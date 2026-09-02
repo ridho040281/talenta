@@ -422,27 +422,24 @@
             <form action="{{ route('admin.settings.general.update') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
                 @csrf
 
-                <!-- SECTION 1: HERO & BANNER ATAS -->
+                <!-- SECTION 1: HERO (HEADLINE & SUBTITLE BERANDA) -->
                 <div class="space-y-4">
                     <div class="flex items-center gap-2 border-b border-white/[0.08] pb-2">
                         <i data-lucide="sparkles" class="w-4 h-4 text-amber-400"></i>
-                        <h4 class="text-xs font-black text-white uppercase tracking-wider">1. Hero Section (Bagian Paling Atas)</h4>
+                        <h4 class="text-xs font-black text-white uppercase tracking-wider">1. Hero Section (Ucapan Selamat Datang & Subtitle Beranda)</h4>
                     </div>
 
                     <div class="space-y-3">
                         <div class="space-y-1.5 bg-[#0C111D]/80 p-4 rounded-2xl border border-white/[0.08]">
-                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">Teks Banner Pengumuman / Pill Badge</label>
-                            <input type="text" name="announcement_banner" value="{{ old('announcement_banner', $settings['announcement_banner']) }}" placeholder="Contoh: REGISTRASI TALENTA 2026 RESMI DIBUKA!" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-semibold focus:border-[#7A5AF8] outline-none">
-                        </div>
-
-                        <div class="space-y-1.5 bg-[#0C111D]/80 p-4 rounded-2xl border border-white/[0.08]">
                             <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">Judul Utama (Headline / Ucapan Selamat Datang)</label>
-                            <input type="text" name="hero_title" value="{{ old('hero_title', $settings['hero_title']) }}" placeholder="Contoh: Selamat Datang di TALENTA MTsN 1 Blitar" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-semibold focus:border-[#7A5AF8] outline-none">
+                            <p class="text-[10px] text-slate-500">Tampil di bawah kaligrafi Ahlan Wa Sahlan pada bagian paling atas Beranda.</p>
+                            <input type="text" name="hero_title" value="{{ old('hero_title', $settings['hero_title']) }}" placeholder="Selamat Datang di TALENTA MTsN 1 Blitar" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-bold focus:border-[#7A5AF8] outline-none">
                         </div>
 
                         <div class="space-y-1.5 bg-[#0C111D]/80 p-4 rounded-2xl border border-white/[0.08]">
                             <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">Deskripsi / Subtitle Hero</label>
-                            <textarea name="hero_subtitle" rows="2" placeholder="Contoh: Platform manajemen perlombaan MTsN 1 Blitar." class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-medium focus:border-[#7A5AF8] outline-none leading-relaxed">{{ old('hero_subtitle', $settings['hero_subtitle']) }}</textarea>
+                            <p class="text-[10px] text-slate-500">Teks penjelas singkat di bawah judul headline Beranda.</p>
+                            <textarea name="hero_subtitle" rows="2" placeholder="Platform manajemen perlombaan MTsN 1 Blitar." class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-medium focus:border-[#7A5AF8] outline-none leading-relaxed">{{ old('hero_subtitle', $settings['hero_subtitle']) }}</textarea>
                         </div>
                     </div>
                 </div>
