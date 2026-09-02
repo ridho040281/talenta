@@ -20,6 +20,62 @@
     selectedPrintCompetition: 'all',
     selectedPrintStatus: 'all',
     selectedPrintGender: 'all',
+    competitionsData: @js($competitions->map(fn($c) => ['id' => (string)$c->id, 'code' => $c->code, 'name' => $c->name])),
+    get currentCompCode() {
+        if (this.selectedCompetition === 'all') return 'ALL';
+        const comp = this.competitionsData.find(c => c.id === this.selectedCompetition);
+        return comp ? comp.code : '';
+    },
+    get currentCompName() {
+        if (this.selectedCompetition === 'all') return 'Semua Cabang';
+        const comp = this.competitionsData.find(c => c.id === this.selectedCompetition);
+        return comp ? comp.name : 'Cabang';
+    },
+    get sectorOptions() {
+        if (this.currentCompCode === 'BLT') {
+            return [
+                { value: 'all', label: '🏸 Semua Sektor Bulu Tangkis' },
+                { value: 'tunggal_pa', label: '👦 Semua Tunggal Putra (PA)' },
+                { value: 'tunggal_pa_a', label: '🏷️ Tunggal PA - Kat A (Kelas 1–2 SD/MI)' },
+                { value: 'tunggal_pa_b', label: '🏷️ Tunggal PA - Kat B (Kelas 3–4 SD/MI)' },
+                { value: 'tunggal_pa_c', label: '🏷️ Tunggal PA - Kat C (Kelas 5–6 SD/MI)' },
+                { value: 'tunggal_pi', label: '👧 Semua Tunggal Putri (PI)' },
+                { value: 'tunggal_pi_a', label: '🏷️ Tunggal PI - Kat A (Kelas 1–2 SD/MI)' },
+                { value: 'tunggal_pi_b', label: '🏷️ Tunggal PI - Kat B (Kelas 3–4 SD/MI)' },
+                { value: 'tunggal_pi_c', label: '🏷️ Tunggal PI - Kat C (Kelas 5–6 SD/MI)' },
+                { value: 'ganda_all', label: '👥 Semua Ganda (PA & PI)' },
+                { value: 'ganda_pa', label: '👥 Ganda Putra (PA) - Semua Kelas' },
+                { value: 'ganda_pi', label: '👥 Ganda Putri (PI) - Semua Kelas' },
+            ];
+        } else if (this.currentCompCode === 'TMJ') {
+            return [
+                { value: 'all', label: '🏓 Semua Kategori Tenis Meja' },
+                { value: 'tmj_a_all', label: '🏷️ Semua Kategori A (Kelas 1–3 SD/MI)' },
+                { value: 'tmj_pa_a', label: '👦 Putra (PA) - Kat A (Kelas 1–3 SD/MI)' },
+                { value: 'tmj_pi_a', label: '👧 Putri (PI) - Kat A (Kelas 1–3 SD/MI)' },
+                { value: 'tmj_b_all', label: '🏷️ Semua Kategori B (Kelas 4–6 SD/MI)' },
+                { value: 'tmj_pa_b', label: '👦 Putra (PA) - Kat B (Kelas 4–6 SD/MI)' },
+                { value: 'tmj_pi_b', label: '👧 Putri (PI) - Kat B (Kelas 4–6 SD/MI)' },
+            ];
+        } else if (this.currentCompCode === 'ALL') {
+            return [
+                { value: 'all', label: 'Semua Sektor / Kategori Lomba' },
+                { value: 'tunggal_pa', label: '🏸 Bulu Tangkis: Tunggal Putra (PA)' },
+                { value: 'tunggal_pi', label: '🏸 Bulu Tangkis: Tunggal Putri (PI)' },
+                { value: 'ganda_all', label: '👥 Bulu Tangkis: Ganda (Semua)' },
+                { value: 'kat_a', label: '🏓 Tenis Meja: Kategori A (Kelas 1–3)' },
+                { value: 'kat_b', label: '🏓 Tenis Meja: Kategori B (Kelas 4–6)' },
+                { value: 'individu_pa', label: '👦 Cabang Lain: Putra (PA)' },
+                { value: 'individu_pi', label: '👧 Cabang Lain: Putri (PI)' },
+            ];
+        } else {
+            return [
+                { value: 'all', label: 'Semua Peserta ' + this.currentCompName },
+                { value: 'individu_pa', label: '👦 Kelompok Putra (PA)' },
+                { value: 'individu_pi', label: '👧 Kelompok Putri (PI)' },
+            ];
+        }
+    },
     items: @js($allRegistrations->map(function($r) {
         $firstMember = $r->members->first();
         $isGanda = $r->members->count() > 1 || stripos($r->match_type ?? '', 'ganda') !== false || stripos($r->sub_category ?? '', 'ganda') !== false;
@@ -31,8 +87,8 @@
             'gender' => $gender,
             'status' => $r->status,
             'is_ganda' => $isGanda,
-            'is_kat_a' => (stripos($targetStr, 'kategori a') !== false || stripos($targetStr, 'kat a') !== false || stripos($targetStr, 'kelas 1') !== false || stripos($targetStr, 'kelas 2') !== false || stripos($targetStr, '-a-') !== false || stripos($targetStr, 'kat_a') !== false),
-            'is_kat_b' => (stripos($targetStr, 'kategori b') !== false || stripos($targetStr, 'kat b') !== false || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, 'kelas 4') !== false || stripos($targetStr, '-b-') !== false || stripos($targetStr, 'kat_b') !== false),
+            'is_kat_a' => (stripos($targetStr, 'kategori a') !== false || stripos($targetStr, 'kat a') !== false || stripos($targetStr, 'kelas 1') !== false || stripos($targetStr, 'kelas 2') !== false || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, '-a-') !== false || stripos($targetStr, 'kat_a') !== false || stripos($targetStr, 'kat a') !== false),
+            'is_kat_b' => (stripos($targetStr, 'kategori b') !== false || stripos($targetStr, 'kat b') !== false || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, 'kelas 4') !== false || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '-b-') !== false || stripos($targetStr, 'kat_b') !== false),
             'is_kat_c' => (stripos($targetStr, 'kategori c') !== false || stripos($targetStr, 'kat c') !== false || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '-c-') !== false || stripos($targetStr, 'kat_c') !== false),
             'search' => strtolower($r->display_name . ' ' . $r->registration_code . ' ' . ($r->participant_number ?? '') . ' ' . $r->institution_name . ' ' . ($firstMember?->nisn ?? ''))
         ];
@@ -49,20 +105,20 @@
             
             let matchSector = true;
             if (this.selectedSector === 'tunggal_pa') matchSector = (!isGanda && isPa);
-            else if (this.selectedSector === 'tunggal_pa_a') matchSector = (!isGanda && isPa && item.is_kat_a);
-            else if (this.selectedSector === 'tunggal_pa_b') matchSector = (!isGanda && isPa && item.is_kat_b);
+            else if (this.selectedSector === 'tunggal_pa_a' || this.selectedSector === 'tmj_pa_a') matchSector = (!isGanda && isPa && item.is_kat_a);
+            else if (this.selectedSector === 'tunggal_pa_b' || this.selectedSector === 'tmj_pa_b') matchSector = (!isGanda && isPa && item.is_kat_b);
             else if (this.selectedSector === 'tunggal_pa_c') matchSector = (!isGanda && isPa && item.is_kat_c);
             else if (this.selectedSector === 'tunggal_pi') matchSector = (!isGanda && isPi);
-            else if (this.selectedSector === 'tunggal_pi_a') matchSector = (!isGanda && isPi && item.is_kat_a);
-            else if (this.selectedSector === 'tunggal_pi_b') matchSector = (!isGanda && isPi && item.is_kat_b);
+            else if (this.selectedSector === 'tunggal_pi_a' || this.selectedSector === 'tmj_pi_a') matchSector = (!isGanda && isPi && item.is_kat_a);
+            else if (this.selectedSector === 'tunggal_pi_b' || this.selectedSector === 'tmj_pi_b') matchSector = (!isGanda && isPi && item.is_kat_b);
             else if (this.selectedSector === 'tunggal_pi_c') matchSector = (!isGanda && isPi && item.is_kat_c);
+            else if (this.selectedSector === 'tmj_a_all' || this.selectedSector === 'kat_a') matchSector = item.is_kat_a;
+            else if (this.selectedSector === 'tmj_b_all' || this.selectedSector === 'kat_b') matchSector = item.is_kat_b;
             else if (this.selectedSector === 'ganda_all' || this.selectedSector === 'ganda') matchSector = isGanda;
             else if (this.selectedSector === 'ganda_pa') matchSector = (isGanda && isPa);
             else if (this.selectedSector === 'ganda_pi') matchSector = (isGanda && isPi);
-            else if (this.selectedSector === 'tunggal') matchSector = !isGanda;
-            else if (this.selectedSector === 'kat_a') matchSector = item.is_kat_a;
-            else if (this.selectedSector === 'kat_b') matchSector = item.is_kat_b;
-            else if (this.selectedSector === 'kat_c') matchSector = item.is_kat_c;
+            else if (this.selectedSector === 'individu_pa') matchSector = isPa;
+            else if (this.selectedSector === 'individu_pi') matchSector = isPi;
 
             const matchSearch = (!this.searchQuery || item.search.includes(this.searchQuery.toLowerCase()));
             return matchComp && matchStatus && matchGender && matchSector && matchSearch;
@@ -196,7 +252,7 @@
             <!-- Dropdown 1: Cabang Lomba -->
             <div>
                 <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Cabang Lomba:</label>
-                <select x-model="selectedCompetition" class="w-full px-3 py-2.5 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8] cursor-pointer">
+                <select x-model="selectedCompetition" @change="selectedSector = 'all'" class="w-full px-3 py-2.5 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8] cursor-pointer">
                     <option value="all">Semua Cabang Lomba ({{ $competitions->count() }})</option>
                     @foreach($competitions as $comp)
                         <option value="{{ $comp->id }}">{{ $comp->name }} ({{ $comp->registrations->count() }} Pendaftar)</option>
@@ -204,36 +260,13 @@
                 </select>
             </div>
 
-            <!-- Dropdown 2: Sektor / Kategori Bulu Tangkis -->
+            <!-- Dropdown 2: Sektor / Kategori Tanding (Dinamis Sesuai Cabang Lomba) -->
             <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Sektor / Kategori Tanding:</label>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1" x-text="currentCompCode === 'BLT' ? 'Sektor / Kelas Bulu Tangkis:' : (currentCompCode === 'TMJ' ? 'Kategori Tenis Meja:' : 'Kategori / Sektor:')"></label>
                 <select x-model="selectedSector" class="w-full px-3 py-2.5 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8] cursor-pointer">
-                    <option value="all">Semua Sektor / Kategori</option>
-                    
-                    <optgroup label="🏸 TUNGGAL PUTRA (PA)">
-                        <option value="tunggal_pa">👦 Semua Tunggal Putra (PA)</option>
-                        <option value="tunggal_pa_a">🏷️ Tunggal PA - Kat A (Kelas 1–2 SD/MI)</option>
-                        <option value="tunggal_pa_b">🏷️ Tunggal PA - Kat B (Kelas 3–4 SD/MI)</option>
-                        <option value="tunggal_pa_c">🏷️ Tunggal PA - Kat C (Kelas 5–6 SD/MI)</option>
-                    </optgroup>
-
-                    <optgroup label="🏸 TUNGGAL PUTRI (PI)">
-                        <option value="tunggal_pi">👧 Semua Tunggal Putri (PI)</option>
-                        <option value="tunggal_pi_a">🏷️ Tunggal PI - Kat A (Kelas 1–2 SD/MI)</option>
-                        <option value="tunggal_pi_b">🏷️ Tunggal PI - Kat B (Kelas 3–4 SD/MI)</option>
-                        <option value="tunggal_pi_c">🏷️ Tunggal PI - Kat C (Kelas 5–6 SD/MI)</option>
-                    </optgroup>
-
-                    <optgroup label="👥 GANDA PUTRA & PUTRI">
-                        <option value="ganda_all">👥 Semua Ganda (PA & PI)</option>
-                        <option value="ganda_pa">👦 Ganda Putra (PA) - Semua Kelas</option>
-                        <option value="ganda_pi">👧 Ganda Putri (PI) - Semua Kelas</option>
-                    </optgroup>
-
-                    <optgroup label="👤 SEKTOR INDIVIDU (MTQ / POP / DLL)">
-                        <option value="individu_pa">👦 Individu Putra (PA)</option>
-                        <option value="individu_pi">👧 Individu Putri (PI)</option>
-                    </optgroup>
+                    <template x-for="opt in sectorOptions" :key="opt.value">
+                        <option :value="opt.value" x-text="opt.label"></option>
+                    </template>
                 </select>
             </div>
 
