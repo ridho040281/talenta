@@ -105,6 +105,19 @@ class AuthController extends Controller
             'status' => 'active',
         ]);
 
+        // Trigger Auto WhatsApp Notification: Pembuatan Akun Baru
+        try {
+            \App\Services\WablasNotificationService::sendAutoNotification('account_created', [
+                'phone' => $user->phone,
+                'nama_peserta' => $user->name,
+                'nisn' => $user->nisn,
+                'nama_sekolah' => $user->institution_name,
+                'link_login' => route('login'),
+            ]);
+        } catch (\Throwable $e) {
+            // Non-blocking if gateway offline
+        }
+
         Auth::login($user);
 
         // Store Account Slip in Session for display & print

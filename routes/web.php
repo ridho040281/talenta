@@ -180,6 +180,10 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->name('admin.')-
         Route::post('/whatsapp-blast/contacts', [AdminSettingsController::class, 'storeCustomContact'])->name('whatsapp.blast.contacts.store');
         Route::post('/whatsapp-blast/contacts/{id}/delete', [AdminSettingsController::class, 'deleteCustomContact'])->name('whatsapp.blast.contacts.delete');
         Route::post('/whatsapp-blast/contacts/clear-all', [AdminSettingsController::class, 'clearAllCustomContacts'])->name('whatsapp.blast.contacts.clear-all');
+        Route::post('/whatsapp-blast/templates', [AdminSettingsController::class, 'storeWhatsappTemplate'])->name('whatsapp.blast.templates.store');
+        Route::post('/whatsapp-blast/templates/{id}/update', [AdminSettingsController::class, 'updateWhatsappTemplate'])->name('whatsapp.blast.templates.update');
+        Route::post('/whatsapp-blast/templates/{id}/delete', [AdminSettingsController::class, 'deleteWhatsappTemplate'])->name('whatsapp.blast.templates.delete');
+        Route::post('/whatsapp-blast/templates/{id}/toggle', [AdminSettingsController::class, 'toggleWhatsappTemplate'])->name('whatsapp.blast.templates.toggle');
         Route::post('/whatsapp-blast/save-credentials', [AdminSettingsController::class, 'saveWablasCredentials'])->name('whatsapp.blast.save-credentials');
         Route::post('/whatsapp-blast/test-connection', [AdminSettingsController::class, 'testWablasConnection'])->name('whatsapp.blast.test-connection');
         Route::get('/changelog', [AdminSettingsController::class, 'changelog'])->name('changelog');

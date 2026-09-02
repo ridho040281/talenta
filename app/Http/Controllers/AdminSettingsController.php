@@ -8,6 +8,7 @@ use App\Models\Competition;
 use App\Models\CustomContact;
 use App\Models\Registration;
 use App\Models\User;
+use App\Models\WhatsappTemplate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -397,6 +398,10 @@ class AdminSettingsController extends Controller
             ];
         })->unique('phone')->values();
 
+        // 5. WhatsApp Message Templates & Auto-Triggers
+        WhatsappTemplate::seedDefaults();
+        $whatsappTemplates = WhatsappTemplate::orderBy('is_system', 'desc')->orderBy('id', 'asc')->get();
+
         return view('admin.settings.whatsapp-blast', compact(
             'competitions',
             'broadcastLogs',
@@ -405,7 +410,8 @@ class AdminSettingsController extends Controller
             'participantContacts',
             'committeeContacts',
             'publicationContacts',
-            'customContacts'
+            'customContacts',
+            'whatsappTemplates'
         ));
     }
 
@@ -949,6 +955,80 @@ class AdminSettingsController extends Controller
     {
         CustomContact::truncate();
         return redirect()->back()->with('success', 'Seluruh kontak tersimpan berhasil dibersihkan.');
+    }
+
+    /**
+     * Store Custom WhatsApp Template
+     */
+    public function storeWhatsappTemplate(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:150',
+            'description' => 'nullable|string|max:255',
+            'message' => 'required|string',
+        ]);
+
+        WhatsappTemplate::create([
+            'code' => 'custom_' . time(),
+            'name' => $request->name,
+            'description' => $request->description ?: 'Template pesan kustom',
+            'message' => $request->message,
+            'is_active' => true,
+            'is_system' => false,
+        ]);
+
+        return redirect()->back()->with('success', 'Template pesan kustom baru berhasil ditambahkan.');
+    }
+
+    /**
+     * Update WhatsApp Template (System or Custom)
+     */
+    public function updateWhatsappTemplate(Request $request, $id)
+    {
+        $template = WhatsappTemplate::findOrFail($id);
+
+        $request->validate([
+            'name' => 'required|string|max:150',
+            'description' => 'nullable|string|max:255',
+            'message' => 'required|string',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $template->update([
+            'name' => $request->name,
+            'description' => $request->description,
+            'message' => $request->message,
+            'is_active' => $request->boolean('is_active', true),
+        ]);
+
+        return redirect()->back()->with('success', 'Template pesan WhatsApp "' . $template->name . '" berhasil diperbarui.');
+    }
+
+    /**
+     * Delete Custom WhatsApp Template
+     */
+    public function deleteWhatsappTemplate($id)
+    {
+        $template = WhatsappTemplate::findOrFail($id);
+        if ($template->is_system) {
+            return redirect()->back()->with('error', 'Template bawaan sistem tidak dapat dihapus, namun dapat dinonaktifkan atau diubah isinya.');
+        }
+
+        $template->delete();
+        return redirect()->back()->with('success', 'Template pesan kustom berhasil dihapus.');
+    }
+
+    /**
+     * Toggle WhatsApp Template Active/Inactive Trigger
+     */
+    public function toggleWhatsappTemplate($id)
+    {
+        $template = WhatsappTemplate::findOrFail($id);
+        $template->is_active = !$template->is_active;
+        $template->save();
+
+        $statusStr = $template->is_active ? 'diaktifkan (Auto-Trigger Aktif)' : 'dinonaktifkan (Auto-Trigger Mati)';
+        return redirect()->back()->with('success', 'Status template "' . $template->name . '" berhasil ' . $statusStr . '.');
     }
 
     /**

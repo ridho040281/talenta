@@ -8,21 +8,30 @@
 
     <!-- MAIN TAB NAVIGATION BAR -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-2 bg-[#0C111D]/90 rounded-3xl border border-white/[0.08] shadow-2xl backdrop-blur-xl">
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
             <!-- Tab 1: Broadcast Pesan -->
             <button type="button" @click="setMainTab('broadcast')" 
                 :class="mainTab === 'broadcast' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-lg shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white font-bold hover:bg-white/[0.04]'"
-                class="px-5 py-3 rounded-2xl text-xs sm:text-sm transition-all duration-200 flex items-center gap-2.5 cursor-pointer">
+                class="px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm transition-all duration-200 flex items-center gap-2 cursor-pointer">
                 <i data-lucide="megaphone" class="w-4 h-4"></i>
-                <span>Kirim Pesan Broadcast</span>
+                <span>Kirim Broadcast</span>
             </button>
 
-            <!-- Tab 2: Pengaturan API Gateway -->
+            <!-- Tab 2: Template & Auto-Trigger -->
+            <button type="button" @click="setMainTab('templates')" 
+                :class="mainTab === 'templates' ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 shadow-lg shadow-emerald-500/30 font-black' : 'text-slate-400 hover:text-white font-bold hover:bg-white/[0.04]'"
+                class="px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm transition-all duration-200 flex items-center gap-2 cursor-pointer">
+                <i data-lucide="zap" class="w-4 h-4"></i>
+                <span>Template & Auto-Trigger</span>
+                <span class="px-1.5 py-0.5 rounded-full text-[10px] font-mono" :class="mainTab === 'templates' ? 'bg-black/25 text-slate-950 font-bold' : 'bg-white/10 text-emerald-400'">{{ $whatsappTemplates->count() }}</span>
+            </button>
+
+            <!-- Tab 3: Pengaturan API Gateway -->
             <button type="button" @click="setMainTab('api')" 
                 :class="mainTab === 'api' ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 shadow-lg shadow-amber-500/30 font-black' : 'text-slate-400 hover:text-white font-bold hover:bg-white/[0.04]'"
-                class="px-5 py-3 rounded-2xl text-xs sm:text-sm transition-all duration-200 flex items-center gap-2.5 cursor-pointer">
+                class="px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm transition-all duration-200 flex items-center gap-2 cursor-pointer">
                 <i data-lucide="key-round" class="w-4 h-4"></i>
-                <span>Pengaturan API Gateway</span>
+                <span>Pengaturan Gateway</span>
             </button>
         </div>
 
@@ -34,7 +43,7 @@
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                     <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                 </span>
-                <span class="truncate max-w-[140px]" x-text="deviceSender || 'Terhubung'"></span>
+                <span class="truncate max-w-[130px]" x-text="deviceSender || 'Terhubung'"></span>
                 <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono" x-text="remainingQuota + ' Kuota'"></span>
             </div>
             <div x-show="statusState !== 'connected'" class="flex items-center gap-1.5 text-rose-400 font-bold font-mono text-xs">
@@ -74,9 +83,37 @@
             
             <!-- Left: Form Composer -->
             <div class="lg:col-span-7 ai-card rounded-3xl p-6 sm:p-8 border border-white/[0.08] shadow-2xl space-y-6 text-white">
-                <div class="border-b border-white/[0.08] pb-4">
-                    <h3 class="text-lg font-black text-white font-display">Buat Pesan WhatsApp Blast</h3>
-                    <p class="text-xs text-slate-400 mt-0.5">Tentukan target penerima dan susun isi pesan broadcast</p>
+                <div class="flex items-center justify-between border-b border-white/[0.08] pb-4">
+                    <div>
+                        <h3 class="text-lg font-black text-white font-display">Buat Pesan WhatsApp Blast</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Tentukan target penerima dan susun isi pesan broadcast</p>
+                    </div>
+
+                    <!-- Quick Template Dropdown Button -->
+                    <div class="relative" x-data="{ openTmpl: false }">
+                        <button type="button" @click="openTmpl = !openTmpl" class="px-3 py-1.5 rounded-xl bg-[#7A5AF8]/20 hover:bg-[#7A5AF8]/30 text-[#A594FD] border border-[#7A5AF8]/30 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm">
+                            <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                            <span>Pilih Template</span>
+                            <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                        </button>
+
+                        <div x-show="openTmpl" @click.outside="openTmpl = false" class="absolute right-0 mt-2 w-72 rounded-2xl bg-[#0C111D] border border-white/[0.15] shadow-2xl z-30 p-2 space-y-1" style="display: none;">
+                            <div class="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-white/[0.06]">
+                                Pilih Template Siap Pakai
+                            </div>
+                            <template x-for="t in templatesList" :key="t.id">
+                                <button type="button" @click="useTemplate(t); openTmpl = false" class="w-full text-left p-2 rounded-xl hover:bg-white/[0.06] transition flex flex-col gap-0.5 cursor-pointer group">
+                                    <span class="text-xs font-bold text-white group-hover:text-[#84D0FF]" x-text="t.name"></span>
+                                    <span class="text-[10px] text-slate-400 truncate" x-text="t.description || t.message"></span>
+                                </button>
+                            </template>
+                            <div class="pt-1 border-t border-white/[0.06]">
+                                <button type="button" @click="setMainTab('templates'); openTmpl = false" class="w-full text-center py-1.5 text-[11px] font-bold text-emerald-400 hover:underline">
+                                    ⚙️ Kelola Semua Template
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <form action="{{ route('admin.settings.whatsapp.blast.send') }}" method="POST" enctype="multipart/form-data" class="space-y-5">
@@ -312,6 +349,9 @@
                             <button type="button" @click="insertTag('{nama_peserta}')" class="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-[#84D0FF] border border-white/[0.08] text-xs font-mono font-bold transition cursor-pointer">
                                 {nama_peserta}
                             </button>
+                            <button type="button" @click="insertTag('{nisn}')" class="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-amber-300 border border-white/[0.08] text-xs font-mono font-bold transition cursor-pointer">
+                                {nisn}
+                            </button>
                             <button type="button" @click="insertTag('{nama_sekolah}')" class="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-[#A594FD] border border-white/[0.08] text-xs font-mono font-bold transition cursor-pointer">
                                 {nama_sekolah}
                             </button>
@@ -321,8 +361,14 @@
                             <button type="button" @click="insertTag('{no_peserta}')" class="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-amber-300 border border-white/[0.08] text-xs font-mono font-bold transition cursor-pointer">
                                 {no_peserta}
                             </button>
+                            <button type="button" @click="insertTag('{kode_pendaftaran}')" class="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-cyan-300 border border-white/[0.08] text-xs font-mono font-bold transition cursor-pointer">
+                                {kode_pendaftaran}
+                            </button>
                             <button type="button" @click="insertTag('{link_scoreboard}')" class="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-pink-400 border border-white/[0.08] text-xs font-mono font-bold transition cursor-pointer">
                                 {link_scoreboard}
+                            </button>
+                            <button type="button" @click="insertTag('{link_login}')" class="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-indigo-400 border border-white/[0.08] text-xs font-mono font-bold transition cursor-pointer">
+                                {link_login}
                             </button>
                         </div>
                     </div>
@@ -337,11 +383,7 @@
                     </div>
 
                     <!-- Submit Button -->
-                    <div class="flex items-center justify-between pt-2">
-                        <button type="button" @click="applyTemplate('tm')" class="text-xs font-bold text-[#84D0FF] hover:underline cursor-pointer flex items-center gap-1">
-                            <span>⚡ Pakai Template Technical Meeting</span>
-                        </button>
-
+                    <div class="flex items-center justify-end pt-2">
                         <button type="submit" class="gradient-btn px-8 py-3.5 rounded-2xl text-white font-black text-xs shadow-xl shadow-[#7A5AF8]/25 hover:scale-[1.01] transition duration-200 flex items-center gap-2 cursor-pointer">
                             <i data-lucide="send" class="w-4 h-4 text-white"></i>
                             <span>Kirim WhatsApp Blast</span>
@@ -508,9 +550,9 @@
                         @forelse($broadcastLogs as $log)
                             <tr class="hover:bg-white/[0.02] transition text-xs">
                                 <td class="py-3.5 px-4 font-mono text-slate-400">{{ $log->created_at->format('d/m/Y H:i') }}</td>
-                                <td class="py-3.5 px-4 font-bold text-white">{{ $log->sender->name ?? 'Admin' }}</td>
+                                <td class="py-3.5 px-4 font-bold text-white">{{ $log->sender->name ?? 'Admin / Sistem' }}</td>
                                 <td class="py-3.5 px-4 capitalize text-[#84D0FF]">
-                                    {{ $log->target_competition ? 'Lomba: ' . $log->target_competition : $log->target_audience }}
+                                    {{ $log->target_competition ? $log->target_competition : $log->target_audience }}
                                 </td>
                                 <td class="py-3.5 px-4 text-center font-bold font-mono text-emerald-400">{{ $log->recipients_count }} Kontak</td>
                                 <td class="py-3.5 px-4 text-slate-400 truncate max-w-xs">{{ $log->message }}</td>
@@ -547,7 +589,131 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- TAB 2: PENGATURAN API GATEWAY WABLAS (DEDICATED FULL VIEW) -->
+    <!-- TAB 2: TEMPLATE PESAN & AUTO-TRIGGER NOTIFIKASI -->
+    <!-- ========================================================================= -->
+    <div x-show="mainTab === 'templates'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-6">
+        
+        <!-- Header & Action Bar -->
+        <div class="ai-card rounded-3xl p-6 sm:p-8 border border-white/[0.08] text-white shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <div class="flex items-center gap-2.5">
+                    <span class="p-2 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-md">
+                        <i data-lucide="zap" class="w-5 h-5"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-base sm:text-lg font-black text-white font-display">Manajemen Template & Auto-Trigger WhatsApp</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Atur pesan otomatis saat pendaftaran serta buat dan kelola template kustom</p>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" @click="openCreateTemplateModal()" class="px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2 cursor-pointer shrink-0 transition">
+                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                <span>Buat Template Kustom Baru</span>
+            </button>
+        </div>
+
+        <!-- 3 Trigger Otomatis Banner Notice -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="p-4 rounded-3xl bg-indigo-500/10 border border-indigo-500/30 text-white space-y-1.5 shadow-lg">
+                <div class="flex items-center gap-2 text-indigo-300 font-bold text-xs">
+                    <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+                    <span>1. Auto-Trigger: Pembuatan Akun</span>
+                </div>
+                <p class="text-[11px] text-slate-300">Terkirim instan saat peserta mendaftar akun di portal (menyertakan NISN & password).</p>
+            </div>
+
+            <div class="p-4 rounded-3xl bg-cyan-500/10 border border-cyan-500/30 text-white space-y-1.5 shadow-lg">
+                <div class="flex items-center gap-2 text-cyan-300 font-bold text-xs">
+                    <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                    <span>2. Auto-Trigger: Pengiriman Pendaftaran</span>
+                </div>
+                <p class="text-[11px] text-slate-300">Terkirim saat formulir pendaftaran cabang lomba berhasil di-submit oleh peserta.</p>
+            </div>
+
+            <div class="p-4 rounded-3xl bg-emerald-500/10 border border-emerald-500/30 text-white space-y-1.5 shadow-lg">
+                <div class="flex items-center gap-2 text-emerald-300 font-bold text-xs">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>3. Auto-Trigger: Pendaftaran Terverifikasi</span>
+                </div>
+                <p class="text-[11px] text-slate-300">Terkirim saat admin / PIC memvalidasi berkas pendaftaran menjadi sah & terverifikasi.</p>
+            </div>
+        </div>
+
+        <!-- List of Templates Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            @foreach($whatsappTemplates as $template)
+                <div class="ai-card rounded-3xl p-6 sm:p-7 border border-white/[0.08] hover:border-white/[0.2] transition text-white shadow-2xl flex flex-col justify-between space-y-4 relative overflow-hidden group">
+                    
+                    <!-- Top Info & Badges -->
+                    <div class="space-y-2.5">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h4 class="text-sm sm:text-base font-black text-white font-display">{{ $template->name }}</h4>
+                                    @if($template->is_system)
+                                        <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                                            Sistem Auto-Trigger
+                                        </span>
+                                    @else
+                                        <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                            Template Kustom
+                                        </span>
+                                    @endif
+                                </div>
+                                <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">{{ $template->description ?: 'Template pesan WhatsApp siap pakai' }}</p>
+                            </div>
+
+                            <!-- Trigger Status Toggle Button -->
+                            <form action="{{ route('admin.settings.whatsapp.blast.templates.toggle', $template->id) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm {{ $template->is_active ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30' : 'bg-slate-800 text-slate-400 border border-slate-700 hover:text-white' }}" title="Klik untuk mengubah status aktif auto-trigger">
+                                    <span class="w-2 h-2 rounded-full {{ $template->is_active ? 'bg-emerald-400' : 'bg-slate-500' }}"></span>
+                                    <span>{{ $template->is_active ? 'Auto-Trigger Aktif' : 'Nonaktif' }}</span>
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Message Content Preview Box -->
+                        <div class="p-4 rounded-2xl bg-[#0C111D] border border-white/[0.08] text-xs font-mono text-slate-300 whitespace-pre-wrap leading-relaxed max-h-56 overflow-y-auto custom-scrollbar">
+{{ $template->message }}
+                        </div>
+                    </div>
+
+                    <!-- Bottom Action Buttons -->
+                    <div class="flex items-center justify-between pt-3 border-t border-white/[0.06] text-xs">
+                        <!-- Use in Broadcast Composer -->
+                        <button type="button" @click="useTemplate(@json($template))" class="px-3.5 py-2 rounded-xl bg-[#7A5AF8]/20 hover:bg-[#7A5AF8]/30 text-[#A594FD] border border-[#7A5AF8]/30 font-bold transition flex items-center gap-1.5 cursor-pointer">
+                            <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                            <span>Pakai di Broadcast</span>
+                        </button>
+
+                        <div class="flex items-center gap-1.5">
+                            <!-- Edit Button -->
+                            <button type="button" @click="openEditTemplateModal(@json($template))" class="p-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 hover:text-white border border-white/[0.08] transition cursor-pointer" title="Edit Isi Template Ini">
+                                <i data-lucide="edit" class="w-4 h-4"></i>
+                            </button>
+
+                            <!-- Delete Button (Only for Custom Templates) -->
+                            @if(!$template->is_system)
+                                <form action="{{ route('admin.settings.whatsapp.blast.templates.delete', $template->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus template kustom ini?')">
+                                    @csrf
+                                    <button type="submit" class="p-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/30 transition cursor-pointer" title="Hapus Template Kustom">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
+                    </div>
+
+                </div>
+            @endforeach
+        </div>
+
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 3: PENGATURAN API GATEWAY WABLAS (DEDICATED FULL VIEW) -->
     <!-- ========================================================================= -->
     <div x-show="mainTab === 'api'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-6">
         
@@ -751,6 +917,10 @@
                             <span class="text-slate-400 text-[11px]">Nama Peserta / Pendaftar</span>
                         </div>
                         <div class="p-2.5 rounded-xl bg-[#0C111D] border border-white/[0.06] flex items-center justify-between">
+                            <code class="text-amber-300 font-bold">{nisn}</code>
+                            <span class="text-slate-400 text-[11px]">NISN Peserta</span>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-[#0C111D] border border-white/[0.06] flex items-center justify-between">
                             <code class="text-[#A594FD] font-bold">{nama_sekolah}</code>
                             <span class="text-slate-400 text-[11px]">Nama Asal Sekolah / Lembaga</span>
                         </div>
@@ -760,11 +930,19 @@
                         </div>
                         <div class="p-2.5 rounded-xl bg-[#0C111D] border border-white/[0.06] flex items-center justify-between">
                             <code class="text-amber-300 font-bold">{no_peserta}</code>
-                            <span class="text-slate-400 text-[11px]">Nomor Peserta / Kode Reg</span>
+                            <span class="text-slate-400 text-[11px]">Nomor Peserta Resmi</span>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-[#0C111D] border border-white/[0.06] flex items-center justify-between">
+                            <code class="text-cyan-300 font-bold">{kode_pendaftaran}</code>
+                            <span class="text-slate-400 text-[11px]">Kode Pendaftaran Lomba</span>
                         </div>
                         <div class="p-2.5 rounded-xl bg-[#0C111D] border border-white/[0.06] flex items-center justify-between">
                             <code class="text-pink-400 font-bold">{link_scoreboard}</code>
                             <span class="text-slate-400 text-[11px]">Link Live Scoreboard Resmi</span>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-[#0C111D] border border-white/[0.06] flex items-center justify-between">
+                            <code class="text-indigo-400 font-bold">{link_login}</code>
+                            <span class="text-slate-400 text-[11px]">Link Login Portal</span>
                         </div>
                     </div>
                 </div>
@@ -775,7 +953,7 @@
 
     </div>
 
-    <!-- MODAL TAMBAH KONTAK MANUAL -->
+    <!-- MODAL 1: TAMBAH KONTAK MANUAL -->
     <div x-show="showAddContactModal" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" style="display: none;">
         <div class="ai-card w-full max-w-md p-6 rounded-3xl border border-white/[0.12] text-white shadow-2xl space-y-4" @click.outside="showAddContactModal = false">
             <div class="flex items-center justify-between border-b border-white/[0.08] pb-3">
@@ -819,19 +997,118 @@
         </div>
     </div>
 
+    <!-- MODAL 2: BUAT TEMPLATE KUSTOM BARU -->
+    <div x-show="showCreateTemplateModal" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" style="display: none;">
+        <div class="ai-card w-full max-w-lg p-6 sm:p-7 rounded-3xl border border-white/[0.12] text-white shadow-2xl space-y-4" @click.outside="showCreateTemplateModal = false">
+            <div class="flex items-center justify-between border-b border-white/[0.08] pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="p-1.5 rounded-xl bg-emerald-500/20 text-emerald-400">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                    </span>
+                    <h3 class="text-sm sm:text-base font-black font-display text-white">Buat Template Pesan Kustom Baru</h3>
+                </div>
+                <button type="button" @click="showCreateTemplateModal = false" class="text-slate-400 hover:text-white p-1">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <form action="{{ route('admin.settings.whatsapp.blast.templates.store') }}" method="POST" class="space-y-4">
+                @csrf
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Nama Judul Template *</label>
+                    <input type="text" name="name" required placeholder="Contoh: Pengumuman Pembagian Sertifikat & Hadiah" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/[0.1] text-xs text-white outline-none focus:border-emerald-400">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Deskripsi Singkat (Opsional)</label>
+                    <input type="text" name="description" placeholder="Contoh: Template broadcast pemberitahuan pengambilan sertifikat" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/[0.1] text-xs text-white outline-none focus:border-emerald-400">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Isi Pesan Template *</label>
+                    <textarea name="message" rows="6" required placeholder="Tuliskan isi format pesan WhatsApp di sini... Gunakan tag seperti {nama_peserta}, {cabang_lomba}, {nama_sekolah}, dll." class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/[0.1] text-xs font-mono text-white outline-none focus:border-emerald-400 leading-relaxed"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-white/[0.08]">
+                    <button type="button" @click="showCreateTemplateModal = false" class="px-4 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs text-slate-300 font-bold">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-xs text-slate-950 font-black shadow-lg shadow-emerald-500/20">
+                        Simpan Template
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: EDIT TEMPLATE -->
+    <div x-show="showEditTemplateModal" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" style="display: none;">
+        <div class="ai-card w-full max-w-lg p-6 sm:p-7 rounded-3xl border border-white/[0.12] text-white shadow-2xl space-y-4" @click.outside="showEditTemplateModal = false">
+            <div class="flex items-center justify-between border-b border-white/[0.08] pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="p-1.5 rounded-xl bg-[#7A5AF8]/20 text-[#A594FD]">
+                        <i data-lucide="edit" class="w-4 h-4"></i>
+                    </span>
+                    <h3 class="text-sm sm:text-base font-black font-display text-white">Edit Template Pesan WhatsApp</h3>
+                </div>
+                <button type="button" @click="showEditTemplateModal = false" class="text-slate-400 hover:text-white p-1">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <form :action="'{{ url('admin/settings/whatsapp-blast/templates') }}/' + editingTemplate.id + '/update'" method="POST" class="space-y-4">
+                @csrf
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Nama Judul Template *</label>
+                    <input type="text" name="name" x-model="editingTemplate.name" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/[0.1] text-xs text-white outline-none focus:border-[#7A5AF8]">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Deskripsi Singkat</label>
+                    <input type="text" name="description" x-model="editingTemplate.description" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/[0.1] text-xs text-white outline-none focus:border-[#7A5AF8]">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Isi Pesan Template *</label>
+                    <textarea name="message" x-model="editingTemplate.message" rows="7" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/[0.1] text-xs font-mono text-white outline-none focus:border-[#7A5AF8] leading-relaxed"></textarea>
+                </div>
+
+                <div class="flex items-center justify-between pt-2 border-t border-white/[0.08]">
+                    <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                        <input type="checkbox" name="is_active" value="1" :checked="editingTemplate.is_active" class="rounded bg-slate-900 border-white/[0.2] text-[#7A5AF8] focus:ring-0">
+                        <span>Aktifkan Template / Auto-Trigger</span>
+                    </label>
+
+                    <div class="flex items-center gap-2">
+                        <button type="button" @click="showEditTemplateModal = false" class="px-4 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs text-slate-300 font-bold">
+                            Batal
+                        </button>
+                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-[#7A5AF8] hover:bg-[#6842f6] text-xs text-white font-black shadow-lg shadow-[#7A5AF8]/20">
+                            Simpan Perubahan
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
 </div>
 
 @push('scripts')
 <script>
     function whatsappBlastApp() {
         return {
-            mainTab: 'broadcast', // 'broadcast' or 'api'
+            mainTab: 'broadcast', // 'broadcast', 'templates', 'api'
             targetAudience: 'all',
             manualNumbers: '',
             selectedFileName: '',
             activeContactTab: 'peserta',
             contactSearch: '',
             showAddContactModal: false,
+            showCreateTemplateModal: false,
+            showEditTemplateModal: false,
+            editingTemplate: {},
+            templatesList: @json($whatsappTemplates),
             contactsPeserta: @json($participantContacts),
             contactsPanitia: @json($committeeContacts),
             contactsPublikasi: @json($publicationContacts),
@@ -857,6 +1134,35 @@
 
             setMainTab(tab) {
                 this.mainTab = tab;
+                this.$nextTick(() => {
+                    if (window.lucide) lucide.createIcons();
+                });
+            },
+
+            useTemplate(tmpl) {
+                if (tmpl && tmpl.message) {
+                    this.messageText = tmpl.message;
+                    this.mainTab = 'broadcast';
+                    this.$nextTick(() => {
+                        const textarea = document.getElementById('messageBox');
+                        if (textarea) {
+                            textarea.focus();
+                            textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    });
+                }
+            },
+
+            openCreateTemplateModal() {
+                this.showCreateTemplateModal = true;
+                this.$nextTick(() => {
+                    if (window.lucide) lucide.createIcons();
+                });
+            },
+
+            openEditTemplateModal(tmpl) {
+                this.editingTemplate = Object.assign({}, tmpl);
+                this.showEditTemplateModal = true;
                 this.$nextTick(() => {
                     if (window.lucide) lucide.createIcons();
                 });
@@ -974,12 +1280,6 @@
                     textarea.focus();
                     textarea.selectionStart = textarea.selectionEnd = start + tag.length;
                 });
-            },
-
-            applyTemplate(type) {
-                if (type === 'tm') {
-                    this.messageText = 'Pemberitahuan Jadwal Technical Meeting & Spin Undian TALENTA 2026\n\nKepada Yth. Delegasi {nama_sekolah} ({nama_peserta}),\n\nTechnical meeting dan penentuan nomor urut tampil cabang {cabang_lomba} akan dilaksanakan secara live transparan.\n\nNomor Peserta: {no_peserta}\nLink Scoreboard & Undian: {link_scoreboard}\n\nMohon hadir tepat waktu.\nPanitia TALENTA MTsN 1 Blitar';
-                }
             }
         }
     }

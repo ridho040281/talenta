@@ -386,6 +386,29 @@ class PicController extends Controller
             }
         }
 
+        // Trigger Auto WhatsApp Notification: Pendaftaran Terverifikasi Sah
+        if ($validated['status'] === 'verified') {
+            try {
+                $registration->loadMissing(['members', 'user', 'competition']);
+                $firstMember = $registration->members->first();
+                $targetPhone = $registration->official_phone ?: ($registration->user?->phone ?: $firstMember?->phone);
+
+                \App\Services\WablasNotificationService::sendAutoNotification('registration_verified', [
+                    'phone' => $targetPhone,
+                    'nama_peserta' => $registration->display_name,
+                    'nisn' => $firstMember?->nisn ?? ($registration->user?->nisn ?? '-'),
+                    'nama_sekolah' => $registration->institution_name,
+                    'cabang_lomba' => $registration->competition->name,
+                    'no_peserta' => $registration->participant_number ?: $registration->registration_code,
+                    'kode_pendaftaran' => $registration->registration_code,
+                    'link_scoreboard' => url('/'),
+                    'link_login' => route('login'),
+                ]);
+            } catch (\Throwable $e) {
+                // Non-blocking
+            }
+        }
+
         return back()->with('success', 'Status pendaftaran ' . $registration->registration_code . ' berhasil diubah menjadi: ' . ucfirst($validated['status']));
     }
 

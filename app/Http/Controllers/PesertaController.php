@@ -221,6 +221,23 @@ class PesertaController extends Controller
             ]);
         }
 
+        // Trigger Auto WhatsApp Notification: Pengiriman Pendaftaran Lomba
+        try {
+            $firstMember = $registration->members->first();
+            $targetPhone = $registration->official_phone ?: ($user->phone ?: $firstMember?->phone);
+            \App\Services\WablasNotificationService::sendAutoNotification('registration_submitted', [
+                'phone' => $targetPhone,
+                'nama_peserta' => $registration->display_name,
+                'nisn' => $firstMember?->nisn ?? ($user->nisn ?? '-'),
+                'nama_sekolah' => $registration->institution_name,
+                'cabang_lomba' => $competition->name,
+                'kode_pendaftaran' => $registration->registration_code,
+                'link_login' => route('peserta.registration.detail', $registration->id),
+            ]);
+        } catch (\Throwable $e) {
+            // Non-blocking
+        }
+
         return redirect()->route('peserta.registration.detail', $registration->id)
             ->with('success', 'Pendaftaran berhasil dikirim! Kode Pendaftaran Anda: ' . $regCode . '. Tim panitia akan memverifikasi berkas Anda.');
     }
