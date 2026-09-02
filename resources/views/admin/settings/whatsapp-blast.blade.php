@@ -694,14 +694,14 @@
                     <!-- Bottom Action Buttons -->
                     <div class="flex items-center justify-between pt-3 border-t border-white/[0.06] text-xs">
                         <!-- Use in Broadcast Composer -->
-                        <button type="button" @click="useTemplate(@json($template))" class="px-3.5 py-2 rounded-xl bg-[#7A5AF8]/20 hover:bg-[#7A5AF8]/30 text-[#A594FD] border border-[#7A5AF8]/30 font-bold transition flex items-center gap-1.5 cursor-pointer">
+                        <button type="button" @click="useTemplateById({{ $template->id }})" class="px-3.5 py-2 rounded-xl bg-[#7A5AF8]/20 hover:bg-[#7A5AF8]/30 text-[#A594FD] border border-[#7A5AF8]/30 font-bold transition flex items-center gap-1.5 cursor-pointer">
                             <i data-lucide="send" class="w-3.5 h-3.5"></i>
                             <span>Pakai di Broadcast</span>
                         </button>
 
                         <div class="flex items-center gap-1.5">
                             <!-- Edit Button -->
-                            <button type="button" @click="openEditTemplateModal(@json($template))" class="p-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 hover:text-white border border-white/[0.08] transition cursor-pointer" title="Edit Isi Template Ini">
+                            <button type="button" @click="openEditTemplateById({{ $template->id }})" class="p-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 hover:text-white border border-white/[0.08] transition cursor-pointer" title="Edit Isi Template Ini">
                                 <i data-lucide="edit" class="w-4 h-4"></i>
                             </button>
 
@@ -1067,7 +1067,7 @@
                 </button>
             </div>
 
-            <form :action="'{{ url('admin/settings/whatsapp-blast/templates') }}/' + editingTemplate.id + '/update'" method="POST" class="space-y-4">
+            <form :action="'{{ url('admin/settings/whatsapp-blast/templates') }}/' + (editingTemplate.id || '') + '/update'" method="POST" class="space-y-4">
                 @csrf
                 <div>
                     <label class="block text-xs font-bold text-slate-300 mb-1">Nama Judul Template *</label>
@@ -1086,7 +1086,7 @@
 
                 <div class="flex items-center justify-between pt-2 border-t border-white/[0.08]">
                     <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
-                        <input type="checkbox" name="is_active" value="1" :checked="editingTemplate.is_active" class="rounded bg-slate-900 border-white/[0.2] text-[#7A5AF8] focus:ring-0">
+                        <input type="checkbox" name="is_active" value="1" x-model="editingTemplate.is_active" class="rounded bg-slate-900 border-white/[0.2] text-[#7A5AF8] focus:ring-0">
                         <span>Aktifkan Template / Auto-Trigger</span>
                     </label>
 
@@ -1164,6 +1164,13 @@
                 }
             },
 
+            useTemplateById(id) {
+                const tmpl = this.templatesList.find(t => t.id == id);
+                if (tmpl) {
+                    this.useTemplate(tmpl);
+                }
+            },
+
             openCreateTemplateModal() {
                 this.showCreateTemplateModal = true;
                 this.$nextTick(() => {
@@ -1172,11 +1179,25 @@
             },
 
             openEditTemplateModal(tmpl) {
-                this.editingTemplate = Object.assign({}, tmpl);
+                if (!tmpl) return;
+                this.editingTemplate = {
+                    id: tmpl.id,
+                    name: tmpl.name || '',
+                    description: tmpl.description || '',
+                    message: tmpl.message || '',
+                    is_active: Boolean(tmpl.is_active)
+                };
                 this.showEditTemplateModal = true;
                 this.$nextTick(() => {
                     if (window.lucide) lucide.createIcons();
                 });
+            },
+
+            openEditTemplateById(id) {
+                const tmpl = this.templatesList.find(t => t.id == id);
+                if (tmpl) {
+                    this.openEditTemplateModal(tmpl);
+                }
             },
 
             async checkStatus() {
