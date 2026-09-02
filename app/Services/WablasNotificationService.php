@@ -50,17 +50,30 @@ class WablasNotificationService
 
             // 4. Build message with dynamic placeholders
             $msg = $template->message;
+            $appName = AppSetting::get('app_name', 'TALENTA');
+            $eventName = AppSetting::get('event_name', 'Milad ke-57 MTsN 1 Blitar');
+            $institutionName = AppSetting::get('institution_name', 'MTsN 1 Blitar');
+
             $placeholders = [
-                '{nama_peserta}' => $data['nama_peserta'] ?? 'Bapak/Ibu Peserta',
+                '{nama_peserta}' => $data['nama_peserta'] ?? ($data['nama_pendaftar'] ?? 'Bapak/Ibu Peserta'),
+                '{nama_pendaftar}' => $data['nama_pendaftar'] ?? ($data['nama_peserta'] ?? 'Bapak/Ibu Pendaftar'),
                 '{nisn}' => $data['nisn'] ?? '-',
-                '{nama_sekolah}' => $data['nama_sekolah'] ?? '-',
+                '{nama_sekolah}' => $data['nama_sekolah'] ?? ($data['nama_instansi'] ?? $institutionName),
+                '{nama_instansi}' => $data['nama_instansi'] ?? ($data['nama_sekolah'] ?? $institutionName),
                 '{cabang_lomba}' => $data['cabang_lomba'] ?? 'TALENTA 2026',
+                '{kategori_lomba}' => $data['kategori_lomba'] ?? ($data['cabang_lomba'] ?? '-'),
                 '{no_peserta}' => $data['no_peserta'] ?? ($data['kode_pendaftaran'] ?? '-'),
                 '{kode_pendaftaran}' => $data['kode_pendaftaran'] ?? ($data['no_peserta'] ?? '-'),
                 '{nomor_undian}' => $data['nomor_undian'] ?? ($data['draw_number'] ?? '-'),
-                '{link_scoreboard}' => $data['link_scoreboard'] ?? url('/'),
+                '{nominal_biaya}' => !empty($data['nominal_biaya']) ? number_format((float)$data['nominal_biaya'], 0, ',', '.') : '0',
+                '{jumlah_peserta}' => $data['jumlah_peserta'] ?? '1',
+                '{waktu_daftar}' => $data['waktu_daftar'] ?? now()->translatedFormat('d F Y H:i') . ' WIB',
+                '{waktu_verifikasi}' => $data['waktu_verifikasi'] ?? now()->translatedFormat('d F Y H:i') . ' WIB',
+                '{link_scoreboard}' => $data['link_scoreboard'] ?? route('live.scoreboard'),
                 '{link_login}' => $data['link_login'] ?? route('login'),
-                '{no_wa}' => $data['phone'] ?? $cleanPhone,
+                '{no_wa}' => $data['phone_pendaftar'] ?? ($data['phone'] ?? $cleanPhone),
+                '{nama_aplikasi}' => $appName,
+                '{nama_kegiatan}' => $eventName,
             ];
 
             foreach ($placeholders as $tag => $val) {
@@ -97,6 +110,101 @@ class WablasNotificationService
             return $isSent;
         } catch (\Throwable $e) {
             Log::error("Wablas Auto Notification Error ({$templateCode}): " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Send new registration notification alert to PIC of the competition
+     */
+    public static function notifyPicNewRegistration($registration): bool
+    {
+        try {
+            if (!$registration) return false;
+
+            $competition = $registration->competition;
+            if (!$competition) return false;
+
+            // Find PIC phone number
+            $pic = $competition->pic;
+            $picPhone = $pic->phone ?? '';
+
+            // If no direct PIC assigned, check if there's any user with role pic_lomba or fallback admin
+            if (empty($picPhone)) {
+                $picUser = \App\Models\User::where('role', 'pic_lomba')
+                    ->whereNotNull('phone')
+                    ->where('phone', '!=', '')
+                    ->first();
+                $picPhone = $picUser->phone ?? '';
+            }
+
+            if (empty($picPhone)) {
+                return false; // No PIC phone number available
+            }
+
+            $primaryMember = $registration->members->first();
+            $namaPeserta = $primaryMember->full_name ?? ($registration->user->name ?? 'Peserta Baru');
+            $pendaftarPhone = $registration->user->phone ?? ($primaryMember->phone ?? '-');
+
+            return static::sendAutoNotification('pic_new_registration', [
+                'phone' => $picPhone,
+                'nama_peserta' => $namaPeserta,
+                'nama_pendaftar' => $registration->user->name ?? $namaPeserta,
+                'nama_sekolah' => $registration->institution_name ?: ($registration->user->institution_name ?? '-'),
+                'nama_instansi' => $registration->institution_name ?: ($registration->user->institution_name ?? '-'),
+                'cabang_lomba' => $competition->name,
+                'kode_pendaftaran' => $registration->registration_code,
+                'phone_pendaftar' => $pendaftarPhone,
+                'waktu_daftar' => now()->translatedFormat('d M Y H:i') . ' WIB',
+                'link_login' => route('pic.dashboard'),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error("notifyPicNewRegistration Error: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Send payment notification alert to Treasurer (Bendahara)
+     */
+    public static function notifyTreasurerNewPayment($registration, $customAmount = null): bool
+    {
+        try {
+            if (!$registration) return false;
+
+            // Get Treasurer Phone from AppSetting or role
+            $treasurerPhone = trim(AppSetting::get('treasurer_phone_number', ''));
+            if (empty($treasurerPhone)) {
+                // Fallback to superadmin phone if available
+                $superAdmin = \App\Models\User::where('role', 'superadmin')->whereNotNull('phone')->first();
+                $treasurerPhone = $superAdmin->phone ?? '';
+            }
+
+            if (empty($treasurerPhone)) {
+                return false; // No treasurer phone configured
+            }
+
+            $competition = $registration->competition;
+            $compName = $competition->name ?? 'TALENTA 2026';
+            $fee = $customAmount ?? ($registration->amount ?? ($competition->registration_fee ?? 0));
+            $primaryMember = $registration->members->first();
+            $namaPeserta = $primaryMember->full_name ?? ($registration->user->name ?? 'Pendaftar Baru');
+
+            return static::sendAutoNotification('treasurer_new_payment', [
+                'phone' => $treasurerPhone,
+                'nama_peserta' => $namaPeserta,
+                'nama_pendaftar' => $registration->user->name ?? $namaPeserta,
+                'nama_sekolah' => $registration->institution_name ?: ($registration->user->institution_name ?? '-'),
+                'nama_instansi' => $registration->institution_name ?: ($registration->user->institution_name ?? '-'),
+                'cabang_lomba' => $compName,
+                'kode_pendaftaran' => $registration->registration_code,
+                'nominal_biaya' => $fee,
+                'jumlah_peserta' => $registration->members->count() ?: 1,
+                'waktu_daftar' => now()->translatedFormat('d M Y H:i') . ' WIB',
+                'link_login' => route('admin.dashboard'),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error("notifyTreasurerNewPayment Error: " . $e->getMessage());
             return false;
         }
     }

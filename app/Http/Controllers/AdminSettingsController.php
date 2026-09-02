@@ -255,7 +255,8 @@ class AdminSettingsController extends Controller
             'step_2_desc', 'step_3_title', 'step_3_desc', 'step_4_title', 'step_4_desc',
             'catalog_tagline', 'catalog_title', 'timeline_tagline', 'timeline_title',
             'timeline_subtitle', 'cta_tagline', 'cta_title', 'cta_subtitle',
-            'cta_button_text', 'sponsor_title', 'pamphlet_embed_url', 'footer_about'
+            'cta_button_text', 'sponsor_title', 'pamphlet_embed_url', 'footer_about',
+            'treasurer_phone_number'
         ];
 
         foreach ($textFields as $field) {
@@ -436,7 +437,11 @@ class AdminSettingsController extends Controller
         AppSetting::set('wablas_api_token', trim($request->token));
         AppSetting::set('wablas_secret_key', trim($request->secret_key ?? ''));
 
-        return redirect()->back()->with('success', 'Kredensial API Wablas berhasil disimpan.');
+        if ($request->has('treasurer_phone_number')) {
+            AppSetting::set('treasurer_phone_number', trim($request->treasurer_phone_number));
+        }
+
+        return redirect()->back()->with('success', 'Kredensial API Wablas dan Nomor WhatsApp Bendahara berhasil disimpan.');
     }
 
     /**

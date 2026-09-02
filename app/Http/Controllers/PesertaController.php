@@ -221,10 +221,12 @@ class PesertaController extends Controller
             ]);
         }
 
-        // Trigger Auto WhatsApp Notification: Pengiriman Pendaftaran Lomba
+        // Trigger Auto WhatsApp Notification: Pengiriman Pendaftaran Lomba (Multi-Notifikasi: Peserta, PIC, dan Bendahara)
         try {
             $firstMember = $registration->members->first();
             $targetPhone = $registration->official_phone ?: ($user->phone ?: $firstMember?->phone);
+            
+            // 1. Ke Pendaftar / Peserta
             \App\Services\WablasNotificationService::sendAutoNotification('registration_submitted', [
                 'phone' => $targetPhone,
                 'nama_peserta' => $registration->display_name,
@@ -234,6 +236,12 @@ class PesertaController extends Controller
                 'kode_pendaftaran' => $registration->registration_code,
                 'link_login' => route('peserta.registration.detail', $registration->id),
             ]);
+
+            // 2. Ke PIC Cabang Lomba (Pendaftar Masuk & Siap Diverifikasi)
+            \App\Services\WablasNotificationService::notifyPicNewRegistration($registration);
+
+            // 3. Ke Bendahara Panitia (Pembayaran Masuk & Cek Mutasi Rekening)
+            \App\Services\WablasNotificationService::notifyTreasurerNewPayment($registration, $fee);
         } catch (\Throwable $e) {
             // Non-blocking
         }

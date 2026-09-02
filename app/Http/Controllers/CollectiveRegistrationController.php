@@ -526,6 +526,30 @@ class CollectiveRegistrationController extends Controller
 
             DB::commit();
 
+            // Trigger WhatsApp Notifications for Batch Registration
+            try {
+                // 1. Notify User/Pendaftar
+                $userPhone = $user->phone;
+                if (!empty($userPhone)) {
+                    \App\Services\WablasNotificationService::sendAutoNotification('registration_submitted', [
+                        'phone' => $userPhone,
+                        'nama_peserta' => $user->name,
+                        'nama_sekolah' => $user->institution_name ?? 'Sekolah/Madrasah',
+                        'cabang_lomba' => count($cleanBatch) . ' Peserta (Kolektif)',
+                        'kode_pendaftaran' => $invoice->invoice_number,
+                        'link_login' => route('peserta.invoices.show', $invoice->id),
+                    ]);
+                }
+
+                // 2. Notify Treasurer about New Collective Payment
+                $firstReg = Registration::with('competition')->where('invoice_id', $invoice->id)->first();
+                if ($firstReg) {
+                    \App\Services\WablasNotificationService::notifyTreasurerNewPayment($firstReg, $totalAmount);
+                }
+            } catch (\Throwable $e) {
+                // Non-blocking
+            }
+
             return redirect()->route('peserta.invoices.show', $invoice->id)
                 ->with('success', 'Pendaftaran kolektif dan bukti pembayaran berhasil dikirim dalam satu langkah! Panitia akan segera memverifikasi berkas Anda.');
 

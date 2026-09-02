@@ -616,38 +616,72 @@
             </button>
         </div>
 
-        <!-- 4 Trigger Otomatis Banner Notice -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <!-- 6 Trigger Otomatis Banner Notice (Peserta, PIC Lomba & Bendahara) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
             <div class="p-4 rounded-3xl bg-indigo-500/10 border border-indigo-500/30 text-white space-y-1.5 shadow-lg">
-                <div class="flex items-center gap-2 text-indigo-300 font-bold text-xs">
-                    <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
-                    <span>1. Pembuatan Akun</span>
+                <div class="flex items-center justify-between text-xs">
+                    <span class="font-bold text-indigo-300 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+                        <span>1. Pembuatan Akun</span>
+                    </span>
+                    <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-indigo-500/20 text-indigo-300">🎓 Peserta</span>
                 </div>
-                <p class="text-[11px] text-slate-300">Terkirim instan saat peserta mendaftar akun di portal (menyertakan NISN & password).</p>
+                <p class="text-[11px] text-slate-300">Terkirim instan saat peserta mendaftar akun di portal (menyertakan NISN & password login).</p>
             </div>
 
             <div class="p-4 rounded-3xl bg-cyan-500/10 border border-cyan-500/30 text-white space-y-1.5 shadow-lg">
-                <div class="flex items-center gap-2 text-cyan-300 font-bold text-xs">
-                    <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-                    <span>2. Kirim Pendaftaran</span>
+                <div class="flex items-center justify-between text-xs">
+                    <span class="font-bold text-cyan-300 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                        <span>2. Kirim Pendaftaran</span>
+                    </span>
+                    <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-cyan-500/20 text-cyan-300">🎓 Peserta</span>
                 </div>
-                <p class="text-[11px] text-slate-300">Terkirim saat formulir pendaftaran cabang lomba berhasil di-submit oleh peserta.</p>
+                <p class="text-[11px] text-slate-300">Terkirim sebagai tanda terima resmi saat formulir pendaftaran cabang lomba berhasil dikirim.</p>
             </div>
 
             <div class="p-4 rounded-3xl bg-emerald-500/10 border border-emerald-500/30 text-white space-y-1.5 shadow-lg">
-                <div class="flex items-center gap-2 text-emerald-300 font-bold text-xs">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span>3. Berkas Terverifikasi</span>
+                <div class="flex items-center justify-between text-xs">
+                    <span class="font-bold text-emerald-300 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span>3. Berkas Terverifikasi</span>
+                    </span>
+                    <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/20 text-emerald-300">🎓 Peserta</span>
                 </div>
-                <p class="text-[11px] text-slate-300">Terkirim saat admin / PIC memvalidasi berkas pendaftaran menjadi sah & terverifikasi.</p>
+                <p class="text-[11px] text-slate-300">Terkirim saat panitia / PIC memvalidasi berkas pendaftaran (menyertakan Nomor Peserta resmi).</p>
             </div>
 
             <div class="p-4 rounded-3xl bg-amber-500/10 border border-amber-500/30 text-white space-y-1.5 shadow-lg">
-                <div class="flex items-center gap-2 text-amber-300 font-bold text-xs">
-                    <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-                    <span>4. Hasil Undian Spin</span>
+                <div class="flex items-center justify-between text-xs">
+                    <span class="font-bold text-amber-300 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                        <span>4. Undian Spin Wheel</span>
+                    </span>
+                    <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/20 text-amber-300">🎓 Peserta</span>
                 </div>
-                <p class="text-[11px] text-slate-300">Terkirim saat nomor undian / giliran tampil peserta berhasil diputar & disimpan.</p>
+                <p class="text-[11px] text-slate-300">Terkirim saat nomor giliran tampil peserta berhasil diundi transparan via Spin Wheel.</p>
+            </div>
+
+            <div class="p-4 rounded-3xl bg-pink-500/10 border border-pink-500/30 text-white space-y-1.5 shadow-lg">
+                <div class="flex items-center justify-between text-xs">
+                    <span class="font-bold text-pink-300 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-pink-400 animate-pulse"></span>
+                        <span>5. Alert PIC: Berkas Masuk</span>
+                    </span>
+                    <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-pink-500/20 text-pink-300">🏸 PIC Lomba</span>
+                </div>
+                <p class="text-[11px] text-slate-300">Terkirim otomatis ke HP PIC Lomba agar segera login & memeriksa berkas pendaftar baru.</p>
+            </div>
+
+            <div class="p-4 rounded-3xl bg-teal-500/10 border border-teal-500/30 text-white space-y-1.5 shadow-lg">
+                <div class="flex items-center justify-between text-xs">
+                    <span class="font-bold text-teal-300 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span>
+                        <span>6. Alert Bendahara: Cek Mutasi</span>
+                    </span>
+                    <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-teal-500/20 text-teal-300">💰 Bendahara</span>
+                </div>
+                <p class="text-[11px] text-slate-300">Terkirim otomatis ke HP Bendahara saat ada pendaftar baru agar dicek mutasi rekening bank.</p>
             </div>
         </div>
 
@@ -662,9 +696,17 @@
                             <div>
                                 <div class="flex items-center gap-2 flex-wrap">
                                     <h4 class="text-sm sm:text-base font-black text-white font-display">{{ $template->name }}</h4>
-                                    @if($template->is_system)
+                                    @if($template->code === 'pic_new_registration')
+                                        <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-pink-500/20 text-pink-300 border border-pink-500/30">
+                                            🏸 Internal PIC Lomba
+                                        </span>
+                                    @elseif($template->code === 'treasurer_new_payment')
+                                        <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-teal-500/20 text-teal-300 border border-teal-500/30">
+                                            💰 Internal Bendahara
+                                        </span>
+                                    @elseif($template->is_system)
                                         <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                                            Sistem Auto-Trigger
+                                            🎓 Peserta / Pendaftar
                                         </span>
                                     @else
                                         <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
@@ -833,14 +875,24 @@
                                 </button>
                             </div>
                         </div>
-                        <input :type="showSecret ? 'text' : 'password'" name="secret_key" x-model="secretKey" placeholder="Biarkan kosong jika paket Wablas tidak menggunakan secret key..." class="block w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/[0.1] text-xs sm:text-sm font-mono text-white placeholder-slate-500 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400/30 tracking-wider">
+                    <!-- 4. Treasurer Phone Box -->
+                    <div class="p-4 rounded-2xl bg-[#0C111D] border border-white/[0.08] space-y-2 hover:border-teal-400/40 transition">
+                        <div class="flex items-center justify-between">
+                            <label class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                                <span class="text-teal-400 text-sm">💰</span>
+                                <span>Nomor WhatsApp Bendahara Panitia (Alert Pembayaran Masuk)</span>
+                            </label>
+                            <span class="text-[10px] font-mono text-teal-300 font-bold px-2 py-0.5 rounded-md bg-teal-500/15 border border-teal-500/25">Alert Keuangan</span>
+                        </div>
+                        <input type="text" name="treasurer_phone_number" value="{{ \App\Models\AppSetting::get('treasurer_phone_number', '') }}" placeholder="Contoh: 081234567890" class="block w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/[0.1] text-xs sm:text-sm font-mono text-white placeholder-slate-500 outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 tracking-wider">
+                        <p class="text-[10px] text-slate-400">Setiap ada pendaftar baru yang mengirim formulir pendaftaran & tagihan biaya, sistem otomatis mengirim alert WA ke nomor Bendahara ini untuk memeriksa mutasi bank.</p>
                     </div>
 
                     <!-- Button: Save Credentials -->
                     <div class="pt-2">
                         <button type="submit" class="w-full py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm transition shadow-xl shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer">
                             <i data-lucide="save" class="w-4 h-4"></i>
-                            <span>Simpan Kredensial Wablas</span>
+                            <span>Simpan Pengaturan Gateway & Nomor Bendahara</span>
                         </button>
                     </div>
                 </form>
