@@ -713,95 +713,183 @@
             @mouseleave="isHovered = false"
             x-init="init()">
             
-            <div class="glass-card p-3.5 sm:p-6 lg:p-8 rounded-3xl border border-white/[0.08] shadow-2xl relative overflow-hidden space-y-4 sm:space-y-5">
+            <div class="glass-card p-6 sm:p-8 lg:p-10 rounded-3xl border border-white/[0.08] shadow-2xl relative overflow-hidden">
                 
-                <!-- Section Header -->
-                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-white/[0.08] pb-4">
-                    <div class="space-y-1.5">
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-500/15 border border-pink-500/30 text-pink-300 text-[11px] font-bold tracking-wider uppercase shadow-xs">
-                            <i data-lucide="image" class="w-3.5 h-3.5 text-pink-400"></i>
-                            <span>Pamflet & Brosur Resmi</span>
-                        </span>
-                        <h2 class="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight font-display">
-                            Pamflet Informasi {{ $appSettings['app_name'] ?? 'TALENTA' }} {{ $appSettings['event_year'] ?? '2026' }}
-                        </h2>
-                        <p class="text-xs text-slate-400 max-w-2xl leading-relaxed">
-                            Simak informasi lengkap petunjuk dan pamflet resmi penyelenggaraan acara langsung di bawah ini.
-                        </p>
-                    </div>
+                <!-- Ambient Subtle Glow Decoration behind Card -->
+                <div class="absolute -top-24 -right-24 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute -bottom-24 -left-24 w-96 h-96 bg-[#7A5AF8]/10 rounded-full blur-3xl pointer-events-none"></div>
 
-                    @if($totalPamphlets > 1)
-                        <!-- Carousel Counter Indicator -->
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-mono font-bold px-3 py-1 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/30">
-                                Pamflet <span x-text="active + 1"></span> dari <span x-text="total"></span>
-                            </span>
-                        </div>
-                    @endif
-                </div>
-
-                <!-- Showcase / Carousel Slider Container (Snug fit, no excess black gaps) -->
-                <div class="relative w-full flex items-center justify-center bg-slate-950/40 rounded-2xl border border-white/[0.08] p-1.5 sm:p-4 overflow-hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center relative z-10">
                     
-                    @foreach($pamphletList as $idx => $item)
-                        <div x-show="active === {{ $idx }}" 
-                            x-transition:enter="transition ease-out duration-500 transform"
-                            x-transition:enter-start="opacity-0 scale-95"
-                            x-transition:enter-end="opacity-100 scale-100"
-                            x-transition:leave="transition ease-in duration-300 transform absolute"
-                            x-transition:leave-start="opacity-100 scale-100"
-                            x-transition:leave-end="opacity-0 scale-95"
-                            class="w-full flex items-center justify-center">
+                    <!-- LEFT COLUMN (6/12): Narrative & Action Details -->
+                    <div class="lg:col-span-6 space-y-5 sm:space-y-6 text-center lg:text-left">
+                        
+                        <!-- Badge & Counter -->
+                        <div class="flex items-center justify-center lg:justify-start gap-2.5 flex-wrap">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-500/15 border border-pink-500/30 text-pink-300 text-[11px] font-bold tracking-wider uppercase shadow-xs">
+                                <i data-lucide="image" class="w-3.5 h-3.5 text-pink-400"></i>
+                                <span>Pamflet & Brosur Resmi</span>
+                            </span>
 
-                            @if($item['type'] === 'image')
-                                <div class="relative group cursor-zoom-in max-w-xl mx-auto flex flex-col items-center" @click="openZoom('{{ $item['url'] }}')">
-                                    <img src="{{ $item['url'] }}" 
-                                        alt="Pamflet {{ $idx + 1 }}" 
-                                        class="max-h-[60vh] sm:max-h-[75vh] w-auto max-w-full rounded-2xl shadow-2xl object-contain border border-white/[0.1] transition-transform duration-300 group-hover:scale-[1.01]">
-                                    
-                                    <!-- Zoom Hover Pill -->
-                                    <div class="absolute bottom-3 px-3 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/20 text-white text-[11px] font-bold flex items-center gap-1.5 opacity-90 group-hover:opacity-100 transition shadow-lg pointer-events-none">
-                                        <i data-lucide="zoom-in" class="w-3.5 h-3.5 text-pink-400"></i>
-                                        <span>Ketuk untuk Perbesar</span>
-                                    </div>
+                            @if($totalPamphlets > 1)
+                                <span class="text-xs font-mono font-bold px-3 py-1 rounded-full bg-white/[0.06] text-slate-300 border border-white/[0.1]">
+                                    Pamflet <span class="text-pink-400" x-text="active + 1"></span> dari <span x-text="total"></span>
+                                </span>
+                            @endif
+                        </div>
+
+                        <!-- Main Heading -->
+                        <div class="space-y-2">
+                            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight font-display leading-tight">
+                                Pamflet Informasi {{ $appSettings['app_name'] ?? 'TALENTA' }} {{ $appSettings['event_year'] ?? '2026' }}
+                            </h2>
+                            <p class="text-xs sm:text-sm text-slate-300 max-w-xl mx-auto lg:mx-0 leading-relaxed font-normal">
+                                Simak seluruh petunjuk teknis, syarat & ketentuan lomba, agenda pelaksanaan, serta informasi resmi penyelenggaraan {{ $appSettings['app_name'] ?? 'TALENTA' }} {{ $appSettings['institution_name'] ?? 'MTsN 1 Blitar' }}.
+                            </p>
+                        </div>
+
+                        <!-- 3 Feature Highlight Mini Cards -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                            <div class="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] text-left space-y-1">
+                                <div class="w-7 h-7 rounded-lg bg-pink-500/20 text-pink-400 flex items-center justify-center font-bold">
+                                    <i data-lucide="file-check" class="w-3.5 h-3.5"></i>
                                 </div>
-                            @else
-                                <!-- Canva Embed Container with Responsive Aspect Ratio -->
-                                <div class="w-full max-w-xl mx-auto aspect-[1/1.414] max-h-[75vh] rounded-2xl overflow-hidden bg-[#0C111D] border border-white/[0.1] shadow-2xl relative">
-                                    <iframe loading="lazy" 
-                                        src="{{ $item['url'] }}" 
-                                        class="w-full h-full border-0 rounded-2xl" 
-                                        allowfullscreen="allowfullscreen" 
-                                        allow="fullscreen">
-                                    </iframe>
+                                <h4 class="text-xs font-bold text-white">Petunjuk Teknis</h4>
+                                <p class="text-[10px] text-slate-400 leading-snug">Pedoman lengkap tiap cabang lomba.</p>
+                            </div>
+
+                            <div class="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] text-left space-y-1">
+                                <div class="w-7 h-7 rounded-lg bg-[#7A5AF8]/20 text-[#A594FD] flex items-center justify-center font-bold">
+                                    <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+                                </div>
+                                <h4 class="text-xs font-bold text-white">Lokasi Venue</h4>
+                                <p class="text-[10px] text-slate-400 leading-snug">Kampus Terpadu MTsN 1 Blitar.</p>
+                            </div>
+
+                            <div class="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] text-left space-y-1">
+                                <div class="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
+                                    <i data-lucide="trophy" class="w-3.5 h-3.5"></i>
+                                </div>
+                                <h4 class="text-xs font-bold text-white">Hadiah & Juara</h4>
+                                <p class="text-[10px] text-slate-400 leading-snug">Trofi, piagam, & uang pembinaan.</p>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons & Carousel Switcher -->
+                        <div class="space-y-4 pt-1">
+                            
+                            @foreach($pamphletList as $idx => $item)
+                                <div x-show="active === {{ $idx }}" class="flex flex-wrap items-center justify-center lg:justify-start gap-3">
+                                    @if($item['type'] === 'image')
+                                        <button type="button" 
+                                            @click="openZoom('{{ $item['url'] }}')" 
+                                            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-400 hover:to-rose-500 text-white font-bold text-xs shadow-lg shadow-pink-500/30 hover:scale-[1.02] transition cursor-pointer">
+                                            <i data-lucide="zoom-in" class="w-4 h-4"></i>
+                                            <span>Perbesar Layar Penuh</span>
+                                        </button>
+
+                                        <a href="{{ $item['url'] }}" 
+                                            download="Pamflet_TALENTA_{{ $idx + 1 }}.jpg" 
+                                            target="_blank"
+                                            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 hover:text-white font-bold text-xs border border-white/[0.1] transition cursor-pointer">
+                                            <i data-lucide="download" class="w-4 h-4 text-emerald-400"></i>
+                                            <span>Unduh Gambar</span>
+                                        </a>
+                                    @else
+                                        <a href="{{ $item['url'] }}" 
+                                            target="_blank" 
+                                            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-400 hover:to-rose-500 text-white font-bold text-xs shadow-lg shadow-pink-500/30 hover:scale-[1.02] transition cursor-pointer">
+                                            <i data-lucide="external-link" class="w-4 h-4"></i>
+                                            <span>Buka Dokumen Canva</span>
+                                        </a>
+                                    @endif
+                                </div>
+                            @endforeach
+
+                            <!-- Multi-Pamphlet Thumbnail Strip (if more than 1 pamphlet) -->
+                            @if($totalPamphlets > 1)
+                                <div class="pt-2 border-t border-white/[0.08] flex items-center justify-center lg:justify-start gap-2.5">
+                                    <span class="text-[11px] font-bold text-slate-400 mr-1">Pilih Pamflet:</span>
+                                    @foreach($pamphletList as $idx => $item)
+                                        <button type="button" 
+                                            @click="active = {{ $idx }}" 
+                                            :class="active === {{ $idx }} ? 'border-pink-500 ring-2 ring-pink-500/50 scale-105' : 'border-white/[0.1] opacity-60 hover:opacity-100'"
+                                            class="w-12 h-16 rounded-xl overflow-hidden border bg-slate-900 transition duration-200 cursor-pointer shadow-md shrink-0">
+                                            @if($item['type'] === 'image')
+                                                <img src="{{ $item['url'] }}" alt="Thumb {{ $idx + 1 }}" class="w-full h-full object-cover">
+                                            @else
+                                                <div class="w-full h-full flex items-center justify-center text-[10px] font-black text-pink-300 bg-pink-500/10">
+                                                    #{{ $idx + 1 }}
+                                                </div>
+                                            @endif
+                                        </button>
+                                    @endforeach
                                 </div>
                             @endif
 
                         </div>
-                    @endforeach
 
-                    @if($totalPamphlets > 1)
-                        <!-- Prev / Next Floating Navigation Buttons -->
-                        <button type="button" @click="prev()" class="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-black/60 hover:bg-pink-600 text-white border border-white/20 flex items-center justify-center transition shadow-xl hover:scale-110 active:scale-95 cursor-pointer z-20 backdrop-blur-md" title="Pamflet Sebelumnya">
-                            <i data-lucide="chevron-left" class="w-4 h-4 sm:w-6 sm:h-6"></i>
-                        </button>
+                    </div>
+
+                    <!-- RIGHT COLUMN (6/12): Showcase Poster Container (Snug, Tall & Sharp) -->
+                    <div class="lg:col-span-6 flex items-center justify-center relative">
                         
-                        <button type="button" @click="next()" class="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-black/60 hover:bg-pink-600 text-white border border-white/20 flex items-center justify-center transition shadow-xl hover:scale-110 active:scale-95 cursor-pointer z-20 backdrop-blur-md" title="Pamflet Selanjutnya">
-                            <i data-lucide="chevron-right" class="w-4 h-4 sm:w-6 sm:h-6"></i>
-                        </button>
+                        <!-- Ambient Poster Glow -->
+                        <div class="absolute inset-0 bg-gradient-to-tr from-pink-500/20 via-[#7A5AF8]/20 to-[#4E6EFF]/20 rounded-3xl blur-2xl pointer-events-none"></div>
 
-                        <!-- Bottom Dot Indicators -->
-                        <div class="absolute bottom-2.5 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/15 z-20">
+                        <div class="relative w-full flex items-center justify-center">
+                            
                             @foreach($pamphletList as $idx => $item)
-                                <button type="button" 
-                                    @click="active = {{ $idx }}" 
-                                    :class="active === {{ $idx }} ? 'w-5 sm:w-6 bg-pink-500' : 'w-1.5 sm:w-2 bg-white/40 hover:bg-white/70'"
-                                    class="h-1.5 sm:h-2 rounded-full transition-all duration-300 cursor-pointer"
-                                    title="Pindah ke Pamflet {{ $idx + 1 }}">
-                                </button>
+                                <div x-show="active === {{ $idx }}" 
+                                    x-transition:enter="transition ease-out duration-500 transform"
+                                    x-transition:enter-start="opacity-0 scale-95"
+                                    x-transition:enter-end="opacity-100 scale-100"
+                                    x-transition:leave="transition ease-in duration-300 transform absolute"
+                                    x-transition:leave-start="opacity-100 scale-100"
+                                    x-transition:leave-end="opacity-0 scale-95"
+                                    class="w-full flex items-center justify-center">
+
+                                    @if($item['type'] === 'image')
+                                        <div class="relative group cursor-zoom-in flex flex-col items-center justify-center" @click="openZoom('{{ $item['url'] }}')">
+                                            <img src="{{ $item['url'] }}" 
+                                                alt="Pamflet {{ $idx + 1 }}" 
+                                                class="w-auto max-w-full max-h-[520px] sm:max-h-[620px] lg:max-h-[680px] object-contain rounded-2xl shadow-2xl border-2 border-white/[0.12] transition-transform duration-500 group-hover:scale-[1.02]">
+                                            
+                                            <!-- Zoom Pill on hover -->
+                                            <div class="absolute bottom-4 px-3.5 py-1.5 rounded-full bg-black/80 backdrop-blur-md border border-white/20 text-white text-xs font-bold flex items-center gap-1.5 opacity-90 group-hover:opacity-100 transition shadow-xl pointer-events-none">
+                                                <i data-lucide="zoom-in" class="w-3.5 h-3.5 text-pink-400"></i>
+                                                <span>Klik untuk Perbesar</span>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <!-- Canva Responsive Embed -->
+                                        <div class="w-full max-w-md aspect-[1/1.414] max-h-[620px] rounded-2xl overflow-hidden bg-[#0C111D] border-2 border-white/[0.12] shadow-2xl relative">
+                                            <iframe loading="lazy" 
+                                                src="{{ $item['url'] }}" 
+                                                class="w-full h-full border-0 rounded-2xl" 
+                                                allowfullscreen="allowfullscreen" 
+                                                allow="fullscreen">
+                                            </iframe>
+                                        </div>
+                                    @endif
+
+                                </div>
                             @endforeach
+
+                            @if($totalPamphlets > 1)
+                                <!-- Floating Prev/Next Arrow Controls -->
+                                <button type="button" @click="prev()" class="absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-black/70 hover:bg-pink-600 text-white border border-white/20 flex items-center justify-center transition shadow-xl hover:scale-110 active:scale-95 cursor-pointer z-20 backdrop-blur-md" title="Pamflet Sebelumnya">
+                                    <i data-lucide="chevron-left" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                                </button>
+                                
+                                <button type="button" @click="next()" class="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-black/70 hover:bg-pink-600 text-white border border-white/20 flex items-center justify-center transition shadow-xl hover:scale-110 active:scale-95 cursor-pointer z-20 backdrop-blur-md" title="Pamflet Selanjutnya">
+                                    <i data-lucide="chevron-right" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                                </button>
+                            @endif
+
                         </div>
-                    @endif
+
+                    </div>
 
                 </div>
 
