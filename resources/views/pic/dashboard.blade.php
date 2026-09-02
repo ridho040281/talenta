@@ -57,6 +57,18 @@
                 { value: 'tmj_pa_b', label: '👦 Putra (PA) - Kat B (Kelas 4–6 SD/MI)' },
                 { value: 'tmj_pi_b', label: '👧 Putri (PI) - Kat B (Kelas 4–6 SD/MI)' },
             ];
+        } else if (this.currentCompCode === 'MTQ') {
+            return [
+                { value: 'all', label: '📖 Semua Kategori MTQ' },
+                { value: 'individu_pa', label: '👦 MTQ Putra (PA)' },
+                { value: 'individu_pi', label: '👧 MTQ Putri (PI)' },
+            ];
+        } else if (this.currentCompCode === 'POP') {
+            return [
+                { value: 'all', label: '🎤 Semua Kategori Pop Singer' },
+                { value: 'individu_pa', label: '👦 Pop Singer Putra (PA)' },
+                { value: 'individu_pi', label: '👧 Pop Singer Putri (PI)' },
+            ];
         } else if (this.currentCompCode === 'ALL') {
             return [
                 { value: 'all', label: 'Semua Sektor / Kategori Lomba' },
@@ -65,14 +77,11 @@
                 { value: 'ganda_all', label: '👥 Bulu Tangkis: Ganda (Semua)' },
                 { value: 'kat_a', label: '🏓 Tenis Meja: Kategori A (Kelas 1–3)' },
                 { value: 'kat_b', label: '🏓 Tenis Meja: Kategori B (Kelas 4–6)' },
-                { value: 'individu_pa', label: '👦 Cabang Lain: Putra (PA)' },
-                { value: 'individu_pi', label: '👧 Cabang Lain: Putri (PI)' },
             ];
         } else {
+            // Cabang Terbuka / Tanpa Pembagian Sektor PA-PI di Master (Olimpiade MIPA, Catur, Kaligrafi, Pidato, dll)
             return [
-                { value: 'all', label: 'Semua Peserta ' + this.currentCompName },
-                { value: 'individu_pa', label: '👦 Kelompok Putra (PA)' },
-                { value: 'individu_pi', label: '👧 Kelompok Putri (PI)' },
+                { value: 'all', label: 'Semua Peserta ' + this.currentCompName + ' (Umum / Satu Kategori)' },
             ];
         }
     },
@@ -262,8 +271,8 @@
 
             <!-- Dropdown 2: Sektor / Kategori Tanding (Dinamis Sesuai Cabang Lomba) -->
             <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1" x-text="currentCompCode === 'BLT' ? 'Sektor / Kelas Bulu Tangkis:' : (currentCompCode === 'TMJ' ? 'Kategori Tenis Meja:' : 'Kategori / Sektor:')"></label>
-                <select x-model="selectedSector" class="w-full px-3 py-2.5 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8] cursor-pointer">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1" x-text="currentCompCode === 'BLT' ? 'Sektor / Kelas Bulu Tangkis:' : (currentCompCode === 'TMJ' ? 'Kategori Tenis Meja:' : (['MTQ', 'POP'].includes(currentCompCode) ? 'Kategori Sektor (PA/PI):' : 'Kategori Lomba:'))"></label>
+                <select x-model="selectedSector" :disabled="sectorOptions.length <= 1" :class="sectorOptions.length <= 1 ? 'opacity-70 bg-[#0C111D]/60' : 'cursor-pointer'" class="w-full px-3 py-2.5 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8]">
                     <template x-for="opt in sectorOptions" :key="opt.value">
                         <option :value="opt.value" x-text="opt.label"></option>
                     </template>
