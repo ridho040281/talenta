@@ -743,8 +743,8 @@
 
                         <div class="flex items-center gap-1.5">
                             <!-- Edit Button -->
-                            <button type="button" @click="openEditTemplateById({{ $template->id }})" class="p-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 hover:text-white border border-white/[0.08] transition cursor-pointer" title="Edit Isi Template Ini">
-                                <i data-lucide="edit" class="w-4 h-4"></i>
+                            <button type="button" @click="editTemplate({{ $template->id }}, {{ json_encode($template->name) }}, {{ json_encode($template->description) }}, {{ json_encode($template->message) }}, {{ $template->is_active ? 'true' : 'false' }})" class="p-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 hover:text-white border border-white/[0.08] transition cursor-pointer" title="Edit Isi Template Ini">
+                                <i data-lucide="edit" class="w-4 h-4 pointer-events-none"></i>
                             </button>
 
                             <!-- Delete Button (Only for Custom Templates) -->
@@ -1105,8 +1105,8 @@
     </div>
 
     <!-- MODAL 3: EDIT TEMPLATE -->
-    <div x-show="showEditTemplateModal" x-cloak x-transition.opacity class="fixed inset-0 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" style="display: none; z-index: 99999;">
-        <div class="ai-card w-full max-w-lg p-6 sm:p-7 rounded-3xl border border-white/[0.12] text-white shadow-2xl space-y-4">
+    <div x-show="showEditTemplateModal" x-cloak class="fixed inset-0 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" style="display: none; z-index: 99999;" @click.self="showEditTemplateModal = false">
+        <div class="relative z-10 ai-card w-full max-w-lg p-6 sm:p-7 rounded-3xl border border-white/[0.12] text-white shadow-2xl space-y-4">
             <div class="flex items-center justify-between border-b border-white/[0.08] pb-3">
                 <div class="flex items-center gap-2">
                     <span class="p-1.5 rounded-xl bg-[#7A5AF8]/20 text-[#A594FD]">
@@ -1230,14 +1230,13 @@
                 });
             },
 
-            openEditTemplateModal(tmpl) {
-                if (!tmpl) return;
+            editTemplate(id, name, description, message, isActive) {
                 this.editingTemplate = {
-                    id: tmpl.id,
-                    name: tmpl.name || '',
-                    description: tmpl.description || '',
-                    message: tmpl.message || '',
-                    is_active: Boolean(tmpl.is_active)
+                    id: id,
+                    name: name || '',
+                    description: description || '',
+                    message: message || '',
+                    is_active: Boolean(isActive)
                 };
                 this.showEditTemplateModal = true;
                 this.$nextTick(() => {
@@ -1245,8 +1244,13 @@
                 });
             },
 
+            openEditTemplateModal(tmpl) {
+                if (!tmpl) return;
+                this.editTemplate(tmpl.id, tmpl.name, tmpl.description, tmpl.message, tmpl.is_active);
+            },
+
             openEditTemplateById(id) {
-                const tmpl = this.templatesList.find(t => t.id == id);
+                const tmpl = (this.templatesList || []).find(t => t.id == id);
                 if (tmpl) {
                     this.openEditTemplateModal(tmpl);
                 }
