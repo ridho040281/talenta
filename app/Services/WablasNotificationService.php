@@ -57,6 +57,7 @@ class WablasNotificationService
                 '{cabang_lomba}' => $data['cabang_lomba'] ?? 'TALENTA 2026',
                 '{no_peserta}' => $data['no_peserta'] ?? ($data['kode_pendaftaran'] ?? '-'),
                 '{kode_pendaftaran}' => $data['kode_pendaftaran'] ?? ($data['no_peserta'] ?? '-'),
+                '{nomor_undian}' => $data['nomor_undian'] ?? ($data['draw_number'] ?? '-'),
                 '{link_scoreboard}' => $data['link_scoreboard'] ?? url('/'),
                 '{link_login}' => $data['link_login'] ?? route('login'),
                 '{no_wa}' => $data['phone'] ?? $cleanPhone,

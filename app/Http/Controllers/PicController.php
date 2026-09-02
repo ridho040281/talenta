@@ -670,6 +670,29 @@ class PicController extends Controller
             ]
         );
 
+        // Trigger Auto WhatsApp Notification: Hasil Undian Spin Wheel / Hacker Draw
+        try {
+            $registration->loadMissing(['members', 'user', 'competition']);
+            $firstMember = $registration->members->first();
+            $targetPhone = $registration->official_phone ?: ($registration->user?->phone ?: $firstMember?->phone);
+
+            \App\Services\WablasNotificationService::sendAutoNotification('draw_result_picked', [
+                'phone' => $targetPhone,
+                'nama_peserta' => $registration->display_name,
+                'nisn' => $firstMember?->nisn ?? ($registration->user?->nisn ?? '-'),
+                'nama_sekolah' => $registration->institution_name,
+                'cabang_lomba' => $competition->name,
+                'no_peserta' => $registration->participant_number ?: $registration->registration_code,
+                'kode_pendaftaran' => $registration->registration_code,
+                'nomor_undian' => $validated['draw_number'],
+                'draw_number' => $validated['draw_number'],
+                'link_scoreboard' => url('/'),
+                'link_login' => route('login'),
+            ]);
+        } catch (\Throwable $e) {
+            // Non-blocking
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Nomor undian ' . $validated['draw_number'] . ' berhasil disimpan untuk ' . $registration->display_name,

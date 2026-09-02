@@ -361,6 +361,9 @@
                             <button type="button" @click="insertTag('{no_peserta}')" class="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-amber-300 border border-white/[0.08] text-xs font-mono font-bold transition cursor-pointer">
                                 {no_peserta}
                             </button>
+                            <button type="button" @click="insertTag('{nomor_undian}')" class="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-amber-400 border border-white/[0.08] text-xs font-mono font-bold transition cursor-pointer">
+                                {nomor_undian}
+                            </button>
                             <button type="button" @click="insertTag('{kode_pendaftaran}')" class="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-cyan-300 border border-white/[0.08] text-xs font-mono font-bold transition cursor-pointer">
                                 {kode_pendaftaran}
                             </button>
@@ -613,12 +616,12 @@
             </button>
         </div>
 
-        <!-- 3 Trigger Otomatis Banner Notice -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- 4 Trigger Otomatis Banner Notice -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
             <div class="p-4 rounded-3xl bg-indigo-500/10 border border-indigo-500/30 text-white space-y-1.5 shadow-lg">
                 <div class="flex items-center gap-2 text-indigo-300 font-bold text-xs">
                     <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
-                    <span>1. Auto-Trigger: Pembuatan Akun</span>
+                    <span>1. Pembuatan Akun</span>
                 </div>
                 <p class="text-[11px] text-slate-300">Terkirim instan saat peserta mendaftar akun di portal (menyertakan NISN & password).</p>
             </div>
@@ -626,7 +629,7 @@
             <div class="p-4 rounded-3xl bg-cyan-500/10 border border-cyan-500/30 text-white space-y-1.5 shadow-lg">
                 <div class="flex items-center gap-2 text-cyan-300 font-bold text-xs">
                     <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-                    <span>2. Auto-Trigger: Pengiriman Pendaftaran</span>
+                    <span>2. Kirim Pendaftaran</span>
                 </div>
                 <p class="text-[11px] text-slate-300">Terkirim saat formulir pendaftaran cabang lomba berhasil di-submit oleh peserta.</p>
             </div>
@@ -634,9 +637,17 @@
             <div class="p-4 rounded-3xl bg-emerald-500/10 border border-emerald-500/30 text-white space-y-1.5 shadow-lg">
                 <div class="flex items-center gap-2 text-emerald-300 font-bold text-xs">
                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span>3. Auto-Trigger: Pendaftaran Terverifikasi</span>
+                    <span>3. Berkas Terverifikasi</span>
                 </div>
                 <p class="text-[11px] text-slate-300">Terkirim saat admin / PIC memvalidasi berkas pendaftaran menjadi sah & terverifikasi.</p>
+            </div>
+
+            <div class="p-4 rounded-3xl bg-amber-500/10 border border-amber-500/30 text-white space-y-1.5 shadow-lg">
+                <div class="flex items-center gap-2 text-amber-300 font-bold text-xs">
+                    <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                    <span>4. Hasil Undian Spin</span>
+                </div>
+                <p class="text-[11px] text-slate-300">Terkirim saat nomor undian / giliran tampil peserta berhasil diputar & disimpan.</p>
             </div>
         </div>
 

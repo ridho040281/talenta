@@ -54,8 +54,16 @@ class WhatsappTemplate extends Model
                 'is_system' => true,
             ],
             [
+                'code' => 'draw_result_picked',
+                'name' => '4. Notifikasi Hasil Undian & Nomor Tampil (Spin Wheel)',
+                'description' => 'Terkirim otomatis ke WhatsApp peserta saat hasil putaran undian spin wheel / hacker draw berhasil disimpan.',
+                'message' => "Assalamu'alaikum Wr. Wb.\nYth. Official & Peserta {nama_peserta} ({nama_sekolah}),\n\nHASIL PENGUNDIAN NOMOR URUT TAMPIL TALENTA 2026\n\nBerdasarkan hasil undian resmi panitia pada cabang *{cabang_lomba}*, nomor urut giliran tampil Anda adalah:\n\n🎲 *NOMOR URUT TAMPIL: #{nomor_undian}*\n\nDetail Peserta:\n• Nama: {nama_peserta}\n• Asal Sekolah: {nama_sekolah}\n• No. Peserta: {no_peserta}\n• Cabang Lomba: {cabang_lomba}\n\nPantau jadwal urutan tampil lengkap dan live scoreboard melalui:\n{link_scoreboard}\n\nHarap hadir tepat waktu sesuai dengan nomor urut tampil Anda.\nPanitia TALENTA 2026 MTsN 1 Blitar",
+                'is_active' => true,
+                'is_system' => true,
+            ],
+            [
                 'code' => 'tm_spin_invitation',
-                'name' => '4. Pengumuman Jadwal Technical Meeting & Undian',
+                'name' => '5. Pengumuman Jadwal Technical Meeting & Undian',
                 'description' => 'Template broadcast undangan Technical Meeting dan pengundian nomor urut tampil lomba.',
                 'message' => "Pemberitahuan Jadwal Technical Meeting & Spin Undian TALENTA 2026\n\nKepada Yth. Delegasi {nama_sekolah} ({nama_peserta}),\n\nTechnical meeting dan penentuan nomor urut tampil cabang {cabang_lomba} akan dilaksanakan secara live transparan.\n\nNomor Peserta: {no_peserta}\nLink Scoreboard & Undian: {link_scoreboard}\n\nMohon hadir tepat waktu.\nPanitia TALENTA MTsN 1 Blitar",
                 'is_active' => true,
@@ -64,7 +72,7 @@ class WhatsappTemplate extends Model
         ];
 
         foreach ($defaults as $tmpl) {
-            static::firstOrCreate(
+            static::updateOrCreate(
                 ['code' => $tmpl['code']],
                 $tmpl
             );
