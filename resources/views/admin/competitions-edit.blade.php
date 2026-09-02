@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
@@ -192,10 +192,233 @@
                     @endif
 
                     @if($isMultiTier)
-                    <div class="p-4 rounded-xl text-xs" style="background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2);">
-                        <p class="font-bold text-amber-300">Cabang lomba multi-tier ({{ $competition->code }})</p>
-                        <p class="mt-0.5 text-amber-400/60">Pengaturan biaya, kuota, PIC, dan status per kategori dikelola melalui halaman daftar cabang lomba.</p>
-                    </div>
+                        @php $mode = request('mode', 'all'); @endphp
+
+                        {{-- MTQ & POP SINGER --}}
+                        @if(in_array($competition->code, ['MTQ', 'POP']))
+                            @php
+                                $prefix = strtolower($competition->code);
+                                $fee_pa = old($prefix . '_fee_pa', \App\Models\AppSetting::get($prefix . '_fee_pa', $competition->registration_fee));
+                                $quota_pa = old($prefix . '_quota_pa', \App\Models\AppSetting::get($prefix . '_quota_pa', ceil($competition->quota / 2)));
+                                $pic_pa = old($prefix . '_pic_pa', \App\Models\AppSetting::get($prefix . '_pic_pa', $competition->pic_id));
+                                $status_pa = old($prefix . '_status_pa', \App\Models\AppSetting::get($prefix . '_status_pa', $competition->status ?? 'buka'));
+
+                                $fee_pi = old($prefix . '_fee_pi', \App\Models\AppSetting::get($prefix . '_fee_pi', $competition->registration_fee));
+                                $quota_pi = old($prefix . '_quota_pi', \App\Models\AppSetting::get($prefix . '_quota_pi', floor($competition->quota / 2)));
+                                $pic_pi = old($prefix . '_pic_pi', \App\Models\AppSetting::get($prefix . '_pic_pi', $competition->pic_id));
+                                $status_pi = old($prefix . '_status_pi', \App\Models\AppSetting::get($prefix . '_status_pi', $competition->status ?? 'buka'));
+                            @endphp
+
+                            <div class="space-y-4 pt-1">
+                                <!-- SEKTOR PUTRA (PA) -->
+                                <div class="p-4 sm:p-5 rounded-2xl space-y-3.5 transition {{ $mode === 'pa' ? 'ring-2 ring-emerald-400' : '' }}" style="background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.22);">
+                                    <div class="flex items-center justify-between pb-2" style="border-bottom: 1px solid rgba(16,185,129,0.18);">
+                                        <span class="text-xs font-black text-emerald-300 flex items-center gap-2">
+                                            <i data-lucide="user" class="w-4 h-4 text-emerald-400"></i>
+                                            <span>PENGATURAN {{ strtoupper($competition->name) }} — INDIVIDU PUTRA (PA)</span>
+                                        </span>
+                                        <span class="text-[10px] font-bold text-emerald-300 px-2 py-0.5 rounded font-mono" style="background: rgba(16,185,129,0.18);">Individu • PA</span>
+                                    </div>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                        <div>
+                                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Biaya Putra (Rp)</label>
+                                            <input name="{{ $prefix }}_fee_pa" type="number" step="1000" min="0" value="{{ $fee_pa }}" class="input-admin block w-full px-3 py-2 rounded-xl text-xs font-mono font-bold text-emerald-400">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Kuota Putra (Peserta)</label>
+                                            <input name="{{ $prefix }}_quota_pa" type="number" min="0" value="{{ $quota_pa }}" class="input-admin block w-full px-3 py-2 rounded-xl text-xs font-bold text-white">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Petugas PIC Putra</label>
+                                            <select name="{{ $prefix }}_pic_pa" class="input-admin block w-full px-3 py-2 rounded-xl text-xs font-semibold">
+                                                <option value="">-- Sama PIC Utama --</option>
+                                                @foreach($pics as $p)
+                                                    <option value="{{ $p->id }}" {{ $pic_pa == $p->id ? 'selected' : '' }}>{{ $p->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Status Pendaftaran</label>
+                                            <select name="{{ $prefix }}_status_pa" class="input-admin block w-full px-3 py-2 rounded-xl text-xs font-semibold">
+                                                <option value="buka" {{ $status_pa === 'buka' ? 'selected' : '' }}>Buka</option>
+                                                <option value="tutup" {{ $status_pa === 'tutup' ? 'selected' : '' }}>Tutup</option>
+                                                <option value="selesai" {{ $status_pa === 'selesai' ? 'selected' : '' }}>Selesai</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- SEKTOR PUTRI (PI) -->
+                                <div class="p-4 sm:p-5 rounded-2xl space-y-3.5 transition {{ $mode === 'pi' ? 'ring-2 ring-pink-400' : '' }}" style="background: rgba(236,72,153,0.06); border: 1px solid rgba(236,72,153,0.22);">
+                                    <div class="flex items-center justify-between pb-2" style="border-bottom: 1px solid rgba(236,72,153,0.18);">
+                                        <span class="text-xs font-black text-pink-300 flex items-center gap-2">
+                                            <i data-lucide="user" class="w-4 h-4 text-pink-400"></i>
+                                            <span>PENGATURAN {{ strtoupper($competition->name) }} — INDIVIDU PUTRI (PI)</span>
+                                        </span>
+                                        <span class="text-[10px] font-bold text-pink-300 px-2 py-0.5 rounded font-mono" style="background: rgba(236,72,153,0.18);">Individu • PI</span>
+                                    </div>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                        <div>
+                                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Biaya Putri (Rp)</label>
+                                            <input name="{{ $prefix }}_fee_pi" type="number" step="1000" min="0" value="{{ $fee_pi }}" class="input-admin block w-full px-3 py-2 rounded-xl text-xs font-mono font-bold text-pink-400">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Kuota Putri (Peserta)</label>
+                                            <input name="{{ $prefix }}_quota_pi" type="number" min="0" value="{{ $quota_pi }}" class="input-admin block w-full px-3 py-2 rounded-xl text-xs font-bold text-white">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Petugas PIC Putri</label>
+                                            <select name="{{ $prefix }}_pic_pi" class="input-admin block w-full px-3 py-2 rounded-xl text-xs font-semibold">
+                                                <option value="">-- Sama PIC Utama --</option>
+                                                @foreach($pics as $p)
+                                                    <option value="{{ $p->id }}" {{ $pic_pi == $p->id ? 'selected' : '' }}>{{ $p->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Status Pendaftaran</label>
+                                            <select name="{{ $prefix }}_status_pi" class="input-admin block w-full px-3 py-2 rounded-xl text-xs font-semibold">
+                                                <option value="buka" {{ $status_pi === 'buka' ? 'selected' : '' }}>Buka</option>
+                                                <option value="tutup" {{ $status_pi === 'tutup' ? 'selected' : '' }}>Tutup</option>
+                                                <option value="selesai" {{ $status_pi === 'selesai' ? 'selected' : '' }}>Selesai</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
+                        {{-- TENIS MEJA (TMJ) --}}
+                        @if($competition->code === 'TMJ')
+                            @php
+                                $mode = request('mode', 'all');
+                                $tmjTiers = [
+                                    ['key' => 'a_tunggal_pa', 'label' => 'Tunggal Putra (PA) — Kat A (Kelas 1–3 SD/MI)', 'badge' => 'Tunggal PA • Kat A', 'color' => 'emerald', 'mode_match' => 'tmj_pa_a'],
+                                    ['key' => 'b_tunggal_pa', 'label' => 'Tunggal Putra (PA) — Kat B (Kelas 4–6 SD/MI)', 'badge' => 'Tunggal PA • Kat B', 'color' => 'emerald', 'mode_match' => 'tmj_pa_b'],
+                                    ['key' => 'a_tunggal_pi', 'label' => 'Tunggal Putri (PI) — Kat A (Kelas 1–3 SD/MI)', 'badge' => 'Tunggal PI • Kat A', 'color' => 'pink', 'mode_match' => 'tmj_pi_a'],
+                                    ['key' => 'b_tunggal_pi', 'label' => 'Tunggal Putri (PI) — Kat B (Kelas 4–6 SD/MI)', 'badge' => 'Tunggal PI • Kat B', 'color' => 'pink', 'mode_match' => 'tmj_pi_b'],
+                                ];
+                            @endphp
+
+                            <div class="space-y-4 pt-1">
+                                @foreach($tmjTiers as $t)
+                                    @php
+                                        $fee = old('tmj_fee_' . $t['key'], \App\Models\AppSetting::get('tmj_fee_' . $t['key'], $competition->registration_fee ?: 35000));
+                                        $quota = old('tmj_quota_' . $t['key'], \App\Models\AppSetting::get('tmj_quota_' . $t['key'], floor($competition->quota / 4)));
+                                        $picKey = str_contains($t['key'], '_pa') ? 'tmj_pic_tunggal_pa' : 'tmj_pic_tunggal_pi';
+                                        $pic = old($picKey, \App\Models\AppSetting::get($picKey, $competition->pic_id));
+                                        $status = old('tmj_status_' . $t['key'], \App\Models\AppSetting::get('tmj_status_' . $t['key'], $competition->status ?? 'buka'));
+                                        $isPa = $t['color'] === 'emerald';
+                                    @endphp
+                                    <div class="p-4 sm:p-5 rounded-2xl space-y-3.5 transition {{ $mode === $t['mode_match'] ? 'ring-2 ' . ($isPa ? 'ring-emerald-400' : 'ring-pink-400') : '' }}" style="background: {{ $isPa ? 'rgba(16,185,129,0.06)' : 'rgba(236,72,153,0.06)' }}; border: 1px solid {{ $isPa ? 'rgba(16,185,129,0.22)' : 'rgba(236,72,153,0.22)' }};">
+                                        <div class="flex items-center justify-between pb-2" style="border-bottom: 1px solid {{ $isPa ? 'rgba(16,185,129,0.18)' : 'rgba(236,72,153,0.18)' }};">
+                                            <span class="text-xs font-black {{ $isPa ? 'text-emerald-300' : 'text-pink-300' }} flex items-center gap-2">
+                                                <i data-lucide="user" class="w-4 h-4"></i>
+                                                <span>PENGATURAN TENIS MEJA — {{ strtoupper($t['label']) }}</span>
+                                            </span>
+                                            <span class="text-[10px] font-bold px-2 py-0.5 rounded font-mono" style="background: {{ $isPa ? 'rgba(16,185,129,0.18)' : 'rgba(236,72,153,0.18)' }}; color: {{ $isPa ? '#34d399' : '#f472b6' }};">{{ $t['badge'] }}</span>
+                                        </div>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                            <div>
+                                                <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Biaya (Rp)</label>
+                                                <input name="tmj_fee_{{ $t['key'] }}" type="number" step="1000" min="0" value="{{ $fee }}" class="input-admin block w-full px-3 py-2 rounded-xl text-xs font-mono font-bold" style="color: {{ $isPa ? '#34d399' : '#f472b6' }};">
+                                            </div>
+                                            <div>
+                                                <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Kuota (Peserta)</label>
+                                                <input name="tmj_quota_{{ $t['key'] }}" type="number" min="0" value="{{ $quota }}" class="input-admin block w-full px-3 py-2 rounded-xl text-xs font-bold text-white">
+                                            </div>
+                                            <div>
+                                                <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Petugas PIC</label>
+                                                <select name="{{ $picKey }}" class="input-admin block w-full px-3 py-2 rounded-xl text-xs font-semibold">
+                                                    <option value="">-- Sama PIC Utama --</option>
+                                                    @foreach($pics as $p)
+                                                        <option value="{{ $p->id }}" {{ $pic == $p->id ? 'selected' : '' }}>{{ $p->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Status Pendaftaran</label>
+                                                <select name="tmj_status_{{ $t['key'] }}" class="input-admin block w-full px-3 py-2 rounded-xl text-xs font-semibold">
+                                                    <option value="buka" {{ $status === 'buka' ? 'selected' : '' }}>Buka</option>
+                                                    <option value="tutup" {{ $status === 'tutup' ? 'selected' : '' }}>Tutup</option>
+                                                    <option value="selesai" {{ $status === 'selesai' ? 'selected' : '' }}>Selesai</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        {{-- BULU TANGKIS (BLT) --}}
+                        @if($competition->code === 'BLT')
+                            @php
+                                $mode = request('mode', 'all');
+                                $bltTiers = [
+                                    ['fee_k' => 'blt_fee_a_tunggal_pa', 'quota_k' => 'blt_quota_a_tunggal_pa', 'pic_k' => 'blt_pic_tunggal_pa', 'stat_k' => 'blt_status_a_tunggal_pa', 'label' => 'Tunggal Putra (PA) — Kat A (Kelas 1–2 SD/MI)', 'badge' => 'Tunggal PA • Kat A', 'type' => 'pa', 'def_fee' => 130000, 'def_q' => 16, 'mode_match' => 'tunggal_pa_a'],
+                                    ['fee_k' => 'blt_fee_b_tunggal_pa', 'quota_k' => 'blt_quota_b_tunggal_pa', 'pic_k' => 'blt_pic_tunggal_pa', 'stat_k' => 'blt_status_b_tunggal_pa', 'label' => 'Tunggal Putra (PA) — Kat B (Kelas 3–4 SD/MI)', 'badge' => 'Tunggal PA • Kat B', 'type' => 'pa', 'def_fee' => 150000, 'def_q' => 16, 'mode_match' => 'tunggal_pa_b'],
+                                    ['fee_k' => 'blt_fee_c_tunggal_pa', 'quota_k' => 'blt_quota_c_tunggal_pa', 'pic_k' => 'blt_pic_tunggal_pa', 'stat_k' => 'blt_status_c_tunggal_pa', 'label' => 'Tunggal Putra (PA) — Kat C (Kelas 5–6 SD/MI)', 'badge' => 'Tunggal PA • Kat C', 'type' => 'pa', 'def_fee' => 150000, 'def_q' => 16, 'mode_match' => 'tunggal_pa_c'],
+
+                                    ['fee_k' => 'blt_fee_a_tunggal_pi', 'quota_k' => 'blt_quota_a_tunggal_pi', 'pic_k' => 'blt_pic_tunggal_pi', 'stat_k' => 'blt_status_a_tunggal_pi', 'label' => 'Tunggal Putri (PI) — Kat A (Kelas 1–2 SD/MI)', 'badge' => 'Tunggal PI • Kat A', 'type' => 'pi', 'def_fee' => 130000, 'def_q' => 16, 'mode_match' => 'tunggal_pi_a'],
+                                    ['fee_k' => 'blt_fee_b_tunggal_pi', 'quota_k' => 'blt_quota_b_tunggal_pi', 'pic_k' => 'blt_pic_tunggal_pi', 'stat_k' => 'blt_status_b_tunggal_pi', 'label' => 'Tunggal Putri (PI) — Kat B (Kelas 3–4 SD/MI)', 'badge' => 'Tunggal PI • Kat B', 'type' => 'pi', 'def_fee' => 150000, 'def_q' => 16, 'mode_match' => 'tunggal_pi_b'],
+                                    ['fee_k' => 'blt_fee_c_tunggal_pi', 'quota_k' => 'blt_quota_c_tunggal_pi', 'pic_k' => 'blt_pic_tunggal_pi', 'stat_k' => 'blt_status_c_tunggal_pi', 'label' => 'Tunggal Putri (PI) — Kat C (Kelas 5–6 SD/MI)', 'badge' => 'Tunggal PI • Kat C', 'type' => 'pi', 'def_fee' => 150000, 'def_q' => 16, 'mode_match' => 'tunggal_pi_c'],
+
+                                    ['fee_k' => 'blt_fee_ganda_pa', 'quota_k' => 'blt_quota_ganda_pa', 'pic_k' => 'blt_pic_ganda_pa', 'stat_k' => 'blt_status_ganda_pa', 'label' => 'Ganda Putra (PA) — (Kelas 3–6 SD/MI)', 'badge' => 'Ganda • PA', 'type' => 'ganda_pa', 'def_fee' => 200000, 'def_q' => 10, 'mode_match' => 'ganda_pa'],
+                                    ['fee_k' => 'blt_fee_ganda_pi', 'quota_k' => 'blt_quota_ganda_pi', 'pic_k' => 'blt_pic_ganda_pi', 'stat_k' => 'blt_status_ganda_pi', 'label' => 'Ganda Putri (PI) — (Kelas 3–6 SD/MI)', 'badge' => 'Ganda • PI', 'type' => 'ganda_pi', 'def_fee' => 200000, 'def_q' => 10, 'mode_match' => 'ganda_pi'],
+                                ];
+                            @endphp
+
+                            <div class="space-y-4 pt-1">
+                                @foreach($bltTiers as $bt)
+                                    @php
+                                        $fee = old($bt['fee_k'], \App\Models\AppSetting::get($bt['fee_k'], $bt['def_fee']));
+                                        $quota = old($bt['quota_k'], \App\Models\AppSetting::get($bt['quota_k'], $bt['def_q']));
+                                        $pic = old($bt['pic_k'], \App\Models\AppSetting::get($bt['pic_k'], $competition->pic_id));
+                                        $status = old($bt['stat_k'], \App\Models\AppSetting::get($bt['stat_k'], $competition->status ?? 'buka'));
+                                        $colorClass = $bt['type'] === 'pa' ? 'emerald' : ($bt['type'] === 'pi' ? 'pink' : 'amber');
+                                        $bgStyle = $colorClass === 'emerald' ? 'rgba(16,185,129,0.06)' : ($colorClass === 'pink' ? 'rgba(236,72,153,0.06)' : 'rgba(245,158,11,0.06)');
+                                        $borderStyle = $colorClass === 'emerald' ? 'rgba(16,185,129,0.22)' : ($colorClass === 'pink' ? 'rgba(236,72,153,0.22)' : 'rgba(245,158,11,0.22)');
+                                        $textColor = $colorClass === 'emerald' ? '#34d399' : ($colorClass === 'pink' ? '#f472b6' : '#fbbf24');
+                                    @endphp
+                                    <div class="p-4 sm:p-5 rounded-2xl space-y-3.5 transition {{ $mode === $bt['mode_match'] ? 'ring-2 ring-emerald-400' : '' }}" style="background: {{ $bgStyle }}; border: 1px solid {{ $borderStyle }};">
+                                        <div class="flex items-center justify-between pb-2" style="border-bottom: 1px solid {{ $borderStyle }};">
+                                            <span class="text-xs font-black flex items-center gap-2" style="color: {{ $textColor }};">
+                                                <i data-lucide="{{ str_contains($bt['type'], 'ganda') ? 'users' : 'user' }}" class="w-4 h-4"></i>
+                                                <span>PENGATURAN BULU TANGKIS — {{ strtoupper($bt['label']) }}</span>
+                                            </span>
+                                            <span class="text-[10px] font-bold px-2 py-0.5 rounded font-mono" style="background: {{ $bgStyle }}; color: {{ $textColor }}; border: 1px solid {{ $borderStyle }};">{{ $bt['badge'] }}</span>
+                                        </div>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                            <div>
+                                                <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Biaya (Rp)</label>
+                                                <input name="{{ $bt['fee_k'] }}" type="number" step="1000" min="0" value="{{ $fee }}" class="input-admin block w-full px-3 py-2 rounded-xl text-xs font-mono font-bold" style="color: {{ $textColor }};">
+                                            </div>
+                                            <div>
+                                                <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Kuota (Peserta)</label>
+                                                <input name="{{ $bt['quota_k'] }}" type="number" min="0" value="{{ $quota }}" class="input-admin block w-full px-3 py-2 rounded-xl text-xs font-bold text-white">
+                                            </div>
+                                            <div>
+                                                <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Petugas PIC</label>
+                                                <select name="{{ $bt['pic_k'] }}" class="input-admin block w-full px-3 py-2 rounded-xl text-xs font-semibold">
+                                                    <option value="">-- Sama PIC Utama --</option>
+                                                    @foreach($pics as $p)
+                                                        <option value="{{ $p->id }}" {{ $pic == $p->id ? 'selected' : '' }}>{{ $p->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Status Pendaftaran</label>
+                                                <select name="{{ $bt['stat_k'] }}" class="input-admin block w-full px-3 py-2 rounded-xl text-xs font-semibold">
+                                                    <option value="buka" {{ $status === 'buka' ? 'selected' : '' }}>Buka</option>
+                                                    <option value="tutup" {{ $status === 'tutup' ? 'selected' : '' }}>Tutup</option>
+                                                    <option value="selesai" {{ $status === 'selesai' ? 'selected' : '' }}>Selesai</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
                     @endif
 
                     <!-- Aturan & Petunjuk Teknis -->

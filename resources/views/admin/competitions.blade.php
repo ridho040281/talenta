@@ -108,90 +108,7 @@
                 return criteria.reduce((sum, item) => sum + (parseInt(item.weight_percentage) || 0), 0);
             },
             openBltEdit(item, mode = 'all') {
-                this.selectedCompetition = Object.assign({}, item);
-                this.selectedCompetition.order = (item.order !== undefined && item.order !== null) ? item.order : 0;
-                this.selectedCompetition.show_criteria = (item.show_criteria !== undefined && item.show_criteria !== null) ? Boolean(Number(item.show_criteria)) : true;
-                this.selectedCompetition.criteria = (item.criteria && item.criteria.length > 0) 
-                    ? JSON.parse(JSON.stringify(item.criteria)) 
-                    : [{ name: 'Penilaian Umum', weight_percentage: 100, min_score: 0, max_score: 100, description: '' }];
-
-                const tf = item.tier_fees || {};
-                this.selectedCompetition.blt_fee_a_tunggal_pa = tf.A_tunggal_pa !== undefined ? tf.A_tunggal_pa : (tf.A_tunggal ?? 130000);
-                this.selectedCompetition.blt_fee_b_tunggal_pa = tf.B_tunggal_pa !== undefined ? tf.B_tunggal_pa : (tf.B_tunggal ?? 150000);
-                this.selectedCompetition.blt_fee_c_tunggal_pa = tf.C_tunggal_pa !== undefined ? tf.C_tunggal_pa : (tf.C_tunggal ?? 150000);
-                this.selectedCompetition.blt_fee_a_tunggal_pi = tf.A_tunggal_pi !== undefined ? tf.A_tunggal_pi : (tf.A_tunggal ?? 130000);
-                this.selectedCompetition.blt_fee_b_tunggal_pi = tf.B_tunggal_pi !== undefined ? tf.B_tunggal_pi : (tf.B_tunggal ?? 150000);
-                this.selectedCompetition.blt_fee_c_tunggal_pi = tf.C_tunggal_pi !== undefined ? tf.C_tunggal_pi : (tf.C_tunggal ?? 150000);
-                this.selectedCompetition.blt_fee_ganda_pa = tf.ganda_pa !== undefined ? tf.ganda_pa : (tf.ganda ?? 200000);
-                this.selectedCompetition.blt_fee_ganda_pi = tf.ganda_pi !== undefined ? tf.ganda_pi : (tf.ganda ?? 200000);
-
-                const tq = item.tier_quotas || {};
-                this.selectedCompetition.blt_quota_a_tunggal_pa = tq.A_tunggal_pa !== undefined ? tq.A_tunggal_pa : (tq.A_tunggal ?? 16);
-                this.selectedCompetition.blt_quota_b_tunggal_pa = tq.B_tunggal_pa !== undefined ? tq.B_tunggal_pa : (tq.B_tunggal ?? 16);
-                this.selectedCompetition.blt_quota_c_tunggal_pa = tq.C_tunggal_pa !== undefined ? tq.C_tunggal_pa : (tq.C_tunggal ?? 16);
-                this.selectedCompetition.blt_quota_a_tunggal_pi = tq.A_tunggal_pi !== undefined ? tq.A_tunggal_pi : (tq.A_tunggal ?? 16);
-                this.selectedCompetition.blt_quota_b_tunggal_pi = tq.B_tunggal_pi !== undefined ? tq.B_tunggal_pi : (tq.B_tunggal ?? 16);
-                this.selectedCompetition.blt_quota_c_tunggal_pi = tq.C_tunggal_pi !== undefined ? tq.C_tunggal_pi : (tq.C_tunggal ?? 16);
-                this.selectedCompetition.blt_quota_ganda_pa = tq.ganda_pa !== undefined ? tq.ganda_pa : (tq.ganda ?? 10);
-                this.selectedCompetition.blt_quota_ganda_pi = tq.ganda_pi !== undefined ? tq.ganda_pi : (tq.ganda ?? 10);
-
-                const tp = item.tier_pics || {};
-                this.selectedCompetition.blt_pic_tunggal_pa = tp.tunggal_pa || item.pic_id || '';
-                this.selectedCompetition.blt_pic_tunggal_pi = tp.tunggal_pi || item.pic_id || '';
-                this.selectedCompetition.blt_pic_ganda_pa = tp.ganda_pa || item.pic_id || '';
-                this.selectedCompetition.blt_pic_ganda_pi = tp.ganda_pi || item.pic_id || '';
-
-                this.selectedCompetition.blt_status_a_tunggal_pa = item.status_a_tunggal_pa || item.status_tunggal_pa || item.status || 'buka';
-                this.selectedCompetition.blt_status_b_tunggal_pa = item.status_b_tunggal_pa || item.status_tunggal_pa || item.status || 'buka';
-                this.selectedCompetition.blt_status_c_tunggal_pa = item.status_c_tunggal_pa || item.status_tunggal_pa || item.status || 'buka';
-                this.selectedCompetition.blt_status_a_tunggal_pi = item.status_a_tunggal_pi || item.status_tunggal_pi || item.status || 'buka';
-                this.selectedCompetition.blt_status_b_tunggal_pi = item.status_b_tunggal_pi || item.status_tunggal_pi || item.status || 'buka';
-                this.selectedCompetition.blt_status_c_tunggal_pi = item.status_c_tunggal_pi || item.status_tunggal_pi || item.status || 'buka';
-                this.selectedCompetition.blt_status_ganda_pa = item.status_ganda_pa || item.status || 'buka';
-                this.selectedCompetition.blt_status_ganda_pi = item.status_ganda_pi || item.status || 'buka';
-                this.selectedCompetition.blt_status_tunggal_pa = item.status_tunggal_pa || item.status || 'buka';
-                this.selectedCompetition.blt_status_tunggal_pi = item.status_tunggal_pi || item.status || 'buka';
-
-                if (['MTQ', 'POP'].includes(item.code)) {
-                    this.selectedCompetition.fee_pa = tf.pa !== undefined ? tf.pa : item.registration_fee;
-                    this.selectedCompetition.fee_pi = tf.pi !== undefined ? tf.pi : item.registration_fee;
-                    this.selectedCompetition.quota_pa = tq.pa !== undefined ? tq.pa : Math.ceil(item.quota / 2);
-                    this.selectedCompetition.quota_pi = tq.pi !== undefined ? tq.pi : Math.floor(item.quota / 2);
-                    this.selectedCompetition.pic_pa = tp.pa || item.pic_id || '';
-                    this.selectedCompetition.pic_pi = tp.pi || item.pic_id || '';
-                    this.selectedCompetition.status_pa = item.status_pa || item.status || 'buka';
-                    this.selectedCompetition.status_pi = item.status_pi || item.status || 'buka';
-                }
-
-                if (item.code === 'TMJ') {
-                    this.selectedCompetition.tmj_fee_a_tunggal_pa = tf.A_tunggal_pa !== undefined ? tf.A_tunggal_pa : (item.registration_fee || 35000);
-                    this.selectedCompetition.tmj_fee_b_tunggal_pa = tf.B_tunggal_pa !== undefined ? tf.B_tunggal_pa : (item.registration_fee || 35000);
-                    this.selectedCompetition.tmj_fee_a_tunggal_pi = tf.A_tunggal_pi !== undefined ? tf.A_tunggal_pi : (item.registration_fee || 35000);
-                    this.selectedCompetition.tmj_fee_b_tunggal_pi = tf.B_tunggal_pi !== undefined ? tf.B_tunggal_pi : (item.registration_fee || 35000);
-
-                    this.selectedCompetition.tmj_quota_a_tunggal_pa = tq.A_tunggal_pa !== undefined ? tq.A_tunggal_pa : Math.floor(item.quota / 4);
-                    this.selectedCompetition.tmj_quota_b_tunggal_pa = tq.B_tunggal_pa !== undefined ? tq.B_tunggal_pa : Math.floor(item.quota / 4);
-                    this.selectedCompetition.tmj_quota_a_tunggal_pi = tq.A_tunggal_pi !== undefined ? tq.A_tunggal_pi : Math.floor(item.quota / 4);
-                    this.selectedCompetition.tmj_quota_b_tunggal_pi = tq.B_tunggal_pi !== undefined ? tq.B_tunggal_pi : Math.floor(item.quota / 4);
-
-                    this.selectedCompetition.tmj_pic_tunggal_pa = tp.tunggal_pa || item.pic_id || '';
-                    this.selectedCompetition.tmj_pic_tunggal_pi = tp.tunggal_pi || item.pic_id || '';
-
-                    this.selectedCompetition.tmj_status_a_tunggal_pa = item.status_a_tunggal_pa || item.status_tunggal_pa || item.status || 'buka';
-                    this.selectedCompetition.tmj_status_b_tunggal_pa = item.status_b_tunggal_pa || item.status_tunggal_pa || item.status || 'buka';
-                    this.selectedCompetition.tmj_status_a_tunggal_pi = item.status_a_tunggal_pi || item.status_tunggal_pi || item.status || 'buka';
-                    this.selectedCompetition.tmj_status_b_tunggal_pi = item.status_b_tunggal_pi || item.status_tunggal_pi || item.status || 'buka';
-                    this.selectedCompetition.tmj_status_tunggal_pa = item.status_tunggal_pa || item.status || 'buka';
-                    this.selectedCompetition.tmj_status_tunggal_pi = item.status_tunggal_pi || item.status || 'buka';
-                }
-
-                this.bltEditMode = mode;
-                this.editCompetitionModal = true;
-                document.body.classList.add('edit-fullscreen');
-                document.body.style.overflow = 'hidden';
-                this.$nextTick(() => {
-                    if (window.lucide) window.lucide.createIcons();
-                });
+                window.location.href = '{{ url('/admin/competitions') }}/' + item.id + '/edit' + (mode && mode !== 'all' ? '?mode=' + mode : '');
             },
             closeEditCompetitionModal() {
                 this.editCompetitionModal = false;
@@ -199,7 +116,7 @@
                 document.body.style.overflow = '';
             },
             editCompetition(item) {
-                this.openBltEdit(item, 'all');
+                window.location.href = '{{ url('/admin/competitions') }}/' + item.id + '/edit';
             },
             createCompetitionWithCategory(categoryId) {
                 this.newCompetition = {
@@ -784,9 +701,9 @@
                                             <!-- Aksi Tunggal PA (3 Baris Kat A, B, C) -->
                                             <div class="h-[84px] flex flex-col justify-center gap-1.5">
                                                 <div class="h-[22px] flex items-center justify-center gap-1.5">
-                                                    <button type="button" @click="openBltEdit({{ $comp->toJson() }}, 'tunggal_pa_a')" class="p-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit Kat A Tunggal PA">
+                                                    <a href="{{ route('admin.competitions.edit', [$comp->id, 'mode' => 'tunggal_pa_a']) }}" class="p-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit Kat A Tunggal PA">
                                                         <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                                                    </button>
+                                                    </a>
                                                     <form action="{{ route('admin.competitions.delete', $comp->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus cabang lomba {{ $comp->name }} beserta seluruh data pendaftarannya?')">
                                                         @csrf
                                                         <button type="submit" class="p-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 transition cursor-pointer" title="Hapus Cabang Lomba {{ $comp->name }}">
@@ -795,9 +712,9 @@
                                                     </form>
                                                 </div>
                                                 <div class="h-[22px] flex items-center justify-center gap-1.5">
-                                                    <button type="button" @click="openBltEdit({{ $comp->toJson() }}, 'tunggal_pa_b')" class="p-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit Kat B Tunggal PA">
+                                                    <a href="{{ route('admin.competitions.edit', [$comp->id, 'mode' => 'tunggal_pa_b']) }}" class="p-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit Kat B Tunggal PA">
                                                         <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                                                    </button>
+                                                    </a>
                                                     <form action="{{ route('admin.competitions.delete', $comp->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus cabang lomba {{ $comp->name }} beserta seluruh data pendaftarannya?')">
                                                         @csrf
                                                         <button type="submit" class="p-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 transition cursor-pointer" title="Hapus Cabang Lomba {{ $comp->name }}">
@@ -806,9 +723,9 @@
                                                     </form>
                                                 </div>
                                                 <div class="h-[22px] flex items-center justify-center gap-1.5">
-                                                    <button type="button" @click="openBltEdit({{ $comp->toJson() }}, 'tunggal_pa_c')" class="p-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit Kat C Tunggal PA">
+                                                    <a href="{{ route('admin.competitions.edit', [$comp->id, 'mode' => 'tunggal_pa_c']) }}" class="p-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit Kat C Tunggal PA">
                                                         <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                                                    </button>
+                                                    </a>
                                                     <form action="{{ route('admin.competitions.delete', $comp->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus cabang lomba {{ $comp->name }} beserta seluruh data pendaftarannya?')">
                                                         @csrf
                                                         <button type="submit" class="p-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 transition cursor-pointer" title="Hapus Cabang Lomba {{ $comp->name }}">
@@ -821,9 +738,9 @@
                                             <!-- Aksi Tunggal PI (3 Baris Kat A, B, C) -->
                                             <div class="h-[84px] flex flex-col justify-center gap-1.5">
                                                 <div class="h-[22px] flex items-center justify-center gap-1.5">
-                                                    <button type="button" @click="openBltEdit({{ $comp->toJson() }}, 'tunggal_pi_a')" class="p-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit Kat A Tunggal PI">
+                                                    <a href="{{ route('admin.competitions.edit', [$comp->id, 'mode' => 'tunggal_pi_a']) }}" class="p-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit Kat A Tunggal PI">
                                                         <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                                                    </button>
+                                                    </a>
                                                     <form action="{{ route('admin.competitions.delete', $comp->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus cabang lomba {{ $comp->name }} beserta seluruh data pendaftarannya?')">
                                                         @csrf
                                                         <button type="submit" class="p-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 transition cursor-pointer" title="Hapus Cabang Lomba {{ $comp->name }}">
@@ -832,9 +749,9 @@
                                                     </form>
                                                 </div>
                                                 <div class="h-[22px] flex items-center justify-center gap-1.5">
-                                                    <button type="button" @click="openBltEdit({{ $comp->toJson() }}, 'tunggal_pi_b')" class="p-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit Kat B Tunggal PI">
+                                                    <a href="{{ route('admin.competitions.edit', [$comp->id, 'mode' => 'tunggal_pi_b']) }}" class="p-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit Kat B Tunggal PI">
                                                         <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                                                    </button>
+                                                    </a>
                                                     <form action="{{ route('admin.competitions.delete', $comp->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus cabang lomba {{ $comp->name }} beserta seluruh data pendaftarannya?')">
                                                         @csrf
                                                         <button type="submit" class="p-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 transition cursor-pointer" title="Hapus Cabang Lomba {{ $comp->name }}">
@@ -843,9 +760,9 @@
                                                     </form>
                                                 </div>
                                                 <div class="h-[22px] flex items-center justify-center gap-1.5">
-                                                    <button type="button" @click="openBltEdit({{ $comp->toJson() }}, 'tunggal_pi_c')" class="p-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit Kat C Tunggal PI">
+                                                    <a href="{{ route('admin.competitions.edit', [$comp->id, 'mode' => 'tunggal_pi_c']) }}" class="p-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit Kat C Tunggal PI">
                                                         <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                                                    </button>
+                                                    </a>
                                                     <form action="{{ route('admin.competitions.delete', $comp->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus cabang lomba {{ $comp->name }} beserta seluruh data pendaftarannya?')">
                                                         @csrf
                                                         <button type="submit" class="p-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 transition cursor-pointer" title="Hapus Cabang Lomba {{ $comp->name }}">
@@ -857,9 +774,9 @@
                                             <div class="border-t border-white/[0.08] my-1.5"></div>
                                             <!-- Aksi Ganda PA -->
                                             <div class="h-[36px] flex items-center justify-center gap-1.5">
-                                                <button type="button" @click="openBltEdit({{ $comp->toJson() }}, 'ganda_pa')" class="p-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit Ganda Putra (PA)">
+                                                <a href="{{ route('admin.competitions.edit', [$comp->id, 'mode' => 'ganda_pa']) }}" class="p-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit Ganda Putra (PA)">
                                                     <i data-lucide="edit-3" class="w-4 h-4"></i>
-                                                </button>
+                                                </a>
                                                 <form action="{{ route('admin.competitions.delete', $comp->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus cabang lomba {{ $comp->name }} beserta seluruh data pendaftarannya?')">
                                                     @csrf
                                                     <button type="submit" class="p-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 transition cursor-pointer" title="Hapus Cabang Lomba {{ $comp->name }}">
@@ -870,9 +787,9 @@
                                             <div class="border-t border-white/[0.08] my-1.5"></div>
                                             <!-- Aksi Ganda PI -->
                                             <div class="h-[36px] flex items-center justify-center gap-1.5">
-                                                <button type="button" @click="openBltEdit({{ $comp->toJson() }}, 'ganda_pi')" class="p-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit Ganda Putri (PI)">
+                                                <a href="{{ route('admin.competitions.edit', [$comp->id, 'mode' => 'ganda_pi']) }}" class="p-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit Ganda Putri (PI)">
                                                     <i data-lucide="edit-3" class="w-4 h-4"></i>
-                                                </button>
+                                                </a>
                                                 <form action="{{ route('admin.competitions.delete', $comp->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus cabang lomba {{ $comp->name }} beserta seluruh data pendaftarannya?')">
                                                     @csrf
                                                     <button type="submit" class="p-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 transition cursor-pointer" title="Hapus Seluruh Cabang Lomba {{ $comp->name }}">
@@ -885,9 +802,9 @@
                                         <div class="flex flex-col py-1">
                                             <!-- Aksi PA -->
                                             <div class="h-[36px] flex items-center justify-center gap-1.5">
-                                                <button type="button" @click="openBltEdit({{ $comp->toJson() }}, 'pa')" class="p-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit {{ $comp->name }} (Putra / PA)">
+                                                <a href="{{ route('admin.competitions.edit', [$comp->id, 'mode' => 'pa']) }}" class="p-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit {{ $comp->name }} (Putra / PA)">
                                                     <i data-lucide="edit-3" class="w-4 h-4"></i>
-                                                </button>
+                                                </a>
                                                 <form action="{{ route('admin.competitions.delete', $comp->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus cabang lomba {{ $comp->name }} beserta seluruh data pendaftarannya?')">
                                                     @csrf
                                                     <button type="submit" class="p-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 transition cursor-pointer" title="Hapus Cabang Lomba {{ $comp->name }}">
@@ -898,9 +815,9 @@
                                             <div class="border-t border-white/[0.08] my-1.5"></div>
                                             <!-- Aksi PI -->
                                             <div class="h-[36px] flex items-center justify-center gap-1.5">
-                                                <button type="button" @click="openBltEdit({{ $comp->toJson() }}, 'pi')" class="p-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit {{ $comp->name }} (Putri / PI)">
+                                                <a href="{{ route('admin.competitions.edit', [$comp->id, 'mode' => 'pi']) }}" class="p-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit {{ $comp->name }} (Putri / PI)">
                                                     <i data-lucide="edit-3" class="w-4 h-4"></i>
-                                                </button>
+                                                </a>
                                                 <form action="{{ route('admin.competitions.delete', $comp->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus cabang lomba {{ $comp->name }} beserta seluruh data pendaftarannya?')">
                                                     @csrf
                                                     <button type="submit" class="p-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 transition cursor-pointer" title="Hapus Cabang Lomba {{ $comp->name }}">
@@ -914,9 +831,9 @@
                                             <!-- Aksi Tunggal PA (Kat A & B) -->
                                             <div class="h-[56px] flex flex-col justify-center gap-1.5">
                                                 <div class="h-[22px] flex items-center justify-center gap-1.5">
-                                                    <button type="button" @click="openBltEdit({{ $comp->toJson() }}, 'tmj_pa_a')" class="p-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit Kat A Tunggal PA">
+                                                    <a href="{{ route('admin.competitions.edit', [$comp->id, 'mode' => 'tmj_pa_a']) }}" class="p-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit Kat A Tunggal PA">
                                                         <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                                                    </button>
+                                                    </a>
                                                     <form action="{{ route('admin.competitions.delete', $comp->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus cabang lomba {{ $comp->name }} beserta seluruh data pendaftarannya?')">
                                                         @csrf
                                                         <button type="submit" class="p-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 transition cursor-pointer" title="Hapus Cabang Lomba {{ $comp->name }}">
@@ -925,9 +842,9 @@
                                                     </form>
                                                 </div>
                                                 <div class="h-[22px] flex items-center justify-center gap-1.5">
-                                                    <button type="button" @click="openBltEdit({{ $comp->toJson() }}, 'tmj_pa_b')" class="p-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit Kat B Tunggal PA">
+                                                    <a href="{{ route('admin.competitions.edit', [$comp->id, 'mode' => 'tmj_pa_b']) }}" class="p-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit Kat B Tunggal PA">
                                                         <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                                                    </button>
+                                                    </a>
                                                     <form action="{{ route('admin.competitions.delete', $comp->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus cabang lomba {{ $comp->name }} beserta seluruh data pendaftarannya?')">
                                                         @csrf
                                                         <button type="submit" class="p-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 transition cursor-pointer" title="Hapus Cabang Lomba {{ $comp->name }}">
@@ -940,9 +857,9 @@
                                             <!-- Aksi Tunggal PI (Kat A & B) -->
                                             <div class="h-[56px] flex flex-col justify-center gap-1.5">
                                                 <div class="h-[22px] flex items-center justify-center gap-1.5">
-                                                    <button type="button" @click="openBltEdit({{ $comp->toJson() }}, 'tmj_pi_a')" class="p-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit Kat A Tunggal PI">
+                                                    <a href="{{ route('admin.competitions.edit', [$comp->id, 'mode' => 'tmj_pi_a']) }}" class="p-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit Kat A Tunggal PI">
                                                         <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                                                    </button>
+                                                    </a>
                                                     <form action="{{ route('admin.competitions.delete', $comp->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus cabang lomba {{ $comp->name }} beserta seluruh data pendaftarannya?')">
                                                         @csrf
                                                         <button type="submit" class="p-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 transition cursor-pointer" title="Hapus Cabang Lomba {{ $comp->name }}">
@@ -951,9 +868,9 @@
                                                     </form>
                                                 </div>
                                                 <div class="h-[22px] flex items-center justify-center gap-1.5">
-                                                    <button type="button" @click="openBltEdit({{ $comp->toJson() }}, 'tmj_pi_b')" class="p-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit Kat B Tunggal PI">
+                                                    <a href="{{ route('admin.competitions.edit', [$comp->id, 'mode' => 'tmj_pi_b']) }}" class="p-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit Kat B Tunggal PI">
                                                         <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                                                    </button>
+                                                    </a>
                                                     <form action="{{ route('admin.competitions.delete', $comp->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus cabang lomba {{ $comp->name }} beserta seluruh data pendaftarannya?')">
                                                         @csrf
                                                         <button type="submit" class="p-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 transition cursor-pointer" title="Hapus Cabang Lomba {{ $comp->name }}">
@@ -1461,6 +1378,7 @@
         </div>
     </div>
 
+    @if(false)
     <!-- Edit Competition Fullpage Workspace (1 Halaman Penuh, Menutup Seluruh Layar & Sidebar) -->
     <div x-show="editCompetitionModal" x-cloak aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none; position: fixed; inset: 0; z-index: 999999; background: #070A13; overflow-y: auto; min-height: 100vh; width: 100vw; flex-direction: column;" :style="editCompetitionModal ? 'display: flex;' : 'display: none;'">
         
@@ -2344,6 +2262,7 @@
 
         </div>
     </div>
+    @endif
 
     <!-- Create Category Modal -->
     <div x-show="createCategoryModal" x-cloak class="fixed inset-0 z-[100] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
