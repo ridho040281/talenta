@@ -38,11 +38,6 @@
             <span>🏫 Identitas Instansi & Logo</span>
         </button>
 
-        <button type="button" @click="activeTab = 'pendaftaran'" :class="activeTab === 'pendaftaran' ? 'gradient-btn text-white font-black shadow-lg shadow-[#7A5AF8]/25' : 'bg-white/[0.04] hover:bg-white/[0.08] text-slate-400 hover:text-slate-200 font-bold border border-white/[0.08]'" class="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs transition whitespace-nowrap cursor-pointer">
-            <i data-lucide="calendar" class="w-4 h-4"></i>
-            <span>📅 Status Pendaftaran & Event</span>
-        </button>
-
         <button type="button" @click="activeTab = 'landing'" :class="activeTab === 'landing' ? 'gradient-btn text-white font-black shadow-lg shadow-[#7A5AF8]/25' : 'bg-white/[0.04] hover:bg-white/[0.08] text-slate-400 hover:text-slate-200 font-bold border border-white/[0.08]'" class="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs transition whitespace-nowrap cursor-pointer">
             <i data-lucide="layout-template" class="w-4 h-4"></i>
             <span>🌐 Konten Landing Page</span>
@@ -402,79 +397,7 @@
         </div>
     </div>
 
-    <!-- TAB 3: STATUS PENDAFTARAN & EVENT -->
-    <div x-show="activeTab === 'pendaftaran'" x-transition class="space-y-6">
-        <div class="ai-card rounded-3xl border border-white/[0.08] shadow-2xl p-6 sm:p-8 space-y-6">
-            
-            <div class="flex items-center gap-3 border-b border-white/[0.08] pb-4">
-                <div class="w-10 h-10 rounded-2xl bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold shadow-xs">
-                    <i data-lucide="calendar" class="w-5 h-5"></i>
-                </div>
-                <div>
-                    <h3 class="text-base sm:text-lg font-black text-white font-display">
-                        Status Pendaftaran & Banner Pengumuman
-                    </h3>
-                    <p class="text-xs text-slate-400">Atur buka/tutup pendaftaran, jalur form web vs excel, dan teks pengumuman</p>
-                </div>
-            </div>
-
-            <form action="{{ route('admin.settings.general.update') }}" method="POST" class="space-y-6">
-                @csrf
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="space-y-1.5 bg-[#0C111D]/80 p-4 rounded-2xl border border-white/[0.08]">
-                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">Status Pendaftaran</label>
-                        <select name="registration_status" required class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-bold focus:border-[#7A5AF8] outline-none">
-                            <option value="open" {{ $settings['registration_status'] === 'open' ? 'selected' : '' }}>🟢 Dibuka (Pendaftaran Aktif)</option>
-                            <option value="technical_meeting" {{ $settings['registration_status'] === 'technical_meeting' ? 'selected' : '' }}>🟡 Technical Meeting & Undian</option>
-                            <option value="ongoing" {{ $settings['registration_status'] === 'ongoing' ? 'selected' : '' }}>🔵 Pelaksanaan Lomba (Live Scoring)</option>
-                            <option value="closed" {{ $settings['registration_status'] === 'closed' ? 'selected' : '' }}>🔴 Ditutup Sementara</option>
-                            <option value="finished" {{ $settings['registration_status'] === 'finished' ? 'selected' : '' }}>🏆 Selesai (Pengumuman Juara Umum)</option>
-                        </select>
-                    </div>
-
-                    <div class="space-y-1.5 bg-[#0C111D]/80 p-4 rounded-2xl border border-white/[0.08]">
-                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">Batas Akhir Pendaftaran</label>
-                        <input type="date" name="registration_deadline" value="{{ old('registration_deadline', $settings['registration_deadline']) }}" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-semibold focus:border-[#7A5AF8] outline-none">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="space-y-1.5 bg-[#0C111D]/80 p-4 rounded-2xl border border-white/[0.08]">
-                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">👤 Jalur Pendaftaran Individu (Form Web)</label>
-                        <select name="allow_individual_reg" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-bold focus:border-[#7A5AF8] outline-none">
-                            <option value="1" {{ ($settings['allow_individual_reg'] ?? '1') == '1' ? 'selected' : '' }}>🟢 Aktif (Pendaftar Boleh Isi Form Web)</option>
-                            <option value="0" {{ ($settings['allow_individual_reg'] ?? '1') == '0' ? 'selected' : '' }}>🔴 Nonaktif (Tutup Jalur Form Web)</option>
-                        </select>
-                    </div>
-
-                    <div class="space-y-1.5 bg-[#0C111D]/80 p-4 rounded-2xl border border-white/[0.08]">
-                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">👥 Jalur Pendaftaran Kolektif (Excel Import)</label>
-                        <select name="allow_collective_reg" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-bold focus:border-[#7A5AF8] outline-none">
-                            <option value="1" {{ ($settings['allow_collective_reg'] ?? '1') == '1' ? 'selected' : '' }}>🟢 Aktif (Pendaftar Boleh Upload Excel)</option>
-                            <option value="0" {{ ($settings['allow_collective_reg'] ?? '1') == '0' ? 'selected' : '' }}>🔴 Nonaktif (Tutup Jalur Excel Import)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="space-y-1.5 bg-[#0C111D]/80 p-4 rounded-2xl border border-white/[0.08]">
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">Teks Banner Pengumuman di Beranda</label>
-                    <textarea name="announcement_banner" rows="2" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-semibold focus:border-[#7A5AF8] outline-none">{{ old('announcement_banner', $settings['announcement_banner']) }}</textarea>
-                </div>
-
-                <div class="pt-4 border-t border-white/[0.08] flex items-center justify-end">
-                    <button type="submit" class="gradient-btn px-6 py-2.5 rounded-2xl text-white font-bold text-xs shadow-lg shadow-[#7A5AF8]/25 transition flex items-center gap-2 cursor-pointer">
-                        <i data-lucide="save" class="w-4 h-4"></i>
-                        <span>Simpan Status Pendaftaran</span>
-                    </button>
-                </div>
-
-            </form>
-
-        </div>
-    </div>
-
-    <!-- TAB 4: KONTEN & NARASI LANDING PAGE -->
+    <!-- TAB 3: KONTEN & NARASI LANDING PAGE -->
     <div x-show="activeTab === 'landing'" x-transition class="space-y-6">
         <div class="ai-card rounded-3xl border border-white/[0.08] shadow-2xl p-6 sm:p-8 space-y-8">
             
