@@ -164,7 +164,7 @@
                                 <div class="inline-flex items-center gap-1.5 justify-center">
                                     <!-- 🔑 Tombol Reset Password -->
                                     <button type="button" 
-                                            @click="openResetPassword({{ $u->toJson() }})" 
+                                            @click="openResetPassword(@js($u))" 
                                             class="p-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 transition cursor-pointer shadow-xs" 
                                             title="Reset Kata Sandi Pengguna">
                                         <i data-lucide="key" class="w-4 h-4"></i>
@@ -172,7 +172,7 @@
 
                                     <!-- ✏️ Tombol Edit Akun -->
                                     <button type="button" 
-                                            @click="openEditUser({{ $u->toJson() }})" 
+                                            @click="openEditUser(@js($u))" 
                                             class="p-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer shadow-xs" 
                                             title="Edit Data Pengguna & Status Akun">
                                         <i data-lucide="edit-3" class="w-4 h-4"></i>
@@ -181,7 +181,7 @@
                                     <!-- 🗑️ Tombol Hapus Akun -->
                                     @if($u->id !== auth()->id())
                                         <button type="button"
-                                                @click="openDeleteModal({{ $u->toJson() }})"
+                                                @click="openDeleteModal(@js($u))"
                                                 class="p-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 transition cursor-pointer shadow-xs" 
                                                 title="Hapus Akun Pengguna">
                                             <i data-lucide="trash-2" class="w-4 h-4"></i>
@@ -219,11 +219,10 @@
     </div>
 
     <!-- ==================== MODAL 1: RESET PASSWORD (AIStarterKit Dark Style) ==================== -->
-    <div x-show="resetPasswordModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div x-show="resetPasswordModal" @click="resetPasswordModal = false" class="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity"></div>
+    <div x-show="resetPasswordModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div x-show="resetPasswordModal" x-transition.opacity @click="resetPasswordModal = false" class="fixed inset-0 bg-black/80 backdrop-blur-md"></div>
 
-            <div x-show="resetPasswordModal" class="inline-block align-bottom bg-[#161F30] rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full p-6 sm:p-8 space-y-6 border border-white/[0.12] text-slate-200">
+        <div x-show="resetPasswordModal" x-transition.scale.95 @click.stop class="relative z-10 w-full max-w-md bg-[#161F30] rounded-3xl p-6 sm:p-8 space-y-6 border border-white/[0.12] text-slate-200 shadow-2xl my-auto">
                 
                 <div class="flex items-center justify-between border-b border-white/[0.08] pb-4">
                     <div class="flex items-center gap-3">
@@ -311,14 +310,12 @@
 
             </div>
         </div>
-    </div>
 
     <!-- ==================== MODAL 2: EDIT DATA PENGGUNA (AIStarterKit Dark Style) ==================== -->
-    <div x-show="editUserModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div x-show="editUserModal" @click="editUserModal = false" class="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity"></div>
+    <div x-show="editUserModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div x-show="editUserModal" x-transition.opacity @click="editUserModal = false" class="fixed inset-0 bg-black/80 backdrop-blur-md"></div>
 
-            <div x-show="editUserModal" class="inline-block align-bottom bg-[#161F30] rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full p-6 sm:p-8 space-y-6 border border-white/[0.12] text-slate-200">
+        <div x-show="editUserModal" x-transition.scale.95 @click.stop class="relative z-10 w-full max-w-lg bg-[#161F30] rounded-3xl p-6 sm:p-8 space-y-6 border border-white/[0.12] text-slate-200 shadow-2xl my-auto">
                 
                 <div class="flex items-center justify-between border-b border-white/[0.08] pb-4">
                     <div class="flex items-center gap-3">
@@ -399,14 +396,12 @@
 
             </div>
         </div>
-    </div>
 
     <!-- ==================== MODAL 3: TAMBAH USER BARU (AIStarterKit Dark Style) ==================== -->
-    <div x-show="userModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div x-show="userModal" @click="userModal = false" class="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity"></div>
+    <div x-show="userModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div x-show="userModal" x-transition.opacity @click="userModal = false" class="fixed inset-0 bg-black/80 backdrop-blur-md"></div>
 
-            <div x-show="userModal" class="inline-block align-bottom bg-[#161F30] rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full p-6 sm:p-8 space-y-6 border border-white/[0.12] text-slate-200">
+        <div x-show="userModal" x-transition.scale.95 @click.stop class="relative z-10 w-full max-w-lg bg-[#161F30] rounded-3xl p-6 sm:p-8 space-y-6 border border-white/[0.12] text-slate-200 shadow-2xl my-auto">
                 
                 <div class="flex items-center justify-between border-b border-white/[0.08] pb-4">
                     <div class="flex items-center gap-3">
@@ -497,14 +492,12 @@
 
             </div>
         </div>
-    </div>
 
     <!-- ==================== MODAL 4: KONFIRMASI HAPUS PENGGUNA (AIStarterKit Dark Style) ==================== -->
-    <div x-show="deleteUserModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div x-show="deleteUserModal" @click="deleteUserModal = false" class="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity"></div>
+    <div x-show="deleteUserModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div x-show="deleteUserModal" x-transition.opacity @click="deleteUserModal = false" class="fixed inset-0 bg-black/80 backdrop-blur-md"></div>
 
-            <div x-show="deleteUserModal" class="inline-block align-bottom bg-[#161F30] rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full p-6 sm:p-8 space-y-6 border border-rose-500/30 text-slate-200">
+        <div x-show="deleteUserModal" x-transition.scale.95 @click.stop class="relative z-10 w-full max-w-md bg-[#161F30] rounded-3xl p-6 sm:p-8 space-y-6 border border-rose-500/30 text-slate-200 shadow-2xl my-auto">
                 
                 <div class="flex items-start gap-4">
                     <div class="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center shrink-0 shadow-lg shadow-rose-500/20">
@@ -563,7 +556,6 @@
 
             </div>
         </div>
-    </div>
 
 </div>
 
@@ -596,7 +588,20 @@
                 });
             },
             openEditUser(user) {
-                this.selectedUser = Object.assign({ status: 'active' }, user);
+                this.selectedUser = Object.assign({
+                    id: null,
+                    name: '',
+                    email: '',
+                    role: 'peserta',
+                    status: 'active',
+                    phone: '',
+                    institution_name: '',
+                    position: ''
+                }, user);
+                this.selectedUser.phone = this.selectedUser.phone || '';
+                this.selectedUser.institution_name = this.selectedUser.institution_name || '';
+                this.selectedUser.position = this.selectedUser.position || '';
+                this.selectedUser.status = this.selectedUser.status || 'active';
                 this.editUserModal = true;
                 this.$nextTick(() => {
                     if (window.lucide) window.lucide.createIcons();
