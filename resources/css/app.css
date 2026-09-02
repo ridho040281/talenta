@@ -1,0 +1,47 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../views/**/*.blade.php';
+@source '../js/**/*.js';
+
+@theme {
+    --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'Space Mono', monospace;
+
+    --color-darkbg: #101828;
+    --color-darkcard: #161F30;
+    --color-darkpanel: #0C111D;
+    --color-darkborder: rgba(255, 255, 255, 0.08);
+
+    --color-aipurple-50: #F4F3FF;
+    --color-aipurple-100: #EBE9FE;
+    --color-aipurple-200: #D9D6FE;
+    --color-aipurple-500: #7A5AF8;
+    --color-aipurple-600: #6941C6;
+    --color-aipurple-700: #53389E;
+
+    --color-aiblue-50: #EFF4FF;
+    --color-aiblue-100: #D1E0FF;
+    --color-aiblue-500: #4E6EFF;
+    --color-aiblue-600: #3555EC;
+
+    --color-aipink-500: #FF58D5;
+
+    --color-primary-50: #F4F3FF;
+    --color-primary-100: #EBE9FE;
+    --color-primary-200: #D9D6FE;
+    --color-primary-500: #7A5AF8;
+    --color-primary-600: #6941C6;
+    --color-primary-700: #53389E;
+
+    --color-brand-50: #F4F3FF;
+    --color-brand-100: #EBE9FE;
+    --color-brand-200: #D9D6FE;
+    --color-brand-500: #7A5AF8;
+    --color-brand-600: #6941C6;
+    --color-brand-700: #53389E;
+}
