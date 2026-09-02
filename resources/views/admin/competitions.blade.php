@@ -1455,10 +1455,10 @@
     </div>
 
     <!-- Edit Competition Fullpage Workspace (1 Halaman Penuh, Menutup Seluruh Layar & Sidebar) -->
-    <div x-show="editCompetitionModal" x-cloak class="fixed inset-0 z-[999999] bg-[#070A13] overflow-y-auto min-h-screen w-screen flex flex-col" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
+    <div x-show="editCompetitionModal" x-cloak aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none; position: fixed; inset: 0; z-index: 999999; background: #070A13; overflow-y: auto; min-height: 100vh; width: 100vw; flex-direction: column;" :style="editCompetitionModal ? 'display: flex;' : 'display: none;'">
         
         <!-- Sticky Workspace Header Bar -->
-        <div class="sticky top-0 z-50 bg-[#0B101D]/95 backdrop-blur-xl border-b border-white/[0.1] px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-2xl">
+        <div style="position: sticky; top: 0; z-index: 50; background: rgba(11,16,29,0.97); border-bottom: 1px solid rgba(255,255,255,0.1); padding: 14px 32px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 32px rgba(0,0,0,0.6);">
             <div class="flex items-center gap-3.5 min-w-0">
                 <button type="button" @click="editCompetitionModal = false" class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-slate-200 hover:text-white text-xs font-bold transition cursor-pointer border border-white/[0.1] shrink-0">
                     <i data-lucide="arrow-left" class="w-4 h-4"></i>
