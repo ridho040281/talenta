@@ -248,16 +248,6 @@
                     <option value="rejected">❌ Ditolak ({{ $stats['rejected_registrations'] ?? 0 }})</option>
                 </select>
             </div>
-
-            <!-- Dropdown 4: Jenis Kelamin -->
-            <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Gender / Kategori:</label>
-                <select x-model="selectedGender" class="w-full px-3 py-2.5 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8] cursor-pointer">
-                    <option value="all">Semua Gender</option>
-                    <option value="L">👦 Putra (PA)</option>
-                    <option value="P">👧 Putri (PI)</option>
-                </select>
-            </div>
         </div>
     </div>
 
