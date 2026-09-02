@@ -1454,71 +1454,81 @@
         </div>
     </div>
 
-    <!-- Edit Competition Modal -->
-    <div x-show="editCompetitionModal" x-cloak class="fixed inset-0 z-[100] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
-        <div class="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
-            <!-- Backdrop -->
-            <div x-show="editCompetitionModal" @click="editCompetitionModal = false" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"></div>
-
-            <!-- Modal Content (Crisp, High Z-Index) -->
-            <div x-show="editCompetitionModal" class="relative z-10 inline-block bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all my-4 sm:align-middle sm:max-w-4xl lg:max-w-5xl w-full p-5 sm:p-7 space-y-4">
-                
-                <!-- Modal Header (Fixed) -->
-                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <div>
-                        <h3 class="text-base sm:text-lg font-black text-slate-900" x-text="
-                            selectedCompetition.code === 'BLT' ? (
-                                bltEditMode === 'tunggal_pa_a' ? 'Edit Bulu Tangkis — Tunggal Putra (Kat A)' :
-                                bltEditMode === 'tunggal_pa_b' ? 'Edit Bulu Tangkis — Tunggal Putra (Kat B)' :
-                                bltEditMode === 'tunggal_pa_c' ? 'Edit Bulu Tangkis — Tunggal Putra (Kat C)' :
-                                bltEditMode === 'tunggal_pi_a' ? 'Edit Bulu Tangkis — Tunggal Putri (Kat A)' :
-                                bltEditMode === 'tunggal_pi_b' ? 'Edit Bulu Tangkis — Tunggal Putri (Kat B)' :
-                                bltEditMode === 'tunggal_pi_c' ? 'Edit Bulu Tangkis — Tunggal Putri (Kat C)' :
-                                bltEditMode === 'ganda_pa' ? 'Edit Bulu Tangkis — Ganda Putra (PA)' :
-                                bltEditMode === 'ganda_pi' ? 'Edit Bulu Tangkis — Ganda Putri (PI)' :
-                                'Edit ' + selectedCompetition.name
-                            ) : (
-                            selectedCompetition.code === 'TMJ' ? (
-                                bltEditMode === 'tmj_pa_a' ? 'Edit Tenis Meja — Tunggal Putra (Kat A)' :
-                                bltEditMode === 'tmj_pa_b' ? 'Edit Tenis Meja — Tunggal Putra (Kat B)' :
-                                bltEditMode === 'tmj_pi_a' ? 'Edit Tenis Meja — Tunggal Putri (Kat A)' :
-                                bltEditMode === 'tmj_pi_b' ? 'Edit Tenis Meja — Tunggal Putri (Kat B)' :
-                                'Edit ' + selectedCompetition.name
-                            ) : (
-                            ['MTQ', 'POP'].includes(selectedCompetition.code) ? (
-                                'Edit ' + selectedCompetition.name + ' (' + (bltEditMode === 'pa' ? 'Putra / PA' : (bltEditMode === 'pi' ? 'Putri / PI' : 'Semua Sektor')) + ')'
-                            ) : 'Edit Cabang Perlombaan'))"></h3>
-                        <p class="text-xs text-slate-500" x-text="
-                            selectedCompetition.code === 'BLT' ? (
-                                bltEditMode === 'tunggal_pa_a' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putra Kat A (Kelas 1–2 SD/MI)' :
-                                bltEditMode === 'tunggal_pa_b' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putra Kat B (Kelas 3–4 SD/MI)' :
-                                bltEditMode === 'tunggal_pa_c' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putra Kat C (Kelas 5–6 SD/MI)' :
-                                bltEditMode === 'tunggal_pi_a' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putri Kat A (Kelas 1–2 SD/MI)' :
-                                bltEditMode === 'tunggal_pi_b' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putri Kat B (Kelas 3–4 SD/MI)' :
-                                bltEditMode === 'tunggal_pi_c' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putri Kat C (Kelas 5–6 SD/MI)' :
-                                bltEditMode === 'ganda_pa' ? 'Perbarui biaya, kuota, PIC, dan status Ganda Putra (PA)' :
-                                bltEditMode === 'ganda_pi' ? 'Perbarui biaya, kuota, PIC, dan status Ganda Putri (PI)' :
-                                'Perbarui informasi cabang lomba'
-                            ) : (
-                            selectedCompetition.code === 'TMJ' ? (
-                                bltEditMode === 'tmj_pa_a' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putra Kat A (Kelas 1–3 SD/MI)' :
-                                bltEditMode === 'tmj_pa_b' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putra Kat B (Kelas 4–6 SD/MI)' :
-                                bltEditMode === 'tmj_pi_a' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putri Kat A (Kelas 1–3 SD/MI)' :
-                                bltEditMode === 'tmj_pi_b' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putri Kat B (Kelas 4–6 SD/MI)' :
-                                'Perbarui informasi cabang lomba'
-                            ) : (
-                            ['MTQ', 'POP'].includes(selectedCompetition.code) ? 'Perbarui biaya, kuota, PIC, dan status per sektor Putra (PA) & Putri (PI)' : 'Perbarui informasi cabang lomba, kuota, PIC, dan status pendaftaran'))"></p>
-                    </div>
-                    <button @click="editCompetitionModal = false" class="text-slate-400 hover:text-slate-600 cursor-pointer">
-                        <i data-lucide="x" class="w-5 h-5"></i>
-                    </button>
+    <!-- Edit Competition Fullpage Workspace (1 Halaman Penuh, Menutup Seluruh Layar & Sidebar) -->
+    <div x-show="editCompetitionModal" x-cloak class="fixed inset-0 z-[999999] bg-[#070A13] overflow-y-auto min-h-screen w-screen flex flex-col" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
+        
+        <!-- Sticky Workspace Header Bar -->
+        <div class="sticky top-0 z-50 bg-[#0B101D]/95 backdrop-blur-xl border-b border-white/[0.1] px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-2xl">
+            <div class="flex items-center gap-3.5 min-w-0">
+                <button type="button" @click="editCompetitionModal = false" class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-slate-200 hover:text-white text-xs font-bold transition cursor-pointer border border-white/[0.1] shrink-0">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    <span>Tutup & Kembali</span>
+                </button>
+                <div class="min-w-0">
+                    <h3 class="text-sm sm:text-base font-black text-white truncate" x-text="
+                        selectedCompetition.code === 'BLT' ? (
+                            bltEditMode === 'tunggal_pa_a' ? 'Edit Bulu Tangkis — Tunggal Putra (Kat A)' :
+                            bltEditMode === 'tunggal_pa_b' ? 'Edit Bulu Tangkis — Tunggal Putra (Kat B)' :
+                            bltEditMode === 'tunggal_pa_c' ? 'Edit Bulu Tangkis — Tunggal Putra (Kat C)' :
+                            bltEditMode === 'tunggal_pi_a' ? 'Edit Bulu Tangkis — Tunggal Putri (Kat A)' :
+                            bltEditMode === 'tunggal_pi_b' ? 'Edit Bulu Tangkis — Tunggal Putri (Kat B)' :
+                            bltEditMode === 'tunggal_pi_c' ? 'Edit Bulu Tangkis — Tunggal Putri (Kat C)' :
+                            bltEditMode === 'ganda_pa' ? 'Edit Bulu Tangkis — Ganda Putra (PA)' :
+                            bltEditMode === 'ganda_pi' ? 'Edit Bulu Tangkis — Ganda Putri (PI)' :
+                            'Edit ' + selectedCompetition.name
+                        ) : (
+                        selectedCompetition.code === 'TMJ' ? (
+                            bltEditMode === 'tmj_pa_a' ? 'Edit Tenis Meja — Tunggal Putra (Kat A)' :
+                            bltEditMode === 'tmj_pa_b' ? 'Edit Tenis Meja — Tunggal Putra (Kat B)' :
+                            bltEditMode === 'tmj_pi_a' ? 'Edit Tenis Meja — Tunggal Putri (Kat A)' :
+                            bltEditMode === 'tmj_pi_b' ? 'Edit Tenis Meja — Tunggal Putri (Kat B)' :
+                            'Edit ' + selectedCompetition.name
+                        ) : (
+                        ['MTQ', 'POP'].includes(selectedCompetition.code) ? (
+                            'Edit ' + selectedCompetition.name + ' (' + (bltEditMode === 'pa' ? 'Putra / PA' : (bltEditMode === 'pi' ? 'Putri / PI' : 'Semua Sektor')) + ')'
+                        ) : 'Edit Cabang Perlombaan'))"></h3>
+                    <p class="text-xs text-slate-400 hidden sm:block truncate" x-text="
+                        selectedCompetition.code === 'BLT' ? (
+                            bltEditMode === 'tunggal_pa_a' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putra Kat A (Kelas 1–2 SD/MI)' :
+                            bltEditMode === 'tunggal_pa_b' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putra Kat B (Kelas 3–4 SD/MI)' :
+                            bltEditMode === 'tunggal_pa_c' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putra Kat C (Kelas 5–6 SD/MI)' :
+                            bltEditMode === 'tunggal_pi_a' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putri Kat A (Kelas 1–2 SD/MI)' :
+                            bltEditMode === 'tunggal_pi_b' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putri Kat B (Kelas 3–4 SD/MI)' :
+                            bltEditMode === 'tunggal_pi_c' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putri Kat C (Kelas 5–6 SD/MI)' :
+                            bltEditMode === 'ganda_pa' ? 'Perbarui biaya, kuota, PIC, dan status Ganda Putra (PA)' :
+                            bltEditMode === 'ganda_pi' ? 'Perbarui biaya, kuota, PIC, dan status Ganda Putri (PI)' :
+                            'Perbarui informasi cabang lomba'
+                        ) : (
+                        selectedCompetition.code === 'TMJ' ? (
+                            bltEditMode === 'tmj_pa_a' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putra Kat A (Kelas 1–3 SD/MI)' :
+                            bltEditMode === 'tmj_pa_b' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putra Kat B (Kelas 4–6 SD/MI)' :
+                            bltEditMode === 'tmj_pi_a' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putri Kat A (Kelas 1–3 SD/MI)' :
+                            bltEditMode === 'tmj_pi_b' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putri Kat B (Kelas 4–6 SD/MI)' :
+                            'Perbarui informasi cabang lomba'
+                        ) : (
+                        ['MTQ', 'POP'].includes(selectedCompetition.code) ? 'Perbarui biaya, kuota, PIC, dan status per sektor Putra (PA) & Putri (PI)' : 'Perbarui informasi cabang lomba, kuota, PIC, dan status pendaftaran'))"></p>
                 </div>
+            </div>
 
-                <form :action="'{{ url('admin/competitions') }}/' + (selectedCompetition ? selectedCompetition.id : '') + '/update'" method="POST" enctype="multipart/form-data" class="space-y-4">
-                    @csrf
+            <div class="flex items-center gap-3 shrink-0">
+                <button type="button" @click="editCompetitionModal = false" class="px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-slate-300 text-xs font-bold transition cursor-pointer">
+                    Batal
+                </button>
+                <button type="button" @click="$refs.editCompetitionForm.submit()" class="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-xs shadow-lg shadow-emerald-500/20 transition cursor-pointer flex items-center gap-1.5">
+                    <i data-lucide="check" class="w-4 h-4"></i>
+                    <span>Simpan Perubahan</span>
+                </button>
+            </div>
+        </div>
 
-                    <!-- Form Body -->
-                    <div class="space-y-3.5 max-h-[75vh] sm:max-h-[82vh] overflow-y-auto pr-1 sm:pr-2">
+        <!-- Fullpage Form Body Container -->
+        <div class="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+            <form x-ref="editCompetitionForm" :action="'{{ url('admin/competitions') }}/' + (selectedCompetition ? selectedCompetition.id : '') + '/update'" method="POST" enctype="multipart/form-data" class="space-y-6">
+                @csrf
+
+                <!-- Form Card -->
+                <div class="bg-white rounded-3xl p-5 sm:p-7 shadow-2xl space-y-5 text-slate-900 border border-slate-200">
+                    <div class="space-y-3.5 pr-1 sm:pr-2">
 
                         <!-- Row 1: Jenis Lomba, Nama Lomba, Kode Singkat -->
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
@@ -2300,14 +2310,14 @@
 
                     </div>
 
-                    <!-- Modal Footer (STICKY AT BOTTOM) -->
-                    <div class="pt-4 flex items-center justify-between border-t border-slate-100 bg-white">
-                        <button type="button" @click="if(confirm('Apakah Anda yakin ingin menghapus cabang lomba ' + selectedCompetition.name + ' beserta seluruh data pendaftarannya?')) { $refs.deleteModalForm.submit(); }" class="px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
+                    <!-- Modal Footer -->
+                    <div class="pt-5 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-100">
+                        <button type="button" @click="if(confirm('Apakah Anda yakin ingin menghapus cabang lomba ' + selectedCompetition.name + ' beserta seluruh data pendaftarannya?')) { $refs.deleteModalForm.submit(); }" class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer">
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                             <span>Hapus Cabang Lomba</span>
                         </button>
 
-                        <div class="flex items-center gap-3">
+                        <div class="w-full sm:w-auto flex items-center justify-end gap-3">
                             <button type="button" @click="editCompetitionModal = false" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer">
                                 Batal
                             </button>
@@ -2317,14 +2327,14 @@
                             </button>
                         </div>
                     </div>
-                </form>
+                </div>
+            </form>
 
-                <!-- Hidden Delete Form triggered by modal -->
-                <form x-ref="deleteModalForm" :action="'{{ url('/admin/competitions') }}/' + selectedCompetition.id + '/delete'" method="POST" class="hidden">
-                    @csrf
-                </form>
+            <!-- Hidden Delete Form triggered by modal -->
+            <form x-ref="deleteModalForm" :action="'{{ url('/admin/competitions') }}/' + selectedCompetition.id + '/delete'" method="POST" class="hidden">
+                @csrf
+            </form>
 
-            </div>
         </div>
     </div>
 
