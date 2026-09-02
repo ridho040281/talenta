@@ -986,6 +986,15 @@ class AdminSettingsController extends Controller
     }
 
     /**
+     * Dedicated Full Page to Edit WhatsApp Template
+     */
+    public function editWhatsappTemplatePage($id)
+    {
+        $template = WhatsappTemplate::findOrFail($id);
+        return view('admin.settings.whatsapp-template-edit', compact('template'));
+    }
+
+    /**
      * Update WhatsApp Template (System or Custom)
      */
     public function updateWhatsappTemplate(Request $request, $id)
@@ -1006,7 +1015,7 @@ class AdminSettingsController extends Controller
             'is_active' => $request->boolean('is_active', true),
         ]);
 
-        return redirect()->back()->with('success', 'Template pesan WhatsApp "' . $template->name . '" berhasil diperbarui.');
+        return redirect()->route('admin.settings.whatsapp.blast', ['tab' => 'templates'])->with('success', 'Template pesan WhatsApp "' . $template->name . '" berhasil diperbarui.');
     }
 
     /**

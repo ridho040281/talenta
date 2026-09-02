@@ -743,9 +743,9 @@
 
                         <div class="flex items-center gap-1.5">
                             <!-- Edit Button -->
-                            <button type="button" @click="editTemplate({{ $template->id }}, {{ json_encode($template->name) }}, {{ json_encode($template->description) }}, {{ json_encode($template->message) }}, {{ $template->is_active ? 'true' : 'false' }})" class="p-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 hover:text-white border border-white/[0.08] transition cursor-pointer" title="Edit Isi Template Ini">
-                                <i data-lucide="edit" class="w-4 h-4 pointer-events-none"></i>
-                            </button>
+                            <a href="{{ route('admin.settings.whatsapp.blast.templates.edit', $template->id) }}" class="p-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 hover:text-white border border-white/[0.08] transition" title="Edit Isi Template Ini">
+                                <i data-lucide="edit" class="w-4 h-4"></i>
+                            </a>
 
                             <!-- Delete Button (Only for Custom Templates) -->
                             @if(!$template->is_system)
@@ -1161,7 +1161,7 @@
 <script>
     function whatsappBlastApp() {
         return {
-            mainTab: 'broadcast', // 'broadcast', 'templates', 'api'
+            mainTab: '{{ request('tab', 'broadcast') }}', // 'broadcast', 'templates', 'api'
             targetAudience: 'all',
             manualNumbers: '',
             selectedFileName: '',
