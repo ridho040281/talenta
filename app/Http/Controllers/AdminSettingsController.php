@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AppSetting;
 use App\Models\BroadcastLog;
 use App\Models\Competition;
+use App\Models\CustomContact;
 use App\Models\Registration;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -377,6 +378,25 @@ class AdminSettingsController extends Controller
         }
         $publicationContacts = $publicationContacts->unique('phone')->values();
 
+        // 4. Custom / Saved Contacts (Manual & Excel imports)
+        $customContacts = CustomContact::latest()->get()->map(function ($c) {
+            $cleanPhone = preg_replace('/[^0-9]/', '', $c->phone);
+            if (str_starts_with($cleanPhone, '0')) $cleanPhone = '62' . substr($cleanPhone, 1);
+            elseif (str_starts_with($cleanPhone, '8')) $cleanPhone = '628' . substr($cleanPhone, 1);
+
+            return [
+                'id' => 'custom_' . $c->id,
+                'real_id' => $c->id,
+                'name' => $c->name,
+                'subtitle' => ($c->institution && $c->institution !== '-' ? $c->institution : 'Kontak Manual') . ' • Tersimpan',
+                'institution' => $c->institution ?: '-',
+                'phone' => $cleanPhone,
+                'display_phone' => $c->phone,
+                'type' => 'custom',
+                'category' => $c->category,
+            ];
+        })->unique('phone')->values();
+
         return view('admin.settings.whatsapp-blast', compact(
             'competitions',
             'broadcastLogs',
@@ -384,7 +404,8 @@ class AdminSettingsController extends Controller
             'wablasCredentials',
             'participantContacts',
             'committeeContacts',
-            'publicationContacts'
+            'publicationContacts',
+            'customContacts'
         ));
     }
 
@@ -641,6 +662,16 @@ class AdminSettingsController extends Controller
                     'no_peserta' => '-',
                     'link_scoreboard' => url('/'),
                 ]);
+
+                // Auto save to custom contacts
+                CustomContact::updateOrCreate(
+                    ['phone' => $cleanPhone],
+                    [
+                        'name' => $rawName ?: 'Bapak/Ibu Peserta',
+                        'institution' => ($rawSchool && $rawSchool !== '-') ? $rawSchool : null,
+                        'category' => 'manual',
+                    ]
+                );
             }
 
             $recipientsList = $recipientsList->unique('phone');
@@ -689,6 +720,16 @@ class AdminSettingsController extends Controller
                         'no_peserta' => '-',
                         'link_scoreboard' => url('/'),
                     ]);
+
+                    // Auto save to custom contacts
+                    CustomContact::updateOrCreate(
+                        ['phone' => $cleanPhone],
+                        [
+                            'name' => $rawName ?: 'Bapak/Ibu Peserta',
+                            'institution' => ($rawSchool && $rawSchool !== '-') ? $rawSchool : null,
+                            'category' => 'excel',
+                        ]
+                    );
                 }
 
                 $recipientsList = $recipientsList->unique('phone');
@@ -861,6 +902,53 @@ class AdminSettingsController extends Controller
     {
         BroadcastLog::truncate();
         return redirect()->back()->with('success', 'Seluruh riwayat broadcast WhatsApp berhasil dibersihkan.');
+    }
+
+    /**
+     * Store Single Custom Contact
+     */
+    public function storeCustomContact(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:150',
+            'phone' => 'required|string|max:30',
+            'institution' => 'nullable|string|max:150',
+            'category' => 'nullable|string|max:50',
+        ]);
+
+        $cleanPhone = preg_replace('/[^0-9]/', '', $request->phone);
+        if (str_starts_with($cleanPhone, '0')) $cleanPhone = '62' . substr($cleanPhone, 1);
+        elseif (str_starts_with($cleanPhone, '8')) $cleanPhone = '628' . substr($cleanPhone, 1);
+
+        CustomContact::updateOrCreate(
+            ['phone' => $cleanPhone],
+            [
+                'name' => $request->name,
+                'institution' => $request->institution ?: '-',
+                'category' => $request->category ?: 'manual',
+            ]
+        );
+
+        return redirect()->back()->with('success', 'Kontak baru berhasil disimpan ke Buku Kontak.');
+    }
+
+    /**
+     * Delete Custom Contact
+     */
+    public function deleteCustomContact($id)
+    {
+        $contact = CustomContact::findOrFail($id);
+        $contact->delete();
+        return redirect()->back()->with('success', 'Kontak berhasil dihapus dari Buku Kontak.');
+    }
+
+    /**
+     * Clear All Custom Contacts
+     */
+    public function clearAllCustomContacts()
+    {
+        CustomContact::truncate();
+        return redirect()->back()->with('success', 'Seluruh kontak tersimpan berhasil dibersihkan.');
     }
 
     /**

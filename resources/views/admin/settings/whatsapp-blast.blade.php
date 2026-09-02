@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'WhatsApp Blast & Gateway Gateway')
+@section('title', 'WhatsApp Blast & Gateway')
 @section('page_title', 'WhatsApp Blast & Gateway Wablas')
 
 @section('content')
@@ -49,7 +49,7 @@
     <!-- ========================================================================= -->
     <div x-show="mainTab === 'broadcast'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-6">
         
-        <!-- Quick Audience Stats (AIStarterKit Dark Style) -->
+        <!-- Quick Audience Stats -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="ai-card p-5 rounded-3xl border border-white/[0.08] shadow-lg">
                 <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Semua Pendaftar</div>
@@ -82,11 +82,11 @@
                 <form action="{{ route('admin.settings.whatsapp.blast.send') }}" method="POST" enctype="multipart/form-data" class="space-y-5">
                     @csrf
 
-                    <!-- Target Audience (Small Cards Grid) -->
+                    <!-- Target Audience Selection Grid -->
                     <div class="space-y-2.5">
                         <div class="flex items-center justify-between">
                             <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">Pilih Target Penerima Pesan</label>
-                            <span class="text-[11px] font-mono text-[#84D0FF] font-semibold" x-text="'Target Aktif: ' + targetAudience.toUpperCase()"></span>
+                            <span class="text-[11px] font-mono text-[#84D0FF] font-semibold" x-text="'Target: ' + targetAudience.toUpperCase()"></span>
                         </div>
 
                         <input type="hidden" name="target_audience" :value="targetAudience">
@@ -178,7 +178,7 @@
                                     </span>
                                 </div>
                                 <div>
-                                    <div class="text-xs font-bold leading-snug" :class="targetAudience === 'panitia' ? 'text-white font-black' : 'text-slate-200'">Panitia, PIC & Juri</div>
+                                    <div class="text-xs font-bold leading-snug" :class="targetAudience === 'panitia' ? 'text-white font-black' : 'text-slate-200'">Panitia & Juri</div>
                                     <div class="text-[10px] text-slate-400 mt-0.5">Internal panitia</div>
                                 </div>
                             </div>
@@ -270,9 +270,15 @@
 081234567890
 085712345678, Ahmad Pratama, SDN 1 Wonodadi
 089988776655, Siti Nurhaliza" class="block w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/[0.12] text-white text-xs font-mono placeholder-slate-500 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/30 leading-relaxed"></textarea>
-                        <div class="flex items-center gap-1.5 text-[11px] text-slate-400">
-                            <i data-lucide="info" class="w-3.5 h-3.5 text-emerald-400 shrink-0"></i>
-                            <span>Bisa masukkan nomor saja, atau <code>Nomor, Nama, Sekolah</code> dipisahkan koma per baris.</span>
+                        
+                        <div class="flex items-center justify-between pt-1 text-[11px]">
+                            <div class="flex items-center gap-1.5 text-slate-400">
+                                <i data-lucide="info" class="w-3.5 h-3.5 text-emerald-400 shrink-0"></i>
+                                <span>Format: <code>Nomor, Nama, Sekolah</code> dipisahkan koma per baris.</span>
+                            </div>
+                            <span class="text-emerald-400 font-medium flex items-center gap-1">
+                                <i data-lucide="check" class="w-3 h-3"></i> Otomatis tersimpan ke Buku Kontak
+                            </span>
                         </div>
                     </div>
 
@@ -347,7 +353,6 @@
             <!-- Right: Buku Kontak & Direktori Nomor WA -->
             <div class="lg:col-span-5 space-y-6">
                 
-                <!-- BUKU KONTAK & DIREKTORI NOMOR WA -->
                 <div class="ai-card rounded-3xl p-6 border border-white/[0.08] text-white shadow-2xl space-y-4">
                     <div class="flex items-center justify-between border-b border-white/[0.08] pb-3">
                         <div class="flex items-center gap-2">
@@ -356,32 +361,45 @@
                             </span>
                             <div>
                                 <h3 class="text-sm font-black text-white font-display">Buku Kontak & Direktori Nomor</h3>
-                                <p class="text-[11px] text-slate-400">Pilih kategori untuk melihat, menyalin, atau memakai kontak</p>
+                                <p class="text-[11px] text-slate-400">Pilih kategori untuk melihat, menyalin, memakai, atau mengelola kontak</p>
                             </div>
                         </div>
+
+                        <!-- Add Manual Contact Trigger Button -->
+                        <button type="button" @click="showAddContactModal = true" class="p-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 text-xs font-bold transition flex items-center gap-1 cursor-pointer" title="Tambah Kontak Baru Manual">
+                            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+                            <span class="hidden sm:inline text-[11px]">Tambah</span>
+                        </button>
                     </div>
 
-                    <!-- Category Tabs: Peserta, Panitia, Publikasi -->
-                    <div class="grid grid-cols-3 gap-1.5 p-1 bg-[#0C111D] rounded-2xl border border-white/[0.08]">
+                    <!-- Category Tabs: Peserta, Panitia, Publikasi, Tersimpan (Custom) -->
+                    <div class="grid grid-cols-4 gap-1 p-1 bg-[#0C111D] rounded-2xl border border-white/[0.08]">
                         <button type="button" @click="setContactTab('peserta')" 
                             :class="activeContactTab === 'peserta' ? 'bg-gradient-to-r from-[#4E6EFF] to-[#7A5AF8] text-white shadow-lg font-black' : 'text-slate-400 hover:text-white font-medium'"
-                            class="py-2 px-1.5 rounded-xl text-xs transition flex flex-col sm:flex-row items-center justify-center gap-1 cursor-pointer">
+                            class="py-2 px-1 rounded-xl text-[11px] transition flex flex-col items-center justify-center gap-0.5 cursor-pointer">
                             <span>🎓 Peserta</span>
-                            <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-white/20 font-mono" x-text="contactsPeserta.length"></span>
+                            <span class="px-1.5 py-0.2 rounded-full text-[9px] bg-white/20 font-mono" x-text="contactsPeserta.length"></span>
                         </button>
 
                         <button type="button" @click="setContactTab('panitia')" 
                             :class="activeContactTab === 'panitia' ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 shadow-lg font-black' : 'text-slate-400 hover:text-white font-medium'"
-                            class="py-2 px-1.5 rounded-xl text-xs transition flex flex-col sm:flex-row items-center justify-center gap-1 cursor-pointer">
+                            class="py-2 px-1 rounded-xl text-[11px] transition flex flex-col items-center justify-center gap-0.5 cursor-pointer">
                             <span>🛡️ Panitia</span>
-                            <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-black/20 font-mono" x-text="contactsPanitia.length"></span>
+                            <span class="px-1.5 py-0.2 rounded-full text-[9px] bg-black/20 font-mono" x-text="contactsPanitia.length"></span>
                         </button>
 
                         <button type="button" @click="setContactTab('publikasi')" 
-                            :class="activeContactTab === 'publikasi' ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 shadow-lg font-black' : 'text-slate-400 hover:text-white font-medium'"
-                            class="py-2 px-1.5 rounded-xl text-xs transition flex flex-col sm:flex-row items-center justify-center gap-1 cursor-pointer">
+                            :class="activeContactTab === 'publikasi' ? 'bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-lg font-black' : 'text-slate-400 hover:text-white font-medium'"
+                            class="py-2 px-1 rounded-xl text-[11px] transition flex flex-col items-center justify-center gap-0.5 cursor-pointer">
                             <span>📢 Publikasi</span>
-                            <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-black/20 font-mono" x-text="contactsPublikasi.length"></span>
+                            <span class="px-1.5 py-0.2 rounded-full text-[9px] bg-black/20 font-mono" x-text="contactsPublikasi.length"></span>
+                        </button>
+
+                        <button type="button" @click="setContactTab('custom')" 
+                            :class="activeContactTab === 'custom' ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 shadow-lg font-black' : 'text-slate-400 hover:text-white font-medium'"
+                            class="py-2 px-1 rounded-xl text-[11px] transition flex flex-col items-center justify-center gap-0.5 cursor-pointer">
+                            <span>⭐ Manual</span>
+                            <span class="px-1.5 py-0.2 rounded-full text-[9px] bg-black/20 font-mono" x-text="contactsCustom.length"></span>
                         </button>
                     </div>
 
@@ -403,7 +421,7 @@
                             <div class="p-2.5 rounded-2xl bg-[#0C111D] border border-white/[0.06] hover:border-white/[0.15] transition flex items-center justify-between gap-3 group">
                                 <div class="flex items-center gap-2.5 min-w-0">
                                     <div class="w-8 h-8 rounded-xl bg-white/[0.08] text-white flex items-center justify-center text-xs font-black shrink-0 font-display border border-white/[0.08]"
-                                        :class="activeContactTab === 'peserta' ? 'text-[#84D0FF] border-[#4E6EFF]/30' : (activeContactTab === 'panitia' ? 'text-amber-300 border-amber-500/30' : 'text-emerald-300 border-emerald-500/30')"
+                                        :class="activeContactTab === 'peserta' ? 'text-[#84D0FF] border-[#4E6EFF]/30' : (activeContactTab === 'panitia' ? 'text-amber-300 border-amber-500/30' : (activeContactTab === 'publikasi' ? 'text-pink-300 border-pink-500/30' : 'text-emerald-300 border-emerald-500/30'))"
                                         x-text="(c.name || 'P').charAt(0).toUpperCase()">
                                     </div>
                                     <div class="min-w-0">
@@ -427,6 +445,16 @@
                                         <span>Pakai</span>
                                     </button>
 
+                                    <!-- Delete Button (Only for Custom / Manual Contacts) -->
+                                    <template x-if="c.type === 'custom' && c.real_id">
+                                        <form :action="'{{ url('admin/settings/whatsapp-blast/contacts') }}/' + c.real_id + '/delete'" method="POST" onsubmit="return confirm('Hapus kontak ini dari Buku Kontak?')">
+                                            @csrf
+                                            <button type="submit" class="p-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/40 text-rose-400 border border-rose-500/30 transition cursor-pointer" title="Hapus Kontak Ini">
+                                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                            </button>
+                                        </form>
+                                    </template>
+
                                     <!-- Direct WhatsApp Link -->
                                     <a :href="'https://wa.me/' + c.phone" target="_blank" class="p-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-400 border border-emerald-500/30 transition cursor-pointer" title="Buka Chat WhatsApp">
                                         <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
@@ -445,7 +473,7 @@
 
         </div>
 
-        <!-- Broadcast History Table (AIStarterKit Glass Style) -->
+        <!-- Broadcast History Table -->
         <div class="ai-card rounded-3xl border border-white/[0.08] shadow-2xl overflow-hidden p-6 sm:p-8 space-y-4 text-white">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.08] pb-4">
                 <div>
@@ -747,6 +775,50 @@
 
     </div>
 
+    <!-- MODAL TAMBAH KONTAK MANUAL -->
+    <div x-show="showAddContactModal" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" style="display: none;">
+        <div class="ai-card w-full max-w-md p-6 rounded-3xl border border-white/[0.12] text-white shadow-2xl space-y-4" @click.outside="showAddContactModal = false">
+            <div class="flex items-center justify-between border-b border-white/[0.08] pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="p-1.5 rounded-xl bg-amber-500/20 text-amber-400">
+                        <i data-lucide="user-plus" class="w-4 h-4"></i>
+                    </span>
+                    <h3 class="text-sm font-black font-display text-white">Tambah Kontak Manual Baru</h3>
+                </div>
+                <button type="button" @click="showAddContactModal = false" class="text-slate-400 hover:text-white p-1">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <form action="{{ route('admin.settings.whatsapp.blast.contacts.store') }}" method="POST" class="space-y-3.5">
+                @csrf
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Nama Penerima / Kontak *</label>
+                    <input type="text" name="name" required placeholder="Contoh: Bpk. H. Supriyadi" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/[0.1] text-xs text-white outline-none focus:border-[#7A5AF8]">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Nomor WhatsApp *</label>
+                    <input type="text" name="phone" required placeholder="Contoh: 081234567890" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/[0.1] text-xs font-mono text-white outline-none focus:border-[#7A5AF8]">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Nama Instansi / Sekolah (Opsional)</label>
+                    <input type="text" name="institution" placeholder="Contoh: MI Al-Hidayah Blitar" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/[0.1] text-xs text-white outline-none focus:border-[#7A5AF8]">
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-white/[0.08]">
+                    <button type="button" @click="showAddContactModal = false" class="px-4 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs text-slate-300 font-bold">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-xs text-slate-950 font-black shadow-lg shadow-amber-500/20">
+                        Simpan ke Kontak
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 </div>
 
 @push('scripts')
@@ -759,9 +831,11 @@
             selectedFileName: '',
             activeContactTab: 'peserta',
             contactSearch: '',
+            showAddContactModal: false,
             contactsPeserta: @json($participantContacts),
             contactsPanitia: @json($committeeContacts),
             contactsPublikasi: @json($publicationContacts),
+            contactsCustom: @json($customContacts),
             messageText: 'Yth. Official {nama_sekolah} & Peserta {nama_peserta},\n\nTerima kasih telah mendaftar di ajang TALENTA 2026 MTsN 1 Blitar pada cabang {cabang_lomba}.\n\nNomor peserta resmi Anda adalah: {no_peserta}.\n\nPantau live scoreboard dan hasil undian melalui:\n{link_scoreboard}\n\nSalam hangat,\nPanitia TALENTA 2026',
             
             // API Credential States
@@ -824,10 +898,10 @@
             },
 
             get manualCountText() {
-                if (!this.manualNumbers || !this.manualNumbers.trim()) return '0 Nomor Terdeteksi';
+                if (!this.manualNumbers || !this.manualNumbers.trim()) return '0 Nomor';
                 const lines = this.manualNumbers.trim().split(/[\r\n]+/);
                 const count = lines.filter(l => l.replace(/[^0-9]/g, '').length >= 8).length;
-                return `🟢 ${count} Nomor Terdeteksi`;
+                return `${count} Nomor`;
             },
             
             get filteredContacts() {
@@ -835,6 +909,7 @@
                 if (this.activeContactTab === 'peserta') list = this.contactsPeserta;
                 else if (this.activeContactTab === 'panitia') list = this.contactsPanitia;
                 else if (this.activeContactTab === 'publikasi') list = this.contactsPublikasi;
+                else if (this.activeContactTab === 'custom') list = this.contactsCustom;
 
                 if (!this.contactSearch || !this.contactSearch.trim()) return list;
                 const q = this.contactSearch.toLowerCase();

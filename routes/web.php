@@ -177,6 +177,9 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->name('admin.')-
         Route::post('/whatsapp-blast', [AdminSettingsController::class, 'sendWhatsappBlast'])->name('whatsapp.blast.send');
         Route::post('/whatsapp-blast/logs/{id}/delete', [AdminSettingsController::class, 'deleteBroadcastLog'])->name('whatsapp.blast.logs.delete');
         Route::post('/whatsapp-blast/logs/clear-all', [AdminSettingsController::class, 'clearAllBroadcastLogs'])->name('whatsapp.blast.logs.clear-all');
+        Route::post('/whatsapp-blast/contacts', [AdminSettingsController::class, 'storeCustomContact'])->name('whatsapp.blast.contacts.store');
+        Route::post('/whatsapp-blast/contacts/{id}/delete', [AdminSettingsController::class, 'deleteCustomContact'])->name('whatsapp.blast.contacts.delete');
+        Route::post('/whatsapp-blast/contacts/clear-all', [AdminSettingsController::class, 'clearAllCustomContacts'])->name('whatsapp.blast.contacts.clear-all');
         Route::post('/whatsapp-blast/save-credentials', [AdminSettingsController::class, 'saveWablasCredentials'])->name('whatsapp.blast.save-credentials');
         Route::post('/whatsapp-blast/test-connection', [AdminSettingsController::class, 'testWablasConnection'])->name('whatsapp.blast.test-connection');
         Route::get('/changelog', [AdminSettingsController::class, 'changelog'])->name('changelog');
