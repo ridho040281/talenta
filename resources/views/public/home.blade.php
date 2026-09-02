@@ -95,7 +95,7 @@
                 </div>
                 <div class="min-w-0">
                     <div class="text-base sm:text-2xl font-black text-white leading-none">{{ $stats['total_schools'] }}</div>
-                    <div class="text-[10px] sm:text-[11px] font-medium text-slate-400 mt-1 truncate">Kontingen</div>
+                    <div class="text-[10px] sm:text-[11px] font-medium text-slate-400 mt-1 truncate">Sekolah / Madrasah</div>
                 </div>
             </div>
 
