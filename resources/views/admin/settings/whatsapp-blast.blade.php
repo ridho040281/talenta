@@ -372,34 +372,34 @@
                         </button>
                     </div>
 
-                    <!-- Category Tabs: Peserta, Panitia, Publikasi, Tersimpan (Custom) -->
-                    <div class="grid grid-cols-4 gap-1 p-1 bg-[#0C111D] rounded-2xl border border-white/[0.08]">
+                    <!-- Category Tabs: Peserta, Panitia, Publikasi, Tersimpan (Custom) - BERJAJAR 1 BARIS -->
+                    <div class="flex items-center gap-1.5 p-1 bg-[#0C111D] rounded-2xl border border-white/[0.08]">
                         <button type="button" @click="setContactTab('peserta')" 
-                            :class="activeContactTab === 'peserta' ? 'bg-gradient-to-r from-[#4E6EFF] to-[#7A5AF8] text-white shadow-lg font-black' : 'text-slate-400 hover:text-white font-medium'"
-                            class="py-2 px-1 rounded-xl text-[11px] transition flex flex-col items-center justify-center gap-0.5 cursor-pointer">
+                            :class="activeContactTab === 'peserta' ? 'bg-gradient-to-r from-[#4E6EFF] to-[#7A5AF8] text-white shadow-lg font-black' : 'text-slate-400 hover:text-white font-medium hover:bg-white/[0.04]'"
+                            class="flex-1 py-2 px-2 rounded-xl text-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
                             <span>🎓 Peserta</span>
-                            <span class="px-1.5 py-0.2 rounded-full text-[9px] bg-white/20 font-mono" x-text="contactsPeserta.length"></span>
+                            <span class="px-1.5 py-0.5 rounded-full text-[10px] font-mono" :class="activeContactTab === 'peserta' ? 'bg-white/25 text-white' : 'bg-white/[0.06] text-slate-400'" x-text="contactsPeserta.length"></span>
                         </button>
 
                         <button type="button" @click="setContactTab('panitia')" 
-                            :class="activeContactTab === 'panitia' ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 shadow-lg font-black' : 'text-slate-400 hover:text-white font-medium'"
-                            class="py-2 px-1 rounded-xl text-[11px] transition flex flex-col items-center justify-center gap-0.5 cursor-pointer">
+                            :class="activeContactTab === 'panitia' ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 shadow-lg font-black' : 'text-slate-400 hover:text-white font-medium hover:bg-white/[0.04]'"
+                            class="flex-1 py-2 px-2 rounded-xl text-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
                             <span>🛡️ Panitia</span>
-                            <span class="px-1.5 py-0.2 rounded-full text-[9px] bg-black/20 font-mono" x-text="contactsPanitia.length"></span>
+                            <span class="px-1.5 py-0.5 rounded-full text-[10px] font-mono" :class="activeContactTab === 'panitia' ? 'bg-black/25 text-slate-950 font-bold' : 'bg-white/[0.06] text-slate-400'" x-text="contactsPanitia.length"></span>
                         </button>
 
                         <button type="button" @click="setContactTab('publikasi')" 
-                            :class="activeContactTab === 'publikasi' ? 'bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-lg font-black' : 'text-slate-400 hover:text-white font-medium'"
-                            class="py-2 px-1 rounded-xl text-[11px] transition flex flex-col items-center justify-center gap-0.5 cursor-pointer">
+                            :class="activeContactTab === 'publikasi' ? 'bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-lg font-black' : 'text-slate-400 hover:text-white font-medium hover:bg-white/[0.04]'"
+                            class="flex-1 py-2 px-2 rounded-xl text-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
                             <span>📢 Publikasi</span>
-                            <span class="px-1.5 py-0.2 rounded-full text-[9px] bg-black/20 font-mono" x-text="contactsPublikasi.length"></span>
+                            <span class="px-1.5 py-0.5 rounded-full text-[10px] font-mono" :class="activeContactTab === 'publikasi' ? 'bg-white/25 text-white' : 'bg-white/[0.06] text-slate-400'" x-text="contactsPublikasi.length"></span>
                         </button>
 
                         <button type="button" @click="setContactTab('custom')" 
-                            :class="activeContactTab === 'custom' ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 shadow-lg font-black' : 'text-slate-400 hover:text-white font-medium'"
-                            class="py-2 px-1 rounded-xl text-[11px] transition flex flex-col items-center justify-center gap-0.5 cursor-pointer">
+                            :class="activeContactTab === 'custom' ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 shadow-lg font-black' : 'text-slate-400 hover:text-white font-medium hover:bg-white/[0.04]'"
+                            class="flex-1 py-2 px-2 rounded-xl text-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
                             <span>⭐ Manual</span>
-                            <span class="px-1.5 py-0.2 rounded-full text-[9px] bg-black/20 font-mono" x-text="contactsCustom.length"></span>
+                            <span class="px-1.5 py-0.5 rounded-full text-[10px] font-mono" :class="activeContactTab === 'custom' ? 'bg-black/25 text-slate-950 font-bold' : 'bg-white/[0.06] text-slate-400'" x-text="contactsCustom.length"></span>
                         </button>
                     </div>
 
