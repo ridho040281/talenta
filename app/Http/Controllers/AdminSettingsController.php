@@ -978,11 +978,19 @@ class AdminSettingsController extends Controller
             'name' => $request->name,
             'description' => $request->description ?: 'Template pesan kustom',
             'message' => $request->message,
-            'is_active' => true,
+            'is_active' => $request->has('is_active') ? (bool)$request->is_active : true,
             'is_system' => false,
         ]);
 
-        return redirect()->back()->with('success', 'Template pesan kustom baru berhasil ditambahkan.');
+        return redirect()->route('admin.settings.whatsapp.blast', ['tab' => 'templates'])->with('success', 'Template pesan kustom baru berhasil ditambahkan.');
+    }
+
+    /**
+     * Dedicated Full Page to Create New Custom WhatsApp Template
+     */
+    public function createWhatsappTemplatePage()
+    {
+        return view('admin.settings.whatsapp-template-create');
     }
 
     /**

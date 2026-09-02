@@ -182,6 +182,7 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->name('admin.')-
         Route::post('/whatsapp-blast/contacts/{id}/delete', [AdminSettingsController::class, 'deleteCustomContact'])->name('whatsapp.blast.contacts.delete');
         Route::post('/whatsapp-blast/contacts/clear-all', [AdminSettingsController::class, 'clearAllCustomContacts'])->name('whatsapp.blast.contacts.clear-all');
         Route::post('/whatsapp-blast/templates', [AdminSettingsController::class, 'storeWhatsappTemplate'])->name('whatsapp.blast.templates.store');
+        Route::get('/whatsapp-blast/templates/create', [AdminSettingsController::class, 'createWhatsappTemplatePage'])->name('whatsapp.blast.templates.create');
         Route::get('/whatsapp-blast/templates/{id}/edit', [AdminSettingsController::class, 'editWhatsappTemplatePage'])->name('whatsapp.blast.templates.edit');
         Route::post('/whatsapp-blast/templates/{id}/update', [AdminSettingsController::class, 'updateWhatsappTemplate'])->name('whatsapp.blast.templates.update');
         Route::post('/whatsapp-blast/templates/{id}/delete', [AdminSettingsController::class, 'deleteWhatsappTemplate'])->name('whatsapp.blast.templates.delete');

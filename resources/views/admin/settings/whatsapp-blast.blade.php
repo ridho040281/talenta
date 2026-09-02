@@ -610,10 +610,10 @@
                 </div>
             </div>
 
-            <button type="button" @click="openCreateTemplateModal()" class="px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2 cursor-pointer shrink-0 transition">
+            <a href="{{ route('admin.settings.whatsapp.blast.templates.create') }}" class="px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2 cursor-pointer shrink-0 transition">
                 <i data-lucide="plus-circle" class="w-4 h-4"></i>
                 <span>Buat Template Kustom Baru</span>
-            </button>
+            </a>
         </div>
 
         <!-- 6 Trigger Otomatis Banner Notice (Peserta, PIC Lomba & Bendahara) -->
@@ -1224,10 +1224,7 @@
             },
 
             openCreateTemplateModal() {
-                this.showCreateTemplateModal = true;
-                this.$nextTick(() => {
-                    if (window.lucide) lucide.createIcons();
-                });
+                window.location.href = "{{ route('admin.settings.whatsapp.blast.templates.create') }}";
             },
 
             editTemplate(id, name, description, message, isActive) {
