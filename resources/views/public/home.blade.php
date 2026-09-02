@@ -20,7 +20,7 @@
 
                     <!-- Main Heading: Selamat Datang -->
                     <h1 class="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-snug sm:leading-tight font-display">
-                        @if(!empty($appSettings['hero_title']) && $appSettings['hero_title'] !== 'Daftar, Tanding & Raih Prestasi Juara')
+                        @if(!empty($appSettings['hero_title']))
                             {!! nl2br(e($appSettings['hero_title'])) !!}
                         @else
                             Selamat Datang di <span class="text-white">{{ $appSettings['app_name'] ?? 'TALENTA' }}</span><br/>
@@ -28,14 +28,12 @@
                         @endif
                     </h1>
 
-                    <!-- Subtitle -->
-                    <p class="text-xs sm:text-sm text-slate-300 max-w-xl mx-auto lg:mx-0 leading-relaxed font-normal">
-                        @if(!empty($appSettings['hero_subtitle']) && !str_starts_with($appSettings['hero_subtitle'], 'Platform manajemen perlombaan modern'))
+                    <!-- Subtitle / Deskripsi Hero -->
+                    @if(!empty($appSettings['hero_subtitle']))
+                        <p class="text-xs sm:text-sm text-slate-300 max-w-xl mx-auto lg:mx-0 leading-relaxed font-normal">
                             {{ $appSettings['hero_subtitle'] }}
-                        @else
-                            Platform manajemen perlombaan <strong class="text-white">{{ $appSettings['institution_name'] ?? 'MTsN 1 Blitar' }}</strong>.
-                        @endif
-                    </p>
+                        </p>
+                    @endif
 
                 </div>
 
