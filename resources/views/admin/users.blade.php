@@ -26,41 +26,75 @@
         </div>
 
         <!-- Filter & Search Bar -->
-        <form method="GET" action="{{ route('admin.users') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 pt-3 border-t border-white/[0.08]">
-            <div class="sm:col-span-2 md:col-span-2 relative">
-                <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3.5 top-3"></i>
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama, jabatan, email, no WA, atau instansi..." class="w-full pl-10 pr-4 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-medium text-white placeholder-slate-500 outline-none focus:border-[#7A5AF8] focus:ring-2 focus:ring-[#7A5AF8]/30">
+        <form method="GET" action="{{ route('admin.users') }}" class="space-y-3 pt-3 border-t border-white/[0.08]">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+                <div class="sm:col-span-2 md:col-span-2 relative">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3.5 top-3"></i>
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama, jabatan, email, no WA, atau instansi..." class="w-full pl-10 pr-9 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-medium text-white placeholder-slate-500 outline-none focus:border-[#7A5AF8] focus:ring-2 focus:ring-[#7A5AF8]/30">
+                    @if(request('search'))
+                        <a href="{{ route('admin.users', request()->except('search')) }}" class="absolute right-3 top-2.5 text-slate-400 hover:text-white" title="Hapus pencarian">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </a>
+                    @endif
+                </div>
+
+                <div>
+                    <select name="role" onchange="this.form.submit()" class="w-full px-3.5 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8] focus:ring-2 focus:ring-[#7A5AF8]/30 cursor-pointer">
+                        <option value="all" {{ !request('role') || request('role') == 'all' ? 'selected' : '' }}>Semua Role / Hak Akses</option>
+                        <option value="superadmin" {{ request('role') == 'superadmin' ? 'selected' : '' }}>👑 Super Administrator</option>
+                        <option value="pic_lomba" {{ request('role') == 'pic_lomba' ? 'selected' : '' }}>🛡️ PIC Cabang Lomba</option>
+                        <option value="juri" {{ request('role') == 'juri' ? 'selected' : '' }}>⚖️ Dewan Juri / Wasit</option>
+                        <option value="peserta" {{ request('role') == 'peserta' ? 'selected' : '' }}>🎓 Peserta / Official</option>
+                    </select>
+                </div>
+
+                <div>
+                    <select name="status" onchange="this.form.submit()" class="w-full px-3.5 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8] focus:ring-2 focus:ring-[#7A5AF8]/30 cursor-pointer">
+                        <option value="all" {{ !request('status') || request('status') == 'all' ? 'selected' : '' }}>Semua Status</option>
+                        <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>🟢 Hanya Aktif</option>
+                        <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>🔴 Hanya Nonaktif</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button type="submit" class="w-full py-2 px-4 rounded-xl bg-white/[0.08] hover:bg-white/[0.12] text-white text-xs font-bold transition flex items-center justify-center gap-1.5 border border-white/[0.1] cursor-pointer">
+                        <i data-lucide="filter" class="w-3.5 h-3.5"></i>
+                        <span>Terapkan</span>
+                    </button>
+                    @if(request('search') || (request('role') && request('role') !== 'all') || (request('status') && request('status') !== 'all'))
+                        <a href="{{ route('admin.users') }}" class="p-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 transition shrink-0 flex items-center justify-center" title="Reset Semua Filter">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                        </a>
+                    @endif
+                </div>
             </div>
 
-            <div>
-                <select name="role" class="w-full px-3.5 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8] focus:ring-2 focus:ring-[#7A5AF8]/30">
-                    <option value="all" {{ request('role') == 'all' ? 'selected' : '' }}>Semua Role / Hak Akses</option>
-                    <option value="superadmin" {{ request('role') == 'superadmin' ? 'selected' : '' }}>👑 Super Administrator</option>
-                    <option value="pic_lomba" {{ request('role') == 'pic_lomba' ? 'selected' : '' }}>🛡️ PIC Cabang Lomba</option>
-                    <option value="juri" {{ request('role') == 'juri' ? 'selected' : '' }}>⚖️ Dewan Juri / Wasit</option>
-                    <option value="peserta" {{ request('role') == 'peserta' ? 'selected' : '' }}>🎓 Peserta / Official</option>
-                </select>
-            </div>
-
-            <div>
-                <select name="status" class="w-full px-3.5 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8] focus:ring-2 focus:ring-[#7A5AF8]/30">
-                    <option value="all" {{ request('status') == 'all' ? 'selected' : '' }}>Semua Status</option>
-                    <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>🟢 Hanya Aktif</option>
-                    <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>🔴 Hanya Nonaktif</option>
-                </select>
-            </div>
-
-            <div class="flex items-center gap-2">
-                <button type="submit" class="w-full py-2 px-4 rounded-xl bg-white/[0.08] hover:bg-white/[0.12] text-white text-xs font-bold transition flex items-center justify-center gap-1.5 border border-white/[0.1] cursor-pointer">
-                    <i data-lucide="filter" class="w-3.5 h-3.5"></i>
-                    <span>Terapkan</span>
-                </button>
-                @if(request('search') || (request('role') && request('role') !== 'all') || (request('status') && request('status') !== 'all'))
-                    <a href="{{ route('admin.users') }}" class="p-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-400 hover:text-white border border-white/[0.08] transition shrink-0" title="Reset Filter">
-                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+            @if(request('search') || (request('role') && request('role') !== 'all') || (request('status') && request('status') !== 'all'))
+                <div class="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-white/[0.05] flex-wrap gap-2">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Filter Aktif:</span>
+                        @if(request('role') && request('role') !== 'all')
+                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#7A5AF8]/20 text-[#A594FD] border border-[#7A5AF8]/30">
+                                Role: {{ request('role') === 'juri' ? '⚖️ Dewan Juri / Wasit' : (request('role') === 'pic_lomba' ? '🛡️ PIC Cabang Lomba' : (request('role') === 'superadmin' ? '👑 Super Administrator' : '🎓 Peserta / Official')) }}
+                            </span>
+                        @endif
+                        @if(request('status') && request('status') !== 'all')
+                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold {{ request('status') === 'active' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border-rose-500/30' }} border">
+                                Status: {{ request('status') === 'active' ? '🟢 Aktif' : '🔴 Nonaktif' }}
+                            </span>
+                        @endif
+                        @if(request('search'))
+                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                                Kata Kunci: "{{ request('search') }}"
+                            </span>
+                        @endif
+                    </div>
+                    <a href="{{ route('admin.users') }}" class="text-[11px] text-[#84D0FF] hover:underline font-bold flex items-center gap-1">
+                        <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+                        <span>Reset Semua Filter</span>
                     </a>
-                @endif
-            </div>
+                </div>
+            @endif
         </form>
     </div>
 
