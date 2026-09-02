@@ -845,6 +845,25 @@ class AdminSettingsController extends Controller
     }
 
     /**
+     * Delete Single Broadcast Log
+     */
+    public function deleteBroadcastLog($id)
+    {
+        $log = BroadcastLog::findOrFail($id);
+        $log->delete();
+        return redirect()->back()->with('success', 'Riwayat broadcast WhatsApp berhasil dihapus.');
+    }
+
+    /**
+     * Clear All Broadcast Logs
+     */
+    public function clearAllBroadcastLogs()
+    {
+        BroadcastLog::truncate();
+        return redirect()->back()->with('success', 'Seluruh riwayat broadcast WhatsApp berhasil dibersihkan.');
+    }
+
+    /**
      * Changelog & System Updates History
      */
     public function changelog()

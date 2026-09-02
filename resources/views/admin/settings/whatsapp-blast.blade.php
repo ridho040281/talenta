@@ -258,7 +258,13 @@
                                 <i data-lucide="edit-3" class="w-3.5 h-3.5 text-emerald-400"></i>
                                 <span>Daftar Nomor WhatsApp (Input Manual)</span>
                             </label>
-                            <span class="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30" x-text="manualCountText"></span>
+                            <div class="flex items-center gap-2">
+                                <button type="button" x-show="manualNumbers.trim().length > 0" @click="manualNumbers = ''" class="text-[10px] font-bold text-rose-400 hover:text-rose-300 transition flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-500/10 border border-rose-500/20 cursor-pointer">
+                                    <i data-lucide="trash-2" class="w-3 h-3"></i>
+                                    <span>Bersihkan Kotak</span>
+                                </button>
+                                <span class="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30" x-text="manualCountText"></span>
+                            </div>
                         </div>
                         <textarea name="manual_numbers" x-model="manualNumbers" rows="4" placeholder="Contoh format per baris:
 081234567890
@@ -441,11 +447,20 @@
 
         <!-- Broadcast History Table (AIStarterKit Glass Style) -->
         <div class="ai-card rounded-3xl border border-white/[0.08] shadow-2xl overflow-hidden p-6 sm:p-8 space-y-4 text-white">
-            <div class="flex items-center justify-between border-b border-white/[0.08] pb-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.08] pb-4">
                 <div>
                     <h3 class="text-base sm:text-lg font-black text-white font-display">Riwayat Pengiriman WhatsApp Blast</h3>
                     <p class="text-xs text-slate-400">Daftar rekaman broadcast yang telah dikirimkan oleh administrator</p>
                 </div>
+                @if($broadcastLogs->count() > 0)
+                    <form action="{{ route('admin.settings.whatsapp.blast.logs.clear-all') }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus SELURUH riwayat broadcast WhatsApp?')">
+                        @csrf
+                        <button type="submit" class="px-3.5 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            <span>Bersihkan Semua Riwayat</span>
+                        </button>
+                    </form>
+                @endif
             </div>
 
             <div class="overflow-x-auto">
@@ -458,13 +473,14 @@
                             <th class="py-3.5 px-4 text-center">Jumlah Penerima</th>
                             <th class="py-3.5 px-4">Cuplikan Pesan</th>
                             <th class="py-3.5 px-4">Status</th>
+                            <th class="py-3.5 px-4 text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-white/[0.04] font-medium">
                         @forelse($broadcastLogs as $log)
                             <tr class="hover:bg-white/[0.02] transition text-xs">
                                 <td class="py-3.5 px-4 font-mono text-slate-400">{{ $log->created_at->format('d/m/Y H:i') }}</td>
-                                <td class="py-3.5 px-4 font-bold text-white">{{ $log->sender->name }}</td>
+                                <td class="py-3.5 px-4 font-bold text-white">{{ $log->sender->name ?? 'Admin' }}</td>
                                 <td class="py-3.5 px-4 capitalize text-[#84D0FF]">
                                     {{ $log->target_competition ? 'Lomba: ' . $log->target_competition : $log->target_audience }}
                                 </td>
@@ -475,10 +491,18 @@
                                         Terkirim
                                     </span>
                                 </td>
+                                <td class="py-3.5 px-4 text-center">
+                                    <form action="{{ route('admin.settings.whatsapp.blast.logs.delete', $log->id) }}" method="POST" onsubmit="return confirm('Hapus log riwayat ini?')">
+                                        @csrf
+                                        <button type="submit" class="p-1.5 rounded-lg bg-white/[0.05] hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-white/[0.08] hover:border-rose-500/30 transition cursor-pointer" title="Hapus Riwayat Ini">
+                                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                    </form>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="py-8 text-center text-slate-500">Belum ada riwayat pengiriman broadcast.</td>
+                                <td colspan="7" class="py-8 text-center text-slate-500">Belum ada riwayat pengiriman broadcast.</td>
                             </tr>
                         @endforelse
                     </tbody>
