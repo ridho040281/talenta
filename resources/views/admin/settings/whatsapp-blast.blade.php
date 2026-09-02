@@ -1105,8 +1105,8 @@
     </div>
 
     <!-- MODAL 3: EDIT TEMPLATE -->
-    <div x-show="showEditTemplateModal" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" style="display: none;">
-        <div class="ai-card w-full max-w-lg p-6 sm:p-7 rounded-3xl border border-white/[0.12] text-white shadow-2xl space-y-4" @click.outside="showEditTemplateModal = false">
+    <div x-show="showEditTemplateModal" x-cloak x-transition.opacity class="fixed inset-0 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" style="display: none; z-index: 99999;">
+        <div class="ai-card w-full max-w-lg p-6 sm:p-7 rounded-3xl border border-white/[0.12] text-white shadow-2xl space-y-4">
             <div class="flex items-center justify-between border-b border-white/[0.08] pb-3">
                 <div class="flex items-center gap-2">
                     <span class="p-1.5 rounded-xl bg-[#7A5AF8]/20 text-[#A594FD]">
