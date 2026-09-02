@@ -1086,11 +1086,13 @@
     </div>
 
     <!-- Create Competition Modal -->
-    <div x-show="createModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div x-show="createModal" @click="createModal = false" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"></div>
+    <div x-show="createModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
+        <div class="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
+            <!-- Backdrop -->
+            <div x-show="createModal" @click="createModal = false" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"></div>
 
-            <div x-show="createModal" class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl sm:w-full p-6 sm:p-8 space-y-6">
+            <!-- Modal Content (Crisp, High Z-Index) -->
+            <div x-show="createModal" class="relative z-10 inline-block bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all my-8 sm:align-middle sm:max-w-xl w-full p-6 sm:p-8 space-y-6">
                 
                 <div class="flex items-center justify-between border-b border-slate-100 pb-4">
                     <h3 class="text-lg font-black text-slate-900">Tambah Cabang Lomba Baru</h3>
@@ -1309,11 +1311,13 @@
     </div>
 
     <!-- Create Timeline Modal -->
-    <div x-show="createTimelineModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div x-show="createTimelineModal" @click="createTimelineModal = false" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"></div>
+    <div x-show="createTimelineModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
+        <div class="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
+            <!-- Backdrop -->
+            <div x-show="createTimelineModal" @click="createTimelineModal = false" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"></div>
 
-            <div x-show="createTimelineModal" class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full p-6 sm:p-8 space-y-6">
+            <!-- Modal Content (Crisp, High Z-Index) -->
+            <div x-show="createTimelineModal" class="relative z-10 inline-block bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all my-8 sm:align-middle sm:max-w-lg w-full p-6 sm:p-8 space-y-6">
                 
                 <div class="flex items-center justify-between border-b border-slate-100 pb-4">
                     <h3 class="text-lg font-black text-slate-900">Tambah Jadwal Rangkaian Acara Baru</h3>
@@ -1379,11 +1383,13 @@
     </div>
 
     <!-- Edit Timeline Modal -->
-    <div x-show="editTimelineModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div x-show="editTimelineModal" @click="editTimelineModal = false" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"></div>
+    <div x-show="editTimelineModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
+        <div class="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
+            <!-- Backdrop -->
+            <div x-show="editTimelineModal" @click="editTimelineModal = false" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"></div>
 
-            <div x-show="editTimelineModal" class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full p-6 sm:p-8 space-y-6">
+            <!-- Modal Content (Crisp, High Z-Index) -->
+            <div x-show="editTimelineModal" class="relative z-10 inline-block bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all my-8 sm:align-middle sm:max-w-lg w-full p-6 sm:p-8 space-y-6">
                 
                 <div class="flex items-center justify-between border-b border-slate-100 pb-4">
                     <h3 class="text-lg font-black text-slate-900">Edit Jadwal Rangkaian Acara</h3>
@@ -1449,11 +1455,13 @@
     </div>
 
     <!-- Edit Competition Modal -->
-    <div x-show="editCompetitionModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div x-show="editCompetitionModal" @click="editCompetitionModal = false" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"></div>
+    <div x-show="editCompetitionModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
+        <div class="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
+            <!-- Backdrop -->
+            <div x-show="editCompetitionModal" @click="editCompetitionModal = false" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"></div>
 
-            <div x-show="editCompetitionModal" class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-4 sm:align-middle sm:max-w-4xl lg:max-w-5xl sm:w-full p-5 sm:p-7 space-y-4">
+            <!-- Modal Content (Crisp, High Z-Index) -->
+            <div x-show="editCompetitionModal" class="relative z-10 inline-block bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all my-4 sm:align-middle sm:max-w-4xl lg:max-w-5xl w-full p-5 sm:p-7 space-y-4">
                 
                 <!-- Modal Header (Fixed) -->
                 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -2321,11 +2329,13 @@
     </div>
 
     <!-- Create Category Modal -->
-    <div x-show="createCategoryModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div x-show="createCategoryModal" @click="createCategoryModal = false" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"></div>
+    <div x-show="createCategoryModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
+        <div class="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
+            <!-- Backdrop -->
+            <div x-show="createCategoryModal" @click="createCategoryModal = false" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"></div>
 
-            <div x-show="createCategoryModal" class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full p-6 sm:p-8 space-y-6">
+            <!-- Modal Content (Crisp, High Z-Index) -->
+            <div x-show="createCategoryModal" class="relative z-10 inline-block bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all my-8 sm:align-middle sm:max-w-lg w-full p-6 sm:p-8 space-y-6">
                 
                 <div class="flex items-center justify-between border-b border-slate-100 pb-4">
                     <div>
@@ -2385,11 +2395,13 @@
     </div>
 
     <!-- Edit Category Modal -->
-    <div x-show="editCategoryModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div x-show="editCategoryModal" @click="editCategoryModal = false" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"></div>
+    <div x-show="editCategoryModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
+        <div class="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
+            <!-- Backdrop -->
+            <div x-show="editCategoryModal" @click="editCategoryModal = false" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"></div>
 
-            <div x-show="editCategoryModal" class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full p-6 sm:p-8 space-y-6">
+            <!-- Modal Content (Crisp, High Z-Index) -->
+            <div x-show="editCategoryModal" class="relative z-10 inline-block bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all my-8 sm:align-middle sm:max-w-lg w-full p-6 sm:p-8 space-y-6">
                 
                 <div class="flex items-center justify-between border-b border-slate-100 pb-4">
                     <div>
