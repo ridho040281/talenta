@@ -18,9 +18,17 @@
                         <img src="{{ asset('images/ahlan ptsp.png') }}" alt="Ahlan Wa Sahlan" class="h-10 sm:h-14 lg:h-20 w-auto max-w-[200px] sm:max-w-none object-contain drop-shadow-lg hover:scale-105 transition-transform duration-300">
                     </div>
 
-                    <!-- Main Heading: Selamat Datang -->
+                    <!-- Pill Badge / Announcement Banner (if any) -->
+                    @if(!empty($appSettings['announcement_banner']))
+                        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.06] border border-white/[0.12] text-[#84D0FF] text-xs font-bold shadow-lg backdrop-blur-md">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span>{{ $appSettings['announcement_banner'] }}</span>
+                        </div>
+                    @endif
+
+                    <!-- Main Heading: Selamat Datang / Headline Hero -->
                     <h1 class="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-snug sm:leading-tight font-display">
-                        @if(!empty($appSettings['hero_title']) && $appSettings['hero_title'] !== 'Daftar, Tanding & Raih Prestasi Juara')
+                        @if(!empty($appSettings['hero_title']))
                             {!! nl2br(e($appSettings['hero_title'])) !!}
                         @else
                             Selamat Datang di <span class="text-white">{{ $appSettings['app_name'] ?? 'TALENTA' }}</span><br/>
@@ -28,24 +36,24 @@
                         @endif
                     </h1>
 
-                    <!-- Subtitle -->
+                    <!-- Subtitle / Deskripsi Hero -->
                     <p class="text-xs sm:text-sm text-slate-300 max-w-xl mx-auto lg:mx-0 leading-relaxed font-normal">
-                        @if(!empty($appSettings['hero_subtitle']) && !str_starts_with($appSettings['hero_subtitle'], 'Platform manajemen perlombaan modern'))
-                            {{ $appSettings['hero_subtitle'] }}
-                        @else
-                            Platform manajemen perlombaan <strong class="text-white">{{ $appSettings['institution_name'] ?? 'MTsN 1 Blitar' }}</strong>.
-                        @endif
+                        {{ $appSettings['hero_subtitle'] ?? ('Platform manajemen perlombaan ' . ($appSettings['institution_name'] ?? 'MTsN 1 Blitar') . '. Terbuka untuk SD/MI sederajat dalam berbagai cabang perlombaan bergengsi.') }}
                     </p>
 
                 </div>
 
-                <!-- Right Column: Logo Milad 57 MTsN 1 Blitar -->
+                <!-- Right Column: Logo Milad 57 / Event Logo MTsN 1 Blitar -->
                 <div class="lg:col-span-5 relative flex items-center justify-center">
                     <div class="relative mx-auto flex flex-col items-center justify-center p-2">
                         
-                        <!-- Logo Milad 57 Image -->
+                        <!-- Logo Image -->
                         <div class="relative z-10 group flex items-center justify-center">
-                            <img src="{{ asset('images/logo milad 57.png') }}" alt="Logo Milad 57 MTsN 1 Blitar" class="max-h-[160px] sm:max-h-[220px] lg:max-h-[270px] w-auto max-w-[140px] sm:max-w-[200px] lg:max-w-[250px] object-contain drop-shadow-[0_10px_25px_rgba(0,0,0,0.5)] group-hover:scale-105 transition-transform duration-500">
+                            @if(!empty($appSettings['event_logo']))
+                                <img src="{{ asset('storage/' . $appSettings['event_logo']) }}" alt="{{ $appSettings['event_name'] ?? 'Logo Event' }}" class="max-h-[160px] sm:max-h-[220px] lg:max-h-[270px] w-auto max-w-[140px] sm:max-w-[200px] lg:max-w-[250px] object-contain drop-shadow-[0_10px_25px_rgba(0,0,0,0.5)] group-hover:scale-105 transition-transform duration-500">
+                            @else
+                                <img src="{{ asset('images/logo milad 57.png') }}" alt="Logo Milad 57 MTsN 1 Blitar" class="max-h-[160px] sm:max-h-[220px] lg:max-h-[270px] w-auto max-w-[140px] sm:max-w-[200px] lg:max-w-[250px] object-contain drop-shadow-[0_10px_25px_rgba(0,0,0,0.5)] group-hover:scale-105 transition-transform duration-500">
+                            @endif
                         </div>
 
                         <!-- Ambient Glow Decoration behind Logo -->
