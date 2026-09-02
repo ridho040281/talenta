@@ -50,6 +50,15 @@ class AdminController extends Controller
         return view('admin.competitions', compact('competitions', 'categories', 'pics', 'timelines'));
     }
 
+    public function editCompetitionPage($id)
+    {
+        $competition = Competition::with(['category', 'pic', 'criteria'])->withCount('registrations')->findOrFail($id);
+        $categories = Category::orderBy('order', 'asc')->get();
+        $pics = User::where('role', 'pic_lomba')->orWhere('role', 'superadmin')->get();
+
+        return view('admin.competitions-edit', compact('competition', 'categories', 'pics'));
+    }
+
     public function storeCompetition(Request $request)
     {
         $validated = $request->validate([

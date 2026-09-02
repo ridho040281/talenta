@@ -135,6 +135,7 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->name('admin.')-
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/competitions', [AdminController::class, 'competitions'])->name('competitions');
     Route::post('/competitions', [AdminController::class, 'storeCompetition'])->name('competitions.store');
+    Route::get('/competitions/{id}/edit', [AdminController::class, 'editCompetitionPage'])->name('competitions.edit');
     Route::post('/competitions/{id}/update', [AdminController::class, 'updateCompetition'])->name('competitions.update');
     Route::post('/competitions/{id}/delete', [AdminController::class, 'deleteCompetition'])->name('competitions.delete');
     Route::post('/competitions/{id}/toggle-live-score', [AdminController::class, 'toggleLiveScore'])->name('competitions.toggle-live-score');

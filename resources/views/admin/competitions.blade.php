@@ -965,9 +965,9 @@
                                         </div>
                                     @else
                                         <div class="flex items-center justify-center gap-2">
-                                            <button type="button" @click="editCompetition({{ $comp->toJson() }})" class="p-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit Cabang Lomba">
+                                            <a href="{{ route('admin.competitions.edit', $comp->id) }}" class="p-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition" title="Edit Cabang Lomba">
                                                 <i data-lucide="edit-3" class="w-4 h-4"></i>
-                                            </button>
+                                            </a>
                                             <form action="{{ route('admin.competitions.delete', $comp->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus cabang lomba {{ $comp->name }} beserta seluruh data pendaftarannya?')">
                                                 @csrf
                                                 <button type="submit" class="p-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 transition cursor-pointer" title="Hapus Cabang Lomba">
