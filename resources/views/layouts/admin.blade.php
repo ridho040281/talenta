@@ -36,6 +36,14 @@
     <style>
         [x-cloak] { display: none !important; }
 
+        /* Edit Fullscreen Mode: sembunyikan sidebar sepenuhnya */
+        body.edit-fullscreen aside {
+            display: none !important;
+        }
+        body.edit-fullscreen > div.flex-1 {
+            padding-left: 0 !important;
+        }
+
         html, body {
             overflow-x: hidden !important;
             max-width: 100vw !important;

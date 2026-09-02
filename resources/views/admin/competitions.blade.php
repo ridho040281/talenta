@@ -187,9 +187,16 @@
 
                 this.bltEditMode = mode;
                 this.editCompetitionModal = true;
+                document.body.classList.add('edit-fullscreen');
+                document.body.style.overflow = 'hidden';
                 this.$nextTick(() => {
                     if (window.lucide) window.lucide.createIcons();
                 });
+            },
+            closeEditCompetitionModal() {
+                this.editCompetitionModal = false;
+                document.body.classList.remove('edit-fullscreen');
+                document.body.style.overflow = '';
             },
             editCompetition(item) {
                 this.openBltEdit(item, 'all');
@@ -1460,7 +1467,7 @@
         <!-- Sticky Workspace Header Bar -->
         <div style="position: sticky; top: 0; z-index: 50; background: rgba(11,16,29,0.97); border-bottom: 1px solid rgba(255,255,255,0.1); padding: 14px 32px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 32px rgba(0,0,0,0.6);">
             <div class="flex items-center gap-3.5 min-w-0">
-                <button type="button" @click="editCompetitionModal = false" class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-slate-200 hover:text-white text-xs font-bold transition cursor-pointer border border-white/[0.1] shrink-0">
+                <button type="button" @click="closeEditCompetitionModal()" class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-slate-200 hover:text-white text-xs font-bold transition cursor-pointer border border-white/[0.1] shrink-0">
                     <i data-lucide="arrow-left" class="w-4 h-4"></i>
                     <span>Tutup & Kembali</span>
                 </button>
@@ -1511,7 +1518,7 @@
             </div>
 
             <div class="flex items-center gap-3 shrink-0">
-                <button type="button" @click="editCompetitionModal = false" class="px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-slate-300 text-xs font-bold transition cursor-pointer">
+                <button type="button" @click="closeEditCompetitionModal()" class="px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-slate-300 text-xs font-bold transition cursor-pointer">
                     Batal
                 </button>
                 <button type="button" @click="$refs.editCompetitionForm.submit()" class="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-xs shadow-lg shadow-emerald-500/20 transition cursor-pointer flex items-center gap-1.5">
@@ -1535,7 +1542,7 @@
                             <div class="md:col-span-3">
                                 <div class="flex items-center justify-between mb-1">
                                     <label class="block text-xs font-bold uppercase tracking-wider text-slate-600">Jenis Lomba</label>
-                                    <button type="button" @click="editCompetitionModal = false; createCategoryModal = true" class="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                                    <button type="button" @click="closeEditCompetitionModal(); createCategoryModal = true" class="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">
                                         <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
                                         <span>+ Baru</span>
                                     </button>
@@ -2318,7 +2325,7 @@
                         </button>
 
                         <div class="w-full sm:w-auto flex items-center justify-end gap-3">
-                            <button type="button" @click="editCompetitionModal = false" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer">
+                            <button type="button" @click="closeEditCompetitionModal()" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer">
                                 Batal
                             </button>
                             <button type="submit" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-xs shadow-lg shadow-emerald-500/20 transition cursor-pointer flex items-center gap-1.5">
