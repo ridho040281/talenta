@@ -1086,7 +1086,7 @@
     </div>
 
     <!-- Create Competition Modal -->
-    <div x-show="createModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
+    <div x-show="createModal" x-cloak class="fixed inset-0 z-[70] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
         <div class="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
             <!-- Backdrop -->
             <div x-show="createModal" @click="createModal = false" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"></div>
@@ -1311,7 +1311,7 @@
     </div>
 
     <!-- Create Timeline Modal -->
-    <div x-show="createTimelineModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
+    <div x-show="createTimelineModal" x-cloak class="fixed inset-0 z-[70] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
         <div class="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
             <!-- Backdrop -->
             <div x-show="createTimelineModal" @click="createTimelineModal = false" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"></div>
@@ -1383,7 +1383,7 @@
     </div>
 
     <!-- Edit Timeline Modal -->
-    <div x-show="editTimelineModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
+    <div x-show="editTimelineModal" x-cloak class="fixed inset-0 z-[70] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
         <div class="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
             <!-- Backdrop -->
             <div x-show="editTimelineModal" @click="editTimelineModal = false" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"></div>
@@ -1455,7 +1455,7 @@
     </div>
 
     <!-- Edit Competition Modal -->
-    <div x-show="editCompetitionModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
+    <div x-show="editCompetitionModal" x-cloak class="fixed inset-0 z-[70] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
         <div class="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
             <!-- Backdrop -->
             <div x-show="editCompetitionModal" @click="editCompetitionModal = false" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"></div>
@@ -2329,7 +2329,7 @@
     </div>
 
     <!-- Create Category Modal -->
-    <div x-show="createCategoryModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
+    <div x-show="createCategoryModal" x-cloak class="fixed inset-0 z-[70] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
         <div class="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
             <!-- Backdrop -->
             <div x-show="createCategoryModal" @click="createCategoryModal = false" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"></div>
@@ -2395,7 +2395,7 @@
     </div>
 
     <!-- Edit Category Modal -->
-    <div x-show="editCategoryModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
+    <div x-show="editCategoryModal" x-cloak class="fixed inset-0 z-[70] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
         <div class="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
             <!-- Backdrop -->
             <div x-show="editCategoryModal" @click="editCategoryModal = false" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"></div>

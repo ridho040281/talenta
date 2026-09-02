@@ -276,10 +276,10 @@
 <body class="text-slate-100 font-sans antialiased min-h-screen flex selection:bg-[#7A5AF8] selection:text-white relative overflow-x-hidden" x-data="{ sidebarOpen: false, passwordModal: false }">
 
     <!-- Mobile Sidebar Backdrop -->
-    <div x-show="sidebarOpen" @click="sidebarOpen = false" x-cloak class="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm lg:hidden transition-opacity"></div>
+    <div x-show="sidebarOpen" @click="sidebarOpen = false" x-cloak class="fixed inset-0 z-20 bg-black/80 backdrop-blur-sm lg:hidden transition-opacity"></div>
 
     <!-- Sidebar Navigation (AIStarterKit Dark Glass Structure) -->
-    <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'" class="fixed inset-y-0 left-0 z-50 w-64 bg-[#090D17]/98 backdrop-blur-2xl text-slate-300 flex flex-col transition-transform duration-300 ease-in-out border-r border-white/[0.12] shadow-[4px_0_25px_rgba(0,0,0,0.6)]">
+    <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'" class="fixed inset-y-0 left-0 z-30 w-64 bg-[#090D17]/98 backdrop-blur-2xl text-slate-300 flex flex-col transition-transform duration-300 ease-in-out border-r border-white/[0.12] shadow-[4px_0_25px_rgba(0,0,0,0.6)]">
         
         <!-- Sidebar Brand Header -->
         <div class="h-16 flex items-center justify-between px-5 border-b border-white/[0.08]">
