@@ -740,58 +740,63 @@
                     @endif
                 </div>
 
-                <!-- Showcase / Carousel Slider Container (Big & Prominent on Desktop, Snug on Mobile) -->
-                <div class="relative w-full flex items-center justify-center rounded-2xl border border-white/[0.08] p-1 sm:p-4 lg:p-6 bg-slate-950/40 overflow-hidden">
+                <!-- Showcase / Carousel Slider Container (Option A: Center-Focused Poster Showcase) -->
+                <div class="relative w-full flex items-center justify-center py-2 sm:py-4">
                     
-                    @foreach($pamphletList as $idx => $item)
-                        <div x-show="active === {{ $idx }}" 
-                            x-transition:enter="transition ease-out duration-500 transform"
-                            x-transition:enter-start="opacity-0 scale-95"
-                            x-transition:enter-end="opacity-100 scale-100"
-                            x-transition:leave="transition ease-in duration-300 transform absolute"
-                            x-transition:leave-start="opacity-100 scale-100"
-                            x-transition:leave-end="opacity-0 scale-95"
-                            class="w-full flex items-center justify-center">
+                    <!-- Ambient Glow Aura behind Poster -->
+                    <div class="absolute w-[320px] sm:w-[500px] h-[420px] sm:h-[650px] bg-gradient-to-tr from-pink-500/25 via-[#7A5AF8]/20 to-[#4E6EFF]/20 rounded-full blur-3xl pointer-events-none -z-0"></div>
 
-                            @if($item['type'] === 'image')
-                                <div class="relative group cursor-zoom-in w-full max-w-4xl mx-auto flex flex-col items-center justify-center" @click="openZoom('{{ $item['url'] }}')">
-                                    <img src="{{ $item['url'] }}" 
-                                        alt="Pamflet {{ $idx + 1 }}" 
-                                        class="w-auto max-w-full max-h-[70vh] sm:max-h-[80vh] lg:max-h-[85vh] h-auto object-contain rounded-2xl shadow-2xl border border-white/[0.12] transition-transform duration-300 group-hover:scale-[1.01]">
-                                    
-                                    <!-- Zoom Hover Pill -->
-                                    <div class="absolute bottom-3 px-3.5 py-1.5 rounded-full bg-black/75 backdrop-blur-md border border-white/20 text-white text-xs font-bold flex items-center gap-1.5 opacity-90 group-hover:opacity-100 transition shadow-lg pointer-events-none">
-                                        <i data-lucide="zoom-in" class="w-4 h-4 text-pink-400"></i>
-                                        <span>Klik untuk Perbesar Layar Penuh</span>
+                    <div class="relative z-10 w-full flex items-center justify-center">
+                        @foreach($pamphletList as $idx => $item)
+                            <div x-show="active === {{ $idx }}" 
+                                x-transition:enter="transition ease-out duration-500 transform"
+                                x-transition:enter-start="opacity-0 scale-95"
+                                x-transition:enter-end="opacity-100 scale-100"
+                                x-transition:leave="transition ease-in duration-300 transform absolute"
+                                x-transition:leave-start="opacity-100 scale-100"
+                                x-transition:leave-end="opacity-0 scale-95"
+                                class="w-full flex items-center justify-center">
+
+                                @if($item['type'] === 'image')
+                                    <div class="relative group cursor-zoom-in flex flex-col items-center justify-center" @click="openZoom('{{ $item['url'] }}')">
+                                        <img src="{{ $item['url'] }}" 
+                                            alt="Pamflet {{ $idx + 1 }}" 
+                                            class="w-auto max-w-full max-h-[68vh] sm:max-h-[78vh] lg:max-h-[82vh] h-auto object-contain rounded-2xl shadow-2xl border-2 border-white/[0.15] transition-transform duration-300 group-hover:scale-[1.01]">
+                                        
+                                        <!-- Zoom Hover Pill -->
+                                        <div class="absolute bottom-3 px-3.5 py-1.5 rounded-full bg-black/80 backdrop-blur-md border border-white/20 text-white text-xs font-bold flex items-center gap-1.5 opacity-90 group-hover:opacity-100 transition shadow-xl pointer-events-none">
+                                            <i data-lucide="zoom-in" class="w-3.5 h-3.5 text-pink-400"></i>
+                                            <span>Klik untuk Perbesar Layar Penuh</span>
+                                        </div>
                                     </div>
-                                </div>
-                            @else
-                                <!-- Canva Embed Container (Large on Desktop, Full Height on Mobile) -->
-                                <div class="w-full max-w-4xl mx-auto h-[500px] sm:h-[720px] lg:h-[840px] rounded-2xl overflow-hidden bg-[#0C111D] border border-white/[0.12] shadow-2xl relative">
-                                    <iframe loading="lazy" 
-                                        src="{{ $item['url'] }}" 
-                                        class="w-full h-full border-0 rounded-2xl" 
-                                        allowfullscreen="allowfullscreen" 
-                                        allow="fullscreen">
-                                    </iframe>
-                                </div>
-                            @endif
+                                @else
+                                    <!-- Canva Embed Container (Snug Portrait Frame - Zero Black Sidebars) -->
+                                    <div class="w-full max-w-[390px] sm:max-w-[480px] lg:max-w-[520px] mx-auto aspect-[1/1.414] max-h-[75vh] sm:max-h-[82vh] rounded-2xl overflow-hidden bg-[#0C111D] border-2 border-white/[0.15] shadow-2xl relative">
+                                        <iframe loading="lazy" 
+                                            src="{{ $item['url'] }}" 
+                                            class="w-full h-full border-0 rounded-2xl" 
+                                            allowfullscreen="allowfullscreen" 
+                                            allow="fullscreen">
+                                        </iframe>
+                                    </div>
+                                @endif
 
-                        </div>
-                    @endforeach
+                            </div>
+                        @endforeach
+                    </div>
 
                     @if($totalPamphlets > 1)
                         <!-- Prev / Next Floating Navigation Buttons -->
-                        <button type="button" @click="prev()" class="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-black/60 hover:bg-pink-600 text-white border border-white/20 flex items-center justify-center transition shadow-xl hover:scale-110 active:scale-95 cursor-pointer z-20 backdrop-blur-md" title="Pamflet Sebelumnya">
+                        <button type="button" @click="prev()" class="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-black/70 hover:bg-pink-600 text-white border border-white/20 flex items-center justify-center transition shadow-xl hover:scale-110 active:scale-95 cursor-pointer z-20 backdrop-blur-md" title="Pamflet Sebelumnya">
                             <i data-lucide="chevron-left" class="w-4 h-4 sm:w-6 sm:h-6"></i>
                         </button>
                         
-                        <button type="button" @click="next()" class="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-black/60 hover:bg-pink-600 text-white border border-white/20 flex items-center justify-center transition shadow-xl hover:scale-110 active:scale-95 cursor-pointer z-20 backdrop-blur-md" title="Pamflet Selanjutnya">
+                        <button type="button" @click="next()" class="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-black/70 hover:bg-pink-600 text-white border border-white/20 flex items-center justify-center transition shadow-xl hover:scale-110 active:scale-95 cursor-pointer z-20 backdrop-blur-md" title="Pamflet Selanjutnya">
                             <i data-lucide="chevron-right" class="w-4 h-4 sm:w-6 sm:h-6"></i>
                         </button>
 
                         <!-- Bottom Dot Indicators -->
-                        <div class="absolute bottom-2 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/15 z-20">
+                        <div class="absolute bottom-1 sm:bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/15 z-20">
                             @foreach($pamphletList as $idx => $item)
                                 <button type="button" 
                                     @click="active = {{ $idx }}" 
