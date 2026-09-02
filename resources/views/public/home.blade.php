@@ -740,8 +740,8 @@
                     @endif
                 </div>
 
-                <!-- Showcase / Carousel Slider Container (Snug fit, no top/bottom excess gaps) -->
-                <div class="relative w-full flex items-center justify-center rounded-2xl border border-white/[0.08] p-1 sm:p-4 bg-slate-950/40 overflow-hidden">
+                <!-- Showcase / Carousel Slider Container (Big & Prominent on Desktop, Snug on Mobile) -->
+                <div class="relative w-full flex items-center justify-center rounded-2xl border border-white/[0.08] p-1 sm:p-4 lg:p-6 bg-slate-950/40 overflow-hidden">
                     
                     @foreach($pamphletList as $idx => $item)
                         <div x-show="active === {{ $idx }}" 
@@ -754,20 +754,20 @@
                             class="w-full flex items-center justify-center">
 
                             @if($item['type'] === 'image')
-                                <div class="relative group cursor-zoom-in w-full max-w-xl mx-auto flex flex-col items-center justify-center" @click="openZoom('{{ $item['url'] }}')">
+                                <div class="relative group cursor-zoom-in w-full max-w-4xl mx-auto flex flex-col items-center justify-center" @click="openZoom('{{ $item['url'] }}')">
                                     <img src="{{ $item['url'] }}" 
                                         alt="Pamflet {{ $idx + 1 }}" 
-                                        class="w-full sm:w-auto max-w-full max-h-[70vh] sm:max-h-[80vh] h-auto object-contain rounded-2xl shadow-2xl border border-white/[0.1] transition-transform duration-300 group-hover:scale-[1.01]">
+                                        class="w-auto max-w-full max-h-[70vh] sm:max-h-[80vh] lg:max-h-[85vh] h-auto object-contain rounded-2xl shadow-2xl border border-white/[0.12] transition-transform duration-300 group-hover:scale-[1.01]">
                                     
                                     <!-- Zoom Hover Pill -->
-                                    <div class="absolute bottom-3 px-3 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/20 text-white text-[11px] font-bold flex items-center gap-1.5 opacity-90 group-hover:opacity-100 transition shadow-lg pointer-events-none">
-                                        <i data-lucide="zoom-in" class="w-3.5 h-3.5 text-pink-400"></i>
-                                        <span>Ketuk untuk Perbesar</span>
+                                    <div class="absolute bottom-3 px-3.5 py-1.5 rounded-full bg-black/75 backdrop-blur-md border border-white/20 text-white text-xs font-bold flex items-center gap-1.5 opacity-90 group-hover:opacity-100 transition shadow-lg pointer-events-none">
+                                        <i data-lucide="zoom-in" class="w-4 h-4 text-pink-400"></i>
+                                        <span>Klik untuk Perbesar Layar Penuh</span>
                                     </div>
                                 </div>
                             @else
-                                <!-- Canva Embed Container with Responsive Aspect Ratio (A4 Poster 1:1.414) -->
-                                <div class="w-full max-w-xl mx-auto aspect-[1/1.414] max-h-[72vh] sm:max-h-[85vh] rounded-2xl overflow-hidden bg-[#0C111D] border border-white/[0.1] shadow-2xl relative">
+                                <!-- Canva Embed Container (Large on Desktop, Full Height on Mobile) -->
+                                <div class="w-full max-w-4xl mx-auto h-[500px] sm:h-[720px] lg:h-[840px] rounded-2xl overflow-hidden bg-[#0C111D] border border-white/[0.12] shadow-2xl relative">
                                     <iframe loading="lazy" 
                                         src="{{ $item['url'] }}" 
                                         class="w-full h-full border-0 rounded-2xl" 
