@@ -198,7 +198,9 @@ class CollectiveRegistrationController extends Controller
             return back()->with('error', 'File Excel kosong atau tidak memiliki data peserta.');
         }
 
-        $competitions = Competition::with('category')->withCount('registrations')->get()->keyBy(fn($item) => strtoupper(trim($item->code)));
+        $competitions = Competition::with('category')->withCount(['registrations' => function($q) {
+            $q->whereIn('status', ['pending', 'verified']);
+        }])->get()->keyBy(fn($item) => strtoupper(trim($item->code)));
 
         $parsedRows = [];
         $totalFee = 0;

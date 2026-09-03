@@ -88,7 +88,9 @@ class PesertaController extends Controller
 
         // Enforce quota limit only if quota is explicitly greater than 0 (0 = unlimited)
         if ($competition->quota > 0 && !in_array($competition->code, ['BLT', 'TMJ', 'MTQ', 'POP'])) {
-            $currentTotal = Registration::where('competition_id', $competition->id)->count();
+            $currentTotal = Registration::where('competition_id', $competition->id)
+                ->whereIn('status', ['pending', 'verified'])
+                ->count();
             if ($currentTotal >= $competition->quota) {
                 return back()->with('error', 'Mohon maaf, kuota pendaftaran untuk cabang lomba ' . $competition->name . ' telah penuh (' . $competition->quota . ' peserta).');
             }
@@ -97,6 +99,85 @@ class PesertaController extends Controller
         $isBuluTangkis = ($competition->code === 'BLT');
         $isTenisMeja = ($competition->code === 'TMJ');
         $isGandaBlt = $isBuluTangkis && (stripos($request->input('match_type', ''), 'Ganda') !== false);
+
+        // Enforce tier quotas for Tenis Meja
+        if ($isTenisMeja) {
+            $tierQuotas = $competition->tier_quotas;
+            $matchType = $request->input('match_type');
+            $targetClass = $request->input('target_class');
+            $isPa = stripos($matchType, 'Putra') !== false || stripos($matchType, 'PA') !== false;
+            $isKatA = stripos($targetClass, 'Kategori A') !== false || stripos($targetClass, '1 - 3') !== false;
+            $quotaKey = ($isKatA ? 'A' : 'B') . '_tunggal_' . ($isPa ? 'pa' : 'pi');
+            $maxQuota = (int) ($tierQuotas[$quotaKey] ?? 0);
+            if ($maxQuota > 0) {
+                $currentTierTotal = Registration::where('competition_id', $competition->id)
+                    ->whereIn('status', ['pending', 'verified'])
+                    ->where('match_type', $matchType)
+                    ->where('target_class', $targetClass)
+                    ->count();
+                if ($currentTierTotal >= $maxQuota) {
+                    return back()->with('error', "Mohon maaf, kuota pendaftaran Tenis Meja untuk {$targetClass} - {$matchType} telah penuh ({$maxQuota} peserta).");
+                }
+            }
+        }
+
+        // Enforce tier quotas for Bulu Tangkis
+        if ($isBuluTangkis) {
+            $tierQuotas = $competition->tier_quotas;
+            $matchType = $request->input('match_type');
+            $targetClass = $request->input('target_class');
+            $isGanda = stripos($matchType, 'Ganda') !== false;
+            $isPa = stripos($matchType, 'Putra') !== false || stripos($matchType, 'PA') !== false;
+            if ($isGanda) {
+                $quotaKey = 'ganda_' . ($isPa ? 'pa' : 'pi');
+                $maxQuota = (int) ($tierQuotas[$quotaKey] ?? 0);
+                if ($maxQuota > 0) {
+                    $currentTierTotal = Registration::where('competition_id', $competition->id)
+                        ->whereIn('status', ['pending', 'verified'])
+                        ->where('match_type', $matchType)
+                        ->count();
+                    if ($currentTierTotal >= $maxQuota) {
+                        return back()->with('error', "Mohon maaf, kuota pendaftaran Bulu Tangkis untuk {$matchType} telah penuh ({$maxQuota} regu).");
+                    }
+                }
+            } else {
+                $kat = 'A';
+                if (stripos($targetClass, 'Kategori B') !== false) $kat = 'B';
+                elseif (stripos($targetClass, 'Kategori C') !== false) $kat = 'C';
+                $quotaKey = $kat . '_tunggal_' . ($isPa ? 'pa' : 'pi');
+                $maxQuota = (int) ($tierQuotas[$quotaKey] ?? 0);
+                if ($maxQuota > 0) {
+                    $currentTierTotal = Registration::where('competition_id', $competition->id)
+                        ->whereIn('status', ['pending', 'verified'])
+                        ->where('match_type', $matchType)
+                        ->where('target_class', $targetClass)
+                        ->count();
+                    if ($currentTierTotal >= $maxQuota) {
+                        return back()->with('error', "Mohon maaf, kuota pendaftaran Bulu Tangkis untuk {$targetClass} - {$matchType} telah penuh ({$maxQuota} peserta).");
+                    }
+                }
+            }
+        }
+
+        // Enforce tier quotas for MTQ & Pop Singer (PA / PI)
+        if (in_array($competition->code, ['MTQ', 'POP'])) {
+            $tierQuotas = $competition->tier_quotas;
+            $firstGender = $request->input('members.0.gender', 'L');
+            $sectorKey = ($firstGender === 'P') ? 'pi' : 'pa';
+            $maxQuota = (int) ($tierQuotas[$sectorKey] ?? 0);
+            if ($maxQuota > 0) {
+                $currentSectorTotal = Registration::where('competition_id', $competition->id)
+                    ->whereIn('status', ['pending', 'verified'])
+                    ->whereHas('members', function($q) use ($firstGender) {
+                        $q->where('gender', $firstGender);
+                    })
+                    ->count();
+                if ($currentSectorTotal >= $maxQuota) {
+                    $sectorLabel = ($firstGender === 'P') ? 'Putri (PI)' : 'Putra (PA)';
+                    return back()->with('error', "Mohon maaf, kuota pendaftaran {$competition->name} untuk sektor {$sectorLabel} telah penuh ({$maxQuota} peserta).");
+                }
+            }
+        }
 
         $validated = $request->validate([
             'target_class' => [($isBuluTangkis && !$isGandaBlt) || $isTenisMeja ? 'required' : 'nullable', 'string', 'max:50'],
