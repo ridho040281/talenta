@@ -110,7 +110,10 @@ class HomeController extends Controller
     {
         $competition = Competition::with(['category', 'registrations' => function ($q) {
             $q->where('status', 'verified')->with('members');
-        }])->where('slug', $slug)->firstOrFail();
+        }])->where(function ($query) use ($slug) {
+            $query->where('slug', $slug)
+                  ->orWhere('code', strtoupper($slug));
+        })->firstOrFail();
 
         $participants = $competition->registrations->map(function ($reg) {
             $firstMember = $reg->members->first();

@@ -33,10 +33,10 @@
                 <span>Mode Hacker</span>
             </a>
 
-            <!-- Public Viewer -->
-            <a href="{{ route('spin.viewer', $competition->slug) }}" target="_blank" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 transition">
+            <!-- Public Viewer TV -->
+            <a href="{{ url('tv/' . $competition->slug) }}" target="_blank" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 transition" title="Link Cepat TV: /tv/{{ $competition->slug }}">
                 <i data-lucide="tv" class="w-4 h-4"></i>
-                <span>Layar Publik</span>
+                <span>Layar TV (/tv/{{ $competition->slug }})</span>
             </a>
             
             <!-- Reset All -->

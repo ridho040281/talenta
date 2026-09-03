@@ -20,8 +20,14 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/lomba/{slug}', [HomeController::class, 'competitionDetail'])->name('competition.detail');
 Route::get('/lomba/{slug}/spin-viewer', [HomeController::class, 'spinViewer'])->name('spin.viewer');
+// Short URL aliases for Smart TV / Proyektor (Mudah diketik di remote TV)
+Route::get('/u/{slug}', [HomeController::class, 'spinViewer'])->name('spin.viewer.u');
+Route::get('/tv/{slug}', [HomeController::class, 'spinViewer'])->name('spin.viewer.tv');
+Route::get('/undi/{slug}', [HomeController::class, 'spinViewer'])->name('spin.viewer.undi');
+
 Route::get('/cek-status', [HomeController::class, 'checkStatus'])->name('check.status');
 Route::get('/live-scoreboard/{slug?}', [HomeController::class, 'liveScoreboard'])->name('live.scoreboard');
+Route::get('/skor/{slug?}', [HomeController::class, 'liveScoreboard'])->name('live.scoreboard.short');
 Route::get('/badminton/scoreboard/{id?}', [BadmintonMatchController::class, 'scoreboard'])->name('badminton.scoreboard');
 Route::get('/badminton/arena', [BadmintonMatchController::class, 'arenaScoreboard'])->name('badminton.arena');
 Route::get('/badminton/umpire/{id}', [BadmintonMatchController::class, 'umpire'])->name('badminton.umpire');
