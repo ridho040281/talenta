@@ -466,6 +466,61 @@ class Competition extends Model
         return $this->belongsTo(User::class, 'pic_id');
     }
 
+    public function pics(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'competition_pics', 'competition_id', 'user_id')
+                    ->withPivot('role_title')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Get all unique PICs assigned to this competition:
+     * - Primary PIC from `pic_id`
+     * - Multi-PICs from `competition_pics` pivot table
+     * - Sector PICs from `AppSetting` (if BLT, TMJ, MTQ, POP)
+     */
+    public function getAllPicsAttribute()
+    {
+        $users = collect();
+        if ($this->pic) {
+            $users->push($this->pic);
+        }
+        foreach ($this->pics as $p) {
+            $users->push($p);
+        }
+        if (!empty($this->tier_pics)) {
+            foreach ($this->tier_pics as $sectorPicId) {
+                if ($sectorPicId && $secUser = User::find($sectorPicId)) {
+                    $users->push($secUser);
+                }
+            }
+        }
+        return $users->unique('id')->values();
+    }
+
+    /**
+     * Get all valid phone numbers of assigned PICs formatted for WhatsApp
+     */
+    public function getAllPicPhonesAttribute(): array
+    {
+        return $this->all_pics
+            ->pluck('phone')
+            ->filter()
+            ->map(function ($phone) {
+                $clean = preg_replace('/[^0-9]/', '', (string)$phone);
+                if (str_starts_with($clean, '0')) {
+                    $clean = '62' . substr($clean, 1);
+                } elseif (str_starts_with($clean, '8')) {
+                    $clean = '628' . substr($clean, 1);
+                }
+                return $clean;
+            })
+            ->filter(fn($p) => strlen($p) >= 9)
+            ->unique()
+            ->values()
+            ->toArray();
+    }
+
     public function criteria(): HasMany
     {
         return $this->hasMany(CompetitionCriterion::class);

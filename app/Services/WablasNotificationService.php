@@ -125,20 +125,21 @@ class WablasNotificationService
             $competition = $registration->competition;
             if (!$competition) return false;
 
-            // Find PIC phone number
-            $pic = $competition->pic;
-            $picPhone = $pic->phone ?? '';
+            // Find all assigned PIC phone numbers for this competition (multi-PIC support)
+            $phones = $competition->all_pic_phones;
 
-            // If no direct PIC assigned, check if there's any user with role pic_lomba or fallback admin
-            if (empty($picPhone)) {
+            // If no direct PIC assigned, fallback to any user with role pic_lomba
+            if (empty($phones)) {
                 $picUser = \App\Models\User::where('role', 'pic_lomba')
                     ->whereNotNull('phone')
                     ->where('phone', '!=', '')
                     ->first();
-                $picPhone = $picUser->phone ?? '';
+                if ($picUser && !empty($picUser->phone)) {
+                    $phones = [$picUser->phone];
+                }
             }
 
-            if (empty($picPhone)) {
+            if (empty($phones)) {
                 return false; // No PIC phone number available
             }
 
@@ -146,18 +147,26 @@ class WablasNotificationService
             $namaPeserta = $primaryMember->full_name ?? ($registration->user->name ?? 'Peserta Baru');
             $pendaftarPhone = $registration->user->phone ?? ($primaryMember->phone ?? '-');
 
-            return static::sendAutoNotification('pic_new_registration', [
-                'phone' => $picPhone,
-                'nama_peserta' => $namaPeserta,
-                'nama_pendaftar' => $registration->user->name ?? $namaPeserta,
-                'nama_sekolah' => $registration->institution_name ?: ($registration->user->institution_name ?? '-'),
-                'nama_instansi' => $registration->institution_name ?: ($registration->user->institution_name ?? '-'),
-                'cabang_lomba' => $competition->name,
-                'kode_pendaftaran' => $registration->registration_code,
-                'phone_pendaftar' => $pendaftarPhone,
-                'waktu_daftar' => now()->translatedFormat('d M Y H:i') . ' WIB',
-                'link_login' => route('pic.dashboard'),
-            ]);
+            $allSent = true;
+            foreach ($phones as $picPhone) {
+                $sent = static::sendAutoNotification('pic_new_registration', [
+                    'phone' => $picPhone,
+                    'nama_peserta' => $namaPeserta,
+                    'nama_pendaftar' => $registration->user->name ?? $namaPeserta,
+                    'nama_sekolah' => $registration->institution_name ?: ($registration->user->institution_name ?? '-'),
+                    'nama_instansi' => $registration->institution_name ?: ($registration->user->institution_name ?? '-'),
+                    'cabang_lomba' => $competition->name,
+                    'kode_pendaftaran' => $registration->registration_code,
+                    'phone_pendaftar' => $pendaftarPhone,
+                    'waktu_daftar' => now()->translatedFormat('d M Y H:i') . ' WIB',
+                    'link_login' => route('pic.dashboard'),
+                ]);
+                if (!$sent) {
+                    $allSent = false;
+                }
+            }
+
+            return $allSent;
         } catch (\Throwable $e) {
             Log::error("notifyPicNewRegistration Error: " . $e->getMessage());
             return false;

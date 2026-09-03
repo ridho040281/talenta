@@ -172,11 +172,11 @@
                             <input name="quota" type="number" min="0" value="{{ old('quota', $competition->quota) }}" class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-bold">
                         </div>
                         <div class="col-span-2 sm:col-span-4">
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Koordinator PIC</label>
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Koordinator PIC Utama</label>
                             <select name="pic_id" class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-semibold">
                                 <option value="">-- Belum Ditugaskan --</option>
                                 @foreach($pics as $pic)
-                                    <option value="{{ $pic->id }}" {{ $competition->pic_id == $pic->id ? 'selected' : '' }}>{{ $pic->name }}</option>
+                                    <option value="{{ $pic->id }}" {{ $competition->pic_id == $pic->id ? 'selected' : '' }}>{{ $pic->name }} {{ $pic->phone ? '('.$pic->phone.')' : '' }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -187,6 +187,54 @@
                                 <option value="tutup" {{ $competition->status == 'tutup' ? 'selected' : '' }}>Tutup</option>
                                 <option value="selesai" {{ $competition->status == 'selesai' ? 'selected' : '' }}>Selesai</option>
                             </select>
+                        </div>
+
+                        <!-- MULTI-PIC SELECTION -->
+                        <div class="col-span-2 sm:col-span-12 pt-3 border-t border-white/[0.07]">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2.5">
+                                <label class="block text-[11px] font-black uppercase tracking-wider text-[#84D0FF] flex items-center gap-1.5">
+                                    <i data-lucide="users" class="w-3.5 h-3.5"></i>
+                                    <span>Tim Petugas PIC Lomba (Multi-PIC & Notifikasi WhatsApp)</span>
+                                </label>
+                                <span class="text-[10px] text-slate-400">Centang satu atau lebih PIC yang bertugas pada cabang ini</span>
+                            </div>
+
+                            @php
+                                $assignedPicIds = old('pic_ids', $competition->pics->pluck('id')->toArray());
+                                if (empty($assignedPicIds) && $competition->pic_id) {
+                                    $assignedPicIds = [$competition->pic_id];
+                                }
+                            @endphp
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-60 overflow-y-auto pr-1">
+                                @foreach($pics as $pic)
+                                    @php $isChecked = in_array($pic->id, $assignedPicIds); @endphp
+                                    <label class="flex items-start gap-3 p-3 rounded-xl border transition cursor-pointer select-none {{ $isChecked ? 'bg-[#4E6EFF]/15 border-[#4E6EFF]/40 text-white shadow-sm' : 'bg-white/[0.02] border-white/[0.08] text-slate-300 hover:bg-white/[0.05]' }}">
+                                        <input type="checkbox" name="pic_ids[]" value="{{ $pic->id }}" {{ $isChecked ? 'checked' : '' }} class="mt-0.5 rounded border-slate-700 text-[#4E6EFF] focus:ring-0 focus:ring-offset-0 bg-black/40">
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-center justify-between gap-1">
+                                                <span class="text-xs font-bold truncate">{{ $pic->name }}</span>
+                                                @if($competition->pic_id == $pic->id)
+                                                    <span class="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">Utama</span>
+                                                @endif
+                                            </div>
+                                            <div class="flex items-center gap-2 mt-1 text-[11px]">
+                                                @if(!empty($pic->phone))
+                                                    <span class="flex items-center gap-1 text-emerald-400 font-mono text-[11px]">
+                                                        <i data-lucide="phone" class="w-3 h-3"></i> {{ $pic->phone }}
+                                                    </span>
+                                                @else
+                                                    <span class="text-rose-400/80 italic text-[10px]">(No WA belum diisi)</span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </label>
+                                @endforeach
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-2 flex items-center gap-1.5">
+                                <i data-lucide="info" class="w-3.5 h-3.5 text-[#84D0FF] shrink-0"></i>
+                                <span>Seluruh PIC yang dicentang akan <strong>menerima pesan notifikasi WhatsApp serentak</strong> saat ada pendaftaran masuk dan memiliki hak akses verifikasi di Dashboard PIC.</span>
+                            </p>
                         </div>
                     </div>
                     @endif

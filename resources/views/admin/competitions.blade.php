@@ -560,10 +560,25 @@
                                             </div>
                                         </div>
                                     @else
-                                        <div class="flex items-center gap-1.5 font-medium">
-                                            <i data-lucide="user-check" class="w-3.5 h-3.5 text-slate-400"></i>
-                                            <span>{{ $comp->pic->name ?? 'Belum Ditugaskan' }}</span>
-                                        </div>
+                                        @php $allPics = $comp->all_pics; @endphp
+                                        @if($allPics->isNotEmpty())
+                                            <div class="flex flex-col gap-1.5">
+                                                @foreach($allPics as $p)
+                                                    <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#4E6EFF]/10 text-slate-200 border border-[#4E6EFF]/20 text-xs">
+                                                        <i data-lucide="user-check" class="w-3.5 h-3.5 text-[#84D0FF] shrink-0"></i>
+                                                        <span class="font-bold truncate">{{ $p->name }}</span>
+                                                        @if(!empty($p->phone))
+                                                            <span class="text-[10px] text-emerald-400 font-mono">({{ $p->phone }})</span>
+                                                        @endif
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <div class="flex items-center gap-1.5 font-medium text-slate-500 italic text-xs">
+                                                <i data-lucide="user-x" class="w-3.5 h-3.5 text-slate-500"></i>
+                                                <span>Belum Ditugaskan</span>
+                                            </div>
+                                        @endif
                                     @endif
                                 </td>
                                 <td class="py-4 px-6 text-center whitespace-nowrap align-middle">
@@ -904,14 +919,37 @@
                             <span class="text-[10px] text-slate-400">Isi 0 untuk kuota tak terbatas (∞)</span>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Koordinator PIC</label>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Koordinator PIC Utama</label>
                             <select name="pic_id" class="block w-full px-3 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none focus:border-emerald-500">
-                                <option value="">-- Pilih PIC --</option>
+                                <option value="">-- Pilih PIC Utama --</option>
                                 @foreach($pics as $p)
-                                    <option value="{{ $p->id }}">{{ $p->name }}</option>
+                                    <option value="{{ $p->id }}">{{ $p->name }} {{ $p->phone ? '('.$p->phone.')' : '' }}</option>
                                 @endforeach
                             </select>
                         </div>
+                    </div>
+
+                    <!-- TIM PETUGAS PIC (MULTI-PIC) -->
+                    <div class="space-y-2 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                                <i data-lucide="users" class="w-4 h-4 text-blue-600"></i>
+                                <span>Tim Petugas PIC (Multi-PIC & Notifikasi WhatsApp)</span>
+                            </label>
+                            <span class="text-[11px] text-slate-400 font-medium">Centang 1 atau lebih PIC</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-36 overflow-y-auto">
+                            @foreach($pics as $p)
+                                <label class="flex items-center gap-2.5 p-2 rounded-xl bg-white border border-slate-200 hover:border-blue-400 text-xs cursor-pointer transition select-none">
+                                    <input type="checkbox" name="pic_ids[]" value="{{ $p->id }}" class="rounded text-blue-600 border-slate-300">
+                                    <span class="font-bold text-slate-800">{{ $p->name }}</span>
+                                    @if(!empty($p->phone))
+                                        <span class="text-[10px] text-emerald-600 font-mono">({{ $p->phone }})</span>
+                                    @endif
+                                </label>
+                            @endforeach
+                        </div>
+                        <p class="text-[11px] text-slate-500">Seluruh PIC yang dicentang akan otomatis menerima pesan notifikasi WhatsApp saat ada peserta mendaftar.</p>
                     </div>
 
                     <div>

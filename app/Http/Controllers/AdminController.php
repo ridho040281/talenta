@@ -40,8 +40,8 @@ class AdminController extends Controller
 
     public function competitions()
     {
-        $competitions = Competition::with(['category', 'pic', 'criteria'])->withCount('registrations')->get();
-        $categories = Category::with(['competitions.pic', 'competitions' => function($q) {
+        $competitions = Competition::with(['category', 'pic', 'pics', 'criteria'])->withCount('registrations')->get();
+        $categories = Category::with(['competitions.pic', 'competitions.pics', 'competitions' => function($q) {
             $q->withCount('registrations');
         }])->withCount('competitions')->orderBy('order', 'asc')->get();
         $pics = User::where('role', 'pic_lomba')->orWhere('role', 'superadmin')->get();
@@ -52,7 +52,7 @@ class AdminController extends Controller
 
     public function editCompetitionPage($id)
     {
-        $competition = Competition::with(['category', 'pic', 'criteria'])->withCount('registrations')->findOrFail($id);
+        $competition = Competition::with(['category', 'pic', 'pics', 'criteria'])->withCount('registrations')->findOrFail($id);
         $categories = Category::orderBy('order', 'asc')->get();
         $pics = User::where('role', 'pic_lomba')->orWhere('role', 'superadmin')->get();
 
@@ -71,6 +71,8 @@ class AdminController extends Controller
             'quota' => ['required', 'integer', 'min:0'],
             'registration_fee' => ['nullable', 'numeric', 'min:0'],
             'pic_id' => ['nullable', 'exists:users,id'],
+            'pic_ids' => ['nullable', 'array'],
+            'pic_ids.*' => ['exists:users,id'],
             'venue' => ['nullable', 'string'],
             'schedule_date' => ['nullable', 'date'],
             'schedule_time' => ['nullable', 'string'],
@@ -88,9 +90,15 @@ class AdminController extends Controller
 
         $nextOrder = $validated['order'] ?? (Competition::withoutGlobalScope('order')->max('order') + 1);
 
+        $picIds = array_values(array_filter((array) $request->input('pic_ids', [])));
+        if (empty($picIds) && !empty($validated['pic_id'])) {
+            $picIds = [$validated['pic_id']];
+        }
+        $primaryPicId = !empty($picIds) ? $picIds[0] : ($validated['pic_id'] ?? null);
+
         $competition = Competition::create([
             'category_id' => $validated['category_id'],
-            'pic_id' => $validated['pic_id'] ?? null,
+            'pic_id' => $primaryPicId,
             'name' => $validated['name'],
             'slug' => Str::slug($validated['name']),
             'code' => strtoupper($validated['code']),
@@ -109,6 +117,10 @@ class AdminController extends Controller
             'status' => 'buka',
             'is_live_score' => $request->boolean('is_live_score', false),
         ]);
+
+        if (!empty($picIds)) {
+            $competition->pics()->sync($picIds);
+        }
 
         // Default / Custom criteria
         if ($request->has('criteria') && is_array($request->criteria)) {
@@ -155,6 +167,8 @@ class AdminController extends Controller
             'quota' => [$isMultiTier ? 'nullable' : 'required', 'integer', 'min:0'],
             'registration_fee' => ['nullable', 'numeric', 'min:0'],
             'pic_id' => ['nullable', 'exists:users,id'],
+            'pic_ids' => ['nullable', 'array'],
+            'pic_ids.*' => ['exists:users,id'],
             'status' => [$isMultiTier ? 'nullable' : 'required', 'in:buka,tutup,selesai'],
             'venue' => ['nullable', 'string'],
             'schedule_date' => ['nullable', 'date'],
@@ -173,9 +187,21 @@ class AdminController extends Controller
             $guidelinesPath = $request->input('guidelines_file');
         }
 
+        $picIds = $request->input('pic_ids');
+        if ($request->has('pic_ids')) {
+            $cleanedPicIds = array_values(array_filter((array) $picIds));
+            $competition->pics()->sync($cleanedPicIds);
+            $primaryPicId = !empty($cleanedPicIds) ? $cleanedPicIds[0] : null;
+        } else {
+            $primaryPicId = $validated['pic_id'] ?? $competition->pic_id;
+            if ($primaryPicId) {
+                $competition->pics()->syncWithoutDetaching([$primaryPicId]);
+            }
+        }
+
         $competition->update([
             'category_id' => $validated['category_id'],
-            'pic_id' => $validated['pic_id'] ?? $competition->pic_id,
+            'pic_id' => $primaryPicId,
             'name' => $validated['name'],
             'slug' => Str::slug($validated['name']),
             'code' => strtoupper($validated['code']),

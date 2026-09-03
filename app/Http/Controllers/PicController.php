@@ -59,7 +59,10 @@ class PicController extends Controller
         }
 
         return Competition::where(function ($q) use ($user, $extraCodes) {
-            $q->where('pic_id', $user->id);
+            $q->where('pic_id', $user->id)
+              ->orWhereHas('pics', function ($sub) use ($user) {
+                  $sub->where('users.id', $user->id);
+              });
             if (!empty($extraCodes)) {
                 $q->orWhereIn('code', $extraCodes);
             }
