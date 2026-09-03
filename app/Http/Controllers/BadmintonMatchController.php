@@ -13,6 +13,11 @@ class BadmintonMatchController extends Controller
 {
     public function index(Request $request)
     {
+        $user = Auth::user();
+        if (!$user->managesBadminton()) {
+            abort(403, 'Halaman ini khusus untuk koordinator dan wasit cabang Bulu Tangkis.');
+        }
+
         $query = BadmintonMatch::with(['competition', 'umpire'])->latest();
 
         if ($request->filled('court')) {

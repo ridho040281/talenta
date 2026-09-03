@@ -77,4 +77,37 @@ class User extends Authenticatable
     {
         return $this->hasMany(Score::class, 'judge_id');
     }
+
+    /**
+     * Check if user is authorized to manage or umpire Badminton
+     */
+    public function managesBadminton(): bool
+    {
+        if ($this->role === 'superadmin') {
+            return true;
+        }
+
+        if ($this->role === 'pic_lomba') {
+            // Primary PIC for Bulu Tangkis
+            if (Competition::where('code', 'BLT')->where('pic_id', $this->id)->exists()) {
+                return true;
+            }
+
+            // Sector PICs in AppSetting
+            $bltPics = array_filter([
+                AppSetting::get('blt_pic_tunggal_pa'),
+                AppSetting::get('blt_pic_tunggal_pi'),
+                AppSetting::get('blt_pic_ganda_pa'),
+                AppSetting::get('blt_pic_ganda_pi'),
+            ]);
+
+            return in_array($this->id, $bltPics) || in_array((string)$this->id, $bltPics);
+        }
+
+        if ($this->role === 'juri') {
+            return $this->judgedCompetitions()->where('code', 'BLT')->exists();
+        }
+
+        return false;
+    }
 }
