@@ -74,7 +74,13 @@
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-2">
+                    <div class="flex flex-wrap items-center gap-2">
+                        @if(!empty($competition->whatsapp_group_url))
+                            <a href="{{ $competition->whatsapp_group_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 text-xs font-black transition shadow-lg shadow-emerald-500/20">
+                                <i data-lucide="message-circle" class="w-4 h-4"></i>
+                                <span>Grup WhatsApp</span>
+                            </a>
+                        @endif
                         <a href="{{ $competition->guidelines_download_url ?? $competition->guidelines_embed_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-200 text-xs font-bold transition border border-white/[0.08]">
                             <i data-lucide="external-link" class="w-3.5 h-3.5 text-[#84D0FF]"></i>
                             <span>Buka di Tab Baru</span>
@@ -171,6 +177,13 @@
                     <i data-lucide="edit-3" class="w-5 h-5"></i>
                     <span>Daftar Cabang Lomba Ini</span>
                 </a>
+
+                @if(!empty($competition->whatsapp_group_url))
+                    <a href="{{ $competition->whatsapp_group_url }}" target="_blank" rel="noopener noreferrer" class="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 font-bold text-xs border border-emerald-500/30 hover:border-emerald-500 transition duration-200">
+                        <i data-lucide="message-circle" class="w-4 h-4"></i>
+                        <span>Gabung Grup WhatsApp Resmi</span>
+                    </a>
+                @endif
             </div>
 
             <!-- Schedule Card -->

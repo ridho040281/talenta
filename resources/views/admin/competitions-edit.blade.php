@@ -439,6 +439,16 @@
                         <input name="guidelines_pdf" type="file" accept=".pdf" class="block w-full text-xs text-slate-400 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold cursor-pointer" style="--tw-file-bg: rgba(78,110,255,0.12);">
                     </div>
 
+                    <!-- Link Grup WhatsApp Resmi Cabang -->
+                    <div class="p-4 rounded-xl space-y-2.5" style="background: rgba(12,17,29,0.6); border: 1px solid rgba(16,185,129,0.25);">
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-emerald-400 flex items-center gap-2">
+                            <i data-lucide="message-circle" class="w-3.5 h-3.5 text-emerald-400"></i>
+                            Tautan Undangan Grup WhatsApp Cabang (Opsional)
+                        </label>
+                        <input name="whatsapp_group_url" type="url" value="{{ old('whatsapp_group_url', $competition->whatsapp_group_url) }}" placeholder="https://chat.whatsapp.com/Gzxxxxxxxxxx" class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-mono">
+                        <p class="text-[10px] text-slate-400">Jika diisi, tombol hijau "Grup WA" otomatis muncul di samping tombol Juknis di halaman utama untuk memudahkan peserta/pembina bergabung.</p>
+                    </div>
+
                     <!-- Checkboxes -->
                     <div class="flex flex-col sm:flex-row gap-3">
                         <label class="flex items-center gap-3 p-3 rounded-xl flex-1 cursor-pointer" style="background: rgba(122,90,248,0.08); border: 1px solid rgba(122,90,248,0.18);">

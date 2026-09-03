@@ -950,6 +950,21 @@
                         </div>
                     </div>
 
+                    <!-- LINK GRUP WHATSAPP CABANG LOMBA -->
+                    <div class="space-y-2 p-3.5 rounded-2xl bg-emerald-50/50 border border-emerald-200/80">
+                        <label class="block text-xs font-black uppercase tracking-wider text-emerald-800 flex items-center gap-2">
+                            <i data-lucide="message-circle" class="w-4 h-4 text-emerald-600"></i>
+                            <span>Tautan Undangan Grup WhatsApp Cabang (Opsional)</span>
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-emerald-500">
+                                <i data-lucide="link-2" class="w-3.5 h-3.5"></i>
+                            </div>
+                            <input name="whatsapp_group_url" type="url" placeholder="https://chat.whatsapp.com/Gzxxxxxxxxxx" class="block w-full pl-9 pr-3 py-2 rounded-xl bg-white border border-emerald-200 text-xs font-medium text-slate-900 outline-none focus:border-emerald-500 shadow-sm font-mono">
+                        </div>
+                        <p class="text-[11px] text-slate-500">Jika diisi, icon WhatsApp akan otomatis tampil di samping tombol Juknis di halaman depan.</p>
+                    </div>
+
                     <!-- KRITERIA PENILAIAN DEWAN JURI -->
                     <div class="space-y-3 pt-3 border-t border-slate-100">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-slate-50 p-3 rounded-2xl border border-slate-200/80">
@@ -1961,6 +1976,21 @@
                                 </div>
                                 <div x-ref="editPdfName" class="text-xs font-bold text-emerald-600"></div>
                             </div>
+                        </div>
+
+                        <!-- LINK GRUP WHATSAPP CABANG LOMBA -->
+                        <div class="space-y-2 p-3.5 rounded-2xl bg-emerald-50/50 border border-emerald-200/80">
+                            <label class="block text-xs font-black uppercase tracking-wider text-emerald-800 flex items-center gap-2">
+                                <i data-lucide="message-circle" class="w-4 h-4 text-emerald-600"></i>
+                                <span>Tautan Undangan Grup WhatsApp Cabang (Opsional)</span>
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-emerald-500">
+                                    <i data-lucide="link-2" class="w-3.5 h-3.5"></i>
+                                </div>
+                                <input name="whatsapp_group_url" type="url" x-model="selectedCompetition.whatsapp_group_url" placeholder="https://chat.whatsapp.com/Gzxxxxxxxxxx" class="block w-full pl-9 pr-3 py-2 rounded-xl bg-white border border-emerald-200 text-xs font-medium text-slate-900 outline-none focus:border-emerald-500 shadow-sm font-mono">
+                            </div>
+                            <p class="text-[11px] text-slate-500">Jika diisi, icon WhatsApp akan otomatis tampil di samping tombol Juknis di halaman depan.</p>
                         </div>
 
                         <!-- KRITERIA PENILAIAN DEWAN JURI -->

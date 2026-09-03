@@ -25,6 +25,7 @@ class Competition extends Model
         'registration_fee',
         'rules',
         'guidelines_file',
+        'whatsapp_group_url',
         'venue',
         'schedule_date',
         'schedule_time',

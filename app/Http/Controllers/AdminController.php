@@ -77,6 +77,7 @@ class AdminController extends Controller
             'rules' => ['nullable', 'string'],
             'guidelines_file' => ['nullable', 'string'],
             'guidelines_pdf' => ['nullable', 'file', 'mimes:pdf', 'max:20480'],
+            'whatsapp_group_url' => ['nullable', 'string', 'max:255'],
             'order' => ['nullable', 'integer'],
         ]);
 
@@ -103,6 +104,7 @@ class AdminController extends Controller
             'schedule_time' => $validated['schedule_time'] ?? null,
             'rules' => $validated['rules'] ?? null,
             'guidelines_file' => $guidelinesPath,
+            'whatsapp_group_url' => $validated['whatsapp_group_url'] ?? null,
             'order' => $nextOrder,
             'status' => 'buka',
             'is_live_score' => $request->boolean('is_live_score', false),
@@ -160,6 +162,7 @@ class AdminController extends Controller
             'rules' => ['nullable', 'string'],
             'guidelines_file' => ['nullable', 'string'],
             'guidelines_pdf' => ['nullable', 'file', 'mimes:pdf', 'max:20480'],
+            'whatsapp_group_url' => ['nullable', 'string', 'max:255'],
             'order' => ['nullable', 'integer'],
         ]);
 
@@ -187,6 +190,7 @@ class AdminController extends Controller
             'schedule_time' => $validated['schedule_time'] ?? null,
             'rules' => $validated['rules'] ?? null,
             'guidelines_file' => $guidelinesPath,
+            'whatsapp_group_url' => $validated['whatsapp_group_url'] ?? null,
             'order' => isset($validated['order']) ? (int) $validated['order'] : ($competition->order ?? 0),
             'show_criteria' => $request->has('show_criteria') ? $request->boolean('show_criteria') : true,
             'is_live_score' => $request->has('is_live_score') ? $request->boolean('is_live_score') : $competition->is_live_score,
