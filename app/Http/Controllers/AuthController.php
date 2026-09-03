@@ -37,14 +37,23 @@ class AuthController extends Controller
 
         if ($user && Hash::check($request->password, $user->password)) {
             if ($user->status !== 'active') {
+                \App\Models\ActivityLog::record('LOGIN_BLOCKED', "Percobaan login pada akun yang dinonaktifkan: '{$user->name}'", $user, 'warning', $loginInput);
                 return back()->withErrors(['login' => 'Akun Anda sedang dinonaktifkan oleh administrator.']);
             }
 
             Auth::login($user, $request->boolean('remember'));
             $request->session()->regenerate();
 
+            \App\Models\ActivityLog::record('LOGIN_SUCCESS', "Berhasil login ke sistem sebagai role: " . strtoupper($user->role), $user, 'success', $loginInput);
+
             return $this->redirectBasedOnRole($user)
                 ->with('success', 'Selamat datang kembali, ' . $user->name . '!');
+        }
+
+        if ($user) {
+            \App\Models\ActivityLog::record('LOGIN_FAILED', "Percobaan login GAGAL (kata sandi salah) untuk akun: '{$user->name}' ({$user->role})", $user, 'failed', $loginInput);
+        } else {
+            \App\Models\ActivityLog::record('LOGIN_FAILED', "Percobaan login GAGAL (akun tidak terdaftar): '{$loginInput}'", null, 'failed', $loginInput);
         }
 
         return back()->withErrors([
@@ -180,6 +189,11 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        $user = Auth::user();
+        if ($user) {
+            \App\Models\ActivityLog::record('LOGOUT', "Pengguna keluar (logout) dari sistem", $user, 'info');
+        }
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

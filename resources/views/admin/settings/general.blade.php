@@ -4,7 +4,7 @@
 @section('page_title', 'Pengaturan Aplikasi & Sistem')
 
 @section('content')
-<div x-data="{ activeTab: 'pembayaran' }" class="space-y-6">
+<div x-data="{ activeTab: '{{ request('tab', 'pembayaran') }}' }" class="space-y-6">
     
     <!-- Top Header Bar (AIStarterKit Dark Style) -->
     <div class="ai-card rounded-3xl p-6 sm:p-8 border border-white/[0.08] shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -46,6 +46,16 @@
         <button type="button" @click="activeTab = 'system'" :class="activeTab === 'system' ? 'gradient-btn text-white font-black shadow-lg shadow-[#7A5AF8]/25' : 'bg-white/[0.04] hover:bg-white/[0.08] text-slate-400 hover:text-slate-200 font-bold border border-white/[0.08]'" class="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs transition whitespace-nowrap cursor-pointer">
             <i data-lucide="server" class="w-4 h-4"></i>
             <span>⚙️ Status Server & Engine</span>
+        </button>
+
+        <button type="button" @click="activeTab = 'security'" :class="activeTab === 'security' ? 'gradient-btn text-white font-black shadow-lg shadow-[#7A5AF8]/25' : 'bg-white/[0.04] hover:bg-white/[0.08] text-slate-400 hover:text-slate-200 font-bold border border-white/[0.08]'" class="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs transition whitespace-nowrap cursor-pointer">
+            <i data-lucide="shield-alert" class="w-4 h-4 text-amber-400"></i>
+            <span>🛡️ Log Aktivitas & Keamanan</span>
+            @if(!empty($logStats['failed_logins_today']) && $logStats['failed_logins_today'] > 0)
+                <span class="px-2 py-0.5 rounded-full text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/40 font-mono font-black animate-pulse">
+                    {{ $logStats['failed_logins_today'] }} Salah Sandi
+                </span>
+            @endif
         </button>
     </div>
 
@@ -708,6 +718,208 @@
                     <span class="font-bold text-white">{{ $systemInfo['timezone'] ?? 'Asia/Jakarta' }}</span>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- TAB 6: LOG AKTIVITAS & AUDIT KEAMANAN (AI STARTER KIT DARK GLASS) -->
+    <div x-show="activeTab === 'security'" x-transition class="space-y-6">
+        
+        <!-- Stats Row -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <!-- Card 1: Login Sukses Hari Ini -->
+            <div class="ai-card p-4 sm:p-5 rounded-3xl border border-white/[0.08] shadow-lg flex items-center gap-3.5 hover:border-emerald-500/40 transition">
+                <div class="w-10 h-10 rounded-2xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-black shrink-0">
+                    <i data-lucide="log-in" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <div class="text-2xl font-black text-white font-mono">{{ $logStats['success_logins_today'] ?? 0 }}</div>
+                    <div class="text-[11px] font-bold text-slate-400">Login Sukses Hari Ini</div>
+                </div>
+            </div>
+
+            <!-- Card 2: Login Gagal / Salah Sandi -->
+            <div class="ai-card p-4 sm:p-5 rounded-3xl border border-white/[0.08] shadow-lg flex items-center gap-3.5 hover:border-rose-500/40 transition">
+                <div class="w-10 h-10 rounded-2xl bg-rose-500/15 text-rose-400 border border-rose-500/30 flex items-center justify-center font-black shrink-0">
+                    <i data-lucide="shield-alert" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <div class="text-2xl font-black {{ ($logStats['failed_logins_today'] ?? 0) > 0 ? 'text-rose-400' : 'text-white' }} font-mono">{{ $logStats['failed_logins_today'] ?? 0 }}</div>
+                    <div class="text-[11px] font-bold text-slate-400">Salah Sandi / Gagal</div>
+                </div>
+            </div>
+
+            <!-- Card 3: Total Log Hari Ini -->
+            <div class="ai-card p-4 sm:p-5 rounded-3xl border border-white/[0.08] shadow-lg flex items-center gap-3.5 hover:border-[#4E6EFF]/40 transition">
+                <div class="w-10 h-10 rounded-2xl bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30 flex items-center justify-center font-black shrink-0">
+                    <i data-lucide="activity" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <div class="text-2xl font-black text-white font-mono">{{ $logStats['total_today'] ?? 0 }}</div>
+                    <div class="text-[11px] font-bold text-slate-400">Aktivitas Hari Ini</div>
+                </div>
+            </div>
+
+            <!-- Card 4: Total Rekam Jejak -->
+            <div class="ai-card p-4 sm:p-5 rounded-3xl border border-white/[0.08] shadow-lg flex items-center gap-3.5 hover:border-[#7A5AF8]/40 transition">
+                <div class="w-10 h-10 rounded-2xl bg-[#7A5AF8]/15 text-[#A594FD] border border-[#7A5AF8]/30 flex items-center justify-center font-black shrink-0">
+                    <i data-lucide="database" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <div class="text-2xl font-black text-white font-mono">{{ $logStats['total_logs'] ?? 0 }}</div>
+                    <div class="text-[11px] font-bold text-slate-400">Total Riwayat Log</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Card: Table of Activity Logs -->
+        <div class="ai-card rounded-3xl border border-white/[0.08] shadow-2xl p-6 sm:p-8 space-y-6">
+            
+            <!-- Table Header & Action Bar -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.08] pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-[#7A5AF8]/15 text-[#A594FD] border border-[#7A5AF8]/30 flex items-center justify-center font-bold shadow-xs">
+                        <i data-lucide="shield-check" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base sm:text-lg font-black text-white font-display">
+                            Rekam Jejak Aktivitas & Audit Keamanan
+                        </h3>
+                        <p class="text-xs text-slate-400">
+                            Memantau siapa yang login, alamat IP, kesalahan input kata sandi, dan histori perubahan data secara real-time
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Clean Logs Action Button -->
+                <div class="flex items-center gap-2">
+                    <form action="{{ route('admin.settings.activity_logs.clear') }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin membersihkan riwayat log aktivitas yang berusia lebih dari 30 hari?')">
+                        @csrf
+                        <input type="hidden" name="mode" value="old">
+                        <button type="submit" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-slate-300 hover:text-white font-bold text-xs border border-white/[0.08] transition cursor-pointer">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5 text-rose-400"></i>
+                            <span>Bersihkan Log >30 Hari</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="border-b border-white/[0.08] text-[10px] font-black uppercase tracking-wider text-slate-400">
+                            <th class="py-3 px-4">Waktu (WIB)</th>
+                            <th class="py-3 px-4">Pelaku / Akun</th>
+                            <th class="py-3 px-4">Aktivitas / Event</th>
+                            <th class="py-3 px-4">Deskripsi / Keterangan</th>
+                            <th class="py-3 px-4">Alamat IP & Perangkat</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/[0.04]">
+                        @forelse($activityLogs as $log)
+                            <tr class="hover:bg-white/[0.02] transition">
+                                <!-- Waktu -->
+                                <td class="py-3 px-4 font-mono text-slate-300 whitespace-nowrap">
+                                    <div class="font-bold">{{ $log->created_at->format('d/m/Y') }}</div>
+                                    <div class="text-[10px] text-slate-400">{{ $log->created_at->format('H:i:s') }} WIB</div>
+                                </td>
+
+                                <!-- Pelaku / Akun -->
+                                <td class="py-3 px-4 whitespace-nowrap">
+                                    @if($log->user)
+                                        <div class="font-black text-white">{{ $log->user->name }}</div>
+                                        <div class="flex items-center gap-1.5 text-[10px] text-slate-400 mt-0.5">
+                                            <span class="font-mono">{{ $log->user->email ?: $log->user->nisn }}</span>
+                                            <span class="px-1.5 py-0.2 rounded text-[9px] font-black uppercase {{ $log->user->role === 'superadmin' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : ($log->user->role === 'pic_lomba' ? 'bg-[#7A5AF8]/20 text-[#A594FD] border border-[#7A5AF8]/30' : 'bg-slate-800 text-slate-300') }}">
+                                                {{ $log->user->role }}
+                                            </span>
+                                        </div>
+                                    @else
+                                        <div class="font-bold text-slate-300">{{ $log->username_attempt ?: 'Tamu / Anonim' }}</div>
+                                        <div class="text-[10px] text-slate-500 italic mt-0.5">Tidak login / Akun tidak terdaftar</div>
+                                    @endif
+                                </td>
+
+                                <!-- Event Badge -->
+                                <td class="py-3 px-4 whitespace-nowrap">
+                                    @if($log->event === 'LOGIN_SUCCESS')
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                            <i data-lucide="check-circle" class="w-3 h-3"></i>
+                                            <span>Login Berhasil</span>
+                                        </span>
+                                    @elseif($log->event === 'LOGIN_FAILED')
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black bg-rose-500/15 text-rose-400 border border-rose-500/30 animate-pulse">
+                                            <i data-lucide="alert-triangle" class="w-3 h-3"></i>
+                                            <span>Salah Sandi / Gagal</span>
+                                        </span>
+                                    @elseif($log->event === 'LOGIN_BLOCKED')
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                                            <i data-lucide="lock" class="w-3 h-3"></i>
+                                            <span>Akun Dinonaktifkan</span>
+                                        </span>
+                                    @elseif($log->event === 'LOGOUT')
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white/[0.05] text-slate-400 border border-white/[0.08]">
+                                            <i data-lucide="log-out" class="w-3 h-3"></i>
+                                            <span>Logout</span>
+                                        </span>
+                                    @elseif(str_starts_with($log->event, 'VERIFY'))
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30">
+                                            <i data-lucide="shield-check" class="w-3 h-3"></i>
+                                            <span>Verifikasi</span>
+                                        </span>
+                                    @elseif(str_starts_with($log->event, 'DELETE'))
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                                            <i data-lucide="trash-2" class="w-3 h-3"></i>
+                                            <span>Hapus Data</span>
+                                        </span>
+                                    @elseif($log->event === 'MANUAL_REGISTRATION')
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                            <i data-lucide="user-plus" class="w-3 h-3"></i>
+                                            <span>Daftar Manual</span>
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black bg-[#7A5AF8]/15 text-[#A594FD] border border-[#7A5AF8]/30">
+                                            <i data-lucide="activity" class="w-3 h-3"></i>
+                                            <span>{{ $log->event }}</span>
+                                        </span>
+                                    @endif
+                                </td>
+
+                                <!-- Deskripsi -->
+                                <td class="py-3 px-4 text-slate-200 min-w-[260px]">
+                                    <p class="leading-relaxed">{{ $log->description }}</p>
+                                </td>
+
+                                <!-- IP & Perangkat -->
+                                <td class="py-3 px-4 whitespace-nowrap text-slate-400 text-[11px]">
+                                    <div class="font-mono text-slate-300 font-bold flex items-center gap-1.5">
+                                        <i data-lucide="globe" class="w-3 h-3 text-[#4E6EFF]"></i>
+                                        <span>{{ $log->ip_address ?: '127.0.0.1' }}</span>
+                                    </div>
+                                    <div class="text-[10px] text-slate-500 truncate max-w-[220px]" title="{{ $log->user_agent }}">
+                                        {{ Str::limit($log->user_agent, 40) }}
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="py-12 text-center text-slate-500">
+                                    <i data-lucide="shield-check" class="w-8 h-8 mx-auto mb-2 text-slate-600"></i>
+                                    <span>Belum ada riwayat aktivitas keamanan yang tercatat.</span>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination Links -->
+            @if($activityLogs->hasPages())
+                <div class="pt-4 border-t border-white/[0.08]">
+                    {{ $activityLogs->appends(['tab' => 'security'])->links() }}
+                </div>
+            @endif
+
         </div>
     </div>
 

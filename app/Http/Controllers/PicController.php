@@ -413,6 +413,13 @@ class PicController extends Controller
 
         $registration->save();
 
+        \App\Models\ActivityLog::record(
+            $validated['status'] === 'verified' ? 'VERIFY_SUCCESS' : 'VERIFY_REJECT',
+            ($validated['status'] === 'verified' ? 'Memverifikasi sah' : 'Menolak') . " peserta '{$registration->display_name}' ({$registration->registration_code}) pada cabang {$registration->competition->name}" . ($validated['verification_notes'] ? ". Catatan: {$validated['verification_notes']}" : ''),
+            $user,
+            $validated['status'] === 'verified' ? 'success' : 'warning'
+        );
+
         // Auto-sync invoice status if part of collective registration
         if ($registration->invoice_id && $registration->invoice) {
             $invoice = $registration->invoice;
@@ -564,6 +571,13 @@ class PicController extends Controller
             ]);
         }
 
+        \App\Models\ActivityLog::record(
+            'UNVERIFY',
+            "Membatalkan verifikasi pendaftaran '{$registration->display_name}' ({$registration->registration_code}) kembali ke Pending",
+            $user,
+            'warning'
+        );
+
         return back()->with('success', 'Verifikasi pendaftaran ' . $registration->registration_code . ' telah dibatalkan. Status otomatis kembali menjadi Menunggu dan peserta dapat mengedit data di akunnya.');
     }
 
@@ -581,6 +595,13 @@ class PicController extends Controller
         $registration->drawAllocation()->delete();
         $registration->members()->delete();
         $registration->delete();
+
+        \App\Models\ActivityLog::record(
+            'DELETE_PARTICIPANT',
+            "Menghapus data pendaftaran peserta '{$name}' ({$code}) secara permanen",
+            $user,
+            'danger'
+        );
 
         return back()->with('success', 'Data pendaftaran ' . $name . ' (' . $code . ') berhasil dihapus secara permanen.');
     }
@@ -732,6 +753,13 @@ class PicController extends Controller
                 'role_in_team' => 'Pemain 2',
             ]);
         }
+
+        \App\Models\ActivityLog::record(
+            'MANUAL_REGISTRATION',
+            "Mendaftarkan peserta baru '{$validated['full_name']}' secara manual pada cabang {$competition->name}" . ($status === 'verified' ? ' (Langsung Terverifikasi/Lunas Tunai)' : ' (Status: Pending)'),
+            $user,
+            'success'
+        );
 
         return redirect()->back()->with('success', "Peserta '{$validated['full_name']}' berhasil didaftarkan secara manual pada cabang {$competition->name}" . ($status === 'verified' ? " dan langsung berstatus Lunas/Terverifikasi." : "."));
     }

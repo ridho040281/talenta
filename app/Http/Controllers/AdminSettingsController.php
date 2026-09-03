@@ -96,7 +96,42 @@ class AdminSettingsController extends Controller
             'timezone' => config('app.timezone') . ' (WIB)',
         ];
 
-        return view('admin.settings.general', compact('settings', 'systemInfo'));
+        $activityLogs = \App\Models\ActivityLog::with('user')
+            ->latest()
+            ->paginate(50);
+
+        $logStats = [
+            'total_today' => \App\Models\ActivityLog::whereDate('created_at', today())->count(),
+            'failed_logins_today' => \App\Models\ActivityLog::where('event', 'LOGIN_FAILED')->whereDate('created_at', today())->count(),
+            'success_logins_today' => \App\Models\ActivityLog::where('event', 'LOGIN_SUCCESS')->whereDate('created_at', today())->count(),
+            'total_logs' => \App\Models\ActivityLog::count(),
+        ];
+
+        return view('admin.settings.general', compact('settings', 'systemInfo', 'activityLogs', 'logStats'));
+    }
+
+    /**
+     * Clear Activity & Security Logs
+     */
+    public function clearActivityLogs(Request $request)
+    {
+        $mode = $request->input('mode', 'old');
+        if ($mode === 'all') {
+            \App\Models\ActivityLog::truncate();
+            $msg = 'Seluruh riwayat log aktivitas dan keamanan berhasil dibersihkan.';
+        } else {
+            $count = \App\Models\ActivityLog::where('created_at', '<', now()->subDays(30))->delete();
+            $msg = "Riwayat log aktivitas yang lebih lama dari 30 hari ({$count} data) berhasil dibersihkan.";
+        }
+
+        \App\Models\ActivityLog::record(
+            'CLEAR_LOGS',
+            $msg,
+            Auth::user(),
+            'warning'
+        );
+
+        return redirect()->route('admin.settings.general', ['tab' => 'security'])->with('success', $msg);
     }
 
     /**
