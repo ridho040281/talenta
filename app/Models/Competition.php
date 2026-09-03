@@ -575,4 +575,49 @@ class Competition extends Model
         }
         return (string) $this->quota;
     }
+
+    public function getQuotaDisplayAttribute(): string
+    {
+        $unitWord = match(strtolower($this->type)) {
+            'regu' => 'Regu',
+            'tim' => 'Tim',
+            'kelompok' => 'Kelompok',
+            'pasangan' => 'Pasangan',
+            default => 'Peserta',
+        };
+
+        if ($this->code === 'BLT') {
+            $tunggalTotal = ($this->tier_quotas['A_tunggal_pa'] ?? 16)
+                          + ($this->tier_quotas['B_tunggal_pa'] ?? 16)
+                          + ($this->tier_quotas['C_tunggal_pa'] ?? 32)
+                          + ($this->tier_quotas['A_tunggal_pi'] ?? 16)
+                          + ($this->tier_quotas['B_tunggal_pi'] ?? 16)
+                          + ($this->tier_quotas['C_tunggal_pi'] ?? 16);
+            $gandaPa = $this->tier_quotas['ganda_pa'] ?? 0;
+            $gandaPi = $this->tier_quotas['ganda_pi'] ?? 0;
+            $gandaText = ($gandaPa <= 0 && $gandaPi <= 0) ? '∞ Bebas Ganda' : (($gandaPa + $gandaPi) . ' Ganda');
+            return "{$tunggalTotal} Tunggal / {$gandaText}";
+        }
+
+        if (in_array($this->code, ['MTQ', 'POP'])) {
+            $pa = $this->tier_quotas['pa'] ?? (int) ceil($this->quota / 2);
+            $pi = $this->tier_quotas['pi'] ?? (int) floor($this->quota / 2);
+            $total = $pa + $pi;
+            return "{$total} Peserta ({$pa} PA / {$pi} PI)";
+        }
+
+        if ($this->code === 'TMJ') {
+            $total = ($this->tier_quotas['A_tunggal_pa'] ?? 10)
+                   + ($this->tier_quotas['B_tunggal_pa'] ?? 10)
+                   + ($this->tier_quotas['A_tunggal_pi'] ?? 10)
+                   + ($this->tier_quotas['B_tunggal_pi'] ?? 10);
+            return "{$total} Peserta (Tunggal Kat A & B)";
+        }
+
+        if ($this->isUnlimitedQuota()) {
+            return '∞ Tak Terbatas';
+        }
+
+        return "{$this->quota} {$unitWord}";
+    }
 }

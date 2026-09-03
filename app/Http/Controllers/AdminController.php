@@ -289,9 +289,16 @@ class AdminController extends Controller
             if ($request->has('blt_status_tunggal_pi')) AppSetting::set('blt_status_tunggal_pi', $request->input('blt_status_tunggal_pi') ?: 'buka', 'general');
 
             $primaryPic = $request->input('blt_pic_tunggal_pa') ?: ($request->input('blt_pic_tunggal_pi') ?: ($request->input('blt_pic_ganda_pa') ?: null));
-            if ($primaryPic) {
-                $competition->update(['pic_id' => $primaryPic]);
-            }
+            $bltTotalTunggal = (int)$request->input('blt_quota_a_tunggal_pa', 16)
+                             + (int)$request->input('blt_quota_b_tunggal_pa', 16)
+                             + (int)$request->input('blt_quota_c_tunggal_pa', 32)
+                             + (int)$request->input('blt_quota_a_tunggal_pi', 16)
+                             + (int)$request->input('blt_quota_b_tunggal_pi', 16)
+                             + (int)$request->input('blt_quota_c_tunggal_pi', 16);
+            $competition->update([
+                'pic_id' => $primaryPic ?: $competition->pic_id,
+                'quota' => $bltTotalTunggal,
+            ]);
         }
 
         // Khusus Cabang MTQ & Pop Singer (Sektor Individu PA & PI)
@@ -315,9 +322,12 @@ class AdminController extends Controller
             if ($request->has($prefix . '_status_pi')) AppSetting::set($prefix . '_status_pi', $request->input($prefix . '_status_pi') ?: 'buka', 'general');
 
             $primaryPic = $request->input($prefix . '_pic_pa') ?: ($request->input($prefix . '_pic_pi') ?: null);
-            if ($primaryPic) {
-                $competition->update(['pic_id' => $primaryPic]);
-            }
+            $qPa = $request->filled($prefix . '_quota_pa') ? (int) $request->input($prefix . '_quota_pa') : (int) AppSetting::get($prefix . '_quota_pa', 50);
+            $qPi = $request->filled($prefix . '_quota_pi') ? (int) $request->input($prefix . '_quota_pi') : (int) AppSetting::get($prefix . '_quota_pi', 50);
+            $competition->update([
+                'pic_id' => $primaryPic ?: $competition->pic_id,
+                'quota' => ($qPa + $qPi),
+            ]);
         }
 
         // Khusus Cabang Tenis Meja (TMJ - Kat A & Kat B)
@@ -351,9 +361,14 @@ class AdminController extends Controller
             if ($request->has('tmj_status_tunggal_pi')) AppSetting::set('tmj_status_tunggal_pi', $request->input('tmj_status_tunggal_pi') ?: 'buka', 'general');
 
             $primaryPic = $request->input('tmj_pic_tunggal_pa') ?: ($request->input('tmj_pic_tunggal_pi') ?: null);
-            if ($primaryPic) {
-                $competition->update(['pic_id' => $primaryPic]);
-            }
+            $qA_pa = $request->filled('tmj_quota_a_tunggal_pa') ? (int) $request->input('tmj_quota_a_tunggal_pa') : (int) AppSetting::get('tmj_quota_a_tunggal_pa', 10);
+            $qB_pa = $request->filled('tmj_quota_b_tunggal_pa') ? (int) $request->input('tmj_quota_b_tunggal_pa') : (int) AppSetting::get('tmj_quota_b_tunggal_pa', 10);
+            $qA_pi = $request->filled('tmj_quota_a_tunggal_pi') ? (int) $request->input('tmj_quota_a_tunggal_pi') : (int) AppSetting::get('tmj_quota_a_tunggal_pi', 10);
+            $qB_pi = $request->filled('tmj_quota_b_tunggal_pi') ? (int) $request->input('tmj_quota_b_tunggal_pi') : (int) AppSetting::get('tmj_quota_b_tunggal_pi', 10);
+            $competition->update([
+                'pic_id' => $primaryPic ?: $competition->pic_id,
+                'quota' => ($qA_pa + $qB_pa + $qA_pi + $qB_pi),
+            ]);
         }
 
         return redirect()->route('admin.competitions')->with('success', 'Cabang lomba ' . $competition->name . ' berhasil diperbarui.');

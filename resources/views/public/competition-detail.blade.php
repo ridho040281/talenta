@@ -157,19 +157,19 @@
                     </div>
                     <div class="flex items-center justify-between">
                         <span class="text-slate-400">Kuota Peserta:</span>
-                        @if($competition->code === 'BLT')
-                            <span class="font-bold text-xs text-white text-right">{{ ($competition->tier_quotas['A_tunggal_pa'] ?? 16) + ($competition->tier_quotas['B_tunggal_pa'] ?? 16) + ($competition->tier_quotas['C_tunggal_pa'] ?? 16) + ($competition->tier_quotas['A_tunggal_pi'] ?? 16) + ($competition->tier_quotas['B_tunggal_pi'] ?? 16) + ($competition->tier_quotas['C_tunggal_pi'] ?? 16) }} Tunggal / {{ ($competition->tier_quotas['ganda_pa'] ?? 10) + ($competition->tier_quotas['ganda_pi'] ?? 10) }} Ganda</span>
-                        @elseif($competition->code === 'TMJ')
-                            <span class="font-bold text-xs text-white text-right">{{ ($competition->tier_quotas['A_tunggal_pa'] ?? 10) + ($competition->tier_quotas['B_tunggal_pa'] ?? 10) + ($competition->tier_quotas['A_tunggal_pi'] ?? 10) + ($competition->tier_quotas['B_tunggal_pi'] ?? 10) }} Total (Tunggal Kat A & B)</span>
-                        @elseif($competition->isUnlimitedQuota())
-                            <span class="font-bold text-sm text-purple-300">∞ Tak Terbatas</span>
-                        @else
-                            <span class="font-bold text-sm text-white">{{ $competition->quota }} Peserta</span>
-                        @endif
+                        <span class="font-bold text-sm text-white text-right">{{ $competition->quota_display }}</span>
                     </div>
                     <div class="flex items-center justify-between">
                         <span class="text-slate-400">Peserta Terverifikasi:</span>
-                        <span class="font-bold text-sm text-[#A594FD]">{{ $verifiedCount }} Peserta</span>
+                        @php
+                            $verifiedUnit = match(strtolower($competition->type)) {
+                                'regu' => 'Regu',
+                                'tim' => 'Tim',
+                                'kelompok' => 'Kelompok',
+                                default => 'Peserta',
+                            };
+                        @endphp
+                        <span class="font-bold text-sm text-[#A594FD]">{{ $verifiedCount }} {{ $verifiedUnit }}</span>
                     </div>
                 </div>
 
