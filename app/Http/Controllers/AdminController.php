@@ -257,6 +257,11 @@ class AdminController extends Controller
             if ($request->has('blt_status_ganda_pi')) AppSetting::set('blt_status_ganda_pi', $request->input('blt_status_ganda_pi') ?: 'buka', 'general');
             if ($request->has('blt_status_tunggal_pa')) AppSetting::set('blt_status_tunggal_pa', $request->input('blt_status_tunggal_pa') ?: 'buka', 'general');
             if ($request->has('blt_status_tunggal_pi')) AppSetting::set('blt_status_tunggal_pi', $request->input('blt_status_tunggal_pi') ?: 'buka', 'general');
+
+            $primaryPic = $request->input('blt_pic_tunggal_pa') ?: ($request->input('blt_pic_tunggal_pi') ?: ($request->input('blt_pic_ganda_pa') ?: null));
+            if ($primaryPic) {
+                $competition->update(['pic_id' => $primaryPic]);
+            }
         }
 
         // Khusus Cabang MTQ & Pop Singer (Sektor Individu PA & PI)
@@ -278,6 +283,11 @@ class AdminController extends Controller
             // Status PA & PI
             if ($request->has($prefix . '_status_pa')) AppSetting::set($prefix . '_status_pa', $request->input($prefix . '_status_pa') ?: 'buka', 'general');
             if ($request->has($prefix . '_status_pi')) AppSetting::set($prefix . '_status_pi', $request->input($prefix . '_status_pi') ?: 'buka', 'general');
+
+            $primaryPic = $request->input($prefix . '_pic_pa') ?: ($request->input($prefix . '_pic_pi') ?: null);
+            if ($primaryPic) {
+                $competition->update(['pic_id' => $primaryPic]);
+            }
         }
 
         // Khusus Cabang Tenis Meja (TMJ - Kat A & Kat B)
@@ -309,6 +319,11 @@ class AdminController extends Controller
             if ($request->has('tmj_status_b_tunggal_pi')) AppSetting::set('tmj_status_b_tunggal_pi', $request->input('tmj_status_b_tunggal_pi') ?: 'buka', 'general');
             if ($request->has('tmj_status_tunggal_pa')) AppSetting::set('tmj_status_tunggal_pa', $request->input('tmj_status_tunggal_pa') ?: 'buka', 'general');
             if ($request->has('tmj_status_tunggal_pi')) AppSetting::set('tmj_status_tunggal_pi', $request->input('tmj_status_tunggal_pi') ?: 'buka', 'general');
+
+            $primaryPic = $request->input('tmj_pic_tunggal_pa') ?: ($request->input('tmj_pic_tunggal_pi') ?: null);
+            if ($primaryPic) {
+                $competition->update(['pic_id' => $primaryPic]);
+            }
         }
 
         return redirect()->route('admin.competitions')->with('success', 'Cabang lomba ' . $competition->name . ' berhasil diperbarui.');

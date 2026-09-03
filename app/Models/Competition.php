@@ -305,13 +305,15 @@ class Competition extends Model
 
     public function getPicTunggalPaAttribute()
     {
-        $id = AppSetting::get('blt_pic_tunggal_pa', $this->pic_id);
+        $prefix = strtolower($this->code);
+        $id = AppSetting::get($prefix . '_pic_tunggal_pa', $this->pic_id);
         return $id ? User::find($id) : $this->pic;
     }
 
     public function getPicTunggalPiAttribute()
     {
-        $id = AppSetting::get('blt_pic_tunggal_pi', $this->pic_id);
+        $prefix = strtolower($this->code);
+        $id = AppSetting::get($prefix . '_pic_tunggal_pi', $this->pic_id);
         return $id ? User::find($id) : $this->pic;
     }
 
