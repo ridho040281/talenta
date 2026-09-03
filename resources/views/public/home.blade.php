@@ -222,11 +222,10 @@
                 <table class="w-full text-left text-sm text-slate-300">
                     <thead class="text-[11px] font-bold uppercase tracking-wider bg-[#0C111D]/90 text-slate-400 border-b border-white/[0.08]">
                         <tr>
-                            <th class="py-3 px-5 whitespace-nowrap min-w-[200px]">Nama Lomba</th>
-                            <th class="py-3 px-4 whitespace-nowrap min-w-[140px]">Jenis Lomba</th>
+                            <th class="py-3 px-5 whitespace-nowrap min-w-[220px]">Nama Lomba</th>
                             <th class="py-3 px-5 whitespace-nowrap min-w-[180px]">Kategori</th>
                             <th class="py-3 px-5 whitespace-nowrap min-w-[180px]">Sisa Kuota</th>
-                            <th class="py-3 px-4 text-center whitespace-nowrap min-w-[100px]">Aksi</th>
+                            <th class="py-3 px-4 text-center whitespace-nowrap min-w-[120px]">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-white/[0.04] font-medium text-xs sm:text-sm">
@@ -309,13 +308,6 @@
                                     <span class="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
                                         <i data-lucide="map-pin" class="w-3 h-3 text-[#4E6EFF] shrink-0"></i>
                                         <span>{{ $comp->venue ?? 'Kampus MTsN 1 Blitar' }}</span>
-                                    </span>
-                                </td>
-
-                                <td class="py-3.5 px-4 whitespace-nowrap min-w-[140px] align-middle">
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg {{ $rowTheme['badge'] }} text-xs font-semibold whitespace-nowrap shadow-sm">
-                                        <i data-lucide="{{ $comp->category->icon ?: 'folder' }}" class="w-3 h-3 {{ $rowTheme['icon_color'] }}"></i>
-                                        <span>{{ $comp->category->name }}</span>
                                     </span>
                                 </td>
 
