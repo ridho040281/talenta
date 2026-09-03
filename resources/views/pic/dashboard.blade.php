@@ -70,14 +70,47 @@
                 { value: 'individu_pi', label: '👧 Pop Singer Putri (PI)' },
             ];
         } else if (this.currentCompCode === 'ALL') {
-            return [
-                { value: 'all', label: 'Semua Sektor / Kategori Lomba' },
-                { value: 'tunggal_pa', label: '🏸 Bulu Tangkis: Tunggal Putra (PA)' },
-                { value: 'tunggal_pi', label: '🏸 Bulu Tangkis: Tunggal Putri (PI)' },
-                { value: 'ganda_all', label: '👥 Bulu Tangkis: Ganda (Semua)' },
-                { value: 'kat_a', label: '🏓 Tenis Meja: Kategori A (Kelas 1–3)' },
-                { value: 'kat_b', label: '🏓 Tenis Meja: Kategori B (Kelas 4–6)' },
-            ];
+            const list = [{ value: 'all', label: 'Semua Sektor / Kategori Lomba' }];
+            const codes = this.competitionsData.map(c => c.code);
+
+            if (codes.includes('BLT')) {
+                list.push(
+                    { value: 'tunggal_pa', label: '🏸 Bulu Tangkis: Semua Tunggal Putra (PA)' },
+                    { value: 'tunggal_pa_a', label: '🏷️ Bulu Tangkis: Tunggal PA - Kat A (Kelas 1–2)' },
+                    { value: 'tunggal_pa_b', label: '🏷️ Bulu Tangkis: Tunggal PA - Kat B (Kelas 3–4)' },
+                    { value: 'tunggal_pa_c', label: '🏷️ Bulu Tangkis: Tunggal PA - Kat C (Kelas 5–6)' },
+                    { value: 'tunggal_pi', label: '🏸 Bulu Tangkis: Semua Tunggal Putri (PI)' },
+                    { value: 'tunggal_pi_a', label: '🏷️ Bulu Tangkis: Tunggal PI - Kat A (Kelas 1–2)' },
+                    { value: 'tunggal_pi_b', label: '🏷️ Bulu Tangkis: Tunggal PI - Kat B (Kelas 3–4)' },
+                    { value: 'tunggal_pi_c', label: '🏷️ Bulu Tangkis: Tunggal PI - Kat C (Kelas 5–6)' },
+                    { value: 'ganda_all', label: '👥 Bulu Tangkis: Semua Ganda (PA & PI)' },
+                    { value: 'ganda_pa', label: '👥 Bulu Tangkis: Ganda Putra (PA)' },
+                    { value: 'ganda_pi', label: '👥 Bulu Tangkis: Ganda Putri (PI)' }
+                );
+            }
+            if (codes.includes('TMJ')) {
+                list.push(
+                    { value: 'tmj_a_all', label: '🏓 Tenis Meja: Semua Kategori A (Kelas 1–3)' },
+                    { value: 'tmj_pa_a', label: '🏷️ Tenis Meja: Tunggal PA - Kat A (Kelas 1–3)' },
+                    { value: 'tmj_pi_a', label: '🏷️ Tenis Meja: Tunggal PI - Kat A (Kelas 1–3)' },
+                    { value: 'tmj_b_all', label: '🏓 Tenis Meja: Semua Kategori B (Kelas 4–6)' },
+                    { value: 'tmj_pa_b', label: '🏷️ Tenis Meja: Tunggal PA - Kat B (Kelas 4–6)' },
+                    { value: 'tmj_pi_b', label: '🏷️ Tenis Meja: Tunggal PI - Kat B (Kelas 4–6)' }
+                );
+            }
+            if (codes.includes('MTQ')) {
+                list.push(
+                    { value: 'individu_pa', label: '📖 MTQ: Sektor Putra (PA)' },
+                    { value: 'individu_pi', label: '📖 MTQ: Sektor Putri (PI)' }
+                );
+            }
+            if (codes.includes('POP')) {
+                list.push(
+                    { value: 'individu_pa', label: '🎤 Pop Singer: Sektor Putra (PA)' },
+                    { value: 'individu_pi', label: '🎤 Pop Singer: Sektor Putri (PI)' }
+                );
+            }
+            return list;
         } else {
             // Cabang Terbuka / Tanpa Pembagian Sektor PA-PI di Master (Olimpiade MIPA, Catur, Kaligrafi, Pidato, dll)
             return [

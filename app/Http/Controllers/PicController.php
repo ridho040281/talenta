@@ -11,18 +11,74 @@ use Illuminate\Support\Facades\Auth;
 
 class PicController extends Controller
 {
+    /**
+     * Get IDs of all competitions managed by user (both as primary PIC and sector/category PIC in AppSetting)
+     */
+    public static function getManagedCompetitionIds($user): array
+    {
+        if ($user->role === 'superadmin') {
+            return Competition::pluck('id')->toArray();
+        }
+
+        $extraCodes = [];
+        $bltPics = array_filter([
+            \App\Models\AppSetting::get('blt_pic_tunggal_pa'),
+            \App\Models\AppSetting::get('blt_pic_tunggal_pi'),
+            \App\Models\AppSetting::get('blt_pic_ganda_pa'),
+            \App\Models\AppSetting::get('blt_pic_ganda_pi'),
+        ]);
+        if (in_array($user->id, $bltPics) || in_array((string)$user->id, $bltPics)) {
+            $extraCodes[] = 'BLT';
+        }
+
+        $tmjPics = array_filter([
+            \App\Models\AppSetting::get('tmj_pic_tunggal_pa'),
+            \App\Models\AppSetting::get('tmj_pic_tunggal_pi'),
+        ]);
+        if (in_array($user->id, $tmjPics) || in_array((string)$user->id, $tmjPics)) {
+            $extraCodes[] = 'TMJ';
+        }
+
+        $mtqPics = array_filter([
+            \App\Models\AppSetting::get('mtq_pic_pa'),
+            \App\Models\AppSetting::get('mtq_pic_pi'),
+        ]);
+        if (in_array($user->id, $mtqPics) || in_array((string)$user->id, $mtqPics)) {
+            $extraCodes[] = 'MTQ';
+        }
+
+        $popPics = array_filter([
+            \App\Models\AppSetting::get('pop_pic_pa'),
+            \App\Models\AppSetting::get('pop_pic_pi'),
+        ]);
+        if (in_array($user->id, $popPics) || in_array((string)$user->id, $popPics)) {
+            $extraCodes[] = 'POP';
+        }
+
+        return Competition::where(function ($q) use ($user, $extraCodes) {
+            $q->where('pic_id', $user->id);
+            if (!empty($extraCodes)) {
+                $q->orWhereIn('code', $extraCodes);
+            }
+        })->pluck('id')->toArray();
+    }
+
+    protected function authorizeCompetitionManagement($user, $competitionId): void
+    {
+        if (!in_array($competitionId, self::getManagedCompetitionIds($user))) {
+            abort(403, 'Anda tidak memiliki hak akses untuk mengelola cabang lomba ini.');
+        }
+    }
+
     public function dashboard()
     {
         $user = Auth::user();
+        $competitionIds = self::getManagedCompetitionIds($user);
 
         // Get competitions managed by this PIC (or all if superadmin)
         $competitions = Competition::with(['category', 'registrations.members'])
-            ->when($user->role === 'pic_lomba', function ($q) use ($user) {
-                $q->where('pic_id', $user->id);
-            })
+            ->whereIn('id', $competitionIds)
             ->get();
-
-        $competitionIds = $competitions->pluck('id');
         
         $allRegistrations = Registration::with(['competition.category', 'members', 'user', 'invoice'])
             ->whereIn('competition_id', $competitionIds)
@@ -58,12 +114,9 @@ class PicController extends Controller
         $status = $request->query('status', 'all');
         $genderFilter = $request->query('gender', 'all');
 
+        $managedCompIds = self::getManagedCompetitionIds($user);
         $query = Registration::with(['competition.category', 'members', 'user'])
-            ->when($user->role === 'pic_lomba', function ($q) use ($user) {
-                $q->whereHas('competition', function ($cq) use ($user) {
-                    $cq->where('pic_id', $user->id);
-                });
-            })
+            ->whereIn('competition_id', $managedCompIds)
             ->when($competitionId !== 'all', function ($q) use ($competitionId) {
                 $q->where('competition_id', $competitionId);
             })
@@ -204,12 +257,9 @@ class PicController extends Controller
         $status = $request->query('status', 'all');
         $genderFilter = $request->query('gender', 'all');
 
+        $managedCompIds = self::getManagedCompetitionIds($user);
         $query = Registration::with(['competition.category', 'members', 'user'])
-            ->when($user->role === 'pic_lomba', function ($q) use ($user) {
-                $q->whereHas('competition', function ($cq) use ($user) {
-                    $cq->where('pic_id', $user->id);
-                });
-            })
+            ->whereIn('competition_id', $managedCompIds)
             ->when($competitionId !== 'all', function ($q) use ($competitionId) {
                 $q->where('competition_id', $competitionId);
             })
@@ -318,9 +368,7 @@ class PicController extends Controller
         $user = Auth::user();
         $competition = Competition::with('category')->findOrFail($competition_id);
 
-        if ($user->role === 'pic_lomba' && $competition->pic_id !== $user->id) {
-            abort(403, 'Anda tidak memiliki hak akses untuk mengelola cabang lomba ini.');
-        }
+        $this->authorizeCompetitionManagement($user, $competition->id);
 
         $statusFilter = $request->input('status', 'all');
 
@@ -340,10 +388,7 @@ class PicController extends Controller
     {
         $registration = Registration::with(['competition', 'invoice.registrations'])->findOrFail($registration_id);
         $user = Auth::user();
-
-        if ($user->role === 'pic_lomba' && $registration->competition->pic_id !== $user->id) {
-            abort(403);
-        }
+        $this->authorizeCompetitionManagement($user, $registration->competition_id);
 
         $validated = $request->validate([
             'status' => ['required', 'in:verified,rejected,revision'],
@@ -546,9 +591,7 @@ class PicController extends Controller
         $competitions = Competition::with(['category', 'registrations' => function ($q) {
                 $q->with('members');
             }])
-            ->when($user->role === 'pic_lomba', function ($q) use ($user) {
-                $q->where('pic_id', $user->id);
-            })
+            ->whereIn('id', self::getManagedCompetitionIds($user))
             ->get()
             ->map(function ($comp) {
                 $verified = $comp->registrations->where('status', 'verified');
@@ -584,9 +627,7 @@ class PicController extends Controller
             $q->where('status', 'verified')->with('members');
         }])->findOrFail($competition_id);
 
-        if ($user->role === 'pic_lomba' && $competition->pic_id !== $user->id) {
-            abort(403);
-        }
+        $this->authorizeCompetitionManagement($user, $competition->id);
 
         $verifiedList = $competition->registrations->map(function ($reg) {
             $firstMember = $reg->members->first();
@@ -617,9 +658,7 @@ class PicController extends Controller
             $q->where('status', 'verified')->with('members');
         }])->findOrFail($competition_id);
 
-        if ($user->role === 'pic_lomba' && $competition->pic_id !== $user->id) {
-            abort(403);
-        }
+        $this->authorizeCompetitionManagement($user, $competition->id);
 
         $verifiedList = $competition->registrations->map(function ($reg) {
             $firstMember = $reg->members->first();
@@ -645,6 +684,7 @@ class PicController extends Controller
     {
         $competition = Competition::findOrFail($competition_id);
         $user = Auth::user();
+        $this->authorizeCompetitionManagement($user, $competition->id);
 
         $validated = $request->validate([
             'registration_id' => ['required', 'exists:registrations,id'],
