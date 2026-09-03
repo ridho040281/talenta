@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Layar Undian Nomor Tampil - {{ $competition->name }} | {{ $appSettings['app_name'] ?? 'TALENTA' }}</title>
+    <title>Layar Undian Nomor Tampil - {{ $competition->name }} | {{ $appSettings['event_name'] ?? ($appSettings['app_name'] ?? 'TALENTA') }}</title>
     
     <!-- Favicon -->
     @if(!empty($appSettings['favicon']))
@@ -38,7 +38,7 @@
             </a>
             <div>
                 <h1 class="text-lg font-black text-white">HASIL UNDIAN NOMOR TAMPIL</h1>
-                <p class="text-xs text-amber-400 font-bold">{{ $competition->name }} ({{ $appSettings['app_name'] ?? 'TALENTA' }})</p>
+                <p class="text-xs text-amber-400 font-bold">{{ $competition->name }} ({{ $appSettings['event_name'] ?? ($appSettings['app_name'] ?? 'TALENTA') }})</p>
             </div>
         </div>
         <a href="{{ route('live.scoreboard', $competition->slug) }}" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 border border-slate-700 transition">
@@ -78,7 +78,7 @@
     </main>
 
     <footer class="bg-slate-900 border-t border-slate-800 py-4 text-center text-xs text-slate-500">
-        TALENTA Drawing Monitor • MTsN 1 Blitar
+        {{ $appSettings['app_name'] ?? 'TALENTA' }} Drawing Monitor • {{ $appSettings['event_name'] ?? ($appSettings['institution_name'] ?? 'MTsN 1 Blitar') }}
     </footer>
 
     <script>
