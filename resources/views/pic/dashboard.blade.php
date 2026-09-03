@@ -14,6 +14,15 @@
     editModal: false,
     exportModal: false,
     singlePrintModal: false,
+    createModal: false,
+    createCompId: '',
+    get createCompCode() {
+        const c = this.competitionsData.find(x => x.id === this.createCompId);
+        return c ? c.code : '';
+    },
+    createMatchType: '',
+    createTargetClass: '',
+    createGender: 'L',
     selectedReg: null,
     selectedEditReg: null,
     selectedSingleReg: null,
@@ -253,8 +262,14 @@
                 </button>
             </div>
 
-            <!-- Action Buttons: Spin Wheel & Cetak/Export -->
+            <!-- Action Buttons: Tambah Peserta, Cetak/Export & Spin Wheel -->
             <div class="flex items-center gap-2 shrink-0">
+
+                <!-- Tambah Peserta Manual Button -->
+                <button @click="createModal = true" type="button" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 transition cursor-pointer">
+                    <i data-lucide="user-plus" class="w-4 h-4"></i>
+                    <span>+ Tambah Peserta</span>
+                </button>
                 
                 <!-- Print & Export Modal Launcher Button -->
                 <button @click="selectedPrintCompetition = selectedCompetition; exportModal = true" type="button" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#4E6EFF]/15 hover:bg-[#4E6EFF]/25 text-[#84D0FF] border border-[#4E6EFF]/30 font-black text-xs transition cursor-pointer">
@@ -1072,6 +1087,198 @@
                         Tutup
                     </button>
                 </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== CREATE PARTICIPANT MODAL (TAMBAH PESERTA MANUAL) ==================== -->
+    <div x-show="createModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="createModal" @click="createModal = false" class="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity"></div>
+
+            <div x-show="createModal" class="inline-block align-bottom bg-[#161F30] border border-white/[0.12] rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full p-6 sm:p-8 space-y-6">
+                
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between border-b border-white/[0.08] pb-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-mono font-bold text-emerald-400 px-2.5 py-1 bg-emerald-500/15 border border-emerald-500/30 rounded-lg">PENDAFTARAN MANUAL</span>
+                            <span class="text-xs font-bold text-slate-400">Admin & PIC Lomba</span>
+                        </div>
+                        <h3 class="text-lg font-black text-white mt-2">Daftarkan Peserta Baru (Offline / Sekretariat)</h3>
+                    </div>
+                    <button @click="createModal = false" type="button" class="text-slate-400 hover:text-white transition cursor-pointer">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <form action="{{ route('pic.store.participant') }}" method="POST" class="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+                    @csrf
+
+                    <!-- Cabang Lomba Selection -->
+                    <div class="p-4 rounded-2xl bg-[#0C111D] border border-white/[0.08] space-y-3">
+                        <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider">
+                            Pilih Cabang Lomba <span class="text-rose-400">*</span>
+                        </label>
+                        <select name="competition_id" x-model="createCompId" required class="w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.12] text-xs font-bold text-white focus:border-[#7A5AF8] outline-none">
+                            <option value="">-- Pilih Cabang Lomba --</option>
+                            @foreach($competitions as $comp)
+                                <option value="{{ $comp->id }}">{{ $comp->name }} ({{ $comp->code }})</option>
+                            @endforeach
+                        </select>
+
+                        <!-- Sektor Bulu Tangkis (BLT) -->
+                        <template x-if="createCompCode === 'BLT'">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-white/[0.06]">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Sektor Pertandingan <span class="text-rose-400">*</span></label>
+                                    <select name="match_type" x-model="createMatchType" required class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-bold text-white">
+                                        <option value="">-- Pilih Sektor --</option>
+                                        <option value="Tunggal Putra (PA)">Tunggal Putra (PA)</option>
+                                        <option value="Tunggal Putri (PI)">Tunggal Putri (PI)</option>
+                                        <option value="Ganda Putra (PA)">Ganda Putra (PA)</option>
+                                        <option value="Ganda Putri (PI)">Ganda Putri (PI)</option>
+                                    </select>
+                                </div>
+                                <div x-show="!createMatchType.includes('Ganda')">
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Kategori Jenjang Kelas <span class="text-rose-400">*</span></label>
+                                    <select name="target_class" x-model="createTargetClass" :required="!createMatchType.includes('Ganda')" class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-bold text-white">
+                                        <option value="">-- Pilih Kategori --</option>
+                                        <option value="Kategori A (Kelas 1 - 2)">Kategori A (Kelas 1–2 SD/MI)</option>
+                                        <option value="Kategori B (Kelas 3 - 4)">Kategori B (Kelas 3–4 SD/MI)</option>
+                                        <option value="Kategori C (Kelas 5 - 6)">Kategori C (Kelas 5–6 SD/MI)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Sektor Tenis Meja (TMJ) -->
+                        <template x-if="createCompCode === 'TMJ'">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-white/[0.06]">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Sektor Pertandingan <span class="text-rose-400">*</span></label>
+                                    <select name="match_type" x-model="createMatchType" required class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-bold text-white">
+                                        <option value="">-- Pilih Sektor --</option>
+                                        <option value="Tunggal Putra (PA)">Tunggal Putra (PA)</option>
+                                        <option value="Tunggal Putri (PI)">Tunggal Putri (PI)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Kategori Jenjang Kelas <span class="text-rose-400">*</span></label>
+                                    <select name="target_class" x-model="createTargetClass" required class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-bold text-white">
+                                        <option value="">-- Pilih Kategori --</option>
+                                        <option value="Kategori A (Kelas 1 - 3)">Kategori A (Kelas 1–3 SD/MI)</option>
+                                        <option value="Kategori B (Kelas 4 - 6)">Kategori B (Kelas 4–6 SD/MI)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Data Peserta Utama -->
+                    <div class="p-4 rounded-2xl bg-[#0C111D] border border-white/[0.08] space-y-3">
+                        <span class="text-[11px] font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                            <i data-lucide="user" class="w-4 h-4"></i>
+                            <span>Biodata Peserta Utama</span>
+                        </span>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="sm:col-span-2">
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nama Lengkap Peserta <span class="text-rose-400">*</span></label>
+                                <input type="text" name="full_name" required placeholder="Contoh: Muhammad Rayhan" class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-bold text-white focus:border-[#7A5AF8] outline-none">
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">NISN (10 Digit)</label>
+                                <input type="text" name="nisn" maxlength="20" placeholder="Opsional / 10 digit angka" class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-mono font-bold text-white focus:border-[#7A5AF8] outline-none">
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Jenis Kelamin <span class="text-rose-400">*</span></label>
+                                <select name="gender" x-model="createGender" required class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-bold text-white">
+                                    <option value="L">Laki-laki (Putra / PA)</option>
+                                    <option value="P">Perempuan (Putri / PI)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Asal Sekolah / Madrasah <span class="text-rose-400">*</span></label>
+                                <input type="text" name="institution_name" required placeholder="Contoh: MI Al-Ikhlas" class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-bold text-white focus:border-[#7A5AF8] outline-none">
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">No. WhatsApp / HP</label>
+                                <input type="text" name="phone" placeholder="08xxxxxxxxxx" class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-bold text-white focus:border-[#7A5AF8] outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Khusus Ganda Bulu Tangkis (Pemain 2) -->
+                    <div x-show="createCompCode === 'BLT' && createMatchType.includes('Ganda')" class="p-4 rounded-2xl bg-[#0C111D] border border-blue-500/20 space-y-3">
+                        <span class="text-[11px] font-black uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
+                            <i data-lucide="users" class="w-4 h-4"></i>
+                            <span>Data Pasangan Ganda (Pemain 2)</span>
+                        </span>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="sm:col-span-2">
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nama Pemain 2</label>
+                                <input type="text" name="member2_name" placeholder="Nama lengkap pasangan ganda" class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-bold text-white focus:border-[#7A5AF8] outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">NISN Pemain 2</label>
+                                <input type="text" name="member2_nisn" placeholder="Opsional" class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-mono font-bold text-white">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Asal Sekolah Pemain 2</label>
+                                <input type="text" name="member2_school" placeholder="Kosongkan jika sama dengan pemain 1" class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-bold text-white">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status & Catatan Verifikasi -->
+                    <div class="p-4 rounded-2xl bg-[#0C111D] border border-white/[0.08] space-y-3">
+                        <span class="text-[11px] font-black uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                            <i data-lucide="shield-check" class="w-4 h-4"></i>
+                            <span>Status Pendaftaran & Dispensasi</span>
+                        </span>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Status Langsung <span class="text-rose-400">*</span></label>
+                                <select name="status" required class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-bold text-white">
+                                    <option value="verified" selected>✅ Terverifikasi (Lunas Tunai / Sah)</option>
+                                    <option value="pending">⏳ Pending (Menunggu Pembayaran / Berkas)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Catatan Panitia / Kwitansi</label>
+                                <input type="text" name="verification_notes" placeholder="Misal: Lunas tunai di sekretariat" class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-bold text-white">
+                            </div>
+                        </div>
+
+                        <!-- Opsi Abaikan Kuota (Dispensasi) -->
+                        <div class="pt-2 border-t border-white/[0.06] flex items-center gap-2">
+                            <input type="checkbox" name="ignore_quota" id="ignore_quota" value="1" class="w-4 h-4 rounded text-emerald-600 bg-[#161F30] border-white/[0.2] focus:ring-emerald-500 cursor-pointer">
+                            <label for="ignore_quota" class="text-xs text-amber-300 font-semibold cursor-pointer select-none">
+                                Abaikan batas kuota (Gunakan sebagai kuota dispensasi khusus panitia)
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Modal Actions -->
+                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-white/[0.08]">
+                        <button type="button" @click="createModal = false" class="px-5 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-300 text-xs font-bold transition cursor-pointer">
+                            Batal
+                        </button>
+                        <button type="submit" class="px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/25 transition cursor-pointer flex items-center gap-2">
+                            <i data-lucide="check-circle" class="w-4 h-4"></i>
+                            <span>Simpan & Daftarkan Peserta</span>
+                        </button>
+                    </div>
+                </form>
 
             </div>
         </div>

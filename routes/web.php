@@ -92,6 +92,7 @@ Route::middleware(['auth', 'role:pic_lomba,superadmin'])->prefix('pic')->name('p
     Route::get('/lomba/{competition_id}/peserta', [PicController::class, 'participants'])->name('participants');
     Route::get('/peserta/cetak-pdf', [PicController::class, 'printParticipantsPdf'])->name('participants.print.pdf');
     Route::get('/peserta/export-excel', [PicController::class, 'exportParticipantsExcel'])->name('participants.export.excel');
+    Route::post('/peserta/store-manual', [PicController::class, 'storeParticipant'])->name('store.participant');
     Route::post('/peserta/{registration_id}/verifikasi', [PicController::class, 'verifyParticipant'])->name('verify.participant');
     Route::post('/peserta/{registration_id}/update', [PicController::class, 'updateParticipantData'])->name('update.participant');
     Route::post('/peserta/{registration_id}/batalkan-verifikasi', [PicController::class, 'unverifyParticipant'])->name('unverify.participant');

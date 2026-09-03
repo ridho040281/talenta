@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Competition;
 use App\Models\DrawAllocation;
 use App\Models\Registration;
+use App\Models\RegistrationMember;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class PicController extends Controller
 {
@@ -569,9 +572,7 @@ class PicController extends Controller
         $registration = Registration::with(['competition'])->findOrFail($registration_id);
         $user = Auth::user();
 
-        if ($user->role === 'pic_lomba' && $registration->competition->pic_id !== $user->id) {
-            abort(403);
-        }
+        $this->authorizeCompetitionManagement($user, $registration->competition_id);
 
         $code = $registration->registration_code;
         $name = $registration->display_name;
@@ -582,6 +583,157 @@ class PicController extends Controller
         $registration->delete();
 
         return back()->with('success', 'Data pendaftaran ' . $name . ' (' . $code . ') berhasil dihapus secara permanen.');
+    }
+
+    /**
+     * Store manual participant registration by Admin or PIC
+     */
+    public function storeParticipant(Request $request)
+    {
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'competition_id' => ['required', 'exists:competitions,id'],
+            'full_name' => ['required', 'string', 'max:255'],
+            'gender' => ['required', 'in:L,P'],
+            'institution_name' => ['required', 'string', 'max:255'],
+            'nisn' => ['nullable', 'string', 'max:20'],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'match_type' => ['nullable', 'string', 'max:50'],
+            'target_class' => ['nullable', 'string', 'max:50'],
+            'status' => ['required', 'in:pending,verified'],
+            'verification_notes' => ['nullable', 'string', 'max:255'],
+            'ignore_quota' => ['nullable'],
+            // Optional Member 2 for Ganda BLT
+            'member2_name' => ['nullable', 'string', 'max:255'],
+            'member2_nisn' => ['nullable', 'string', 'max:20'],
+            'member2_school' => ['nullable', 'string', 'max:255'],
+        ], [
+            'competition_id.required' => 'Cabang lomba wajib dipilih.',
+            'full_name.required' => 'Nama lengkap peserta wajib diisi.',
+            'gender.required' => 'Jenis kelamin peserta wajib dipilih.',
+            'institution_name.required' => 'Nama asal sekolah/madrasah wajib diisi.',
+        ]);
+
+        $competition = Competition::findOrFail($validated['competition_id']);
+        $this->authorizeCompetitionManagement($user, $competition->id);
+
+        // Check quota if ignore_quota is not checked
+        if (!$request->boolean('ignore_quota')) {
+            if ($competition->quota > 0 && !in_array($competition->code, ['BLT', 'TMJ', 'MTQ', 'POP'])) {
+                $currentTotal = Registration::where('competition_id', $competition->id)
+                    ->whereIn('status', ['pending', 'verified'])
+                    ->count();
+                if ($currentTotal >= $competition->quota) {
+                    return back()->with('error', "Kuota pendaftaran untuk {$competition->name} sudah penuh ({$competition->quota} peserta). Centang opsi 'Abaikan Kuota' jika ini merupakan dispensasi khusus.")->withInput();
+                }
+            }
+        }
+
+        // Find or create User for the participant so they can login to portal if needed
+        $nisnClean = !empty($validated['nisn']) ? trim($validated['nisn']) : null;
+        $participantUser = null;
+        if ($nisnClean) {
+            $participantUser = User::where('nisn', $nisnClean)->first();
+        }
+        if (!$participantUser) {
+            $randomSuffix = rand(100, 999);
+            $autoNisn = $nisnClean ?: ('MNL' . date('ymd') . $randomSuffix);
+            $email = $autoNisn . '@peserta.talenta';
+            if (User::where('email', $email)->exists()) {
+                $email = $autoNisn . '_' . rand(10, 99) . '@peserta.talenta';
+            }
+            $participantUser = User::create([
+                'name' => $validated['full_name'],
+                'nisn' => $nisnClean,
+                'email' => $email,
+                'password' => Hash::make($nisnClean ?: 'talenta2026'),
+                'role' => 'peserta',
+                'phone' => $validated['phone'] ?? null,
+                'institution_name' => $validated['institution_name'],
+                'account_type' => 'pendaftar',
+                'status' => 'active',
+            ]);
+        }
+
+        // Prevent duplicate NISN in same competition
+        if ($nisnClean) {
+            $existingMember = RegistrationMember::where('nisn', $nisnClean)
+                ->whereHas('registration', function($q) use ($competition) {
+                    $q->where('competition_id', $competition->id)
+                      ->whereIn('status', ['pending', 'verified']);
+                })
+                ->first();
+
+            if ($existingMember) {
+                return back()->with('error', "Peserta dengan NISN '{$nisnClean}' ({$existingMember->full_name}) sudah terdaftar pada cabang {$competition->name}.")->withInput();
+            }
+        }
+
+        // Determine sub_category
+        $subCategory = null;
+        if (!empty($validated['target_class']) && !empty($validated['match_type'])) {
+            $subCategory = $validated['target_class'] . ' - ' . $validated['match_type'];
+        } elseif (!empty($validated['match_type'])) {
+            $subCategory = $validated['match_type'];
+        }
+
+        $regCode = 'REG-' . date('Y') . '-' . $competition->code . '-' . strtoupper(Str::random(5));
+
+        $teamName = null;
+        if (!empty($validated['member2_name'])) {
+            $teamName = $validated['full_name'] . ' / ' . $validated['member2_name'];
+        }
+
+        $status = $validated['status'];
+        $notes = $validated['verification_notes'] ?: ($status === 'verified' ? 'Didaftarkan manual oleh ' . $user->name . ' (Lunas Tunai)' : 'Pendaftaran manual (Menunggu Verifikasi)');
+
+        $registration = Registration::create([
+            'competition_id' => $competition->id,
+            'user_id' => $participantUser->id,
+            'registration_code' => $regCode,
+            'team_name' => $teamName,
+            'sub_category' => $subCategory,
+            'target_class' => $validated['target_class'] ?? null,
+            'match_type' => $validated['match_type'] ?? null,
+            'institution_name' => $validated['institution_name'],
+            'official_name' => $user->name,
+            'official_phone' => $validated['phone'] ?? $user->phone,
+            'status' => $status,
+            'verified_at' => $status === 'verified' ? now() : null,
+            'verified_by' => $status === 'verified' ? $user->id : null,
+            'verification_notes' => $notes,
+        ]);
+
+        // Generate participant number if verified
+        if ($status === 'verified') {
+            $registration->generateParticipantNumber();
+        }
+
+        // Create Member 1
+        RegistrationMember::create([
+            'registration_id' => $registration->id,
+            'full_name' => $validated['full_name'],
+            'school_name' => $validated['institution_name'],
+            'nisn' => $nisnClean,
+            'gender' => $validated['gender'],
+            'phone' => $validated['phone'] ?? null,
+            'role_in_team' => !empty($validated['member2_name']) ? 'Pemain 1' : 'Peserta Utama',
+        ]);
+
+        // Create Member 2 if Ganda
+        if (!empty($validated['member2_name'])) {
+            RegistrationMember::create([
+                'registration_id' => $registration->id,
+                'full_name' => $validated['member2_name'],
+                'school_name' => $validated['member2_school'] ?: $validated['institution_name'],
+                'nisn' => !empty($validated['member2_nisn']) ? trim($validated['member2_nisn']) : null,
+                'gender' => $validated['gender'],
+                'role_in_team' => 'Pemain 2',
+            ]);
+        }
+
+        return redirect()->back()->with('success', "Peserta '{$validated['full_name']}' berhasil didaftarkan secara manual pada cabang {$competition->name}" . ($status === 'verified' ? " dan langsung berstatus Lunas/Terverifikasi." : "."));
     }
 
     public function drawIndex()
