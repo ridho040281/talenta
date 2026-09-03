@@ -275,10 +275,15 @@
                         <div>
                             <div class="leading-tight">Blitar, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</div>
                             <div class="font-bold">Bendahara Panitia</div>
-                            <div class="font-bold">MTsN 1 Blitar</div>
+                            <div class="font-bold">{{ $appSettings['institution_name'] ?? 'MTsN 1 Blitar' }}</div>
                         </div>
                         <div class="pt-12">
-                            <div class="font-black text-slate-950 underline underline-offset-2">HJ. SITI KHADIJAH, S.E.</div>
+                            <div class="font-black text-slate-950 underline underline-offset-2">
+                                {{ !empty($appSettings['treasurer_name']) ? $appSettings['treasurer_name'] : ($appSettings['bank_account_holder'] ?? 'WIJIATIN') }}
+                            </div>
+                            @if(!empty($appSettings['treasurer_nip']))
+                                <div class="text-[10px] text-slate-600 font-mono">NIP. {{ $appSettings['treasurer_nip'] }}</div>
+                            @endif
                             <div class="text-[10px] text-slate-500">{{ $appSettings['event_name'] ?? 'Milad ke-57' }} • {{ $appSettings['institution_name'] ?? 'MTsN 1 Blitar' }}</div>
                         </div>
                     </div>

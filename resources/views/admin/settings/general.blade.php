@@ -110,6 +110,27 @@
 
                 </div>
 
+                <!-- Identitas Bendahara Panitia (Tampil di Kwitansi & Invoice) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-white/[0.08]">
+                    
+                    <div class="space-y-1.5 bg-[#0C111D]/80 p-4 rounded-2xl border border-white/[0.08]">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                            Nama Bendahara Panitia <span class="text-rose-400">*</span>
+                        </label>
+                        <p class="text-[10px] text-slate-500">Nama bendahara yang dicetak pada tanda tangan Kwitansi / Invoice</p>
+                        <input type="text" name="treasurer_name" value="{{ old('treasurer_name', $settings['treasurer_name'] ?? 'WIJIATIN') }}" placeholder="Contoh: WIJIATIN / HJ. SITI KHADIJAH, S.E." class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-bold focus:border-[#7A5AF8] outline-none">
+                    </div>
+
+                    <div class="space-y-1.5 bg-[#0C111D]/80 p-4 rounded-2xl border border-white/[0.08]">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                            NIP Bendahara Panitia <span class="text-[10px] text-slate-400 font-normal lowercase">(opsional)</span>
+                        </label>
+                        <p class="text-[10px] text-slate-500">Nomor Induk Pegawai bendahara (kosongkan jika tidak ada)</p>
+                        <input type="text" name="treasurer_nip" value="{{ old('treasurer_nip', $settings['treasurer_nip'] ?? '') }}" placeholder="Contoh: 19800101 200501 2 001" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-mono focus:border-[#7A5AF8] outline-none">
+                    </div>
+
+                </div>
+
                 <!-- Preview Rekening Box -->
                 <div class="p-6 rounded-2xl bg-gradient-to-r from-[#101828] via-[#161F30] to-emerald-950/60 border border-emerald-500/30 text-white space-y-3 shadow-lg">
                     <div class="flex items-center justify-between">
@@ -130,7 +151,7 @@
                 <div class="pt-4 border-t border-white/[0.08] flex items-center justify-end">
                     <button type="submit" class="gradient-btn px-6 py-2.5 rounded-2xl text-white font-bold text-xs shadow-lg shadow-[#7A5AF8]/25 transition flex items-center gap-2 cursor-pointer">
                         <i data-lucide="save" class="w-4 h-4"></i>
-                        <span>Simpan Pengaturan Rekening</span>
+                        <span>Simpan Pengaturan Rekening & Bendahara</span>
                     </button>
                 </div>
 

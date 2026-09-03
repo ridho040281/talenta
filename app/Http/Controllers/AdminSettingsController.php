@@ -52,6 +52,8 @@ class AdminSettingsController extends Controller
             'bank_name' => AppSetting::get('bank_name', 'Bank Syariah Indonesia (BSI)'),
             'bank_account_number' => AppSetting::get('bank_account_number', '7123456789'),
             'bank_account_holder' => AppSetting::get('bank_account_holder', 'Panitia TALENTA MTsN 1 Blitar'),
+            'treasurer_name' => AppSetting::get('treasurer_name', 'WIJIATIN'),
+            'treasurer_nip' => AppSetting::get('treasurer_nip', ''),
             'announcement_banner' => AppSetting::get('announcement_banner', 'Registrasi TALENTA 2026 resmi dibuka!'),
 
             // Landing Page Content & Narratives
@@ -171,6 +173,8 @@ class AdminSettingsController extends Controller
             'bank_name' => 'nullable|string|max:100',
             'bank_account_number' => 'nullable|string|max:50',
             'bank_account_holder' => 'nullable|string|max:100',
+            'treasurer_name' => 'nullable|string|max:255',
+            'treasurer_nip' => 'nullable|string|max:50',
             'announcement_banner' => 'nullable|string|max:500',
 
             // Landing Page Content & Narratives
@@ -284,7 +288,7 @@ class AdminSettingsController extends Controller
             'contact_phone', 'contact_email', 'school_website', 'event_year',
             'allow_individual_reg', 'allow_collective_reg',
             'registration_status', 'registration_deadline', 'bank_name',
-            'bank_account_number', 'bank_account_holder', 'announcement_banner',
+            'bank_account_number', 'bank_account_holder', 'treasurer_name', 'treasurer_nip', 'announcement_banner',
             'hero_title', 'hero_subtitle', 'how_it_works_tagline', 'how_it_works_title',
             'how_it_works_subtitle', 'step_1_title', 'step_1_desc', 'step_2_title',
             'step_2_desc', 'step_3_title', 'step_3_desc', 'step_4_title', 'step_4_desc',
