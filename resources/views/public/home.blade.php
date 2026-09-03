@@ -649,7 +649,7 @@
                                                         {{ $isFull ? 'Kuota Penuh' : 'Sisa: ' . $sisa . ' ' . $unitWord }}
                                                     </span>
                                                     <span class="text-[11px] sm:text-xs font-semibold text-slate-400">
-                                                        {{ $comp->registrations_count }}/{{ $comp->quota }} Terdaftar
+                                                        {{ $comp->registrations_count }}/{{ $comp->quota }}
                                                     </span>
                                                 </div>
                                                 <div class="w-full bg-white/[0.08] h-2.5 rounded-full overflow-hidden p-0.5 border border-white/[0.05]">
