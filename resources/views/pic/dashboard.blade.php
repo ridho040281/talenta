@@ -266,7 +266,7 @@
             <div class="flex items-center gap-2 shrink-0">
 
                 <!-- Tambah Peserta Manual Button -->
-                <button @click="createModal = true" type="button" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 transition cursor-pointer">
+                <button @click="createModal = true; $nextTick(() => { if (window.lucide) lucide.createIcons(); })" type="button" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 transition cursor-pointer">
                     <i data-lucide="user-plus" class="w-4 h-4"></i>
                     <span>+ Tambah Peserta</span>
                 </button>
@@ -593,7 +593,7 @@
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div x-show="verifyModal" @click="verifyModal = false" class="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity"></div>
 
-            <div x-show="verifyModal" class="inline-block align-bottom bg-[#161F30] border border-white/[0.12] rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full p-6 sm:p-8 space-y-6">
+            <div x-show="verifyModal" class="relative z-10 inline-block align-bottom bg-[#161F30] border border-white/[0.12] rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full p-6 sm:p-8 space-y-6">
                 
                 <!-- Modal Header -->
                 <div class="flex items-center justify-between border-b border-white/[0.08] pb-4">
@@ -751,7 +751,7 @@
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div x-show="editModal" @click="editModal = false" class="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity"></div>
 
-            <div x-show="editModal" class="inline-block align-bottom bg-[#161F30] border border-white/[0.12] rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full p-6 sm:p-8 space-y-6">
+            <div x-show="editModal" class="relative z-10 inline-block align-bottom bg-[#161F30] border border-white/[0.12] rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full p-6 sm:p-8 space-y-6">
                 
                 <!-- Modal Header -->
                 <div class="flex items-center justify-between border-b border-white/[0.08] pb-4">
@@ -920,7 +920,7 @@
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div x-show="exportModal" @click="exportModal = false" class="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity"></div>
 
-            <div x-show="exportModal" class="inline-block align-bottom bg-[#161F30] border border-white/[0.12] rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl sm:w-full p-6 sm:p-8 space-y-6">
+            <div x-show="exportModal" class="relative z-10 inline-block align-bottom bg-[#161F30] border border-white/[0.12] rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl sm:w-full p-6 sm:p-8 space-y-6">
                 
                 <!-- Header -->
                 <div class="flex items-center justify-between border-b border-white/[0.08] pb-4">
@@ -1018,7 +1018,7 @@
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div x-show="singlePrintModal" @click="singlePrintModal = false" class="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity"></div>
 
-            <div x-show="singlePrintModal" class="inline-block align-bottom bg-[#161F30] border border-white/[0.12] rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl sm:w-full p-6 sm:p-8 space-y-6">
+            <div x-show="singlePrintModal" class="relative z-10 inline-block align-bottom bg-[#161F30] border border-white/[0.12] rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl sm:w-full p-6 sm:p-8 space-y-6">
                 
                 <!-- Header -->
                 <div class="flex items-center justify-between border-b border-white/[0.08] pb-4">
@@ -1093,11 +1093,10 @@
     </div>
 
     <!-- ==================== CREATE PARTICIPANT MODAL (TAMBAH PESERTA MANUAL) ==================== -->
-    <div x-show="createModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div x-show="createModal" @click="createModal = false" class="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity"></div>
+    <div x-show="createModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto" role="dialog" aria-modal="true">
+        <div x-show="createModal" x-transition.opacity @click="createModal = false" class="fixed inset-0 bg-black/80 backdrop-blur-md"></div>
 
-            <div x-show="createModal" class="inline-block align-bottom bg-[#161F30] border border-white/[0.12] rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full p-6 sm:p-8 space-y-6">
+        <div x-show="createModal" x-transition.scale.95 @click.stop class="relative z-10 w-full max-w-2xl bg-[#161F30] border border-white/[0.12] rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl my-auto text-left">
                 
                 <!-- Modal Header -->
                 <div class="flex items-center justify-between border-b border-white/[0.08] pb-4">
@@ -1282,7 +1281,6 @@
 
             </div>
         </div>
-    </div>
 
 </div>
 @endsection
