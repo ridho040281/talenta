@@ -179,6 +179,20 @@ class PesertaController extends Controller
             }
         }
 
+        $minMembers = 1;
+        $maxMembers = 10;
+        if ($isBuluTangkis) {
+            $isGanda = str_contains($request->input('match_type', ''), 'Ganda');
+            $minMembers = $isGanda ? 2 : 1;
+            $maxMembers = $isGanda ? 2 : 1;
+        } elseif ($isTenisMeja) {
+            $minMembers = 1;
+            $maxMembers = 1;
+        } else {
+            $minMembers = max(1, (int) ($competition->min_members ?? 1));
+            $maxMembers = max($minMembers, (int) ($competition->max_members ?? 10));
+        }
+
         $validated = $request->validate([
             'target_class' => [($isBuluTangkis && !$isGandaBlt) || $isTenisMeja ? 'required' : 'nullable', 'string', 'max:50'],
             'match_type' => [$isBuluTangkis || $isTenisMeja ? 'required' : 'nullable', 'string', 'max:50'],
@@ -186,7 +200,7 @@ class PesertaController extends Controller
             'institution_name' => [$isGandaBlt ? 'nullable' : 'required', 'string', 'max:255'],
             'official_name' => ['nullable', 'string', 'max:255'],
             'official_phone' => ['nullable', 'string', 'max:20'],
-            'members' => ['required', 'array', 'min:1', 'max:10'],
+            'members' => ['required', 'array', "min:{$minMembers}", "max:{$maxMembers}"],
             'members.*.full_name' => ['required', 'string', 'max:255'],
             'members.*.school_name' => ['nullable', 'string', 'max:255'],
             'members.*.nisn' => ['nullable', 'string', 'max:20'],
@@ -204,6 +218,8 @@ class PesertaController extends Controller
             'team_name.required' => 'Nama regu / tim wajib diisi.',
             'institution_name.required' => 'Nama sekolah/madrasah asal wajib diisi.',
             'members.required' => 'Data anggota peserta wajib diisi.',
+            'members.min' => "Jumlah anggota minimal untuk {$competition->name} adalah {$minMembers} orang.",
+            'members.max' => "Jumlah anggota maksimal untuk {$competition->name} adalah {$maxMembers} orang.",
             'members.*.full_name.required' => 'Nama lengkap peserta wajib diisi.',
             'members.*.gender.required' => 'Jenis kelamin peserta wajib dipilih.',
         ]);
