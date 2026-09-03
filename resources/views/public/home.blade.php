@@ -399,36 +399,52 @@
 
                                 <td class="py-3.5 px-5 whitespace-nowrap align-middle">
                                     @if($isBlt)
-                                        <div class="flex flex-col py-1 text-slate-400 text-xs min-w-[190px]">
+                                        <div class="flex flex-col py-1 text-slate-400 text-xs min-w-[210px]">
+                                            @php
+                                                $sisaBltPaA = max(0, ($comp->tier_quotas['A_tunggal_pa'] ?? 16) - $countBltTunggalPaA);
+                                                $sisaBltPaB = max(0, ($comp->tier_quotas['B_tunggal_pa'] ?? 16) - $countBltTunggalPaB);
+                                                $sisaBltPaC = max(0, ($comp->tier_quotas['C_tunggal_pa'] ?? 16) - $countBltTunggalPaC);
+                                                $sisaBltPiA = max(0, ($comp->tier_quotas['A_tunggal_pi'] ?? 16) - $countBltTunggalPiA);
+                                                $sisaBltPiB = max(0, ($comp->tier_quotas['B_tunggal_pi'] ?? 16) - $countBltTunggalPiB);
+                                                $sisaBltPiC = max(0, ($comp->tier_quotas['C_tunggal_pi'] ?? 16) - $countBltTunggalPiC);
+                                                $sisaBltGandaPa = max(0, ($comp->tier_quotas['ganda_pa'] ?? 10) - $countBltGandaPa);
+                                                $sisaBltGandaPi = max(0, ($comp->tier_quotas['ganda_pi'] ?? 10) - $countBltGandaPi);
+                                            @endphp
                                             <!-- Kuota Tunggal PA -->
                                             <div class="space-y-1.5">
                                                 <!-- Kat A -->
                                                 <div>
-                                                    <div class="flex items-center justify-between text-[11px] font-bold">
-                                                        <span class="text-[#A594FD]">{{ $countBltTunggalPaA }} Terdaftar</span>
-                                                        <span class="text-slate-400">Kapasitas: {{ $comp->tier_quotas['A_tunggal_pa'] ?? 16 }}</span>
+                                                    <div class="flex items-center justify-between text-xs font-bold gap-3">
+                                                        <span class="{{ $sisaBltPaA <= 0 ? 'text-rose-400 font-black' : 'text-emerald-400 font-extrabold' }}">
+                                                            {{ $sisaBltPaA <= 0 ? 'Penuh' : 'Sisa: ' . $sisaBltPaA . ' Peserta' }}
+                                                        </span>
+                                                        <span class="text-slate-400 font-medium text-[11px]">{{ $countBltTunggalPaA }}/{{ $comp->tier_quotas['A_tunggal_pa'] ?? 16 }}</span>
                                                     </div>
-                                                    <div class="w-full bg-[#0C111D] h-1.5 rounded-full overflow-hidden mt-0.5">
+                                                    <div class="w-full bg-white/[0.08] h-2 rounded-full overflow-hidden mt-1 p-0.5 border border-white/[0.05]">
                                                         <div class="bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] h-full rounded-full" style="width: {{ min(100, ($countBltTunggalPaA / max(1, ($comp->tier_quotas['A_tunggal_pa'] ?? 16))) * 100) }}%"></div>
                                                     </div>
                                                 </div>
                                                 <!-- Kat B -->
                                                 <div>
-                                                    <div class="flex items-center justify-between text-[11px] font-bold">
-                                                        <span class="text-[#A594FD]">{{ $countBltTunggalPaB }} Terdaftar</span>
-                                                        <span class="text-slate-400">Kapasitas: {{ $comp->tier_quotas['B_tunggal_pa'] ?? 16 }}</span>
+                                                    <div class="flex items-center justify-between text-xs font-bold gap-3">
+                                                        <span class="{{ $sisaBltPaB <= 0 ? 'text-rose-400 font-black' : 'text-emerald-400 font-extrabold' }}">
+                                                            {{ $sisaBltPaB <= 0 ? 'Penuh' : 'Sisa: ' . $sisaBltPaB . ' Peserta' }}
+                                                        </span>
+                                                        <span class="text-slate-400 font-medium text-[11px]">{{ $countBltTunggalPaB }}/{{ $comp->tier_quotas['B_tunggal_pa'] ?? 16 }}</span>
                                                     </div>
-                                                    <div class="w-full bg-[#0C111D] h-1.5 rounded-full overflow-hidden mt-0.5">
+                                                    <div class="w-full bg-white/[0.08] h-2 rounded-full overflow-hidden mt-1 p-0.5 border border-white/[0.05]">
                                                         <div class="bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] h-full rounded-full" style="width: {{ min(100, ($countBltTunggalPaB / max(1, ($comp->tier_quotas['B_tunggal_pa'] ?? 16))) * 100) }}%"></div>
                                                     </div>
                                                 </div>
                                                 <!-- Kat C -->
                                                 <div>
-                                                    <div class="flex items-center justify-between text-[11px] font-bold">
-                                                        <span class="text-[#A594FD]">{{ $countBltTunggalPaC }} Terdaftar</span>
-                                                        <span class="text-slate-400">Kapasitas: {{ $comp->tier_quotas['C_tunggal_pa'] ?? 16 }}</span>
+                                                    <div class="flex items-center justify-between text-xs font-bold gap-3">
+                                                        <span class="{{ $sisaBltPaC <= 0 ? 'text-rose-400 font-black' : 'text-emerald-400 font-extrabold' }}">
+                                                            {{ $sisaBltPaC <= 0 ? 'Penuh' : 'Sisa: ' . $sisaBltPaC . ' Peserta' }}
+                                                        </span>
+                                                        <span class="text-slate-400 font-medium text-[11px]">{{ $countBltTunggalPaC }}/{{ $comp->tier_quotas['C_tunggal_pa'] ?? 16 }}</span>
                                                     </div>
-                                                    <div class="w-full bg-[#0C111D] h-1.5 rounded-full overflow-hidden mt-0.5">
+                                                    <div class="w-full bg-white/[0.08] h-2 rounded-full overflow-hidden mt-1 p-0.5 border border-white/[0.05]">
                                                         <div class="bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] h-full rounded-full" style="width: {{ min(100, ($countBltTunggalPaC / max(1, ($comp->tier_quotas['C_tunggal_pa'] ?? 16))) * 100) }}%"></div>
                                                     </div>
                                                 </div>
@@ -440,31 +456,37 @@
                                             <div class="space-y-1.5">
                                                 <!-- Kat A -->
                                                 <div>
-                                                    <div class="flex items-center justify-between text-[11px] font-bold">
-                                                        <span class="text-[#A594FD]">{{ $countBltTunggalPiA }} Terdaftar</span>
-                                                        <span class="text-slate-400">Kapasitas: {{ $comp->tier_quotas['A_tunggal_pi'] ?? 16 }}</span>
+                                                    <div class="flex items-center justify-between text-xs font-bold gap-3">
+                                                        <span class="{{ $sisaBltPiA <= 0 ? 'text-rose-400 font-black' : 'text-emerald-400 font-extrabold' }}">
+                                                            {{ $sisaBltPiA <= 0 ? 'Penuh' : 'Sisa: ' . $sisaBltPiA . ' Peserta' }}
+                                                        </span>
+                                                        <span class="text-slate-400 font-medium text-[11px]">{{ $countBltTunggalPiA }}/{{ $comp->tier_quotas['A_tunggal_pi'] ?? 16 }}</span>
                                                     </div>
-                                                    <div class="w-full bg-[#0C111D] h-1.5 rounded-full overflow-hidden mt-0.5">
+                                                    <div class="w-full bg-white/[0.08] h-2 rounded-full overflow-hidden mt-1 p-0.5 border border-white/[0.05]">
                                                         <div class="bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] h-full rounded-full" style="width: {{ min(100, ($countBltTunggalPiA / max(1, ($comp->tier_quotas['A_tunggal_pi'] ?? 16))) * 100) }}%"></div>
                                                     </div>
                                                 </div>
                                                 <!-- Kat B -->
                                                 <div>
-                                                    <div class="flex items-center justify-between text-[11px] font-bold">
-                                                        <span class="text-[#A594FD]">{{ $countBltTunggalPiB }} Terdaftar</span>
-                                                        <span class="text-slate-400">Kapasitas: {{ $comp->tier_quotas['B_tunggal_pi'] ?? 16 }}</span>
+                                                    <div class="flex items-center justify-between text-xs font-bold gap-3">
+                                                        <span class="{{ $sisaBltPiB <= 0 ? 'text-rose-400 font-black' : 'text-emerald-400 font-extrabold' }}">
+                                                            {{ $sisaBltPiB <= 0 ? 'Penuh' : 'Sisa: ' . $sisaBltPiB . ' Peserta' }}
+                                                        </span>
+                                                        <span class="text-slate-400 font-medium text-[11px]">{{ $countBltTunggalPiB }}/{{ $comp->tier_quotas['B_tunggal_pi'] ?? 16 }}</span>
                                                     </div>
-                                                    <div class="w-full bg-[#0C111D] h-1.5 rounded-full overflow-hidden mt-0.5">
+                                                    <div class="w-full bg-white/[0.08] h-2 rounded-full overflow-hidden mt-1 p-0.5 border border-white/[0.05]">
                                                         <div class="bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] h-full rounded-full" style="width: {{ min(100, ($countBltTunggalPiB / max(1, ($comp->tier_quotas['B_tunggal_pi'] ?? 16))) * 100) }}%"></div>
                                                     </div>
                                                 </div>
                                                 <!-- Kat C -->
                                                 <div>
-                                                    <div class="flex items-center justify-between text-[11px] font-bold">
-                                                        <span class="text-[#A594FD]">{{ $countBltTunggalPiC }} Terdaftar</span>
-                                                        <span class="text-slate-400">Kapasitas: {{ $comp->tier_quotas['C_tunggal_pi'] ?? 16 }}</span>
+                                                    <div class="flex items-center justify-between text-xs font-bold gap-3">
+                                                        <span class="{{ $sisaBltPiC <= 0 ? 'text-rose-400 font-black' : 'text-emerald-400 font-extrabold' }}">
+                                                            {{ $sisaBltPiC <= 0 ? 'Penuh' : 'Sisa: ' . $sisaBltPiC . ' Peserta' }}
+                                                        </span>
+                                                        <span class="text-slate-400 font-medium text-[11px]">{{ $countBltTunggalPiC }}/{{ $comp->tier_quotas['C_tunggal_pi'] ?? 16 }}</span>
                                                     </div>
-                                                    <div class="w-full bg-[#0C111D] h-1.5 rounded-full overflow-hidden mt-0.5">
+                                                    <div class="w-full bg-white/[0.08] h-2 rounded-full overflow-hidden mt-1 p-0.5 border border-white/[0.05]">
                                                         <div class="bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] h-full rounded-full" style="width: {{ min(100, ($countBltTunggalPiC / max(1, ($comp->tier_quotas['C_tunggal_pi'] ?? 16))) * 100) }}%"></div>
                                                     </div>
                                                 </div>
@@ -474,11 +496,13 @@
 
                                             <!-- Kuota Ganda PA -->
                                             <div>
-                                                <div class="flex items-center justify-between text-[11px] font-bold">
-                                                    <span class="text-[#A594FD]">{{ $countBltGandaPa }} Terdaftar</span>
-                                                    <span class="text-slate-400">Kapasitas: {{ $comp->tier_quotas['ganda_pa'] ?? 10 }}</span>
+                                                <div class="flex items-center justify-between text-xs font-bold gap-3">
+                                                    <span class="{{ $sisaBltGandaPa <= 0 ? 'text-rose-400 font-black' : 'text-emerald-400 font-extrabold' }}">
+                                                        {{ $sisaBltGandaPa <= 0 ? 'Penuh' : 'Sisa: ' . $sisaBltGandaPa . ' Pasangan' }}
+                                                    </span>
+                                                    <span class="text-slate-400 font-medium text-[11px]">{{ $countBltGandaPa }}/{{ $comp->tier_quotas['ganda_pa'] ?? 10 }}</span>
                                                 </div>
-                                                <div class="w-full bg-[#0C111D] h-1.5 rounded-full overflow-hidden mt-0.5">
+                                                <div class="w-full bg-white/[0.08] h-2 rounded-full overflow-hidden mt-1 p-0.5 border border-white/[0.05]">
                                                     <div class="bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] h-full rounded-full" style="width: {{ min(100, ($countBltGandaPa / max(1, ($comp->tier_quotas['ganda_pa'] ?? 10))) * 100) }}%"></div>
                                                 </div>
                                             </div>
@@ -487,60 +511,80 @@
 
                                             <!-- Kuota Ganda PI -->
                                             <div>
-                                                <div class="flex items-center justify-between text-[11px] font-bold">
-                                                    <span class="text-[#A594FD]">{{ $countBltGandaPi }} Terdaftar</span>
-                                                    <span class="text-slate-400">Kapasitas: {{ $comp->tier_quotas['ganda_pi'] ?? 10 }}</span>
+                                                <div class="flex items-center justify-between text-xs font-bold gap-3">
+                                                    <span class="{{ $sisaBltGandaPi <= 0 ? 'text-rose-400 font-black' : 'text-emerald-400 font-extrabold' }}">
+                                                        {{ $sisaBltGandaPi <= 0 ? 'Penuh' : 'Sisa: ' . $sisaBltGandaPi . ' Pasangan' }}
+                                                    </span>
+                                                    <span class="text-slate-400 font-medium text-[11px]">{{ $countBltGandaPi }}/{{ $comp->tier_quotas['ganda_pi'] ?? 10 }}</span>
                                                 </div>
-                                                <div class="w-full bg-[#0C111D] h-1.5 rounded-full overflow-hidden mt-0.5">
+                                                <div class="w-full bg-white/[0.08] h-2 rounded-full overflow-hidden mt-1 p-0.5 border border-white/[0.05]">
                                                     <div class="bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] h-full rounded-full" style="width: {{ min(100, ($countBltGandaPi / max(1, ($comp->tier_quotas['ganda_pi'] ?? 10))) * 100) }}%"></div>
                                                 </div>
                                             </div>
                                         </div>
                                     @elseif($isMtqPop)
-                                        <div class="flex flex-col py-1 text-slate-400 text-xs min-w-[190px]">
+                                        <div class="flex flex-col py-1 text-slate-400 text-xs min-w-[210px]">
+                                            @php
+                                                $sisaPa = max(0, $quotaPa - $countPa);
+                                                $sisaPi = max(0, $quotaPi - $countPi);
+                                            @endphp
                                             <!-- PA -->
                                             <div>
-                                                <div class="flex items-center justify-between text-[11px] font-bold">
-                                                    <span class="text-[#A594FD]">{{ $countPa }} Terdaftar</span>
-                                                    <span class="text-slate-400">Kapasitas: {{ $quotaPa }}</span>
+                                                <div class="flex items-center justify-between text-xs font-bold gap-3">
+                                                    <span class="{{ $sisaPa <= 0 ? 'text-rose-400 font-black' : 'text-emerald-400 font-extrabold' }}">
+                                                        {{ $sisaPa <= 0 ? 'Penuh' : 'Sisa: ' . $sisaPa . ' Peserta' }}
+                                                    </span>
+                                                    <span class="text-slate-400 font-medium text-[11px]">{{ $countPa }}/{{ $quotaPa }}</span>
                                                 </div>
-                                                <div class="w-full bg-[#0C111D] h-1.5 rounded-full overflow-hidden mt-0.5">
+                                                <div class="w-full bg-white/[0.08] h-2 rounded-full overflow-hidden mt-1 p-0.5 border border-white/[0.05]">
                                                     <div class="bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] h-full rounded-full" style="width: {{ min(100, ($countPa / max(1, $quotaPa)) * 100) }}%"></div>
                                                 </div>
                                             </div>
                                             <div class="border-t border-white/[0.08] my-2"></div>
                                             <!-- PI -->
                                             <div>
-                                                <div class="flex items-center justify-between text-[11px] font-bold">
-                                                    <span class="text-[#A594FD]">{{ $countPi }} Terdaftar</span>
-                                                    <span class="text-slate-400">Kapasitas: {{ $quotaPi }}</span>
+                                                <div class="flex items-center justify-between text-xs font-bold gap-3">
+                                                    <span class="{{ $sisaPi <= 0 ? 'text-rose-400 font-black' : 'text-emerald-400 font-extrabold' }}">
+                                                        {{ $sisaPi <= 0 ? 'Penuh' : 'Sisa: ' . $sisaPi . ' Peserta' }}
+                                                    </span>
+                                                    <span class="text-slate-400 font-medium text-[11px]">{{ $countPi }}/{{ $quotaPi }}</span>
                                                 </div>
-                                                <div class="w-full bg-[#0C111D] h-1.5 rounded-full overflow-hidden mt-0.5">
+                                                <div class="w-full bg-white/[0.08] h-2 rounded-full overflow-hidden mt-1 p-0.5 border border-white/[0.05]">
                                                     <div class="bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] h-full rounded-full" style="width: {{ min(100, ($countPi / max(1, $quotaPi)) * 100) }}%"></div>
                                                 </div>
                                             </div>
                                         </div>
                                     @elseif($isTmj)
-                                        <div class="flex flex-col py-1 text-slate-400 text-xs min-w-[190px]">
+                                        <div class="flex flex-col py-1 text-slate-400 text-xs min-w-[210px]">
+                                            @php
+                                                $sisaTmjPaA = max(0, ($comp->tier_quotas['A_tunggal_pa'] ?? 10) - $countTmjTunggalPaA);
+                                                $sisaTmjPaB = max(0, ($comp->tier_quotas['B_tunggal_pa'] ?? 10) - $countTmjTunggalPaB);
+                                                $sisaTmjPiA = max(0, ($comp->tier_quotas['A_tunggal_pi'] ?? 10) - $countTmjTunggalPiA);
+                                                $sisaTmjPiB = max(0, ($comp->tier_quotas['B_tunggal_pi'] ?? 10) - $countTmjTunggalPiB);
+                                            @endphp
                                             <!-- Kuota Tunggal PA -->
                                             <div class="space-y-1.5">
                                                 <!-- Kat A -->
                                                 <div>
-                                                    <div class="flex items-center justify-between text-[11px] font-bold">
-                                                        <span class="text-[#A594FD]">{{ $countTmjTunggalPaA }} Terdaftar</span>
-                                                        <span class="text-slate-400">Kapasitas: {{ $comp->tier_quotas['A_tunggal_pa'] ?? 10 }}</span>
+                                                    <div class="flex items-center justify-between text-xs font-bold gap-3">
+                                                        <span class="{{ $sisaTmjPaA <= 0 ? 'text-rose-400 font-black' : 'text-emerald-400 font-extrabold' }}">
+                                                            {{ $sisaTmjPaA <= 0 ? 'Penuh' : 'Sisa: ' . $sisaTmjPaA . ' Peserta' }}
+                                                        </span>
+                                                        <span class="text-slate-400 font-medium text-[11px]">{{ $countTmjTunggalPaA }}/{{ $comp->tier_quotas['A_tunggal_pa'] ?? 10 }}</span>
                                                     </div>
-                                                    <div class="w-full bg-[#0C111D] h-1.5 rounded-full overflow-hidden mt-0.5">
+                                                    <div class="w-full bg-white/[0.08] h-2 rounded-full overflow-hidden mt-1 p-0.5 border border-white/[0.05]">
                                                         <div class="bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] h-full rounded-full" style="width: {{ min(100, ($countTmjTunggalPaA / max(1, ($comp->tier_quotas['A_tunggal_pa'] ?? 10))) * 100) }}%"></div>
                                                     </div>
                                                 </div>
                                                 <!-- Kat B -->
                                                 <div>
-                                                    <div class="flex items-center justify-between text-[11px] font-bold">
-                                                        <span class="text-[#A594FD]">{{ $countTmjTunggalPaB }} Terdaftar</span>
-                                                        <span class="text-slate-400">Kapasitas: {{ $comp->tier_quotas['B_tunggal_pa'] ?? 10 }}</span>
+                                                    <div class="flex items-center justify-between text-xs font-bold gap-3">
+                                                        <span class="{{ $sisaTmjPaB <= 0 ? 'text-rose-400 font-black' : 'text-emerald-400 font-extrabold' }}">
+                                                            {{ $sisaTmjPaB <= 0 ? 'Penuh' : 'Sisa: ' . $sisaTmjPaB . ' Peserta' }}
+                                                        </span>
+                                                        <span class="text-slate-400 font-medium text-[11px]">{{ $countTmjTunggalPaB }}/{{ $comp->tier_quotas['B_tunggal_pa'] ?? 10 }}</span>
                                                     </div>
-                                                    <div class="w-full bg-[#0C111D] h-1.5 rounded-full overflow-hidden mt-0.5">
+                                                    <div class="w-full bg-white/[0.08] h-2 rounded-full overflow-hidden mt-1 p-0.5 border border-white/[0.05]">
                                                         <div class="bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] h-full rounded-full" style="width: {{ min(100, ($countTmjTunggalPaB / max(1, ($comp->tier_quotas['B_tunggal_pa'] ?? 10))) * 100) }}%"></div>
                                                     </div>
                                                 </div>
@@ -552,21 +596,25 @@
                                             <div class="space-y-1.5">
                                                 <!-- Kat A -->
                                                 <div>
-                                                    <div class="flex items-center justify-between text-[11px] font-bold">
-                                                        <span class="text-[#A594FD]">{{ $countTmjTunggalPiA }} Terdaftar</span>
-                                                        <span class="text-slate-400">Kapasitas: {{ $comp->tier_quotas['A_tunggal_pi'] ?? 10 }}</span>
+                                                    <div class="flex items-center justify-between text-xs font-bold gap-3">
+                                                        <span class="{{ $sisaTmjPiA <= 0 ? 'text-rose-400 font-black' : 'text-emerald-400 font-extrabold' }}">
+                                                            {{ $sisaTmjPiA <= 0 ? 'Penuh' : 'Sisa: ' . $sisaTmjPiA . ' Peserta' }}
+                                                        </span>
+                                                        <span class="text-slate-400 font-medium text-[11px]">{{ $countTmjTunggalPiA }}/{{ $comp->tier_quotas['A_tunggal_pi'] ?? 10 }}</span>
                                                     </div>
-                                                    <div class="w-full bg-[#0C111D] h-1.5 rounded-full overflow-hidden mt-0.5">
+                                                    <div class="w-full bg-white/[0.08] h-2 rounded-full overflow-hidden mt-1 p-0.5 border border-white/[0.05]">
                                                         <div class="bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] h-full rounded-full" style="width: {{ min(100, ($countTmjTunggalPiA / max(1, ($comp->tier_quotas['A_tunggal_pi'] ?? 10))) * 100) }}%"></div>
                                                     </div>
                                                 </div>
                                                 <!-- Kat B -->
                                                 <div>
-                                                    <div class="flex items-center justify-between text-[11px] font-bold">
-                                                        <span class="text-[#A594FD]">{{ $countTmjTunggalPiB }} Terdaftar</span>
-                                                        <span class="text-slate-400">Kapasitas: {{ $comp->tier_quotas['B_tunggal_pi'] ?? 10 }}</span>
+                                                    <div class="flex items-center justify-between text-xs font-bold gap-3">
+                                                        <span class="{{ $sisaTmjPiB <= 0 ? 'text-rose-400 font-black' : 'text-emerald-400 font-extrabold' }}">
+                                                            {{ $sisaTmjPiB <= 0 ? 'Penuh' : 'Sisa: ' . $sisaTmjPiB . ' Peserta' }}
+                                                        </span>
+                                                        <span class="text-slate-400 font-medium text-[11px]">{{ $countTmjTunggalPiB }}/{{ $comp->tier_quotas['B_tunggal_pi'] ?? 10 }}</span>
                                                     </div>
-                                                    <div class="w-full bg-[#0C111D] h-1.5 rounded-full overflow-hidden mt-0.5">
+                                                    <div class="w-full bg-white/[0.08] h-2 rounded-full overflow-hidden mt-1 p-0.5 border border-white/[0.05]">
                                                         <div class="bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] h-full rounded-full" style="width: {{ min(100, ($countTmjTunggalPiB / max(1, ($comp->tier_quotas['B_tunggal_pi'] ?? 10))) * 100) }}%"></div>
                                                     </div>
                                                 </div>
@@ -579,18 +627,33 @@
                                                     <span class="font-bold text-white text-sm">{{ $comp->registrations_count }}</span>
                                                     <span class="text-slate-400 font-mono">/ ∞</span>
                                                 </div>
-                                                <span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-purple-500/20 text-purple-300 border border-purple-500/30 whitespace-nowrap inline-block">
-                                                    ∞ Tak Terbatas
+                                                <span class="px-2.5 py-1 rounded-full text-xs font-black bg-purple-500/20 text-purple-300 border border-purple-500/30 whitespace-nowrap inline-block">
+                                                    ∞ Kuota Tak Terbatas
                                                 </span>
                                             </div>
                                         @else
-                                            <div class="space-y-1 min-w-[180px]">
-                                                <div class="flex items-center justify-between text-[11px] font-bold">
-                                                    <span class="text-[#A594FD]">{{ $comp->registrations_count }} Terdaftar</span>
-                                                    <span class="text-slate-400">Kapasitas: {{ $comp->quota }}</span>
+                                            @php
+                                                $unitWord = match(strtolower($comp->type)) {
+                                                    'regu' => 'Regu',
+                                                    'tim' => 'Tim',
+                                                    'kelompok' => 'Kelompok',
+                                                    default => 'Peserta',
+                                                };
+                                                $sisa = max(0, $comp->quota - $comp->registrations_count);
+                                                $isFull = $sisa <= 0;
+                                                $isLow = $sisa > 0 && $sisa <= 5;
+                                            @endphp
+                                            <div class="space-y-1.5 min-w-[210px]">
+                                                <div class="flex items-center justify-between gap-3">
+                                                    <span class="text-xs sm:text-sm {{ $isFull ? 'text-rose-400 font-black' : ($isLow ? 'text-amber-300 font-black' : 'text-emerald-400 font-black') }}">
+                                                        {{ $isFull ? 'Kuota Penuh' : 'Sisa: ' . $sisa . ' ' . $unitWord }}
+                                                    </span>
+                                                    <span class="text-[11px] sm:text-xs font-semibold text-slate-400">
+                                                        {{ $comp->registrations_count }}/{{ $comp->quota }} Terdaftar
+                                                    </span>
                                                 </div>
-                                                <div class="w-full bg-[#0C111D] h-1.5 rounded-full overflow-hidden">
-                                                    <div class="bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] h-full rounded-full" style="width: {{ min(100, ($comp->registrations_count / max(1, $comp->quota)) * 100) }}%"></div>
+                                                <div class="w-full bg-white/[0.08] h-2.5 rounded-full overflow-hidden p-0.5 border border-white/[0.05]">
+                                                    <div class="bg-gradient-to-r {{ $isFull ? 'from-rose-500 to-red-600' : ($isLow ? 'from-amber-400 to-orange-500' : 'from-[#7A5AF8] to-[#4E6EFF]') }} h-full rounded-full transition-all duration-300 shadow-sm" style="width: {{ min(100, ($comp->registrations_count / max(1, $comp->quota)) * 100) }}%"></div>
                                                 </div>
                                             </div>
                                         @endif
