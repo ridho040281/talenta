@@ -27,9 +27,12 @@ class PesertaController extends Controller
 
         $openCompetitions = Competition::with('category')
             ->where('status', 'buka')
+            ->orderBy('order', 'asc')
             ->get();
 
-        return view('peserta.dashboard', compact('user', 'registrations', 'invoices', 'openCompetitions'));
+        $categories = \App\Models\Category::orderBy('order', 'asc')->get();
+
+        return view('peserta.dashboard', compact('user', 'registrations', 'invoices', 'openCompetitions', 'categories'));
     }
 
     public function myRegistrations()

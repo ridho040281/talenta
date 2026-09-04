@@ -96,26 +96,18 @@
             </a>
         </div>
 
-        <!-- Dynamic Filter Category Pills -->
-        <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none text-xs">
-            <button type="button" @click="activeCategory = 'all'" :class="activeCategory === 'all' ? 'bg-gradient-to-r from-emerald-400 to-teal-400 text-slate-950 font-black shadow-lg shadow-emerald-500/30 scale-105' : 'bg-slate-900/80 hover:bg-slate-800 text-slate-300 border border-slate-800 font-bold'" class="px-4 py-2 rounded-xl transition-all duration-200 shrink-0 cursor-pointer">
+        <!-- Dynamic Filter Category Pills (Aligned with Landing Page & Master Categories) -->
+        <div class="flex flex-wrap items-center gap-2 pb-1 text-xs">
+            <button type="button" @click="activeCategory = 'all'" :class="activeCategory === 'all' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-black shadow-lg shadow-[#7A5AF8]/30 ring-2 ring-[#7A5AF8]/50' : 'bg-slate-900/80 hover:bg-slate-800 text-slate-300 border border-slate-800 font-bold'" class="px-3.5 py-2 rounded-xl transition-all duration-200 shrink-0 cursor-pointer">
                 Semua Cabang ({{ $openCompetitions->count() }})
             </button>
-            <button type="button" @click="activeCategory = 'Seni'" :class="activeCategory === 'Seni' ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white font-black shadow-lg shadow-pink-500/40 scale-105' : 'bg-slate-900/80 hover:bg-slate-800 text-slate-300 border border-slate-800 font-bold'" class="px-4 py-2 rounded-xl transition-all duration-200 shrink-0 cursor-pointer">
-                🎨 Seni
-            </button>
-            <button type="button" @click="activeCategory = 'Olahraga'" :class="activeCategory === 'Olahraga' ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 font-black shadow-lg shadow-amber-500/40 scale-105' : 'bg-slate-900/80 hover:bg-slate-800 text-slate-300 border border-slate-800 font-bold'" class="px-4 py-2 rounded-xl transition-all duration-200 shrink-0 cursor-pointer">
-                🏸 Olahraga
-            </button>
-            <button type="button" @click="activeCategory = 'Olimpiade'" :class="activeCategory === 'Olimpiade' ? 'bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 font-black shadow-lg shadow-cyan-500/40 scale-105' : 'bg-slate-900/80 hover:bg-slate-800 text-slate-300 border border-slate-800 font-bold'" class="px-4 py-2 rounded-xl transition-all duration-200 shrink-0 cursor-pointer">
-                📐 Olimpiade & Akademik
-            </button>
-            <button type="button" @click="activeCategory = 'Teknologi'" :class="activeCategory === 'Teknologi' ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white font-black shadow-lg shadow-purple-500/40 scale-105' : 'bg-slate-900/80 hover:bg-slate-800 text-slate-300 border border-slate-800 font-bold'" class="px-4 py-2 rounded-xl transition-all duration-200 shrink-0 cursor-pointer">
-                🤖 Teknologi / Robotik
-            </button>
-            <button type="button" @click="activeCategory = 'Pramuka'" :class="activeCategory === 'Pramuka' ? 'bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950 font-black shadow-lg shadow-emerald-500/40 scale-105' : 'bg-slate-900/80 hover:bg-slate-800 text-slate-300 border border-slate-800 font-bold'" class="px-4 py-2 rounded-xl transition-all duration-200 shrink-0 cursor-pointer">
-                ⛺ Pramuka & Keagamaan
-            </button>
+
+            @foreach($categories as $cat)
+                <button type="button" @click="activeCategory = '{{ $cat->slug }}'" :class="activeCategory === '{{ $cat->slug }}' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-black shadow-lg shadow-[#7A5AF8]/30 ring-2 ring-[#7A5AF8]/50' : 'bg-slate-900/80 hover:bg-slate-800 text-slate-300 border border-slate-800 font-bold'" class="px-3.5 py-2 rounded-xl transition-all duration-200 shrink-0 flex items-center gap-1.5 cursor-pointer">
+                    <i data-lucide="{{ strtolower($cat->icon ?: 'folder') }}" class="w-3.5 h-3.5" :class="activeCategory === '{{ $cat->slug }}' ? 'text-white' : 'text-[#A594FD]'"></i>
+                    <span>{{ $cat->name }}</span>
+                </button>
+            @endforeach
         </div>
 
         <!-- Competition Cards Grid (Category-Dynamic Neon Glow) -->
@@ -125,13 +117,11 @@
                     $registeredReg = $registrations->firstWhere('competition_id', $c->id);
                     $isRegistered = !is_null($registeredReg);
                     $categoryName = $c->category->name ?? 'Lomba';
-                    $catLower = strtolower($categoryName . ' ' . $c->name);
+                    $catSlug = strtolower($c->category->slug ?? '');
 
-                    // Dynamic category color styling (Opsi 2)
-                    if (str_contains($catLower, 'seni') || str_contains($catLower, 'pop') || str_contains($catLower, 'art') || str_contains($catLower, 'lukis') || str_contains($catLower, 'puisi')) {
+                    if ($catSlug === 'seni') {
                         // SENI: Pink / Rose Neon
                         $theme = [
-                            'key' => 'Seni',
                             'borderHover' => 'hover:border-pink-500/80 hover:shadow-[0_0_35px_rgba(244,63,94,0.30)]',
                             'topStripe' => 'from-pink-500 via-rose-400 to-pink-500',
                             'badge' => 'bg-pink-500/20 text-pink-300 border-pink-500/40 group-hover:bg-pink-500/30',
@@ -141,10 +131,9 @@
                             'btnGrad' => 'bg-gradient-to-r from-pink-500 via-rose-500 to-pink-600 text-white shadow-[0_0_22px_rgba(244,63,94,0.55)] group-hover:shadow-[0_0_35px_rgba(244,63,94,0.90)]',
                             'feeText' => 'text-pink-400',
                         ];
-                    } elseif (str_contains($catLower, 'olahraga') || str_contains($catLower, 'sport') || str_contains($catLower, 'tangkis') || str_contains($catLower, 'catur') || str_contains($catLower, 'tenis') || str_contains($catLower, 'lari') || str_contains($catLower, 'atletik')) {
+                    } elseif ($catSlug === 'olahraga') {
                         // OLAHRAGA: Electric Amber / Orange Fire
                         $theme = [
-                            'key' => 'Olahraga',
                             'borderHover' => 'hover:border-amber-500/80 hover:shadow-[0_0_35px_rgba(245,158,11,0.30)]',
                             'topStripe' => 'from-amber-400 via-orange-500 to-amber-500',
                             'badge' => 'bg-amber-500/20 text-amber-300 border-amber-500/40 group-hover:bg-amber-500/30',
@@ -154,10 +143,9 @@
                             'btnGrad' => 'bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 text-slate-950 shadow-[0_0_22px_rgba(245,158,11,0.55)] group-hover:shadow-[0_0_35px_rgba(245,158,11,0.90)]',
                             'feeText' => 'text-amber-400',
                         ];
-                    } elseif (str_contains($catLower, 'olimpiade') || str_contains($catLower, 'akademik') || str_contains($catLower, 'sains') || str_contains($catLower, 'mipa') || str_contains($catLower, 'matematika') || str_contains($catLower, 'ipa') || str_contains($catLower, 'ips') || str_contains($catLower, 'inggris')) {
+                    } elseif ($catSlug === 'olimpiade') {
                         // OLIMPIADE & AKADEMIK: Hyper Cyan / Electric Blue
                         $theme = [
-                            'key' => 'Olimpiade',
                             'borderHover' => 'hover:border-cyan-400/80 hover:shadow-[0_0_35px_rgba(6,182,212,0.30)]',
                             'topStripe' => 'from-cyan-400 via-blue-500 to-cyan-400',
                             'badge' => 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 group-hover:bg-cyan-500/30',
@@ -167,10 +155,9 @@
                             'btnGrad' => 'bg-gradient-to-r from-cyan-400 via-sky-400 to-blue-500 text-slate-950 shadow-[0_0_22px_rgba(6,182,212,0.55)] group-hover:shadow-[0_0_35px_rgba(6,182,212,0.90)]',
                             'feeText' => 'text-cyan-400',
                         ];
-                    } elseif (str_contains($catLower, 'teknologi') || str_contains($catLower, 'robotik') || str_contains($catLower, 'it') || str_contains($catLower, 'komputer') || str_contains($catLower, 'coding')) {
+                    } elseif ($catSlug === 'teknologi') {
                         // TEKNOLOGI / ROBOTIK: Cyber Violet / Purple
                         $theme = [
-                            'key' => 'Teknologi',
                             'borderHover' => 'hover:border-purple-500/80 hover:shadow-[0_0_35px_rgba(168,85,247,0.30)]',
                             'topStripe' => 'from-violet-500 via-purple-500 to-indigo-500',
                             'badge' => 'bg-purple-500/20 text-purple-300 border-purple-500/40 group-hover:bg-purple-500/30',
@@ -180,10 +167,21 @@
                             'btnGrad' => 'bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-500 text-white shadow-[0_0_22px_rgba(168,85,247,0.55)] group-hover:shadow-[0_0_35px_rgba(168,85,247,0.90)]',
                             'feeText' => 'text-purple-400',
                         ];
-                    } else {
-                        // PRAMUKA / TAHFIDZ / KEAGAMAAN / DEFAULT: Luminous Emerald & Mint
+                    } elseif ($catSlug === 'tahfidz') {
+                        // TAHFIDZ: Spiritual Teal / Mint
                         $theme = [
-                            'key' => 'Pramuka',
+                            'borderHover' => 'hover:border-teal-400/80 hover:shadow-[0_0_35px_rgba(20,184,166,0.30)]',
+                            'topStripe' => 'from-teal-400 via-emerald-400 to-teal-500',
+                            'badge' => 'bg-teal-500/20 text-teal-300 border-teal-500/40 group-hover:bg-teal-500/30',
+                            'dot' => 'bg-teal-400',
+                            'code' => 'group-hover:text-teal-400',
+                            'title' => 'group-hover:text-teal-300',
+                            'btnGrad' => 'bg-gradient-to-r from-teal-400 via-emerald-400 to-cyan-400 text-slate-950 shadow-[0_0_22px_rgba(20,184,166,0.55)] group-hover:shadow-[0_0_35px_rgba(20,184,166,0.90)]',
+                            'feeText' => 'text-teal-400',
+                        ];
+                    } else {
+                        // PRAMUKA / DEFAULT: Luminous Emerald & Mint
+                        $theme = [
                             'borderHover' => 'hover:border-emerald-400/80 hover:shadow-[0_0_35px_rgba(16,185,129,0.30)]',
                             'topStripe' => 'from-emerald-400 via-teal-400 to-emerald-500',
                             'badge' => 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 group-hover:bg-emerald-500/30',
@@ -201,7 +199,7 @@
                 @endphp
                 
                 <a href="{{ $targetUrl }}" 
-                   x-show="activeCategory === 'all' || activeCategory === '{{ $theme['key'] }}' || activeCategory === '{{ $categoryName }}'" 
+                   x-show="activeCategory === 'all' || activeCategory === '{{ $c->category->slug ?? '' }}'" 
                    x-transition:enter="transition ease-out duration-200" 
                    x-transition:enter-start="opacity-0 scale-95" 
                    x-transition:enter-end="opacity-100 scale-100" 
