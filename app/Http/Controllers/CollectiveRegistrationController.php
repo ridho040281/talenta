@@ -31,13 +31,13 @@ class CollectiveRegistrationController extends Controller
      */
     public function wizard()
     {
+        $user = Auth::user();
         $regInfo = AppSetting::getRegistrationStatusInfo();
-        if (!$regInfo['is_open']) {
+        if (!$regInfo['is_open'] && !$user->isTester()) {
             return redirect()->route('peserta.dashboard')
                 ->with('error', $regInfo['closed_message'] ?: 'Pendaftaran kolektif saat ini sedang ditutup.');
         }
 
-        $user = Auth::user();
         $competitions = Competition::with('category')->where('status', 'buka')->get();
         $invoices = Invoice::with(['registrations.competition', 'registrations.members'])
             ->where('user_id', $user->id)
@@ -466,13 +466,12 @@ class CollectiveRegistrationController extends Controller
             return redirect()->route('peserta.collective.wizard')->with('error', 'Data pendaftaran tidak valid.');
         }
 
+        $user = Auth::user();
         $regInfo = AppSetting::getRegistrationStatusInfo();
-        if (!$regInfo['is_open']) {
+        if (!$regInfo['is_open'] && !$user->isTester()) {
             return redirect()->route('peserta.dashboard')
                 ->with('error', $regInfo['closed_message'] ?: 'Pendaftaran kolektif saat ini sedang ditutup.');
         }
-
-        $user = Auth::user();
 
         // Filter only valid rows
         $validRows = array_filter($data, fn ($item) => ! empty($item['is_valid']) && ! empty($item['competition_id']));

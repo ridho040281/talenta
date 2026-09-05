@@ -60,7 +60,7 @@ class PesertaController extends Controller
         $user = Auth::user();
 
         $regInfo = AppSetting::getRegistrationStatusInfo();
-        if (!$regInfo['is_open']) {
+        if (!$regInfo['is_open'] && !$user->isTester()) {
             $msg = $regInfo['status_code'] === 'not_started'
                 ? 'Pendaftaran TALENTA 2026 belum dibuka. Pendaftaran dibuka mulai ' . ($regInfo['start_date_formatted'] ?: '-') . ' WIB.'
                 : ($regInfo['closed_message'] ?: 'Pendaftaran perlombaan saat ini telah resmi ditutup.');
@@ -92,7 +92,7 @@ class PesertaController extends Controller
         $isBuluTangkis = ($competition->code === 'BLT');
 
         $regInfo = AppSetting::getRegistrationStatusInfo();
-        if (!$regInfo['is_open']) {
+        if (!$regInfo['is_open'] && !$user->isTester()) {
             $msg = $regInfo['status_code'] === 'not_started'
                 ? 'Pendaftaran TALENTA 2026 belum dibuka. Pendaftaran dibuka mulai ' . ($regInfo['start_date_formatted'] ?: '-') . ' WIB.'
                 : ($regInfo['closed_message'] ?: 'Pendaftaran perlombaan saat ini telah resmi ditutup.');

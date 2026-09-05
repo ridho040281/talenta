@@ -58,6 +58,14 @@ class User extends Authenticatable
         return $this->role === 'peserta';
     }
 
+    public function isTester(): bool
+    {
+        return $this->role === 'superadmin'
+            || str_ends_with(strtolower($this->email ?? ''), '@talenta.test')
+            || str_starts_with(strtolower($this->nisn ?? ''), 'tester_')
+            || str_starts_with(strtolower($this->name ?? ''), 'tester');
+    }
+
     public function registrations(): HasMany
     {
         return $this->hasMany(Registration::class, 'user_id');

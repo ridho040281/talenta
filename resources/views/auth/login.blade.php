@@ -76,6 +76,42 @@
                     </div>
                 </div>
 
+                <!-- Math Captcha Security Verification (1-25) -->
+                <div x-data="{ 
+                    captchaQuestion: '{{ session('login_captcha_question') ?? '...' }}',
+                    refreshing: false,
+                    refresh() {
+                        this.refreshing = true;
+                        fetch('{{ route('captcha.refresh') }}')
+                            .then(res => res.json())
+                            .then(data => {
+                                this.captchaQuestion = data.question;
+                                this.refreshing = false;
+                            })
+                            .catch(() => this.refreshing = false);
+                    }
+                }" class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-700/80 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label for="captcha" class="block text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                            <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
+                            <span>Hitung Angka Pengaman</span>
+                        </label>
+                        <button type="button" @click="refresh()" class="text-[11px] text-slate-400 hover:text-emerald-400 flex items-center gap-1 transition cursor-pointer" title="Ganti Soal Captcha">
+                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5" :class="refreshing ? 'animate-spin' : ''"></i>
+                            <span>Ganti Soal</span>
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-2.5">
+                        <div class="px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700/80 text-emerald-400 font-mono font-black text-sm tracking-wider select-none shrink-0 shadow-inner flex items-center gap-1">
+                            <span x-text="captchaQuestion + ' =' "></span>
+                        </div>
+                        <input id="captcha" name="captcha" type="number" required placeholder="Jawaban?" autocomplete="off" class="block w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-white font-mono font-bold text-sm outline-none transition @error('captcha') border-rose-500 @enderror">
+                    </div>
+                    @error('captcha')
+                        <p class="text-xs text-rose-400 font-medium">{{ $message }}</p>
+                    @enderror
+                </div>
+
                 <!-- Remember & Forgot -->
                 <div class="flex items-center justify-between text-xs">
                     <label class="flex items-center gap-2 cursor-pointer text-slate-400">
@@ -86,30 +122,11 @@
                 </div>
 
                 <!-- Submit Button -->
-                <button type="submit" class="w-full py-3.5 px-4 rounded-2xl btn-gradient text-slate-950 font-black text-sm uppercase tracking-wider shadow-lg shadow-emerald-500/25 hover:scale-[1.01] active:scale-[0.99] transition duration-200 flex items-center justify-center gap-2">
+                <button type="submit" class="w-full py-3.5 px-4 rounded-2xl btn-gradient text-slate-950 font-black text-sm uppercase tracking-wider shadow-lg shadow-emerald-500/25 hover:scale-[1.01] active:scale-[0.99] transition duration-200 flex items-center justify-center gap-2 cursor-pointer">
                     <i data-lucide="log-in" class="w-4 h-4"></i>
                     <span>Masuk ke Akun</span>
                 </button>
             </form>
-
-            <!-- Quick Demo Credential Switcher -->
-            <div class="pt-6 border-t border-slate-800" x-data>
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center mb-3">⚡ Uji Coba Cepat (Pilih Akun Demo)</p>
-                <div class="grid grid-cols-2 gap-2 text-xs">
-                    <button type="button" @click="document.getElementById('login').value='admin@talenta.test'; document.getElementById('password').value='password123';" class="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold text-left transition border border-slate-800">
-                        👑 Super Admin
-                    </button>
-                    <button type="button" @click="document.getElementById('login').value='pic.mtq@talenta.test'; document.getElementById('password').value='password123';" class="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold text-left transition border border-slate-800">
-                        🛡️ PIC Lomba MTQ
-                    </button>
-                    <button type="button" @click="document.getElementById('login').value='juri1@talenta.test'; document.getElementById('password').value='password123';" class="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold text-left transition border border-slate-800">
-                        ⚖️ Dewan Juri
-                    </button>
-                    <button type="button" @click="document.getElementById('login').value='alfalah@talenta.test'; document.getElementById('password').value='password123';" class="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold text-left transition border border-slate-800">
-                        🎓 Akun Pendaftar
-                    </button>
-                </div>
-            </div>
 
         </div>
 

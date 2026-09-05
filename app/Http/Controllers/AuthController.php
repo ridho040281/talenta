@@ -18,7 +18,54 @@ class AuthController extends Controller
             return $this->redirectBasedOnRole(Auth::user());
         }
 
+        if (!session()->has('login_captcha_question') || !session()->has('login_captcha_answer')) {
+            static::generateMathCaptcha();
+        }
+
         return view('auth.login');
+    }
+
+    /**
+     * Refresh Math Captcha for AJAX request
+     */
+    public function refreshCaptcha()
+    {
+        $captcha = static::generateMathCaptcha();
+        return response()->json(['question' => $captcha['question']]);
+    }
+
+    /**
+     * Generate Math Captcha (Addition, Subtraction, Division 1-25)
+     */
+    public static function generateMathCaptcha(): array
+    {
+        $types = ['add', 'sub', 'div'];
+        $type = $types[array_rand($types)];
+
+        if ($type === 'add') {
+            $a = rand(1, 15);
+            $b = rand(1, 10);
+            $question = "{$a} + {$b}";
+            $answer = $a + $b;
+        } elseif ($type === 'sub') {
+            $a = rand(10, 25);
+            $b = rand(1, $a - 1);
+            $question = "{$a} - {$b}";
+            $answer = $a - $b;
+        } else { // div
+            $divisor = rand(2, 5);
+            $quotient = rand(1, 5);
+            $a = $divisor * $quotient;
+            $question = "{$a} ÷ {$divisor}";
+            $answer = $quotient;
+        }
+
+        session([
+            'login_captcha_question' => $question,
+            'login_captcha_answer' => (string) $answer,
+        ]);
+
+        return ['question' => $question, 'answer' => $answer];
     }
 
     public function login(Request $request)
@@ -26,10 +73,23 @@ class AuthController extends Controller
         $request->validate([
             'login' => ['required', 'string'],
             'password' => ['required', 'string'],
+            'captcha' => ['required', 'string'],
         ], [
             'login.required' => 'Silakan masukkan NISN atau Alamat Email Anda.',
             'password.required' => 'Silakan masukkan kata sandi Anda.',
+            'captcha.required' => 'Silakan isi jawaban perhitungan verifikasi (Captcha).',
         ]);
+
+        // Validate Captcha
+        $expectedAnswer = session('login_captcha_answer');
+        $userAnswer = trim((string) $request->input('captcha', ''));
+
+        if ($expectedAnswer === null || $userAnswer !== (string) $expectedAnswer) {
+            static::generateMathCaptcha();
+            return back()->withErrors([
+                'captcha' => 'Jawaban hitungan keamanan (Captcha) tidak sesuai. Silakan coba lagi.',
+            ])->onlyInput('login');
+        }
 
         $loginInput = trim($request->input('login'));
 
@@ -42,8 +102,12 @@ class AuthController extends Controller
             if ($user->status !== 'active') {
                 ActivityLog::record('LOGIN_BLOCKED', "Percobaan login pada akun yang dinonaktifkan: '{$user->name}'", $user, 'warning', $loginInput);
 
+                static::generateMathCaptcha();
                 return back()->withErrors(['login' => 'Akun Anda sedang dinonaktifkan oleh administrator.']);
             }
+
+            // Forget captcha session on successful login
+            session()->forget(['login_captcha_question', 'login_captcha_answer']);
 
             Auth::login($user, $request->boolean('remember'));
             $request->session()->regenerate();
@@ -53,6 +117,8 @@ class AuthController extends Controller
             return $this->redirectBasedOnRole($user)
                 ->with('success', 'Selamat datang kembali, '.$user->name.'!');
         }
+
+        static::generateMathCaptcha();
 
         if ($user) {
             ActivityLog::record('LOGIN_FAILED', "Percobaan login GAGAL (kata sandi salah) untuk akun: '{$user->name}' ({$user->role})", $user, 'failed', $loginInput);
