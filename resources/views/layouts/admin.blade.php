@@ -704,6 +704,11 @@
         </div>
     </div>
 
+    <!-- Pop-up Announcement Modal for Peserta Dashboard -->
+    @if(auth()->check() && auth()->user()->role === 'peserta')
+        @include('partials.popup-announcement', ['context' => 'dashboard'])
+    @endif
+
     <!-- Initialize Lucide Icons -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {

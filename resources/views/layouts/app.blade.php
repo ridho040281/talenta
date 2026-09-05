@@ -450,6 +450,11 @@
         </div>
     </footer>
 
+    <!-- Pop-up Announcement Modal for Landing Page / Public -->
+    @if(request()->routeIs('home') || request()->is('/'))
+        @include('partials.popup-announcement', ['context' => 'landing'])
+    @endif
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();

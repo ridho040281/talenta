@@ -348,8 +348,5 @@
         </div>
     </div>
 
-    <!-- Pop-up Announcement Modal for Peserta Dashboard -->
-    @include('partials.popup-announcement', ['context' => 'dashboard'])
-
 </div>
 @endsection
