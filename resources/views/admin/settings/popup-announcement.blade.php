@@ -217,12 +217,25 @@
                     </div>
                 </div>
 
-                <!-- Submit Button -->
-                <div class="pt-2">
-                    <button type="submit" class="gradient-btn px-8 py-3.5 rounded-2xl text-white font-black text-xs shadow-xl shadow-[#7A5AF8]/30 hover:scale-[1.02] active:scale-[0.98] transition flex items-center gap-2.5 cursor-pointer uppercase tracking-wider">
-                        <i data-lucide="save" class="w-4 h-4"></i>
-                        <span>Simpan & Rilis Informasi Baru</span>
-                    </button>
+                <!-- Action Buttons: Simpan Koreksi vs Rilis Baru -->
+                <div class="pt-2 space-y-2.5">
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                        <!-- Tombol 1: Simpan Koreksi Redaksi (Typo) -->
+                        <button type="submit" name="save_action" value="update" class="px-5 py-3.5 rounded-2xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/[0.15] text-white font-bold text-xs hover:scale-[1.01] active:scale-[0.99] transition flex items-center justify-center gap-2 cursor-pointer shadow-lg">
+                            <i data-lucide="check" class="w-4 h-4 text-emerald-400"></i>
+                            <span>Simpan Koreksi Redaksi (Typo)</span>
+                        </button>
+
+                        <!-- Tombol 2: Rilis Sebagai Informasi Baru -->
+                        <button type="submit" name="save_action" value="publish" onclick="return confirm('Apakah Anda yakin ingin merilis ini sebagai INFORMASI BARU?\n\nPengumuman ini akan dicatat sebagai riwayat baru dan otomatis muncul kembali ke seluruh pengunjung/peserta.');" class="gradient-btn px-6 py-3.5 rounded-2xl text-white font-black text-xs shadow-xl shadow-[#7A5AF8]/30 hover:scale-[1.02] active:scale-[0.98] transition flex items-center justify-center gap-2.5 cursor-pointer uppercase tracking-wider">
+                            <i data-lucide="send" class="w-4 h-4"></i>
+                            <span>Rilis Sebagai Informasi Baru</span>
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-1.5 text-[11px] text-slate-400 px-1">
+                        <i data-lucide="info" class="w-3.5 h-3.5 text-indigo-400 shrink-0"></i>
+                        <span>Pilih <b>Simpan Koreksi</b> untuk membetulkan salah ketik tanpa menambah riwayat baru.</span>
+                    </div>
                 </div>
 
             </form>
@@ -273,7 +286,7 @@
                                             </span>
                                         @endif
                                     </div>
-                                    <p class="text-[10px] text-slate-400 flex items-center gap-1">
+                                    <p class="text-[10px] text-slate-400 flex items-center gap-1 flex-wrap">
                                         <i data-lucide="clock" class="w-3 h-3 text-slate-500"></i>
                                         <span>
                                             @if(!empty($item['timestamp']))
@@ -282,6 +295,9 @@
                                                 {{ $item['created_at'] ?? '-' }}
                                             @endif
                                         </span>
+                                        @if(!empty($item['updated_at']))
+                                            <span class="text-amber-400/90 text-[9px] font-medium">(koreksi: {{ $item['updated_at'] }})</span>
+                                        @endif
                                         @if(!empty($item['created_by']))
                                             <span class="text-slate-500">• {{ $item['created_by'] }}</span>
                                         @endif

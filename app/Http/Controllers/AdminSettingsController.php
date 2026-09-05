@@ -1421,32 +1421,72 @@ class AdminSettingsController extends Controller
             AppSetting::set('popup_image', $imagePath);
         }
 
-        $newVersion = 'v_' . time();
-        AppSetting::set('popup_version', $newVersion);
-
-        // Record snapshot to history list
+        $saveAction = $request->input('save_action', 'update');
         $histories = json_decode(AppSetting::get('popup_history_list', '[]'), true) ?: [];
-        $newHistoryItem = [
-            'id' => (string) \Illuminate\Support\Str::uuid(),
-            'title' => $validated['popup_title'],
-            'subtitle' => $validated['popup_subtitle'] ?? '',
-            'content' => $validated['popup_content'],
-            'image' => AppSetting::get('popup_image'),
-            'target' => $validated['popup_target'],
-            'button_text' => $validated['popup_button_text'] ?? '',
-            'button_url' => $validated['popup_button_url'] ?? '',
-            'secondary_button_text' => $validated['popup_secondary_button_text'] ?? 'Saya Mengerti / Tutup',
-            'enabled' => $request->input('popup_enabled', '0'),
-            'version' => $newVersion,
-            'created_at' => now()->setTimezone('Asia/Jakarta')->translatedFormat('d F Y, H:i') . ' WIB',
-            'timestamp' => time(),
-            'created_by' => auth()->user()->name ?? 'Administrator',
-        ];
-        array_unshift($histories, $newHistoryItem);
-        $histories = array_slice($histories, 0, 50);
-        AppSetting::set('popup_history_list', json_encode($histories));
 
-        return redirect()->route('admin.settings.popup.index')->with('success', 'Pengaturan Informasi berhasil disimpan dan dicatat ke dalam riwayat.');
+        if ($saveAction === 'publish') {
+            // RELEASE AS NEW ANNOUNCEMENT (Increments version & adds new history row)
+            $newVersion = 'v_' . time();
+            AppSetting::set('popup_version', $newVersion);
+
+            $newHistoryItem = [
+                'id' => (string) \Illuminate\Support\Str::uuid(),
+                'title' => $validated['popup_title'],
+                'subtitle' => $validated['popup_subtitle'] ?? '',
+                'content' => $validated['popup_content'],
+                'image' => AppSetting::get('popup_image'),
+                'target' => $validated['popup_target'],
+                'button_text' => $validated['popup_button_text'] ?? '',
+                'button_url' => $validated['popup_button_url'] ?? '',
+                'secondary_button_text' => $validated['popup_secondary_button_text'] ?? 'Saya Mengerti / Tutup',
+                'enabled' => $request->input('popup_enabled', '0'),
+                'version' => $newVersion,
+                'created_at' => now()->setTimezone('Asia/Jakarta')->translatedFormat('d F Y, H:i') . ' WIB',
+                'timestamp' => time(),
+                'created_by' => auth()->user()->name ?? 'Administrator',
+            ];
+            array_unshift($histories, $newHistoryItem);
+            $histories = array_slice($histories, 0, 50);
+            AppSetting::set('popup_history_list', json_encode($histories));
+
+            return redirect()->route('admin.settings.popup.index')->with('success', 'Pengumuman baru berhasil dirilis dan dicatat ke riwayat. Pop-up akan tampil kembali ke seluruh pengunjung.');
+        } else {
+            // UPDATE IN-PLACE (Typo / editorial fix without resetting version or adding history row)
+            if (!empty($histories)) {
+                $histories[0]['title'] = $validated['popup_title'];
+                $histories[0]['subtitle'] = $validated['popup_subtitle'] ?? '';
+                $histories[0]['content'] = $validated['popup_content'];
+                $histories[0]['image'] = AppSetting::get('popup_image');
+                $histories[0]['target'] = $validated['popup_target'];
+                $histories[0]['button_text'] = $validated['popup_button_text'] ?? '';
+                $histories[0]['button_url'] = $validated['popup_button_url'] ?? '';
+                $histories[0]['secondary_button_text'] = $validated['popup_secondary_button_text'] ?? 'Saya Mengerti / Tutup';
+                $histories[0]['enabled'] = $request->input('popup_enabled', '0');
+                $histories[0]['updated_at'] = now()->setTimezone('Asia/Jakarta')->translatedFormat('d F Y, H:i') . ' WIB';
+            } else {
+                $histories = [
+                    [
+                        'id' => (string) \Illuminate\Support\Str::uuid(),
+                        'title' => $validated['popup_title'],
+                        'subtitle' => $validated['popup_subtitle'] ?? '',
+                        'content' => $validated['popup_content'],
+                        'image' => AppSetting::get('popup_image'),
+                        'target' => $validated['popup_target'],
+                        'button_text' => $validated['popup_button_text'] ?? '',
+                        'button_url' => $validated['popup_button_url'] ?? '',
+                        'secondary_button_text' => $validated['popup_secondary_button_text'] ?? 'Saya Mengerti / Tutup',
+                        'enabled' => $request->input('popup_enabled', '0'),
+                        'version' => AppSetting::get('popup_version', 'v1'),
+                        'created_at' => now()->setTimezone('Asia/Jakarta')->translatedFormat('d F Y, H:i') . ' WIB',
+                        'timestamp' => time(),
+                        'created_by' => auth()->user()->name ?? 'Administrator',
+                    ]
+                ];
+            }
+            AppSetting::set('popup_history_list', json_encode($histories));
+
+            return redirect()->route('admin.settings.popup.index')->with('success', 'Koreksi redaksi berhasil disimpan tanpa menambah riwayat baru.');
+        }
     }
 
     /**
