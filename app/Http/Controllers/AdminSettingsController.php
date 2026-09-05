@@ -1364,7 +1364,7 @@ class AdminSettingsController extends Controller
                     'secondary_button_text' => $settings['popup_secondary_button_text'],
                     'enabled' => $settings['popup_enabled'],
                     'version' => $settings['popup_version'],
-                    'created_at' => now()->translatedFormat('d F Y, H:i'),
+                    'created_at' => now()->setTimezone('Asia/Jakarta')->translatedFormat('d F Y, H:i') . ' WIB',
                     'timestamp' => time(),
                     'created_by' => auth()->user()->name ?? 'Administrator',
                 ]
@@ -1438,7 +1438,7 @@ class AdminSettingsController extends Controller
             'secondary_button_text' => $validated['popup_secondary_button_text'] ?? 'Saya Mengerti / Tutup',
             'enabled' => $request->input('popup_enabled', '0'),
             'version' => $newVersion,
-            'created_at' => now()->translatedFormat('d F Y, H:i'),
+            'created_at' => now()->setTimezone('Asia/Jakarta')->translatedFormat('d F Y, H:i') . ' WIB',
             'timestamp' => time(),
             'created_by' => auth()->user()->name ?? 'Administrator',
         ];

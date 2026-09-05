@@ -275,7 +275,13 @@
                                     </div>
                                     <p class="text-[10px] text-slate-400 flex items-center gap-1">
                                         <i data-lucide="clock" class="w-3 h-3 text-slate-500"></i>
-                                        <span>{{ $item['created_at'] ?? '-' }}</span>
+                                        <span>
+                                            @if(!empty($item['timestamp']))
+                                                {{ \Carbon\Carbon::createFromTimestamp($item['timestamp'])->setTimezone('Asia/Jakarta')->translatedFormat('d F Y, H:i') }} WIB
+                                            @else
+                                                {{ $item['created_at'] ?? '-' }}
+                                            @endif
+                                        </span>
                                         @if(!empty($item['created_by']))
                                             <span class="text-slate-500">• {{ $item['created_by'] }}</span>
                                         @endif
