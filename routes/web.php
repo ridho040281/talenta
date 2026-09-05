@@ -216,6 +216,7 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->name('admin.')-
         Route::get('/popup-announcement', [AdminSettingsController::class, 'popupAnnouncement'])->name('popup.index');
         Route::post('/popup-announcement', [AdminSettingsController::class, 'updatePopupAnnouncement'])->name('popup.update');
         Route::post('/popup-announcement/reset-version', [AdminSettingsController::class, 'resetPopupVersion'])->name('popup.reset-version');
+        Route::post('/popup-announcement/history/{id}/delete', [AdminSettingsController::class, 'deletePopupHistory'])->name('popup.history.delete');
 
         Route::get('/changelog', [AdminSettingsController::class, 'changelog'])->name('changelog');
         Route::get('/app-info', [AdminSettingsController::class, 'appInfo'])->name('app.info');

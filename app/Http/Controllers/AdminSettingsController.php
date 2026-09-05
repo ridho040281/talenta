@@ -1330,7 +1330,7 @@ class AdminSettingsController extends Controller
     }
 
     /**
-     * Show Pop-up Announcement Modal Settings Page
+     * Show Announcement & Pop-up Modal Settings Page (Pusat Informasi)
      */
     public function popupAnnouncement()
     {
@@ -1347,11 +1347,36 @@ class AdminSettingsController extends Controller
             'popup_version' => AppSetting::get('popup_version', 'v1'),
         ];
 
-        return view('admin.settings.popup-announcement', compact('settings'));
+        $histories = json_decode(AppSetting::get('popup_history_list', '[]'), true) ?: [];
+        
+        // Seed initial history if empty
+        if (empty($histories) && !empty($settings['popup_title'])) {
+            $histories = [
+                [
+                    'id' => (string) \Illuminate\Support\Str::uuid(),
+                    'title' => $settings['popup_title'],
+                    'subtitle' => $settings['popup_subtitle'],
+                    'content' => $settings['popup_content'],
+                    'image' => $settings['popup_image'],
+                    'target' => $settings['popup_target'],
+                    'button_text' => $settings['popup_button_text'],
+                    'button_url' => $settings['popup_button_url'],
+                    'secondary_button_text' => $settings['popup_secondary_button_text'],
+                    'enabled' => $settings['popup_enabled'],
+                    'version' => $settings['popup_version'],
+                    'created_at' => now()->translatedFormat('d F Y, H:i'),
+                    'timestamp' => time(),
+                    'created_by' => auth()->user()->name ?? 'Administrator',
+                ]
+            ];
+            AppSetting::set('popup_history_list', json_encode($histories));
+        }
+
+        return view('admin.settings.popup-announcement', compact('settings', 'histories'));
     }
 
     /**
-     * Update Pop-up Announcement Modal Settings
+     * Update Pop-up Announcement Modal Settings & Record to History
      */
     public function updatePopupAnnouncement(Request $request)
     {
@@ -1396,10 +1421,44 @@ class AdminSettingsController extends Controller
             AppSetting::set('popup_image', $imagePath);
         }
 
-        // Update version tag so users will see updated announcement
-        AppSetting::set('popup_version', 'v_' . time());
+        $newVersion = 'v_' . time();
+        AppSetting::set('popup_version', $newVersion);
 
-        return redirect()->route('admin.settings.popup.index')->with('success', 'Pengaturan Pop-up Informasi berhasil disimpan dan diperbarui.');
+        // Record snapshot to history list
+        $histories = json_decode(AppSetting::get('popup_history_list', '[]'), true) ?: [];
+        $newHistoryItem = [
+            'id' => (string) \Illuminate\Support\Str::uuid(),
+            'title' => $validated['popup_title'],
+            'subtitle' => $validated['popup_subtitle'] ?? '',
+            'content' => $validated['popup_content'],
+            'image' => AppSetting::get('popup_image'),
+            'target' => $validated['popup_target'],
+            'button_text' => $validated['popup_button_text'] ?? '',
+            'button_url' => $validated['popup_button_url'] ?? '',
+            'secondary_button_text' => $validated['popup_secondary_button_text'] ?? 'Saya Mengerti / Tutup',
+            'enabled' => $request->input('popup_enabled', '0'),
+            'version' => $newVersion,
+            'created_at' => now()->translatedFormat('d F Y, H:i'),
+            'timestamp' => time(),
+            'created_by' => auth()->user()->name ?? 'Administrator',
+        ];
+        array_unshift($histories, $newHistoryItem);
+        $histories = array_slice($histories, 0, 50);
+        AppSetting::set('popup_history_list', json_encode($histories));
+
+        return redirect()->route('admin.settings.popup.index')->with('success', 'Pengaturan Informasi berhasil disimpan dan dicatat ke dalam riwayat.');
+    }
+
+    /**
+     * Delete an entry from Announcement History
+     */
+    public function deletePopupHistory($id)
+    {
+        $histories = json_decode(AppSetting::get('popup_history_list', '[]'), true) ?: [];
+        $filtered = array_values(array_filter($histories, fn($item) => ($item['id'] ?? '') !== $id));
+        AppSetting::set('popup_history_list', json_encode($filtered));
+
+        return redirect()->route('admin.settings.popup.index')->with('success', 'Riwayat informasi berhasil dihapus.');
     }
 
     /**
@@ -1409,6 +1468,6 @@ class AdminSettingsController extends Controller
     {
         AppSetting::set('popup_version', 'v_' . time());
 
-        return redirect()->route('admin.settings.popup.index')->with('success', 'Status Pop-up berhasil di-reset. Pop-up akan muncul kembali satu kali kepada seluruh pengunjung dan peserta.');
+        return redirect()->route('admin.settings.popup.index')->with('success', 'Status Informasi berhasil di-reset. Pengumuman akan muncul kembali satu kali kepada seluruh pengunjung dan peserta.');
     }
 }
