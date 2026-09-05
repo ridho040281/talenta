@@ -77,6 +77,9 @@
         </div>
     @endif
 
+    @php
+        $regInfo = \App\Models\AppSetting::getRegistrationStatusInfo();
+    @endphp
     <!-- KATALOG CABANG PERLOMBAAN TALENTA 2026 (Category-Dynamic Neon Cards) -->
     <div class="glass-card rounded-3xl p-6 sm:p-8 border border-slate-800/80 shadow-2xl space-y-6">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
@@ -86,15 +89,40 @@
                 </div>
                 <div>
                     <h3 class="text-base sm:text-lg font-black text-white font-display">Katalog Cabang Perlombaan TALENTA 2026</h3>
-                    <p class="text-xs text-slate-400">Klik langsung pada kartu lomba di bawah untuk mengisi formulir pendaftaran peserta</p>
+                    <div class="flex flex-wrap items-center gap-2 mt-0.5 text-xs text-slate-400">
+                        <span>Pilih kartu lomba di bawah untuk mengisi formulir pendaftaran peserta.</span>
+                        @if($regInfo['deadline_formatted'])
+                            <span class="inline-flex items-center gap-1 font-bold {{ $regInfo['is_open'] ? 'text-amber-400' : 'text-rose-400' }}">
+                                <i data-lucide="{{ $regInfo['is_open'] ? 'timer' : 'lock' }}" class="w-3.5 h-3.5"></i>
+                                <span>Batas Akhir: {{ $regInfo['deadline_formatted'] }} WIB</span>
+                            </span>
+                        @endif
+                    </div>
                 </div>
             </div>
 
-            <a href="{{ route('peserta.collective.wizard') }}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 hover:from-emerald-300 hover:to-cyan-300 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/30 hover:scale-[1.02] transition-all cursor-pointer shrink-0">
-                <i data-lucide="file-spreadsheet" class="w-4 h-4 text-slate-950"></i>
-                <span>Daftar Kolektif Excel (Banyak Siswa)</span>
-            </a>
+            @if($regInfo['is_open'])
+                <a href="{{ route('peserta.collective.wizard') }}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 hover:from-emerald-300 hover:to-cyan-300 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/30 hover:scale-[1.02] transition-all cursor-pointer shrink-0">
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4 text-slate-950"></i>
+                    <span>Daftar Kolektif Excel (Banyak Siswa)</span>
+                </a>
+            @else
+                <span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-rose-500/15 text-rose-300 border border-rose-500/30 font-bold text-xs shrink-0">
+                    <i data-lucide="lock" class="w-4 h-4"></i>
+                    <span>Pendaftaran Ditutup</span>
+                </span>
+            @endif
         </div>
+
+        @if(!$regInfo['is_open'])
+            <div class="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-start sm:items-center gap-3 text-rose-300 text-xs">
+                <i data-lucide="lock" class="w-5 h-5 text-rose-400 shrink-0 mt-0.5 sm:mt-0"></i>
+                <div>
+                    <strong class="font-bold text-white">{{ $regInfo['status_label'] }}:</strong>
+                    <span>{{ $regInfo['closed_message'] }}</span>
+                </div>
+            </div>
+        @endif
 
         <!-- Dynamic Filter Category Pills (Aligned with Landing Page & Master Categories) -->
         <div class="flex flex-wrap items-center gap-2 pb-1 text-xs">
@@ -195,7 +223,7 @@
 
                     $targetUrl = $isRegistered 
                         ? route('peserta.registration.detail', $registeredReg->id) 
-                        : route('peserta.register.competition', $c->slug);
+                        : ($regInfo['is_open'] ? route('peserta.register.competition', $c->slug) : route('competition.detail', $c->slug));
                 @endphp
                 
                 <a href="{{ $targetUrl }}" 
@@ -300,6 +328,11 @@
                                         <span>Sudah Terdaftar</span>
                                     </span>
                                     <span class="text-[10px] text-emerald-300 font-bold underline">Lihat Berkas ➔</span>
+                                </div>
+                            @elseif(!$regInfo['is_open'])
+                                <div class="w-full py-2.5 px-3 rounded-2xl bg-slate-800/80 text-slate-400 border border-slate-700 font-bold text-xs flex items-center justify-center gap-2 tracking-wide">
+                                    <i data-lucide="lock" class="w-4 h-4 text-rose-400"></i>
+                                    <span>Pendaftaran Ditutup</span>
                                 </div>
                             @else
                                 <div class="w-full py-3 px-4 rounded-2xl {{ $theme['btnGrad'] }} font-black text-xs flex items-center justify-center gap-2 tracking-wide uppercase group-hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 cursor-pointer">

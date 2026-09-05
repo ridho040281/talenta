@@ -47,8 +47,9 @@ class AdminController extends Controller
         }])->withCount('competitions')->orderBy('order', 'asc')->get();
         $pics = User::where('role', 'pic_lomba')->orWhere('role', 'superadmin')->get();
         $timelines = Timeline::orderBy('order', 'asc')->get();
+        $appSettings = AppSetting::allKeyValues();
 
-        return view('admin.competitions', compact('competitions', 'categories', 'pics', 'timelines'));
+        return view('admin.competitions', compact('competitions', 'categories', 'pics', 'timelines', 'appSettings'));
     }
 
     public function editCompetitionPage($id)
@@ -504,6 +505,40 @@ class AdminController extends Controller
         $competition->delete();
 
         return redirect()->route('admin.competitions')->with('success', 'Cabang lomba '.$name.' berhasil dihapus.');
+    }
+
+    public function toggleAllCompetitionsStatus(Request $request)
+    {
+        $action = $request->input('action', 'tutup'); // 'buka' or 'tutup'
+        $status = ($action === 'buka') ? 'buka' : 'tutup';
+
+        // 1. Update all competitions in competitions table
+        Competition::query()->update(['status' => $status]);
+
+        // 2. Update multi-tier setting statuses
+        $multiTierKeys = [
+            'blt_status_a_tunggal_pa', 'blt_status_b_tunggal_pa', 'blt_status_c_tunggal_pa',
+            'blt_status_a_tunggal_pi', 'blt_status_b_tunggal_pi', 'blt_status_c_tunggal_pi',
+            'blt_status_ganda_pa', 'blt_status_ganda_pi',
+            'blt_status_tunggal_pa', 'blt_status_tunggal_pi',
+            'mtq_status_pa', 'mtq_status_pi',
+            'pop_status_pa', 'pop_status_pi',
+            'tmj_status_a_tunggal_pa', 'tmj_status_b_tunggal_pa',
+            'tmj_status_a_tunggal_pi', 'tmj_status_b_tunggal_pi',
+            'tmj_status_tunggal_pa', 'tmj_status_tunggal_pi',
+        ];
+        foreach ($multiTierKeys as $key) {
+            AppSetting::set($key, $status, 'general');
+        }
+
+        // 3. Set global registration status in AppSetting
+        AppSetting::set('global_registration_status', ($status === 'buka' ? 'open' : 'closed'), 'general');
+
+        $msg = ($status === 'buka') 
+            ? 'Seluruh cabang lomba dan seluruh sektor berhasil DIBUKA serentak.' 
+            : 'Seluruh cabang lomba dan seluruh sektor berhasil DITUTUP serentak.';
+
+        return redirect()->route('admin.competitions')->with('success', $msg);
     }
 
     /**

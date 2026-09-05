@@ -159,6 +159,7 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->name('admin.')-
     Route::post('/competitions/{id}/update', [AdminController::class, 'updateCompetition'])->name('competitions.update');
     Route::post('/competitions/{id}/delete', [AdminController::class, 'deleteCompetition'])->name('competitions.delete');
     Route::post('/competitions/{id}/toggle-live-score', [AdminController::class, 'toggleLiveScore'])->name('competitions.toggle-live-score');
+    Route::post('/competitions/toggle-all-status', [AdminController::class, 'toggleAllCompetitionsStatus'])->name('competitions.toggle-all-status');
 
     // Category Routes
     Route::post('/categories', [AdminController::class, 'storeCategory'])->name('categories.store');

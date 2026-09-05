@@ -136,17 +136,27 @@
             
             <!-- Action Card -->
             <div class="glass-card bg-gradient-to-br from-[#161F30] to-[#1e293b]/90 rounded-3xl p-6 sm:p-8 text-white border border-white/[0.1] shadow-2xl space-y-6">
+                @php
+                    $regInfo = \App\Models\AppSetting::getRegistrationStatusInfo();
+                    $isCompOpen = ($competition->status === 'buka') && $regInfo['is_open'];
+                @endphp
                 <div>
-                    <span class="text-xs font-bold text-[#A594FD] uppercase tracking-wider">Status Perlombaan</span>
+                    <span class="text-xs font-bold text-[#A594FD] uppercase tracking-wider">Status Pendaftaran</span>
                     <div class="flex items-center justify-between mt-1">
-                        <span class="text-2xl font-black text-white capitalize font-display">{{ $competition->status }}</span>
-                        <span class="px-3 py-1 text-xs font-black rounded-full {{ $competition->status === 'buka' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border border-rose-500/40' }}">
-                            {{ $competition->status === 'buka' ? 'Pendaftaran Dibuka' : 'Ditutup' }}
+                        <span class="text-xl font-black text-white capitalize font-display">{{ $isCompOpen ? 'Dibuka' : 'Ditutup' }}</span>
+                        <span class="px-3 py-1 text-xs font-black rounded-full {{ $isCompOpen ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border border-rose-500/40' }}">
+                            {{ $isCompOpen ? 'Pendaftaran Dibuka' : 'Ditutup' }}
                         </span>
                     </div>
                 </div>
 
                 <div class="space-y-3 text-xs text-slate-300 border-t border-white/[0.08] pt-4">
+                    @if(!empty($regInfo['deadline_formatted']))
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-400">Batas Pendaftaran:</span>
+                        <span class="font-bold text-xs text-amber-300">{{ $regInfo['deadline_formatted'] }} WIB</span>
+                    </div>
+                    @endif
                     <div class="flex items-center justify-between">
                         <span class="text-slate-400">Biaya Pendaftaran:</span>
                         @if($competition->code === 'BLT')
@@ -173,10 +183,17 @@
                     </div>
                 </div>
 
-                <a href="{{ route('peserta.register.competition', $competition->slug) }}" class="w-full flex items-center justify-center gap-2 py-4 px-6 rounded-2xl btn-gradient text-white font-black text-sm shadow-xl shadow-[#7A5AF8]/30 hover:scale-[1.02] active:scale-[0.98] transition duration-200">
-                    <i data-lucide="edit-3" class="w-5 h-5"></i>
-                    <span>Daftar Cabang Lomba Ini</span>
-                </a>
+                @if($isCompOpen)
+                    <a href="{{ route('peserta.register.competition', $competition->slug) }}" class="w-full flex items-center justify-center gap-2 py-4 px-6 rounded-2xl btn-gradient text-white font-black text-sm shadow-xl shadow-[#7A5AF8]/30 hover:scale-[1.02] active:scale-[0.98] transition duration-200">
+                        <i data-lucide="edit-3" class="w-5 h-5"></i>
+                        <span>Daftar Cabang Lomba Ini</span>
+                    </a>
+                @else
+                    <div class="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl bg-slate-800/80 text-slate-400 border border-slate-700 font-bold text-xs">
+                        <i data-lucide="lock" class="w-4 h-4 text-rose-400"></i>
+                        <span>Pendaftaran Ditutup</span>
+                    </div>
+                @endif
 
                 @if(!empty($competition->whatsapp_group_url))
                     <a href="{{ $competition->whatsapp_group_url }}" target="_blank" rel="noopener noreferrer" class="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 font-bold text-xs border border-emerald-500/30 hover:border-emerald-500 transition duration-200">

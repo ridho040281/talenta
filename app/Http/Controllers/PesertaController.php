@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AppSetting;
 use App\Models\Category;
 use App\Models\Competition;
 use App\Models\Invoice;
@@ -58,6 +59,17 @@ class PesertaController extends Controller
         $competition = Competition::where('slug', $slug)->firstOrFail();
         $user = Auth::user();
 
+        $regInfo = AppSetting::getRegistrationStatusInfo();
+        if (!$regInfo['is_open']) {
+            return redirect()->route('peserta.dashboard')
+                ->with('error', $regInfo['closed_message'] ?: 'Pendaftaran perlombaan saat ini sedang ditutup.');
+        }
+
+        if ($competition->status === 'tutup') {
+            return redirect()->route('peserta.dashboard')
+                ->with('error', 'Pendaftaran untuk cabang lomba '.$competition->name.' telah ditutup.');
+        }
+
         // Check if user already registered for this competition
         $existing = Registration::where('user_id', $user->id)
             ->where('competition_id', $competition->id)
@@ -77,6 +89,15 @@ class PesertaController extends Controller
         $user = Auth::user();
         $isBuluTangkis = ($competition->code === 'BLT');
 
+        $regInfo = AppSetting::getRegistrationStatusInfo();
+        if (!$regInfo['is_open']) {
+            return back()->with('error', $regInfo['closed_message'] ?: 'Pendaftaran perlombaan saat ini sedang ditutup.');
+        }
+
+        if ($competition->status === 'tutup') {
+            return back()->with('error', 'Pendaftaran untuk cabang lomba '.$competition->name.' telah ditutup.');
+        }
+
         // Prevent duplicate registration in the same competition for this user account
         $existingUserReg = Registration::where('user_id', $user->id)
             ->where('competition_id', $competition->id)
@@ -85,10 +106,6 @@ class PesertaController extends Controller
         if ($existingUserReg) {
             return redirect()->route('peserta.registration.detail', $existingUserReg->id)
                 ->with('error', 'Anda sudah terdaftar pada cabang lomba '.$competition->name.'. Silakan pilih cabang lomba lain jika ingin mengikuti lebih dari satu lomba.');
-        }
-
-        if ($competition->status === 'tutup') {
-            return back()->with('error', 'Pendaftaran untuk cabang lomba '.$competition->name.' telah ditutup.');
         }
 
         // Enforce quota limit only if quota is explicitly greater than 0 (0 = unlimited)

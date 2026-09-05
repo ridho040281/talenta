@@ -81,6 +81,93 @@
             <form action="{{ route('admin.settings.general.update') }}" method="POST" class="space-y-6">
                 @csrf
 
+                <!-- BAGIAN 1: STATUS & JADWAL PENDAFTARAN GLOBAL (OPSI C) -->
+                <div class="p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-[#101828] via-[#161F30] to-[#1E293B] border border-indigo-500/30 space-y-4 shadow-xl">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.08] pb-3">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center font-bold">
+                                <i data-lucide="calendar-clock" class="w-4 h-4"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-black text-white">Status & Jadwal Batas Pendaftaran (Opsi C)</h4>
+                                <p class="text-[11px] text-slate-400">Atur buka/tutup serentak, jadwal mulai, batas akhir pendaftaran (deadline), dan pesan pengumuman.</p>
+                            </div>
+                        </div>
+                        @php
+                            $globalStatus = $settings['global_registration_status'] ?? 'open';
+                            $regInfo = \App\Models\AppSetting::getRegistrationStatusInfo();
+                        @endphp
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border {{ $regInfo['status_color'] === 'emerald' ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' : ($regInfo['status_color'] === 'amber' ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' : 'bg-rose-500/15 text-rose-300 border-rose-500/30') }}">
+                            <span class="w-2 h-2 rounded-full {{ $regInfo['status_color'] === 'emerald' ? 'bg-emerald-400 animate-pulse' : ($regInfo['status_color'] === 'amber' ? 'bg-amber-400' : 'bg-rose-400') }}"></span>
+                            <span>{{ $regInfo['status_label'] }}</span>
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <!-- Mode Status Pendaftaran -->
+                        <div class="space-y-1.5 bg-[#0C111D]/80 p-3.5 rounded-xl border border-white/[0.08]">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                                Mode Status Pendaftaran
+                            </label>
+                            <p class="text-[10px] text-slate-500">Pilih kontrol buka/tutup global</p>
+                            <select name="global_registration_status" class="block w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-bold focus:border-[#7A5AF8] outline-none">
+                                <option value="open" {{ $globalStatus === 'open' ? 'selected' : '' }}>🟢 Pendaftaran DIBUKA (Aktif)</option>
+                                <option value="closed" {{ $globalStatus === 'closed' ? 'selected' : '' }}>🔴 Pendaftaran DITUTUP (Tutup Manual)</option>
+                                <option value="auto" {{ $globalStatus === 'auto' ? 'selected' : '' }}>📅 Otomatis Sesuai Tanggal & Jam</option>
+                            </select>
+                        </div>
+
+                        <!-- Tanggal & Jam Mulai -->
+                        <div class="space-y-1.5 bg-[#0C111D]/80 p-3.5 rounded-xl border border-white/[0.08]">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                                Tanggal & Jam Mulai (WIB)
+                            </label>
+                            <p class="text-[10px] text-slate-500">Waktu pendaftaran resmi dimulai</p>
+                            <input type="datetime-local" name="registration_start_date" value="{{ old('registration_start_date', $settings['registration_start_date'] ?? '2026-09-01T08:00') }}" class="block w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-cyan-300 text-xs font-mono font-bold focus:border-[#7A5AF8] outline-none [color-scheme:dark]">
+                        </div>
+
+                        <!-- Tanggal & Jam Batas Akhir (Deadline) -->
+                        <div class="space-y-1.5 bg-[#0C111D]/80 p-3.5 rounded-xl border border-white/[0.08]">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                                Batas Akhir / Deadline (WIB) <span class="text-rose-400">*</span>
+                            </label>
+                            <p class="text-[10px] text-slate-500">Ditampilkan di Landing Page & Dashboard</p>
+                            <input type="datetime-local" name="registration_deadline" value="{{ old('registration_deadline', $settings['registration_deadline'] ?? '2026-09-25T23:59') }}" class="block w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-amber-300 text-xs font-mono font-bold focus:border-[#7A5AF8] outline-none [color-scheme:dark]">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 pt-1">
+                        <!-- Auto-Close Toggle -->
+                        <div class="sm:col-span-4 bg-[#0C111D]/80 p-3.5 rounded-xl border border-white/[0.08] flex items-center justify-between gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-200">Kunci Otomatis saat Deadline</label>
+                                <p class="text-[10px] text-slate-400">Tutup pendaftaran otomatis jika melewati deadline</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                <input type="hidden" name="registration_auto_close" value="0">
+                                <input type="checkbox" name="registration_auto_close" value="1" {{ ($settings['registration_auto_close'] ?? '1') == '1' ? 'checked' : '' }} class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                            </label>
+                        </div>
+
+                        <!-- Pesan Khusus saat Ditutup -->
+                        <div class="sm:col-span-8 bg-[#0C111D]/80 p-3.5 rounded-xl border border-white/[0.08] space-y-1">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                                Pesan Pengumuman saat Pendaftaran Ditutup
+                            </label>
+                            <input type="text" name="registration_closed_message" value="{{ old('registration_closed_message', $settings['registration_closed_message'] ?? 'Pendaftaran TALENTA 2026 telah resmi ditutup. Terima kasih atas partisipasinya.') }}" placeholder="Pesan yang tampil pada formulir saat pendaftaran ditutup" class="block w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-slate-200 text-xs font-medium focus:border-[#7A5AF8] outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BAGIAN 2: INFORMASI REKENING BANK & PEMBAYARAN -->
+                <div class="pt-2">
+                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
+                        <i data-lucide="credit-card" class="w-3.5 h-3.5 text-emerald-400"></i>
+                        <span>Informasi Rekening Bank Tujuan Transfer</span>
+                    </h4>
+                </div>
+
                 <!-- Bank Info Cards -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     
