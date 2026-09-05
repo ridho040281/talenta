@@ -1,4 +1,4 @@
-﻿@extends('layouts.admin')
+@extends('layouts.admin')
 
 @section('title', 'Pengaturan Pop-up Informasi & Pengumuman')
 @section('page_title', 'Pop-up Informasi & Pengumuman Modal')
@@ -299,40 +299,40 @@
     </div>
 
     <!-- Interactive Simulation Modal Backdrop (Overlay) -->
-    <div x-show="previewModal" x-transition.opacity.duration.300ms class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/80 backdrop-blur-md" style="display: none;">
-        <div @click.away="previewModal = false" x-show="previewModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-90" x-transition:enter-end="opacity-100 scale-100" class="relative w-full max-w-lg rounded-3xl border border-white/[0.15] bg-[#0C111D]/95 backdrop-blur-2xl p-6 sm:p-7 shadow-[0_0_50px_rgba(122,90,248,0.25)] space-y-5 text-white max-h-[90vh] overflow-y-auto no-scrollbar">
+    <div x-show="previewModal" x-transition.opacity.duration.300ms class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/85 backdrop-blur-md" style="display: none;">
+        <div @click.away="previewModal = false" x-show="previewModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-90" x-transition:enter-end="opacity-100 scale-100" class="relative w-full max-w-3xl rounded-3xl border border-white/[0.2] bg-[#0C111D] p-6 sm:p-8 shadow-[0_0_60px_rgba(122,90,248,0.35)] space-y-6 text-white max-h-[90vh] overflow-y-auto no-scrollbar">
             
             <!-- Close Button -->
-            <button type="button" @click="previewModal = false" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/[0.08] hover:bg-white/[0.15] text-slate-300 hover:text-white flex items-center justify-center transition cursor-pointer">
+            <button type="button" @click="previewModal = false" class="absolute top-5 right-5 w-10 h-10 rounded-2xl bg-white/[0.08] hover:bg-white/[0.18] text-slate-300 hover:text-white flex items-center justify-center transition cursor-pointer">
                 ✕
             </button>
 
             <!-- Subtitle -->
             <div class="flex items-center gap-2 pr-8">
-                <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
                 <span class="text-xs font-black uppercase tracking-widest text-[#A594FD]" x-text="subtitle || 'Informasi Resmi TALENTA 2026'"></span>
             </div>
 
             <!-- Poster Image Preview -->
             <template x-if="imagePreview">
-                <div class="rounded-2xl overflow-hidden border border-white/[0.1] max-h-[220px] bg-slate-950 flex items-center justify-center">
+                <div class="rounded-2xl overflow-hidden border border-white/[0.12] max-h-[320px] bg-slate-950 flex items-center justify-center">
                     <img :src="imagePreview" alt="Poster Preview" class="w-full h-full object-cover">
                 </div>
             </template>
 
             <!-- Title -->
-            <h2 class="text-lg sm:text-xl font-black text-white leading-snug font-display" x-text="title || 'Judul Pengumuman Pop-up'"></h2>
+            <h2 class="text-xl sm:text-2xl font-black text-white leading-snug font-display" x-text="title || 'Judul Pengumuman Pop-up'"></h2>
 
             <!-- Content -->
-            <div class="text-xs sm:text-sm text-slate-300 leading-relaxed whitespace-pre-line font-normal max-h-[250px] overflow-y-auto no-scrollbar" x-text="content || 'Isi pengumuman modal.'"></div>
+            <div class="text-sm sm:text-base text-slate-200 leading-relaxed whitespace-pre-line font-normal max-h-[300px] overflow-y-auto no-scrollbar bg-slate-900/60 p-5 rounded-2xl border border-white/[0.08]" x-text="content || 'Isi pengumuman modal.'"></div>
 
             <!-- Action Buttons -->
-            <div class="pt-4 border-t border-white/[0.08] flex flex-col sm:flex-row items-center justify-end gap-2.5">
-                <button type="button" @click="previewModal = false" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-300 font-semibold text-xs border border-white/[0.08] transition">
+            <div class="pt-4 border-t border-white/[0.08] flex flex-col sm:flex-row items-center justify-end gap-3">
+                <button type="button" @click="previewModal = false" class="w-full sm:w-auto px-6 py-3 rounded-2xl bg-white/[0.08] hover:bg-white/[0.15] text-slate-200 font-bold text-xs border border-white/[0.1] transition">
                     <span x-text="secBtnText || 'Tutup'"></span>
                 </button>
                 <template x-if="btnText">
-                    <button type="button" @click="previewModal = false" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold text-xs shadow-lg shadow-[#7A5AF8]/30 transition">
+                    <button type="button" @click="previewModal = false" class="w-full sm:w-auto px-7 py-3 rounded-2xl bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-black text-xs shadow-lg shadow-[#7A5AF8]/35 transition uppercase tracking-wider">
                         <span x-text="btnText"></span>
                     </button>
                 </template>
