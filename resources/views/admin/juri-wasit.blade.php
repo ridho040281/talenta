@@ -573,6 +573,8 @@
                     <p class="text-xs text-slate-400 mt-1">Belum ada cabang lomba yang terdaftar dalam sistem.</p>
                 </div>
             @endforelse
+        </div>
+
     </div>
 
     <!-- =========================================================================
