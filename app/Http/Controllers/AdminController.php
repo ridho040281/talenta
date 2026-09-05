@@ -965,6 +965,7 @@ class AdminController extends Controller
         $totalDrawn = $drawCompetitions->sum('drawn_count');
         $totalUndrawn = $drawCompetitions->sum('undrawn_count');
         $totalVerifiedAll = $drawCompetitions->sum('total_verified');
+        $allCompetitions = Competition::with('category')->get();
 
         return view('admin.juri-wasit', compact(
             'activeTab',
@@ -975,7 +976,8 @@ class AdminController extends Controller
             'drawCompetitions',
             'totalDrawn',
             'totalUndrawn',
-            'totalVerifiedAll'
+            'totalVerifiedAll',
+            'allCompetitions'
         ));
     }
 
