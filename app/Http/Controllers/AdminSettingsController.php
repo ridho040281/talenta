@@ -1328,4 +1328,87 @@ class AdminSettingsController extends Controller
             // Ignore if image cropping fails gracefully
         }
     }
+
+    /**
+     * Show Pop-up Announcement Modal Settings Page
+     */
+    public function popupAnnouncement()
+    {
+        $settings = [
+            'popup_enabled' => AppSetting::get('popup_enabled', '1'),
+            'popup_target' => AppSetting::get('popup_target', 'all'),
+            'popup_title' => AppSetting::get('popup_title', '📢 PENGUMUMAN RESMI TALENTA 2026'),
+            'popup_subtitle' => AppSetting::get('popup_subtitle', 'Informasi Petunjuk Teknis & Pendaftaran Peserta'),
+            'popup_image' => AppSetting::get('popup_image', null),
+            'popup_content' => AppSetting::get('popup_content', "Selamat datang di Portal Resmi TALENTA MTsN 1 Blitar 2026.\n\nPastikan official dan peserta membaca Petunjuk Teknis (Juknis) masing-masing cabang lomba serta mematuhi batas akhir pendaftaran sebelum mengisi formulir."),
+            'popup_button_text' => AppSetting::get('popup_button_text', 'Lihat Katalog Lomba & Juknis'),
+            'popup_button_url' => AppSetting::get('popup_button_url', '#kategori'),
+            'popup_secondary_button_text' => AppSetting::get('popup_secondary_button_text', 'Saya Mengerti / Tutup'),
+            'popup_version' => AppSetting::get('popup_version', 'v1'),
+        ];
+
+        return view('admin.settings.popup-announcement', compact('settings'));
+    }
+
+    /**
+     * Update Pop-up Announcement Modal Settings
+     */
+    public function updatePopupAnnouncement(Request $request)
+    {
+        $validated = $request->validate([
+            'popup_enabled' => 'nullable|string|in:0,1',
+            'popup_target' => 'required|string|in:all,landing,dashboard',
+            'popup_title' => 'required|string|max:255',
+            'popup_subtitle' => 'nullable|string|max:255',
+            'popup_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:3072',
+            'delete_popup_image' => 'nullable|string',
+            'popup_content' => 'required|string|max:5000',
+            'popup_button_text' => 'nullable|string|max:100',
+            'popup_button_url' => 'nullable|string|max:500',
+            'popup_secondary_button_text' => 'nullable|string|max:100',
+        ]);
+
+        AppSetting::set('popup_enabled', $request->input('popup_enabled', '0'));
+        AppSetting::set('popup_target', $validated['popup_target']);
+        AppSetting::set('popup_title', $validated['popup_title']);
+        AppSetting::set('popup_subtitle', $validated['popup_subtitle'] ?? '');
+        AppSetting::set('popup_content', $validated['popup_content']);
+        AppSetting::set('popup_button_text', $validated['popup_button_text'] ?? '');
+        AppSetting::set('popup_button_url', $validated['popup_button_url'] ?? '');
+        AppSetting::set('popup_secondary_button_text', $validated['popup_secondary_button_text'] ?? 'Saya Mengerti / Tutup');
+
+        // Handle delete image
+        if ($request->filled('delete_popup_image')) {
+            $oldImage = AppSetting::get('popup_image');
+            if ($oldImage && \Illuminate\Support\Facades\Storage::disk('public')->exists($oldImage)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldImage);
+            }
+            AppSetting::set('popup_image', null);
+        }
+
+        // Handle upload image
+        if ($request->hasFile('popup_image')) {
+            $oldImage = AppSetting::get('popup_image');
+            if ($oldImage && \Illuminate\Support\Facades\Storage::disk('public')->exists($oldImage)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldImage);
+            }
+            $imagePath = $request->file('popup_image')->store('popups', 'public');
+            AppSetting::set('popup_image', $imagePath);
+        }
+
+        // Update version tag so users will see updated announcement
+        AppSetting::set('popup_version', 'v_' . time());
+
+        return redirect()->route('admin.settings.popup.index')->with('success', 'Pengaturan Pop-up Informasi berhasil disimpan dan diperbarui.');
+    }
+
+    /**
+     * Reset Pop-up Version (Force reshow to all users)
+     */
+    public function resetPopupVersion()
+    {
+        AppSetting::set('popup_version', 'v_' . time());
+
+        return redirect()->route('admin.settings.popup.index')->with('success', 'Status Pop-up berhasil di-reset. Pop-up akan muncul kembali satu kali kepada seluruh pengunjung dan peserta.');
+    }
 }

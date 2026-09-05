@@ -372,6 +372,10 @@
                         <i data-lucide="message-square" class="w-4 h-4 {{ request()->routeIs('admin.settings.whatsapp*') ? 'text-white' : 'text-green-400' }}"></i>
                         <span>WhatsApp Blast</span>
                     </a>
+                    <a href="{{ route('admin.settings.popup.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('admin.settings.popup*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
+                        <i data-lucide="bell-ring" class="w-4 h-4 {{ request()->routeIs('admin.settings.popup*') ? 'text-white' : 'text-amber-400' }}"></i>
+                        <span>Pop-up Informasi</span>
+                    </a>
                     <a href="{{ route('admin.settings.changelog') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('admin.settings.changelog*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
                         <i data-lucide="history" class="w-4 h-4 text-blue-400"></i>
                         <span>Changelog Rilis</span>

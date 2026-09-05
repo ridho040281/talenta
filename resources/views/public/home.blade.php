@@ -1062,5 +1062,8 @@
         </div>
     </section>
 
+    <!-- Pop-up Announcement Modal -->
+    @include('partials.popup-announcement', ['context' => 'landing'])
+
 </div>
 @endsection
