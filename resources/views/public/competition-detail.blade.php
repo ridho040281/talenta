@@ -189,10 +189,17 @@
                         <span>Daftar Cabang Lomba Ini</span>
                     </a>
                 @else
-                    <div class="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl bg-slate-800/80 text-slate-400 border border-slate-700 font-bold text-xs">
-                        <i data-lucide="lock" class="w-4 h-4 text-rose-400"></i>
-                        <span>Pendaftaran Ditutup</span>
-                    </div>
+                    @if($regInfo['status_code'] === 'not_started')
+                        <div class="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl bg-amber-500/10 text-amber-300 border border-amber-500/30 font-bold text-xs shadow-sm">
+                            <i data-lucide="clock" class="w-4 h-4 text-amber-400"></i>
+                            <span>Belum Dibuka (Terjadwal: {{ $regInfo['start_date_formatted'] ?: '-' }} WIB)</span>
+                        </div>
+                    @else
+                        <div class="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl bg-slate-800/80 text-slate-400 border border-slate-700 font-bold text-xs">
+                            <i data-lucide="lock" class="w-4 h-4 text-rose-400"></i>
+                            <span>Pendaftaran Ditutup</span>
+                        </div>
+                    @endif
                 @endif
 
                 @if(!empty($competition->whatsapp_group_url))

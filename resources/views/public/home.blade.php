@@ -199,7 +199,12 @@
                         </h2>
                     </div>
                     <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-                        @if($regInfo['deadline_formatted'])
+                        @if($regInfo['status_code'] === 'not_started' && $regInfo['start_date_formatted'])
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                                <i data-lucide="clock" class="w-3.5 h-3.5 text-amber-400"></i>
+                                <span>Buka: {{ $regInfo['start_date_formatted'] }} WIB</span>
+                            </span>
+                        @elseif($regInfo['deadline_formatted'])
                             <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold {{ $regInfo['is_open'] ? 'bg-indigo-500/15 text-indigo-300 border border-indigo-500/30' : 'bg-rose-500/15 text-rose-300 border border-rose-500/30' }}">
                                 <i data-lucide="{{ $regInfo['is_open'] ? 'timer' : 'alert-circle' }}" class="w-3.5 h-3.5 {{ $regInfo['is_open'] ? 'text-amber-400' : 'text-rose-400' }}"></i>
                                 <span>{{ $regInfo['is_open'] ? 'Batas Akhir: ' . $regInfo['deadline_formatted'] . ' WIB' : 'Pendaftaran Ditutup' }}</span>
@@ -213,8 +218,8 @@
                 </div>
 
                 @if(!$regInfo['is_open'])
-                    <div class="p-3.5 sm:p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-start sm:items-center gap-3 text-rose-300 text-xs">
-                        <i data-lucide="lock" class="w-5 h-5 text-rose-400 shrink-0 mt-0.5 sm:mt-0"></i>
+                    <div class="p-3.5 sm:p-4 rounded-2xl {{ $regInfo['status_code'] === 'not_started' ? 'bg-amber-500/10 border border-amber-500/30 text-amber-300' : 'bg-rose-500/10 border border-rose-500/30 text-rose-300' }} flex items-start sm:items-center gap-3 text-xs">
+                        <i data-lucide="{{ $regInfo['status_code'] === 'not_started' ? 'clock' : 'lock' }}" class="w-5 h-5 {{ $regInfo['status_code'] === 'not_started' ? 'text-amber-400' : 'text-rose-400' }} shrink-0 mt-0.5 sm:mt-0"></i>
                         <div>
                             <strong class="font-bold text-white">{{ $regInfo['status_label'] }}:</strong>
                             <span>{{ $regInfo['closed_message'] }}</span>

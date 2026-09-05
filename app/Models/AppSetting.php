@@ -107,30 +107,43 @@ class AppSetting extends Model
         $statusCode = 'open';
         $statusLabel = 'Pendaftaran Dibuka';
         $statusColor = 'emerald';
+        $buttonText = 'Daftar Cabang Ini';
+        $buttonIcon = 'arrow-right';
 
         if ($status === 'closed') {
             $statusCode = 'closed_manual';
             $statusLabel = 'Ditutup Manual oleh Panitia';
             $statusColor = 'rose';
+            $buttonText = 'Pendaftaran Ditutup';
+            $buttonIcon = 'lock';
         } elseif ($autoClose && !$isStarted) {
             $statusCode = 'not_started';
             $statusLabel = 'Belum Dibuka (Terjadwal)';
             $statusColor = 'amber';
+            $buttonText = 'Belum Dibuka';
+            $buttonIcon = 'clock';
         } elseif ($autoClose && $isExpired) {
             $statusCode = 'closed_expired';
             $statusLabel = 'Ditutup (Batas Waktu Berakhir)';
             $statusColor = 'rose';
+            $buttonText = 'Pendaftaran Ditutup';
+            $buttonIcon = 'lock';
         }
+
+        $startDateFormatted = !empty($startDate) ? \Carbon\Carbon::parse($startDate)->translatedFormat('d F Y, H:i') : null;
+        $deadlineFormatted = !empty($deadline) ? \Carbon\Carbon::parse($deadline)->translatedFormat('d F Y, H:i') : null;
 
         return [
             'is_open' => $isOpen,
             'status_code' => $statusCode,
             'status_label' => $statusLabel,
             'status_color' => $statusColor,
+            'button_text' => $buttonText,
+            'button_icon' => $buttonIcon,
             'start_date' => $startDate,
             'deadline' => $deadline,
-            'start_date_formatted' => !empty($startDate) ? \Carbon\Carbon::parse($startDate)->translatedFormat('d F Y, H:i') : null,
-            'deadline_formatted' => !empty($deadline) ? \Carbon\Carbon::parse($deadline)->translatedFormat('d F Y, H:i') : null,
+            'start_date_formatted' => $startDateFormatted,
+            'deadline_formatted' => $deadlineFormatted,
             'closed_message' => $closedMessage,
             'auto_close' => $autoClose,
             'global_status' => $status,
