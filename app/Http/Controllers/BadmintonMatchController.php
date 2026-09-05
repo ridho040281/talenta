@@ -2,10 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AppSetting;
 use App\Models\BadmintonMatch;
 use App\Models\Competition;
-use App\Models\Registration;
-use App\Models\AppSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -14,7 +13,7 @@ class BadmintonMatchController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        if (!$user->managesBadminton()) {
+        if (! $user->managesBadminton()) {
             abort(403, 'Halaman ini khusus untuk koordinator dan wasit cabang Bulu Tangkis.');
         }
 
@@ -50,17 +49,17 @@ class BadmintonMatchController extends Controller
     {
         $validated = $request->validate([
             'competition_id' => 'nullable|exists:competitions,id',
-            'court_number'   => 'required|string|max:50',
-            'match_code'     => 'nullable|string|max:50',
-            'round_name'     => 'required|string|max:100',
-            'category'       => 'required|string|in:MS,WS,MD,WD,XD',
-            'match_type'     => 'required|string|in:single,double',
-            'team1_school'   => 'required|string|max:150',
-            'team1_player1'  => 'required|string|max:150',
-            'team1_player2'  => 'nullable|string|max:150',
-            'team2_school'   => 'required|string|max:150',
-            'team2_player1'  => 'required|string|max:150',
-            'team2_player2'  => 'nullable|string|max:150',
+            'court_number' => 'required|string|max:50',
+            'match_code' => 'nullable|string|max:50',
+            'round_name' => 'required|string|max:100',
+            'category' => 'required|string|in:MS,WS,MD,WD,XD',
+            'match_type' => 'required|string|in:single,double',
+            'team1_school' => 'required|string|max:150',
+            'team1_player1' => 'required|string|max:150',
+            'team1_player2' => 'nullable|string|max:150',
+            'team2_school' => 'required|string|max:150',
+            'team2_player1' => 'required|string|max:150',
+            'team2_player2' => 'nullable|string|max:150',
         ]);
 
         $validated['current_set'] = 1;
@@ -86,17 +85,17 @@ class BadmintonMatchController extends Controller
 
         $validated = $request->validate([
             'competition_id' => 'nullable|exists:competitions,id',
-            'court_number'   => 'required|string|max:50',
-            'match_code'     => 'nullable|string|max:50',
-            'round_name'     => 'required|string|max:100',
-            'category'       => 'required|string|in:MS,WS,MD,WD,XD',
-            'match_type'     => 'required|string|in:single,double',
-            'team1_school'   => 'required|string|max:150',
-            'team1_player1'  => 'required|string|max:150',
-            'team1_player2'  => 'nullable|string|max:150',
-            'team2_school'   => 'required|string|max:150',
-            'team2_player1'  => 'required|string|max:150',
-            'team2_player2'  => 'nullable|string|max:150',
+            'court_number' => 'required|string|max:50',
+            'match_code' => 'nullable|string|max:50',
+            'round_name' => 'required|string|max:100',
+            'category' => 'required|string|in:MS,WS,MD,WD,XD',
+            'match_type' => 'required|string|in:single,double',
+            'team1_school' => 'required|string|max:150',
+            'team1_player1' => 'required|string|max:150',
+            'team1_player2' => 'nullable|string|max:150',
+            'team2_school' => 'required|string|max:150',
+            'team2_player1' => 'required|string|max:150',
+            'team2_player2' => 'nullable|string|max:150',
         ]);
 
         $match->update($validated);
@@ -118,7 +117,7 @@ class BadmintonMatchController extends Controller
         $appSettings = AppSetting::getAllSettings();
 
         // Assign current user as umpire if not set
-        if (!$match->umpire_id && Auth::check()) {
+        if (! $match->umpire_id && Auth::check()) {
             $match->update(['umpire_id' => Auth::id()]);
         }
 
@@ -135,17 +134,17 @@ class BadmintonMatchController extends Controller
         // Save snapshot for Undo
         if (in_array($action, ['add_point', 'set_server', 'next_set', 'set_status'])) {
             $snapshot = [
-                'current_set'   => $match->current_set,
-                'team1_set1'    => $match->team1_set1,
-                'team2_set1'    => $match->team2_set1,
-                'team1_set2'    => $match->team1_set2,
-                'team2_set2'    => $match->team2_set2,
-                'team1_set3'    => $match->team1_set3,
-                'team2_set3'    => $match->team2_set3,
-                'server_team'   => $match->server_team,
+                'current_set' => $match->current_set,
+                'team1_set1' => $match->team1_set1,
+                'team2_set1' => $match->team2_set1,
+                'team1_set2' => $match->team1_set2,
+                'team2_set2' => $match->team2_set2,
+                'team1_set3' => $match->team1_set3,
+                'team2_set3' => $match->team2_set3,
+                'server_team' => $match->server_team,
                 'server_player' => $match->server_player,
-                'match_status'  => $match->match_status,
-                'winner_team'   => $match->winner_team,
+                'match_status' => $match->match_status,
+                'winner_team' => $match->winner_team,
             ];
             $history[] = $snapshot;
             if (count($history) > 40) {
@@ -213,7 +212,7 @@ class BadmintonMatchController extends Controller
             $match->scores_history = $history;
             $match->save();
         } elseif ($action === 'undo') {
-            if (!empty($history)) {
+            if (! empty($history)) {
                 $last = array_pop($history);
                 $match->fill($last);
                 $match->scores_history = $history;
@@ -255,16 +254,17 @@ class BadmintonMatchController extends Controller
 
         return response()->json([
             'success' => true,
-            'match'   => $this->formatMatchState($match),
+            'match' => $this->formatMatchState($match),
         ]);
     }
 
     public function apiState($id)
     {
         $match = BadmintonMatch::find($id);
-        if (!$match) {
+        if (! $match) {
             return response()->json(['error' => 'Match not found'], 404);
         }
+
         return response()->json($this->formatMatchState($match))
             ->header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
             ->header('Pragma', 'no-cache')
@@ -280,14 +280,14 @@ class BadmintonMatchController extends Controller
             $match = BadmintonMatch::with('competition')->find($id);
         }
 
-        if (!$match) {
+        if (! $match) {
             // Find active ongoing match or latest match
             $match = BadmintonMatch::with('competition')
                 ->where('match_status', 'ongoing')
                 ->latest('updated_at')
                 ->first();
 
-            if (!$match) {
+            if (! $match) {
                 $match = BadmintonMatch::with('competition')->latest()->first();
             }
         }
@@ -315,13 +315,13 @@ class BadmintonMatchController extends Controller
                 ->latest('updated_at')
                 ->first();
 
-            if (!$m) {
+            if (! $m) {
                 $m = BadmintonMatch::where('court_number', $court)
                     ->where('match_status', 'upcoming')
                     ->first();
             }
 
-            if (!$m) {
+            if (! $m) {
                 $m = BadmintonMatch::where('court_number', $court)
                     ->latest('updated_at')
                     ->first();
@@ -348,13 +348,13 @@ class BadmintonMatchController extends Controller
                 ->latest('updated_at')
                 ->first();
 
-            if (!$m) {
+            if (! $m) {
                 $m = BadmintonMatch::where('court_number', $court)
                     ->where('match_status', 'upcoming')
                     ->first();
             }
 
-            if (!$m) {
+            if (! $m) {
                 $m = BadmintonMatch::where('court_number', $court)
                     ->latest('updated_at')
                     ->first();
@@ -374,9 +374,10 @@ class BadmintonMatchController extends Controller
     public function streamState($id)
     {
         $match = BadmintonMatch::find($id);
-        if (!$match) {
+        if (! $match) {
             return response()->json(['error' => 'Match not found'], 404);
         }
+
         return response()->json($this->formatMatchState($match))
             ->header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
     }
@@ -389,31 +390,31 @@ class BadmintonMatchController extends Controller
     private function formatMatchState(BadmintonMatch $match): array
     {
         return [
-            'id'             => $match->id,
-            'court_number'   => $match->court_number,
-            'match_code'     => $match->match_code,
-            'round_name'     => $match->round_name,
-            'category'       => $match->category,
-            'match_type'     => $match->match_type,
-            'team1_school'   => $match->team1_school,
-            'team1_player1'  => $match->team1_player1,
-            'team1_player2'  => $match->team1_player2,
-            'team2_school'   => $match->team2_school,
-            'team2_player1'  => $match->team2_player1,
-            'team2_player2'  => $match->team2_player2,
-            'current_set'    => $match->current_set,
-            'team1_set1'     => $match->team1_set1,
-            'team2_set1'     => $match->team2_set1,
-            'team1_set2'     => $match->team1_set2,
-            'team2_set2'     => $match->team2_set2,
-            'team1_set3'     => $match->team1_set3,
-            'team2_set3'     => $match->team2_set3,
-            'server_team'    => $match->server_team,
-            'server_player'  => $match->server_player,
-            'match_status'   => $match->match_status,
-            'winner_team'    => $match->winner_team,
-            'sets_won'       => $match->getSetsWon(),
-            'updated_at'     => $match->updated_at->toIso8601String(),
+            'id' => $match->id,
+            'court_number' => $match->court_number,
+            'match_code' => $match->match_code,
+            'round_name' => $match->round_name,
+            'category' => $match->category,
+            'match_type' => $match->match_type,
+            'team1_school' => $match->team1_school,
+            'team1_player1' => $match->team1_player1,
+            'team1_player2' => $match->team1_player2,
+            'team2_school' => $match->team2_school,
+            'team2_player1' => $match->team2_player1,
+            'team2_player2' => $match->team2_player2,
+            'current_set' => $match->current_set,
+            'team1_set1' => $match->team1_set1,
+            'team2_set1' => $match->team2_set1,
+            'team1_set2' => $match->team1_set2,
+            'team2_set2' => $match->team2_set2,
+            'team1_set3' => $match->team1_set3,
+            'team2_set3' => $match->team2_set3,
+            'server_team' => $match->server_team,
+            'server_player' => $match->server_player,
+            'match_status' => $match->match_status,
+            'winner_team' => $match->winner_team,
+            'sets_won' => $match->getSetsWon(),
+            'updated_at' => $match->updated_at->toIso8601String(),
         ];
     }
 }

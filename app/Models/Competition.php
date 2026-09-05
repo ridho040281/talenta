@@ -5,8 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Competition extends Model
 {
@@ -34,6 +34,12 @@ class Competition extends Model
         'draw_status',
         'show_criteria',
         'is_live_score',
+        'has_stage_timer',
+        'stage_duration_minutes',
+        'stage_warning_minutes',
+        'stage_overtime_minutes',
+        'stage_bell_sound',
+        'stage_state',
         'order',
     ];
 
@@ -70,6 +76,11 @@ class Competition extends Model
             'has_draw' => 'boolean',
             'show_criteria' => 'boolean',
             'is_live_score' => 'boolean',
+            'has_stage_timer' => 'boolean',
+            'stage_duration_minutes' => 'integer',
+            'stage_warning_minutes' => 'integer',
+            'stage_overtime_minutes' => 'integer',
+            'stage_state' => 'array',
             'registration_fee' => 'decimal:2',
             'order' => 'integer',
         ];
@@ -94,16 +105,16 @@ class Competition extends Model
                 'A_tunggal_pi' => $tunggalA_pi,
                 'B_tunggal_pi' => $tunggalB_pi,
                 'C_tunggal_pi' => $tunggalC_pi,
-                'ganda_pa'     => $gandaFee_pa,
-                'ganda_pi'     => $gandaFee_pi,
+                'ganda_pa' => $gandaFee_pa,
+                'ganda_pi' => $gandaFee_pi,
                 // Fallbacks
-                'A_tunggal'    => $tunggalA_pa,
-                'B_tunggal'    => $tunggalB_pa,
-                'C_tunggal'    => $tunggalC_pa,
-                'ganda'        => $gandaFee_pa,
-                'A'            => $tunggalA_pa,
-                'B'            => $tunggalB_pa,
-                'C'            => $tunggalC_pa,
+                'A_tunggal' => $tunggalA_pa,
+                'B_tunggal' => $tunggalB_pa,
+                'C_tunggal' => $tunggalC_pa,
+                'ganda' => $gandaFee_pa,
+                'A' => $tunggalA_pa,
+                'B' => $tunggalB_pa,
+                'C' => $tunggalC_pa,
             ];
         }
 
@@ -132,12 +143,12 @@ class Competition extends Model
                 'B_tunggal_pa' => $b_pa,
                 'A_tunggal_pi' => $a_pi,
                 'B_tunggal_pi' => $b_pi,
-                'A_tunggal'    => $a_pa,
-                'B_tunggal'    => $b_pa,
-                'A'            => $a_pa,
-                'B'            => $b_pa,
-                'pa'           => $a_pa,
-                'pi'           => $a_pi,
+                'A_tunggal' => $a_pa,
+                'B_tunggal' => $b_pa,
+                'A' => $a_pa,
+                'B' => $b_pa,
+                'pa' => $a_pa,
+                'pi' => $a_pi,
             ];
         }
 
@@ -154,13 +165,13 @@ class Competition extends Model
                 'A_tunggal_pi' => (int) AppSetting::get('blt_quota_a_tunggal_pi', (int) AppSetting::get('blt_quota_a_tunggal', 16)),
                 'B_tunggal_pi' => (int) AppSetting::get('blt_quota_b_tunggal_pi', (int) AppSetting::get('blt_quota_b_tunggal', 16)),
                 'C_tunggal_pi' => (int) AppSetting::get('blt_quota_c_tunggal_pi', (int) AppSetting::get('blt_quota_c_tunggal', 16)),
-                'ganda_pa'     => (int) AppSetting::get('blt_quota_ganda_pa', (int) AppSetting::get('blt_quota_ganda', 10)),
-                'ganda_pi'     => (int) AppSetting::get('blt_quota_ganda_pi', (int) AppSetting::get('blt_quota_ganda', 10)),
+                'ganda_pa' => (int) AppSetting::get('blt_quota_ganda_pa', (int) AppSetting::get('blt_quota_ganda', 10)),
+                'ganda_pi' => (int) AppSetting::get('blt_quota_ganda_pi', (int) AppSetting::get('blt_quota_ganda', 10)),
                 // Fallbacks
-                'A_tunggal'    => (int) AppSetting::get('blt_quota_a_tunggal_pa', 16),
-                'B_tunggal'    => (int) AppSetting::get('blt_quota_b_tunggal_pa', 16),
-                'C_tunggal'    => (int) AppSetting::get('blt_quota_c_tunggal_pa', 16),
-                'ganda'        => (int) AppSetting::get('blt_quota_ganda_pa', 10),
+                'A_tunggal' => (int) AppSetting::get('blt_quota_a_tunggal_pa', 16),
+                'B_tunggal' => (int) AppSetting::get('blt_quota_b_tunggal_pa', 16),
+                'C_tunggal' => (int) AppSetting::get('blt_quota_c_tunggal_pa', 16),
+                'ganda' => (int) AppSetting::get('blt_quota_ganda_pa', 10),
             ];
         }
 
@@ -180,13 +191,14 @@ class Competition extends Model
 
         if ($this->code === 'TMJ') {
             $defaultQuota = (int) max(1, floor($this->quota / 4));
+
             return [
                 'A_tunggal_pa' => (int) AppSetting::get('tmj_quota_a_tunggal_pa', $defaultQuota),
                 'B_tunggal_pa' => (int) AppSetting::get('tmj_quota_b_tunggal_pa', $defaultQuota),
                 'A_tunggal_pi' => (int) AppSetting::get('tmj_quota_a_tunggal_pi', $defaultQuota),
                 'B_tunggal_pi' => (int) AppSetting::get('tmj_quota_b_tunggal_pi', $defaultQuota),
-                'A_tunggal'    => (int) AppSetting::get('tmj_quota_a_tunggal_pa', $defaultQuota),
-                'B_tunggal'    => (int) AppSetting::get('tmj_quota_b_tunggal_pa', $defaultQuota),
+                'A_tunggal' => (int) AppSetting::get('tmj_quota_a_tunggal_pa', $defaultQuota),
+                'B_tunggal' => (int) AppSetting::get('tmj_quota_b_tunggal_pa', $defaultQuota),
             ];
         }
 
@@ -199,8 +211,8 @@ class Competition extends Model
             return [
                 'tunggal_pa' => (int) AppSetting::get('blt_pic_tunggal_pa', $this->pic_id),
                 'tunggal_pi' => (int) AppSetting::get('blt_pic_tunggal_pi', $this->pic_id),
-                'ganda_pa'   => (int) AppSetting::get('blt_pic_ganda_pa', $this->pic_id),
-                'ganda_pi'   => (int) AppSetting::get('blt_pic_ganda_pi', $this->pic_id),
+                'ganda_pa' => (int) AppSetting::get('blt_pic_ganda_pa', $this->pic_id),
+                'ganda_pi' => (int) AppSetting::get('blt_pic_ganda_pi', $this->pic_id),
             ];
         }
 
@@ -222,8 +234,8 @@ class Competition extends Model
             return [
                 'tunggal_pa' => (int) AppSetting::get('tmj_pic_tunggal_pa', $this->pic_id),
                 'tunggal_pi' => (int) AppSetting::get('tmj_pic_tunggal_pi', $this->pic_id),
-                'pa'         => (int) AppSetting::get('tmj_pic_tunggal_pa', $this->pic_id),
-                'pi'         => (int) AppSetting::get('tmj_pic_tunggal_pi', $this->pic_id),
+                'pa' => (int) AppSetting::get('tmj_pic_tunggal_pa', $this->pic_id),
+                'pi' => (int) AppSetting::get('tmj_pic_tunggal_pi', $this->pic_id),
             ];
         }
 
@@ -234,19 +246,23 @@ class Competition extends Model
     {
         if ($this->code === 'MTQ') {
             $id = AppSetting::get('mtq_pic_pa', $this->pic_id);
+
             return $id ? User::find($id) : $this->pic;
         }
         if ($this->code === 'POP') {
             $id = AppSetting::get('pop_pic_pa', $this->pic_id);
+
             return $id ? User::find($id) : $this->pic;
         }
         if ($this->code === 'TMJ') {
             $id = AppSetting::get('tmj_pic_tunggal_pa', $this->pic_id);
+
             return $id ? User::find($id) : $this->pic;
         }
         if ($this->code === 'BLT') {
             return $this->pic_tunggal_pa;
         }
+
         return $this->pic;
     }
 
@@ -254,19 +270,23 @@ class Competition extends Model
     {
         if ($this->code === 'MTQ') {
             $id = AppSetting::get('mtq_pic_pi', $this->pic_id);
+
             return $id ? User::find($id) : $this->pic;
         }
         if ($this->code === 'POP') {
             $id = AppSetting::get('pop_pic_pi', $this->pic_id);
+
             return $id ? User::find($id) : $this->pic;
         }
         if ($this->code === 'TMJ') {
             $id = AppSetting::get('tmj_pic_tunggal_pi', $this->pic_id);
+
             return $id ? User::find($id) : $this->pic;
         }
         if ($this->code === 'BLT') {
             return $this->pic_tunggal_pi;
         }
+
         return $this->pic;
     }
 
@@ -284,6 +304,7 @@ class Competition extends Model
         if ($this->code === 'BLT') {
             return $this->status_tunggal_pa;
         }
+
         return $this->status ?? 'buka';
     }
 
@@ -301,81 +322,94 @@ class Competition extends Model
         if ($this->code === 'BLT') {
             return $this->status_tunggal_pi;
         }
+
         return $this->status ?? 'buka';
     }
 
     public function getPicTunggalPaAttribute()
     {
         $prefix = strtolower($this->code);
-        $id = AppSetting::get($prefix . '_pic_tunggal_pa', $this->pic_id);
+        $id = AppSetting::get($prefix.'_pic_tunggal_pa', $this->pic_id);
+
         return $id ? User::find($id) : $this->pic;
     }
 
     public function getPicTunggalPiAttribute()
     {
         $prefix = strtolower($this->code);
-        $id = AppSetting::get($prefix . '_pic_tunggal_pi', $this->pic_id);
+        $id = AppSetting::get($prefix.'_pic_tunggal_pi', $this->pic_id);
+
         return $id ? User::find($id) : $this->pic;
     }
 
     public function getPicGandaPaAttribute()
     {
         $id = AppSetting::get('blt_pic_ganda_pa', $this->pic_id);
+
         return $id ? User::find($id) : $this->pic;
     }
 
     public function getPicGandaPiAttribute()
     {
         $id = AppSetting::get('blt_pic_ganda_pi', $this->pic_id);
+
         return $id ? User::find($id) : $this->pic;
     }
 
     public function getStatusATunggalPaAttribute(): string
     {
         $prefix = strtolower($this->code);
-        return AppSetting::get($prefix . '_status_a_tunggal_pa', AppSetting::get($prefix . '_status_tunggal_pa', $this->status ?? 'buka'));
+
+        return AppSetting::get($prefix.'_status_a_tunggal_pa', AppSetting::get($prefix.'_status_tunggal_pa', $this->status ?? 'buka'));
     }
 
     public function getStatusBTunggalPaAttribute(): string
     {
         $prefix = strtolower($this->code);
-        return AppSetting::get($prefix . '_status_b_tunggal_pa', AppSetting::get($prefix . '_status_tunggal_pa', $this->status ?? 'buka'));
+
+        return AppSetting::get($prefix.'_status_b_tunggal_pa', AppSetting::get($prefix.'_status_tunggal_pa', $this->status ?? 'buka'));
     }
 
     public function getStatusCTunggalPaAttribute(): string
     {
         $prefix = strtolower($this->code);
-        return AppSetting::get($prefix . '_status_c_tunggal_pa', AppSetting::get($prefix . '_status_tunggal_pa', $this->status ?? 'buka'));
+
+        return AppSetting::get($prefix.'_status_c_tunggal_pa', AppSetting::get($prefix.'_status_tunggal_pa', $this->status ?? 'buka'));
     }
 
     public function getStatusATunggalPiAttribute(): string
     {
         $prefix = strtolower($this->code);
-        return AppSetting::get($prefix . '_status_a_tunggal_pi', AppSetting::get($prefix . '_status_tunggal_pi', $this->status ?? 'buka'));
+
+        return AppSetting::get($prefix.'_status_a_tunggal_pi', AppSetting::get($prefix.'_status_tunggal_pi', $this->status ?? 'buka'));
     }
 
     public function getStatusBTunggalPiAttribute(): string
     {
         $prefix = strtolower($this->code);
-        return AppSetting::get($prefix . '_status_b_tunggal_pi', AppSetting::get($prefix . '_status_tunggal_pi', $this->status ?? 'buka'));
+
+        return AppSetting::get($prefix.'_status_b_tunggal_pi', AppSetting::get($prefix.'_status_tunggal_pi', $this->status ?? 'buka'));
     }
 
     public function getStatusCTunggalPiAttribute(): string
     {
         $prefix = strtolower($this->code);
-        return AppSetting::get($prefix . '_status_c_tunggal_pi', AppSetting::get($prefix . '_status_tunggal_pi', $this->status ?? 'buka'));
+
+        return AppSetting::get($prefix.'_status_c_tunggal_pi', AppSetting::get($prefix.'_status_tunggal_pi', $this->status ?? 'buka'));
     }
 
     public function getStatusTunggalPaAttribute(): string
     {
         $prefix = strtolower($this->code);
-        return AppSetting::get($prefix . '_status_tunggal_pa', $this->status ?? 'buka');
+
+        return AppSetting::get($prefix.'_status_tunggal_pa', $this->status ?? 'buka');
     }
 
     public function getStatusTunggalPiAttribute(): string
     {
         $prefix = strtolower($this->code);
-        return AppSetting::get($prefix . '_status_tunggal_pi', $this->status ?? 'buka');
+
+        return AppSetting::get($prefix.'_status_tunggal_pi', $this->status ?? 'buka');
     }
 
     public function getStatusGandaPaAttribute(): string
@@ -391,7 +425,9 @@ class Competition extends Model
     public function getGuidelinesEmbedUrlAttribute(): ?string
     {
         $val = trim($this->guidelines_file ?? '');
-        if (!$val) return null;
+        if (! $val) {
+            return null;
+        }
 
         // If full iframe snippet, extract src
         if (preg_match('/src=["\']([^"\']+)["\']/', $val, $matches)) {
@@ -414,8 +450,8 @@ class Competition extends Model
         }
 
         // Local uploaded file path
-        if (!str_starts_with($val, 'http://') && !str_starts_with($val, 'https://')) {
-            return asset('storage/' . ltrim($val, '/'));
+        if (! str_starts_with($val, 'http://') && ! str_starts_with($val, 'https://')) {
+            return asset('storage/'.ltrim($val, '/'));
         }
 
         return $val;
@@ -424,7 +460,9 @@ class Competition extends Model
     public function getGuidelinesDownloadUrlAttribute(): ?string
     {
         $val = trim($this->guidelines_file ?? '');
-        if (!$val) return null;
+        if (! $val) {
+            return null;
+        }
 
         // If full iframe snippet, extract src
         if (preg_match('/src=["\']([^"\']+)["\']/', $val, $matches)) {
@@ -442,8 +480,8 @@ class Competition extends Model
         }
 
         // Local uploaded file path
-        if (!str_starts_with($val, 'http://') && !str_starts_with($val, 'https://')) {
-            return asset('storage/' . ltrim($val, '/'));
+        if (! str_starts_with($val, 'http://') && ! str_starts_with($val, 'https://')) {
+            return asset('storage/'.ltrim($val, '/'));
         }
 
         return $val;
@@ -453,6 +491,7 @@ class Competition extends Model
     {
         $tier = strtoupper(trim($tier));
         $tiers = $this->tier_fees;
+
         return $tiers[$tier] ?? (float) $this->registration_fee;
     }
 
@@ -469,8 +508,8 @@ class Competition extends Model
     public function pics(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'competition_pics', 'competition_id', 'user_id')
-                    ->withPivot('role_title')
-                    ->withTimestamps();
+            ->withPivot('role_title')
+            ->withTimestamps();
     }
 
     /**
@@ -488,13 +527,14 @@ class Competition extends Model
         foreach ($this->pics as $p) {
             $users->push($p);
         }
-        if (!empty($this->tier_pics)) {
+        if (! empty($this->tier_pics)) {
             foreach ($this->tier_pics as $sectorPicId) {
                 if ($sectorPicId && $secUser = User::find($sectorPicId)) {
                     $users->push($secUser);
                 }
             }
         }
+
         return $users->unique('id')->values();
     }
 
@@ -507,15 +547,16 @@ class Competition extends Model
             ->pluck('phone')
             ->filter()
             ->map(function ($phone) {
-                $clean = preg_replace('/[^0-9]/', '', (string)$phone);
+                $clean = preg_replace('/[^0-9]/', '', (string) $phone);
                 if (str_starts_with($clean, '0')) {
-                    $clean = '62' . substr($clean, 1);
+                    $clean = '62'.substr($clean, 1);
                 } elseif (str_starts_with($clean, '8')) {
-                    $clean = '628' . substr($clean, 1);
+                    $clean = '628'.substr($clean, 1);
                 }
+
                 return $clean;
             })
-            ->filter(fn($p) => strlen($p) >= 9)
+            ->filter(fn ($p) => strlen($p) >= 9)
             ->unique()
             ->values()
             ->toArray();
@@ -539,8 +580,8 @@ class Competition extends Model
     public function judges(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'competition_judges', 'competition_id', 'user_id')
-                    ->withPivot('role_title')
-                    ->withTimestamps();
+            ->withPivot('role_title')
+            ->withTimestamps();
     }
 
     public function scores(): HasMany
@@ -573,12 +614,13 @@ class Competition extends Model
         if ($this->isUnlimitedQuota()) {
             return 'Tak Terbatas';
         }
+
         return (string) $this->quota;
     }
 
     public function getQuotaDisplayAttribute(): string
     {
-        $unitWord = match(strtolower($this->type)) {
+        $unitWord = match (strtolower($this->type)) {
             'regu' => 'Regu',
             'tim' => 'Tim',
             'kelompok' => 'Kelompok',
@@ -595,7 +637,8 @@ class Competition extends Model
                           + ($this->tier_quotas['C_tunggal_pi'] ?? 16);
             $gandaPa = $this->tier_quotas['ganda_pa'] ?? 0;
             $gandaPi = $this->tier_quotas['ganda_pi'] ?? 0;
-            $gandaText = ($gandaPa <= 0 && $gandaPi <= 0) ? '∞ Bebas Ganda' : (($gandaPa + $gandaPi) . ' Ganda');
+            $gandaText = ($gandaPa <= 0 && $gandaPi <= 0) ? '∞ Bebas Ganda' : (($gandaPa + $gandaPi).' Ganda');
+
             return "{$tunggalTotal} Tunggal / {$gandaText}";
         }
 
@@ -603,6 +646,7 @@ class Competition extends Model
             $pa = $this->tier_quotas['pa'] ?? (int) ceil($this->quota / 2);
             $pi = $this->tier_quotas['pi'] ?? (int) floor($this->quota / 2);
             $total = $pa + $pi;
+
             return "{$total} Peserta ({$pa} PA / {$pi} PI)";
         }
 
@@ -611,6 +655,7 @@ class Competition extends Model
                    + ($this->tier_quotas['B_tunggal_pa'] ?? 10)
                    + ($this->tier_quotas['A_tunggal_pi'] ?? 10)
                    + ($this->tier_quotas['B_tunggal_pi'] ?? 10);
+
             return "{$total} Peserta (Tunggal Kat A & B)";
         }
 

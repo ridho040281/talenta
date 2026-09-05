@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Competition;
+use App\Models\Invoice;
 use App\Models\Registration;
 use App\Models\RegistrationMember;
+use App\Services\WablasNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -20,7 +22,7 @@ class PesertaController extends Controller
             ->latest()
             ->get();
 
-        $invoices = \App\Models\Invoice::with(['registrations.competition'])
+        $invoices = Invoice::with(['registrations.competition'])
             ->where('user_id', $user->id)
             ->latest()
             ->get();
@@ -30,7 +32,7 @@ class PesertaController extends Controller
             ->orderBy('order', 'asc')
             ->get();
 
-        $categories = \App\Models\Category::orderBy('order', 'asc')->get();
+        $categories = Category::orderBy('order', 'asc')->get();
 
         return view('peserta.dashboard', compact('user', 'registrations', 'invoices', 'openCompetitions', 'categories'));
     }
@@ -43,7 +45,7 @@ class PesertaController extends Controller
             ->latest()
             ->get();
 
-        $invoices = \App\Models\Invoice::with(['registrations.competition'])
+        $invoices = Invoice::with(['registrations.competition'])
             ->where('user_id', $user->id)
             ->latest()
             ->get();
@@ -63,7 +65,7 @@ class PesertaController extends Controller
 
         if ($existing) {
             return redirect()->route('peserta.registration.detail', $existing->id)
-                ->with('info', 'Anda sudah terdaftar pada cabang lomba ' . $competition->name . ' (Kode Reg: ' . $existing->registration_code . '). Anda bebas mendaftar pada cabang lomba yang berbeda di Dashboard.');
+                ->with('info', 'Anda sudah terdaftar pada cabang lomba '.$competition->name.' (Kode Reg: '.$existing->registration_code.'). Anda bebas mendaftar pada cabang lomba yang berbeda di Dashboard.');
         }
 
         return view('peserta.register-competition', compact('competition', 'user', 'existing'));
@@ -82,20 +84,20 @@ class PesertaController extends Controller
 
         if ($existingUserReg) {
             return redirect()->route('peserta.registration.detail', $existingUserReg->id)
-                ->with('error', 'Anda sudah terdaftar pada cabang lomba ' . $competition->name . '. Silakan pilih cabang lomba lain jika ingin mengikuti lebih dari satu lomba.');
+                ->with('error', 'Anda sudah terdaftar pada cabang lomba '.$competition->name.'. Silakan pilih cabang lomba lain jika ingin mengikuti lebih dari satu lomba.');
         }
 
         if ($competition->status === 'tutup') {
-            return back()->with('error', 'Pendaftaran untuk cabang lomba ' . $competition->name . ' telah ditutup.');
+            return back()->with('error', 'Pendaftaran untuk cabang lomba '.$competition->name.' telah ditutup.');
         }
 
         // Enforce quota limit only if quota is explicitly greater than 0 (0 = unlimited)
-        if ($competition->quota > 0 && !in_array($competition->code, ['BLT', 'TMJ', 'MTQ', 'POP'])) {
+        if ($competition->quota > 0 && ! in_array($competition->code, ['BLT', 'TMJ', 'MTQ', 'POP'])) {
             $currentTotal = Registration::where('competition_id', $competition->id)
                 ->whereIn('status', ['pending', 'verified'])
                 ->count();
             if ($currentTotal >= $competition->quota) {
-                return back()->with('error', 'Mohon maaf, kuota pendaftaran untuk cabang lomba ' . $competition->name . ' telah penuh (' . $competition->quota . ' peserta).');
+                return back()->with('error', 'Mohon maaf, kuota pendaftaran untuk cabang lomba '.$competition->name.' telah penuh ('.$competition->quota.' peserta).');
             }
         }
 
@@ -110,7 +112,7 @@ class PesertaController extends Controller
             $targetClass = $request->input('target_class');
             $isPa = stripos($matchType, 'Putra') !== false || stripos($matchType, 'PA') !== false;
             $isKatA = stripos($targetClass, 'Kategori A') !== false || stripos($targetClass, '1 - 3') !== false;
-            $quotaKey = ($isKatA ? 'A' : 'B') . '_tunggal_' . ($isPa ? 'pa' : 'pi');
+            $quotaKey = ($isKatA ? 'A' : 'B').'_tunggal_'.($isPa ? 'pa' : 'pi');
             $maxQuota = (int) ($tierQuotas[$quotaKey] ?? 0);
             if ($maxQuota > 0) {
                 $currentTierTotal = Registration::where('competition_id', $competition->id)
@@ -132,7 +134,7 @@ class PesertaController extends Controller
             $isGanda = stripos($matchType, 'Ganda') !== false;
             $isPa = stripos($matchType, 'Putra') !== false || stripos($matchType, 'PA') !== false;
             if ($isGanda) {
-                $quotaKey = 'ganda_' . ($isPa ? 'pa' : 'pi');
+                $quotaKey = 'ganda_'.($isPa ? 'pa' : 'pi');
                 $maxQuota = (int) ($tierQuotas[$quotaKey] ?? 0);
                 if ($maxQuota > 0) {
                     $currentTierTotal = Registration::where('competition_id', $competition->id)
@@ -145,9 +147,12 @@ class PesertaController extends Controller
                 }
             } else {
                 $kat = 'A';
-                if (stripos($targetClass, 'Kategori B') !== false) $kat = 'B';
-                elseif (stripos($targetClass, 'Kategori C') !== false) $kat = 'C';
-                $quotaKey = $kat . '_tunggal_' . ($isPa ? 'pa' : 'pi');
+                if (stripos($targetClass, 'Kategori B') !== false) {
+                    $kat = 'B';
+                } elseif (stripos($targetClass, 'Kategori C') !== false) {
+                    $kat = 'C';
+                }
+                $quotaKey = $kat.'_tunggal_'.($isPa ? 'pa' : 'pi');
                 $maxQuota = (int) ($tierQuotas[$quotaKey] ?? 0);
                 if ($maxQuota > 0) {
                     $currentTierTotal = Registration::where('competition_id', $competition->id)
@@ -171,12 +176,13 @@ class PesertaController extends Controller
             if ($maxQuota > 0) {
                 $currentSectorTotal = Registration::where('competition_id', $competition->id)
                     ->whereIn('status', ['pending', 'verified'])
-                    ->whereHas('members', function($q) use ($firstGender) {
+                    ->whereHas('members', function ($q) use ($firstGender) {
                         $q->where('gender', $firstGender);
                     })
                     ->count();
                 if ($currentSectorTotal >= $maxQuota) {
                     $sectorLabel = ($firstGender === 'P') ? 'Putri (PI)' : 'Putra (PA)';
+
                     return back()->with('error', "Mohon maaf, kuota pendaftaran {$competition->name} untuk sektor {$sectorLabel} telah penuh ({$maxQuota} peserta).");
                 }
             }
@@ -197,9 +203,9 @@ class PesertaController extends Controller
         }
 
         $validated = $request->validate([
-            'target_class' => [($isBuluTangkis && !$isGandaBlt) || $isTenisMeja ? 'required' : 'nullable', 'string', 'max:50'],
+            'target_class' => [($isBuluTangkis && ! $isGandaBlt) || $isTenisMeja ? 'required' : 'nullable', 'string', 'max:50'],
             'match_type' => [$isBuluTangkis || $isTenisMeja ? 'required' : 'nullable', 'string', 'max:50'],
-            'team_name' => [($competition->isCollective() && !$isBuluTangkis && !$isTenisMeja) ? 'required' : 'nullable', 'string', 'max:255'],
+            'team_name' => [($competition->isCollective() && ! $isBuluTangkis && ! $isTenisMeja) ? 'required' : 'nullable', 'string', 'max:255'],
             'institution_name' => [$isGandaBlt ? 'nullable' : 'required', 'string', 'max:255'],
             'official_name' => ['nullable', 'string', 'max:255'],
             'official_phone' => ['nullable', 'string', 'max:20'],
@@ -229,25 +235,25 @@ class PesertaController extends Controller
 
         // Prevent duplicate registration for member with same NISN in the SAME competition
         foreach ($validated['members'] as $memberData) {
-            if (!empty($memberData['nisn'])) {
+            if (! empty($memberData['nisn'])) {
                 $checkNisn = trim($memberData['nisn']);
                 $existingMember = RegistrationMember::where('nisn', $checkNisn)
-                    ->whereHas('registration', function($q) use ($competition) {
+                    ->whereHas('registration', function ($q) use ($competition) {
                         $q->where('competition_id', $competition->id)
-                          ->whereIn('status', ['pending', 'verified']);
+                            ->whereIn('status', ['pending', 'verified']);
                     })
                     ->first();
 
                 if ($existingMember) {
                     return back()->withErrors([
-                        'members' => "Peserta dengan NISN '{$checkNisn}' ({$existingMember->full_name}) sudah terdaftar pada cabang lomba {$competition->name}."
+                        'members' => "Peserta dengan NISN '{$checkNisn}' ({$existingMember->full_name}) sudah terdaftar pada cabang lomba {$competition->name}.",
                     ])->withInput();
                 }
             }
         }
 
         // Generate Registration Code: REG-YEAR-CODE-RANDOM
-        $regCode = 'REG-' . date('Y') . '-' . $competition->code . '-' . strtoupper(Str::random(5));
+        $regCode = 'REG-'.date('Y').'-'.$competition->code.'-'.strtoupper(Str::random(5));
 
         $docPath = null;
         if ($request->hasFile('document_file')) {
@@ -265,12 +271,12 @@ class PesertaController extends Controller
             if ($isGandaBlt) {
                 $targetClass = 'Ganda (Semua Kelas)';
                 $subCategory = $validated['match_type'] ?? 'Ganda';
-            } else if (!empty($validated['target_class']) && !empty($validated['match_type'])) {
-                $subCategory = $validated['target_class'] . ' - ' . $validated['match_type'];
+            } elseif (! empty($validated['target_class']) && ! empty($validated['match_type'])) {
+                $subCategory = $validated['target_class'].' - '.$validated['match_type'];
             }
         } elseif ($isTenisMeja) {
-            if (!empty($validated['target_class']) && !empty($validated['match_type'])) {
-                $subCategory = $validated['target_class'] . ' - ' . $validated['match_type'];
+            if (! empty($validated['target_class']) && ! empty($validated['match_type'])) {
+                $subCategory = $validated['target_class'].' - '.$validated['match_type'];
             }
         }
 
@@ -283,7 +289,7 @@ class PesertaController extends Controller
         $institutionName = $validated['institution_name'] ?? null;
         if ($isBuluTangkis && $isGandaBlt) {
             $memberSchools = array_unique(array_filter(array_column($validated['members'], 'school_name')));
-            if (!empty($memberSchools)) {
+            if (! empty($memberSchools)) {
                 $institutionName = implode(' / ', $memberSchools);
             }
         }
@@ -317,7 +323,7 @@ class PesertaController extends Controller
                 'birth_place' => $memberData['birth_place'] ?? null,
                 'birth_date' => $memberData['birth_date'] ?? null,
                 'phone' => $memberData['phone'] ?? null,
-                'role_in_team' => $memberData['role_in_team'] ?? ($competition->isCollective() ? 'Anggota ' . ($index + 1) : ($isGandaBlt ? 'Pemain ' . ($index + 1) : 'Peserta Utama')),
+                'role_in_team' => $memberData['role_in_team'] ?? ($competition->isCollective() ? 'Anggota '.($index + 1) : ($isGandaBlt ? 'Pemain '.($index + 1) : 'Peserta Utama')),
             ]);
         }
 
@@ -325,9 +331,9 @@ class PesertaController extends Controller
         try {
             $firstMember = $registration->members->first();
             $targetPhone = $registration->official_phone ?: ($user->phone ?: $firstMember?->phone);
-            
+
             // 1. Ke Pendaftar / Peserta
-            \App\Services\WablasNotificationService::sendAutoNotification('registration_submitted', [
+            WablasNotificationService::sendAutoNotification('registration_submitted', [
                 'phone' => $targetPhone,
                 'nama_peserta' => $registration->display_name,
                 'nisn' => $firstMember?->nisn ?? ($user->nisn ?? '-'),
@@ -338,16 +344,16 @@ class PesertaController extends Controller
             ]);
 
             // 2. Ke PIC Cabang Lomba (Pendaftar Masuk & Siap Diverifikasi)
-            \App\Services\WablasNotificationService::notifyPicNewRegistration($registration);
+            WablasNotificationService::notifyPicNewRegistration($registration);
 
             // 3. Ke Bendahara Panitia (Pembayaran Masuk & Cek Mutasi Rekening)
-            \App\Services\WablasNotificationService::notifyTreasurerNewPayment($registration, $fee);
+            WablasNotificationService::notifyTreasurerNewPayment($registration, $fee);
         } catch (\Throwable $e) {
             // Non-blocking
         }
 
         return redirect()->route('peserta.registration.detail', $registration->id)
-            ->with('success', 'Pendaftaran berhasil dikirim! Kode Pendaftaran Anda: ' . $regCode . '. Tim panitia akan memverifikasi berkas Anda.');
+            ->with('success', 'Pendaftaran berhasil dikirim! Kode Pendaftaran Anda: '.$regCode.'. Tim panitia akan memverifikasi berkas Anda.');
     }
 
     public function showRegistrationDetail($id)
@@ -381,7 +387,7 @@ class PesertaController extends Controller
         }
 
         $registration->status = 'pending';
-        $registration->verification_notes = 'Revisi berkas telah diunggah oleh peserta pada ' . now()->format('d M Y H:i');
+        $registration->verification_notes = 'Revisi berkas telah diunggah oleh peserta pada '.now()->format('d M Y H:i');
         $registration->save();
 
         return back()->with('success', 'Berkas revisi berhasil diunggah! Mohon menunggu verifikasi ulang.');

@@ -53,7 +53,7 @@ class ActivityLog extends Model
             'status' => $status,
             'ip_address' => $ip,
             'user_agent' => $agent,
-            'properties' => !empty($properties) ? $properties : null,
+            'properties' => ! empty($properties) ? $properties : null,
         ]);
     }
 }

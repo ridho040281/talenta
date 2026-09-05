@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
+use App\Models\AppSetting;
+use App\Models\Category;
 use App\Models\Competition;
 use App\Models\DrawAllocation;
 use App\Models\Registration;
 use App\Models\RegistrationMember;
 use App\Models\User;
+use App\Services\WablasNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -25,45 +29,45 @@ class PicController extends Controller
 
         $extraCodes = [];
         $bltPics = array_filter([
-            \App\Models\AppSetting::get('blt_pic_tunggal_pa'),
-            \App\Models\AppSetting::get('blt_pic_tunggal_pi'),
-            \App\Models\AppSetting::get('blt_pic_ganda_pa'),
-            \App\Models\AppSetting::get('blt_pic_ganda_pi'),
+            AppSetting::get('blt_pic_tunggal_pa'),
+            AppSetting::get('blt_pic_tunggal_pi'),
+            AppSetting::get('blt_pic_ganda_pa'),
+            AppSetting::get('blt_pic_ganda_pi'),
         ]);
-        if (in_array($user->id, $bltPics) || in_array((string)$user->id, $bltPics)) {
+        if (in_array($user->id, $bltPics) || in_array((string) $user->id, $bltPics)) {
             $extraCodes[] = 'BLT';
         }
 
         $tmjPics = array_filter([
-            \App\Models\AppSetting::get('tmj_pic_tunggal_pa'),
-            \App\Models\AppSetting::get('tmj_pic_tunggal_pi'),
+            AppSetting::get('tmj_pic_tunggal_pa'),
+            AppSetting::get('tmj_pic_tunggal_pi'),
         ]);
-        if (in_array($user->id, $tmjPics) || in_array((string)$user->id, $tmjPics)) {
+        if (in_array($user->id, $tmjPics) || in_array((string) $user->id, $tmjPics)) {
             $extraCodes[] = 'TMJ';
         }
 
         $mtqPics = array_filter([
-            \App\Models\AppSetting::get('mtq_pic_pa'),
-            \App\Models\AppSetting::get('mtq_pic_pi'),
+            AppSetting::get('mtq_pic_pa'),
+            AppSetting::get('mtq_pic_pi'),
         ]);
-        if (in_array($user->id, $mtqPics) || in_array((string)$user->id, $mtqPics)) {
+        if (in_array($user->id, $mtqPics) || in_array((string) $user->id, $mtqPics)) {
             $extraCodes[] = 'MTQ';
         }
 
         $popPics = array_filter([
-            \App\Models\AppSetting::get('pop_pic_pa'),
-            \App\Models\AppSetting::get('pop_pic_pi'),
+            AppSetting::get('pop_pic_pa'),
+            AppSetting::get('pop_pic_pi'),
         ]);
-        if (in_array($user->id, $popPics) || in_array((string)$user->id, $popPics)) {
+        if (in_array($user->id, $popPics) || in_array((string) $user->id, $popPics)) {
             $extraCodes[] = 'POP';
         }
 
         return Competition::where(function ($q) use ($user, $extraCodes) {
             $q->where('pic_id', $user->id)
-              ->orWhereHas('pics', function ($sub) use ($user) {
-                  $sub->where('users.id', $user->id);
-              });
-            if (!empty($extraCodes)) {
+                ->orWhereHas('pics', function ($sub) use ($user) {
+                    $sub->where('users.id', $user->id);
+                });
+            if (! empty($extraCodes)) {
                 $q->orWhereIn('code', $extraCodes);
             }
         })->pluck('id')->toArray();
@@ -71,7 +75,7 @@ class PicController extends Controller
 
     protected function authorizeCompetitionManagement($user, $competitionId): void
     {
-        if (!in_array($competitionId, self::getManagedCompetitionIds($user))) {
+        if (! in_array($competitionId, self::getManagedCompetitionIds($user))) {
             abort(403, 'Anda tidak memiliki hak akses untuk mengelola cabang lomba ini.');
         }
     }
@@ -85,7 +89,7 @@ class PicController extends Controller
         $competitions = Competition::with(['category', 'registrations.members'])
             ->whereIn('id', $competitionIds)
             ->get();
-        
+
         $allRegistrations = Registration::with(['competition.category', 'members', 'user', 'invoice'])
             ->whereIn('competition_id', $competitionIds)
             ->latest()
@@ -108,7 +112,7 @@ class PicController extends Controller
             'total_pi' => $totalPi,
         ];
 
-        $categories = \App\Models\Category::all();
+        $categories = Category::all();
 
         return view('pic.dashboard', compact('user', 'competitions', 'stats', 'allRegistrations', 'categories'));
     }
@@ -154,24 +158,33 @@ class PicController extends Controller
                 ];
 
                 foreach ($bltCategories as $catKey => $catLabel) {
-                    $catRegs = $compRegs->filter(function($r) use ($catKey) {
-                        $targetStr = strtolower(($r->target_class ?? '') . ' ' . ($r->sub_category ?? '') . ' ' . ($r->match_type ?? ''));
-                        if (stripos($targetStr, 'ganda') !== false) return false;
-                        if ($catKey === 'kat_a') return (stripos($targetStr, 'kategori a') !== false || stripos($targetStr, 'kat a') !== false || stripos($targetStr, 'kat_a') !== false || stripos($targetStr, 'kelas 1') !== false || stripos($targetStr, 'kelas 2') !== false || stripos($targetStr, '-a-') !== false);
-                        if ($catKey === 'kat_b') return (stripos($targetStr, 'kategori b') !== false || stripos($targetStr, 'kat b') !== false || stripos($targetStr, 'kat_b') !== false || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, 'kelas 4') !== false || stripos($targetStr, '-b-') !== false);
-                        if ($catKey === 'kat_c') return (stripos($targetStr, 'kategori c') !== false || stripos($targetStr, 'kat c') !== false || stripos($targetStr, 'kat_c') !== false || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '-c-') !== false);
+                    $catRegs = $compRegs->filter(function ($r) use ($catKey) {
+                        $targetStr = strtolower(($r->target_class ?? '').' '.($r->sub_category ?? '').' '.($r->match_type ?? ''));
+                        if (stripos($targetStr, 'ganda') !== false) {
+                            return false;
+                        }
+                        if ($catKey === 'kat_a') {
+                            return stripos($targetStr, 'kategori a') !== false || stripos($targetStr, 'kat a') !== false || stripos($targetStr, 'kat_a') !== false || stripos($targetStr, 'kelas 1') !== false || stripos($targetStr, 'kelas 2') !== false || stripos($targetStr, '-a-') !== false;
+                        }
+                        if ($catKey === 'kat_b') {
+                            return stripos($targetStr, 'kategori b') !== false || stripos($targetStr, 'kat b') !== false || stripos($targetStr, 'kat_b') !== false || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, 'kelas 4') !== false || stripos($targetStr, '-b-') !== false;
+                        }
+                        if ($catKey === 'kat_c') {
+                            return stripos($targetStr, 'kategori c') !== false || stripos($targetStr, 'kat c') !== false || stripos($targetStr, 'kat_c') !== false || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '-c-') !== false;
+                        }
+
                         return false;
                     });
 
                     if ($catRegs->isNotEmpty()) {
-                        $paRegs = $catRegs->filter(fn($r) => $r->primary_gender === 'L')->sortBy(fn($r) => $r->draw_number ?: 9999)->values();
-                        $piRegs = $catRegs->filter(fn($r) => $r->primary_gender === 'P')->sortBy(fn($r) => $r->draw_number ?: 9999)->values();
+                        $paRegs = $catRegs->filter(fn ($r) => $r->primary_gender === 'L')->sortBy(fn ($r) => $r->draw_number ?: 9999)->values();
+                        $piRegs = $catRegs->filter(fn ($r) => $r->primary_gender === 'P')->sortBy(fn ($r) => $r->draw_number ?: 9999)->values();
 
                         if ($paRegs->isNotEmpty()) {
                             $pages[] = [
                                 'competition_name' => $comp->name,
                                 'sub_group_title' => '👦 KELOMPOK PUTRA (PA)',
-                                'sector_title' => $catLabel . ' - TUNGGAL PUTRA',
+                                'sector_title' => $catLabel.' - TUNGGAL PUTRA',
                                 'gender_badge_class' => 'bg-blue-100 text-blue-900',
                                 'registrations' => $paRegs,
                             ];
@@ -180,7 +193,7 @@ class PicController extends Controller
                             $pages[] = [
                                 'competition_name' => $comp->name,
                                 'sub_group_title' => '👧 KELOMPOK PUTRI (PI)',
-                                'sector_title' => $catLabel . ' - TUNGGAL PUTRI',
+                                'sector_title' => $catLabel.' - TUNGGAL PUTRI',
                                 'gender_badge_class' => 'bg-rose-100 text-rose-900',
                                 'registrations' => $piRegs,
                             ];
@@ -189,14 +202,15 @@ class PicController extends Controller
                 }
 
                 // 2. Ganda Categories (Direct Ganda Putra & Ganda Putri)
-                $gandaAllRegs = $compRegs->filter(function($r) {
-                    $targetStr = strtolower(($r->target_class ?? '') . ' ' . ($r->sub_category ?? '') . ' ' . ($r->match_type ?? ''));
-                    return (stripos($targetStr, 'ganda') !== false || $r->members->count() > 1);
+                $gandaAllRegs = $compRegs->filter(function ($r) {
+                    $targetStr = strtolower(($r->target_class ?? '').' '.($r->sub_category ?? '').' '.($r->match_type ?? ''));
+
+                    return stripos($targetStr, 'ganda') !== false || $r->members->count() > 1;
                 });
 
                 if ($gandaAllRegs->isNotEmpty()) {
-                    $gandaPa = $gandaAllRegs->filter(fn($r) => $r->primary_gender === 'L' || stripos($r->match_type, 'Putra') !== false || stripos($r->match_type, 'PA') !== false)->sortBy(fn($r) => $r->draw_number ?: 9999)->values();
-                    $gandaPi = $gandaAllRegs->filter(fn($r) => $r->primary_gender === 'P' || stripos($r->match_type, 'Putri') !== false || stripos($r->match_type, 'PI') !== false)->sortBy(fn($r) => $r->draw_number ?: 9999)->values();
+                    $gandaPa = $gandaAllRegs->filter(fn ($r) => $r->primary_gender === 'L' || stripos($r->match_type, 'Putra') !== false || stripos($r->match_type, 'PA') !== false)->sortBy(fn ($r) => $r->draw_number ?: 9999)->values();
+                    $gandaPi = $gandaAllRegs->filter(fn ($r) => $r->primary_gender === 'P' || stripos($r->match_type, 'Putri') !== false || stripos($r->match_type, 'PI') !== false)->sortBy(fn ($r) => $r->draw_number ?: 9999)->values();
 
                     if ($gandaPa->isNotEmpty()) {
                         $pages[] = [
@@ -219,9 +233,9 @@ class PicController extends Controller
                 }
             } else {
                 // General Competition: Separate Page 1 (PA) and Page 2 (PI)
-                $paRegs = $compRegs->filter(fn($r) => $r->primary_gender === 'L')->sortBy(fn($r) => $r->draw_number ?: 9999)->values();
-                $piRegs = $compRegs->filter(fn($r) => $r->primary_gender === 'P')->sortBy(fn($r) => $r->draw_number ?: 9999)->values();
-                $otherRegs = $compRegs->filter(fn($r) => !in_array($r->primary_gender, ['L', 'P']))->sortBy(fn($r) => $r->draw_number ?: 9999)->values();
+                $paRegs = $compRegs->filter(fn ($r) => $r->primary_gender === 'L')->sortBy(fn ($r) => $r->draw_number ?: 9999)->values();
+                $piRegs = $compRegs->filter(fn ($r) => $r->primary_gender === 'P')->sortBy(fn ($r) => $r->draw_number ?: 9999)->values();
+                $otherRegs = $compRegs->filter(fn ($r) => ! in_array($r->primary_gender, ['L', 'P']))->sortBy(fn ($r) => $r->draw_number ?: 9999)->values();
 
                 if ($paRegs->isNotEmpty() || ($piRegs->isEmpty() && $otherRegs->isEmpty())) {
                     $pages[] = [
@@ -288,11 +302,14 @@ class PicController extends Controller
             $genderOrder = ['L' => 1, 'P' => 2, 'M' => 3];
             $gA = $genderOrder[$a->primary_gender] ?? 4;
             $gB = $genderOrder[$b->primary_gender] ?? 4;
-            if ($gA !== $gB) return $gA <=> $gB;
+            if ($gA !== $gB) {
+                return $gA <=> $gB;
+            }
+
             return strcmp($a->participant_number ?? '', $b->participant_number ?? '');
         });
 
-        $filename = 'DATA_PESERTA_TALENTA_2026_' . date('Ymd_His') . '.xls';
+        $filename = 'DATA_PESERTA_TALENTA_2026_'.date('Ymd_His').'.xls';
 
         return response()->streamDownload(function () use ($sorted) {
             echo '<!DOCTYPE html>
@@ -345,27 +362,27 @@ class PicController extends Controller
                 $genderClass = ($gender === 'L') ? 'pa' : (($gender === 'P') ? 'pi' : '');
                 $genderLabel = ($gender === 'L') ? 'Putra (PA)' : (($gender === 'P') ? 'Putri (PI)' : 'Ganda / Campuran');
 
-                echo '<tr class="' . $genderClass . '">
-                    <td class="center">' . $no++ . '</td>
-                    <td class="center">' . htmlspecialchars($reg->registration_code) . '</td>
-                    <td class="center bold">' . htmlspecialchars($reg->participant_number ?: '-') . '</td>
-                    <td class="center bold">' . htmlspecialchars($reg->draw_number ? '#' . $reg->draw_number : '-') . '</td>
-                    <td class="bold">' . htmlspecialchars($reg->display_name) . '</td>
-                    <td class="center">' . htmlspecialchars($firstMember?->nisn ?: '-') . '</td>
-                    <td class="center bold">' . htmlspecialchars($genderLabel) . '</td>
-                    <td>' . htmlspecialchars($reg->competition->name ?? '-') . '</td>
-                    <td>' . htmlspecialchars(($reg->target_class ?: '') . ' ' . ($reg->sub_category ?: '')) . '</td>
-                    <td>' . htmlspecialchars($reg->institution_name) . '</td>
-                    <td>' . htmlspecialchars($reg->official_name ?: '-') . '</td>
-                    <td class="center">' . htmlspecialchars($reg->official_phone ?: '-') . '</td>
-                    <td class="center bold">' . ucfirst($reg->status) . '</td>
+                echo '<tr class="'.$genderClass.'">
+                    <td class="center">'.$no++.'</td>
+                    <td class="center">'.htmlspecialchars($reg->registration_code).'</td>
+                    <td class="center bold">'.htmlspecialchars($reg->participant_number ?: '-').'</td>
+                    <td class="center bold">'.htmlspecialchars($reg->draw_number ? '#'.$reg->draw_number : '-').'</td>
+                    <td class="bold">'.htmlspecialchars($reg->display_name).'</td>
+                    <td class="center">'.htmlspecialchars($firstMember?->nisn ?: '-').'</td>
+                    <td class="center bold">'.htmlspecialchars($genderLabel).'</td>
+                    <td>'.htmlspecialchars($reg->competition->name ?? '-').'</td>
+                    <td>'.htmlspecialchars(($reg->target_class ?: '').' '.($reg->sub_category ?: '')).'</td>
+                    <td>'.htmlspecialchars($reg->institution_name).'</td>
+                    <td>'.htmlspecialchars($reg->official_name ?: '-').'</td>
+                    <td class="center">'.htmlspecialchars($reg->official_phone ?: '-').'</td>
+                    <td class="center bold">'.ucfirst($reg->status).'</td>
                 </tr>';
             }
 
             echo '</table></body></html>';
         }, $filename, [
             'Content-Type' => 'application/vnd.ms-excel; charset=utf-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ]);
     }
 
@@ -411,14 +428,14 @@ class PicController extends Controller
             $count = Registration::where('competition_id', $registration->competition_id)
                 ->whereNotNull('participant_number')
                 ->count() + 1;
-            $registration->participant_number = $registration->competition->code . '-' . str_pad($count, 2, '0', STR_PAD_LEFT);
+            $registration->participant_number = $registration->competition->code.'-'.str_pad($count, 2, '0', STR_PAD_LEFT);
         }
 
         $registration->save();
 
-        \App\Models\ActivityLog::record(
+        ActivityLog::record(
             $validated['status'] === 'verified' ? 'VERIFY_SUCCESS' : 'VERIFY_REJECT',
-            ($validated['status'] === 'verified' ? 'Memverifikasi sah' : 'Menolak') . " peserta '{$registration->display_name}' ({$registration->registration_code}) pada cabang {$registration->competition->name}" . ($validated['verification_notes'] ? ". Catatan: {$validated['verification_notes']}" : ''),
+            ($validated['status'] === 'verified' ? 'Memverifikasi sah' : 'Menolak')." peserta '{$registration->display_name}' ({$registration->registration_code}) pada cabang {$registration->competition->name}".($validated['verification_notes'] ? ". Catatan: {$validated['verification_notes']}" : ''),
             $user,
             $validated['status'] === 'verified' ? 'success' : 'warning'
         );
@@ -427,8 +444,8 @@ class PicController extends Controller
         if ($registration->invoice_id && $registration->invoice) {
             $invoice = $registration->invoice;
             $allRegs = $invoice->registrations;
-            
-            if ($allRegs->every(fn($r) => $r->status === 'verified')) {
+
+            if ($allRegs->every(fn ($r) => $r->status === 'verified')) {
                 $invoice->update([
                     'status' => 'verified',
                     'verified_at' => now(),
@@ -451,7 +468,7 @@ class PicController extends Controller
                 $firstMember = $registration->members->first();
                 $targetPhone = $registration->official_phone ?: ($registration->user?->phone ?: $firstMember?->phone);
 
-                \App\Services\WablasNotificationService::sendAutoNotification('registration_verified', [
+                WablasNotificationService::sendAutoNotification('registration_verified', [
                     'phone' => $targetPhone,
                     'nama_peserta' => $registration->display_name,
                     'nisn' => $firstMember?->nisn ?? ($registration->user?->nisn ?? '-'),
@@ -467,7 +484,7 @@ class PicController extends Controller
             }
         }
 
-        return back()->with('success', 'Status pendaftaran ' . $registration->registration_code . ' berhasil diubah menjadi: ' . ucfirst($validated['status']));
+        return back()->with('success', 'Status pendaftaran '.$registration->registration_code.' berhasil diubah menjadi: '.ucfirst($validated['status']));
     }
 
     public function updateParticipantData(Request $request, $registration_id)
@@ -506,18 +523,18 @@ class PicController extends Controller
         $registration->official_phone = $validated['official_phone'];
         $registration->team_name = $validated['team_name'] ?? null;
         $registration->target_class = $validated['target_class'] ?? null;
-        if (!empty($validated['match_type'])) {
+        if (! empty($validated['match_type'])) {
             $registration->match_type = $validated['match_type'];
         }
         $registration->participant_number = $validated['participant_number'] ?? null;
-        $registration->draw_number = !empty($validated['draw_number']) ? $validated['draw_number'] : null;
+        $registration->draw_number = ! empty($validated['draw_number']) ? $validated['draw_number'] : null;
 
         if ($registration->competition && $registration->competition->code === 'BLT') {
             if ($registration->match_type && stripos($registration->match_type, 'ganda') !== false) {
                 $registration->target_class = 'Ganda (Semua Kelas)';
                 $registration->sub_category = $registration->match_type;
-            } elseif (!empty($registration->target_class) && !empty($registration->match_type)) {
-                $registration->sub_category = $registration->target_class . ' - ' . $registration->match_type;
+            } elseif (! empty($registration->target_class) && ! empty($registration->match_type)) {
+                $registration->sub_category = $registration->target_class.' - '.$registration->match_type;
             }
         }
 
@@ -532,8 +549,8 @@ class PicController extends Controller
 
         // Update member records
         foreach ($validated['members'] as $mData) {
-            if (!empty($mData['id'])) {
-                $member = \App\Models\RegistrationMember::where('registration_id', $registration->id)->find($mData['id']);
+            if (! empty($mData['id'])) {
+                $member = RegistrationMember::where('registration_id', $registration->id)->find($mData['id']);
                 if ($member) {
                     $member->update([
                         'full_name' => $mData['full_name'],
@@ -548,7 +565,7 @@ class PicController extends Controller
             }
         }
 
-        return back()->with('success', 'Data pendaftaran ' . $registration->display_name . ' (' . $registration->registration_code . ') berhasil diperbarui oleh Admin.');
+        return back()->with('success', 'Data pendaftaran '.$registration->display_name.' ('.$registration->registration_code.') berhasil diperbarui oleh Admin.');
     }
 
     public function unverifyParticipant($registration_id)
@@ -574,14 +591,14 @@ class PicController extends Controller
             ]);
         }
 
-        \App\Models\ActivityLog::record(
+        ActivityLog::record(
             'UNVERIFY',
             "Membatalkan verifikasi pendaftaran '{$registration->display_name}' ({$registration->registration_code}) kembali ke Pending",
             $user,
             'warning'
         );
 
-        return back()->with('success', 'Verifikasi pendaftaran ' . $registration->registration_code . ' telah dibatalkan. Status otomatis kembali menjadi Menunggu dan peserta dapat mengedit data di akunnya.');
+        return back()->with('success', 'Verifikasi pendaftaran '.$registration->registration_code.' telah dibatalkan. Status otomatis kembali menjadi Menunggu dan peserta dapat mengedit data di akunnya.');
     }
 
     public function deleteParticipant($registration_id)
@@ -599,14 +616,14 @@ class PicController extends Controller
         $registration->members()->delete();
         $registration->delete();
 
-        \App\Models\ActivityLog::record(
+        ActivityLog::record(
             'DELETE_PARTICIPANT',
             "Menghapus data pendaftaran peserta '{$name}' ({$code}) secara permanen",
             $user,
             'danger'
         );
 
-        return back()->with('success', 'Data pendaftaran ' . $name . ' (' . $code . ') berhasil dihapus secara permanen.');
+        return back()->with('success', 'Data pendaftaran '.$name.' ('.$code.') berhasil dihapus secara permanen.');
     }
 
     /**
@@ -643,8 +660,8 @@ class PicController extends Controller
         $this->authorizeCompetitionManagement($user, $competition->id);
 
         // Check quota if ignore_quota is not checked
-        if (!$request->boolean('ignore_quota')) {
-            if ($competition->quota > 0 && !in_array($competition->code, ['BLT', 'TMJ', 'MTQ', 'POP'])) {
+        if (! $request->boolean('ignore_quota')) {
+            if ($competition->quota > 0 && ! in_array($competition->code, ['BLT', 'TMJ', 'MTQ', 'POP'])) {
                 $currentTotal = Registration::where('competition_id', $competition->id)
                     ->whereIn('status', ['pending', 'verified'])
                     ->count();
@@ -655,17 +672,17 @@ class PicController extends Controller
         }
 
         // Find or create User for the participant so they can login to portal if needed
-        $nisnClean = !empty($validated['nisn']) ? trim($validated['nisn']) : null;
+        $nisnClean = ! empty($validated['nisn']) ? trim($validated['nisn']) : null;
         $participantUser = null;
         if ($nisnClean) {
             $participantUser = User::where('nisn', $nisnClean)->first();
         }
-        if (!$participantUser) {
+        if (! $participantUser) {
             $randomSuffix = rand(100, 999);
-            $autoNisn = $nisnClean ?: ('MNL' . date('ymd') . $randomSuffix);
-            $email = $autoNisn . '@peserta.talenta';
+            $autoNisn = $nisnClean ?: ('MNL'.date('ymd').$randomSuffix);
+            $email = $autoNisn.'@peserta.talenta';
             if (User::where('email', $email)->exists()) {
-                $email = $autoNisn . '_' . rand(10, 99) . '@peserta.talenta';
+                $email = $autoNisn.'_'.rand(10, 99).'@peserta.talenta';
             }
             $participantUser = User::create([
                 'name' => $validated['full_name'],
@@ -683,9 +700,9 @@ class PicController extends Controller
         // Prevent duplicate NISN in same competition
         if ($nisnClean) {
             $existingMember = RegistrationMember::where('nisn', $nisnClean)
-                ->whereHas('registration', function($q) use ($competition) {
+                ->whereHas('registration', function ($q) use ($competition) {
                     $q->where('competition_id', $competition->id)
-                      ->whereIn('status', ['pending', 'verified']);
+                        ->whereIn('status', ['pending', 'verified']);
                 })
                 ->first();
 
@@ -696,21 +713,21 @@ class PicController extends Controller
 
         // Determine sub_category
         $subCategory = null;
-        if (!empty($validated['target_class']) && !empty($validated['match_type'])) {
-            $subCategory = $validated['target_class'] . ' - ' . $validated['match_type'];
-        } elseif (!empty($validated['match_type'])) {
+        if (! empty($validated['target_class']) && ! empty($validated['match_type'])) {
+            $subCategory = $validated['target_class'].' - '.$validated['match_type'];
+        } elseif (! empty($validated['match_type'])) {
             $subCategory = $validated['match_type'];
         }
 
-        $regCode = 'REG-' . date('Y') . '-' . $competition->code . '-' . strtoupper(Str::random(5));
+        $regCode = 'REG-'.date('Y').'-'.$competition->code.'-'.strtoupper(Str::random(5));
 
         $teamName = null;
-        if (!empty($validated['member2_name'])) {
-            $teamName = $validated['full_name'] . ' / ' . $validated['member2_name'];
+        if (! empty($validated['member2_name'])) {
+            $teamName = $validated['full_name'].' / '.$validated['member2_name'];
         }
 
         $status = $validated['status'];
-        $notes = $validated['verification_notes'] ?: ($status === 'verified' ? 'Didaftarkan manual oleh ' . $user->name . ' (Lunas Tunai)' : 'Pendaftaran manual (Menunggu Verifikasi)');
+        $notes = $validated['verification_notes'] ?: ($status === 'verified' ? 'Didaftarkan manual oleh '.$user->name.' (Lunas Tunai)' : 'Pendaftaran manual (Menunggu Verifikasi)');
 
         $registration = Registration::create([
             'competition_id' => $competition->id,
@@ -742,29 +759,29 @@ class PicController extends Controller
             'nisn' => $nisnClean,
             'gender' => $validated['gender'],
             'phone' => $validated['phone'] ?? null,
-            'role_in_team' => !empty($validated['member2_name']) ? 'Pemain 1' : 'Peserta Utama',
+            'role_in_team' => ! empty($validated['member2_name']) ? 'Pemain 1' : 'Peserta Utama',
         ]);
 
         // Create Member 2 if Ganda
-        if (!empty($validated['member2_name'])) {
+        if (! empty($validated['member2_name'])) {
             RegistrationMember::create([
                 'registration_id' => $registration->id,
                 'full_name' => $validated['member2_name'],
                 'school_name' => $validated['member2_school'] ?: $validated['institution_name'],
-                'nisn' => !empty($validated['member2_nisn']) ? trim($validated['member2_nisn']) : null,
+                'nisn' => ! empty($validated['member2_nisn']) ? trim($validated['member2_nisn']) : null,
                 'gender' => $validated['gender'],
                 'role_in_team' => 'Pemain 2',
             ]);
         }
 
-        \App\Models\ActivityLog::record(
+        ActivityLog::record(
             'MANUAL_REGISTRATION',
-            "Mendaftarkan peserta baru '{$validated['full_name']}' secara manual pada cabang {$competition->name}" . ($status === 'verified' ? ' (Langsung Terverifikasi/Lunas Tunai)' : ' (Status: Pending)'),
+            "Mendaftarkan peserta baru '{$validated['full_name']}' secara manual pada cabang {$competition->name}".($status === 'verified' ? ' (Langsung Terverifikasi/Lunas Tunai)' : ' (Status: Pending)'),
             $user,
             'success'
         );
 
-        return redirect()->back()->with('success', "Peserta '{$validated['full_name']}' berhasil didaftarkan secara manual pada cabang {$competition->name}" . ($status === 'verified' ? " dan langsung berstatus Lunas/Terverifikasi." : "."));
+        return redirect()->back()->with('success', "Peserta '{$validated['full_name']}' berhasil didaftarkan secara manual pada cabang {$competition->name}".($status === 'verified' ? ' dan langsung berstatus Lunas/Terverifikasi.' : '.'));
     }
 
     public function drawIndex()
@@ -772,8 +789,8 @@ class PicController extends Controller
         $user = Auth::user();
 
         $competitions = Competition::with(['category', 'registrations' => function ($q) {
-                $q->with('members');
-            }])
+            $q->with('members');
+        }])
             ->whereIn('id', self::getManagedCompetitionIds($user))
             ->get()
             ->map(function ($comp) {
@@ -814,7 +831,7 @@ class PicController extends Controller
 
         $verifiedList = $competition->registrations->map(function ($reg) {
             $firstMember = $reg->members->first();
-            $pureName = $reg->team_name ?: ($firstMember?->full_name ?: 'Peserta #' . $reg->id);
+            $pureName = $reg->team_name ?: ($firstMember?->full_name ?: 'Peserta #'.$reg->id);
 
             return [
                 'id' => $reg->id,
@@ -824,7 +841,7 @@ class PicController extends Controller
                 'registration_code' => $reg->registration_code,
                 'gender' => $reg->primary_gender,
                 'draw_number' => $reg->draw_number,
-                'is_drawn' => !is_null($reg->draw_number),
+                'is_drawn' => ! is_null($reg->draw_number),
             ];
         });
 
@@ -845,7 +862,7 @@ class PicController extends Controller
 
         $verifiedList = $competition->registrations->map(function ($reg) {
             $firstMember = $reg->members->first();
-            $pureName = $reg->team_name ?: ($firstMember?->full_name ?: 'Peserta #' . $reg->id);
+            $pureName = $reg->team_name ?: ($firstMember?->full_name ?: 'Peserta #'.$reg->id);
 
             return [
                 'id' => $reg->id,
@@ -853,7 +870,7 @@ class PicController extends Controller
                 'institution' => $reg->institution_name,
                 'participant_number' => $reg->participant_number,
                 'draw_number' => $reg->draw_number,
-                'is_drawn' => !is_null($reg->draw_number),
+                'is_drawn' => ! is_null($reg->draw_number),
             ];
         });
 
@@ -899,7 +916,7 @@ class PicController extends Controller
             $firstMember = $registration->members->first();
             $targetPhone = $registration->official_phone ?: ($registration->user?->phone ?: $firstMember?->phone);
 
-            \App\Services\WablasNotificationService::sendAutoNotification('draw_result_picked', [
+            WablasNotificationService::sendAutoNotification('draw_result_picked', [
                 'phone' => $targetPhone,
                 'nama_peserta' => $registration->display_name,
                 'nisn' => $firstMember?->nisn ?? ($registration->user?->nisn ?? '-'),
@@ -918,7 +935,7 @@ class PicController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Nomor undian ' . $validated['draw_number'] . ' berhasil disimpan untuk ' . $registration->display_name,
+            'message' => 'Nomor undian '.$validated['draw_number'].' berhasil disimpan untuk '.$registration->display_name,
             'registration' => $registration,
         ]);
     }
@@ -926,10 +943,10 @@ class PicController extends Controller
     public function resetDraws(Request $request, $competition_id)
     {
         $competition = Competition::findOrFail($competition_id);
-        
+
         Registration::where('competition_id', $competition->id)->update(['draw_number' => null]);
         DrawAllocation::where('competition_id', $competition->id)->delete();
 
-        return back()->with('success', 'Semua nomor undian pada cabang ' . $competition->name . ' telah di-reset.');
+        return back()->with('success', 'Semua nomor undian pada cabang '.$competition->name.' telah di-reset.');
     }
 }

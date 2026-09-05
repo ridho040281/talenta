@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\User;
+use App\Services\WablasNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -15,6 +17,7 @@ class AuthController extends Controller
         if (Auth::check()) {
             return $this->redirectBasedOnRole(Auth::user());
         }
+
         return view('auth.login');
     }
 
@@ -37,23 +40,24 @@ class AuthController extends Controller
 
         if ($user && Hash::check($request->password, $user->password)) {
             if ($user->status !== 'active') {
-                \App\Models\ActivityLog::record('LOGIN_BLOCKED', "Percobaan login pada akun yang dinonaktifkan: '{$user->name}'", $user, 'warning', $loginInput);
+                ActivityLog::record('LOGIN_BLOCKED', "Percobaan login pada akun yang dinonaktifkan: '{$user->name}'", $user, 'warning', $loginInput);
+
                 return back()->withErrors(['login' => 'Akun Anda sedang dinonaktifkan oleh administrator.']);
             }
 
             Auth::login($user, $request->boolean('remember'));
             $request->session()->regenerate();
 
-            \App\Models\ActivityLog::record('LOGIN_SUCCESS', "Berhasil login ke sistem sebagai role: " . strtoupper($user->role), $user, 'success', $loginInput);
+            ActivityLog::record('LOGIN_SUCCESS', 'Berhasil login ke sistem sebagai role: '.strtoupper($user->role), $user, 'success', $loginInput);
 
             return $this->redirectBasedOnRole($user)
-                ->with('success', 'Selamat datang kembali, ' . $user->name . '!');
+                ->with('success', 'Selamat datang kembali, '.$user->name.'!');
         }
 
         if ($user) {
-            \App\Models\ActivityLog::record('LOGIN_FAILED', "Percobaan login GAGAL (kata sandi salah) untuk akun: '{$user->name}' ({$user->role})", $user, 'failed', $loginInput);
+            ActivityLog::record('LOGIN_FAILED', "Percobaan login GAGAL (kata sandi salah) untuk akun: '{$user->name}' ({$user->role})", $user, 'failed', $loginInput);
         } else {
-            \App\Models\ActivityLog::record('LOGIN_FAILED', "Percobaan login GAGAL (akun tidak terdaftar): '{$loginInput}'", null, 'failed', $loginInput);
+            ActivityLog::record('LOGIN_FAILED', "Percobaan login GAGAL (akun tidak terdaftar): '{$loginInput}'", null, 'failed', $loginInput);
         }
 
         return back()->withErrors([
@@ -66,6 +70,7 @@ class AuthController extends Controller
         if (Auth::check()) {
             return $this->redirectBasedOnRole(Auth::user());
         }
+
         return view('auth.register');
     }
 
@@ -94,13 +99,13 @@ class AuthController extends Controller
         $invalidPatterns = [
             '0000000000', '1111111111', '2222222222', '3333333333', '4444444444',
             '5555555555', '6666666666', '7777777777', '8888888888', '9999999999',
-            '1234567890', '0123456789', '9876543210', '0987654321'
+            '1234567890', '0123456789', '9876543210', '0987654321',
         ];
         if (in_array($nisnClean, $invalidPatterns)) {
             return back()->withErrors(['nisn' => 'Format NISN tidak valid / terdeteksi angka acak. Harap masukkan 10 digit NISN resmi Anda.'])->withInput();
         }
 
-        $email = !empty($validated['email']) ? trim($validated['email']) : ($nisnClean . '@pendaftar.talenta');
+        $email = ! empty($validated['email']) ? trim($validated['email']) : ($nisnClean.'@pendaftar.talenta');
 
         $user = User::create([
             'nisn' => $nisnClean,
@@ -116,7 +121,7 @@ class AuthController extends Controller
 
         // Trigger Auto WhatsApp Notification: Pembuatan Akun Baru
         try {
-            \App\Services\WablasNotificationService::sendAutoNotification('account_created', [
+            WablasNotificationService::sendAutoNotification('account_created', [
                 'phone' => $user->phone,
                 'nama_peserta' => $user->name,
                 'nisn' => $user->nisn,
@@ -137,7 +142,7 @@ class AuthController extends Controller
             'phone' => $user->phone,
             'email' => $user->email,
             'default_password' => $nisnClean,
-            'created_at' => $user->created_at->format('d F Y, H:i') . ' WIB',
+            'created_at' => $user->created_at->format('d F Y, H:i').' WIB',
         ]);
 
         return redirect()->route('register.success');
@@ -146,7 +151,7 @@ class AuthController extends Controller
     public function showRegisterSuccess()
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login');
         }
 
@@ -157,7 +162,7 @@ class AuthController extends Controller
             'phone' => $user->phone ?? '-',
             'email' => $user->email,
             'default_password' => $user->nisn ?? 'Sandi Anda',
-            'created_at' => $user->created_at->format('d F Y, H:i') . ' WIB',
+            'created_at' => $user->created_at->format('d F Y, H:i').' WIB',
         ];
 
         return view('auth.register-success', compact('user', 'slip'));
@@ -176,7 +181,7 @@ class AuthController extends Controller
 
         $user = Auth::user();
 
-        if (!Hash::check($request->current_password, $user->password)) {
+        if (! Hash::check($request->current_password, $user->password)) {
             return back()->withErrors(['current_password' => 'Kata sandi saat ini tidak cocok.']);
         }
 
@@ -191,7 +196,7 @@ class AuthController extends Controller
     {
         $user = Auth::user();
         if ($user) {
-            \App\Models\ActivityLog::record('LOGOUT', "Pengguna keluar (logout) dari sistem", $user, 'info');
+            ActivityLog::record('LOGOUT', 'Pengguna keluar (logout) dari sistem', $user, 'info');
         }
 
         Auth::logout();

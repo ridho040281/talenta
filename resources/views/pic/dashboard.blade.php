@@ -300,6 +300,41 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Stage Timer & Layar Panggung Launcher Button -->
+                <div class="relative" x-data="{ stageMenuOpen: false }">
+                    <button @click="stageMenuOpen = !stageMenuOpen" type="button" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 font-black text-xs transition cursor-pointer">
+                        <i data-lucide="tv" class="w-4 h-4 text-amber-400"></i>
+                        <span>Layar Panggung</span>
+                        <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+                    </button>
+
+                    <!-- Dropdown Menu -->
+                    <div x-show="stageMenuOpen" @click.away="stageMenuOpen = false" x-cloak class="absolute right-0 mt-2 w-72 bg-[#161F30] rounded-2xl shadow-2xl border border-white/[0.12] py-2 z-50 text-xs">
+                        <div class="px-3 py-1.5 text-[10px] font-bold text-amber-300 uppercase tracking-wider border-b border-white/[0.08] flex items-center justify-between">
+                            <span>Layar Panggung & Stage Timer:</span>
+                        </div>
+                        <div class="max-h-60 overflow-y-auto divide-y divide-white/[0.04]">
+                            @foreach($competitions as $c)
+                                <div class="p-2.5 hover:bg-white/[0.04] transition space-y-1.5">
+                                    <div class="flex items-center justify-between gap-1">
+                                        <span class="font-bold text-white text-xs truncate">{{ $c->name }}</span>
+                                        <span class="text-[9px] px-1.5 py-0.2 rounded bg-[#0C111D] text-amber-400 border border-amber-500/30 font-mono">{{ $c->code }}</span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <a href="{{ route('pic.stage.control', $c->id) }}" class="flex-1 py-1 px-2 rounded-lg bg-white/[0.08] hover:bg-white/[0.15] text-slate-200 hover:text-white font-bold text-[10px] text-center transition">
+                                            Panel Kontrol
+                                        </a>
+                                        <a href="{{ route('stage.viewer', $c->slug ?: $c->code) }}" target="_blank" class="py-1 px-2 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-[10px] text-center transition flex items-center gap-1">
+                                            <i data-lucide="tv" class="w-3 h-3"></i>
+                                            <span>TV</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
             </div>
 
         </div>

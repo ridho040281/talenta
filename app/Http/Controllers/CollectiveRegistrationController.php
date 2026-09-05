@@ -8,15 +8,19 @@ use App\Models\Invoice;
 use App\Models\Registration;
 use App\Models\RegistrationMember;
 use App\Models\User;
+use App\Services\WablasNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Color;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -44,18 +48,18 @@ class CollectiveRegistrationController extends Controller
     {
         $competitions = Competition::with('category')->where('status', 'buka')->orderBy('name')->get();
 
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('FORMULIR_PENDAFTARAN');
 
         // Main Header Title
         $sheet->setCellValue('A1', 'FORMULIR PENDAFTARAN KOLEKTIF TALENTA 2026 - MTsN 1 BLITAR');
         $sheet->mergeCells('A1:K1');
-        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('064E3B'));
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new Color('064E3B'));
 
         $sheet->setCellValue('A2', 'Petunjuk: Isi biodata siswa di bawah. Pada kolom CABANG_LOMBA, klik panah drop-down untuk langsung memilih nama lomba yang diikuti.');
         $sheet->mergeCells('A2:K2');
-        $sheet->getStyle('A2')->getFont()->setItalic(true)->setSize(10)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('475569'));
+        $sheet->getStyle('A2')->getFont()->setItalic(true)->setSize(10)->setColor(new Color('475569'));
 
         // Column Headers for Participant Table
         $headers = [
@@ -89,14 +93,14 @@ class CollectiveRegistrationController extends Controller
         $dropdownList = [];
         foreach ($competitions as $c) {
             if ($c->code === 'BLT') {
-                $dropdownList[] = "Bulu Tangkis (Kat A: Kls 1-2 • Tunggal PA)";
-                $dropdownList[] = "Bulu Tangkis (Kat A: Kls 1-2 • Tunggal PI)";
-                $dropdownList[] = "Bulu Tangkis (Kat B: Kls 3-4 • Tunggal PA)";
-                $dropdownList[] = "Bulu Tangkis (Kat B: Kls 3-4 • Tunggal PI)";
-                $dropdownList[] = "Bulu Tangkis (Kat C: Kls 5-6 • Tunggal PA)";
-                $dropdownList[] = "Bulu Tangkis (Kat C: Kls 5-6 • Tunggal PI)";
-                $dropdownList[] = "Bulu Tangkis (Ganda PA)";
-                $dropdownList[] = "Bulu Tangkis (Ganda PI)";
+                $dropdownList[] = 'Bulu Tangkis (Kat A: Kls 1-2 • Tunggal PA)';
+                $dropdownList[] = 'Bulu Tangkis (Kat A: Kls 1-2 • Tunggal PI)';
+                $dropdownList[] = 'Bulu Tangkis (Kat B: Kls 3-4 • Tunggal PA)';
+                $dropdownList[] = 'Bulu Tangkis (Kat B: Kls 3-4 • Tunggal PI)';
+                $dropdownList[] = 'Bulu Tangkis (Kat C: Kls 5-6 • Tunggal PA)';
+                $dropdownList[] = 'Bulu Tangkis (Kat C: Kls 5-6 • Tunggal PI)';
+                $dropdownList[] = 'Bulu Tangkis (Ganda PA)';
+                $dropdownList[] = 'Bulu Tangkis (Ganda PI)';
             } else {
                 $dropdownList[] = $c->name;
             }
@@ -106,10 +110,10 @@ class CollectiveRegistrationController extends Controller
         $listSheet = $spreadsheet->createSheet();
         $listSheet->setTitle('LIST_LOMBA');
         foreach ($dropdownList as $index => $item) {
-            $listSheet->setCellValue('A' . ($index + 1), $item);
+            $listSheet->setCellValue('A'.($index + 1), $item);
         }
         $listSheetCount = count($dropdownList);
-        $listSheet->setSheetState(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet::SHEETSTATE_VERYHIDDEN);
+        $listSheet->setSheetState(Worksheet::SHEETSTATE_VERYHIDDEN);
 
         // Ensure active sheet is the main form
         $spreadsheet->setActiveSheetIndex(0);
@@ -123,7 +127,7 @@ class CollectiveRegistrationController extends Controller
         foreach ($sampleData as $row) {
             $colLetter = 'A';
             foreach ($row as $val) {
-                $sheet->setCellValue($colLetter . $rowNum, $val);
+                $sheet->setCellValue($colLetter.$rowNum, $val);
                 $colLetter++;
             }
             $sheet->getStyle("A{$rowNum}:K{$rowNum}")->getFont()->setSize(10);
@@ -135,16 +139,16 @@ class CollectiveRegistrationController extends Controller
         for ($r = 5; $r <= 200; $r++) {
             // Dropdown Gender (Col D)
             $genderVal = $sheet->getCell("D{$r}")->getDataValidation();
-            $genderVal->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-            $genderVal->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_INFORMATION);
+            $genderVal->setType(DataValidation::TYPE_LIST);
+            $genderVal->setErrorStyle(DataValidation::STYLE_INFORMATION);
             $genderVal->setAllowBlank(true);
             $genderVal->setShowDropDown(true);
             $genderVal->setFormula1('"L,P"');
 
             // Dropdown Cabang Lomba (Col H)
             $compVal = $sheet->getCell("H{$r}")->getDataValidation();
-            $compVal->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-            $compVal->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_INFORMATION);
+            $compVal->setType(DataValidation::TYPE_LIST);
+            $compVal->setErrorStyle(DataValidation::STYLE_INFORMATION);
             $compVal->setAllowBlank(true);
             $compVal->setShowInputMessage(true);
             $compVal->setShowErrorMessage(true);
@@ -166,7 +170,7 @@ class CollectiveRegistrationController extends Controller
             $writer->save('php://output');
         }, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+            'Content-Disposition' => 'attachment; filename="'.$fileName.'"',
             'Cache-Control' => 'max-age=0',
         ]);
     }
@@ -185,22 +189,22 @@ class CollectiveRegistrationController extends Controller
         ]);
 
         $file = $request->file('excel_file');
-        
+
         try {
-            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getRealPath());
+            $spreadsheet = IOFactory::load($file->getRealPath());
             $sheet = $spreadsheet->getSheet(0); // Single sheet
             $rows = $sheet->toArray(null, true, true, true);
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal membaca file Excel: ' . $e->getMessage());
+            return back()->with('error', 'Gagal membaca file Excel: '.$e->getMessage());
         }
 
         if (count($rows) < 5) {
             return back()->with('error', 'File Excel kosong atau tidak memiliki data peserta.');
         }
 
-        $competitions = Competition::with('category')->withCount(['registrations' => function($q) {
+        $competitions = Competition::with('category')->withCount(['registrations' => function ($q) {
             $q->whereIn('status', ['pending', 'verified']);
-        }])->get()->keyBy(fn($item) => strtoupper(trim($item->code)));
+        }])->get()->keyBy(fn ($item) => strtoupper(trim($item->code)));
 
         $parsedRows = [];
         $totalFee = 0;
@@ -212,24 +216,24 @@ class CollectiveRegistrationController extends Controller
         $invalidPatterns = [
             '0000000000', '1111111111', '2222222222', '3333333333', '4444444444',
             '5555555555', '6666666666', '7777777777', '8888888888', '9999999999',
-            '1234567890', '0123456789', '9876543210', '0987654321'
+            '1234567890', '0123456789', '9876543210', '0987654321',
         ];
 
         // Loop data starting at row 5 (row 1-4 are headers and guidance)
         for ($i = 5; $i <= count($rows); $i++) {
             $row = $rows[$i];
-            
+
             $name = trim($row['B'] ?? '');
             $nisn = trim($row['C'] ?? '');
             $gender = strtoupper(trim($row['D'] ?? 'L'));
             $birthPlace = trim($row['E'] ?? '');
             $birthDate = trim($row['F'] ?? '');
             $institution = trim($row['G'] ?? '') ?: (Auth::user()->institution_name ?? 'Mandiri');
-            
+
             // Extract raw competition from Column H (e.g. "Bulu Tangkis (Kat C: Kls 5-6 • Tunggal PA)", "Bulu Tangkis (Ganda PA)", "Olimpiade MIPA", "Catur", "MTQ")
             $rawComp = trim($row['H'] ?? '');
             $code = '';
-            if (!empty($rawComp)) {
+            if (! empty($rawComp)) {
                 if (stripos($rawComp, 'Bulu Tangkis') !== false || stripos($rawComp, 'BLT') !== false) {
                     $code = 'BLT';
                 } elseif (preg_match('/^([A-Za-z0-9]+)\s*[-:]/i', $rawComp, $matches) && isset($competitions[strtoupper(trim($matches[1]))])) {
@@ -262,7 +266,7 @@ class CollectiveRegistrationController extends Controller
                     } else {
                         $matchType = 'Ganda Putra (PA)';
                     }
-                    $subCategory = 'Ganda - ' . $matchType;
+                    $subCategory = 'Ganda - '.$matchType;
                 } else {
                     if (stripos($rawComp, 'Kat A') !== false || stripos($rawComp, '-A-') !== false || stripos($rawComp, 'Kelas 1') !== false || stripos($rawComp, 'Kls 1') !== false) {
                         $targetClass = 'Kategori A (Kelas 1 - 2)';
@@ -280,7 +284,7 @@ class CollectiveRegistrationController extends Controller
                         $matchType = 'Tunggal Putra (PA)';
                     }
 
-                    $subCategory = $targetClass . ' - ' . $matchType;
+                    $subCategory = $targetClass.' - '.$matchType;
                 }
             }
 
@@ -300,8 +304,8 @@ class CollectiveRegistrationController extends Controller
             }
 
             // Validate NISN format if given
-            if (!empty($nisn)) {
-                if (!preg_match('/^[0-9]{8,12}$/', $nisn)) {
+            if (! empty($nisn)) {
+                if (! preg_match('/^[0-9]{8,12}$/', $nisn)) {
                     $errors[] = "Format NISN '{$nisn}' tidak valid (harus 10 digit angka)";
                 } elseif (in_array($nisn, $invalidPatterns)) {
                     $errors[] = "NISN '{$nisn}' terdeteksi angka acak/palsu";
@@ -310,7 +314,7 @@ class CollectiveRegistrationController extends Controller
 
             if (empty($code)) {
                 $errors[] = 'Cabang lomba belum dipilih';
-            } elseif (!isset($competitions[$code])) {
+            } elseif (! isset($competitions[$code])) {
                 $errors[] = "Cabang lomba '{$rawComp}' tidak dikenali di sistem";
             } else {
                 $comp = $competitions[$code];
@@ -327,7 +331,7 @@ class CollectiveRegistrationController extends Controller
                     }
 
                     // Check duplicate registration in the SAME competition
-                    if (!empty($nisn)) {
+                    if (! empty($nisn)) {
                         // A. Check duplicate in same Excel batch
                         if (isset($registeredNisnsInBatch[$code][$nisn])) {
                             $prevRow = $registeredNisnsInBatch[$code][$nisn];
@@ -338,9 +342,9 @@ class CollectiveRegistrationController extends Controller
 
                         // B. Check duplicate in database for the same competition
                         $alreadyInDb = RegistrationMember::where('nisn', $nisn)
-                            ->whereHas('registration', function($q) use ($comp) {
+                            ->whereHas('registration', function ($q) use ($comp) {
                                 $q->where('competition_id', $comp->id)
-                                  ->whereIn('status', ['pending', 'verified']);
+                                    ->whereIn('status', ['pending', 'verified']);
                             })
                             ->exists();
 
@@ -351,17 +355,17 @@ class CollectiveRegistrationController extends Controller
                 }
             }
 
-            if (!in_array($gender, ['L', 'P'])) {
+            if (! in_array($gender, ['L', 'P'])) {
                 $gender = 'L';
             }
 
             $compObj = $competitions[$code] ?? null;
-            $fee = $compObj ? (float)$compObj->registration_fee : 0;
+            $fee = $compObj ? (float) $compObj->registration_fee : 0;
 
             // Tiered pricing for Bulu Tangkis (Tunggal & Ganda, Kat A, Kat B, Kat C)
             if ($code === 'BLT' || (isset($compObj) && $compObj->code === 'BLT')) {
                 $isGanda = stripos($rawComp, 'Ganda') !== false || stripos($rawComp, 'GPA') !== false || stripos($rawComp, 'GPI') !== false || stripos($matchType ?? '', 'Ganda') !== false;
-                
+
                 if ($isGanda) {
                     $fee = (float) AppSetting::get('blt_fee_ganda', AppSetting::get('blt_fee_c_ganda', 125000));
                 } else {
@@ -452,14 +456,14 @@ class CollectiveRegistrationController extends Controller
         ]);
 
         $data = json_decode($request->payload, true);
-        if (!$data || !is_array($data)) {
+        if (! $data || ! is_array($data)) {
             return redirect()->route('peserta.collective.wizard')->with('error', 'Data pendaftaran tidak valid.');
         }
 
         $user = Auth::user();
 
         // Filter only valid rows
-        $validRows = array_filter($data, fn($item) => !empty($item['is_valid']) && !empty($item['competition_id']));
+        $validRows = array_filter($data, fn ($item) => ! empty($item['is_valid']) && ! empty($item['competition_id']));
 
         if (empty($validRows)) {
             return redirect()->route('peserta.collective.wizard')->with('error', 'Tidak ada data peserta valid untuk didaftarkan.');
@@ -468,7 +472,7 @@ class CollectiveRegistrationController extends Controller
         $totalFee = array_sum(array_column($validRows, 'fee'));
         $uniqueCode = 0;
         $finalAmount = $totalFee;
-        $invoiceNumber = 'INV-' . date('Ymd') . '-' . strtoupper(Str::random(5));
+        $invoiceNumber = 'INV-'.date('Ymd').'-'.strtoupper(Str::random(5));
 
         // Store payment proof file
         $paymentProofPath = $request->file('payment_proof')->store('payments', 'public');
@@ -485,16 +489,16 @@ class CollectiveRegistrationController extends Controller
                 'final_amount' => $finalAmount,
                 'payment_proof' => $paymentProofPath,
                 'status' => 'pending',
-                'notes' => 'Pendaftaran kolektif ' . count($validRows) . ' peserta dari ' . ($user->institution_name ?? $user->name),
+                'notes' => 'Pendaftaran kolektif '.count($validRows).' peserta dari '.($user->institution_name ?? $user->name),
             ]);
 
             // 2. Create Registrations & Registration Members
             foreach ($validRows as $row) {
                 $comp = Competition::findOrFail($row['competition_id']);
-                
-                $regCode = strtoupper($comp->code) . '-' . strtoupper(Str::random(6));
+
+                $regCode = strtoupper($comp->code).'-'.strtoupper(Str::random(6));
                 while (Registration::where('registration_code', $regCode)->exists()) {
-                    $regCode = strtoupper($comp->code) . '-' . strtoupper(Str::random(6));
+                    $regCode = strtoupper($comp->code).'-'.strtoupper(Str::random(6));
                 }
 
                 $registration = Registration::create([
@@ -502,13 +506,13 @@ class CollectiveRegistrationController extends Controller
                     'user_id' => $user->id,
                     'invoice_id' => $invoice->id,
                     'registration_code' => $regCode,
-                    'team_name' => !empty($row['team_name']) ? $row['team_name'] : null,
+                    'team_name' => ! empty($row['team_name']) ? $row['team_name'] : null,
                     'sub_category' => $row['sub_category'] ?? null,
                     'target_class' => $row['target_class'] ?? null,
                     'match_type' => $row['match_type'] ?? null,
-                    'institution_name' => !empty($row['institution_name']) ? $row['institution_name'] : ($user->institution_name ?? 'Mandiri'),
-                    'official_name' => !empty($row['official_name']) ? $row['official_name'] : $user->name,
-                    'official_phone' => !empty($row['official_phone']) ? $row['official_phone'] : $user->phone,
+                    'institution_name' => ! empty($row['institution_name']) ? $row['institution_name'] : ($user->institution_name ?? 'Mandiri'),
+                    'official_name' => ! empty($row['official_name']) ? $row['official_name'] : $user->name,
+                    'official_phone' => ! empty($row['official_phone']) ? $row['official_phone'] : $user->phone,
                     'payment_proof' => $paymentProofPath,
                     'status' => 'pending',
                     'is_collective' => true,
@@ -518,10 +522,10 @@ class CollectiveRegistrationController extends Controller
                 RegistrationMember::create([
                     'registration_id' => $registration->id,
                     'full_name' => $row['name'],
-                    'nisn' => !empty($row['nisn']) ? $row['nisn'] : null,
-                    'gender' => !empty($row['gender']) ? $row['gender'] : 'L',
-                    'birth_place' => !empty($row['birth_place']) ? $row['birth_place'] : null,
-                    'birth_date' => !empty($row['birth_date']) ? date('Y-m-d', strtotime($row['birth_date'])) : null,
+                    'nisn' => ! empty($row['nisn']) ? $row['nisn'] : null,
+                    'gender' => ! empty($row['gender']) ? $row['gender'] : 'L',
+                    'birth_place' => ! empty($row['birth_place']) ? $row['birth_place'] : null,
+                    'birth_date' => ! empty($row['birth_date']) ? date('Y-m-d', strtotime($row['birth_date'])) : null,
                     'role_in_team' => 'Peserta Utama',
                 ]);
             }
@@ -532,12 +536,12 @@ class CollectiveRegistrationController extends Controller
             try {
                 // 1. Notify User/Pendaftar
                 $userPhone = $user->phone;
-                if (!empty($userPhone)) {
-                    \App\Services\WablasNotificationService::sendAutoNotification('registration_submitted', [
+                if (! empty($userPhone)) {
+                    WablasNotificationService::sendAutoNotification('registration_submitted', [
                         'phone' => $userPhone,
                         'nama_peserta' => $user->name,
                         'nama_sekolah' => $user->institution_name ?? 'Sekolah/Madrasah',
-                        'cabang_lomba' => count($cleanBatch) . ' Peserta (Kolektif)',
+                        'cabang_lomba' => count($cleanBatch).' Peserta (Kolektif)',
                         'kode_pendaftaran' => $invoice->invoice_number,
                         'link_login' => route('peserta.invoices.show', $invoice->id),
                     ]);
@@ -546,7 +550,7 @@ class CollectiveRegistrationController extends Controller
                 // 2. Notify Treasurer about New Collective Payment
                 $firstReg = Registration::with('competition')->where('invoice_id', $invoice->id)->first();
                 if ($firstReg) {
-                    \App\Services\WablasNotificationService::notifyTreasurerNewPayment($firstReg, $totalAmount);
+                    WablasNotificationService::notifyTreasurerNewPayment($firstReg, $totalAmount);
                 }
             } catch (\Throwable $e) {
                 // Non-blocking
@@ -557,7 +561,8 @@ class CollectiveRegistrationController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->route('peserta.collective.wizard')->with('error', 'Terjadi kesalahan saat memproses pendaftaran: ' . $e->getMessage());
+
+            return redirect()->route('peserta.collective.wizard')->with('error', 'Terjadi kesalahan saat memproses pendaftaran: '.$e->getMessage());
         }
     }
 
@@ -567,12 +572,12 @@ class CollectiveRegistrationController extends Controller
     public function showInvoice($id)
     {
         $user = Auth::user();
-        
+
         $invoice = Invoice::with([
             'user',
             'registrations.competition.category',
             'registrations.members',
-            'verifier'
+            'verifier',
         ])->findOrFail($id);
 
         // Security check
@@ -600,7 +605,7 @@ class CollectiveRegistrationController extends Controller
         ]);
 
         $file = $request->file('payment_proof');
-        $filename = 'proof_' . $invoice->invoice_number . '_' . time() . '.' . $file->getClientOriginalExtension();
+        $filename = 'proof_'.$invoice->invoice_number.'_'.time().'.'.$file->getClientOriginalExtension();
         $path = $file->storeAs('payment_proofs', $filename, 'public');
 
         $invoice->update([
@@ -658,7 +663,7 @@ class CollectiveRegistrationController extends Controller
             'user',
             'registrations.competition.category',
             'registrations.members',
-            'verifier'
+            'verifier',
         ])->findOrFail($id);
 
         return view('admin.invoices.show', compact('invoice'));
@@ -694,7 +699,7 @@ class CollectiveRegistrationController extends Controller
                     $reg->status = 'verified';
                     $reg->verified_at = now();
                     $reg->verified_by = $admin->id;
-                    $reg->verification_notes = 'Lunas & Disetujui via Invoice Kolektif ' . $invoice->invoice_number;
+                    $reg->verification_notes = 'Lunas & Disetujui via Invoice Kolektif '.$invoice->invoice_number;
                     if (empty($reg->participant_number)) {
                         $reg->generateParticipantNumber();
                     } else {
@@ -704,7 +709,7 @@ class CollectiveRegistrationController extends Controller
             });
 
             return redirect()->route('admin.invoices.index')
-                ->with('success', 'Tagihan ' . $invoice->invoice_number . ' dan seluruh pendaftaran di dalamnya BERHASIL DISETUJUI & LUNAS.');
+                ->with('success', 'Tagihan '.$invoice->invoice_number.' dan seluruh pendaftaran di dalamnya BERHASIL DISETUJUI & LUNAS.');
         } else {
             DB::transaction(function () use ($invoice, $admin, $request) {
                 $invoice->update([
@@ -716,12 +721,12 @@ class CollectiveRegistrationController extends Controller
 
                 Registration::where('invoice_id', $invoice->id)->update([
                     'status' => 'rejected',
-                    'verification_notes' => 'Ditolak: ' . ($request->rejection_reason ?? 'Bukti pembayaran tidak valid.'),
+                    'verification_notes' => 'Ditolak: '.($request->rejection_reason ?? 'Bukti pembayaran tidak valid.'),
                 ]);
             });
 
             return redirect()->route('admin.invoices.index')
-                ->with('info', 'Tagihan ' . $invoice->invoice_number . ' telah ditolak.');
+                ->with('info', 'Tagihan '.$invoice->invoice_number.' telah ditolak.');
         }
     }
 }

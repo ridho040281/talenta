@@ -27,6 +27,8 @@ class Registration extends Model
         'official_name',
         'official_phone',
         'status',
+        'stage_status',
+        'stage_duration_seconds',
         'is_collective',
         'payment_proof',
         'document_file',
@@ -40,6 +42,7 @@ class Registration extends Model
         return [
             'verified_at' => 'datetime',
             'draw_number' => 'integer',
+            'stage_duration_seconds' => 'integer',
             'is_collective' => 'boolean',
         ];
     }
@@ -82,20 +85,20 @@ class Registration extends Model
     public function getDisplayNameAttribute(): string
     {
         if ($this->team_name) {
-            return $this->team_name . ' (' . $this->institution_name . ')';
+            return $this->team_name.' ('.$this->institution_name.')';
         }
 
         $firstMember = $this->members->first();
         if ($firstMember) {
-            return $firstMember->full_name . ' (' . $this->institution_name . ')';
+            return $firstMember->full_name.' ('.$this->institution_name.')';
         }
 
-        return 'Peserta #' . $this->id;
+        return 'Peserta #'.$this->id;
     }
 
     public function getFeeAttribute(): float
     {
-        if (!$this->competition) {
+        if (! $this->competition) {
             return 0;
         }
 
@@ -111,7 +114,7 @@ class Registration extends Model
             $feeB = (float) AppSetting::get($isPutri ? 'blt_fee_b_tunggal_pi' : 'blt_fee_b_tunggal_pa', 150000);
             $feeC = (float) AppSetting::get($isPutri ? 'blt_fee_c_tunggal_pi' : 'blt_fee_c_tunggal_pa', 150000);
 
-            $target = ($this->target_class ?? '') . ' ' . ($this->sub_category ?? '');
+            $target = ($this->target_class ?? '').' '.($this->sub_category ?? '');
             if (stripos($target, 'Kategori A') !== false || stripos($target, 'Kat A') !== false || stripos($target, '-A-') !== false) {
                 return $feeA;
             } elseif (stripos($target, 'Kategori B') !== false || stripos($target, 'Kat B') !== false || stripos($target, '-B-') !== false) {
@@ -119,6 +122,7 @@ class Registration extends Model
             } elseif (stripos($target, 'Kategori C') !== false || stripos($target, 'Kat C') !== false || stripos($target, '-C-') !== false) {
                 return $feeC;
             }
+
             return $feeA;
         }
 
@@ -131,18 +135,19 @@ class Registration extends Model
         if ($genders->isEmpty()) {
             return 'U';
         }
-        if ($genders->every(fn($g) => $g === 'L')) {
+        if ($genders->every(fn ($g) => $g === 'L')) {
             return 'L';
         }
-        if ($genders->every(fn($g) => $g === 'P')) {
+        if ($genders->every(fn ($g) => $g === 'P')) {
             return 'P';
         }
+
         return 'M';
     }
 
     public function getGenderLabelAttribute(): string
     {
-        return match($this->primary_gender) {
+        return match ($this->primary_gender) {
             'L' => 'Putra (PA)',
             'P' => 'Putri (PI)',
             'M' => 'Ganda Campuran',
@@ -163,10 +168,10 @@ class Registration extends Model
             ->whereNotNull('participant_number')
             ->count() + 1;
 
-        $participantNumber = $code . '-' . str_pad($count, 2, '0', STR_PAD_LEFT);
+        $participantNumber = $code.'-'.str_pad($count, 2, '0', STR_PAD_LEFT);
         while (self::where('competition_id', $this->competition_id)->where('participant_number', $participantNumber)->exists()) {
             $count++;
-            $participantNumber = $code . '-' . str_pad($count, 2, '0', STR_PAD_LEFT);
+            $participantNumber = $code.'-'.str_pad($count, 2, '0', STR_PAD_LEFT);
         }
 
         $this->participant_number = $participantNumber;
@@ -194,6 +199,7 @@ class Registration extends Model
         if ($lockedScores->isEmpty()) {
             return 0;
         }
+
         return round($lockedScores->avg('total_score'), 2);
     }
 }

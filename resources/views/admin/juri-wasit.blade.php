@@ -102,6 +102,18 @@
                 </span>
             </button>
 
+            <!-- Tab 4: Layar Panggung & Stage Timer -->
+            <button type="button" 
+                    @click="activeTab = 'panggung'" 
+                    class="px-5 py-2.5 rounded-2xl text-xs font-bold transition flex items-center gap-2.5 shrink-0 cursor-pointer"
+                    :class="activeTab === 'panggung' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-lg shadow-[#7A5AF8]/30 font-black' : 'bg-[#0C111D] text-slate-400 hover:text-slate-200 border border-white/[0.08] hover:border-white/[0.15]'">
+                <i data-lucide="tv" class="w-4 h-4" :class="activeTab === 'panggung' ? 'text-white' : 'text-amber-400'"></i>
+                <span>Layar Panggung & Timer</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-mono" :class="activeTab === 'panggung' ? 'bg-white/20 text-white' : 'bg-white/[0.06] text-slate-400'">
+                    {{ $allCompetitions->where('has_stage_timer', true)->count() }}
+                </span>
+            </button>
+
         </div>
     </div>
 
@@ -543,6 +555,98 @@
                                 <span>Layar Publik</span>
                             </a>
                         </div>
+                    </div>
+
+                </div>
+            @empty
+                <div class="col-span-full py-16 text-center ai-card rounded-3xl border border-white/[0.08]">
+                    <div class="w-14 h-14 rounded-2xl bg-white/[0.06] flex items-center justify-center mx-auto text-slate-400 mb-3">
+                        <i data-lucide="inbox" class="w-7 h-7"></i>
+                    </div>
+                    <h4 class="text-white font-bold text-sm">Tidak ada cabang lomba</h4>
+                    <p class="text-xs text-slate-400 mt-1">Belum ada cabang lomba yang terdaftar dalam sistem.</p>
+                </div>
+            @endforelse
+    </div>
+
+    <!-- =========================================================================
+         TAB 4: LAYAR PANGGUNG & STAGE TIMER (TV DISPLAY)
+         ========================================================================= -->
+    <div x-show="activeTab === 'panggung'" x-transition x-cloak class="space-y-6">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 ai-panel p-4 rounded-2xl border border-white/[0.08]">
+            <div class="flex items-center gap-2 text-xs text-slate-300">
+                <i data-lucide="tv" class="w-4 h-4 text-amber-400"></i>
+                <span>Menampilkan sistem **Layar Panggung 3-Panel** (Sedang Tampil, Berikutnya, Selesai) untuk lomba seni, MTQ, pop singer, dan pementasan.</span>
+            </div>
+            <a href="{{ route('admin.competitions') }}" class="px-3.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 hover:text-white text-xs font-bold border border-white/[0.08] transition flex items-center gap-1.5 shrink-0">
+                <i data-lucide="settings" class="w-3.5 h-3.5"></i>
+                <span>Kelola Cabang Lomba</span>
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+            @forelse($allCompetitions as $comp)
+                @php
+                    $isStageActive = $comp->has_stage_timer;
+                    $durationMin = $comp->stage_duration_minutes ?: 7;
+                    $warningMin = $comp->stage_warning_minutes ?: 2;
+                @endphp
+                <div class="ai-card rounded-3xl p-5 sm:p-6 border flex flex-col justify-between transition-all duration-300 relative group overflow-hidden {{ $isStageActive ? 'border-amber-500/30 hover:border-amber-500/50 bg-[#0C111D]/90' : 'border-white/[0.08] opacity-80 bg-[#0C111D]/60' }}">
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-md font-mono {{ $isStageActive ? 'bg-amber-400/20 text-amber-300 border border-amber-400/30' : 'bg-white/[0.06] text-slate-400' }}">
+                                    {{ $comp->code }}
+                                </span>
+                                @if($isStageActive)
+                                    <span class="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                        <span>Aktif Panggung</span>
+                                    </span>
+                                @else
+                                    <span class="text-[10px] text-slate-500 font-medium">Timer Nonaktif</span>
+                                @endif
+                            </div>
+
+                            <a href="{{ route('admin.competitions.edit', $comp->id) }}" class="p-1 rounded-lg text-slate-400 hover:text-white transition" title="Edit Pengaturan Lomba">
+                                <i data-lucide="sliders" class="w-4 h-4"></i>
+                            </a>
+                        </div>
+
+                        <div>
+                            <h4 class="text-base font-black text-white group-hover:text-amber-300 transition font-display">{{ $comp->name }}</h4>
+                            <p class="text-xs text-slate-400 mt-0.5 flex items-center gap-1.5">
+                                <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-500"></i>
+                                <span>{{ $comp->venue ?: 'Panggung Utama' }}</span>
+                            </p>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 pt-2 border-t border-white/[0.06] text-xs">
+                            <div class="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                                <span class="text-[10px] font-bold text-slate-400 block">Durasi Tampil</span>
+                                <span class="text-xs font-black font-mono text-emerald-400">{{ $durationMin }} Menit</span>
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                                <span class="text-[10px] font-bold text-slate-400 block">Peringatan</span>
+                                <span class="text-xs font-black font-mono text-amber-400">Sisa {{ $warningMin }} Menit</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-white/[0.08] flex items-center gap-2">
+                        <!-- Panel Kontrol Operator -->
+                        <a href="{{ route('pic.stage.control', $comp->id) }}" class="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] hover:from-[#6941C6] hover:to-[#3555EC] text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-[#7A5AF8]/20 transition cursor-pointer">
+                            <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+                            <span>Panel Kontrol</span>
+                        </a>
+
+                        <!-- Public TV Display Screen -->
+                        <a href="{{ route('stage.viewer', $comp->slug ?: $comp->code) }}" target="_blank" class="py-2.5 px-3.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-amber-300 hover:text-white border border-white/[0.10] hover:border-amber-400/30 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer" title="Buka Layar TV Smart TV">
+                            <i data-lucide="tv" class="w-3.5 h-3.5 text-amber-400"></i>
+                            <span>Layar TV</span>
+                        </a>
                     </div>
 
                 </div>

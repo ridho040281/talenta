@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Competition;
 use App\Models\Registration;
-use App\Models\Score;
 use App\Models\Timeline;
 use Illuminate\Http\Request;
 
@@ -52,7 +51,7 @@ class HomeController extends Controller
                 ->orWhere('participant_number', 'LIKE', "%{$query}%")
                 ->orWhereHas('members', function ($q) use ($query) {
                     $q->where('full_name', 'LIKE', "%{$query}%")
-                      ->orWhere('nisn', 'LIKE', "%{$query}%");
+                        ->orWhere('nisn', 'LIKE', "%{$query}%");
                 })
                 ->latest()
                 ->take(15)
@@ -69,7 +68,7 @@ class HomeController extends Controller
         }])->orderBy('order')->get();
 
         $competitions = Competition::with('category')->orderBy('name')->get();
-        
+
         $selectedCompetition = null;
         if ($slug) {
             $selectedCompetition = Competition::with(['criteria', 'category', 'registrations' => function ($q) {
@@ -77,7 +76,7 @@ class HomeController extends Controller
             }])->where('slug', $slug)->first();
         }
 
-        if (!$selectedCompetition && $competitions->isNotEmpty()) {
+        if (! $selectedCompetition && $competitions->isNotEmpty()) {
             $selectedCompetition = Competition::with(['criteria', 'category', 'registrations' => function ($q) {
                 $q->where('status', 'verified')->with(['members', 'scores.details']);
             }])->first();
@@ -112,19 +111,19 @@ class HomeController extends Controller
             $q->where('status', 'verified')->with('members');
         }])->where(function ($query) use ($slug) {
             $query->where('slug', $slug)
-                  ->orWhere('code', strtoupper($slug));
+                ->orWhere('code', strtoupper($slug));
         })->firstOrFail();
 
         $participants = $competition->registrations->map(function ($reg) {
             $firstMember = $reg->members->first();
-            $pureName = $reg->team_name ?: ($firstMember?->full_name ?: 'Peserta #' . $reg->id);
+            $pureName = $reg->team_name ?: ($firstMember?->full_name ?: 'Peserta #'.$reg->id);
 
             return [
                 'id' => $reg->id,
                 'name' => $pureName,
                 'institution' => $reg->institution_name,
                 'draw_number' => $reg->draw_number,
-                'has_draw' => !is_null($reg->draw_number),
+                'has_draw' => ! is_null($reg->draw_number),
             ];
         });
 

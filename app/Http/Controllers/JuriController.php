@@ -100,6 +100,6 @@ class JuriController extends Controller
         }
 
         return redirect()->route('juri.scoring', $competition->id)
-            ->with('success', 'Nilai untuk ' . $registration->display_name . ' (' . number_format($score->total_score, 2) . ') berhasil disimpan' . ($score->is_locked ? ' dan dikunci.' : '.'));
+            ->with('success', 'Nilai untuk '.$registration->display_name.' ('.number_format($score->total_score, 2).') berhasil disimpan'.($score->is_locked ? ' dan dikunci.' : '.'));
     }
 }

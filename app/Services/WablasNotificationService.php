@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\AppSetting;
 use App\Models\BroadcastLog;
+use App\Models\User;
 use App\Models\WhatsappTemplate;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -13,16 +14,15 @@ class WablasNotificationService
     /**
      * Send an automated notification triggered by system events
      *
-     * @param string $templateCode (e.g. 'account_created', 'registration_submitted', 'registration_verified')
-     * @param array $data Placeholders data (phone, nama_peserta, nisn, nama_sekolah, cabang_lomba, no_peserta, kode_pendaftaran, etc.)
-     * @return bool
+     * @param  string  $templateCode  (e.g. 'account_created', 'registration_submitted', 'registration_verified')
+     * @param  array  $data  Placeholders data (phone, nama_peserta, nisn, nama_sekolah, cabang_lomba, no_peserta, kode_pendaftaran, etc.)
      */
     public static function sendAutoNotification(string $templateCode, array $data): bool
     {
         try {
             // 1. Get Template
             $template = WhatsappTemplate::where('code', $templateCode)->first();
-            if (!$template || !$template->is_active) {
+            if (! $template || ! $template->is_active) {
                 return false; // Auto-trigger is disabled or template not found
             }
 
@@ -43,9 +43,9 @@ class WablasNotificationService
 
             $cleanPhone = preg_replace('/[^0-9]/', '', $rawPhone);
             if (str_starts_with($cleanPhone, '0')) {
-                $cleanPhone = '62' . substr($cleanPhone, 1);
+                $cleanPhone = '62'.substr($cleanPhone, 1);
             } elseif (str_starts_with($cleanPhone, '8')) {
-                $cleanPhone = '628' . substr($cleanPhone, 1);
+                $cleanPhone = '628'.substr($cleanPhone, 1);
             }
 
             // 4. Build message with dynamic placeholders
@@ -65,10 +65,10 @@ class WablasNotificationService
                 '{no_peserta}' => $data['no_peserta'] ?? ($data['kode_pendaftaran'] ?? '-'),
                 '{kode_pendaftaran}' => $data['kode_pendaftaran'] ?? ($data['no_peserta'] ?? '-'),
                 '{nomor_undian}' => $data['nomor_undian'] ?? ($data['draw_number'] ?? '-'),
-                '{nominal_biaya}' => !empty($data['nominal_biaya']) ? number_format((float)$data['nominal_biaya'], 0, ',', '.') : '0',
+                '{nominal_biaya}' => ! empty($data['nominal_biaya']) ? number_format((float) $data['nominal_biaya'], 0, ',', '.') : '0',
                 '{jumlah_peserta}' => $data['jumlah_peserta'] ?? '1',
-                '{waktu_daftar}' => $data['waktu_daftar'] ?? now()->translatedFormat('d F Y H:i') . ' WIB',
-                '{waktu_verifikasi}' => $data['waktu_verifikasi'] ?? now()->translatedFormat('d F Y H:i') . ' WIB',
+                '{waktu_daftar}' => $data['waktu_daftar'] ?? now()->translatedFormat('d F Y H:i').' WIB',
+                '{waktu_verifikasi}' => $data['waktu_verifikasi'] ?? now()->translatedFormat('d F Y H:i').' WIB',
                 '{link_scoreboard}' => $data['link_scoreboard'] ?? route('live.scoreboard'),
                 '{link_login}' => $data['link_login'] ?? route('login'),
                 '{no_wa}' => $data['phone_pendaftar'] ?? ($data['phone'] ?? $cleanPhone),
@@ -77,11 +77,11 @@ class WablasNotificationService
             ];
 
             foreach ($placeholders as $tag => $val) {
-                $msg = str_replace($tag, (string)$val, $msg);
+                $msg = str_replace($tag, (string) $val, $msg);
             }
 
             // 5. Send to Wablas API
-            $authHeader = $wablasSecretKey ? ($wablasToken . '.' . $wablasSecretKey) : $wablasToken;
+            $authHeader = $wablasSecretKey ? ($wablasToken.'.'.$wablasSecretKey) : $wablasToken;
 
             $res = Http::withoutVerifying()
                 ->timeout(8)
@@ -100,7 +100,7 @@ class WablasNotificationService
             // 6. Record in BroadcastLog
             BroadcastLog::create([
                 'sender_id' => auth()->id() ?? 1,
-                'target_audience' => 'auto_' . $templateCode,
+                'target_audience' => 'auto_'.$templateCode,
                 'target_competition' => $data['cabang_lomba'] ?? 'Sistem Otomatis',
                 'recipients_count' => 1,
                 'message' => $msg,
@@ -109,7 +109,8 @@ class WablasNotificationService
 
             return $isSent;
         } catch (\Throwable $e) {
-            Log::error("Wablas Auto Notification Error ({$templateCode}): " . $e->getMessage());
+            Log::error("Wablas Auto Notification Error ({$templateCode}): ".$e->getMessage());
+
             return false;
         }
     }
@@ -120,21 +121,25 @@ class WablasNotificationService
     public static function notifyPicNewRegistration($registration): bool
     {
         try {
-            if (!$registration) return false;
+            if (! $registration) {
+                return false;
+            }
 
             $competition = $registration->competition;
-            if (!$competition) return false;
+            if (! $competition) {
+                return false;
+            }
 
             // Find all assigned PIC phone numbers for this competition (multi-PIC support)
             $phones = $competition->all_pic_phones;
 
             // If no direct PIC assigned, fallback to any user with role pic_lomba
             if (empty($phones)) {
-                $picUser = \App\Models\User::where('role', 'pic_lomba')
+                $picUser = User::where('role', 'pic_lomba')
                     ->whereNotNull('phone')
                     ->where('phone', '!=', '')
                     ->first();
-                if ($picUser && !empty($picUser->phone)) {
+                if ($picUser && ! empty($picUser->phone)) {
                     $phones = [$picUser->phone];
                 }
             }
@@ -158,17 +163,18 @@ class WablasNotificationService
                     'cabang_lomba' => $competition->name,
                     'kode_pendaftaran' => $registration->registration_code,
                     'phone_pendaftar' => $pendaftarPhone,
-                    'waktu_daftar' => now()->translatedFormat('d M Y H:i') . ' WIB',
+                    'waktu_daftar' => now()->translatedFormat('d M Y H:i').' WIB',
                     'link_login' => route('pic.dashboard'),
                 ]);
-                if (!$sent) {
+                if (! $sent) {
                     $allSent = false;
                 }
             }
 
             return $allSent;
         } catch (\Throwable $e) {
-            Log::error("notifyPicNewRegistration Error: " . $e->getMessage());
+            Log::error('notifyPicNewRegistration Error: '.$e->getMessage());
+
             return false;
         }
     }
@@ -179,13 +185,15 @@ class WablasNotificationService
     public static function notifyTreasurerNewPayment($registration, $customAmount = null): bool
     {
         try {
-            if (!$registration) return false;
+            if (! $registration) {
+                return false;
+            }
 
             // Get Treasurer Phone from AppSetting or role
             $treasurerPhone = trim(AppSetting::get('treasurer_phone_number', ''));
             if (empty($treasurerPhone)) {
                 // Fallback to superadmin phone if available
-                $superAdmin = \App\Models\User::where('role', 'superadmin')->whereNotNull('phone')->first();
+                $superAdmin = User::where('role', 'superadmin')->whereNotNull('phone')->first();
                 $treasurerPhone = $superAdmin->phone ?? '';
             }
 
@@ -209,11 +217,12 @@ class WablasNotificationService
                 'kode_pendaftaran' => $registration->registration_code,
                 'nominal_biaya' => $fee,
                 'jumlah_peserta' => $registration->members->count() ?: 1,
-                'waktu_daftar' => now()->translatedFormat('d M Y H:i') . ' WIB',
+                'waktu_daftar' => now()->translatedFormat('d M Y H:i').' WIB',
                 'link_login' => route('admin.dashboard'),
             ]);
         } catch (\Throwable $e) {
-            Log::error("notifyTreasurerNewPayment Error: " . $e->getMessage());
+            Log::error('notifyTreasurerNewPayment Error: '.$e->getMessage());
+
             return false;
         }
     }

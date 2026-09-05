@@ -11,7 +11,7 @@ class DocumentController extends Controller
     protected function checkAccess($registration, $requireVerified = false)
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             abort(401);
         }
 
@@ -41,7 +41,9 @@ class DocumentController extends Controller
     {
         $registration = Registration::with(['user', 'competition.category', 'members', 'invoice'])->findOrFail($registration_id);
         $redirect = $this->checkAccess($registration, false);
-        if ($redirect) return $redirect;
+        if ($redirect) {
+            return $redirect;
+        }
 
         return view('documents.print-account-proof', compact('registration'));
     }
@@ -53,7 +55,9 @@ class DocumentController extends Controller
     {
         $registration = Registration::with(['user', 'competition.category', 'members', 'verifier'])->findOrFail($registration_id);
         $redirect = $this->checkAccess($registration, true);
-        if ($redirect) return $redirect;
+        if ($redirect) {
+            return $redirect;
+        }
 
         return view('documents.print-registration-form', compact('registration'));
     }
@@ -65,7 +69,9 @@ class DocumentController extends Controller
     {
         $registration = Registration::with(['user', 'competition', 'invoice.registrations.competition', 'members'])->findOrFail($registration_id);
         $redirect = $this->checkAccess($registration, true);
-        if ($redirect) return $redirect;
+        if ($redirect) {
+            return $redirect;
+        }
 
         return view('documents.print-receipt', compact('registration'));
     }
@@ -76,7 +82,7 @@ class DocumentController extends Controller
     public function printCollectiveRegistrations(Request $request)
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             abort(401);
         }
 

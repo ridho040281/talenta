@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\AppSetting;
 use App\Models\BroadcastLog;
 use App\Models\Competition;
@@ -11,8 +12,14 @@ use App\Models\User;
 use App\Models\WhatsappTemplate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class AdminSettingsController extends Controller
 {
@@ -34,7 +41,7 @@ class AdminSettingsController extends Controller
             'contact_email' => AppSetting::get('contact_email', 'talenta@mtsn1blitar.sch.id'),
             'school_website' => AppSetting::get('school_website', 'https://mtsn1blitar.sch.id'),
             'event_year' => AppSetting::get('event_year', '2026'),
-            
+
             // Uploaded Images
             'app_logo' => AppSetting::get('app_logo', null),
             'favicon' => AppSetting::get('favicon', null),
@@ -87,26 +94,26 @@ class AdminSettingsController extends Controller
         ];
 
         $systemInfo = [
-            'framework' => 'Laravel ' . app()->version(),
+            'framework' => 'Laravel '.app()->version(),
             'php_version' => PHP_VERSION,
             'architecture' => 'MVC (Model - View - Controller)',
-            'database' => 'MySQL (InnoDB - ' . config('database.connections.mysql.database') . ')',
+            'database' => 'MySQL (InnoDB - '.config('database.connections.mysql.database').')',
             'javascript_env' => 'TailwindCSS & AlpineJS',
             'pdf_generator' => 'Dompdf Engine',
             'whatsapp_gateway' => 'Direct API Protocol',
-            'server_os' => php_uname('s') . ' ' . php_uname('r'),
-            'timezone' => config('app.timezone') . ' (WIB)',
+            'server_os' => php_uname('s').' '.php_uname('r'),
+            'timezone' => config('app.timezone').' (WIB)',
         ];
 
-        $activityLogs = \App\Models\ActivityLog::with('user')
+        $activityLogs = ActivityLog::with('user')
             ->latest()
             ->paginate(50);
 
         $logStats = [
-            'total_today' => \App\Models\ActivityLog::whereDate('created_at', today())->count(),
-            'failed_logins_today' => \App\Models\ActivityLog::where('event', 'LOGIN_FAILED')->whereDate('created_at', today())->count(),
-            'success_logins_today' => \App\Models\ActivityLog::where('event', 'LOGIN_SUCCESS')->whereDate('created_at', today())->count(),
-            'total_logs' => \App\Models\ActivityLog::count(),
+            'total_today' => ActivityLog::whereDate('created_at', today())->count(),
+            'failed_logins_today' => ActivityLog::where('event', 'LOGIN_FAILED')->whereDate('created_at', today())->count(),
+            'success_logins_today' => ActivityLog::where('event', 'LOGIN_SUCCESS')->whereDate('created_at', today())->count(),
+            'total_logs' => ActivityLog::count(),
         ];
 
         return view('admin.settings.general', compact('settings', 'systemInfo', 'activityLogs', 'logStats'));
@@ -119,14 +126,14 @@ class AdminSettingsController extends Controller
     {
         $mode = $request->input('mode', 'old');
         if ($mode === 'all') {
-            \App\Models\ActivityLog::truncate();
+            ActivityLog::truncate();
             $msg = 'Seluruh riwayat log aktivitas dan keamanan berhasil dibersihkan.';
         } else {
-            $count = \App\Models\ActivityLog::where('created_at', '<', now()->subDays(30))->delete();
+            $count = ActivityLog::where('created_at', '<', now()->subDays(30))->delete();
             $msg = "Riwayat log aktivitas yang lebih lama dari 30 hari ({$count} data) berhasil dibersihkan.";
         }
 
-        \App\Models\ActivityLog::record(
+        ActivityLog::record(
             'CLEAR_LOGS',
             $msg,
             Auth::user(),
@@ -154,7 +161,7 @@ class AdminSettingsController extends Controller
             'contact_email' => 'nullable|email|max:100',
             'school_website' => 'nullable|url|max:255',
             'event_year' => 'nullable|string|max:10',
-            
+
             // Files
             'app_logo' => 'nullable|image|mimes:jpeg,png,jpg,svg,webp|max:3072',
             'favicon' => 'nullable|image|mimes:jpeg,png,jpg,svg,webp,ico|max:1024',
@@ -216,7 +223,7 @@ class AdminSettingsController extends Controller
 
                 // Auto crop white/transparent borders for Kop & Letterhead images so they fit flush to width
                 if (in_array($fileKey, ['kop_lembaga', 'kop_kegiatan', 'letterhead_image', 'certificate_header_image'])) {
-                    $fullPath = storage_path('app/public/' . $path);
+                    $fullPath = storage_path('app/public/'.$path);
                     self::autoCropImageMargins($fullPath);
                 }
 
@@ -244,7 +251,7 @@ class AdminSettingsController extends Controller
                 if (Storage::disk('public')->exists($toDelete)) {
                     Storage::disk('public')->delete($toDelete);
                 }
-                $currentSponsorLogos = array_values(array_filter($currentSponsorLogos, fn($item) => $item !== $toDelete));
+                $currentSponsorLogos = array_values(array_filter($currentSponsorLogos, fn ($item) => $item !== $toDelete));
             }
         }
 
@@ -267,7 +274,7 @@ class AdminSettingsController extends Controller
                 if (Storage::disk('public')->exists($toDelete)) {
                     Storage::disk('public')->delete($toDelete);
                 }
-                $currentPamphletImages = array_values(array_filter($currentPamphletImages, fn($item) => $item !== $toDelete));
+                $currentPamphletImages = array_values(array_filter($currentPamphletImages, fn ($item) => $item !== $toDelete));
             }
         }
 
@@ -295,7 +302,7 @@ class AdminSettingsController extends Controller
             'catalog_tagline', 'catalog_title', 'timeline_tagline', 'timeline_title',
             'timeline_subtitle', 'cta_tagline', 'cta_title', 'cta_subtitle',
             'cta_button_text', 'sponsor_title', 'pamphlet_embed_url', 'footer_about',
-            'treasurer_phone_number'
+            'treasurer_phone_number',
         ];
 
         foreach ($textFields as $field) {
@@ -307,7 +314,6 @@ class AdminSettingsController extends Controller
         return redirect()->back()->with('success', 'Pengaturan aplikasi dan konten landing page berhasil disimpan.');
     }
 
-
     /**
      * WhatsApp Blast Management
      */
@@ -315,7 +321,7 @@ class AdminSettingsController extends Controller
     {
         $competitions = Competition::orderBy('name')->get();
         $broadcastLogs = BroadcastLog::with('sender')->latest()->paginate(10);
-        
+
         $stats = [
             'total_recipients' => Registration::count(),
             'verified_recipients' => Registration::where('status', 'verified')->count(),
@@ -335,16 +341,21 @@ class AdminSettingsController extends Controller
         foreach ($registrations as $reg) {
             $firstMember = $reg->members->first();
             $purePhone = $reg->official_phone ?: ($reg->user?->phone ?: $firstMember?->phone);
-            if (empty($purePhone)) continue;
+            if (empty($purePhone)) {
+                continue;
+            }
 
             $cleanPhone = preg_replace('/[^0-9]/', '', $purePhone);
-            if (str_starts_with($cleanPhone, '0')) $cleanPhone = '62' . substr($cleanPhone, 1);
-            elseif (str_starts_with($cleanPhone, '8')) $cleanPhone = '628' . substr($cleanPhone, 1);
+            if (str_starts_with($cleanPhone, '0')) {
+                $cleanPhone = '62'.substr($cleanPhone, 1);
+            } elseif (str_starts_with($cleanPhone, '8')) {
+                $cleanPhone = '628'.substr($cleanPhone, 1);
+            }
 
             $participantContacts->push([
-                'id' => 'reg_' . $reg->id,
+                'id' => 'reg_'.$reg->id,
                 'name' => $reg->display_name,
-                'subtitle' => ($reg->institution_name ?: 'Mandiri') . ' • ' . ($reg->competition->name ?? 'Lomba'),
+                'subtitle' => ($reg->institution_name ?: 'Mandiri').' • '.($reg->competition->name ?? 'Lomba'),
                 'institution' => $reg->institution_name ?: '-',
                 'phone' => $cleanPhone,
                 'display_phone' => $purePhone,
@@ -356,13 +367,16 @@ class AdminSettingsController extends Controller
         $userParticipants = User::where('role', 'peserta')->whereNotNull('phone')->get();
         foreach ($userParticipants as $u) {
             $cleanPhone = preg_replace('/[^0-9]/', '', $u->phone);
-            if (str_starts_with($cleanPhone, '0')) $cleanPhone = '62' . substr($cleanPhone, 1);
-            elseif (str_starts_with($cleanPhone, '8')) $cleanPhone = '628' . substr($cleanPhone, 1);
+            if (str_starts_with($cleanPhone, '0')) {
+                $cleanPhone = '62'.substr($cleanPhone, 1);
+            } elseif (str_starts_with($cleanPhone, '8')) {
+                $cleanPhone = '628'.substr($cleanPhone, 1);
+            }
 
             $participantContacts->push([
-                'id' => 'user_' . $u->id,
+                'id' => 'user_'.$u->id,
                 'name' => $u->name,
-                'subtitle' => ($u->institution_name ?: 'Akun Peserta') . ' • Terdaftar Akun',
+                'subtitle' => ($u->institution_name ?: 'Akun Peserta').' • Terdaftar Akun',
                 'institution' => $u->institution_name ?: '-',
                 'phone' => $cleanPhone,
                 'display_phone' => $u->phone,
@@ -376,10 +390,13 @@ class AdminSettingsController extends Controller
         $committeeUsers = User::whereIn('role', ['superadmin', 'pic_lomba', 'juri'])->whereNotNull('phone')->orderBy('role')->orderBy('name')->get();
         $committeeContacts = $committeeUsers->map(function ($u) {
             $cleanPhone = preg_replace('/[^0-9]/', '', $u->phone);
-            if (str_starts_with($cleanPhone, '0')) $cleanPhone = '62' . substr($cleanPhone, 1);
-            elseif (str_starts_with($cleanPhone, '8')) $cleanPhone = '628' . substr($cleanPhone, 1);
+            if (str_starts_with($cleanPhone, '0')) {
+                $cleanPhone = '62'.substr($cleanPhone, 1);
+            } elseif (str_starts_with($cleanPhone, '8')) {
+                $cleanPhone = '628'.substr($cleanPhone, 1);
+            }
 
-            $roleLabel = match($u->role) {
+            $roleLabel = match ($u->role) {
                 'superadmin' => 'Super Administrator',
                 'pic_lomba' => 'Koordinator / PIC Lomba',
                 'juri' => 'Dewan Juri / Wasit',
@@ -387,9 +404,9 @@ class AdminSettingsController extends Controller
             };
 
             return [
-                'id' => 'panitia_' . $u->id,
+                'id' => 'panitia_'.$u->id,
                 'name' => $u->name,
-                'subtitle' => $roleLabel . ($u->institution_name ? ' • ' . $u->institution_name : ''),
+                'subtitle' => $roleLabel.($u->institution_name ? ' • '.$u->institution_name : ''),
                 'institution' => $u->institution_name ?: 'Panitia TALENTA',
                 'phone' => $cleanPhone,
                 'display_phone' => $u->phone,
@@ -404,13 +421,16 @@ class AdminSettingsController extends Controller
         $distinctInstitutions = User::whereNotNull('institution_name')->whereNotNull('phone')->get();
         foreach ($distinctInstitutions as $inst) {
             $cleanPhone = preg_replace('/[^0-9]/', '', $inst->phone);
-            if (str_starts_with($cleanPhone, '0')) $cleanPhone = '62' . substr($cleanPhone, 1);
-            elseif (str_starts_with($cleanPhone, '8')) $cleanPhone = '628' . substr($cleanPhone, 1);
+            if (str_starts_with($cleanPhone, '0')) {
+                $cleanPhone = '62'.substr($cleanPhone, 1);
+            } elseif (str_starts_with($cleanPhone, '8')) {
+                $cleanPhone = '628'.substr($cleanPhone, 1);
+            }
 
             $publicationContacts->push([
-                'id' => 'pub_' . $inst->id,
+                'id' => 'pub_'.$inst->id,
                 'name' => $inst->institution_name,
-                'subtitle' => 'Humas / Delegasi: ' . $inst->name,
+                'subtitle' => 'Humas / Delegasi: '.$inst->name,
                 'institution' => $inst->institution_name,
                 'phone' => $cleanPhone,
                 'display_phone' => $inst->phone,
@@ -422,14 +442,17 @@ class AdminSettingsController extends Controller
         // 4. Custom / Saved Contacts (Manual & Excel imports)
         $customContacts = CustomContact::latest()->get()->map(function ($c) {
             $cleanPhone = preg_replace('/[^0-9]/', '', $c->phone);
-            if (str_starts_with($cleanPhone, '0')) $cleanPhone = '62' . substr($cleanPhone, 1);
-            elseif (str_starts_with($cleanPhone, '8')) $cleanPhone = '628' . substr($cleanPhone, 1);
+            if (str_starts_with($cleanPhone, '0')) {
+                $cleanPhone = '62'.substr($cleanPhone, 1);
+            } elseif (str_starts_with($cleanPhone, '8')) {
+                $cleanPhone = '628'.substr($cleanPhone, 1);
+            }
 
             return [
-                'id' => 'custom_' . $c->id,
+                'id' => 'custom_'.$c->id,
                 'real_id' => $c->id,
                 'name' => $c->name,
-                'subtitle' => ($c->institution && $c->institution !== '-' ? $c->institution : 'Kontak Manual') . ' • Tersimpan',
+                'subtitle' => ($c->institution && $c->institution !== '-' ? $c->institution : 'Kontak Manual').' • Tersimpan',
                 'institution' => $c->institution ?: '-',
                 'phone' => $cleanPhone,
                 'display_phone' => $c->phone,
@@ -467,8 +490,8 @@ class AdminSettingsController extends Controller
         ]);
 
         $host = trim($request->api_host);
-        if (!preg_match('#^https?://#i', $host)) {
-            $host = 'https://' . $host;
+        if (! preg_match('#^https?://#i', $host)) {
+            $host = 'https://'.$host;
         }
         $host = rtrim($host, '/');
 
@@ -492,7 +515,7 @@ class AdminSettingsController extends Controller
         $wablasToken = trim(AppSetting::get('wablas_api_token', ''));
         $wablasSecretKey = trim(AppSetting::get('wablas_secret_key', ''));
 
-        if (!$wablasToken) {
+        if (! $wablasToken) {
             return response()->json([
                 'connected' => false,
                 'status' => 'unconfigured',
@@ -502,11 +525,11 @@ class AdminSettingsController extends Controller
             ]);
         }
 
-        $authHeader = $wablasSecretKey ? ($wablasToken . '.' . $wablasSecretKey) : $wablasToken;
+        $authHeader = $wablasSecretKey ? ($wablasToken.'.'.$wablasSecretKey) : $wablasToken;
 
         try {
             // Priority 1: Query param ?token= (Official Wablas standard)
-            $response = \Illuminate\Support\Facades\Http::withoutVerifying()
+            $response = Http::withoutVerifying()
                 ->timeout(8)
                 ->withHeaders([
                     'Authorization' => $authHeader,
@@ -514,8 +537,8 @@ class AdminSettingsController extends Controller
                 ->get("{$wablasHost}/api/device/info?token={$wablasToken}");
 
             // Priority 2: Header Authorization only
-            if (!$response->successful() || $response->json('status') === false) {
-                $response = \Illuminate\Support\Facades\Http::withoutVerifying()
+            if (! $response->successful() || $response->json('status') === false) {
+                $response = Http::withoutVerifying()
                     ->timeout(8)
                     ->withHeaders([
                         'Authorization' => $authHeader,
@@ -524,8 +547,8 @@ class AdminSettingsController extends Controller
             }
 
             // Priority 3: Fallback token only
-            if (!$response->successful() || $response->json('status') === false) {
-                $response = \Illuminate\Support\Facades\Http::withoutVerifying()
+            if (! $response->successful() || $response->json('status') === false) {
+                $response = Http::withoutVerifying()
                     ->timeout(8)
                     ->get("{$wablasHost}/api/device/info?token={$wablasToken}");
             }
@@ -533,9 +556,9 @@ class AdminSettingsController extends Controller
             if ($response->successful() && $response->json('status') !== false) {
                 $body = $response->json();
                 $data = $body['data'] ?? [];
-                $rawStatus = strtolower((string)($data['status'] ?? ''));
-                
-                $isConnected = in_array($rawStatus, ['connected', 'online', 'active']) || (!empty($data['sender']) && $rawStatus !== 'disconnected') || (!empty($data['whatsapp_number']) && $rawStatus !== 'disconnected');
+                $rawStatus = strtolower((string) ($data['status'] ?? ''));
+
+                $isConnected = in_array($rawStatus, ['connected', 'online', 'active']) || (! empty($data['sender']) && $rawStatus !== 'disconnected') || (! empty($data['whatsapp_number']) && $rawStatus !== 'disconnected');
                 $sender = $data['sender'] ?? ($data['name'] ?? ($data['whatsapp_name'] ?? ($data['whatsapp_number'] ?? 'Device Terhubung')));
                 $quota = $data['quota'] ?? ($data['remaining_quota'] ?? '-');
 
@@ -550,11 +573,12 @@ class AdminSettingsController extends Controller
                     'raw_status' => $rawStatus,
                 ]);
             } else {
-                $err = $response->json('message') ?? ('Status HTTP ' . $response->status());
+                $err = $response->json('message') ?? ('Status HTTP '.$response->status());
+
                 return response()->json([
                     'connected' => false,
                     'status' => 'disconnected',
-                    'message' => 'Wablas: ' . $err,
+                    'message' => 'Wablas: '.$err,
                     'sender' => null,
                     'quota' => '-',
                 ]);
@@ -563,7 +587,7 @@ class AdminSettingsController extends Controller
             return response()->json([
                 'connected' => false,
                 'status' => 'error',
-                'message' => 'Gagal koneksi: ' . $e->getMessage(),
+                'message' => 'Gagal koneksi: '.$e->getMessage(),
                 'sender' => null,
                 'quota' => '-',
             ]);
@@ -579,22 +603,22 @@ class AdminSettingsController extends Controller
         $wablasToken = trim(AppSetting::get('wablas_api_token', ''));
         $wablasSecretKey = trim(AppSetting::get('wablas_secret_key', ''));
 
-        if (!$wablasToken) {
+        if (! $wablasToken) {
             return redirect()->back()->with('error', 'Token API Wablas belum diisi.');
         }
 
-        $authHeader = $wablasSecretKey ? ($wablasToken . '.' . $wablasSecretKey) : $wablasToken;
+        $authHeader = $wablasSecretKey ? ($wablasToken.'.'.$wablasSecretKey) : $wablasToken;
 
         try {
-            $response = \Illuminate\Support\Facades\Http::withoutVerifying()
+            $response = Http::withoutVerifying()
                 ->timeout(10)
                 ->withHeaders([
                     'Authorization' => $authHeader,
                 ])
                 ->get("{$wablasHost}/api/device/info?token={$wablasToken}");
 
-            if (!$response->successful() || $response->json('status') === false) {
-                $response = \Illuminate\Support\Facades\Http::withoutVerifying()
+            if (! $response->successful() || $response->json('status') === false) {
+                $response = Http::withoutVerifying()
                     ->timeout(10)
                     ->get("{$wablasHost}/api/device/info?token={$wablasToken}");
             }
@@ -603,13 +627,15 @@ class AdminSettingsController extends Controller
                 $body = $response->json();
                 $sender = $body['data']['sender'] ?? ($body['data']['name'] ?? ($body['data']['whatsapp_number'] ?? 'Device Terhubung'));
                 $quota = $body['data']['quota'] ?? '-';
+
                 return redirect()->back()->with('success', "Koneksi API Wablas Berhasil! Device: {$sender} (Sisa Kuota: {$quota})");
             } else {
-                $err = $response->json('message') ?? ('Status HTTP ' . $response->status());
-                return redirect()->back()->with('error', 'Respon dari Wablas: ' . $err);
+                $err = $response->json('message') ?? ('Status HTTP '.$response->status());
+
+                return redirect()->back()->with('error', 'Respon dari Wablas: '.$err);
             }
         } catch (\Throwable $e) {
-            return redirect()->back()->with('error', 'Gagal menghubungi server Wablas: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal menghubungi server Wablas: '.$e->getMessage());
         }
     }
 
@@ -618,7 +644,7 @@ class AdminSettingsController extends Controller
      */
     public function downloadWhatsappTemplate()
     {
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Data WhatsApp Blast');
 
@@ -643,20 +669,20 @@ class AdminSettingsController extends Controller
         $headerStyle = [
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
             'fill' => [
-                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'fillType' => Fill::FILL_SOLID,
                 'startColor' => ['rgb' => '10B981'],
             ],
-            'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
         ];
         $sheet->getStyle('A1:C1')->applyFromArray($headerStyle);
 
         // Format phone column as text
-        $sheet->getStyle('A2:A100')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_TEXT);
+        $sheet->getStyle('A2:A100')->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_TEXT);
 
         $fileName = 'Template_WhatsApp_Blast_TALENTA.xlsx';
 
         return response()->streamDownload(function () use ($spreadsheet) {
-            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+            $writer = new Xlsx($spreadsheet);
             $writer->save('php://output');
         }, $fileName, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -688,7 +714,9 @@ class AdminSettingsController extends Controller
             $lines = preg_split('/[\r\n]+/', trim($request->manual_numbers));
             foreach ($lines as $line) {
                 $line = trim($line);
-                if (empty($line)) continue;
+                if (empty($line)) {
+                    continue;
+                }
 
                 $parts = preg_split('/[,;\t]+/', $line);
                 $rawPhone = trim($parts[0] ?? '');
@@ -696,12 +724,14 @@ class AdminSettingsController extends Controller
                 $rawSchool = isset($parts[2]) ? trim($parts[2]) : '-';
 
                 $cleanPhone = preg_replace('/[^0-9]/', '', $rawPhone);
-                if (empty($cleanPhone)) continue;
+                if (empty($cleanPhone)) {
+                    continue;
+                }
 
                 if (str_starts_with($cleanPhone, '0')) {
-                    $cleanPhone = '62' . substr($cleanPhone, 1);
+                    $cleanPhone = '62'.substr($cleanPhone, 1);
                 } elseif (str_starts_with($cleanPhone, '8')) {
-                    $cleanPhone = '628' . substr($cleanPhone, 1);
+                    $cleanPhone = '628'.substr($cleanPhone, 1);
                 }
 
                 $recipientsList->push([
@@ -725,15 +755,15 @@ class AdminSettingsController extends Controller
             }
 
             $recipientsList = $recipientsList->unique('phone');
-            $targetLabel = 'Input Manual (' . $recipientsList->count() . ' Nomor)';
+            $targetLabel = 'Input Manual ('.$recipientsList->count().' Nomor)';
         } elseif ($request->target_audience === 'excel') {
-            if (!$request->hasFile('excel_file') || !$request->file('excel_file')->isValid()) {
+            if (! $request->hasFile('excel_file') || ! $request->file('excel_file')->isValid()) {
                 return redirect()->back()->with('error', 'Silakan unggah file Excel / CSV yang valid.');
             }
 
             try {
                 $file = $request->file('excel_file');
-                $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getRealPath());
+                $spreadsheet = IOFactory::load($file->getRealPath());
                 $sheet = $spreadsheet->getActiveSheet();
                 $rows = $sheet->toArray(null, true, true, true);
 
@@ -741,25 +771,29 @@ class AdminSettingsController extends Controller
                 foreach ($rows as $row) {
                     if ($isFirstRow) {
                         $isFirstRow = false;
-                        $firstCol = strtolower(trim((string)($row['A'] ?? '')));
+                        $firstCol = strtolower(trim((string) ($row['A'] ?? '')));
                         if (str_contains($firstCol, 'nomor') || str_contains($firstCol, 'phone') || str_contains($firstCol, 'wa')) {
                             continue;
                         }
                     }
 
-                    $rawPhone = trim((string)($row['A'] ?? ''));
-                    $rawName = trim((string)($row['B'] ?? ''));
-                    $rawSchool = trim((string)($row['C'] ?? ''));
+                    $rawPhone = trim((string) ($row['A'] ?? ''));
+                    $rawName = trim((string) ($row['B'] ?? ''));
+                    $rawSchool = trim((string) ($row['C'] ?? ''));
 
-                    if (empty($rawPhone)) continue;
+                    if (empty($rawPhone)) {
+                        continue;
+                    }
 
                     $cleanPhone = preg_replace('/[^0-9]/', '', $rawPhone);
-                    if (empty($cleanPhone)) continue;
+                    if (empty($cleanPhone)) {
+                        continue;
+                    }
 
                     if (str_starts_with($cleanPhone, '0')) {
-                        $cleanPhone = '62' . substr($cleanPhone, 1);
+                        $cleanPhone = '62'.substr($cleanPhone, 1);
                     } elseif (str_starts_with($cleanPhone, '8')) {
-                        $cleanPhone = '628' . substr($cleanPhone, 1);
+                        $cleanPhone = '628'.substr($cleanPhone, 1);
                     }
 
                     $recipientsList->push([
@@ -783,16 +817,19 @@ class AdminSettingsController extends Controller
                 }
 
                 $recipientsList = $recipientsList->unique('phone');
-                $targetLabel = 'Import Excel: ' . $file->getClientOriginalName() . ' (' . $recipientsList->count() . ' Nomor)';
+                $targetLabel = 'Import Excel: '.$file->getClientOriginalName().' ('.$recipientsList->count().' Nomor)';
             } catch (\Throwable $e) {
-                return redirect()->back()->with('error', 'Gagal membaca file Excel: ' . $e->getMessage());
+                return redirect()->back()->with('error', 'Gagal membaca file Excel: '.$e->getMessage());
             }
         } elseif ($request->target_audience === 'panitia') {
             $committeeUsers = User::whereIn('role', ['superadmin', 'pic_lomba', 'juri'])->whereNotNull('phone')->get();
             foreach ($committeeUsers as $u) {
                 $cleanPhone = preg_replace('/[^0-9]/', '', $u->phone);
-                if (str_starts_with($cleanPhone, '0')) $cleanPhone = '62' . substr($cleanPhone, 1);
-                elseif (str_starts_with($cleanPhone, '8')) $cleanPhone = '628' . substr($cleanPhone, 1);
+                if (str_starts_with($cleanPhone, '0')) {
+                    $cleanPhone = '62'.substr($cleanPhone, 1);
+                } elseif (str_starts_with($cleanPhone, '8')) {
+                    $cleanPhone = '628'.substr($cleanPhone, 1);
+                }
 
                 $recipientsList->push([
                     'phone' => $cleanPhone,
@@ -804,13 +841,16 @@ class AdminSettingsController extends Controller
                 ]);
             }
             $recipientsList = $recipientsList->unique('phone');
-            $targetLabel = 'Semua Panitia & Juri (' . $recipientsList->count() . ' Kontak)';
+            $targetLabel = 'Semua Panitia & Juri ('.$recipientsList->count().' Kontak)';
         } elseif ($request->target_audience === 'publikasi') {
             $instUsers = User::whereNotNull('institution_name')->whereNotNull('phone')->get();
             foreach ($instUsers as $u) {
                 $cleanPhone = preg_replace('/[^0-9]/', '', $u->phone);
-                if (str_starts_with($cleanPhone, '0')) $cleanPhone = '62' . substr($cleanPhone, 1);
-                elseif (str_starts_with($cleanPhone, '8')) $cleanPhone = '628' . substr($cleanPhone, 1);
+                if (str_starts_with($cleanPhone, '0')) {
+                    $cleanPhone = '62'.substr($cleanPhone, 1);
+                } elseif (str_starts_with($cleanPhone, '8')) {
+                    $cleanPhone = '628'.substr($cleanPhone, 1);
+                }
 
                 $recipientsList->push([
                     'phone' => $cleanPhone,
@@ -822,7 +862,7 @@ class AdminSettingsController extends Controller
                 ]);
             }
             $recipientsList = $recipientsList->unique('phone');
-            $targetLabel = 'Publikasi & Humas Sekolah (' . $recipientsList->count() . ' Kontak)';
+            $targetLabel = 'Publikasi & Humas Sekolah ('.$recipientsList->count().' Kontak)';
         } else {
             $query = Registration::with(['competition', 'user', 'members']);
 
@@ -836,7 +876,7 @@ class AdminSettingsController extends Controller
                 $query->where('competition_id', $request->competition_id);
                 $comp = Competition::find($request->competition_id);
                 $compName = $comp ? $comp->name : null;
-                $targetLabel = 'Lomba: ' . ($compName ?? 'Spesifik');
+                $targetLabel = 'Lomba: '.($compName ?? 'Spesifik');
             } else {
                 $targetLabel = 'Semua Pendaftar Terdata';
             }
@@ -845,14 +885,16 @@ class AdminSettingsController extends Controller
             foreach ($regs as $reg) {
                 $firstMember = $reg->members->first();
                 $purePhone = $reg->official_phone ?: ($reg->user?->phone ?: $firstMember?->phone);
-                
-                if (empty($purePhone)) continue;
+
+                if (empty($purePhone)) {
+                    continue;
+                }
 
                 $phone = preg_replace('/[^0-9]/', '', $purePhone);
                 if (str_starts_with($phone, '0')) {
-                    $phone = '62' . substr($phone, 1);
+                    $phone = '62'.substr($phone, 1);
                 } elseif (str_starts_with($phone, '8')) {
-                    $phone = '628' . substr($phone, 1);
+                    $phone = '628'.substr($phone, 1);
                 }
 
                 $recipientsList->push([
@@ -861,7 +903,7 @@ class AdminSettingsController extends Controller
                     'school' => $reg->institution_name ?: '-',
                     'competition' => $reg->competition->name ?? 'TALENTA 2026',
                     'no_peserta' => $reg->participant_number ?? $reg->registration_code,
-                    'link_scoreboard' => url('/live-scoreboard/' . ($reg->competition->slug ?? '')),
+                    'link_scoreboard' => url('/live-scoreboard/'.($reg->competition->slug ?? '')),
                 ]);
             }
 
@@ -875,12 +917,12 @@ class AdminSettingsController extends Controller
         $wablasHost = rtrim(AppSetting::get('wablas_api_host', 'https://jogja.wablas.com/'), '/');
         $wablasToken = AppSetting::get('wablas_api_token', '');
         $wablasSecretKey = AppSetting::get('wablas_secret_key', '');
-        $authHeader = $wablasSecretKey ? ($wablasToken . '.' . $wablasSecretKey) : $wablasToken;
+        $authHeader = $wablasSecretKey ? ($wablasToken.'.'.$wablasSecretKey) : $wablasToken;
 
         $sentSuccessCount = 0;
         $failedCount = 0;
 
-        if (!empty($wablasToken)) {
+        if (! empty($wablasToken)) {
             foreach ($recipientsList as $recipient) {
                 $phone = $recipient['phone'];
 
@@ -892,7 +934,7 @@ class AdminSettingsController extends Controller
                 $msg = str_replace('{link_scoreboard}', $recipient['link_scoreboard'], $msg);
 
                 try {
-                    $res = \Illuminate\Support\Facades\Http::withoutVerifying()
+                    $res = Http::withoutVerifying()
                         ->timeout(10)
                         ->withHeaders([
                             'Authorization' => $authHeader,
@@ -922,12 +964,12 @@ class AdminSettingsController extends Controller
             'target_competition' => $compName ?: $targetLabel,
             'recipients_count' => $recipientsList->count(),
             'message' => $request->message,
-            'status' => (!empty($wablasToken) && $sentSuccessCount > 0) ? 'sent' : 'logged',
+            'status' => (! empty($wablasToken) && $sentSuccessCount > 0) ? 'sent' : 'logged',
         ]);
 
-        $feedbackMsg = 'Pesan WhatsApp Blast berhasil diproses untuk ' . $recipientsList->count() . ' kontak penerima.';
-        if (!empty($wablasToken)) {
-            $feedbackMsg .= " ({$sentSuccessCount} pesan terkirim via Wablas" . ($failedCount > 0 ? ", {$failedCount} gagal/tidak aktif" : "") . ").";
+        $feedbackMsg = 'Pesan WhatsApp Blast berhasil diproses untuk '.$recipientsList->count().' kontak penerima.';
+        if (! empty($wablasToken)) {
+            $feedbackMsg .= " ({$sentSuccessCount} pesan terkirim via Wablas".($failedCount > 0 ? ", {$failedCount} gagal/tidak aktif" : '').').';
         } else {
             $feedbackMsg .= ' (Mode Simulasi Log: Token Wablas belum dihubungkan).';
         }
@@ -942,6 +984,7 @@ class AdminSettingsController extends Controller
     {
         $log = BroadcastLog::findOrFail($id);
         $log->delete();
+
         return redirect()->back()->with('success', 'Riwayat broadcast WhatsApp berhasil dihapus.');
     }
 
@@ -951,6 +994,7 @@ class AdminSettingsController extends Controller
     public function clearAllBroadcastLogs()
     {
         BroadcastLog::truncate();
+
         return redirect()->back()->with('success', 'Seluruh riwayat broadcast WhatsApp berhasil dibersihkan.');
     }
 
@@ -967,8 +1011,11 @@ class AdminSettingsController extends Controller
         ]);
 
         $cleanPhone = preg_replace('/[^0-9]/', '', $request->phone);
-        if (str_starts_with($cleanPhone, '0')) $cleanPhone = '62' . substr($cleanPhone, 1);
-        elseif (str_starts_with($cleanPhone, '8')) $cleanPhone = '628' . substr($cleanPhone, 1);
+        if (str_starts_with($cleanPhone, '0')) {
+            $cleanPhone = '62'.substr($cleanPhone, 1);
+        } elseif (str_starts_with($cleanPhone, '8')) {
+            $cleanPhone = '628'.substr($cleanPhone, 1);
+        }
 
         CustomContact::updateOrCreate(
             ['phone' => $cleanPhone],
@@ -989,6 +1036,7 @@ class AdminSettingsController extends Controller
     {
         $contact = CustomContact::findOrFail($id);
         $contact->delete();
+
         return redirect()->back()->with('success', 'Kontak berhasil dihapus dari Buku Kontak.');
     }
 
@@ -998,6 +1046,7 @@ class AdminSettingsController extends Controller
     public function clearAllCustomContacts()
     {
         CustomContact::truncate();
+
         return redirect()->back()->with('success', 'Seluruh kontak tersimpan berhasil dibersihkan.');
     }
 
@@ -1013,11 +1062,11 @@ class AdminSettingsController extends Controller
         ]);
 
         WhatsappTemplate::create([
-            'code' => 'custom_' . time(),
+            'code' => 'custom_'.time(),
             'name' => $request->name,
             'description' => $request->description ?: 'Template pesan kustom',
             'message' => $request->message,
-            'is_active' => $request->has('is_active') ? (bool)$request->is_active : true,
+            'is_active' => $request->has('is_active') ? (bool) $request->is_active : true,
             'is_system' => false,
         ]);
 
@@ -1038,6 +1087,7 @@ class AdminSettingsController extends Controller
     public function editWhatsappTemplatePage($id)
     {
         $template = WhatsappTemplate::findOrFail($id);
+
         return view('admin.settings.whatsapp-template-edit', compact('template'));
     }
 
@@ -1062,7 +1112,7 @@ class AdminSettingsController extends Controller
             'is_active' => $request->boolean('is_active', true),
         ]);
 
-        return redirect()->route('admin.settings.whatsapp.blast', ['tab' => 'templates'])->with('success', 'Template pesan WhatsApp "' . $template->name . '" berhasil diperbarui.');
+        return redirect()->route('admin.settings.whatsapp.blast', ['tab' => 'templates'])->with('success', 'Template pesan WhatsApp "'.$template->name.'" berhasil diperbarui.');
     }
 
     /**
@@ -1076,6 +1126,7 @@ class AdminSettingsController extends Controller
         }
 
         $template->delete();
+
         return redirect()->back()->with('success', 'Template pesan kustom berhasil dihapus.');
     }
 
@@ -1085,11 +1136,12 @@ class AdminSettingsController extends Controller
     public function toggleWhatsappTemplate($id)
     {
         $template = WhatsappTemplate::findOrFail($id);
-        $template->is_active = !$template->is_active;
+        $template->is_active = ! $template->is_active;
         $template->save();
 
         $statusStr = $template->is_active ? 'diaktifkan (Auto-Trigger Aktif)' : 'dinonaktifkan (Auto-Trigger Mati)';
-        return redirect()->back()->with('success', 'Status template "' . $template->name . '" berhasil ' . $statusStr . '.');
+
+        return redirect()->back()->with('success', 'Status template "'.$template->name.'" berhasil '.$statusStr.'.');
     }
 
     /**
@@ -1164,12 +1216,12 @@ class AdminSettingsController extends Controller
             'app_name' => AppSetting::get('app_name', 'TALENTA 2026 - MTsN 1 BLITAR'),
             'institution' => AppSetting::get('institution_name', 'MTs Negeri 1 Blitar'),
             'institution_name' => AppSetting::get('institution_name', 'MTs Negeri 1 Blitar'),
-            'headmaster' => AppSetting::get('headmaster_name', 'H. Samsuri, S.Ag., M.Pd.') . ' (NIP: ' . AppSetting::get('headmaster_nip', '-') . ')',
-            'committee_chairman' => AppSetting::get('committee_chairman_name', 'Ahmad Fawaid, S.Pd.I.') . ' (NIP: ' . AppSetting::get('committee_chairman_nip', '-') . ')',
+            'headmaster' => AppSetting::get('headmaster_name', 'H. Samsuri, S.Ag., M.Pd.').' (NIP: '.AppSetting::get('headmaster_nip', '-').')',
+            'committee_chairman' => AppSetting::get('committee_chairman_name', 'Ahmad Fawaid, S.Pd.I.').' (NIP: '.AppSetting::get('committee_chairman_nip', '-').')',
             'app_version' => '1.5.0 (Stable)',
             'laravel_version' => app()->version(),
             'php_version' => PHP_VERSION,
-            'server_software' => $_SERVER['SERVER_SOFTWARE'] ?? 'PHP ' . PHP_VERSION . ' Development Server',
+            'server_software' => $_SERVER['SERVER_SOFTWARE'] ?? 'PHP '.PHP_VERSION.' Development Server',
             'database_engine' => 'MySQL (InnoDB)',
             'db_name' => config('database.connections.mysql.database'),
             'environment' => app()->environment(),
@@ -1188,13 +1240,15 @@ class AdminSettingsController extends Controller
      */
     public static function autoCropImageMargins(string $filePath): void
     {
-        if (!file_exists($filePath) || !extension_loaded('gd')) {
+        if (! file_exists($filePath) || ! extension_loaded('gd')) {
             return;
         }
 
         try {
             $info = @getimagesize($filePath);
-            if (!$info) return;
+            if (! $info) {
+                return;
+            }
 
             $mime = $info['mime'];
             $im = null;
@@ -1206,22 +1260,35 @@ class AdminSettingsController extends Controller
                 $im = @imagecreatefromwebp($filePath);
             }
 
-            if (!$im) return;
+            if (! $im) {
+                return;
+            }
 
             $w = imagesx($im);
             $h = imagesy($im);
 
-            $min_x = $w; $max_x = 0; $min_y = $h; $max_y = 0;
+            $min_x = $w;
+            $max_x = 0;
+            $min_y = $h;
+            $max_y = 0;
 
             for ($y = 0; $y < $h; $y++) {
                 for ($x = 0; $x < $w; $x++) {
                     $rgba = imagecolorat($im, $x, $y);
                     $colors = imagecolorsforindex($im, $rgba);
-                    if ($colors['alpha'] < 120 && !($colors['red'] > 242 && $colors['green'] > 242 && $colors['blue'] > 242)) {
-                        if ($x < $min_x) $min_x = $x;
-                        if ($x > $max_x) $max_x = $x;
-                        if ($y < $min_y) $min_y = $y;
-                        if ($y > $max_y) $max_y = $y;
+                    if ($colors['alpha'] < 120 && ! ($colors['red'] > 242 && $colors['green'] > 242 && $colors['blue'] > 242)) {
+                        if ($x < $min_x) {
+                            $min_x = $x;
+                        }
+                        if ($x > $max_x) {
+                            $max_x = $x;
+                        }
+                        if ($y < $min_y) {
+                            $min_y = $y;
+                        }
+                        if ($y > $max_y) {
+                            $max_y = $y;
+                        }
                     }
                 }
             }

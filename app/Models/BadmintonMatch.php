@@ -46,12 +46,12 @@ class BadmintonMatch extends Model
     {
         return [
             'scores_history' => 'array',
-            'started_at'     => 'datetime',
-            'finished_at'    => 'datetime',
-            'current_set'    => 'integer',
-            'server_team'    => 'integer',
-            'server_player'  => 'integer',
-            'winner_team'    => 'integer',
+            'started_at' => 'datetime',
+            'finished_at' => 'datetime',
+            'current_set' => 'integer',
+            'server_team' => 'integer',
+            'server_player' => 'integer',
+            'winner_team' => 'integer',
         ];
     }
 
@@ -80,6 +80,7 @@ class BadmintonMatch extends Model
         if ($this->match_type === 'double' && $this->team1_player2) {
             return "{$this->team1_player1} / {$this->team1_player2}";
         }
+
         return $this->team1_player1;
     }
 
@@ -88,6 +89,7 @@ class BadmintonMatch extends Model
         if ($this->match_type === 'double' && $this->team2_player2) {
             return "{$this->team2_player1} / {$this->team2_player2}";
         }
+
         return $this->team2_player1;
     }
 
@@ -108,20 +110,29 @@ class BadmintonMatch extends Model
 
         // Set 1
         if ((($this->team1_set1 >= 21 || $this->team2_set1 >= 21) && abs($this->team1_set1 - $this->team2_set1) >= 2) || max($this->team1_set1, $this->team2_set1) === 30) {
-            if ($this->team1_set1 > $this->team2_set1) $w1++;
-            elseif ($this->team2_set1 > $this->team1_set1) $w2++;
+            if ($this->team1_set1 > $this->team2_set1) {
+                $w1++;
+            } elseif ($this->team2_set1 > $this->team1_set1) {
+                $w2++;
+            }
         }
 
         // Set 2
         if ((($this->team1_set2 >= 21 || $this->team2_set2 >= 21) && abs($this->team1_set2 - $this->team2_set2) >= 2) || max($this->team1_set2, $this->team2_set2) === 30) {
-            if ($this->team1_set2 > $this->team2_set2) $w1++;
-            elseif ($this->team2_set2 > $this->team1_set2) $w2++;
+            if ($this->team1_set2 > $this->team2_set2) {
+                $w1++;
+            } elseif ($this->team2_set2 > $this->team1_set2) {
+                $w2++;
+            }
         }
 
         // Set 3
         if ((($this->team1_set3 >= 21 || $this->team2_set3 >= 21) && abs($this->team1_set3 - $this->team2_set3) >= 2) || max($this->team1_set3, $this->team2_set3) === 30) {
-            if ($this->team1_set3 > $this->team2_set3) $w1++;
-            elseif ($this->team2_set3 > $this->team1_set3) $w2++;
+            if ($this->team1_set3 > $this->team2_set3) {
+                $w1++;
+            } elseif ($this->team2_set3 > $this->team1_set3) {
+                $w2++;
+            }
         }
 
         return ['t1' => $w1, 't2' => $w2];

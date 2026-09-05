@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('round_name')->default('Penyisihan');
             $table->string('category')->default('MS');
             $table->enum('match_type', ['single', 'double'])->default('single');
-            
+
             // Tim 1 (Sisi Atas / Team A)
             $table->foreignId('team1_registration_id')->nullable()->constrained('registrations')->nullOnDelete();
             $table->string('team1_school');

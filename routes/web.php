@@ -10,6 +10,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JuriController;
 use App\Http\Controllers\PesertaController;
 use App\Http\Controllers\PicController;
+use App\Http\Controllers\StageController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -24,6 +25,13 @@ Route::get('/lomba/{slug}/spin-viewer', [HomeController::class, 'spinViewer'])->
 Route::get('/u/{slug}', [HomeController::class, 'spinViewer'])->name('spin.viewer.u');
 Route::get('/tv/{slug}', [HomeController::class, 'spinViewer'])->name('spin.viewer.tv');
 Route::get('/undi/{slug}', [HomeController::class, 'spinViewer'])->name('spin.viewer.undi');
+
+// Stage Display / Layar Panggung & Stage Timer (Smart TV / Proyektor View)
+Route::get('/stage/{slug}', [StageController::class, 'stageViewer'])->name('stage.viewer');
+Route::get('/p/{slug}', [StageController::class, 'stageViewer'])->name('stage.viewer.short');
+Route::get('/tv-panggung/{slug}', [StageController::class, 'stageViewer'])->name('stage.viewer.tv');
+Route::get('/panggung/{slug}', [StageController::class, 'stageViewer'])->name('stage.viewer.panggung');
+Route::get('/stage/{slug}/state', [StageController::class, 'apiState'])->name('stage.api.state');
 
 Route::get('/cek-status', [HomeController::class, 'checkStatus'])->name('check.status');
 Route::get('/live-scoreboard/{slug?}', [HomeController::class, 'liveScoreboard'])->name('live.scoreboard');
@@ -108,6 +116,11 @@ Route::middleware(['auth', 'role:pic_lomba,superadmin'])->prefix('pic')->name('p
     Route::get('/lomba/{competition_id}/spin-wheel', [PicController::class, 'spinWheel'])->name('spin.wheel');
     Route::post('/lomba/{competition_id}/spin-wheel/save', [PicController::class, 'storeDrawResult'])->name('spin.wheel.save');
     Route::post('/lomba/{competition_id}/spin-wheel/reset', [PicController::class, 'resetDraws'])->name('spin.wheel.reset');
+
+    // Stage Timer & Layar Panggung Operator Control
+    Route::get('/lomba/{competition_id}/stage-control', [StageController::class, 'operatorPanel'])->name('stage.control');
+    Route::post('/lomba/{competition_id}/stage-control/action', [StageController::class, 'handleAction'])->name('stage.control.action');
+    Route::post('/lomba/{competition_id}/stage-control/reset-all', [StageController::class, 'resetAllStage'])->name('stage.control.reset_all');
 });
 
 /*
@@ -146,7 +159,7 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->name('admin.')-
     Route::post('/competitions/{id}/update', [AdminController::class, 'updateCompetition'])->name('competitions.update');
     Route::post('/competitions/{id}/delete', [AdminController::class, 'deleteCompetition'])->name('competitions.delete');
     Route::post('/competitions/{id}/toggle-live-score', [AdminController::class, 'toggleLiveScore'])->name('competitions.toggle-live-score');
-    
+
     // Category Routes
     Route::post('/categories', [AdminController::class, 'storeCategory'])->name('categories.store');
     Route::post('/categories/{id}/update', [AdminController::class, 'updateCategory'])->name('categories.update');

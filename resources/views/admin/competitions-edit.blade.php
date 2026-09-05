@@ -518,6 +518,76 @@
                 </div>
             </div>
 
+            <!-- PENGATURAN LAYAR PANGGUNG & STAGE TIMER CARD -->
+            <div class="card-admin rounded-2xl p-5 sm:p-7 space-y-5" x-data="{ stageEnabled: {{ $competition->has_stage_timer ? 'true' : 'false' }} }">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/[0.07]">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.22);">
+                            <i data-lucide="tv" class="w-4 h-4 text-amber-400"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-black text-white">Layar Panggung & Stage Timer (TV Display)</h4>
+                            <p class="text-xs text-slate-500">Tampilan urutan tampil 3-panel (Sedang Tampil, Berikutnya, Selesai) untuk panggung perlombaan</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        @if($competition->has_stage_timer)
+                            <a href="{{ route('stage.viewer', $competition->slug ?: $competition->code) }}" target="_blank" class="px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold transition flex items-center gap-1.5">
+                                <i data-lucide="tv" class="w-3.5 h-3.5"></i>
+                                <span>Layar TV</span>
+                            </a>
+                            <a href="{{ route('pic.stage.control', $competition->id) }}" class="px-3 py-1.5 rounded-xl bg-[#4E6EFF]/20 hover:bg-[#4E6EFF]/30 text-[#84D0FF] border border-[#4E6EFF]/40 text-xs font-bold transition flex items-center gap-1.5">
+                                <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+                                <span>Panel Kontrol</span>
+                            </a>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- Toggle Aktifkan -->
+                    <label class="flex items-start gap-3 p-3.5 rounded-xl cursor-pointer select-none transition" 
+                           :style="stageEnabled ? 'background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3);' : 'background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08);'">
+                        <input name="has_stage_timer" type="checkbox" value="1" x-model="stageEnabled" class="mt-0.5 w-4 h-4 rounded text-amber-500 bg-slate-900 border-slate-700 focus:ring-0 cursor-pointer">
+                        <div class="flex-1">
+                            <span class="text-xs font-bold text-white block">Aktifkan Fitur Stage Timer & Layar Panggung untuk Cabang Ini</span>
+                            <span class="text-[11px] text-slate-400 block mt-0.5">Sangat direkomendasikan untuk lomba panggung (Pop Singer, MTQ, Tari, Teater, Pidato/Debat, dll).</span>
+                        </div>
+                    </label>
+
+                    <!-- Stage Timer Configuration Fields -->
+                    <div x-show="stageEnabled" x-collapse class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
+                        <div>
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Durasi Tampil (Menit)</label>
+                            <input name="stage_duration_minutes" type="number" min="1" max="180" value="{{ old('stage_duration_minutes', $competition->stage_duration_minutes ?: 7) }}" class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-mono font-bold text-emerald-400">
+                            <p class="text-[10px] text-slate-500 mt-1">Misal: 7 menit</p>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Peringatan Sisa Waktu (Menit)</label>
+                            <input name="stage_warning_minutes" type="number" min="1" max="60" value="{{ old('stage_warning_minutes', $competition->stage_warning_minutes ?: 2) }}" class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-mono font-bold text-amber-400">
+                            <p class="text-[10px] text-slate-500 mt-1">Layar jadi kuning & bunyi bel</p>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Toleransi Overtime (Menit)</label>
+                            <input name="stage_overtime_minutes" type="number" min="0" max="15" value="{{ old('stage_overtime_minutes', $competition->stage_overtime_minutes ?: 1) }}" class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-mono font-bold text-rose-400">
+                            <p class="text-[10px] text-slate-500 mt-1">Layar kedip merah</p>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Pilihan Suara Bel</label>
+                            <select name="stage_bell_sound" class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-semibold">
+                                <option value="bell" {{ ($competition->stage_bell_sound ?: 'bell') === 'bell' ? 'selected' : '' }}>🔔 Bel Standar (Chime Jernih)</option>
+                                <option value="double" {{ $competition->stage_bell_sound === 'double' ? 'selected' : '' }}>🔔🔔 Bel Ganda (2x)</option>
+                                <option value="gong" {{ $competition->stage_bell_sound === 'gong' ? 'selected' : '' }}>🔊 Gong Resonan</option>
+                                <option value="buzzer" {{ $competition->stage_bell_sound === 'buzzer' ? 'selected' : '' }}>⚡ Buzzer Digital</option>
+                                <option value="none" {{ $competition->stage_bell_sound === 'none' ? 'selected' : '' }}>❌ Tanpa Suara</option>
+                            </select>
+                            <p class="text-[10px] text-slate-500 mt-1">Dibunyikan via Web Audio API</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- KRITERIA PENILAIAN CARD -->
             <div class="card-admin rounded-2xl p-5 sm:p-7 space-y-4" x-data="criteriaApp({{ json_encode($competition->criteria->toArray()) }})">
                 <div class="flex items-center justify-between pb-4 border-b border-white/[0.07]">

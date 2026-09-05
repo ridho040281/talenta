@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AppSetting;
+use App\Models\BadmintonMatch;
 use App\Models\Category;
 use App\Models\Competition;
 use App\Models\CompetitionCriterion;
@@ -41,7 +42,7 @@ class AdminController extends Controller
     public function competitions()
     {
         $competitions = Competition::with(['category', 'pic', 'pics', 'criteria'])->withCount('registrations')->get();
-        $categories = Category::with(['competitions.pic', 'competitions.pics', 'competitions' => function($q) {
+        $categories = Category::with(['competitions.pic', 'competitions.pics', 'competitions' => function ($q) {
             $q->withCount('registrations');
         }])->withCount('competitions')->orderBy('order', 'asc')->get();
         $pics = User::where('role', 'pic_lomba')->orWhere('role', 'superadmin')->get();
@@ -91,10 +92,10 @@ class AdminController extends Controller
         $nextOrder = $validated['order'] ?? (Competition::withoutGlobalScope('order')->max('order') + 1);
 
         $picIds = array_values(array_filter((array) $request->input('pic_ids', [])));
-        if (empty($picIds) && !empty($validated['pic_id'])) {
+        if (empty($picIds) && ! empty($validated['pic_id'])) {
             $picIds = [$validated['pic_id']];
         }
-        $primaryPicId = !empty($picIds) ? $picIds[0] : ($validated['pic_id'] ?? null);
+        $primaryPicId = ! empty($picIds) ? $picIds[0] : ($validated['pic_id'] ?? null);
 
         $competition = Competition::create([
             'category_id' => $validated['category_id'],
@@ -116,16 +117,21 @@ class AdminController extends Controller
             'order' => $nextOrder,
             'status' => 'buka',
             'is_live_score' => $request->boolean('is_live_score', false),
+            'has_stage_timer' => $request->boolean('has_stage_timer', false),
+            'stage_duration_minutes' => (int) $request->input('stage_duration_minutes', 7),
+            'stage_warning_minutes' => (int) $request->input('stage_warning_minutes', 2),
+            'stage_overtime_minutes' => (int) $request->input('stage_overtime_minutes', 1),
+            'stage_bell_sound' => $request->input('stage_bell_sound', 'bell'),
         ]);
 
-        if (!empty($picIds)) {
+        if (! empty($picIds)) {
             $competition->pics()->sync($picIds);
         }
 
         // Default / Custom criteria
         if ($request->has('criteria') && is_array($request->criteria)) {
             foreach ($request->criteria as $crit) {
-                if (!empty($crit['name'])) {
+                if (! empty($crit['name'])) {
                     CompetitionCriterion::create([
                         'competition_id' => $competition->id,
                         'name' => $crit['name'],
@@ -148,7 +154,7 @@ class AdminController extends Controller
             ]);
         }
 
-        return redirect()->route('admin.competitions')->with('success', 'Cabang lomba ' . $competition->name . ' berhasil ditambahkan.');
+        return redirect()->route('admin.competitions')->with('success', 'Cabang lomba '.$competition->name.' berhasil ditambahkan.');
     }
 
     public function updateCompetition(Request $request, $id)
@@ -160,7 +166,7 @@ class AdminController extends Controller
         $validated = $request->validate([
             'category_id' => ['required', 'exists:categories,id'],
             'name' => ['required', 'string', 'max:255'],
-            'code' => ['required', 'string', 'max:10', 'unique:competitions,code,' . $competition->id],
+            'code' => ['required', 'string', 'max:10', 'unique:competitions,code,'.$competition->id],
             'type' => ['required', 'in:individu,tim,kelompok,regu,kolektif'],
             'min_members' => ['required', 'integer', 'min:1'],
             'max_members' => ['required', 'integer', 'min:1'],
@@ -178,6 +184,10 @@ class AdminController extends Controller
             'guidelines_pdf' => ['nullable', 'file', 'mimes:pdf', 'max:20480'],
             'whatsapp_group_url' => ['nullable', 'string', 'max:255'],
             'order' => ['nullable', 'integer'],
+            'stage_duration_minutes' => ['nullable', 'integer', 'min:1'],
+            'stage_warning_minutes' => ['nullable', 'integer', 'min:1'],
+            'stage_overtime_minutes' => ['nullable', 'integer', 'min:0'],
+            'stage_bell_sound' => ['nullable', 'string'],
         ]);
 
         $guidelinesPath = $competition->guidelines_file;
@@ -191,7 +201,7 @@ class AdminController extends Controller
         if ($request->has('pic_ids')) {
             $cleanedPicIds = array_values(array_filter((array) $picIds));
             $competition->pics()->sync($cleanedPicIds);
-            $primaryPicId = !empty($cleanedPicIds) ? $cleanedPicIds[0] : null;
+            $primaryPicId = ! empty($cleanedPicIds) ? $cleanedPicIds[0] : null;
         } else {
             $primaryPicId = $validated['pic_id'] ?? $competition->pic_id;
             if ($primaryPicId) {
@@ -220,13 +230,18 @@ class AdminController extends Controller
             'order' => isset($validated['order']) ? (int) $validated['order'] : ($competition->order ?? 0),
             'show_criteria' => $request->has('show_criteria') ? $request->boolean('show_criteria') : true,
             'is_live_score' => $request->has('is_live_score') ? $request->boolean('is_live_score') : $competition->is_live_score,
+            'has_stage_timer' => $request->has('has_stage_timer') ? $request->boolean('has_stage_timer') : false,
+            'stage_duration_minutes' => (int) $request->input('stage_duration_minutes', $competition->stage_duration_minutes ?: 7),
+            'stage_warning_minutes' => (int) $request->input('stage_warning_minutes', $competition->stage_warning_minutes ?: 2),
+            'stage_overtime_minutes' => (int) $request->input('stage_overtime_minutes', $competition->stage_overtime_minutes ?: 1),
+            'stage_bell_sound' => $request->input('stage_bell_sound', $competition->stage_bell_sound ?: 'bell'),
         ]);
 
         // Update Criteria if submitted
         if ($request->has('criteria') && is_array($request->criteria)) {
             $competition->criteria()->delete();
             foreach ($request->criteria as $crit) {
-                if (!empty($crit['name'])) {
+                if (! empty($crit['name'])) {
                     CompetitionCriterion::create([
                         'competition_id' => $competition->id,
                         'name' => $crit['name'],
@@ -241,60 +256,120 @@ class AdminController extends Controller
 
         if ($competition->code === 'BLT') {
             // Fees - Tunggal PA
-            if ($request->filled('blt_fee_a_tunggal_pa')) AppSetting::set('blt_fee_a_tunggal_pa', (float) $request->input('blt_fee_a_tunggal_pa'), 'pricing');
-            if ($request->filled('blt_fee_b_tunggal_pa')) AppSetting::set('blt_fee_b_tunggal_pa', (float) $request->input('blt_fee_b_tunggal_pa'), 'pricing');
-            if ($request->filled('blt_fee_c_tunggal_pa')) AppSetting::set('blt_fee_c_tunggal_pa', (float) $request->input('blt_fee_c_tunggal_pa'), 'pricing');
+            if ($request->filled('blt_fee_a_tunggal_pa')) {
+                AppSetting::set('blt_fee_a_tunggal_pa', (float) $request->input('blt_fee_a_tunggal_pa'), 'pricing');
+            }
+            if ($request->filled('blt_fee_b_tunggal_pa')) {
+                AppSetting::set('blt_fee_b_tunggal_pa', (float) $request->input('blt_fee_b_tunggal_pa'), 'pricing');
+            }
+            if ($request->filled('blt_fee_c_tunggal_pa')) {
+                AppSetting::set('blt_fee_c_tunggal_pa', (float) $request->input('blt_fee_c_tunggal_pa'), 'pricing');
+            }
 
             // Fees - Tunggal PI
-            if ($request->filled('blt_fee_a_tunggal_pi')) AppSetting::set('blt_fee_a_tunggal_pi', (float) $request->input('blt_fee_a_tunggal_pi'), 'pricing');
-            if ($request->filled('blt_fee_b_tunggal_pi')) AppSetting::set('blt_fee_b_tunggal_pi', (float) $request->input('blt_fee_b_tunggal_pi'), 'pricing');
-            if ($request->filled('blt_fee_c_tunggal_pi')) AppSetting::set('blt_fee_c_tunggal_pi', (float) $request->input('blt_fee_c_tunggal_pi'), 'pricing');
+            if ($request->filled('blt_fee_a_tunggal_pi')) {
+                AppSetting::set('blt_fee_a_tunggal_pi', (float) $request->input('blt_fee_a_tunggal_pi'), 'pricing');
+            }
+            if ($request->filled('blt_fee_b_tunggal_pi')) {
+                AppSetting::set('blt_fee_b_tunggal_pi', (float) $request->input('blt_fee_b_tunggal_pi'), 'pricing');
+            }
+            if ($request->filled('blt_fee_c_tunggal_pi')) {
+                AppSetting::set('blt_fee_c_tunggal_pi', (float) $request->input('blt_fee_c_tunggal_pi'), 'pricing');
+            }
 
             // Fees - Ganda PA & PI
-            if ($request->filled('blt_fee_ganda_pa')) AppSetting::set('blt_fee_ganda_pa', (float) $request->input('blt_fee_ganda_pa'), 'pricing');
-            if ($request->filled('blt_fee_ganda_pi')) AppSetting::set('blt_fee_ganda_pi', (float) $request->input('blt_fee_ganda_pi'), 'pricing');
+            if ($request->filled('blt_fee_ganda_pa')) {
+                AppSetting::set('blt_fee_ganda_pa', (float) $request->input('blt_fee_ganda_pa'), 'pricing');
+            }
+            if ($request->filled('blt_fee_ganda_pi')) {
+                AppSetting::set('blt_fee_ganda_pi', (float) $request->input('blt_fee_ganda_pi'), 'pricing');
+            }
 
             // Quotas - Tunggal PA
-            if ($request->filled('blt_quota_a_tunggal_pa')) AppSetting::set('blt_quota_a_tunggal_pa', (int) $request->input('blt_quota_a_tunggal_pa'), 'pricing');
-            if ($request->filled('blt_quota_b_tunggal_pa')) AppSetting::set('blt_quota_b_tunggal_pa', (int) $request->input('blt_quota_b_tunggal_pa'), 'pricing');
-            if ($request->filled('blt_quota_c_tunggal_pa')) AppSetting::set('blt_quota_c_tunggal_pa', (int) $request->input('blt_quota_c_tunggal_pa'), 'pricing');
+            if ($request->filled('blt_quota_a_tunggal_pa')) {
+                AppSetting::set('blt_quota_a_tunggal_pa', (int) $request->input('blt_quota_a_tunggal_pa'), 'pricing');
+            }
+            if ($request->filled('blt_quota_b_tunggal_pa')) {
+                AppSetting::set('blt_quota_b_tunggal_pa', (int) $request->input('blt_quota_b_tunggal_pa'), 'pricing');
+            }
+            if ($request->filled('blt_quota_c_tunggal_pa')) {
+                AppSetting::set('blt_quota_c_tunggal_pa', (int) $request->input('blt_quota_c_tunggal_pa'), 'pricing');
+            }
 
             // Quotas - Tunggal PI
-            if ($request->filled('blt_quota_a_tunggal_pi')) AppSetting::set('blt_quota_a_tunggal_pi', (int) $request->input('blt_quota_a_tunggal_pi'), 'pricing');
-            if ($request->filled('blt_quota_b_tunggal_pi')) AppSetting::set('blt_quota_b_tunggal_pi', (int) $request->input('blt_quota_b_tunggal_pi'), 'pricing');
-            if ($request->filled('blt_quota_c_tunggal_pi')) AppSetting::set('blt_quota_c_tunggal_pi', (int) $request->input('blt_quota_c_tunggal_pi'), 'pricing');
+            if ($request->filled('blt_quota_a_tunggal_pi')) {
+                AppSetting::set('blt_quota_a_tunggal_pi', (int) $request->input('blt_quota_a_tunggal_pi'), 'pricing');
+            }
+            if ($request->filled('blt_quota_b_tunggal_pi')) {
+                AppSetting::set('blt_quota_b_tunggal_pi', (int) $request->input('blt_quota_b_tunggal_pi'), 'pricing');
+            }
+            if ($request->filled('blt_quota_c_tunggal_pi')) {
+                AppSetting::set('blt_quota_c_tunggal_pi', (int) $request->input('blt_quota_c_tunggal_pi'), 'pricing');
+            }
 
             // Quotas - Ganda PA & PI
-            if ($request->filled('blt_quota_ganda_pa')) AppSetting::set('blt_quota_ganda_pa', (int) $request->input('blt_quota_ganda_pa'), 'pricing');
-            if ($request->filled('blt_quota_ganda_pi')) AppSetting::set('blt_quota_ganda_pi', (int) $request->input('blt_quota_ganda_pi'), 'pricing');
+            if ($request->filled('blt_quota_ganda_pa')) {
+                AppSetting::set('blt_quota_ganda_pa', (int) $request->input('blt_quota_ganda_pa'), 'pricing');
+            }
+            if ($request->filled('blt_quota_ganda_pi')) {
+                AppSetting::set('blt_quota_ganda_pi', (int) $request->input('blt_quota_ganda_pi'), 'pricing');
+            }
 
             // PICs - per Sektor
-            if ($request->has('blt_pic_tunggal_pa')) AppSetting::set('blt_pic_tunggal_pa', $request->input('blt_pic_tunggal_pa') ?: null, 'general');
-            if ($request->has('blt_pic_tunggal_pi')) AppSetting::set('blt_pic_tunggal_pi', $request->input('blt_pic_tunggal_pi') ?: null, 'general');
-            if ($request->has('blt_pic_ganda_pa')) AppSetting::set('blt_pic_ganda_pa', $request->input('blt_pic_ganda_pa') ?: null, 'general');
-            if ($request->has('blt_pic_ganda_pi')) AppSetting::set('blt_pic_ganda_pi', $request->input('blt_pic_ganda_pi') ?: null, 'general');
+            if ($request->has('blt_pic_tunggal_pa')) {
+                AppSetting::set('blt_pic_tunggal_pa', $request->input('blt_pic_tunggal_pa') ?: null, 'general');
+            }
+            if ($request->has('blt_pic_tunggal_pi')) {
+                AppSetting::set('blt_pic_tunggal_pi', $request->input('blt_pic_tunggal_pi') ?: null, 'general');
+            }
+            if ($request->has('blt_pic_ganda_pa')) {
+                AppSetting::set('blt_pic_ganda_pa', $request->input('blt_pic_ganda_pa') ?: null, 'general');
+            }
+            if ($request->has('blt_pic_ganda_pi')) {
+                AppSetting::set('blt_pic_ganda_pi', $request->input('blt_pic_ganda_pi') ?: null, 'general');
+            }
 
             // Status - per Kategori & Sektor
-            if ($request->has('blt_status_a_tunggal_pa')) AppSetting::set('blt_status_a_tunggal_pa', $request->input('blt_status_a_tunggal_pa') ?: 'buka', 'general');
-            if ($request->has('blt_status_b_tunggal_pa')) AppSetting::set('blt_status_b_tunggal_pa', $request->input('blt_status_b_tunggal_pa') ?: 'buka', 'general');
-            if ($request->has('blt_status_c_tunggal_pa')) AppSetting::set('blt_status_c_tunggal_pa', $request->input('blt_status_c_tunggal_pa') ?: 'buka', 'general');
+            if ($request->has('blt_status_a_tunggal_pa')) {
+                AppSetting::set('blt_status_a_tunggal_pa', $request->input('blt_status_a_tunggal_pa') ?: 'buka', 'general');
+            }
+            if ($request->has('blt_status_b_tunggal_pa')) {
+                AppSetting::set('blt_status_b_tunggal_pa', $request->input('blt_status_b_tunggal_pa') ?: 'buka', 'general');
+            }
+            if ($request->has('blt_status_c_tunggal_pa')) {
+                AppSetting::set('blt_status_c_tunggal_pa', $request->input('blt_status_c_tunggal_pa') ?: 'buka', 'general');
+            }
 
-            if ($request->has('blt_status_a_tunggal_pi')) AppSetting::set('blt_status_a_tunggal_pi', $request->input('blt_status_a_tunggal_pi') ?: 'buka', 'general');
-            if ($request->has('blt_status_b_tunggal_pi')) AppSetting::set('blt_status_b_tunggal_pi', $request->input('blt_status_b_tunggal_pi') ?: 'buka', 'general');
-            if ($request->has('blt_status_c_tunggal_pi')) AppSetting::set('blt_status_c_tunggal_pi', $request->input('blt_status_c_tunggal_pi') ?: 'buka', 'general');
+            if ($request->has('blt_status_a_tunggal_pi')) {
+                AppSetting::set('blt_status_a_tunggal_pi', $request->input('blt_status_a_tunggal_pi') ?: 'buka', 'general');
+            }
+            if ($request->has('blt_status_b_tunggal_pi')) {
+                AppSetting::set('blt_status_b_tunggal_pi', $request->input('blt_status_b_tunggal_pi') ?: 'buka', 'general');
+            }
+            if ($request->has('blt_status_c_tunggal_pi')) {
+                AppSetting::set('blt_status_c_tunggal_pi', $request->input('blt_status_c_tunggal_pi') ?: 'buka', 'general');
+            }
 
-            if ($request->has('blt_status_ganda_pa')) AppSetting::set('blt_status_ganda_pa', $request->input('blt_status_ganda_pa') ?: 'buka', 'general');
-            if ($request->has('blt_status_ganda_pi')) AppSetting::set('blt_status_ganda_pi', $request->input('blt_status_ganda_pi') ?: 'buka', 'general');
-            if ($request->has('blt_status_tunggal_pa')) AppSetting::set('blt_status_tunggal_pa', $request->input('blt_status_tunggal_pa') ?: 'buka', 'general');
-            if ($request->has('blt_status_tunggal_pi')) AppSetting::set('blt_status_tunggal_pi', $request->input('blt_status_tunggal_pi') ?: 'buka', 'general');
+            if ($request->has('blt_status_ganda_pa')) {
+                AppSetting::set('blt_status_ganda_pa', $request->input('blt_status_ganda_pa') ?: 'buka', 'general');
+            }
+            if ($request->has('blt_status_ganda_pi')) {
+                AppSetting::set('blt_status_ganda_pi', $request->input('blt_status_ganda_pi') ?: 'buka', 'general');
+            }
+            if ($request->has('blt_status_tunggal_pa')) {
+                AppSetting::set('blt_status_tunggal_pa', $request->input('blt_status_tunggal_pa') ?: 'buka', 'general');
+            }
+            if ($request->has('blt_status_tunggal_pi')) {
+                AppSetting::set('blt_status_tunggal_pi', $request->input('blt_status_tunggal_pi') ?: 'buka', 'general');
+            }
 
             $primaryPic = $request->input('blt_pic_tunggal_pa') ?: ($request->input('blt_pic_tunggal_pi') ?: ($request->input('blt_pic_ganda_pa') ?: null));
-            $bltTotalTunggal = (int)$request->input('blt_quota_a_tunggal_pa', 16)
-                             + (int)$request->input('blt_quota_b_tunggal_pa', 16)
-                             + (int)$request->input('blt_quota_c_tunggal_pa', 32)
-                             + (int)$request->input('blt_quota_a_tunggal_pi', 16)
-                             + (int)$request->input('blt_quota_b_tunggal_pi', 16)
-                             + (int)$request->input('blt_quota_c_tunggal_pi', 16);
+            $bltTotalTunggal = (int) $request->input('blt_quota_a_tunggal_pa', 16)
+                             + (int) $request->input('blt_quota_b_tunggal_pa', 16)
+                             + (int) $request->input('blt_quota_c_tunggal_pa', 32)
+                             + (int) $request->input('blt_quota_a_tunggal_pi', 16)
+                             + (int) $request->input('blt_quota_b_tunggal_pi', 16)
+                             + (int) $request->input('blt_quota_c_tunggal_pi', 16);
             $competition->update([
                 'pic_id' => $primaryPic ?: $competition->pic_id,
                 'quota' => $bltTotalTunggal,
@@ -304,26 +379,42 @@ class AdminController extends Controller
         // Khusus Cabang MTQ & Pop Singer (Sektor Individu PA & PI)
         if (in_array($competition->code, ['MTQ', 'POP'])) {
             $prefix = strtolower($competition->code); // 'mtq' or 'pop'
-            
+
             // Biaya PA & PI
-            if ($request->filled($prefix . '_fee_pa')) AppSetting::set($prefix . '_fee_pa', (float) $request->input($prefix . '_fee_pa'), 'pricing');
-            if ($request->filled($prefix . '_fee_pi')) AppSetting::set($prefix . '_fee_pi', (float) $request->input($prefix . '_fee_pi'), 'pricing');
+            if ($request->filled($prefix.'_fee_pa')) {
+                AppSetting::set($prefix.'_fee_pa', (float) $request->input($prefix.'_fee_pa'), 'pricing');
+            }
+            if ($request->filled($prefix.'_fee_pi')) {
+                AppSetting::set($prefix.'_fee_pi', (float) $request->input($prefix.'_fee_pi'), 'pricing');
+            }
 
             // Kuota PA & PI
-            if ($request->filled($prefix . '_quota_pa')) AppSetting::set($prefix . '_quota_pa', (int) $request->input($prefix . '_quota_pa'), 'pricing');
-            if ($request->filled($prefix . '_quota_pi')) AppSetting::set($prefix . '_quota_pi', (int) $request->input($prefix . '_quota_pi'), 'pricing');
+            if ($request->filled($prefix.'_quota_pa')) {
+                AppSetting::set($prefix.'_quota_pa', (int) $request->input($prefix.'_quota_pa'), 'pricing');
+            }
+            if ($request->filled($prefix.'_quota_pi')) {
+                AppSetting::set($prefix.'_quota_pi', (int) $request->input($prefix.'_quota_pi'), 'pricing');
+            }
 
             // PIC PA & PI
-            if ($request->has($prefix . '_pic_pa')) AppSetting::set($prefix . '_pic_pa', $request->input($prefix . '_pic_pa') ?: null, 'general');
-            if ($request->has($prefix . '_pic_pi')) AppSetting::set($prefix . '_pic_pi', $request->input($prefix . '_pic_pi') ?: null, 'general');
+            if ($request->has($prefix.'_pic_pa')) {
+                AppSetting::set($prefix.'_pic_pa', $request->input($prefix.'_pic_pa') ?: null, 'general');
+            }
+            if ($request->has($prefix.'_pic_pi')) {
+                AppSetting::set($prefix.'_pic_pi', $request->input($prefix.'_pic_pi') ?: null, 'general');
+            }
 
             // Status PA & PI
-            if ($request->has($prefix . '_status_pa')) AppSetting::set($prefix . '_status_pa', $request->input($prefix . '_status_pa') ?: 'buka', 'general');
-            if ($request->has($prefix . '_status_pi')) AppSetting::set($prefix . '_status_pi', $request->input($prefix . '_status_pi') ?: 'buka', 'general');
+            if ($request->has($prefix.'_status_pa')) {
+                AppSetting::set($prefix.'_status_pa', $request->input($prefix.'_status_pa') ?: 'buka', 'general');
+            }
+            if ($request->has($prefix.'_status_pi')) {
+                AppSetting::set($prefix.'_status_pi', $request->input($prefix.'_status_pi') ?: 'buka', 'general');
+            }
 
-            $primaryPic = $request->input($prefix . '_pic_pa') ?: ($request->input($prefix . '_pic_pi') ?: null);
-            $qPa = $request->filled($prefix . '_quota_pa') ? (int) $request->input($prefix . '_quota_pa') : (int) AppSetting::get($prefix . '_quota_pa', 50);
-            $qPi = $request->filled($prefix . '_quota_pi') ? (int) $request->input($prefix . '_quota_pi') : (int) AppSetting::get($prefix . '_quota_pi', 50);
+            $primaryPic = $request->input($prefix.'_pic_pa') ?: ($request->input($prefix.'_pic_pi') ?: null);
+            $qPa = $request->filled($prefix.'_quota_pa') ? (int) $request->input($prefix.'_quota_pa') : (int) AppSetting::get($prefix.'_quota_pa', 50);
+            $qPi = $request->filled($prefix.'_quota_pi') ? (int) $request->input($prefix.'_quota_pi') : (int) AppSetting::get($prefix.'_quota_pi', 50);
             $competition->update([
                 'pic_id' => $primaryPic ?: $competition->pic_id,
                 'quota' => ($qPa + $qPi),
@@ -333,32 +424,64 @@ class AdminController extends Controller
         // Khusus Cabang Tenis Meja (TMJ - Kat A & Kat B)
         if ($competition->code === 'TMJ') {
             // Fees - Tunggal PA (Kat A & B)
-            if ($request->filled('tmj_fee_a_tunggal_pa')) AppSetting::set('tmj_fee_a_tunggal_pa', (float) $request->input('tmj_fee_a_tunggal_pa'), 'pricing');
-            if ($request->filled('tmj_fee_b_tunggal_pa')) AppSetting::set('tmj_fee_b_tunggal_pa', (float) $request->input('tmj_fee_b_tunggal_pa'), 'pricing');
+            if ($request->filled('tmj_fee_a_tunggal_pa')) {
+                AppSetting::set('tmj_fee_a_tunggal_pa', (float) $request->input('tmj_fee_a_tunggal_pa'), 'pricing');
+            }
+            if ($request->filled('tmj_fee_b_tunggal_pa')) {
+                AppSetting::set('tmj_fee_b_tunggal_pa', (float) $request->input('tmj_fee_b_tunggal_pa'), 'pricing');
+            }
 
             // Fees - Tunggal PI (Kat A & B)
-            if ($request->filled('tmj_fee_a_tunggal_pi')) AppSetting::set('tmj_fee_a_tunggal_pi', (float) $request->input('tmj_fee_a_tunggal_pi'), 'pricing');
-            if ($request->filled('tmj_fee_b_tunggal_pi')) AppSetting::set('tmj_fee_b_tunggal_pi', (float) $request->input('tmj_fee_b_tunggal_pi'), 'pricing');
+            if ($request->filled('tmj_fee_a_tunggal_pi')) {
+                AppSetting::set('tmj_fee_a_tunggal_pi', (float) $request->input('tmj_fee_a_tunggal_pi'), 'pricing');
+            }
+            if ($request->filled('tmj_fee_b_tunggal_pi')) {
+                AppSetting::set('tmj_fee_b_tunggal_pi', (float) $request->input('tmj_fee_b_tunggal_pi'), 'pricing');
+            }
 
             // Quotas - Tunggal PA (Kat A & B)
-            if ($request->filled('tmj_quota_a_tunggal_pa')) AppSetting::set('tmj_quota_a_tunggal_pa', (int) $request->input('tmj_quota_a_tunggal_pa'), 'pricing');
-            if ($request->filled('tmj_quota_b_tunggal_pa')) AppSetting::set('tmj_quota_b_tunggal_pa', (int) $request->input('tmj_quota_b_tunggal_pa'), 'pricing');
+            if ($request->filled('tmj_quota_a_tunggal_pa')) {
+                AppSetting::set('tmj_quota_a_tunggal_pa', (int) $request->input('tmj_quota_a_tunggal_pa'), 'pricing');
+            }
+            if ($request->filled('tmj_quota_b_tunggal_pa')) {
+                AppSetting::set('tmj_quota_b_tunggal_pa', (int) $request->input('tmj_quota_b_tunggal_pa'), 'pricing');
+            }
 
             // Quotas - Tunggal PI (Kat A & B)
-            if ($request->filled('tmj_quota_a_tunggal_pi')) AppSetting::set('tmj_quota_a_tunggal_pi', (int) $request->input('tmj_quota_a_tunggal_pi'), 'pricing');
-            if ($request->filled('tmj_quota_b_tunggal_pi')) AppSetting::set('tmj_quota_b_tunggal_pi', (int) $request->input('tmj_quota_b_tunggal_pi'), 'pricing');
+            if ($request->filled('tmj_quota_a_tunggal_pi')) {
+                AppSetting::set('tmj_quota_a_tunggal_pi', (int) $request->input('tmj_quota_a_tunggal_pi'), 'pricing');
+            }
+            if ($request->filled('tmj_quota_b_tunggal_pi')) {
+                AppSetting::set('tmj_quota_b_tunggal_pi', (int) $request->input('tmj_quota_b_tunggal_pi'), 'pricing');
+            }
 
             // PICs - per Sektor
-            if ($request->has('tmj_pic_tunggal_pa')) AppSetting::set('tmj_pic_tunggal_pa', $request->input('tmj_pic_tunggal_pa') ?: null, 'general');
-            if ($request->has('tmj_pic_tunggal_pi')) AppSetting::set('tmj_pic_tunggal_pi', $request->input('tmj_pic_tunggal_pi') ?: null, 'general');
+            if ($request->has('tmj_pic_tunggal_pa')) {
+                AppSetting::set('tmj_pic_tunggal_pa', $request->input('tmj_pic_tunggal_pa') ?: null, 'general');
+            }
+            if ($request->has('tmj_pic_tunggal_pi')) {
+                AppSetting::set('tmj_pic_tunggal_pi', $request->input('tmj_pic_tunggal_pi') ?: null, 'general');
+            }
 
             // Status - per Kategori & Sektor
-            if ($request->has('tmj_status_a_tunggal_pa')) AppSetting::set('tmj_status_a_tunggal_pa', $request->input('tmj_status_a_tunggal_pa') ?: 'buka', 'general');
-            if ($request->has('tmj_status_b_tunggal_pa')) AppSetting::set('tmj_status_b_tunggal_pa', $request->input('tmj_status_b_tunggal_pa') ?: 'buka', 'general');
-            if ($request->has('tmj_status_a_tunggal_pi')) AppSetting::set('tmj_status_a_tunggal_pi', $request->input('tmj_status_a_tunggal_pi') ?: 'buka', 'general');
-            if ($request->has('tmj_status_b_tunggal_pi')) AppSetting::set('tmj_status_b_tunggal_pi', $request->input('tmj_status_b_tunggal_pi') ?: 'buka', 'general');
-            if ($request->has('tmj_status_tunggal_pa')) AppSetting::set('tmj_status_tunggal_pa', $request->input('tmj_status_tunggal_pa') ?: 'buka', 'general');
-            if ($request->has('tmj_status_tunggal_pi')) AppSetting::set('tmj_status_tunggal_pi', $request->input('tmj_status_tunggal_pi') ?: 'buka', 'general');
+            if ($request->has('tmj_status_a_tunggal_pa')) {
+                AppSetting::set('tmj_status_a_tunggal_pa', $request->input('tmj_status_a_tunggal_pa') ?: 'buka', 'general');
+            }
+            if ($request->has('tmj_status_b_tunggal_pa')) {
+                AppSetting::set('tmj_status_b_tunggal_pa', $request->input('tmj_status_b_tunggal_pa') ?: 'buka', 'general');
+            }
+            if ($request->has('tmj_status_a_tunggal_pi')) {
+                AppSetting::set('tmj_status_a_tunggal_pi', $request->input('tmj_status_a_tunggal_pi') ?: 'buka', 'general');
+            }
+            if ($request->has('tmj_status_b_tunggal_pi')) {
+                AppSetting::set('tmj_status_b_tunggal_pi', $request->input('tmj_status_b_tunggal_pi') ?: 'buka', 'general');
+            }
+            if ($request->has('tmj_status_tunggal_pa')) {
+                AppSetting::set('tmj_status_tunggal_pa', $request->input('tmj_status_tunggal_pa') ?: 'buka', 'general');
+            }
+            if ($request->has('tmj_status_tunggal_pi')) {
+                AppSetting::set('tmj_status_tunggal_pi', $request->input('tmj_status_tunggal_pi') ?: 'buka', 'general');
+            }
 
             $primaryPic = $request->input('tmj_pic_tunggal_pa') ?: ($request->input('tmj_pic_tunggal_pi') ?: null);
             $qA_pa = $request->filled('tmj_quota_a_tunggal_pa') ? (int) $request->input('tmj_quota_a_tunggal_pa') : (int) AppSetting::get('tmj_quota_a_tunggal_pa', 10);
@@ -371,7 +494,7 @@ class AdminController extends Controller
             ]);
         }
 
-        return redirect()->route('admin.competitions')->with('success', 'Cabang lomba ' . $competition->name . ' berhasil diperbarui.');
+        return redirect()->route('admin.competitions')->with('success', 'Cabang lomba '.$competition->name.' berhasil diperbarui.');
     }
 
     public function deleteCompetition($id)
@@ -380,7 +503,7 @@ class AdminController extends Controller
         $name = $competition->name;
         $competition->delete();
 
-        return redirect()->route('admin.competitions')->with('success', 'Cabang lomba ' . $name . ' berhasil dihapus.');
+        return redirect()->route('admin.competitions')->with('success', 'Cabang lomba '.$name.' berhasil dihapus.');
     }
 
     /**
@@ -398,7 +521,7 @@ class AdminController extends Controller
 
         $slug = Str::slug($validated['name']);
         if (Category::where('slug', $slug)->exists()) {
-            $slug .= '-' . (Category::max('id') + 1);
+            $slug .= '-'.(Category::max('id') + 1);
         }
 
         Category::create([
@@ -410,7 +533,7 @@ class AdminController extends Controller
             'description' => $validated['description'] ?? null,
         ]);
 
-        return redirect()->route('admin.competitions', ['tab' => 'kategori'])->with('success', 'Jenis Lomba ' . $validated['name'] . ' berhasil ditambahkan.');
+        return redirect()->route('admin.competitions', ['tab' => 'kategori'])->with('success', 'Jenis Lomba '.$validated['name'].' berhasil ditambahkan.');
     }
 
     public function updateCategory(Request $request, $id)
@@ -427,7 +550,7 @@ class AdminController extends Controller
 
         $slug = Str::slug($validated['name']);
         if (Category::where('slug', $slug)->where('id', '!=', $category->id)->exists()) {
-            $slug .= '-' . $category->id;
+            $slug .= '-'.$category->id;
         }
 
         $category->update([
@@ -439,7 +562,7 @@ class AdminController extends Controller
             'description' => $validated['description'] ?? null,
         ]);
 
-        return redirect()->route('admin.competitions', ['tab' => 'kategori'])->with('success', 'Kategori ' . $category->name . ' berhasil diperbarui.');
+        return redirect()->route('admin.competitions', ['tab' => 'kategori'])->with('success', 'Kategori '.$category->name.' berhasil diperbarui.');
     }
 
     public function deleteCategory($id)
@@ -447,13 +570,13 @@ class AdminController extends Controller
         $category = Category::withCount('competitions')->findOrFail($id);
 
         if ($category->competitions_count > 0) {
-            return redirect()->route('admin.competitions', ['tab' => 'kategori'])->with('error', 'Kategori ' . $category->name . ' tidak dapat dihapus karena masih memuat ' . $category->competitions_count . ' cabang lomba.');
+            return redirect()->route('admin.competitions', ['tab' => 'kategori'])->with('error', 'Kategori '.$category->name.' tidak dapat dihapus karena masih memuat '.$category->competitions_count.' cabang lomba.');
         }
 
         $name = $category->name;
         $category->delete();
 
-        return redirect()->route('admin.competitions', ['tab' => 'kategori'])->with('success', 'Kategori ' . $name . ' berhasil dihapus.');
+        return redirect()->route('admin.competitions', ['tab' => 'kategori'])->with('success', 'Kategori '.$name.' berhasil dihapus.');
     }
 
     /**
@@ -527,10 +650,10 @@ class AdminController extends Controller
             $search = trim($request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%")
-                  ->orWhere('institution_name', 'like', "%{$search}%")
-                  ->orWhere('position', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('institution_name', 'like', "%{$search}%")
+                    ->orWhere('position', 'like', "%{$search}%");
             });
         }
 
@@ -543,6 +666,7 @@ class AdminController extends Controller
         }
 
         $users = $query->latest()->paginate(20)->withQueryString();
+
         return view('admin.users', compact('users'));
     }
 
@@ -570,7 +694,7 @@ class AdminController extends Controller
             'status' => $validated['status'] ?? 'active',
         ]);
 
-        return redirect()->route('admin.users')->with('success', 'Pengguna baru ' . $validated['name'] . ' berhasil ditambahkan.');
+        return redirect()->route('admin.users')->with('success', 'Pengguna baru '.$validated['name'].' berhasil ditambahkan.');
     }
 
     public function updateUser(Request $request, $id)
@@ -579,7 +703,7 @@ class AdminController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'unique:users,email,' . $user->id],
+            'email' => ['required', 'email', 'unique:users,email,'.$user->id],
             'role' => ['required', 'in:superadmin,pic_lomba,juri,peserta'],
             'status' => ['required', 'in:active,inactive'],
             'phone' => ['nullable', 'string', 'max:50'],
@@ -597,7 +721,7 @@ class AdminController extends Controller
             'position' => $validated['position'] ?? null,
         ]);
 
-        return redirect()->route('admin.users')->with('success', 'Data pengguna ' . $user->name . ' berhasil diperbarui.');
+        return redirect()->route('admin.users')->with('success', 'Data pengguna '.$user->name.' berhasil diperbarui.');
     }
 
     public function resetPassword(Request $request, $id)
@@ -611,7 +735,7 @@ class AdminController extends Controller
         $user->password = Hash::make($validated['password']);
         $user->save();
 
-        return redirect()->route('admin.users')->with('success', 'Password akun ' . $user->name . ' (' . $user->email . ') berhasil direset menjadi: ' . $validated['password']);
+        return redirect()->route('admin.users')->with('success', 'Password akun '.$user->name.' ('.$user->email.') berhasil direset menjadi: '.$validated['password']);
     }
 
     public function deleteUser($id)
@@ -625,7 +749,7 @@ class AdminController extends Controller
         $name = $user->name;
         $user->delete();
 
-        return redirect()->route('admin.users')->with('success', 'Akun pengguna "' . $name . '" berhasil dihapus.');
+        return redirect()->route('admin.users')->with('success', 'Akun pengguna "'.$name.'" berhasil dihapus.');
     }
 
     public function recap()
@@ -636,7 +760,7 @@ class AdminController extends Controller
             'pic',
             'registrations' => function ($q) {
                 $q->with(['members', 'scores.details.criterion', 'user', 'invoice']);
-            }
+            },
         ])->get();
 
         // 2. Tab 1: Financial & Quota Recap per Competition
@@ -658,8 +782,8 @@ class AdminController extends Controller
             $pendingRegs = $comp->registrations->where('status', 'pending');
             $rejectedRegs = $comp->registrations->where('status', 'rejected');
 
-            $verifiedIncome = $verifiedRegs->sum(fn($r) => $r->fee);
-            $pendingIncome = $pendingRegs->sum(fn($r) => $r->fee);
+            $verifiedIncome = $verifiedRegs->sum(fn ($r) => $r->fee);
+            $pendingIncome = $pendingRegs->sum(fn ($r) => $r->fee);
             $totalIncome = $verifiedIncome + $pendingIncome;
 
             $financeRecap[] = [
@@ -697,6 +821,7 @@ class AdminController extends Controller
             $ranked = $comp->registrations->where('status', 'verified')->map(function ($reg) {
                 $lockedScores = $reg->scores->where('is_locked', true);
                 $avg = $lockedScores->isNotEmpty() ? $lockedScores->avg('total_score') : 0;
+
                 return [
                     'registration' => $reg,
                     'institution' => $reg->institution_name,
@@ -787,7 +912,7 @@ class AdminController extends Controller
             });
 
         // 2. Data for Tab 2: Wasit & Pertandingan Bulu Tangkis
-        $matchQuery = \App\Models\BadmintonMatch::with(['competition', 'umpire'])->latest();
+        $matchQuery = BadmintonMatch::with(['competition', 'umpire'])->latest();
         if ($request->filled('court')) {
             $matchQuery->where('court_number', $request->court);
         }
@@ -807,15 +932,15 @@ class AdminController extends Controller
             $badmintonCompetitions = Competition::all();
         }
 
-        $badmintonCourts = \App\Models\BadmintonMatch::select('court_number')->distinct()->pluck('court_number');
+        $badmintonCourts = BadmintonMatch::select('court_number')->distinct()->pluck('court_number');
         if ($badmintonCourts->isEmpty()) {
             $badmintonCourts = collect(['Lapangan 1', 'Lapangan 2', 'Lapangan 3']);
         }
 
         // 3. Data for Tab 3: Undian Nomor Peserta
         $drawCompetitions = Competition::with(['category', 'registrations' => function ($q) {
-                $q->with('members');
-            }])
+            $q->with('members');
+        }])
             ->get()
             ->map(function ($comp) {
                 $verified = $comp->registrations->where('status', 'verified');
@@ -857,17 +982,17 @@ class AdminController extends Controller
     public function toggleLiveScore(Request $request, $id)
     {
         $competition = Competition::findOrFail($id);
-        $competition->is_live_score = !$competition->is_live_score;
+        $competition->is_live_score = ! $competition->is_live_score;
         $competition->save();
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
                 'is_live_score' => (bool) $competition->is_live_score,
-                'message' => 'Status Live Score ' . $competition->name . ' berhasil diubah ke ' . ($competition->is_live_score ? 'PUBLIK (AKTIF)' : 'RAHASIA (OFF)') . '.',
+                'message' => 'Status Live Score '.$competition->name.' berhasil diubah ke '.($competition->is_live_score ? 'PUBLIK (AKTIF)' : 'RAHASIA (OFF)').'.',
             ]);
         }
 
-        return back()->with('success', 'Status Live Score untuk ' . $competition->name . ' berhasil diperbarui.');
+        return back()->with('success', 'Status Live Score untuk '.$competition->name.' berhasil diperbarui.');
     }
 }
