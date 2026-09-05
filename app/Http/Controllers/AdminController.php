@@ -908,6 +908,7 @@ class AdminController extends Controller
                     'criteria_count' => $comp->criteria->count(),
                     'criteria' => $comp->criteria,
                     'judges' => $comp->judges,
+                    'has_stage_timer' => (bool) $comp->has_stage_timer,
                 ];
             });
 

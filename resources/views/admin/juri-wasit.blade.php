@@ -102,13 +102,13 @@
                 </span>
             </button>
 
-            <!-- Tab 4: Layar Panggung & Stage Timer -->
+            <!-- Tab 4: Layar Panggung & Timekeeper -->
             <button type="button" 
                     @click="activeTab = 'panggung'" 
                     class="px-5 py-2.5 rounded-2xl text-xs font-bold transition flex items-center gap-2.5 shrink-0 cursor-pointer"
                     :class="activeTab === 'panggung' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-lg shadow-[#7A5AF8]/30 font-black' : 'bg-[#0C111D] text-slate-400 hover:text-slate-200 border border-white/[0.08] hover:border-white/[0.15]'">
-                <i data-lucide="tv" class="w-4 h-4" :class="activeTab === 'panggung' ? 'text-white' : 'text-amber-400'"></i>
-                <span>Layar Panggung & Timer</span>
+                <i data-lucide="timer" class="w-4 h-4" :class="activeTab === 'panggung' ? 'text-white' : 'text-amber-400'"></i>
+                <span>4. Stage & Timekeeper</span>
                 <span class="px-2 py-0.5 rounded-full text-[10px] font-mono" :class="activeTab === 'panggung' ? 'bg-white/20 text-white' : 'bg-white/[0.06] text-slate-400'">
                     {{ $allCompetitions->where('has_stage_timer', true)->count() }}
                 </span>
@@ -260,11 +260,17 @@
                     </div>
 
                     <!-- CTA Action -->
-                    <div class="pt-3 border-t border-white/[0.08]">
-                        <a href="{{ route('juri.scoring', $comp['id']) }}" class="gradient-btn w-full py-2.5 px-4 rounded-xl text-white font-bold text-xs shadow-lg shadow-[#7A5AF8]/20 transition flex items-center justify-center gap-2 group/btn cursor-pointer">
+                    <div class="pt-3 border-t border-white/[0.08] flex items-center gap-2">
+                        <a href="{{ route('juri.scoring', $comp['id']) }}" class="gradient-btn flex-1 py-2.5 px-4 rounded-xl text-white font-bold text-xs shadow-lg shadow-[#7A5AF8]/20 transition flex items-center justify-center gap-2 group/btn cursor-pointer">
                             <i data-lucide="clipboard-pen" class="w-4 h-4 text-white group-hover/btn:scale-110 transition"></i>
                             <span>Buka Lembar Penilaian Juri</span>
                         </a>
+                        @if(!empty($comp['has_stage_timer']))
+                            <a href="{{ route('pic.stage.control', $comp['id']) }}" class="py-2.5 px-3 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold transition flex items-center gap-1.5 shrink-0" title="Buka Konsol Timekeeper / Operator Panggung">
+                                <i data-lucide="timer" class="w-4 h-4 text-amber-400"></i>
+                                <span class="hidden sm:inline">Timekeeper</span>
+                            </a>
+                        @endif
                     </div>
                 </div>
             @empty
@@ -636,14 +642,14 @@
                     </div>
 
                     <div class="mt-6 pt-4 border-t border-white/[0.08] flex items-center gap-2">
-                        <!-- Panel Kontrol Operator -->
+                        <!-- Panel Kontrol Timekeeper -->
                         <a href="{{ route('pic.stage.control', $comp->id) }}" class="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] hover:from-[#6941C6] hover:to-[#3555EC] text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-[#7A5AF8]/20 transition cursor-pointer">
-                            <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
-                            <span>Panel Kontrol</span>
+                            <i data-lucide="timer" class="w-4 h-4"></i>
+                            <span>Konsol Timekeeper</span>
                         </a>
 
                         <!-- Public TV Display Screen -->
-                        <a href="{{ route('stage.viewer', $comp->slug ?: $comp->code) }}" target="_blank" class="py-2.5 px-3.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-amber-300 hover:text-white border border-white/[0.10] hover:border-amber-400/30 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer" title="Buka Layar TV Smart TV">
+                        <a href="{{ route('stage.viewer', $comp->slug ?: $comp->code) }}" target="_blank" class="py-2.5 px-3.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-amber-300 hover:text-white border border-white/[0.10] hover:border-amber-400/30 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer" title="Buka Layar TV Smart TV (Viewer)">
                             <i data-lucide="tv" class="w-3.5 h-3.5 text-amber-400"></i>
                             <span>Layar TV</span>
                         </a>
