@@ -116,16 +116,19 @@
 
             <!-- Modern Dark Interactive Table Container -->
             <div class="overflow-x-auto rounded-2xl border border-slate-800 shadow-2xl">
-                <table class="w-full text-left border-collapse min-w-[780px]">
+                <table class="w-full text-left border-collapse min-w-[1050px]">
                     <thead>
                         <tr class="bg-slate-950/80 border-b border-slate-800 text-[11px] font-black uppercase tracking-wider text-slate-400">
-                            <th class="py-3.5 px-4 w-12 text-center">No</th>
-                            <th class="py-3.5 px-4">Kode & No. Peserta</th>
-                            <th class="py-3.5 px-4">Cabang Perlombaan</th>
-                            <th class="py-3.5 px-4">Nama Peserta / Delegasi</th>
-                            <th class="py-3.5 px-4 text-center">No. Undian</th>
-                            <th class="py-3.5 px-4 text-center">Status</th>
-                            <th class="py-3.5 px-4 text-center w-56">Aksi</th>
+                            <th class="py-3.5 px-3 w-10 text-center">No</th>
+                            <th class="py-3.5 px-3 whitespace-nowrap">Kode & No. Peserta</th>
+                            <th class="py-3.5 px-3 whitespace-nowrap">Cabang Perlombaan</th>
+                            <th class="py-3.5 px-3 min-w-[170px]">Nama Peserta / Delegasi</th>
+                            <th class="py-3.5 px-3 whitespace-nowrap">NISN</th>
+                            <th class="py-3.5 px-3 min-w-[150px]">Asal Sekolah / Madrasah</th>
+                            <th class="py-3.5 px-3 whitespace-nowrap">TTL</th>
+                            <th class="py-3.5 px-3 text-center whitespace-nowrap">No. Undian</th>
+                            <th class="py-3.5 px-3 text-center whitespace-nowrap">Status</th>
+                            <th class="py-3.5 px-3 text-center whitespace-nowrap">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-800/80 text-xs">
@@ -152,15 +155,15 @@
                                 class="hover:bg-slate-800/40 transition-colors group"
                             >
                                 <!-- No -->
-                                <td class="py-3.5 px-4 text-center font-mono font-bold text-slate-500">
+                                <td class="py-3.5 px-3 text-center font-mono font-bold text-slate-500">
                                     {{ $loop->iteration }}
                                 </td>
 
                                 <!-- Kode & No. Peserta -->
-                                <td class="py-3.5 px-4">
+                                <td class="py-3.5 px-3 whitespace-nowrap">
                                     <div class="space-y-1">
-                                        <div class="flex items-center gap-1.5">
-                                            <span class="font-mono text-xs font-bold text-white bg-slate-800 px-2 py-0.5 rounded-lg border border-slate-700">
+                                        <div>
+                                            <span class="font-mono text-xs font-bold text-white bg-slate-800 px-2 py-0.5 rounded-lg border border-slate-700 inline-block">
                                                 {{ $reg->registration_code }}
                                             </span>
                                         </div>
@@ -171,14 +174,14 @@
                                                     {{ $reg->participant_number }}
                                                 </span>
                                             @else
-                                                <span class="text-[10px] text-slate-500 italic">Menunggu Verifikasi</span>
+                                                <span class="text-[10px] text-slate-500 italic">Menunggu</span>
                                             @endif
                                         </div>
                                     </div>
                                 </td>
 
                                 <!-- Cabang Lomba -->
-                                <td class="py-3.5 px-4">
+                                <td class="py-3.5 px-3">
                                     <div class="space-y-0.5">
                                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                                             {{ $reg->competition->category->name ?? 'Lomba' }}
@@ -192,88 +195,132 @@
                                     </div>
                                 </td>
 
-                                <!-- Nama Peserta & Biodata Lengkap (NISN, Asal Sekolah, TTL) -->
-                                <td class="py-3.5 px-4">
-                                    <div class="space-y-1.5 min-w-[240px]">
-                                        @if($reg->members && $reg->members->count() > 1)
-                                            <div class="font-extrabold text-white text-xs sm:text-sm flex items-center gap-1.5">
-                                                <span class="px-2 py-0.5 rounded-lg bg-blue-500/20 text-blue-300 text-[10px] font-bold border border-blue-500/30">
+                                <!-- Nama Peserta / Delegasi -->
+                                <td class="py-3.5 px-3">
+                                    @if($reg->members && $reg->members->count() > 1)
+                                        <div class="space-y-1">
+                                            <div class="font-extrabold text-white text-xs flex items-center gap-1.5">
+                                                <span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 text-[9px] font-bold border border-blue-500/30 shrink-0">
                                                     👥 {{ $reg->members->count() }} Anggota
                                                 </span>
                                                 <span>{{ $reg->team_name ?: $reg->display_name }}</span>
                                             </div>
-                                            <div class="space-y-1 text-xs">
+                                            <div class="space-y-0.5 pl-1">
                                                 @foreach($reg->members as $idx => $m)
-                                                    @php
-                                                        $mBdate = $m->birth_date ? (strtotime($m->birth_date) ? \Carbon\Carbon::parse($m->birth_date)->format('d/m/Y') : $m->birth_date) : null;
-                                                        $mTTL = trim(($m->birth_place ? $m->birth_place : '').($m->birth_place && $mBdate ? ', ' : '').($mBdate ?: ''));
-                                                    @endphp
-                                                    <div class="p-1.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-0.5">
-                                                        <div class="font-bold text-slate-200 flex items-center justify-between text-[11px]">
-                                                            <span>#{{ $idx+1 }} {{ $m->full_name }}</span>
-                                                            <span class="text-[9px] px-1 py-0.2 rounded {{ $m->gender === 'L' ? 'bg-blue-500/20 text-blue-300' : 'bg-pink-500/20 text-pink-300' }} font-bold">
-                                                                {{ $m->gender === 'L' ? 'L' : 'P' }}
+                                                    <div class="text-[11px] text-slate-300 flex items-center gap-1 font-medium">
+                                                        <span class="text-slate-500">{{ $idx+1 }}.</span>
+                                                        <span>{{ $m->full_name }}</span>
+                                                        @if($m->gender)
+                                                            <span class="text-[9px] px-1 rounded {{ $m->gender === 'L' ? 'bg-blue-500/20 text-blue-300' : 'bg-pink-500/20 text-pink-300' }} font-bold">
+                                                                {{ $m->gender === 'L' ? 'PA' : 'PI' }}
                                                             </span>
-                                                        </div>
-                                                        <div class="flex flex-wrap items-center gap-x-2 text-[10px] text-slate-400 font-mono">
-                                                            @if($m->nisn)
-                                                                <span class="text-emerald-300">NISN: {{ $m->nisn }}</span>
-                                                            @endif
-                                                            @if($mTTL)
-                                                                <span>• TTL: {{ $mTTL }}</span>
-                                                            @endif
-                                                        </div>
+                                                        @endif
                                                     </div>
                                                 @endforeach
                                             </div>
-                                            <div class="text-[11px] text-slate-400 flex items-center gap-1.5 pt-0.5">
-                                                <i data-lucide="school" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i>
-                                                <span class="font-medium text-slate-300 truncate">{{ $reg->institution_name }}</span>
-                                            </div>
-                                        @else
-                                            @php
-                                                $m = $reg->members->first();
-                                                $fullName = $m->full_name ?? $reg->display_name;
-                                                $mBdate = ($m && $m->birth_date) ? (strtotime($m->birth_date) ? \Carbon\Carbon::parse($m->birth_date)->format('d/m/Y') : $m->birth_date) : null;
-                                                $mTTL = $m ? trim(($m->birth_place ? $m->birth_place : '').($m->birth_place && $mBdate ? ', ' : '').($mBdate ?: '')) : '';
-                                                $nisn = $m->nisn ?? null;
-                                                $school = $m->school_name ?? $reg->institution_name;
-                                                $gender = $m->gender ?? $reg->primary_gender;
-                                            @endphp
-                                            <div class="font-extrabold text-white text-xs sm:text-sm flex items-center gap-1.5">
-                                                <span>{{ $fullName }}</span>
-                                                @if($gender && in_array($gender, ['L', 'P']))
-                                                    <span class="text-[9px] px-1.5 py-0.2 rounded {{ $gender === 'L' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-pink-500/20 text-pink-300 border border-pink-500/30' }} font-bold">
-                                                        {{ $gender === 'L' ? '👦 PA' : '👧 PI' }}
-                                                    </span>
-                                                @endif
-                                            </div>
-                                            
-                                            <!-- NISN & TTL Badges -->
-                                            <div class="flex flex-wrap items-center gap-1.5 text-[10.5px]">
-                                                @if($nisn)
-                                                    <span class="font-mono text-[10px] font-bold text-emerald-300 bg-emerald-500/15 px-1.5 py-0.5 rounded-lg border border-emerald-500/25">
-                                                        NISN: {{ $nisn }}
-                                                    </span>
-                                                @endif
-                                                @if($mTTL)
-                                                    <span class="text-[10px] font-medium text-slate-300 bg-slate-800/80 px-1.5 py-0.5 rounded-lg border border-slate-700">
-                                                        TTL: {{ $mTTL }}
-                                                    </span>
-                                                @endif
-                                            </div>
+                                        </div>
+                                    @else
+                                        @php
+                                            $m = $reg->members->first();
+                                            $fullName = $m->full_name ?? $reg->display_name;
+                                            $gender = $m->gender ?? $reg->primary_gender;
+                                        @endphp
+                                        <div class="font-extrabold text-white text-xs sm:text-sm flex items-center gap-1.5">
+                                            <span>{{ $fullName }}</span>
+                                            @if($gender && in_array($gender, ['L', 'P']))
+                                                <span class="text-[9px] px-1.5 py-0.2 rounded {{ $gender === 'L' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-pink-500/20 text-pink-300 border border-pink-500/30' }} font-bold shrink-0">
+                                                    {{ $gender === 'L' ? '👦 PA' : '👧 PI' }}
+                                                </span>
+                                            @endif
+                                        </div>
+                                    @endif
+                                </td>
 
-                                            <!-- Asal Sekolah -->
-                                            <div class="text-[11px] text-slate-400 flex items-center gap-1.5">
-                                                <i data-lucide="school" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i>
-                                                <span class="font-medium text-slate-300 truncate">{{ $school }}</span>
-                                            </div>
+                                <!-- NISN -->
+                                <td class="py-3.5 px-3">
+                                    @if($reg->members && $reg->members->count() > 1)
+                                        <div class="space-y-1 text-xs">
+                                            @foreach($reg->members as $idx => $m)
+                                                <div class="font-mono text-[11px] font-semibold text-emerald-400">
+                                                    {{ $m->nisn ?: '-' }}
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        @php
+                                            $m = $reg->members->first();
+                                            $nisn = $m->nisn ?? null;
+                                        @endphp
+                                        @if($nisn)
+                                            <span class="font-mono text-xs font-bold text-emerald-300 bg-emerald-500/15 px-2 py-0.5 rounded-lg border border-emerald-500/25 inline-block">
+                                                {{ $nisn }}
+                                            </span>
+                                        @else
+                                            <span class="text-slate-500 font-mono text-xs">-</span>
                                         @endif
-                                    </div>
+                                    @endif
+                                </td>
+
+                                <!-- Asal Sekolah / Madrasah -->
+                                <td class="py-3.5 px-3">
+                                    @if($reg->members && $reg->members->count() > 1)
+                                        <div class="space-y-1 text-xs">
+                                            @php
+                                                $uniqueSchools = $reg->members->pluck('school_name')->filter()->unique();
+                                            @endphp
+                                            @if($uniqueSchools->count() > 1)
+                                                @foreach($reg->members as $idx => $m)
+                                                    <div class="text-[11px] text-slate-300 truncate max-w-[200px]" title="{{ $m->school_name ?: $reg->institution_name }}">
+                                                        {{ $m->school_name ?: $reg->institution_name }}
+                                                    </div>
+                                                @endforeach
+                                            @else
+                                                <div class="text-xs text-slate-200 font-medium flex items-center gap-1.5">
+                                                    <i data-lucide="school" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+                                                    <span class="truncate max-w-[220px]" title="{{ $reg->institution_name }}">{{ $reg->institution_name }}</span>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @else
+                                        @php
+                                            $m = $reg->members->first();
+                                            $school = $m->school_name ?? $reg->institution_name;
+                                        @endphp
+                                        <div class="text-xs text-slate-200 font-medium flex items-center gap-1.5">
+                                            <i data-lucide="school" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+                                            <span class="truncate max-w-[220px]" title="{{ $school ?: '-' }}">{{ $school ?: '-' }}</span>
+                                        </div>
+                                    @endif
+                                </td>
+
+                                <!-- TTL (Tempat, Tanggal Lahir) -->
+                                <td class="py-3.5 px-3 whitespace-nowrap">
+                                    @if($reg->members && $reg->members->count() > 1)
+                                        <div class="space-y-1 text-xs">
+                                            @foreach($reg->members as $idx => $m)
+                                                @php
+                                                    $mBdate = $m->birth_date ? (strtotime($m->birth_date) ? \Carbon\Carbon::parse($m->birth_date)->format('d/m/Y') : $m->birth_date) : null;
+                                                    $mTTL = trim(($m->birth_place ? $m->birth_place : '').($m->birth_place && $mBdate ? ', ' : '').($mBdate ?: ''));
+                                                @endphp
+                                                <div class="text-[11px] text-slate-300">
+                                                    {{ $mTTL ?: '-' }}
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        @php
+                                            $m = $reg->members->first();
+                                            $mBdate = ($m && $m->birth_date) ? (strtotime($m->birth_date) ? \Carbon\Carbon::parse($m->birth_date)->format('d/m/Y') : $m->birth_date) : null;
+                                            $mTTL = $m ? trim(($m->birth_place ? $m->birth_place : '').($m->birth_place && $mBdate ? ', ' : '').($mBdate ?: '')) : '';
+                                        @endphp
+                                        <span class="text-xs text-slate-300 font-medium">
+                                            {{ $mTTL ?: '-' }}
+                                        </span>
+                                    @endif
                                 </td>
 
                                 <!-- No. Undian -->
-                                <td class="py-3.5 px-4 text-center">
+                                <td class="py-3.5 px-3 text-center whitespace-nowrap">
                                     @if($reg->draw_number)
                                         <span class="inline-flex items-center px-2.5 py-1 rounded-xl bg-amber-500/20 text-amber-300 font-mono font-black text-xs border border-amber-500/30 shadow-xs">
                                             #{{ $reg->draw_number }}
@@ -284,7 +331,7 @@
                                 </td>
 
                                 <!-- Status Verifikasi -->
-                                <td class="py-3.5 px-4 text-center">
+                                <td class="py-3.5 px-3 text-center whitespace-nowrap">
                                     @if($reg->status === 'verified')
                                         <span class="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-xs">
                                             <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
@@ -309,9 +356,9 @@
                                 </td>
 
                                 <!-- Aksi -->
-                                <td class="py-3.5 px-4 text-center">
+                                <td class="py-3.5 px-3 text-center whitespace-nowrap">
                                     <div class="flex items-center justify-center gap-2">
-                                        <a href="{{ route('peserta.registration.detail', $reg->id) }}" class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-xs transition border border-slate-700 shadow-sm">
+                                        <a href="{{ route('peserta.registration.detail', $reg->id) }}" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-xs transition border border-slate-700 shadow-sm">
                                             <i data-lucide="eye" class="w-3.5 h-3.5 text-[#7A5AF8]"></i>
                                             <span>Detail & Berkas</span>
                                         </a>
