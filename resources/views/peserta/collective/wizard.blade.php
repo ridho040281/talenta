@@ -51,7 +51,7 @@
             </div>
             <h4 class="font-black text-white text-sm font-display">Isi Data Siswa (Offline)</h4>
             <p class="text-xs text-slate-400 leading-relaxed">
-                Isi biodata seluruh siswa dan pilih kode lomba di Excel. Anda dapat mendaftarkan berbagai cabang lomba berbeda dalam satu file.
+                Isi biodata siswa dan pilih lomba via drop-down. Khusus cabang Pop Singer, pilih judul lagu pilihan pada kolom L.
             </p>
             <div class="pt-2 text-xs font-semibold text-slate-500 font-mono">
                 Format tanggal: YYYY-MM-DD

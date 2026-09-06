@@ -120,6 +120,11 @@
                                         🏸 {{ $row['sub_category'] }}
                                     </span>
                                 @endif
+                                @if(!empty($row['chosen_song']))
+                                    <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                                        🎵 {{ $row['chosen_song'] }}
+                                    </span>
+                                @endif
                             </td>
                             <td class="py-3 px-4 text-slate-400">
                                 {{ $row['team_name'] ?: '-' }}

@@ -175,6 +175,16 @@
                             <td class="py-3.5 px-4">
                                 <span class="font-bold text-white">{{ $reg->competition->name }}</span>
                                 <span class="block text-[10px] text-slate-400 uppercase font-mono">{{ $reg->competition->code }} ({{ $reg->competition->type }})</span>
+                                @if($reg->sub_category)
+                                    <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                        🏸 {{ $reg->sub_category }}
+                                    </span>
+                                @endif
+                                @if($reg->chosen_song)
+                                    <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                                        🎵 {{ $reg->chosen_song }}
+                                    </span>
+                                @endif
                             </td>
                             <td class="py-3.5 px-4 font-bold text-emerald-400 whitespace-nowrap font-mono">
                                 Rp {{ number_format($reg->fee, 0, ',', '.') }}

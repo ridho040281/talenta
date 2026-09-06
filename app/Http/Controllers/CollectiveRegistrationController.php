@@ -60,11 +60,11 @@ class CollectiveRegistrationController extends Controller
 
         // Main Header Title
         $sheet->setCellValue('A1', 'FORMULIR PENDAFTARAN KOLEKTIF TALENTA 2026 - MTsN 1 BLITAR');
-        $sheet->mergeCells('A1:K1');
+        $sheet->mergeCells('A1:L1');
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new Color('064E3B'));
 
-        $sheet->setCellValue('A2', 'Petunjuk: Isi biodata siswa di bawah. Pada kolom CABANG_LOMBA, klik panah drop-down untuk langsung memilih nama lomba yang diikuti.');
-        $sheet->mergeCells('A2:K2');
+        $sheet->setCellValue('A2', 'Petunjuk: Isi biodata siswa di bawah. Pada kolom CABANG_LOMBA, klik panah drop-down untuk memilih lomba. Khusus Pop Singer, pilih judul lagu di kolom JUDUL_LAGU.');
+        $sheet->mergeCells('A2:L2');
         $sheet->getStyle('A2')->getFont()->setItalic(true)->setSize(10)->setColor(new Color('475569'));
 
         // Column Headers for Participant Table
@@ -80,6 +80,7 @@ class CollectiveRegistrationController extends Controller
             'I4' => 'NAMA_TIM (KHUSUS REGU)',
             'J4' => 'NAMA_OFFICIAL_PEMBINA',
             'K4' => 'NO_WA_PEMBINA',
+            'L4' => 'JUDUL_LAGU (KHUSUS POP SINGER)',
         ];
 
         foreach ($headers as $cell => $text) {
@@ -92,7 +93,7 @@ class CollectiveRegistrationController extends Controller
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
             'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '047857']]],
         ];
-        $sheet->getStyle('A4:K4')->applyFromArray($headerStyle);
+        $sheet->getStyle('A4:L4')->applyFromArray($headerStyle);
         $sheet->getRowDimension(4)->setRowHeight(28);
 
         // Build Dropdown Options for Competitions (Langsung Nama Lomba)
@@ -112,13 +113,27 @@ class CollectiveRegistrationController extends Controller
             }
         }
 
-        // Create Helper Hidden Sheet for Dropdown List
+        // Build Pop Singer Songs list
+        $popComp = $competitions->firstWhere('code', 'POP');
+        $popSongs = $popComp ? $popComp->song_options : [];
+        if (empty($popSongs)) {
+            $defaultRaw = AppSetting::get('pop_song_options') ?: "Deen Assalam\nRahmatun Lil'Alameen\nYa Maulana\nMan Ana\nAisyah Istri Rasulullah\nBidadari Surga\nSholawat Cinta\nKisah Sang Rasul";
+            $popSongs = array_values(array_filter(array_map('trim', explode("\n", str_replace("\r", "", $defaultRaw)))));
+        }
+
+        // Create Helper Hidden Sheet for Dropdown Lists (Competitions & Pop Songs)
         $listSheet = $spreadsheet->createSheet();
         $listSheet->setTitle('LIST_LOMBA');
         foreach ($dropdownList as $index => $item) {
             $listSheet->setCellValue('A'.($index + 1), $item);
         }
         $listSheetCount = count($dropdownList);
+
+        foreach ($popSongs as $sIndex => $sTitle) {
+            $listSheet->setCellValue('B'.($sIndex + 1), $sTitle);
+        }
+        $popSongCount = count($popSongs);
+
         $listSheet->setSheetState(Worksheet::SHEETSTATE_VERYHIDDEN);
 
         // Ensure active sheet is the main form
@@ -126,7 +141,7 @@ class CollectiveRegistrationController extends Controller
 
         // Sample Data Rows for Guidance (Dibuat 1 nama contoh saja)
         $sampleData = [
-            [1, 'Ahmad Zaki Mubarak', '0112345678', 'L', 'Blitar', '2012-04-15', 'SD Islam Al-Falah', 'Olimpiade MIPA', '', 'Ust. Ridwan', '081234567890'],
+            [1, 'Ahmad Zaki Mubarak', '0112345678', 'L', 'Blitar', '2012-04-15', 'SD Islam Al-Falah', 'Olimpiade MIPA', '', 'Ust. Ridwan', '081234567890', ''],
         ];
 
         $rowNum = 5;
@@ -136,8 +151,8 @@ class CollectiveRegistrationController extends Controller
                 $sheet->setCellValue($colLetter.$rowNum, $val);
                 $colLetter++;
             }
-            $sheet->getStyle("A{$rowNum}:K{$rowNum}")->getFont()->setSize(10);
-            $sheet->getStyle("A{$rowNum}:K{$rowNum}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setRGB('CBD5E1');
+            $sheet->getStyle("A{$rowNum}:L{$rowNum}")->getFont()->setSize(10);
+            $sheet->getStyle("A{$rowNum}:L{$rowNum}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setRGB('CBD5E1');
             $rowNum++;
         }
 
@@ -162,10 +177,24 @@ class CollectiveRegistrationController extends Controller
             $compVal->setPromptTitle('Pilih Nama Lomba');
             $compVal->setPrompt('Klik panah drop-down untuk memilih nama cabang lomba');
             $compVal->setFormula1("LIST_LOMBA!\$A\$1:\$A\${$listSheetCount}");
+
+            // Dropdown Lagu Pop Singer (Col L)
+            if ($popSongCount > 0) {
+                $songVal = $sheet->getCell("L{$r}")->getDataValidation();
+                $songVal->setType(DataValidation::TYPE_LIST);
+                $songVal->setErrorStyle(DataValidation::STYLE_INFORMATION);
+                $songVal->setAllowBlank(true);
+                $songVal->setShowInputMessage(true);
+                $songVal->setShowErrorMessage(true);
+                $songVal->setShowDropDown(true);
+                $songVal->setPromptTitle('Pilih Judul Lagu');
+                $songVal->setPrompt('Khusus cabang Pop Singer: klik drop-down untuk memilih judul lagu');
+                $songVal->setFormula1("LIST_LOMBA!\$B\$1:\$B\${$popSongCount}");
+            }
         }
 
-        // Auto-fit Column Widths A through K
-        foreach (range('A', 'K') as $col) {
+        // Auto-fit Column Widths A through L
+        foreach (range('A', 'L') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
@@ -297,6 +326,7 @@ class CollectiveRegistrationController extends Controller
             $teamName = trim($row['I'] ?? '');
             $officialName = trim($row['J'] ?? '') ?: Auth::user()->name;
             $officialPhone = trim($row['K'] ?? '') ?: Auth::user()->phone;
+            $chosenSong = trim($row['L'] ?? '');
 
             // Skip empty rows
             if (empty($name) && empty($code)) {
@@ -358,6 +388,13 @@ class CollectiveRegistrationController extends Controller
                             $errors[] = "Siswa dengan NISN '{$nisn}' sudah terdaftar sebelumnya pada cabang {$comp->name}";
                         }
                     }
+                }
+            }
+
+            // Check Pop Singer song requirement
+            if ($code === 'POP' || stripos($rawComp, 'Pop Singer') !== false || (isset($competitions[$code]) && $competitions[$code]->code === 'POP')) {
+                if (empty($chosenSong)) {
+                    $errors[] = 'Judul lagu pilihan wajib diisi untuk cabang Pop Singer (kolom L)';
                 }
             }
 
@@ -426,6 +463,7 @@ class CollectiveRegistrationController extends Controller
                 'sub_category' => $subCategory,
                 'target_class' => $targetClass,
                 'match_type' => $matchType,
+                'chosen_song' => $chosenSong ?: null,
                 'team_name' => $teamName,
                 'official_name' => $officialName,
                 'official_phone' => $officialPhone,
@@ -534,6 +572,7 @@ class CollectiveRegistrationController extends Controller
                     'sub_category' => $row['sub_category'] ?? null,
                     'target_class' => $row['target_class'] ?? null,
                     'match_type' => $row['match_type'] ?? null,
+                    'chosen_song' => ! empty($row['chosen_song']) ? $row['chosen_song'] : null,
                     'institution_name' => ! empty($row['institution_name']) ? $row['institution_name'] : ($user->institution_name ?? 'Mandiri'),
                     'official_name' => ! empty($row['official_name']) ? $row['official_name'] : $user->name,
                     'official_phone' => ! empty($row['official_phone']) ? $row['official_phone'] : $user->phone,
@@ -565,7 +604,7 @@ class CollectiveRegistrationController extends Controller
                         'phone' => $userPhone,
                         'nama_peserta' => $user->name,
                         'nama_sekolah' => $user->institution_name ?? 'Sekolah/Madrasah',
-                        'cabang_lomba' => count($cleanBatch).' Peserta (Kolektif)',
+                        'cabang_lomba' => count($validRows).' Peserta (Kolektif)',
                         'kode_pendaftaran' => $invoice->invoice_number,
                         'link_login' => route('peserta.invoices.show', $invoice->id),
                     ]);
@@ -574,7 +613,7 @@ class CollectiveRegistrationController extends Controller
                 // 2. Notify Treasurer about New Collective Payment
                 $firstReg = Registration::with('competition')->where('invoice_id', $invoice->id)->first();
                 if ($firstReg) {
-                    WablasNotificationService::notifyTreasurerNewPayment($firstReg, $totalAmount);
+                    WablasNotificationService::notifyTreasurerNewPayment($firstReg, $finalAmount);
                 }
             } catch (\Throwable $e) {
                 // Non-blocking
