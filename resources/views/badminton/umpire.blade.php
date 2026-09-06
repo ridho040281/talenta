@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>WASIT BULU TANGKIS - {{ $match->court_number }} ({{ $match->category }}) | {{ $appSettings['app_name'] ?? 'TALENTA' }}</title>
     
+    <!-- Favicon -->
+    @if(!empty($appSettings['favicon']))
+        <link rel="icon" type="image/png" href="{{ asset('storage/' . $appSettings['favicon']) }}">
+        <link rel="shortcut icon" href="{{ asset('storage/' . $appSettings['favicon']) }}">
+        <link rel="apple-touch-icon" href="{{ asset('storage/' . $appSettings['favicon']) }}">
+    @else
+        <link rel="icon" href="{{ asset('favicon.ico') }}">
+    @endif
+
     <!-- Vite Local Tailwind CSS & JS Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     

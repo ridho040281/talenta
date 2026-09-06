@@ -3,7 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit {{ $competition->name }} — TALENTA Admin</title>
+    <title>Edit {{ $competition->name }} — {{ $appSettings['app_name'] ?? 'TALENTA' }} {{ $appSettings['institution_name'] ?? 'MTsN 1 Blitar' }}</title>
+
+    <!-- Favicon -->
+    @if(!empty($appSettings['favicon']))
+        <link rel="icon" type="image/png" href="{{ asset('storage/' . $appSettings['favicon']) }}">
+        <link rel="shortcut icon" href="{{ asset('storage/' . $appSettings['favicon']) }}">
+        <link rel="apple-touch-icon" href="{{ asset('storage/' . $appSettings['favicon']) }}">
+    @else
+        <link rel="icon" href="{{ asset('favicon.ico') }}">
+    @endif
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <style>
