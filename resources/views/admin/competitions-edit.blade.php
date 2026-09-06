@@ -9,6 +9,11 @@
     <style>
         [x-cloak] { display: none !important; }
 
+        /* === Global cursor pointer for all interactive elements === */
+        button, [type='button'], [type='submit'], [type='reset'], a, select, input[type='checkbox'], input[type='radio'], label[class*='cursor-pointer'] {
+            cursor: pointer !important;
+        }
+
         /* === Sama persis dengan admin.blade.php body background === */
         body {
             background-color: #141c2e;
@@ -45,6 +50,40 @@
         }
         .input-admin::placeholder { color: rgba(148,163,184,0.4); }
         .input-admin option { background: #161f30; color: #e2e8f0; }
+
+        /* Glowing interactive buttons */
+        .btn-save-glow {
+            background: linear-gradient(135deg, #059669 0%, #0d9488 100%) !important;
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.28);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer !important;
+        }
+        .btn-save-glow:hover {
+            background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%) !important;
+            box-shadow: 0 6px 28px rgba(16, 185, 129, 0.55);
+            transform: translateY(-2px) scale(1.02);
+            filter: brightness(1.12);
+        }
+        .btn-save-glow:active {
+            transform: translateY(1px) scale(0.98);
+        }
+
+        .btn-cancel-action {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #cbd5e1;
+            transition: all 0.2s ease;
+            cursor: pointer !important;
+        }
+        .btn-cancel-action:hover {
+            background: rgba(255, 255, 255, 0.14);
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.25);
+            transform: translateY(-1px);
+        }
+        .btn-cancel-action:active {
+            transform: translateY(1px);
+        }
     </style>
 </head>
 <body class="font-sans antialiased min-h-screen" x-data="editPageApp()" x-init="init()">
@@ -52,7 +91,7 @@
     <!-- TOP STICKY HEADER — sama dengan competitions.blade.php header style -->
     <div style="position: sticky; top: 0; z-index: 100; background: rgba(9,13,23,0.97); border-bottom: 1px solid rgba(255,255,255,0.09); padding: 14px 32px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 32px rgba(0,0,0,0.5);">
         <div class="flex items-center gap-3.5 min-w-0">
-            <a href="{{ route('admin.competitions') }}" class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.07] hover:bg-white/[0.13] text-slate-200 hover:text-white text-xs font-bold transition border border-white/[0.1] shrink-0">
+            <a href="{{ route('admin.competitions') }}" class="btn-cancel-action flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition shrink-0 cursor-pointer">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i>
                 <span>Kembali ke Daftar</span>
             </a>
@@ -62,12 +101,12 @@
             </div>
         </div>
         <div class="flex items-center gap-3 shrink-0">
-            <a href="{{ route('admin.competitions') }}" class="px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-slate-300 hover:text-white text-xs font-bold transition border border-white/[0.08]">
+            <a href="{{ route('admin.competitions') }}" class="btn-cancel-action px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer">
                 Batal
             </a>
-            <button type="button" onclick="document.getElementById('editCompetitionForm').submit()" class="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-lg shadow-emerald-500/25 transition flex items-center gap-1.5">
+            <button type="button" @click="submitForm()" class="btn-save-glow px-5 py-2 rounded-xl text-white font-black text-xs transition flex items-center gap-1.5 cursor-pointer">
                 <i data-lucide="check" class="w-4 h-4"></i>
-                <span>Simpan Perubahan</span>
+                <span x-text="isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'"></span>
             </button>
         </div>
     </div>
@@ -77,7 +116,7 @@
         <form id="editCompetitionForm" action="{{ route('admin.competitions.update', $competition->id) }}" method="POST" enctype="multipart/form-data" class="space-y-5">
             @csrf
 
-            @if ($errors->any())
+            @if (isset($errors) && $errors->any())
                 <div class="bg-rose-500/10 border border-rose-500/25 rounded-2xl p-4">
                     <ul class="text-xs text-rose-400 space-y-1 list-disc pl-4">
                         @foreach ($errors->all() as $error)
@@ -625,9 +664,9 @@
                             <p class="text-xs text-slate-500">Bobot persentase penilaian cabang lomba</p>
                         </div>
                     </div>
-                    <button type="button" @click="addCriterion()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition" style="background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.22); color: #34d399;">
+                    <button type="button" @click="addCriterion()" class="btn-cancel-action flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer" style="color: #34d399; border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.12);">
                         <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                        + Tambah Kriteria
+                        <span>Tambah Kriteria</span>
                     </button>
                 </div>
 
@@ -654,7 +693,7 @@
                             <input :name="'criteria[' + index + '][max_score]'" type="number" min="0" x-model="criterion.max_score" class="input-admin block w-full px-2.5 py-1.5 rounded-lg text-xs font-bold">
                         </div>
                         <div class="col-span-2 flex items-end justify-end">
-                            <button type="button" @click="criteria.splice(index, 1)" class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition" style="background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); color: #f87171;">Hapus</button>
+                            <button type="button" @click="criteria.splice(index, 1)" class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition hover:bg-rose-500/20 cursor-pointer" style="background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); color: #f87171;">Hapus</button>
                         </div>
                     </div>
                 </template>
@@ -669,15 +708,15 @@
 
             <!-- FOOTER CARD -->
             <div class="card-admin rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <button type="button" onclick="if(confirm('Yakin hapus cabang lomba {{ addslashes($competition->name) }}?')) { document.getElementById('deleteForm').submit(); }" class="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5" style="background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); color: #f87171;">
+                <button type="button" onclick="if(confirm('Yakin hapus cabang lomba {{ addslashes($competition->name) }}?')) { document.getElementById('deleteForm').submit(); }" class="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 hover:bg-rose-500/20 cursor-pointer" style="background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); color: #f87171;">
                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                     <span>Hapus Cabang Lomba</span>
                 </button>
                 <div class="w-full sm:w-auto flex items-center justify-end gap-3">
-                    <a href="{{ route('admin.competitions') }}" class="px-5 py-2.5 rounded-xl text-slate-400 hover:text-white text-xs font-bold transition" style="border: 1px solid rgba(255,255,255,0.09);">Batal</a>
-                    <button type="submit" class="px-6 py-2.5 rounded-xl text-white font-black text-xs shadow-lg transition flex items-center gap-1.5" style="background: linear-gradient(135deg, #059669 0%, #0d9488 100%); box-shadow: 0 4px 16px rgba(16,185,129,0.25);">
+                    <a href="{{ route('admin.competitions') }}" class="btn-cancel-action px-5 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer">Batal</a>
+                    <button type="submit" @click="isSubmitting = true" class="btn-save-glow px-6 py-2.5 rounded-xl text-white font-black text-xs transition flex items-center gap-1.5 cursor-pointer">
                         <i data-lucide="check" class="w-4 h-4"></i>
-                        <span>Simpan Perubahan</span>
+                        <span x-text="isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'"></span>
                     </button>
                 </div>
             </div>
@@ -688,7 +727,25 @@
     </div>
 
     <script>
-        function editPageApp() { return { init() { this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); }); } }; }
+        function editPageApp() {
+            return {
+                isSubmitting: false,
+                stageEnabled: {{ $competition->has_stage_timer ? 'true' : 'false' }},
+                init() {
+                    this.$nextTick(() => {
+                        if (window.lucide) window.lucide.createIcons();
+                    });
+                },
+                submitForm() {
+                    const form = document.getElementById('editCompetitionForm');
+                    if (form.reportValidity && !form.reportValidity()) {
+                        return;
+                    }
+                    this.isSubmitting = true;
+                    form.submit();
+                }
+            };
+        }
         function criteriaApp(initialCriteria) {
             return {
                 criteria: initialCriteria || [],
