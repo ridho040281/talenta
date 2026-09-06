@@ -1111,14 +1111,14 @@ class AdminSettingsController extends Controller
             'name' => 'required|string|max:150',
             'description' => 'nullable|string|max:255',
             'message' => 'required|string',
-            'is_active' => 'nullable|boolean',
+            'is_active' => 'nullable',
         ]);
 
         $template->update([
             'name' => $request->name,
             'description' => $request->description,
             'message' => $request->message,
-            'is_active' => $request->boolean('is_active', true),
+            'is_active' => $request->has('is_active'),
         ]);
 
         return redirect()->route('admin.settings.whatsapp.blast', ['tab' => 'templates'])->with('success', 'Template pesan WhatsApp "'.$template->name.'" berhasil diperbarui.');

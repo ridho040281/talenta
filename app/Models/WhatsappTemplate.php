@@ -104,7 +104,7 @@ class WhatsappTemplate extends Model
         ];
 
         foreach ($defaults as $tmpl) {
-            static::updateOrCreate(
+            static::firstOrCreate(
                 ['code' => $tmpl['code']],
                 $tmpl
             );
