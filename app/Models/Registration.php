@@ -96,6 +96,23 @@ class Registration extends Model
         return 'Peserta #'.$this->id;
     }
 
+    /**
+     * Get participant or team name without the institution suffix
+     */
+    public function getPureNameAttribute(): string
+    {
+        if (! empty($this->team_name)) {
+            return $this->team_name;
+        }
+
+        $firstMember = $this->members->first();
+        if ($firstMember && ! empty($firstMember->full_name)) {
+            return $firstMember->full_name;
+        }
+
+        return $this->user?->name ?? ('Peserta #'.$this->id);
+    }
+
     public function getFeeAttribute(): float
     {
         if (! $this->competition) {

@@ -467,7 +467,7 @@ class PicController extends Controller
             if ($validated['status'] === 'verified') {
                 WablasNotificationService::sendAutoNotification('registration_verified', [
                     'phone' => $targetPhones,
-                    'nama_peserta' => $registration->display_name,
+                    'nama_peserta' => $registration->pure_name,
                     'nisn' => $firstMember?->nisn ?? ($registration->user?->nisn ?? '-'),
                     'nama_sekolah' => $registration->institution_name,
                     'cabang_lomba' => $registration->competition->name,
@@ -479,7 +479,7 @@ class PicController extends Controller
             } elseif ($validated['status'] === 'revision') {
                 WablasNotificationService::sendAutoNotification('registration_revision', [
                     'phone' => $targetPhones,
-                    'nama_peserta' => $registration->display_name,
+                    'nama_peserta' => $registration->pure_name,
                     'nisn' => $firstMember?->nisn ?? ($registration->user?->nisn ?? '-'),
                     'nama_sekolah' => $registration->institution_name,
                     'cabang_lomba' => $registration->competition->name,
@@ -490,7 +490,7 @@ class PicController extends Controller
             } elseif ($validated['status'] === 'rejected') {
                 WablasNotificationService::sendAutoNotification('registration_rejected', [
                     'phone' => $targetPhones,
-                    'nama_peserta' => $registration->display_name,
+                    'nama_peserta' => $registration->pure_name,
                     'nisn' => $firstMember?->nisn ?? ($registration->user?->nisn ?? '-'),
                     'nama_sekolah' => $registration->institution_name,
                     'cabang_lomba' => $registration->competition->name,
@@ -994,7 +994,7 @@ class PicController extends Controller
 
             WablasNotificationService::sendAutoNotification('draw_result_picked', [
                 'phone' => $targetPhones,
-                'nama_peserta' => $registration->display_name,
+                'nama_peserta' => $registration->pure_name,
                 'nisn' => $firstMember?->nisn ?? ($registration->user?->nisn ?? '-'),
                 'nama_sekolah' => $registration->institution_name,
                 'cabang_lomba' => $competition->name,

@@ -69,12 +69,22 @@ class WablasNotificationService
 
             $firstCleanPhone = $cleanPhones[0] ?? '';
 
+            $rawNamaPeserta = $data['nama_peserta'] ?? ($data['nama_pendaftar'] ?? 'Bapak/Ibu Peserta');
+            $namaSekolah = $data['nama_sekolah'] ?? ($data['nama_instansi'] ?? $institutionName);
+
+            // Clean duplicate school/institution from nama_peserta if it already ends with "(Nama Sekolah)"
+            $cleanNamaPeserta = $rawNamaPeserta;
+            if (is_string($cleanNamaPeserta) && ! empty($namaSekolah)) {
+                $quotedSchool = preg_quote(trim($namaSekolah), '/');
+                $cleanNamaPeserta = trim(preg_replace('/\s*\(' . $quotedSchool . '\)$/i', '', $cleanNamaPeserta));
+            }
+
             $placeholders = [
-                '{nama_peserta}' => $data['nama_peserta'] ?? ($data['nama_pendaftar'] ?? 'Bapak/Ibu Peserta'),
-                '{nama_pendaftar}' => $data['nama_pendaftar'] ?? ($data['nama_peserta'] ?? 'Bapak/Ibu Pendaftar'),
+                '{nama_peserta}' => $cleanNamaPeserta,
+                '{nama_pendaftar}' => $cleanNamaPeserta,
                 '{nisn}' => $data['nisn'] ?? '-',
-                '{nama_sekolah}' => $data['nama_sekolah'] ?? ($data['nama_instansi'] ?? $institutionName),
-                '{nama_instansi}' => $data['nama_instansi'] ?? ($data['nama_sekolah'] ?? $institutionName),
+                '{nama_sekolah}' => $namaSekolah,
+                '{nama_instansi}' => $namaSekolah,
                 '{cabang_lomba}' => $data['cabang_lomba'] ?? 'TALENTA 2026',
                 '{kategori_lomba}' => $data['kategori_lomba'] ?? ($data['cabang_lomba'] ?? '-'),
                 '{no_peserta}' => $data['no_peserta'] ?? ($data['kode_pendaftaran'] ?? '-'),

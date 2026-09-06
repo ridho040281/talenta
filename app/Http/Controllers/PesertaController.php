@@ -358,7 +358,7 @@ class PesertaController extends Controller
             // 1. Ke Pendaftar & Official (Keduanya dikirim jika diisi)
             WablasNotificationService::sendAutoNotification('registration_submitted', [
                 'phone' => $targetPhones,
-                'nama_peserta' => $registration->display_name,
+                'nama_peserta' => $registration->pure_name,
                 'nisn' => $firstMember?->nisn ?? ($user->nisn ?? '-'),
                 'nama_sekolah' => $registration->institution_name,
                 'cabang_lomba' => $competition->name,

@@ -908,7 +908,7 @@ class AdminSettingsController extends Controller
 
                 $recipientsList->push([
                     'phone' => $phone,
-                    'name' => $reg->display_name ?: 'Bapak/Ibu Peserta',
+                    'name' => $reg->pure_name ?: 'Bapak/Ibu Peserta',
                     'school' => $reg->institution_name ?: '-',
                     'competition' => $reg->competition->name ?? 'TALENTA 2026',
                     'no_peserta' => $reg->participant_number ?? $reg->registration_code,
