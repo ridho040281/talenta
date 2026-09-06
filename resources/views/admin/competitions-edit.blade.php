@@ -104,9 +104,9 @@
             <a href="{{ route('admin.competitions') }}" class="btn-cancel-action px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer">
                 Batal
             </a>
-            <button type="button" @click="submitForm()" class="btn-save-glow px-5 py-2 rounded-xl text-white font-black text-xs transition flex items-center gap-1.5 cursor-pointer">
-                <i data-lucide="check" class="w-4 h-4"></i>
-                <span x-text="isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'"></span>
+            <button type="button" @click="submitForm()" class="btn-save-glow px-5 py-2.5 rounded-xl text-white font-black text-xs transition flex items-center gap-2 cursor-pointer shadow-lg shadow-emerald-500/25">
+                <i data-lucide="save" class="w-4 h-4"></i>
+                <span>Simpan Perubahan</span>
             </button>
         </div>
     </div>
@@ -714,9 +714,9 @@
                 </button>
                 <div class="w-full sm:w-auto flex items-center justify-end gap-3">
                     <a href="{{ route('admin.competitions') }}" class="btn-cancel-action px-5 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer">Batal</a>
-                    <button type="submit" @click="isSubmitting = true" class="btn-save-glow px-6 py-2.5 rounded-xl text-white font-black text-xs transition flex items-center gap-1.5 cursor-pointer">
-                        <i data-lucide="check" class="w-4 h-4"></i>
-                        <span x-text="isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'"></span>
+                    <button type="submit" class="btn-save-glow px-6 py-2.5 rounded-xl text-white font-black text-xs transition flex items-center gap-2 cursor-pointer shadow-lg shadow-emerald-500/25">
+                        <i data-lucide="save" class="w-4 h-4"></i>
+                        <span>Simpan Perubahan</span>
                     </button>
                 </div>
             </div>

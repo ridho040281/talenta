@@ -1369,7 +1369,7 @@
                     Batal
                 </button>
                 <button type="button" @click="$refs.editCompetitionForm.submit()" class="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-xs shadow-lg shadow-emerald-500/20 transition cursor-pointer flex items-center gap-1.5">
-                    <i data-lucide="check" class="w-4 h-4"></i>
+                    <i data-lucide="save" class="w-4 h-4"></i>
                     <span>Simpan Perubahan</span>
                 </button>
             </div>
@@ -2191,7 +2191,7 @@
                                 Batal
                             </button>
                             <button type="submit" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-xs shadow-lg shadow-emerald-500/20 transition cursor-pointer flex items-center gap-1.5">
-                                <i data-lucide="check" class="w-4 h-4"></i>
+                                <i data-lucide="save" class="w-4 h-4"></i>
                                 <span>Simpan Perubahan</span>
                             </button>
                         </div>
