@@ -657,6 +657,10 @@
                     }
                     return isPutri ? (this.tierFees.A_tunggal_pi || 35000) : (this.tierFees.A_tunggal_pa || 35000);
                 }
+                if (this.tierFees && (this.tierFees.pa !== undefined || this.tierFees.pi !== undefined)) {
+                    const firstMemberGender = (this.members && this.members[0] && this.members[0].gender) ? this.members[0].gender : 'L';
+                    return firstMemberGender === 'P' ? (this.tierFees.pi ?? this.baseFee) : (this.tierFees.pa ?? this.baseFee);
+                }
                 return this.baseFee;
             },
             get formattedFee() {

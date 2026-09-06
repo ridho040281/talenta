@@ -339,11 +339,42 @@
                                         <span class="font-bold {{ $theme['feeText'] }} font-mono">Rp {{ number_format($c->tier_fees['B_tunggal_pa'] ?? 35000, 0, ',', '.') }}</span>
                                     </div>
                                 </div>
+                            @elseif(in_array($c->code, ['MTQ', 'POP']))
+                                @php
+                                    $fPa = $c->tier_fees['pa'] ?? $c->registration_fee;
+                                    $fPi = $c->tier_fees['pi'] ?? $c->registration_fee;
+                                @endphp
+                                @if($fPa == $fPi)
+                                    <div class="p-2.5 rounded-2xl bg-slate-950/80 border border-slate-800 text-xs flex items-center justify-between transition">
+                                        <span class="text-[10px] uppercase font-bold text-slate-400">Biaya Pendaftaran:</span>
+                                        <span class="font-black {{ $theme['feeText'] }} font-mono text-sm">
+                                            {{ $fPa > 0 ? 'Rp ' . number_format($fPa, 0, ',', '.') : 'Gratis' }}
+                                        </span>
+                                    </div>
+                                @else
+                                    <div class="p-2.5 rounded-2xl bg-slate-950/80 border border-slate-800 text-xs space-y-1 transition">
+                                        <div class="flex items-center justify-between border-b border-slate-800/80 pb-1">
+                                            <span class="text-[10px] uppercase font-bold text-slate-400">Biaya Pendaftaran:</span>
+                                            <span class="text-[9px] font-black {{ $theme['feeText'] }} bg-slate-900 px-1.5 py-0.2 rounded border border-slate-700">Individu PA & PI</span>
+                                        </div>
+                                        <div class="flex items-center justify-between text-[10px]">
+                                            <span class="text-slate-300">Putra (PA):</span>
+                                            <span class="font-bold {{ $theme['feeText'] }} font-mono">Rp {{ number_format($fPa, 0, ',', '.') }}</span>
+                                        </div>
+                                        <div class="flex items-center justify-between text-[10px]">
+                                            <span class="text-slate-300">Putri (PI):</span>
+                                            <span class="font-bold {{ $theme['feeText'] }} font-mono">Rp {{ number_format($fPi, 0, ',', '.') }}</span>
+                                        </div>
+                                    </div>
+                                @endif
                             @else
+                                @php
+                                    $computedFee = $c->tier_fees['pa'] ?? $c->tier_fees['A_tunggal_pa'] ?? $c->registration_fee;
+                                @endphp
                                 <div class="p-2.5 rounded-2xl bg-slate-950/80 border border-slate-800 text-xs flex items-center justify-between transition">
                                     <span class="text-[10px] uppercase font-bold text-slate-400">Biaya Pendaftaran:</span>
                                     <span class="font-black {{ $theme['feeText'] }} font-mono text-sm">
-                                        {{ $c->registration_fee > 0 ? 'Rp ' . number_format($c->registration_fee, 0, ',', '.') : 'Gratis' }}
+                                        {{ $computedFee > 0 ? 'Rp ' . number_format($computedFee, 0, ',', '.') : 'Gratis' }}
                                     </span>
                                 </div>
                             @endif

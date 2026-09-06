@@ -368,26 +368,39 @@ class CollectiveRegistrationController extends Controller
             $compObj = $competitions[$code] ?? null;
             $fee = $compObj ? (float) $compObj->registration_fee : 0;
 
-            // Tiered pricing for Bulu Tangkis (Tunggal & Ganda, Kat A, Kat B, Kat C)
-            if ($code === 'BLT' || (isset($compObj) && $compObj->code === 'BLT')) {
-                $isGanda = stripos($rawComp, 'Ganda') !== false || stripos($rawComp, 'GPA') !== false || stripos($rawComp, 'GPI') !== false || stripos($matchType ?? '', 'Ganda') !== false;
+            if ($compObj) {
+                if ($compObj->code === 'BLT' || str_starts_with($code, 'BLT')) {
+                    $isGanda = stripos($rawComp, 'Ganda') !== false || stripos($rawComp, 'GPA') !== false || stripos($rawComp, 'GPI') !== false || stripos($matchType ?? '', 'Ganda') !== false;
+                    $isPutri = $gender === 'P' || stripos($rawComp, 'PI') !== false || stripos($rawComp, 'Putri') !== false || stripos($matchType ?? '', 'Putri') !== false || stripos($matchType ?? '', 'PI') !== false;
 
-                if ($isGanda) {
-                    $fee = (float) AppSetting::get('blt_fee_ganda', AppSetting::get('blt_fee_c_ganda', 125000));
-                } else {
-                    $feeA = (float) AppSetting::get('blt_fee_a_tunggal', AppSetting::get('blt_fee_a', 75000));
-                    $feeB = (float) AppSetting::get('blt_fee_b_tunggal', AppSetting::get('blt_fee_b', 100000));
-                    $feeC = (float) AppSetting::get('blt_fee_c_tunggal', AppSetting::get('blt_fee_c', 125000));
-
-                    if (stripos($targetClass ?? '', 'Kategori A') !== false || stripos($rawComp, 'Kat A') !== false || stripos($rawComp, 'Kls 1') !== false) {
-                        $fee = $feeA;
-                    } elseif (stripos($targetClass ?? '', 'Kategori B') !== false || stripos($rawComp, 'Kat B') !== false || stripos($rawComp, 'Kls 3') !== false) {
-                        $fee = $feeB;
-                    } elseif (stripos($targetClass ?? '', 'Kategori C') !== false || stripos($rawComp, 'Kat C') !== false || stripos($rawComp, 'Kls 5') !== false) {
-                        $fee = $feeC;
+                    if ($isGanda) {
+                        $fee = (float) AppSetting::get($isPutri ? 'blt_fee_ganda_pi' : 'blt_fee_ganda_pa', AppSetting::get('blt_fee_ganda', 200000));
                     } else {
-                        $fee = $feeA;
+                        $feeA = (float) AppSetting::get($isPutri ? 'blt_fee_a_tunggal_pi' : 'blt_fee_a_tunggal_pa', 130000);
+                        $feeB = (float) AppSetting::get($isPutri ? 'blt_fee_b_tunggal_pi' : 'blt_fee_b_tunggal_pa', 150000);
+                        $feeC = (float) AppSetting::get($isPutri ? 'blt_fee_c_tunggal_pi' : 'blt_fee_c_tunggal_pa', 150000);
+
+                        if (stripos($targetClass ?? '', 'Kategori A') !== false || stripos($rawComp, 'Kat A') !== false || stripos($rawComp, 'Kls 1') !== false) {
+                            $fee = $feeA;
+                        } elseif (stripos($targetClass ?? '', 'Kategori B') !== false || stripos($rawComp, 'Kat B') !== false || stripos($rawComp, 'Kls 3') !== false) {
+                            $fee = $feeB;
+                        } elseif (stripos($targetClass ?? '', 'Kategori C') !== false || stripos($rawComp, 'Kat C') !== false || stripos($rawComp, 'Kls 5') !== false) {
+                            $fee = $feeC;
+                        } else {
+                            $fee = $feeA;
+                        }
                     }
+                } elseif ($compObj->code === 'TMJ') {
+                    $isPutri = $gender === 'P';
+                    $feeA = (float) AppSetting::get($isPutri ? 'tmj_fee_a_tunggal_pi' : 'tmj_fee_a_tunggal_pa', $compObj->registration_fee ?: 35000);
+                    $feeB = (float) AppSetting::get($isPutri ? 'tmj_fee_b_tunggal_pi' : 'tmj_fee_b_tunggal_pa', $compObj->registration_fee ?: 35000);
+                    $fee = (stripos($rawComp, 'Kat B') !== false || stripos($rawComp, 'Kelas 4') !== false || stripos($rawComp, 'Kls 4') !== false) ? $feeB : $feeA;
+                } elseif ($compObj->code === 'MTQ') {
+                    $isPutri = $gender === 'P';
+                    $fee = (float) AppSetting::get($isPutri ? 'mtq_fee_pi' : 'mtq_fee_pa', $compObj->registration_fee);
+                } elseif ($compObj->code === 'POP') {
+                    $isPutri = $gender === 'P';
+                    $fee = (float) AppSetting::get($isPutri ? 'pop_fee_pi' : 'pop_fee_pa', $compObj->registration_fee);
                 }
             }
 

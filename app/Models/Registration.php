@@ -126,6 +126,25 @@ class Registration extends Model
             return $feeA;
         }
 
+        if ($this->competition->code === 'TMJ') {
+            $isPutri = stripos($this->match_type ?? '', 'Putri') !== false || stripos($this->match_type ?? '', '(PI)') !== false || $this->primary_gender === 'P';
+            $target = ($this->target_class ?? '').' '.($this->sub_category ?? '');
+            if (stripos($target, 'Kategori B') !== false || stripos($target, 'Kat B') !== false || stripos($target, '4 - 6') !== false) {
+                return (float) AppSetting::get($isPutri ? 'tmj_fee_b_tunggal_pi' : 'tmj_fee_b_tunggal_pa', $this->competition->registration_fee ?: 35000);
+            }
+            return (float) AppSetting::get($isPutri ? 'tmj_fee_a_tunggal_pi' : 'tmj_fee_a_tunggal_pa', $this->competition->registration_fee ?: 35000);
+        }
+
+        if ($this->competition->code === 'MTQ') {
+            $isPutri = $this->primary_gender === 'P' || stripos($this->match_type ?? '', 'Putri') !== false || stripos($this->match_type ?? '', 'PI') !== false;
+            return (float) AppSetting::get($isPutri ? 'mtq_fee_pi' : 'mtq_fee_pa', $this->competition->registration_fee);
+        }
+
+        if ($this->competition->code === 'POP') {
+            $isPutri = $this->primary_gender === 'P' || stripos($this->match_type ?? '', 'Putri') !== false || stripos($this->match_type ?? '', 'PI') !== false;
+            return (float) AppSetting::get($isPutri ? 'pop_fee_pi' : 'pop_fee_pa', $this->competition->registration_fee);
+        }
+
         return (float) $this->competition->registration_fee;
     }
 
