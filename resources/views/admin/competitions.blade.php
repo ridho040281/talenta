@@ -632,9 +632,6 @@
                                                     <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#4E6EFF]/10 text-slate-200 border border-[#4E6EFF]/20 text-xs">
                                                         <i data-lucide="user-check" class="w-3.5 h-3.5 text-[#84D0FF] shrink-0"></i>
                                                         <span class="font-bold truncate">{{ $p->name }}</span>
-                                                        @if(!empty($p->phone))
-                                                            <span class="text-[10px] text-emerald-400 font-mono">({{ $p->phone }})</span>
-                                                        @endif
                                                     </div>
                                                 @endforeach
                                             </div>
