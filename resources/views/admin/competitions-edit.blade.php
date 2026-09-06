@@ -188,30 +188,22 @@
                         </div>
                     </div>
 
-                    <!-- Row 3: Biaya, Kuota, PIC, Status -->
+                    <!-- Row 3: Biaya, Kuota, Status -->
                     @php $isMultiTier = in_array($competition->code, ['BLT', 'MTQ', 'POP', 'TMJ']); @endphp
                     @if(!$isMultiTier)
                     <div class="grid grid-cols-2 sm:grid-cols-12 gap-3">
-                        <div class="sm:col-span-3">
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Biaya (Rp)</label>
+                        <div class="sm:col-span-4">
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Biaya Pendaftaran (Rp)</label>
                             <input name="registration_fee" type="number" step="1000" min="0" value="{{ old('registration_fee', $competition->registration_fee) }}" class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-mono font-bold">
-                            <p class="text-[10px] text-slate-600 mt-0.5">Isi 0 untuk Tak Terbatas</p>
+                            <p class="text-[10px] text-slate-600 mt-0.5">Isi 0 untuk Gratis</p>
                         </div>
-                        <div class="sm:col-span-2">
+                        <div class="sm:col-span-4">
                             <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Kuota Total</label>
                             <input name="quota" type="number" min="0" value="{{ old('quota', $competition->quota) }}" class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-bold">
+                            <p class="text-[10px] text-slate-600 mt-0.5">Isi 0 untuk Tak Terbatas (∞)</p>
                         </div>
                         <div class="col-span-2 sm:col-span-4">
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Koordinator PIC Utama</label>
-                            <select name="pic_id" class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-semibold">
-                                <option value="">-- Belum Ditugaskan --</option>
-                                @foreach($pics as $pic)
-                                    <option value="{{ $pic->id }}" {{ $competition->pic_id == $pic->id ? 'selected' : '' }}>{{ $pic->name }} {{ $pic->phone ? '('.$pic->phone.')' : '' }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="sm:col-span-3">
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Status</label>
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Status Pendaftaran</label>
                             <select name="status" required class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-bold">
                                 <option value="buka" {{ $competition->status == 'buka' ? 'selected' : '' }}>Buka</option>
                                 <option value="tutup" {{ $competition->status == 'tutup' ? 'selected' : '' }}>Tutup</option>
@@ -219,61 +211,68 @@
                             </select>
                         </div>
                     </div>
+                    @endif
 
-                    <!-- MULTI-PIC SELECTION (FULL WIDTH OUTSIDE GRID) -->
-                    <div class="mt-4 p-4 sm:p-5 rounded-2xl space-y-3.5" style="background: rgba(78,110,255,0.06); border: 1px solid rgba(78,110,255,0.22);">
+                    <!-- PENGATURAN PIC & NOTIFIKASI WHATSAPP CABANG LOMBA -->
+                    <div class="p-4 sm:p-5 rounded-2xl space-y-4" style="background: rgba(78,110,255,0.06); border: 1px solid rgba(78,110,255,0.22);">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-white/[0.08]">
                             <div>
                                 <label class="text-xs font-black uppercase tracking-wider text-[#84D0FF] flex items-center gap-2">
-                                    <i data-lucide="users" class="w-4 h-4 text-[#84D0FF]"></i>
-                                    <span>Tim Petugas PIC Lomba (Multi-PIC & Notifikasi WhatsApp)</span>
+                                    <i data-lucide="user-check" class="w-4 h-4 text-[#84D0FF]"></i>
+                                    <span>Pengaturan PIC & Notifikasi WhatsApp Lomba</span>
                                 </label>
-                                <p class="text-[11px] text-slate-400 mt-0.5">Centang satu atau lebih petugas PIC yang akan menerima notifikasi WA pendaftar dan mengelola lomba ini</p>
+                                <p class="text-[11px] text-slate-400 mt-0.5">Tentukan koordinator penanggung jawab, saklar notifikasi WA, dan nomor asisten lapangan lomba ini</p>
                             </div>
                             <span class="text-[10px] font-bold text-[#84D0FF] px-2.5 py-1 rounded-full bg-[#4E6EFF]/20 border border-[#4E6EFF]/30 self-start sm:self-auto font-mono">
-                                Multi-PIC
+                                PIC & WhatsApp
                             </span>
                         </div>
 
-                        @php
-                            $assignedPicIds = old('pic_ids', $competition->pics->pluck('id')->toArray());
-                            if (empty($assignedPicIds) && $competition->pic_id) {
-                                $assignedPicIds = [$competition->pic_id];
-                            }
-                        @endphp
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                            @foreach($pics as $pic)
-                                @php $isChecked = in_array($pic->id, $assignedPicIds); @endphp
-                                <label class="flex items-start gap-3 p-3 rounded-xl border transition cursor-pointer select-none" style="{{ $isChecked ? 'background: rgba(78,110,255,0.18); border-color: rgba(78,110,255,0.45);' : 'background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.08);' }}">
-                                    <input type="checkbox" name="pic_ids[]" value="{{ $pic->id }}" {{ $isChecked ? 'checked' : '' }} class="mt-0.5 w-4 h-4 rounded text-blue-600 bg-slate-900 border-slate-700 focus:ring-0 cursor-pointer">
-                                    <div class="flex-1 min-w-0">
-                                        <div class="flex items-center justify-between gap-1">
-                                            <span class="text-xs font-bold text-white truncate">{{ $pic->name }}</span>
-                                            @if($competition->pic_id == $pic->id)
-                                                <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">Utama</span>
-                                            @endif
-                                        </div>
-                                        <div class="mt-1 flex items-center gap-1.5 text-[11px]">
-                                            @if(!empty($pic->phone))
-                                                <span class="text-emerald-400 font-mono font-medium flex items-center gap-1">
-                                                    <i data-lucide="phone" class="w-3 h-3"></i> {{ $pic->phone }}
-                                                </span>
-                                            @else
-                                                <span class="text-rose-400/80 italic text-[10px]">(No WA belum diisi)</span>
-                                            @endif
-                                        </div>
-                                    </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                            <!-- 1. Koordinator PIC Utama -->
+                            <div class="lg:col-span-5 space-y-1.5">
+                                <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                    Koordinator PIC Utama
                                 </label>
-                            @endforeach
+                                <select name="pic_id" class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-semibold">
+                                    <option value="">-- Belum Ditugaskan --</option>
+                                    @foreach($pics as $pic)
+                                        <option value="{{ $pic->id }}" {{ old('pic_id', $competition->pic_id) == $pic->id ? 'selected' : '' }}>
+                                            {{ $pic->name }} {{ $pic->phone ? '('.$pic->phone.')' : '' }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <p class="text-[10px] text-slate-500">Akun resmi dengan hak akses login mengelola lomba ini di Dashboard PIC.</p>
+                            </div>
+
+                            <!-- 2. Saklar Notifikasi WA -->
+                            <div class="lg:col-span-3 space-y-1.5">
+                                <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                    Notifikasi WA Pendaftar
+                                </label>
+                                <select name="notify_pic" class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-bold {{ $competition->notify_pic ? 'text-emerald-400' : 'text-slate-400' }}">
+                                    <option value="1" {{ old('notify_pic', $competition->notify_pic) ? 'selected' : '' }}>🟢 AKTIF (Kirim WA)</option>
+                                    <option value="0" {{ !old('notify_pic', $competition->notify_pic) ? 'selected' : '' }}>⚪ NONAKTIF (Cek Web Saja)</option>
+                                </select>
+                                <p class="text-[10px] text-slate-500">Kirim pesan WhatsApp otomatis setiap ada siswa mendaftar.</p>
+                            </div>
+
+                            <!-- 3. Nomor Asisten / Panitia Lapangan -->
+                            <div class="lg:col-span-4 space-y-1.5">
+                                <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                                    <span>Nomor WA Tambahan / Asisten</span>
+                                    <span class="text-[9px] font-normal text-slate-500 font-mono">(Opsional)</span>
+                                </label>
+                                <input type="text" name="assistant_phones" value="{{ old('assistant_phones', $competition->assistant_phones) }}" placeholder="Contoh: 081234567890, 089876543210" class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-mono">
+                                <p class="text-[10px] text-slate-500">Nomor asisten/juri lapangan yang ikut menerima notifikasi (pisahkan koma).</p>
+                            </div>
                         </div>
 
-                        <p class="text-[11px] text-slate-400 pt-1 flex items-center gap-1.5">
-                            <i data-lucide="info" class="w-3.5 h-3.5 text-[#84D0FF] shrink-0"></i>
-                            <span>Semua nomor PIC yang dicentang akan <strong>otomatis menerima pesan WhatsApp serentak</strong> ketika ada peserta mendaftar dan memiliki akses di Dashboard PIC.</span>
-                        </p>
+                        <div class="pt-2 border-t border-white/[0.06] flex items-start gap-2 text-[11px] text-slate-400">
+                            <i data-lucide="info" class="w-3.5 h-3.5 text-[#84D0FF] shrink-0 mt-0.5"></i>
+                            <span>Jika status <strong>AKTIF</strong>, notifikasi WA peserta baru akan dikirimkan serentak ke nomor PIC Utama beserta nomor asisten tambahan yang didaftarkan.</span>
+                        </div>
                     </div>
-                    @endif
 
                     @if($isMultiTier)
                         @php $mode = request('mode', 'all'); @endphp

@@ -539,13 +539,54 @@ class Competition extends Model
     }
 
     /**
-     * Get all valid phone numbers of assigned PICs formatted for WhatsApp
+     * Is WhatsApp notification enabled for PIC when new participant registers?
+     */
+    public function getNotifyPicAttribute(): bool
+    {
+        $val = AppSetting::get('competition_notify_pic_'.$this->id, '1');
+
+        return $val === '1' || $val === true || $val === 'true' || $val === 1;
+    }
+
+    /**
+     * Additional assistant phone numbers (comma-separated string)
+     */
+    public function getAssistantPhonesAttribute(): string
+    {
+        return (string) AppSetting::get('competition_assistant_phones_'.$this->id, '');
+    }
+
+    /**
+     * Get all valid phone numbers of assigned PICs formatted for WhatsApp.
+     * Returns empty array if notifications for this competition are switched OFF.
      */
     public function getAllPicPhonesAttribute(): array
     {
-        return $this->all_pics
-            ->pluck('phone')
-            ->filter()
+        if (! $this->notify_pic) {
+            return [];
+        }
+
+        $phones = collect();
+
+        // 1. Primary PIC & Sector PICs
+        foreach ($this->all_pics as $picUser) {
+            if (! empty($picUser->phone)) {
+                $phones->push($picUser->phone);
+            }
+        }
+
+        // 2. Assistant / Co-PIC Phones (from comma-separated setting)
+        if (! empty($this->assistant_phones)) {
+            $rawList = explode(',', $this->assistant_phones);
+            foreach ($rawList as $raw) {
+                $trimmed = trim($raw);
+                if (! empty($trimmed)) {
+                    $phones->push($trimmed);
+                }
+            }
+        }
+
+        return $phones
             ->map(function ($phone) {
                 $clean = preg_replace('/[^0-9]/', '', (string) $phone);
                 if (str_starts_with($clean, '0')) {

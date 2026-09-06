@@ -92,11 +92,7 @@ class AdminController extends Controller
 
         $nextOrder = $validated['order'] ?? (Competition::withoutGlobalScope('order')->max('order') + 1);
 
-        $picIds = array_values(array_filter((array) $request->input('pic_ids', [])));
-        if (empty($picIds) && ! empty($validated['pic_id'])) {
-            $picIds = [$validated['pic_id']];
-        }
-        $primaryPicId = ! empty($picIds) ? $picIds[0] : ($validated['pic_id'] ?? null);
+        $primaryPicId = $validated['pic_id'] ?? null;
 
         $competition = Competition::create([
             'category_id' => $validated['category_id'],
@@ -125,8 +121,17 @@ class AdminController extends Controller
             'stage_bell_sound' => $request->input('stage_bell_sound', 'bell'),
         ]);
 
-        if (! empty($picIds)) {
-            $competition->pics()->sync($picIds);
+        if ($primaryPicId) {
+            $competition->pics()->sync([$primaryPicId]);
+        }
+
+        // Notification & Assistant settings
+        $notifyPic = $request->boolean('notify_pic', true);
+        AppSetting::set('competition_notify_pic_'.$competition->id, $notifyPic ? '1' : '0', 'general');
+
+        $assistantPhones = trim($request->input('assistant_phones', ''));
+        if (! empty($assistantPhones)) {
+            AppSetting::set('competition_assistant_phones_'.$competition->id, $assistantPhones, 'general');
         }
 
         // Default / Custom criteria
@@ -198,17 +203,19 @@ class AdminController extends Controller
             $guidelinesPath = $request->input('guidelines_file');
         }
 
-        $picIds = $request->input('pic_ids');
-        if ($request->has('pic_ids')) {
-            $cleanedPicIds = array_values(array_filter((array) $picIds));
-            $competition->pics()->sync($cleanedPicIds);
-            $primaryPicId = ! empty($cleanedPicIds) ? $cleanedPicIds[0] : null;
+        $primaryPicId = $request->filled('pic_id') ? $request->input('pic_id') : ($validated['pic_id'] ?? null);
+        if ($primaryPicId) {
+            $competition->pics()->sync([$primaryPicId]);
         } else {
-            $primaryPicId = $validated['pic_id'] ?? $competition->pic_id;
-            if ($primaryPicId) {
-                $competition->pics()->syncWithoutDetaching([$primaryPicId]);
-            }
+            $competition->pics()->detach();
         }
+
+        // Notification & Assistant settings
+        $notifyPic = $request->boolean('notify_pic', true);
+        AppSetting::set('competition_notify_pic_'.$competition->id, $notifyPic ? '1' : '0', 'general');
+
+        $assistantPhones = trim($request->input('assistant_phones', ''));
+        AppSetting::set('competition_assistant_phones_'.$competition->id, $assistantPhones, 'general');
 
         $competition->update([
             'category_id' => $validated['category_id'],

@@ -168,7 +168,12 @@ class WablasNotificationService
                 return false;
             }
 
-            // Find all assigned PIC phone numbers for this competition (multi-PIC support)
+            // If WhatsApp notification for PIC is disabled for this competition, skip cleanly
+            if (! $competition->notify_pic) {
+                return true;
+            }
+
+            // Find all assigned PIC phone numbers for this competition (Primary PIC + Assistants + Sector PICs)
             $phones = $competition->all_pic_phones;
 
             // If no direct PIC assigned, fallback to any user with role pic_lomba

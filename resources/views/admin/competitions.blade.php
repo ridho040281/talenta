@@ -991,27 +991,32 @@
                         </div>
                     </div>
 
-                    <!-- TIM PETUGAS PIC (MULTI-PIC) -->
-                    <div class="space-y-2 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
-                        <div class="flex items-center justify-between">
+                    <!-- PENGATURAN PIC & NOTIFIKASI WHATSAPP -->
+                    <div class="space-y-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                        <div class="flex items-center justify-between pb-2 border-b border-slate-200/60">
                             <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                                <i data-lucide="users" class="w-4 h-4 text-blue-600"></i>
-                                <span>Tim Petugas PIC (Multi-PIC & Notifikasi WhatsApp)</span>
+                                <i data-lucide="user-check" class="w-4 h-4 text-blue-600"></i>
+                                <span>Pengaturan Notifikasi WhatsApp Lomba</span>
                             </label>
-                            <span class="text-[11px] text-slate-400 font-medium">Centang 1 atau lebih PIC</span>
+                            <span class="text-[10px] font-bold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full font-mono">
+                                PIC & WhatsApp
+                            </span>
                         </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-36 overflow-y-auto">
-                            @foreach($pics as $p)
-                                <label class="flex items-center gap-2.5 p-2 rounded-xl bg-white border border-slate-200 hover:border-blue-400 text-xs cursor-pointer transition select-none">
-                                    <input type="checkbox" name="pic_ids[]" value="{{ $p->id }}" class="rounded text-blue-600 border-slate-300">
-                                    <span class="font-bold text-slate-800">{{ $p->name }}</span>
-                                    @if(!empty($p->phone))
-                                        <span class="text-[10px] text-emerald-600 font-mono">({{ $p->phone }})</span>
-                                    @endif
-                                </label>
-                            @endforeach
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Notifikasi WA Pendaftar</label>
+                                <select name="notify_pic" class="block w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-900 outline-none focus:border-emerald-500">
+                                    <option value="1" selected>🟢 AKTIF (Kirim WA)</option>
+                                    <option value="0">⚪ NONAKTIF (Cek Web Saja)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Nomor WA Asisten (Opsional)</label>
+                                <input type="text" name="assistant_phones" placeholder="Contoh: 081234567890, 089876543210" class="block w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-mono text-slate-900 outline-none focus:border-emerald-500">
+                            </div>
                         </div>
-                        <p class="text-[11px] text-slate-500">Seluruh PIC yang dicentang akan otomatis menerima pesan notifikasi WhatsApp saat ada peserta mendaftar.</p>
+                        <p class="text-[11px] text-slate-500">Jika aktif, notifikasi pendaftaran otomatis dikirimkan ke PIC Utama dan nomor asisten lapangan (jika diisi).</p>
                     </div>
 
                     <div>
