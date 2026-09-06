@@ -120,7 +120,7 @@
                     <thead>
                         <tr class="bg-slate-950/80 border-b border-slate-800 text-[11px] font-black uppercase tracking-wider text-slate-400">
                             <th class="py-3.5 px-4 w-12 text-center">No</th>
-                            <th class="py-3.5 px-4">Kode & No. Dada</th>
+                            <th class="py-3.5 px-4">Kode & No. Peserta</th>
                             <th class="py-3.5 px-4">Cabang Perlombaan</th>
                             <th class="py-3.5 px-4">Nama Peserta / Delegasi</th>
                             <th class="py-3.5 px-4 text-center">No. Undian</th>
@@ -151,7 +151,7 @@
                                     {{ $loop->iteration }}
                                 </td>
 
-                                <!-- Kode & No. Dada -->
+                                <!-- Kode & No. Peserta -->
                                 <td class="py-3.5 px-4">
                                     <div class="space-y-1">
                                         <div class="flex items-center gap-1.5">
@@ -160,7 +160,7 @@
                                             </span>
                                         </div>
                                         <div class="flex items-center gap-1">
-                                            <span class="text-[10px] uppercase font-bold text-slate-400">No. Dada:</span>
+                                            <span class="text-[10px] uppercase font-bold text-slate-400">No. Peserta:</span>
                                             @if($reg->participant_number)
                                                 <span class="font-mono font-black text-emerald-300 text-[11px] bg-emerald-500/20 px-1.5 py-0.2 rounded border border-emerald-500/30">
                                                     {{ $reg->participant_number }}

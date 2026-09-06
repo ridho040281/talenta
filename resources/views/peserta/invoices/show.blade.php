@@ -196,9 +196,9 @@
                             </td>
                             <td class="py-3.5 px-4 text-center">
                                 @if($reg->status === 'verified')
-                                    <a href="{{ route('peserta.print.idcard', $reg->id) }}" target="_blank" class="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 font-bold border border-purple-500/30 transition">
+                                    <a href="{{ route('document.print.registration', $reg->id) }}" target="_blank" class="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 font-bold border border-emerald-500/30 transition text-xs">
                                         <i data-lucide="printer" class="w-3.5 h-3.5"></i>
-                                        <span>Cetak Kartu</span>
+                                        <span>Cetak Formulir</span>
                                     </a>
                                 @else
                                     <span class="text-slate-500 italic text-[11px]">Tersedia saat lunas</span>

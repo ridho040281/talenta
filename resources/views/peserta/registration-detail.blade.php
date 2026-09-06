@@ -25,9 +25,9 @@
 
         <div class="flex items-center gap-3">
             @if($registration->status === 'verified')
-                <a href="{{ route('peserta.print.idcard', $registration->id) }}" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black text-xs shadow-lg shadow-emerald-600/20 transition">
+                <a href="{{ route('document.print.registration', $registration->id) }}" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black text-xs shadow-lg shadow-emerald-600/20 transition">
                     <i data-lucide="printer" class="w-4 h-4"></i>
-                    <span>Cetak ID Card & No. Dada</span>
+                    <span>Cetak Formulir Pendaftaran</span>
                 </a>
             @endif
             <a href="{{ route('peserta.registrations') }}" class="px-4 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs transition">
