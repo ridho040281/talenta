@@ -24,6 +24,7 @@ class Competition extends Model
         'quota',
         'registration_fee',
         'rules',
+        'show_rules',
         'guidelines_file',
         'whatsapp_group_url',
         'venue',
@@ -74,6 +75,7 @@ class Competition extends Model
         return [
             'schedule_date' => 'date',
             'has_draw' => 'boolean',
+            'show_rules' => 'boolean',
             'show_criteria' => 'boolean',
             'is_live_score' => 'boolean',
             'has_stage_timer' => 'boolean',

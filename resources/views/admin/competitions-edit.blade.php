@@ -543,9 +543,17 @@
                     @endif
 
                     <!-- Aturan & Petunjuk Teknis -->
-                    <div>
-                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Aturan & Petunjuk Teknis Singkat</label>
-                        <textarea name="rules" rows="4" class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-medium resize-none">{{ old('rules', $competition->rules) }}</textarea>
+                    <div x-data="{ showRules: {{ $competition->show_rules ? 'true' : 'false' }} }">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400">Aturan & Petunjuk Teknis Singkat</label>
+                            <label class="flex items-center gap-2 cursor-pointer select-none px-2.5 py-1 rounded-lg transition"
+                                   :style="showRules ? 'background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.25);' : 'background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);'">
+                                <input name="show_rules" type="checkbox" value="1" x-model="showRules" class="w-3.5 h-3.5 rounded text-emerald-500 bg-slate-900 border-slate-700 focus:ring-0 cursor-pointer">
+                                <span class="text-[10px] font-black tracking-wide" :class="showRules ? 'text-emerald-400' : 'text-slate-400'" x-text="showRules ? '✓ AKTIF (TAMPIL DI PESERTA)' : '✗ NONAKTIF (TIDAK TAMPIL)'"></span>
+                            </label>
+                        </div>
+                        <textarea name="rules" rows="4" class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-medium resize-none" placeholder="Tuliskan petunjuk teknis / aturan singkat...">{{ old('rules', $competition->rules) }}</textarea>
+                        <p class="text-[10px] text-slate-500 mt-1">Centang aktif di atas jika ingin teks aturan ini ditampilkan ke peserta di halaman rincian lomba.</p>
                     </div>
 
                     <!-- Juknis PDF -->

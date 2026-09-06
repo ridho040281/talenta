@@ -46,6 +46,7 @@
                 </p>
             </div>
 
+            @if($competition->show_rules && !empty($competition->rules))
             <!-- Petunjuk Teknis & Aturan Lomba -->
             <div class="glass-card rounded-3xl p-6 sm:p-8 border border-white/[0.08] shadow-2xl space-y-4">
                 <div class="flex items-center gap-3">
@@ -56,9 +57,10 @@
                 </div>
 
                 <div class="text-xs sm:text-sm text-slate-300 whitespace-pre-line leading-relaxed bg-[#0C111D]/80 p-5 sm:p-6 rounded-2xl border border-white/[0.08]">
-                    {{ $competition->rules ?? "1. Peserta merupakan siswa SD/MI atau SMP/MTs yang telah terdaftar resmi.\n2. Mengenakan seragam atau busana sesuai cabang lomba.\n3. Mengikuti tata tertib dan keputusan dewan juri bersifat mutlak." }}
+                    {{ $competition->rules }}
                 </div>
             </div>
+            @endif
 
             @if($competition->guidelines_embed_url)
             <!-- Petunjuk Teknis Lengkap (Juknis PDF Embed) -->

@@ -32,6 +32,7 @@
                 venue: '',
                 schedule_time: '',
                 rules: '',
+                show_rules: true,
                 show_criteria: true,
                 criteria: [
                     { name: 'Penilaian Umum', weight_percentage: 100, min_score: 0, max_score: 100, description: '' }
@@ -64,6 +65,7 @@
                 venue: '',
                 schedule_time: '',
                 rules: '',
+                show_rules: true,
                 show_criteria: true,
                 criteria: []
             },
@@ -132,6 +134,8 @@
                     venue: '',
                     schedule_time: '',
                     rules: '',
+                    show_rules: true,
+                    show_criteria: true,
                     criteria: [
                         { name: 'Penilaian Umum', weight_percentage: 100, min_score: 0, max_score: 100, description: '' }
                     ]
@@ -1020,8 +1024,19 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Aturan & Petunjuk Teknis Singkat</label>
-                        <textarea name="rules" rows="3" placeholder="Tuliskan petunjuk teknis pelaksanaan..." class="block w-full px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-medium text-slate-900 outline-none focus:border-emerald-500"></textarea>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600">Aturan & Petunjuk Teknis Singkat</label>
+                            <input type="hidden" name="show_rules" :value="newCompetition.show_rules ? '1' : '0'">
+                            <button type="button" 
+                                    @click="newCompetition.show_rules = !newCompetition.show_rules"
+                                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer"
+                                    :class="newCompetition.show_rules ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20' : 'bg-slate-200 hover:bg-slate-300 text-slate-700'"
+                                    :title="newCompetition.show_rules ? 'Klik untuk menyembunyikan aturan dari peserta' : 'Klik untuk menampilkan aturan ke peserta'">
+                                <span class="w-1.5 h-1.5 rounded-full" :class="newCompetition.show_rules ? 'bg-emerald-200 animate-pulse' : 'bg-slate-400'"></span>
+                                <span x-text="newCompetition.show_rules ? '✓ Aktif (Tampil di Peserta)' : '✗ Nonaktif (Sembunyi)'"></span>
+                            </button>
+                        </div>
+                        <textarea name="rules" rows="3" x-model="newCompetition.rules" placeholder="Tuliskan petunjuk teknis pelaksanaan..." class="block w-full px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-medium text-slate-900 outline-none focus:border-emerald-500"></textarea>
                     </div>
 
                     <div>
@@ -2040,7 +2055,18 @@
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Aturan & Petunjuk Teknis Singkat</label>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600">Aturan & Petunjuk Teknis Singkat</label>
+                                <input type="hidden" name="show_rules" :value="selectedCompetition.show_rules ? '1' : '0'">
+                                <button type="button" 
+                                        @click="selectedCompetition.show_rules = !selectedCompetition.show_rules"
+                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer"
+                                        :class="selectedCompetition.show_rules ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20' : 'bg-slate-200 hover:bg-slate-300 text-slate-700'"
+                                        :title="selectedCompetition.show_rules ? 'Klik untuk menyembunyikan aturan dari peserta' : 'Klik untuk menampilkan aturan ke peserta'">
+                                    <span class="w-1.5 h-1.5 rounded-full" :class="selectedCompetition.show_rules ? 'bg-emerald-200 animate-pulse' : 'bg-slate-400'"></span>
+                                    <span x-text="selectedCompetition.show_rules ? '✓ Aktif (Tampil di Peserta)' : '✗ Nonaktif (Sembunyi)'"></span>
+                                </button>
+                            </div>
                             <textarea name="rules" rows="3" x-model="selectedCompetition.rules" placeholder="Tuliskan petunjuk teknis pelaksanaan..." class="block w-full px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-medium text-slate-900 outline-none"></textarea>
                         </div>
 
