@@ -168,10 +168,10 @@ class Registration extends Model
             ->whereNotNull('participant_number')
             ->count() + 1;
 
-        $participantNumber = $code.'-'.str_pad($count, 2, '0', STR_PAD_LEFT);
+        $participantNumber = $code.'-'.str_pad($count, 3, '0', STR_PAD_LEFT);
         while (self::where('competition_id', $this->competition_id)->where('participant_number', $participantNumber)->exists()) {
             $count++;
-            $participantNumber = $code.'-'.str_pad($count, 2, '0', STR_PAD_LEFT);
+            $participantNumber = $code.'-'.str_pad($count, 3, '0', STR_PAD_LEFT);
         }
 
         $this->participant_number = $participantNumber;

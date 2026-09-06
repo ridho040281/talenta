@@ -425,10 +425,7 @@ class PicController extends Controller
 
         // If verified, generate official participant number if not exists
         if ($validated['status'] === 'verified' && empty($registration->participant_number)) {
-            $count = Registration::where('competition_id', $registration->competition_id)
-                ->whereNotNull('participant_number')
-                ->count() + 1;
-            $registration->participant_number = $registration->competition->code.'-'.str_pad($count, 2, '0', STR_PAD_LEFT);
+            $registration->participant_number = $registration->generateParticipantNumber();
         }
 
         $registration->save();
