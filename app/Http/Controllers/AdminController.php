@@ -720,7 +720,7 @@ class AdminController extends Controller
             'position' => ['nullable', 'string', 'max:255'],
         ]);
 
-        User::create([
+        $newUser = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
@@ -730,6 +730,20 @@ class AdminController extends Controller
             'position' => $validated['position'] ?? null,
             'status' => $validated['status'] ?? 'active',
         ]);
+
+        if (! empty($validated['phone'])) {
+            try {
+                \App\Services\WablasNotificationService::sendAutoNotification('account_created', [
+                    'phone' => $validated['phone'],
+                    'nama_peserta' => $validated['name'],
+                    'nisn' => $validated['email'],
+                    'nama_sekolah' => $validated['institution_name'] ?? 'TALENTA 2026',
+                    'link_login' => route('login'),
+                ]);
+            } catch (\Throwable $e) {
+                // Non-blocking
+            }
+        }
 
         return redirect()->route('admin.users')->with('success', 'Pengguna baru '.$validated['name'].' berhasil ditambahkan.');
     }

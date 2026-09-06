@@ -732,6 +732,27 @@ class CollectiveRegistrationController extends Controller
                 }
             });
 
+            // Trigger WhatsApp Notification: Pendaftaran Kolektif Terverifikasi Sah
+            try {
+                $invoice->loadMissing(['user', 'registrations.competition']);
+                $targetPhone = $invoice->user?->phone;
+                if (! empty($targetPhone)) {
+                    WablasNotificationService::sendAutoNotification('registration_verified', [
+                        'phone' => $targetPhone,
+                        'nama_peserta' => $invoice->user->name,
+                        'nisn' => $invoice->user->nisn ?? '-',
+                        'nama_sekolah' => $invoice->user->institution_name ?? 'Sekolah/Madrasah',
+                        'cabang_lomba' => $invoice->registrations->count().' Peserta (Pendaftaran Kolektif)',
+                        'no_peserta' => 'Invoice: '.$invoice->invoice_number,
+                        'kode_pendaftaran' => $invoice->invoice_number,
+                        'link_scoreboard' => url('/'),
+                        'link_login' => route('peserta.invoices.show', $invoice->id),
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                // Non-blocking
+            }
+
             return redirect()->route('admin.invoices.index')
                 ->with('success', 'Tagihan '.$invoice->invoice_number.' dan seluruh pendaftaran di dalamnya BERHASIL DISETUJUI & LUNAS.');
         } else {

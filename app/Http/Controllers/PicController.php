@@ -671,6 +671,7 @@ class PicController extends Controller
         // Find or create User for the participant so they can login to portal if needed
         $nisnClean = ! empty($validated['nisn']) ? trim($validated['nisn']) : null;
         $participantUser = null;
+        $isNewUser = false;
         if ($nisnClean) {
             $participantUser = User::where('nisn', $nisnClean)->first();
         }
@@ -692,6 +693,7 @@ class PicController extends Controller
                 'account_type' => 'pendaftar',
                 'status' => 'active',
             ]);
+            $isNewUser = true;
         }
 
         // Prevent duplicate NISN in same competition
@@ -777,6 +779,57 @@ class PicController extends Controller
             $user,
             'success'
         );
+
+        // Trigger Auto WhatsApp Notifications for Manual Registration
+        try {
+            $targetPhone = ! empty($validated['phone']) ? $validated['phone'] : ($participantUser->phone ?? null);
+
+            if (! empty($targetPhone)) {
+                // 1. Notifikasi Akun Baru (jika dibuatkan akun baru)
+                if ($isNewUser) {
+                    WablasNotificationService::sendAutoNotification('account_created', [
+                        'phone' => $targetPhone,
+                        'nama_peserta' => $validated['full_name'],
+                        'nisn' => $participantUser->nisn ?: $participantUser->email,
+                        'nama_sekolah' => $validated['institution_name'],
+                        'link_login' => route('login'),
+                    ]);
+                }
+
+                // 2. Notifikasi Pendaftaran / Verifikasi ke Peserta
+                if ($status === 'verified') {
+                    $registration->loadMissing(['members', 'user', 'competition']);
+                    WablasNotificationService::sendAutoNotification('registration_verified', [
+                        'phone' => $targetPhone,
+                        'nama_peserta' => $validated['full_name'],
+                        'nisn' => $nisnClean ?: ($participantUser->nisn ?: '-'),
+                        'nama_sekolah' => $validated['institution_name'],
+                        'cabang_lomba' => $competition->name,
+                        'no_peserta' => $registration->participant_number ?: $registration->registration_code,
+                        'kode_pendaftaran' => $registration->registration_code,
+                        'link_scoreboard' => url('/'),
+                        'link_login' => route('login'),
+                    ]);
+                } else {
+                    WablasNotificationService::sendAutoNotification('registration_submitted', [
+                        'phone' => $targetPhone,
+                        'nama_peserta' => $validated['full_name'],
+                        'nisn' => $nisnClean ?: ($participantUser->nisn ?: '-'),
+                        'nama_sekolah' => $validated['institution_name'],
+                        'cabang_lomba' => $competition->name,
+                        'kode_pendaftaran' => $registration->registration_code,
+                        'link_login' => route('login'),
+                    ]);
+                }
+            }
+
+            // 3. Notifikasi Alert ke Seluruh Petugas PIC Lomba
+            WablasNotificationService::notifyPicNewRegistration($registration);
+
+        } catch (\Throwable $e) {
+            // Non-blocking
+            \Illuminate\Support\Facades\Log::error("Gagal mengirim WhatsApp pendaftaran manual: " . $e->getMessage());
+        }
 
         return redirect()->back()->with('success', "Peserta '{$validated['full_name']}' berhasil didaftarkan secara manual pada cabang {$competition->name}".($status === 'verified' ? ' dan langsung berstatus Lunas/Terverifikasi.' : '.'));
     }
