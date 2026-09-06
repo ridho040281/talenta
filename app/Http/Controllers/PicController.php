@@ -548,6 +548,9 @@ class PicController extends Controller
         }
         $registration->participant_number = $validated['participant_number'] ?? null;
         $registration->draw_number = ! empty($validated['draw_number']) ? $validated['draw_number'] : null;
+        if ($request->has('chosen_song')) {
+            $registration->chosen_song = $request->input('chosen_song') ?: null;
+        }
 
         if ($registration->competition && $registration->competition->code === 'BLT') {
             if ($registration->match_type && stripos($registration->match_type, 'ganda') !== false) {
@@ -757,6 +760,7 @@ class PicController extends Controller
             'registration_code' => $regCode,
             'team_name' => $teamName,
             'sub_category' => $subCategory,
+            'chosen_song' => $request->input('chosen_song') ?: null,
             'target_class' => $validated['target_class'] ?? null,
             'match_type' => $validated['match_type'] ?? null,
             'institution_name' => $validated['institution_name'],

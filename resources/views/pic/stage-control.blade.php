@@ -263,6 +263,9 @@
                                     @if($reg->sub_category)
                                         <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-white/[0.06] text-slate-400 shrink-0">{{ $reg->sub_category }}</span>
                                     @endif
+                                    @if($reg->chosen_song)
+                                        <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 shrink-0">🎵 {{ $reg->chosen_song }}</span>
+                                    @endif
                                 </div>
                                 <p class="text-[11px] text-slate-400 truncate">{{ $reg->institution_name }}</p>
                             </div>

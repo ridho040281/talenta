@@ -372,6 +372,7 @@ class StageController extends Controller
                 'institution' => $currentReg->institution_name,
                 'members' => $membersList,
                 'sub_category' => $currentReg->sub_category,
+                'chosen_song' => $currentReg->chosen_song,
                 'stage_status' => $currentReg->stage_status,
             ];
         }
@@ -387,6 +388,7 @@ class StageController extends Controller
                 'participant_number' => $nextReg->participant_number,
                 'name' => $displayName,
                 'institution' => $nextReg->institution_name,
+                'chosen_song' => $nextReg->chosen_song,
             ];
         }
 

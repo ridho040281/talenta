@@ -212,6 +212,12 @@
                             <span class="text-slate-400 block text-[10px] uppercase font-bold">Kategori Kelas</span>
                             <span class="font-bold text-purple-800">{{ $registration->target_class ?: 'Semua Kelas' }}</span>
                         </div>
+                        @if($registration->chosen_song)
+                        <div class="col-span-2 sm:col-span-3 pt-1 border-t border-slate-100">
+                            <span class="text-slate-400 block text-[10px] uppercase font-bold">Judul Lagu Pilihan</span>
+                            <span class="font-black text-purple-900 text-sm">🎵 {{ $registration->chosen_song }}</span>
+                        </div>
+                        @endif
                     </div>
 
                     @if($otherRegistrations->isNotEmpty())

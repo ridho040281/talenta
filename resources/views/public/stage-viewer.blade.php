@@ -270,6 +270,13 @@
                         <span class="hidden sm:inline-flex items-center px-3.5 py-2 rounded-2xl bg-white/[0.08] border border-white/[0.12] text-xs font-bold text-slate-200 backdrop-blur-md shadow-sm"
                               x-text="current.sub_category"></span>
                     </template>
+
+                    <template x-if="current && current.chosen_song">
+                        <span class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-purple-500/20 border border-purple-500/30 text-xs font-bold text-purple-300 backdrop-blur-md shadow-sm">
+                            <i data-lucide="music" class="w-3.5 h-3.5 text-purple-400"></i>
+                            <span x-text="'Lagu: ' + current.chosen_song"></span>
+                        </span>
+                    </template>
                 </div>
 
                 <!-- Massive High-Impact Stage Draw Number Badge -->

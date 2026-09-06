@@ -86,6 +86,12 @@
                                     <i data-lucide="building-2" class="w-3 h-3 text-slate-500"></i>
                                     <span>{{ $reg->institution_name }}</span>
                                 </p>
+                                @if(!empty($reg->chosen_song))
+                                    <p class="text-xs text-purple-300 font-bold flex items-center gap-1 mt-1 bg-purple-500/15 border border-purple-500/30 px-2 py-0.5 rounded-lg w-fit">
+                                        <i data-lucide="music" class="w-3 h-3 text-purple-400"></i>
+                                        <span>Lagu: {{ $reg->chosen_song }}</span>
+                                    </p>
+                                @endif
                             </div>
                         </div>
 

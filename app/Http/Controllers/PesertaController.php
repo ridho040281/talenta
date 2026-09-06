@@ -131,6 +131,7 @@ class PesertaController extends Controller
 
         $isBuluTangkis = ($competition->code === 'BLT');
         $isTenisMeja = ($competition->code === 'TMJ');
+        $isPopSinger = ($competition->code === 'POP' || \Illuminate\Support\Str::contains(strtolower($competition->slug), 'pop') || \Illuminate\Support\Str::contains(strtolower($competition->name), 'pop'));
         $isGandaBlt = $isBuluTangkis && (stripos($request->input('match_type', ''), 'Ganda') !== false);
 
         // Enforce tier quotas for Tenis Meja
@@ -246,9 +247,11 @@ class PesertaController extends Controller
             'members.*.birth_date' => ['nullable', 'date'],
             'members.*.phone' => ['nullable', 'string', 'max:20'],
             'members.*.role_in_team' => ['nullable', 'string', 'max:100'],
+            'chosen_song' => [$isPopSinger ? 'required' : 'nullable', 'string', 'max:255'],
             'document_file' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,zip', 'max:5120'],
             'payment_proof' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
         ], [
+            'chosen_song.required' => 'Judul lagu pilihan wajib dipilih untuk cabang lomba Pop Singer.',
             'target_class.required' => 'Kategori kelas wajib dipilih.',
             'match_type.required' => 'Kategori sektor pertandingan (Tunggal PA/PI) wajib dipilih.',
             'payment_proof.required' => 'Bukti pendaftaran / slip pembayaran wajib diunggah dalam satu kali pengiriman.',
@@ -306,6 +309,9 @@ class PesertaController extends Controller
             if (! empty($validated['target_class']) && ! empty($validated['match_type'])) {
                 $subCategory = $validated['target_class'].' - '.$validated['match_type'];
             }
+        } elseif ($isPopSinger || $competition->code === 'MTQ') {
+            $firstGender = $validated['members'][0]['gender'] ?? 'L';
+            $subCategory = ($firstGender === 'P') ? 'Putri (PI)' : 'Putra (PA)';
         }
 
         $teamName = $validated['team_name'] ?? null;
@@ -331,6 +337,7 @@ class PesertaController extends Controller
             'registration_code' => $regCode,
             'team_name' => $teamName,
             'sub_category' => $subCategory,
+            'chosen_song' => $validated['chosen_song'] ?? $request->input('chosen_song'),
             'target_class' => $targetClass,
             'match_type' => $validated['match_type'] ?? null,
             'institution_name' => $institutionName,

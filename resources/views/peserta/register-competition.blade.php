@@ -426,6 +426,48 @@
 
                 </div>
             </template>
+
+            @php
+                $isPopSinger = ($competition->code === 'POP' || \Illuminate\Support\Str::contains(strtolower($competition->slug), 'pop') || \Illuminate\Support\Str::contains(strtolower($competition->name), 'pop'));
+                $songOptions = $competition->song_options;
+            @endphp
+
+            @if($isPopSinger)
+                <!-- Pilihan Lagu Lomba Khusus Cabang Pop Singer -->
+                <div class="p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-purple-950/40 via-indigo-950/40 to-slate-900 border border-purple-500/30 space-y-3 shadow-xl">
+                    <div class="flex items-center justify-between pb-2 border-b border-purple-500/20">
+                        <label for="chosen_song" class="text-xs font-black uppercase tracking-wider text-purple-300 flex items-center gap-2">
+                            <i data-lucide="music" class="w-4 h-4 text-purple-400"></i>
+                            <span>Judul Lagu Pilihan yang Dinyanyikan <span class="text-rose-400">*</span></span>
+                        </label>
+                        <span class="text-[10px] font-bold text-purple-300 px-2.5 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/30 font-mono">
+                            Pop Singer
+                        </span>
+                    </div>
+
+                    <p class="text-xs text-slate-300">
+                        Silakan tentukan lagu wajib/pilihan dari daftar yang telah disediakan oleh panitia TALENTA 2026:
+                    </p>
+
+                    <div class="relative">
+                        <select id="chosen_song" name="chosen_song" required class="block w-full px-4 py-3 rounded-xl border border-purple-500/40 bg-slate-950 text-white font-bold text-sm focus:border-purple-400 focus:ring-1 focus:ring-purple-400 outline-none cursor-pointer">
+                            <option value="">-- Pilih Judul Lagu Pilihan --</option>
+                            @foreach($songOptions as $song)
+                                <option value="{{ $song }}" {{ old('chosen_song') == $song ? 'selected' : '' }}>🎵 {{ $song }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    @error('chosen_song')
+                        <p class="text-xs text-rose-400 font-bold mt-1">{{ $message }}</p>
+                    @enderror
+
+                    <p class="text-[11px] text-slate-400 flex items-center gap-1.5 pt-1">
+                        <i data-lucide="info" class="w-3.5 h-3.5 text-purple-400 shrink-0"></i>
+                        <span>Pastikan telah mempersiapkan file minus one / iringan musik untuk diserahkan kepada panitia saat registrasi ulang sebelum tampil.</span>
+                    </p>
+                </div>
+            @endif
         </div>
 
         <!-- Section 3: Upload Berkas Syarat & Bukti Pembayaran/Transfer -->

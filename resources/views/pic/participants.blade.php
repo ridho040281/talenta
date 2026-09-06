@@ -72,7 +72,12 @@
                                 <div>{{ $reg->display_name }}</div>
                                 @if($reg->sub_category)
                                     <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                                        🏸 {{ $reg->sub_category }}
+                                        {{ $reg->sub_category }}
+                                    </span>
+                                @endif
+                                @if($reg->chosen_song)
+                                    <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-800 border border-purple-200">
+                                        🎵 {{ $reg->chosen_song }}
                                     </span>
                                 @endif
                             </td>

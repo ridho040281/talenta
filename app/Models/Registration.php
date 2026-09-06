@@ -21,6 +21,7 @@ class Registration extends Model
         'bracket_slot',
         'team_name',
         'sub_category',
+        'chosen_song',
         'target_class',
         'match_type',
         'institution_name',

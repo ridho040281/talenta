@@ -510,6 +510,9 @@
                                         @if($reg->sub_category)
                                             <span class="text-[10px] text-slate-300 font-bold bg-white/[0.05] border border-white/[0.08] px-1.5 py-0.2 rounded">{{ $reg->sub_category }}</span>
                                         @endif
+                                        @if($reg->chosen_song)
+                                            <span class="text-[10px] text-purple-300 font-bold bg-purple-500/15 border border-purple-500/30 px-1.5 py-0.2 rounded">🎵 {{ $reg->chosen_song }}</span>
+                                        @endif
                                         @if($reg->target_class)
                                             <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/15 px-1.5 py-0.2 rounded border border-emerald-500/30">{{ $reg->target_class }}</span>
                                         @endif

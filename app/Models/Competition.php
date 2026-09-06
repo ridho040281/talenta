@@ -665,4 +665,39 @@ class Competition extends Model
 
         return "{$this->quota} {$unitWord}";
     }
+
+    /**
+     * Get list of optional songs for Pop Singer / stage competitions
+     */
+    public function getSongOptionsAttribute(): array
+    {
+        $raw = $this->raw_song_options;
+        if (empty($raw)) {
+            return [];
+        }
+
+        $lines = explode("\n", str_replace("\r", "", $raw));
+        $songs = [];
+        foreach ($lines as $line) {
+            $trimmed = trim($line);
+            if (! empty($trimmed)) {
+                // Remove numbering like "1. " or "1) " if user typed it
+                $cleanTitle = preg_replace('/^\d+[\.\)]\s*/', '', $trimmed);
+                $songs[] = trim($cleanTitle);
+            }
+        }
+
+        return array_values(array_unique(array_filter($songs)));
+    }
+
+    /**
+     * Get raw text of song options (1 line per song)
+     */
+    public function getRawSongOptionsAttribute(): string
+    {
+        $defaultSongs = "Deen Assalam\nRahmatun Lil'Alameen\nYa Maulana\nMan Ana\nAisyah Istri Rasulullah\nBidadari Surga\nSholawat Cinta\nKisah Sang Rasul";
+
+        return AppSetting::get('competition_songs_'.$this->id)
+            ?: (AppSetting::get('pop_song_options') ?: $defaultSongs);
+    }
 }

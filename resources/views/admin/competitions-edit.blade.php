@@ -339,6 +339,31 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- KHUSUS POP SINGER: DAFTAR LAGU PILIHAN -->
+                                @if($competition->code === 'POP' || \Illuminate\Support\Str::contains(strtolower($competition->slug), 'pop') || \Illuminate\Support\Str::contains(strtolower($competition->name), 'pop'))
+                                <div class="p-4 sm:p-5 rounded-2xl space-y-3" style="background: rgba(122,90,248,0.06); border: 1px solid rgba(122,90,248,0.22);">
+                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2" style="border-bottom: 1px solid rgba(122,90,248,0.18);">
+                                        <div>
+                                            <span class="text-xs font-black text-[#A594FD] flex items-center gap-2">
+                                                <i data-lucide="music" class="w-4 h-4 text-[#7A5AF8]"></i>
+                                                <span>DAFTAR LAGU PILIHAN POP SINGER (DROPDOWN PENDAFTARAN)</span>
+                                            </span>
+                                            <p class="text-[11px] text-slate-400 mt-0.5">Daftar judul lagu yang otomatis muncul pada menu drop-down saat peserta mendaftar Pop Singer</p>
+                                        </div>
+                                        <span class="text-[10px] font-bold text-[#A594FD] px-2.5 py-1 rounded-full font-mono self-start sm:self-auto" style="background: rgba(122,90,248,0.18); border: 1px solid rgba(122,90,248,0.3);">
+                                            1 Baris = 1 Judul Lagu
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <textarea name="pop_song_options" rows="7" class="input-admin block w-full px-4 py-3 rounded-xl text-xs font-mono leading-relaxed" placeholder="Contoh:&#10;Deen Assalam&#10;Rahmatun Lil'Alameen&#10;Ya Maulana&#10;Aisyah Istri Rasulullah">{{ old('pop_song_options', $competition->raw_song_options) }}</textarea>
+                                        <div class="mt-2 flex items-start gap-2 text-[11px] text-slate-400">
+                                            <i data-lucide="info" class="w-3.5 h-3.5 text-[#7A5AF8] shrink-0 mt-0.5"></i>
+                                            <span>Ketikkan atau tempel (paste) daftar judul lagu pilihan di atas. Setiap baris baru akan langsung menjadi pilihan drop-down bagi calon peserta saat mengisi formulir lomba.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                @endif
                             </div>
                         @endif
 

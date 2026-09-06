@@ -18,7 +18,13 @@
                 </span>
                 @if($registration->sub_category)
                     <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                        🏸 {{ $registration->sub_category }}
+                        {{ $registration->sub_category }}
+                    </span>
+                @endif
+                @if($registration->chosen_song)
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[10px] font-black tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30 shadow-sm">
+                        <i data-lucide="music" class="w-3 h-3 text-purple-400"></i>
+                        <span>Lagu: {{ $registration->chosen_song }}</span>
                     </span>
                 @endif
             </div>

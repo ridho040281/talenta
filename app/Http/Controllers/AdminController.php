@@ -422,6 +422,14 @@ class AdminController extends Controller
                 'quota' => ($qPa + $qPi),
                 'registration_fee' => $fPa,
             ]);
+
+            // Khusus Lagu Pilihan Pop Singer
+            if ($competition->code === 'POP' || $request->has('pop_song_options')) {
+                if ($request->has('pop_song_options')) {
+                    AppSetting::set('pop_song_options', $request->input('pop_song_options'), 'general');
+                    AppSetting::set('competition_songs_'.$competition->id, $request->input('pop_song_options'), 'general');
+                }
+            }
         }
 
         // Khusus Cabang Tenis Meja (TMJ - Kat A & Kat B)
