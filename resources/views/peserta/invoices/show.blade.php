@@ -55,9 +55,9 @@
                 </div>
 
                 <div class="space-y-1 pt-2">
-                    <p class="text-xs text-slate-400">Bank Syariah Indonesia (BSI) / Rekening Panitia</p>
-                    <p class="text-2xl font-mono font-black tracking-wider text-emerald-300">7145 8892 01</p>
-                    <p class="text-xs text-slate-300 font-medium">a.n. <strong class="text-white">PANITIA TALENTA MTSN 1 BLITAR</strong></p>
+                    <p class="text-xs text-slate-400">{{ $bankInfo['bank_name'] ?? \App\Models\AppSetting::get('bank_name', 'Bank Syariah Indonesia (BSI)') }} / Rekening Panitia</p>
+                    <p class="text-2xl font-mono font-black tracking-wider text-emerald-300 select-all">{{ $bankInfo['bank_account_number'] ?? \App\Models\AppSetting::get('bank_account_number', '7199242042') }}</p>
+                    <p class="text-xs text-slate-300 font-medium">a.n. <strong class="text-white">{{ $bankInfo['bank_account_holder'] ?? \App\Models\AppSetting::get('bank_account_holder', 'WIJIATIN') }}</strong></p>
                 </div>
 
                 <div class="p-3.5 rounded-2xl bg-slate-800/80 border border-slate-700/80 text-[11px] text-slate-300 space-y-1">

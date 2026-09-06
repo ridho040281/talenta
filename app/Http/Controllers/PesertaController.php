@@ -82,7 +82,13 @@ class PesertaController extends Controller
                 ->with('info', 'Anda sudah terdaftar pada cabang lomba '.$competition->name.' (Kode Reg: '.$existing->registration_code.'). Anda bebas mendaftar pada cabang lomba yang berbeda di Dashboard.');
         }
 
-        return view('peserta.register-competition', compact('competition', 'user', 'existing'));
+        $bankInfo = [
+            'bank_name' => AppSetting::get('bank_name', 'Bank Syariah Indonesia (BSI)'),
+            'bank_account_number' => AppSetting::get('bank_account_number', '7199242042'),
+            'bank_account_holder' => AppSetting::get('bank_account_holder', 'WIJIATIN'),
+        ];
+
+        return view('peserta.register-competition', compact('competition', 'user', 'existing', 'bankInfo'));
     }
 
     public function storeRegistration(Request $request, $slug)

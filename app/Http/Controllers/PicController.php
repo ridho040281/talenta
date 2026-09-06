@@ -485,7 +485,7 @@ class PicController extends Controller
                     'cabang_lomba' => $registration->competition->name,
                     'kode_pendaftaran' => $registration->registration_code,
                     'catatan_verifikasi' => $validated['verification_notes'] ?: 'Mohon periksa kembali berkas persyaratan lomba Anda.',
-                    'link_login' => route('peserta.registration.edit', $registration->id),
+                    'link_login' => route('peserta.registration.detail', $registration->id),
                 ]);
             } elseif ($validated['status'] === 'rejected') {
                 WablasNotificationService::sendAutoNotification('registration_rejected', [

@@ -159,17 +159,17 @@
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
                         <div class="p-3 rounded-2xl bg-slate-900 border border-slate-800 space-y-0.5">
                             <span class="text-[10px] text-slate-400 block uppercase font-bold">Nama Bank / Rekening</span>
-                            <span class="font-bold text-white text-sm">{{ $bankInfo['bank_name'] ?? 'BSI' }}</span>
+                            <span class="font-bold text-white text-sm">{{ $bankInfo['bank_name'] ?? \App\Models\AppSetting::get('bank_name', 'Bank Syariah Indonesia (BSI)') }}</span>
                         </div>
 
                         <div class="p-3 rounded-2xl bg-slate-900 border border-slate-800 space-y-0.5">
                             <span class="text-[10px] text-slate-400 block uppercase font-bold">Nomor Rekening</span>
-                            <span class="font-bold text-emerald-400 font-mono text-sm select-all">{{ $bankInfo['bank_account_number'] ?? '7123456789' }}</span>
+                            <span class="font-bold text-emerald-400 font-mono text-sm select-all">{{ $bankInfo['bank_account_number'] ?? \App\Models\AppSetting::get('bank_account_number', '7199242042') }}</span>
                         </div>
 
                         <div class="p-3 rounded-2xl bg-slate-900 border border-slate-800 space-y-0.5">
                             <span class="text-[10px] text-slate-400 block uppercase font-bold">Atas Nama Pemilik</span>
-                            <span class="font-bold text-white text-sm">{{ $bankInfo['bank_account_holder'] ?? 'Panitia TALENTA' }}</span>
+                            <span class="font-bold text-white text-sm">{{ $bankInfo['bank_account_holder'] ?? \App\Models\AppSetting::get('bank_account_holder', 'WIJIATIN') }}</span>
                         </div>
                     </div>
                 </div>

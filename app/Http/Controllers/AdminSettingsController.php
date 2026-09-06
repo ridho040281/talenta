@@ -61,10 +61,10 @@ class AdminSettingsController extends Controller
             'registration_auto_close' => AppSetting::get('registration_auto_close', '1'),
             'registration_closed_message' => AppSetting::get('registration_closed_message', 'Pendaftaran TALENTA 2026 telah resmi ditutup. Terima kasih atas antusiasme seluruh peserta.'),
             'bank_name' => AppSetting::get('bank_name', 'Bank Syariah Indonesia (BSI)'),
-            'bank_account_number' => AppSetting::get('bank_account_number', '7123456789'),
-            'bank_account_holder' => AppSetting::get('bank_account_holder', 'Panitia TALENTA MTsN 1 Blitar'),
-            'treasurer_name' => AppSetting::get('treasurer_name', 'WIJIATIN'),
-            'treasurer_nip' => AppSetting::get('treasurer_nip', ''),
+            'bank_account_number' => AppSetting::get('bank_account_number', '7199242042'),
+            'bank_account_holder' => AppSetting::get('bank_account_holder', 'WIJIATIN'),
+            'treasurer_name' => AppSetting::get('treasurer_name', 'WIJIATIN, S.Pd'),
+            'treasurer_nip' => AppSetting::get('treasurer_nip', '198310102023212035'),
             'announcement_banner' => AppSetting::get('announcement_banner', 'Registrasi TALENTA 2026 resmi dibuka!'),
 
             // Landing Page Content & Narratives

@@ -460,15 +460,15 @@
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs pt-1">
                     <div>
                         <span class="text-[11px] text-slate-400 block">Bank Tujuan:</span>
-                        <strong class="text-white text-sm">Bank Syariah Indonesia (BSI)</strong>
+                        <strong class="text-white text-sm">{{ $bankInfo['bank_name'] ?? \App\Models\AppSetting::get('bank_name', 'Bank Syariah Indonesia (BSI)') }}</strong>
                     </div>
                     <div>
                         <span class="text-[11px] text-slate-400 block">Nomor Rekening:</span>
-                        <strong class="text-amber-400 font-mono text-base tracking-wider">7123456789</strong>
+                        <strong class="text-amber-400 font-mono text-base tracking-wider select-all">{{ $bankInfo['bank_account_number'] ?? \App\Models\AppSetting::get('bank_account_number', '7199242042') }}</strong>
                     </div>
                     <div>
                         <span class="text-[11px] text-slate-400 block">Atas Nama:</span>
-                        <strong class="text-white">Panitia TALENTA 2026</strong>
+                        <strong class="text-white">{{ $bankInfo['bank_account_holder'] ?? \App\Models\AppSetting::get('bank_account_holder', 'WIJIATIN') }}</strong>
                     </div>
                 </div>
                 <div class="pt-2 border-t border-slate-800 flex items-center justify-between text-xs">

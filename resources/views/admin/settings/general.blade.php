@@ -184,7 +184,7 @@
                             Nomor Rekening <span class="text-rose-400">*</span>
                         </label>
                         <p class="text-[10px] text-slate-500">Nomor rekening tanpa spasi / tanda hubung</p>
-                        <input type="text" name="bank_account_number" required value="{{ old('bank_account_number', $settings['bank_account_number'] ?? '7123456789') }}" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-amber-300 text-xs font-mono font-black focus:border-[#7A5AF8] outline-none">
+                        <input type="text" name="bank_account_number" required value="{{ old('bank_account_number', $settings['bank_account_number'] ?? '7199242042') }}" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-amber-300 text-xs font-mono font-black focus:border-[#7A5AF8] outline-none">
                     </div>
 
                     <div class="space-y-1.5 bg-[#0C111D]/80 p-4 rounded-2xl border border-white/[0.08]">
@@ -192,7 +192,7 @@
                             Atas Nama Pemilik Rekening <span class="text-rose-400">*</span>
                         </label>
                         <p class="text-[10px] text-slate-500">Nama resmi pemilik rekening / panitia</p>
-                        <input type="text" name="bank_account_holder" required value="{{ old('bank_account_holder', $settings['bank_account_holder'] ?? 'Panitia TALENTA MTsN 1 Blitar') }}" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-semibold focus:border-[#7A5AF8] outline-none">
+                        <input type="text" name="bank_account_holder" required value="{{ old('bank_account_holder', $settings['bank_account_holder'] ?? 'WIJIATIN') }}" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-semibold focus:border-[#7A5AF8] outline-none">
                     </div>
 
                 </div>
@@ -205,7 +205,7 @@
                             Nama Bendahara Panitia <span class="text-rose-400">*</span>
                         </label>
                         <p class="text-[10px] text-slate-500">Nama bendahara yang dicetak pada tanda tangan Kwitansi / Invoice</p>
-                        <input type="text" name="treasurer_name" value="{{ old('treasurer_name', $settings['treasurer_name'] ?? 'WIJIATIN') }}" placeholder="Contoh: WIJIATIN / HJ. SITI KHADIJAH, S.E." class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-bold focus:border-[#7A5AF8] outline-none">
+                        <input type="text" name="treasurer_name" value="{{ old('treasurer_name', $settings['treasurer_name'] ?? 'WIJIATIN, S.Pd') }}" placeholder="Contoh: WIJIATIN / HJ. SITI KHADIJAH, S.E." class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-bold focus:border-[#7A5AF8] outline-none">
                     </div>
 
                     <div class="space-y-1.5 bg-[#0C111D]/80 p-4 rounded-2xl border border-white/[0.08]">
@@ -213,7 +213,7 @@
                             NIP Bendahara Panitia <span class="text-[10px] text-slate-400 font-normal lowercase">(opsional)</span>
                         </label>
                         <p class="text-[10px] text-slate-500">Nomor Induk Pegawai bendahara (kosongkan jika tidak ada)</p>
-                        <input type="text" name="treasurer_nip" value="{{ old('treasurer_nip', $settings['treasurer_nip'] ?? '') }}" placeholder="Contoh: 19800101 200501 2 001" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-mono focus:border-[#7A5AF8] outline-none">
+                        <input type="text" name="treasurer_nip" value="{{ old('treasurer_nip', $settings['treasurer_nip'] ?? '198310102023212035') }}" placeholder="Contoh: 19800101 200501 2 001" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-mono focus:border-[#7A5AF8] outline-none">
                     </div>
 
                 </div>
@@ -230,8 +230,8 @@
                     <div class="space-y-1 pt-1">
                         <p class="text-xs text-slate-400">Bank Tujuan Transfer:</p>
                         <h4 class="text-lg font-black text-white">{{ $settings['bank_name'] ?? 'Bank Syariah Indonesia (BSI)' }}</h4>
-                        <p class="font-mono text-2xl font-black text-amber-300 tracking-wider">{{ $settings['bank_account_number'] ?? '7123456789' }}</p>
-                        <p class="text-xs text-slate-300">a.n. <strong class="text-white">{{ $settings['bank_account_holder'] ?? 'Panitia TALENTA MTsN 1 Blitar' }}</strong></p>
+                        <p class="font-mono text-2xl font-black text-amber-300 tracking-wider">{{ $settings['bank_account_number'] ?? '7199242042' }}</p>
+                        <p class="text-xs text-slate-300">a.n. <strong class="text-white">{{ $settings['bank_account_holder'] ?? 'WIJIATIN' }}</strong></p>
                     </div>
                 </div>
 

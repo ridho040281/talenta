@@ -445,8 +445,8 @@ class CollectiveRegistrationController extends Controller
 
         $bankInfo = [
             'bank_name' => AppSetting::get('bank_name', 'Bank Syariah Indonesia (BSI)'),
-            'bank_account_number' => AppSetting::get('bank_account_number', '7145 8892 01'),
-            'bank_account_holder' => AppSetting::get('bank_account_holder', 'Panitia TALENTA MTsN 1 Blitar'),
+            'bank_account_number' => AppSetting::get('bank_account_number', '7199242042'),
+            'bank_account_holder' => AppSetting::get('bank_account_holder', 'WIJIATIN'),
         ];
 
         return view('peserta.collective.preview', compact(
@@ -609,7 +609,13 @@ class CollectiveRegistrationController extends Controller
             abort(403, 'Anda tidak memiliki akses ke tagihan ini.');
         }
 
-        return view('peserta.invoices.show', compact('invoice', 'user'));
+        $bankInfo = [
+            'bank_name' => AppSetting::get('bank_name', 'Bank Syariah Indonesia (BSI)'),
+            'bank_account_number' => AppSetting::get('bank_account_number', '7199242042'),
+            'bank_account_holder' => AppSetting::get('bank_account_holder', 'WIJIATIN'),
+        ];
+
+        return view('peserta.invoices.show', compact('invoice', 'user', 'bankInfo'));
     }
 
     /**
