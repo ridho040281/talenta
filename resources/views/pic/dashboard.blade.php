@@ -238,7 +238,7 @@
     </div>
 
     <!-- Master Filter & Action Header (AIStarterKit Design) -->
-    <div class="ai-card rounded-3xl p-5 sm:p-6 border border-white/[0.08] shadow-xl space-y-4">
+    <div class="ai-card rounded-3xl p-5 sm:p-6 border border-white/[0.08] shadow-xl space-y-4 relative z-30">
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5">
             
             <!-- Search input -->
