@@ -279,41 +279,41 @@
         <div class="ai-card rounded-3xl border border-white/[0.08] shadow-xl overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm text-slate-300">
-                    <thead class="text-xs font-bold uppercase tracking-wider bg-[#0C111D]/90 text-slate-400 border-b border-white/[0.08]">
+                    <thead class="text-[11px] font-bold uppercase tracking-wider bg-[#0C111D]/95 text-slate-400 border-b border-white/[0.08]">
                         <tr>
-                            <th class="py-4 px-4 text-center">Urutan</th>
-                            <th class="py-4 px-6">Kode</th>
-                            <th class="py-4 px-6">Nama Lomba</th>
-                            <th class="py-4 px-6">Jenis Lomba</th>
-                            <th class="py-4 px-6">Kategori</th>
-                            <th class="py-4 px-6">Biaya Pendaftaran</th>
-                            <th class="py-4 px-6">Kuota</th>
-                            <th class="py-4 px-6">PIC</th>
-                            <th class="py-4 px-6 text-center">Status</th>
-                            <th class="py-4 px-6 text-center">Aksi</th>
+                            <th class="py-3 px-2 text-center w-12 shrink-0">Urutan</th>
+                            <th class="py-3 px-2.5 text-center font-mono w-14 shrink-0">Kode</th>
+                            <th class="py-3 px-3.5">Nama Lomba</th>
+                            <th class="py-3 px-3">Jenis Lomba</th>
+                            <th class="py-3 px-3">Kategori</th>
+                            <th class="py-3 px-3">Biaya Pendaftaran</th>
+                            <th class="py-3 px-3 text-center">Kuota</th>
+                            <th class="py-3 px-3">PIC</th>
+                            <th class="py-3 px-3 text-center">Status</th>
+                            <th class="py-3 px-3 text-center sticky right-0 z-20 bg-[#0C111D] shadow-[-6px_0_12px_rgba(0,0,0,0.5)] border-l border-white/[0.08]">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-white/[0.04] font-medium">
                         @forelse($competitions as $comp)
-                            <tr x-show="competitionFilter === 'all' || competitionFilter === '{{ $comp->category_id }}'" class="hover:bg-white/[0.025] transition">
-                                <td class="py-4 px-4 text-center">
-                                    <span class="inline-block px-2 py-1 rounded-lg bg-amber-500/10 border border-amber-500/25 font-mono font-black text-xs text-amber-400">
+                            <tr x-show="competitionFilter === 'all' || competitionFilter === '{{ $comp->category_id }}'" class="hover:bg-white/[0.025] transition group">
+                                <td class="py-3 px-2 text-center">
+                                    <span class="inline-block px-2 py-0.5 rounded-lg bg-amber-500/10 border border-amber-500/25 font-mono font-black text-xs text-amber-400">
                                         #{{ $comp->order ?? '-' }}
                                     </span>
                                 </td>
-                                <td class="py-4 px-6 font-mono text-xs font-bold text-[#84D0FF]">
+                                <td class="py-3 px-2.5 text-center font-mono text-xs font-bold text-[#84D0FF]">
                                     {{ $comp->code }}
                                 </td>
-                                <td class="py-4 px-6 font-black text-white text-sm">
+                                <td class="py-3 px-3.5 font-black text-white text-sm">
                                     {{ $comp->name }}
                                 </td>
-                                <td class="py-4 px-6 text-xs whitespace-nowrap">
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30 font-bold">
+                                <td class="py-3 px-3 text-xs whitespace-nowrap">
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30 font-bold">
                                         <i data-lucide="{{ $comp->category->icon ?: 'folder' }}" class="w-3.5 h-3.5"></i>
                                         <span>{{ $comp->category->name }}</span>
                                     </span>
                                 </td>
-                                <td class="py-4 px-6 text-xs whitespace-nowrap align-middle">
+                                <td class="py-3 px-3 text-xs whitespace-nowrap align-middle">
                                     @if($comp->code === 'BLT')
                                         <div class="flex flex-col py-1">
                                             <!-- 1. Tunggal PA -->
@@ -372,7 +372,7 @@
                                         <span class="capitalize text-slate-300 font-bold">{{ $comp->type }}</span>
                                     @endif
                                 </td>
-                                <td class="py-4 px-6 text-xs font-mono whitespace-nowrap align-middle">
+                                <td class="py-3 px-3 text-xs font-mono whitespace-nowrap align-middle">
                                     @if($comp->code === 'BLT')
                                         <div class="flex flex-col py-1">
                                             <!-- 1. Biaya Tunggal PA -->
@@ -483,30 +483,30 @@
                                         </span>
                                     @endif
                                 </td>
-                                <td class="py-4 px-6 text-xs whitespace-nowrap align-middle">
+                                <td class="py-3 px-3 text-xs whitespace-nowrap align-middle text-center">
                                     @if($comp->code === 'BLT')
                                         <div class="flex flex-col py-1 text-slate-400 text-xs">
                                             <!-- Kuota Tunggal PA -->
                                             <div class="h-[84px] flex flex-col justify-center gap-1.5 font-medium text-[11px]">
-                                                <div class="h-[22px] flex items-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['A_tunggal_pa'] ?? 16 }}</div>
-                                                <div class="h-[22px] flex items-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['B_tunggal_pa'] ?? 16 }}</div>
-                                                <div class="h-[22px] flex items-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['C_tunggal_pa'] ?? 16 }}</div>
+                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['A_tunggal_pa'] ?? 16 }}</div>
+                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['B_tunggal_pa'] ?? 16 }}</div>
+                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['C_tunggal_pa'] ?? 16 }}</div>
                                             </div>
                                             <div class="border-t border-white/[0.08] my-1.5"></div>
                                             <!-- Kuota Tunggal PI -->
                                             <div class="h-[84px] flex flex-col justify-center gap-1.5 font-medium text-[11px]">
-                                                <div class="h-[22px] flex items-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['A_tunggal_pi'] ?? 16 }}</div>
-                                                <div class="h-[22px] flex items-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['B_tunggal_pi'] ?? 16 }}</div>
-                                                <div class="h-[22px] flex items-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['C_tunggal_pi'] ?? 16 }}</div>
+                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['A_tunggal_pi'] ?? 16 }}</div>
+                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['B_tunggal_pi'] ?? 16 }}</div>
+                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['C_tunggal_pi'] ?? 16 }}</div>
                                             </div>
                                             <div class="border-t border-white/[0.08] my-1.5"></div>
                                             <!-- Kuota Ganda PA -->
-                                            <div class="h-[36px] flex items-center font-medium text-xs">
+                                            <div class="h-[36px] flex items-center justify-center font-medium text-xs">
                                                 <div><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['ganda_pa'] ?? 10 }}</div>
                                             </div>
                                             <div class="border-t border-white/[0.08] my-1.5"></div>
                                             <!-- Kuota Ganda PI -->
-                                            <div class="h-[36px] flex items-center font-medium text-xs">
+                                            <div class="h-[36px] flex items-center justify-center font-medium text-xs">
                                                 <div><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['ganda_pi'] ?? 10 }}</div>
                                             </div>
                                         </div>
@@ -518,11 +518,11 @@
                                                 $quotaPa = $comp->tier_quotas['pa'] ?? (int) ceil($comp->quota / 2);
                                                 $quotaPi = $comp->tier_quotas['pi'] ?? (int) floor($comp->quota / 2);
                                             @endphp
-                                            <div class="h-[36px] flex items-center font-medium text-xs">
+                                            <div class="h-[36px] flex items-center justify-center font-medium text-xs">
                                                 <div><span class="font-bold text-white">{{ $countPa }}</span>&nbsp;/ {{ $quotaPa }}</div>
                                             </div>
                                             <div class="border-t border-white/[0.08] my-1.5"></div>
-                                            <div class="h-[36px] flex items-center font-medium text-xs">
+                                            <div class="h-[36px] flex items-center justify-center font-medium text-xs">
                                                 <div><span class="font-bold text-white">{{ $countPi }}</span>&nbsp;/ {{ $quotaPi }}</div>
                                             </div>
                                         </div>
@@ -530,14 +530,14 @@
                                         <div class="flex flex-col py-1 text-slate-400 text-xs">
                                             <!-- Kuota Tunggal PA -->
                                             <div class="h-[56px] flex flex-col justify-center gap-1.5 font-medium text-[11px]">
-                                                <div class="h-[22px] flex items-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['A_tunggal_pa'] ?? 10 }}</div>
-                                                <div class="h-[22px] flex items-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['B_tunggal_pa'] ?? 10 }}</div>
+                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['A_tunggal_pa'] ?? 10 }}</div>
+                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['B_tunggal_pa'] ?? 10 }}</div>
                                             </div>
                                             <div class="border-t border-white/[0.08] my-1.5"></div>
                                             <!-- Kuota Tunggal PI -->
                                             <div class="h-[56px] flex flex-col justify-center gap-1.5 font-medium text-[11px]">
-                                                <div class="h-[22px] flex items-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['A_tunggal_pi'] ?? 10 }}</div>
-                                                <div class="h-[22px] flex items-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['B_tunggal_pi'] ?? 10 }}</div>
+                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['A_tunggal_pi'] ?? 10 }}</div>
+                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['B_tunggal_pi'] ?? 10 }}</div>
                                             </div>
                                         </div>
                                     @else
@@ -549,42 +549,42 @@
                                                 </span>
                                             </div>
                                         @else
-                                            <span class="font-bold text-white">{{ $comp->registrations_count }}</span> / {{ $comp->quota }}
+                                            <span class="font-bold text-white">{{ $comp->registrations_count }}</span> <span class="text-slate-400">/ {{ $comp->quota }}</span>
                                         @endif
                                     @endif
                                 </td>
-                                <td class="py-4 px-6 text-xs text-slate-300 whitespace-nowrap align-middle">
+                                <td class="py-3 px-3 text-xs text-slate-300 whitespace-nowrap align-middle">
                                     @if($comp->code === 'BLT')
                                         <div class="flex flex-col py-1 text-xs">
                                             <!-- PIC Tunggal PA -->
                                             <div class="h-[84px] flex items-center text-slate-300 font-medium">
-                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                                                    <i data-lucide="user-check" class="w-3.5 h-3.5 text-emerald-400"></i>
-                                                    <span>{{ $comp->pic_tunggal_pa->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}</span>
+                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20" title="{{ $comp->pic_tunggal_pa->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}">
+                                                    <i data-lucide="user-check" class="w-3.5 h-3.5 text-emerald-400 shrink-0"></i>
+                                                    <span class="truncate max-w-[140px]">{{ $comp->pic_tunggal_pa->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}</span>
                                                 </span>
                                             </div>
                                             <div class="border-t border-white/[0.08] my-1.5"></div>
                                             <!-- PIC Tunggal PI -->
                                             <div class="h-[84px] flex items-center text-slate-300 font-medium">
-                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-pink-500/10 text-pink-300 border border-pink-500/20">
-                                                    <i data-lucide="user-check" class="w-3.5 h-3.5 text-pink-400"></i>
-                                                    <span>{{ $comp->pic_tunggal_pi->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}</span>
+                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-pink-500/10 text-pink-300 border border-pink-500/20" title="{{ $comp->pic_tunggal_pi->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}">
+                                                    <i data-lucide="user-check" class="w-3.5 h-3.5 text-pink-400 shrink-0"></i>
+                                                    <span class="truncate max-w-[140px]">{{ $comp->pic_tunggal_pi->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}</span>
                                                 </span>
                                             </div>
                                             <div class="border-t border-white/[0.08] my-1.5"></div>
                                             <!-- PIC Ganda PA -->
                                             <div class="h-[36px] flex items-center text-slate-300 font-medium">
-                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#4E6EFF]/10 text-[#84D0FF] border border-[#4E6EFF]/20">
-                                                    <i data-lucide="user-check" class="w-3.5 h-3.5 text-[#84D0FF]"></i>
-                                                    <span>{{ $comp->pic_ganda_pa->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}</span>
+                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#4E6EFF]/10 text-[#84D0FF] border border-[#4E6EFF]/20" title="{{ $comp->pic_ganda_pa->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}">
+                                                    <i data-lucide="user-check" class="w-3.5 h-3.5 text-[#84D0FF] shrink-0"></i>
+                                                    <span class="truncate max-w-[140px]">{{ $comp->pic_ganda_pa->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}</span>
                                                 </span>
                                             </div>
                                             <div class="border-t border-white/[0.08] my-1.5"></div>
                                             <!-- PIC Ganda PI -->
                                             <div class="h-[36px] flex items-center text-slate-300 font-medium">
-                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                                                    <i data-lucide="user-check" class="w-3.5 h-3.5 text-amber-400"></i>
-                                                    <span>{{ $comp->pic_ganda_pi->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}</span>
+                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/20" title="{{ $comp->pic_ganda_pi->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}">
+                                                    <i data-lucide="user-check" class="w-3.5 h-3.5 text-amber-400 shrink-0"></i>
+                                                    <span class="truncate max-w-[140px]">{{ $comp->pic_ganda_pi->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}</span>
                                                 </span>
                                             </div>
                                         </div>
@@ -592,17 +592,17 @@
                                         <div class="flex flex-col py-1 text-xs">
                                             <!-- PIC PA -->
                                             <div class="h-[36px] flex items-center text-slate-300 font-medium">
-                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                                                    <i data-lucide="user-check" class="w-3.5 h-3.5 text-emerald-400"></i>
-                                                    <span>{{ $comp->pic_pa->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}</span>
+                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20" title="{{ $comp->pic_pa->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}">
+                                                    <i data-lucide="user-check" class="w-3.5 h-3.5 text-emerald-400 shrink-0"></i>
+                                                    <span class="truncate max-w-[140px]">{{ $comp->pic_pa->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}</span>
                                                 </span>
                                             </div>
                                             <div class="border-t border-white/[0.08] my-1.5"></div>
                                             <!-- PIC PI -->
                                             <div class="h-[36px] flex items-center text-slate-300 font-medium">
-                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-pink-500/10 text-pink-300 border border-pink-500/20">
-                                                    <i data-lucide="user-check" class="w-3.5 h-3.5 text-pink-400"></i>
-                                                    <span>{{ $comp->pic_pi->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}</span>
+                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-pink-500/10 text-pink-300 border border-pink-500/20" title="{{ $comp->pic_pi->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}">
+                                                    <i data-lucide="user-check" class="w-3.5 h-3.5 text-pink-400 shrink-0"></i>
+                                                    <span class="truncate max-w-[140px]">{{ $comp->pic_pi->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}</span>
                                                 </span>
                                             </div>
                                         </div>
@@ -610,17 +610,17 @@
                                         <div class="flex flex-col py-1 text-xs">
                                             <!-- PIC Tunggal PA -->
                                             <div class="h-[56px] flex items-center text-slate-300 font-medium">
-                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                                                    <i data-lucide="user-check" class="w-3.5 h-3.5 text-emerald-400"></i>
-                                                    <span>{{ $comp->pic_tunggal_pa->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}</span>
+                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20" title="{{ $comp->pic_tunggal_pa->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}">
+                                                    <i data-lucide="user-check" class="w-3.5 h-3.5 text-emerald-400 shrink-0"></i>
+                                                    <span class="truncate max-w-[140px]">{{ $comp->pic_tunggal_pa->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}</span>
                                                 </span>
                                             </div>
                                             <div class="border-t border-white/[0.08] my-1.5"></div>
                                             <!-- PIC Tunggal PI -->
                                             <div class="h-[56px] flex items-center text-slate-300 font-medium">
-                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-pink-500/10 text-pink-300 border border-pink-500/20">
-                                                    <i data-lucide="user-check" class="w-3.5 h-3.5 text-pink-400"></i>
-                                                    <span>{{ $comp->pic_tunggal_pi->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}</span>
+                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-pink-500/10 text-pink-300 border border-pink-500/20" title="{{ $comp->pic_tunggal_pi->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}">
+                                                    <i data-lucide="user-check" class="w-3.5 h-3.5 text-pink-400 shrink-0"></i>
+                                                    <span class="truncate max-w-[140px]">{{ $comp->pic_tunggal_pi->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}</span>
                                                 </span>
                                             </div>
                                         </div>
@@ -629,9 +629,9 @@
                                         @if($allPics->isNotEmpty())
                                             <div class="flex flex-col items-start gap-1.5">
                                                 @foreach($allPics as $p)
-                                                    <span class="inline-flex items-center w-fit gap-1.5 px-2.5 py-1 rounded-lg bg-[#4E6EFF]/10 text-slate-200 border border-[#4E6EFF]/20 text-xs">
+                                                    <span class="inline-flex items-center w-fit gap-1.5 px-2.5 py-1 rounded-lg bg-[#4E6EFF]/10 text-slate-200 border border-[#4E6EFF]/20 text-xs" title="{{ $p->name }}">
                                                         <i data-lucide="user-check" class="w-3.5 h-3.5 text-[#84D0FF] shrink-0"></i>
-                                                        <span class="font-bold truncate">{{ $p->name }}</span>
+                                                        <span class="font-bold truncate max-w-[150px]">{{ $p->name }}</span>
                                                     </span>
                                                 @endforeach
                                             </div>
@@ -643,7 +643,7 @@
                                         @endif
                                     @endif
                                 </td>
-                                <td class="py-4 px-6 text-center whitespace-nowrap align-middle">
+                                <td class="py-3 px-3 text-center whitespace-nowrap align-middle">
                                     @if($comp->code === 'BLT')
                                         <div class="flex flex-col py-1 text-xs">
                                             <!-- Status Tunggal PA (3 Baris Kat A, B, C) -->
@@ -772,8 +772,8 @@
                                         </span>
                                     @endif
                                 </td>
-                                <td class="py-4 px-6 text-center whitespace-nowrap align-middle">
-                                    <div class="flex items-center justify-center gap-2">
+                                <td class="py-3 px-3 text-center whitespace-nowrap align-middle sticky right-0 z-20 bg-[#161F30] group-hover:bg-[#1C263A] transition shadow-[-6px_0_12px_rgba(0,0,0,0.4)] border-l border-white/[0.08]">
+                                    <div class="flex items-center justify-center gap-1.5">
                                         <a href="{{ route('admin.competitions.edit', $comp->id) }}" class="p-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer" title="Edit Cabang Lomba {{ $comp->name }}">
                                             <i data-lucide="edit-3" class="w-4 h-4"></i>
                                         </a>
@@ -788,7 +788,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="py-12 text-center text-slate-400">
+                                <td colspan="10" class="py-12 text-center text-slate-400">
                                     Belum ada cabang lomba yang terdaftar.
                                 </td>
                             </tr>
