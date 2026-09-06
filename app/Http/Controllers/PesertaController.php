@@ -132,6 +132,7 @@ class PesertaController extends Controller
         $isBuluTangkis = ($competition->code === 'BLT');
         $isTenisMeja = ($competition->code === 'TMJ');
         $isPopSinger = ($competition->code === 'POP' || \Illuminate\Support\Str::contains(strtolower($competition->slug), 'pop') || \Illuminate\Support\Str::contains(strtolower($competition->name), 'pop'));
+        $isPramuka = ($competition->code === 'PRM' || \Illuminate\Support\Str::contains(strtolower($competition->slug), 'pramuka') || \Illuminate\Support\Str::contains(strtolower($competition->name), 'pramuka'));
         $isGandaBlt = $isBuluTangkis && (stripos($request->input('match_type', ''), 'Ganda') !== false);
 
         // Enforce tier quotas for Tenis Meja
@@ -238,6 +239,8 @@ class PesertaController extends Controller
             'institution_name' => [$isGandaBlt ? 'nullable' : 'required', 'string', 'max:255'],
             'official_name' => ['nullable', 'string', 'max:255'],
             'official_phone' => ['nullable', 'string', 'max:20'],
+            'official_gender' => [$isPramuka ? 'required' : 'nullable', 'in:L,P'],
+            'official_photo' => [$isPramuka ? 'required' : 'nullable', 'file', 'image', 'mimes:jpg,jpeg,png', 'max:3072'],
             'members' => ['required', 'array', "min:{$minMembers}", "max:{$maxMembers}"],
             'members.*.full_name' => ['required', 'string', 'max:255'],
             'members.*.school_name' => ['nullable', 'string', 'max:255'],
@@ -247,10 +250,18 @@ class PesertaController extends Controller
             'members.*.birth_date' => ['nullable', 'date'],
             'members.*.phone' => ['nullable', 'string', 'max:20'],
             'members.*.role_in_team' => ['nullable', 'string', 'max:100'],
+            'members.*.photo' => [$isPramuka ? 'required' : 'nullable', 'file', 'image', 'mimes:jpg,jpeg,png', 'max:3072'],
             'chosen_song' => [$isPopSinger ? 'required' : 'nullable', 'string', 'max:255'],
             'document_file' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,zip', 'max:5120'],
             'payment_proof' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
         ], [
+            'official_gender.required' => 'Jenis kelamin pembina / pendamping wajib dipilih.',
+            'official_photo.required' => 'Foto pembina / pendamping wajib diunggah untuk cabang lomba Pramuka.',
+            'official_photo.max' => 'Ukuran foto pembina / pendamping maksimal 3 MB.',
+            'official_photo.mimes' => 'Format foto pembina / pendamping harus berupa JPG, JPEG, atau PNG.',
+            'members.*.photo.required' => 'Foto peserta wajib diunggah untuk cabang lomba Pramuka.',
+            'members.*.photo.max' => 'Ukuran foto peserta maksimal 3 MB.',
+            'members.*.photo.mimes' => 'Format foto peserta harus berupa JPG, JPEG, atau PNG.',
             'chosen_song.required' => 'Judul lagu pilihan wajib dipilih untuk cabang lomba Pop Singer.',
             'target_class.required' => 'Kategori kelas wajib dipilih.',
             'match_type.required' => 'Kategori sektor pertandingan (Tunggal PA/PI) wajib dipilih.',
@@ -331,6 +342,24 @@ class PesertaController extends Controller
             $institutionName = $validated['institution_name'] ?? $user->institution_name ?? 'Kontingen Mandiri';
         }
 
+        // Upload & Auto-Naming Foto Official/Pendamping
+        $officialPhotoPath = null;
+        if ($request->hasFile('official_photo')) {
+            $officialFile = $request->file('official_photo');
+            $ext = $officialFile->getClientOriginalExtension() ?: 'jpg';
+            $rawOfficialName = trim($validated['official_name'] ?? $user->name ?? 'Pendamping');
+            $officialGender = $validated['official_gender'] ?? 'L';
+            $rawPangkalan = trim($institutionName ?: ($user->institution_name ?: 'Pangkalan'));
+
+            // Format: Nama Pendamping_Jeniskelamin (L/P)_Pangkalan.ext
+            // Contoh: Sulis_L_MIN 3 Malang.jpg
+            $cleanOfficialName = preg_replace('/[\\\\\/:\*\?"<>|]/', '', $rawOfficialName);
+            $cleanPangkalan = preg_replace('/[\\\\\/:\*\?"<>|]/', '', $rawPangkalan);
+            $officialFileName = "{$cleanOfficialName}_{$officialGender}_{$cleanPangkalan}.{$ext}";
+
+            $officialPhotoPath = $officialFile->storeAs('photos/pramuka/officials', $officialFileName, 'public');
+        }
+
         $registration = Registration::create([
             'competition_id' => $competition->id,
             'user_id' => $user->id,
@@ -343,12 +372,29 @@ class PesertaController extends Controller
             'institution_name' => $institutionName,
             'official_name' => $validated['official_name'] ?? $user->name,
             'official_phone' => $validated['official_phone'] ?? $user->phone,
+            'official_gender' => $validated['official_gender'] ?? null,
+            'official_photo' => $officialPhotoPath,
             'status' => 'pending',
             'document_file' => $docPath,
             'payment_proof' => $paymentPath,
         ]);
 
         foreach ($validated['members'] as $index => $memberData) {
+            $memberPhotoPath = null;
+            if ($request->hasFile("members.{$index}.photo")) {
+                $memberFile = $request->file("members.{$index}.photo");
+                $ext = $memberFile->getClientOriginalExtension() ?: 'jpg';
+                $rawNisn = ! empty($memberData['nisn']) ? preg_replace('/[^0-9]/', '', $memberData['nisn']) : 'NONISN';
+                $rawMemberName = trim($memberData['full_name']);
+                $cleanMemberName = preg_replace('/[\\\\\/:\*\?"<>|]/', '', $rawMemberName);
+
+                // Format: NISN_Nama.ext
+                // Contoh: 3123412231_Joko Kelana.jpg
+                $memberFileName = "{$rawNisn}_{$cleanMemberName}.{$ext}";
+
+                $memberPhotoPath = $memberFile->storeAs('photos/pramuka/members', $memberFileName, 'public');
+            }
+
             RegistrationMember::create([
                 'registration_id' => $registration->id,
                 'full_name' => $memberData['full_name'],
@@ -358,6 +404,7 @@ class PesertaController extends Controller
                 'birth_place' => $memberData['birth_place'] ?? null,
                 'birth_date' => $memberData['birth_date'] ?? null,
                 'phone' => $memberData['phone'] ?? null,
+                'photo' => $memberPhotoPath,
                 'role_in_team' => $memberData['role_in_team'] ?? ($competition->isCollective() ? 'Anggota '.($index + 1) : ($isGandaBlt ? 'Pemain '.($index + 1) : 'Peserta Utama')),
             ]);
         }

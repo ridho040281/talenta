@@ -27,6 +27,8 @@ class Registration extends Model
         'institution_name',
         'official_name',
         'official_phone',
+        'official_gender',
+        'official_photo',
         'status',
         'stage_status',
         'stage_duration_seconds',

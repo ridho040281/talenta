@@ -127,7 +127,7 @@
                                 @endif
                             </td>
                             <td class="py-4 px-6 text-center">
-                                <button type="button" @click="selectedReg = {{ $reg->toJson() }}; verifyModal = true" class="px-4 py-2 rounded-xl bg-brand-50 hover:bg-brand-100 text-brand-700 font-bold text-xs border border-brand-200/60 transition inline-flex items-center gap-1.5">
+                                <button type="button" @click="selectedReg = {{ $reg->toJson() }}; verifyModal = true; $nextTick(() => { if (window.lucide) lucide.createIcons(); });" class="px-4 py-2 rounded-xl bg-brand-50 hover:bg-brand-100 text-brand-700 font-bold text-xs border border-brand-200/60 transition inline-flex items-center gap-1.5">
                                     <i data-lucide="check-square" class="w-3.5 h-3.5"></i>
                                     <span>Tinjau & Verifikasi</span>
                                 </button>
@@ -220,6 +220,49 @@
 
                     </div>
                 </div>
+
+                <!-- Inspect Uploaded Photos (Official & Members) -->
+                <template x-if="selectedReg && (selectedReg.official_photo || (selectedReg.members && selectedReg.members.some(m => m.photo)))">
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
+                        <span class="text-[10px] font-black uppercase tracking-wider text-slate-500 block">Lampiran Pas Foto:</span>
+                        
+                        <!-- Foto Official / Pembina -->
+                        <template x-if="selectedReg.official_photo">
+                            <div class="flex items-center justify-between p-2.5 rounded-xl bg-white border border-slate-200 text-xs">
+                                <div class="flex items-center gap-2.5">
+                                    <img :src="'/storage/' + selectedReg.official_photo" class="w-9 h-11 object-cover rounded-lg border border-slate-200">
+                                    <div>
+                                        <span class="font-bold text-slate-800 block text-xs" x-text="selectedReg.official_name || 'Pembina / Official'"></span>
+                                        <span class="text-[10px] text-slate-500" x-text="'Pembina ' + (selectedReg.official_gender === 'L' ? '(Laki-laki)' : '(Perempuan)')"></span>
+                                    </div>
+                                </div>
+                                <a :href="'/storage/' + selectedReg.official_photo" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold hover:bg-emerald-100 transition">
+                                    <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                                    <span>Lihat Foto</span>
+                                </a>
+                            </div>
+                        </template>
+
+                        <!-- Foto Anggota Peserta -->
+                        <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                            <template x-for="(mem, mIdx) in (selectedReg.members || []).filter(m => m.photo)" :key="mIdx">
+                                <div class="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-200 text-xs">
+                                    <div class="flex items-center gap-2.5">
+                                        <img :src="'/storage/' + mem.photo" class="w-8 h-10 object-cover rounded-lg border border-slate-200">
+                                        <div>
+                                            <span class="font-bold text-slate-800 block text-xs" x-text="mem.full_name"></span>
+                                            <span class="text-[10px] text-slate-500" x-text="'NISN: ' + (mem.nisn || '-') + ' • ' + (mem.gender === 'L' ? 'PA' : 'PI')"></span>
+                                        </div>
+                                    </div>
+                                    <a :href="'/storage/' + mem.photo" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-bold hover:bg-blue-100 transition">
+                                        <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                                        <span>Lihat Foto</span>
+                                    </a>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
 
                 <form :action="'/pic/peserta/' + (selectedReg ? selectedReg.id : '') + '/verifikasi'" method="POST" class="space-y-4">
                     @csrf

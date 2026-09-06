@@ -162,17 +162,30 @@
                         }
                         $ttl = trim(($member->birth_place ? $member->birth_place : '').($member->birth_place && $bDateStr ? ', ' : '').($bDateStr ?: ''));
                     @endphp
-                    <div class="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition space-y-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[11px] font-bold text-slate-400">#{{ $index + 1 }} • {{ $member->role_in_team ?? 'Peserta' }}</span>
-                            <span class="px-2 py-0.5 text-[10px] font-bold rounded {{ $member->gender === 'L' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-pink-500/20 text-pink-300 border border-pink-500/30' }}">
+                    <div class="p-3.5 sm:p-4 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition space-y-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex items-center gap-3">
+                                @if($member->photo)
+                                    <a href="{{ asset('storage/' . $member->photo) }}" target="_blank" class="relative group shrink-0" title="Klik untuk memperbesar foto">
+                                        <img src="{{ asset('storage/' . $member->photo) }}" alt="{{ $member->full_name }}" class="w-12 h-14 object-cover rounded-xl border border-emerald-500/40 shadow-md group-hover:opacity-80 transition">
+                                        <div class="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
+                                            <i data-lucide="zoom-in" class="w-3.5 h-3.5 text-white"></i>
+                                        </div>
+                                    </a>
+                                @endif
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[11px] font-bold text-slate-400">#{{ $index + 1 }} • {{ $member->role_in_team ?? 'Peserta' }}</span>
+                                    </div>
+                                    <h4 class="text-sm font-black text-white mt-0.5">{{ $member->full_name }}</h4>
+                                </div>
+                            </div>
+                            <span class="px-2 py-0.5 text-[10px] font-bold rounded shrink-0 {{ $member->gender === 'L' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-pink-500/20 text-pink-300 border border-pink-500/30' }}">
                                 {{ $member->gender === 'L' ? '👦 Laki-laki (PA)' : '👧 Perempuan (PI)' }}
                             </span>
                         </div>
                         
-                        <h4 class="text-sm font-black text-white">{{ $member->full_name }}</h4>
-                        
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs pt-1 border-t border-slate-800/80">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs pt-2 border-t border-slate-800/80">
                             <div>
                                 <span class="text-slate-500 text-[11px]">Asal Sekolah:</span>
                                 <p class="text-slate-200 font-medium truncate">{{ $member->school_name ?? $registration->institution_name }}</p>
@@ -246,12 +259,30 @@
             </div>
 
             <!-- Ringkasan Cepat Info Kontak Official / Pendamping -->
-            @if($registration->official_name || $registration->official_phone)
-                <div class="glass-card rounded-3xl p-5 border border-slate-800/80 shadow-xl space-y-2">
-                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Official / Pendamping</h4>
-                    <div class="text-xs text-slate-200 space-y-1">
-                        <p class="font-bold text-white">{{ $registration->official_name ?: '-' }}</p>
-                        <p class="font-mono text-slate-400">{{ $registration->official_phone ?: '-' }}</p>
+            @if($registration->official_name || $registration->official_phone || $registration->official_photo)
+                <div class="glass-card rounded-3xl p-5 border border-slate-800/80 shadow-xl space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Pembina / Official Pendamping</h4>
+                        @if($registration->official_gender)
+                            <span class="px-2 py-0.5 text-[10px] font-bold rounded {{ $registration->official_gender === 'L' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-pink-500/20 text-pink-300 border border-pink-500/30' }}">
+                                {{ $registration->official_gender === 'L' ? 'Laki-laki (L)' : 'Perempuan (P)' }}
+                            </span>
+                        @endif
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        @if($registration->official_photo)
+                            <a href="{{ asset('storage/' . $registration->official_photo) }}" target="_blank" class="relative group shrink-0" title="Klik untuk memperbesar foto pembina">
+                                <img src="{{ asset('storage/' . $registration->official_photo) }}" alt="{{ $registration->official_name }}" class="w-12 h-14 object-cover rounded-xl border border-emerald-500/40 shadow-md group-hover:opacity-80 transition">
+                                <div class="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
+                                    <i data-lucide="zoom-in" class="w-3.5 h-3.5 text-white"></i>
+                                </div>
+                            </a>
+                        @endif
+                        <div class="text-xs text-slate-200 space-y-0.5 overflow-hidden">
+                            <p class="font-bold text-white text-sm truncate">{{ $registration->official_name ?: '-' }}</p>
+                            <p class="font-mono text-emerald-400">{{ $registration->official_phone ?: '-' }}</p>
+                        </div>
                     </div>
                 </div>
             @endif

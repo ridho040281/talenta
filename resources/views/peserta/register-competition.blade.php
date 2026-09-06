@@ -22,6 +22,10 @@
         </a>
     </div>
 
+    @php
+        $isPramuka = ($competition->code === 'PRM' || \Illuminate\Support\Str::contains(strtolower($competition->slug), 'pramuka') || \Illuminate\Support\Str::contains(strtolower($competition->name), 'pramuka'));
+    @endphp
+
     <!-- Registration Form -->
     <form id="registration-main-form" @submit.prevent="handleSubmit($event)" action="{{ route('peserta.register.competition.store', $competition->slug) }}" method="POST" enctype="multipart/form-data" class="space-y-8">
         @csrf
@@ -324,10 +328,42 @@
                     <input id="official_name" name="official_name" type="text" value="{{ old('official_name', $user->name) }}" placeholder="Contoh: Ust. Salman, S.Pd" class="block w-full px-4 py-3 rounded-xl bg-slate-900/90 border border-slate-700 text-white placeholder-slate-500 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 text-sm outline-none">
                 </div>
 
-                <div :class="matchType.includes('Ganda') ? 'sm:col-span-1' : 'sm:col-span-2'">
+                <div :class="matchType.includes('Ganda') ? 'sm:col-span-1' : ({{ $isPramuka ? 'true' : 'false' }} ? 'sm:col-span-1' : 'sm:col-span-2')">
                     <label for="official_phone" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Nomor WhatsApp Official / Pendamping</label>
                     <input id="official_phone" name="official_phone" type="text" value="{{ old('official_phone', $user->phone) }}" placeholder="08xxxxxxxxxx" class="block w-full px-4 py-3 rounded-xl bg-slate-900/90 border border-slate-700 text-white placeholder-slate-500 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 text-sm outline-none">
                 </div>
+
+                @if($isPramuka)
+                    <div class="sm:col-span-1">
+                        <label for="official_gender" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                            Jenis Kelamin Pembina / Pendamping <span class="text-rose-400">*</span>
+                        </label>
+                        <select id="official_gender" name="official_gender" required class="block w-full px-4 py-3 rounded-xl bg-slate-900/90 border border-slate-700 text-white focus:border-emerald-400 text-sm outline-none">
+                            <option value="L" {{ old('official_gender', 'L') == 'L' ? 'selected' : '' }}>Laki-laki (L)</option>
+                            <option value="P" {{ old('official_gender') == 'P' ? 'selected' : '' }}>Perempuan (P)</option>
+                        </select>
+                        @error('official_gender')
+                            <p class="text-xs text-rose-400 font-bold mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="sm:col-span-2 p-4 sm:p-5 rounded-2xl bg-slate-950/90 border border-emerald-500/30 space-y-2">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                            <label for="official_photo" class="text-xs font-bold uppercase tracking-wider text-emerald-300 flex items-center gap-2">
+                                <i data-lucide="camera" class="w-4 h-4 text-emerald-400"></i>
+                                <span>Upload Foto Pembina / Pendamping (Maks. 3 MB) <span class="text-rose-400">*</span></span>
+                            </label>
+                            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 w-fit">Format Otomatis: Nama_L/P_Pangkalan.jpg</span>
+                        </div>
+                        <input id="official_photo" name="official_photo" type="file" accept="image/jpeg,image/png,image/jpg" required class="block w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-600 file:text-slate-950 hover:file:bg-emerald-500 cursor-pointer">
+                        <p class="text-[11px] text-slate-400">
+                            Format file: JPG, JPEG, atau PNG (Maks 3 MB). Sistem secara otomatis menamai file dengan format: <code class="text-emerald-400 font-mono">Nama Pendamping_L/P_Pangkalan.jpg</code> (Contoh: <code class="text-slate-300 font-mono">Sulis_L_MIN 3 Malang.jpg</code>).
+                        </p>
+                        @error('official_photo')
+                            <p class="text-xs text-rose-400 font-bold mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+                @endif
 
             </div>
         </div>
@@ -422,6 +458,24 @@
                                        class="block w-full px-3 py-2.5 rounded-xl border border-slate-700 bg-slate-950 text-white focus:border-emerald-400 text-sm outline-none cursor-pointer [color-scheme:dark]">
                             </div>
                         </div>
+
+                        @if($isPramuka)
+                            <div class="sm:col-span-2 pt-3 border-t border-slate-800/80">
+                                <div class="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1.5">
+                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                                        <label class="block text-xs font-bold text-emerald-300 flex items-center gap-1.5">
+                                            <i data-lucide="image" class="w-3.5 h-3.5 text-emerald-400"></i>
+                                            <span>Upload Pas Foto Peserta (Maks. 3 MB) <span class="text-rose-400">*</span></span>
+                                        </label>
+                                        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 w-fit">Format Otomatis: NISN_Nama Siswa.jpg</span>
+                                    </div>
+                                    <input :name="'members[' + index + '][photo]'" type="file" accept="image/jpeg,image/png,image/jpg" required class="block w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-slate-800 file:text-emerald-400 hover:file:bg-slate-700 cursor-pointer">
+                                    <p class="text-[10px] text-slate-400">
+                                        Format file: JPG, JPEG, PNG (Maks 3 MB). File foto otomatis disimpan dengan nama: <code class="text-emerald-400 font-mono">NISN_Nama.jpg</code> (Contoh: <code class="text-slate-300 font-mono">3123412231_Joko Kelana.jpg</code>).
+                                    </p>
+                                </div>
+                            </div>
+                        @endif
                     </div>
 
                 </div>
@@ -637,6 +691,13 @@
                 </button>
                 
                 <button type="button" 
+                        x-show="!isPaymentProofMissing && isDocumentFileMissing"
+                        @click="submitDirectly()" 
+                        class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition border border-slate-700">
+                    Lanjutkan Kirim (Tanpa Surat)
+                </button>
+
+                <button type="button" 
                         @click="focusMissingUpload()" 
                         class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 hover:scale-[1.02] transition">
                     Unggah Berkas Sekarang
@@ -798,6 +859,10 @@
                         }
                     }
                 }, 200);
+            },
+            submitDirectly() {
+                this.showWarningModal = false;
+                document.getElementById('registration-main-form').submit();
             }
         }
     }
