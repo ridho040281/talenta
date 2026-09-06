@@ -9,6 +9,21 @@
         searchQuery: '', 
         statusFilter: 'all',
         openMenuId: null,
+        infoModal: {
+            show: false,
+            title: 'Informasi Kwitansi & Invoice',
+            message: '',
+            type: 'amber'
+        },
+        openInfo(message, title = 'Informasi Kwitansi & Invoice', type = 'amber') {
+            this.infoModal.title = title;
+            this.infoModal.message = message;
+            this.infoModal.type = type;
+            this.infoModal.show = true;
+        },
+        closeInfo() {
+            this.infoModal.show = false;
+        },
         matchesSearch(text) {
             if (!this.searchQuery) return true;
             return text.toLowerCase().includes(this.searchQuery.toLowerCase());
@@ -518,13 +533,94 @@
                         <span>Cetak Kwitansi Pembayaran</span>
                     </a>
                 @else
-                    <button type="button" @click="alert('Kwitansi / Invoice resmi dapat dicetak setelah pendaftaran Anda diverifikasi dan berstatus lunas oleh panitia.')" class="w-full py-2.5 px-4 rounded-2xl bg-slate-800 text-slate-400 hover:text-slate-200 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer">
+                    <button type="button" @click="openInfo('Kwitansi / Invoice resmi dapat dicetak setelah pendaftaran Anda diverifikasi dan berstatus lunas oleh panitia.', 'Kwitansi & Invoice Resmi', 'amber')" class="w-full py-2.5 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700/80 text-slate-400 hover:text-slate-200 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer border border-slate-700/60 shadow-sm">
                         <i data-lucide="info" class="w-4 h-4 text-amber-400"></i>
                         <span>Status Invoice / Kwitansi</span>
                     </button>
                 @endif
             </div>
 
+        </div>
+    </div>
+
+    <!-- MODAL NOTIFIKASI DI TENGAH (TAILWIND STYLE) -->
+    <div 
+        x-show="infoModal.show" 
+        x-cloak
+        @keydown.escape.window="closeInfo()"
+        class="fixed inset-0 z-50 overflow-y-auto"
+        aria-labelledby="modal-title" 
+        role="dialog" 
+        aria-modal="true"
+    >
+        <!-- Backdrop Blur Overlay -->
+        <div 
+            x-show="infoModal.show"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="fixed inset-0 bg-slate-950/80 backdrop-blur-md transition-opacity"
+            @click="closeInfo()"
+        ></div>
+
+        <!-- Centered Modal Content -->
+        <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+            <div 
+                x-show="infoModal.show"
+                x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                x-transition:leave="transition ease-in duration-200"
+                x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                class="relative transform overflow-hidden rounded-3xl bg-[#141c2e] border border-slate-700/80 p-6 sm:p-7 text-left shadow-2xl transition-all sm:my-8 max-w-md w-full"
+                @click.stop
+            >
+                <!-- Glowing Ambient Accent -->
+                <div class="absolute -top-12 -right-12 w-32 h-32 bg-amber-500/20 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="absolute -bottom-12 -left-12 w-32 h-32 bg-[#7A5AF8]/15 rounded-full blur-2xl pointer-events-none"></div>
+
+                <!-- Close Button -->
+                <button 
+                    type="button" 
+                    @click="closeInfo()" 
+                    class="absolute top-4 right-4 p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+                >
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+
+                <!-- Modal Body -->
+                <div class="flex flex-col items-center text-center space-y-3 pt-2">
+                    <!-- Icon Box -->
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500/20 to-orange-500/20 border border-amber-500/30 text-amber-400 flex items-center justify-center shadow-lg shadow-amber-500/10">
+                        <i data-lucide="receipt" class="w-7 h-7"></i>
+                    </div>
+
+                    <!-- Title -->
+                    <h3 class="text-base sm:text-lg font-black text-white font-display" x-text="infoModal.title">
+                        Informasi Kwitansi & Invoice
+                    </h3>
+
+                    <!-- Message -->
+                    <p class="text-xs sm:text-sm text-slate-300 leading-relaxed px-1" x-text="infoModal.message">
+                        Kwitansi / Invoice resmi dapat dicetak setelah pendaftaran Anda diverifikasi dan berstatus lunas oleh panitia.
+                    </p>
+                </div>
+
+                <!-- Action Button -->
+                <div class="mt-6">
+                    <button 
+                        type="button" 
+                        @click="closeInfo()"
+                        class="w-full py-3 px-5 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-500/25 transition cursor-pointer flex items-center justify-center gap-2"
+                    >
+                        <span>Saya Mengerti</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
