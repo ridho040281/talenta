@@ -88,7 +88,7 @@
 </head>
 <body class="font-sans antialiased min-h-screen" x-data="editPageApp()" x-init="init()">
 
-    <!-- TOP STICKY HEADER — sama dengan competitions.blade.php header style -->
+    <!-- TOP STICKY HEADER (Clean & Minimalist) -->
     <div style="position: sticky; top: 0; z-index: 100; background: rgba(9,13,23,0.97); border-bottom: 1px solid rgba(255,255,255,0.09); padding: 14px 32px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 32px rgba(0,0,0,0.5);">
         <div class="flex items-center gap-3.5 min-w-0">
             <a href="{{ route('admin.competitions') }}" class="btn-cancel-action flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition shrink-0 cursor-pointer">
@@ -99,15 +99,6 @@
                 <h3 class="text-sm sm:text-base font-black text-white truncate">Edit Cabang Perlombaan</h3>
                 <p class="text-xs text-slate-400 hidden sm:block truncate">Perbarui informasi <strong class="text-emerald-400">{{ $competition->name }}</strong></p>
             </div>
-        </div>
-        <div class="flex items-center gap-3 shrink-0">
-            <a href="{{ route('admin.competitions') }}" class="btn-cancel-action px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer">
-                Batal
-            </a>
-            <button type="button" @click="submitForm()" class="btn-save-glow px-5 py-2.5 rounded-xl text-white font-black text-xs transition flex items-center gap-2 cursor-pointer shadow-lg shadow-emerald-500/25">
-                <i data-lucide="save" class="w-4 h-4"></i>
-                <span>Simpan Perubahan</span>
-            </button>
         </div>
     </div>
 
