@@ -463,10 +463,10 @@ class PicController extends Controller
             try {
                 $registration->loadMissing(['members', 'user', 'competition']);
                 $firstMember = $registration->members->first();
-                $targetPhone = $registration->official_phone ?: ($registration->user?->phone ?: $firstMember?->phone);
+                $targetPhones = $registration->recipient_phones;
 
                 WablasNotificationService::sendAutoNotification('registration_verified', [
-                    'phone' => $targetPhone,
+                    'phone' => $targetPhones,
                     'nama_peserta' => $registration->display_name,
                     'nisn' => $firstMember?->nisn ?? ($registration->user?->nisn ?? '-'),
                     'nama_sekolah' => $registration->institution_name,
@@ -782,13 +782,17 @@ class PicController extends Controller
 
         // Trigger Auto WhatsApp Notifications for Manual Registration
         try {
-            $targetPhone = ! empty($validated['phone']) ? $validated['phone'] : ($participantUser->phone ?? null);
+            $registration->loadMissing(['members', 'user', 'competition']);
+            $targetPhones = $registration->recipient_phones;
+            if (empty($targetPhones) && ! empty($validated['phone'])) {
+                $targetPhones = [$validated['phone']];
+            }
 
-            if (! empty($targetPhone)) {
+            if (! empty($targetPhones)) {
                 // 1. Notifikasi Akun Baru (jika dibuatkan akun baru)
                 if ($isNewUser) {
                     WablasNotificationService::sendAutoNotification('account_created', [
-                        'phone' => $targetPhone,
+                        'phone' => $targetPhones,
                         'nama_peserta' => $validated['full_name'],
                         'nisn' => $participantUser->nisn ?: $participantUser->email,
                         'nama_sekolah' => $validated['institution_name'],
@@ -796,11 +800,10 @@ class PicController extends Controller
                     ]);
                 }
 
-                // 2. Notifikasi Pendaftaran / Verifikasi ke Peserta
+                // 2. Notifikasi Pendaftaran / Verifikasi ke Peserta & Official
                 if ($status === 'verified') {
-                    $registration->loadMissing(['members', 'user', 'competition']);
                     WablasNotificationService::sendAutoNotification('registration_verified', [
-                        'phone' => $targetPhone,
+                        'phone' => $targetPhones,
                         'nama_peserta' => $validated['full_name'],
                         'nisn' => $nisnClean ?: ($participantUser->nisn ?: '-'),
                         'nama_sekolah' => $validated['institution_name'],
@@ -812,7 +815,7 @@ class PicController extends Controller
                     ]);
                 } else {
                     WablasNotificationService::sendAutoNotification('registration_submitted', [
-                        'phone' => $targetPhone,
+                        'phone' => $targetPhones,
                         'nama_peserta' => $validated['full_name'],
                         'nisn' => $nisnClean ?: ($participantUser->nisn ?: '-'),
                         'nama_sekolah' => $validated['institution_name'],
@@ -964,10 +967,10 @@ class PicController extends Controller
         try {
             $registration->loadMissing(['members', 'user', 'competition']);
             $firstMember = $registration->members->first();
-            $targetPhone = $registration->official_phone ?: ($registration->user?->phone ?: $firstMember?->phone);
+            $targetPhones = $registration->recipient_phones;
 
             WablasNotificationService::sendAutoNotification('draw_result_picked', [
-                'phone' => $targetPhone,
+                'phone' => $targetPhones,
                 'nama_peserta' => $registration->display_name,
                 'nisn' => $firstMember?->nisn ?? ($registration->user?->nisn ?? '-'),
                 'nama_sekolah' => $registration->institution_name,

@@ -221,4 +221,49 @@ class Registration extends Model
 
         return round($lockedScores->avg('total_score'), 2);
     }
+
+    /**
+     * Get all unique formatted recipient phone numbers (Official, Account User & Participant Members)
+     * Returns deduplicated array of clean phone numbers (e.g. ['62812...', '62857...'])
+     */
+    public function getRecipientPhonesAttribute(): array
+    {
+        $phones = [];
+
+        // 1. Official phone
+        if (! empty($this->official_phone)) {
+            $phones[] = $this->official_phone;
+        }
+
+        // 2. Registrant / Account user phone
+        if (! empty($this->user?->phone)) {
+            $phones[] = $this->user->phone;
+        }
+
+        // 3. Member phones
+        if ($this->relationLoaded('members') || $this->members()->exists()) {
+            foreach ($this->members as $member) {
+                if (! empty($member->phone)) {
+                    $phones[] = $member->phone;
+                }
+            }
+        }
+
+        // Clean & format to standard Indonesian 628xxx
+        $cleanPhones = [];
+        foreach ($phones as $p) {
+            $clean = preg_replace('/[^0-9]/', '', (string) $p);
+            if (empty($clean)) {
+                continue;
+            }
+            if (str_starts_with($clean, '0')) {
+                $clean = '62'.substr($clean, 1);
+            } elseif (str_starts_with($clean, '8')) {
+                $clean = '628'.substr($clean, 1);
+            }
+            $cleanPhones[] = $clean;
+        }
+
+        return array_values(array_unique($cleanPhones));
+    }
 }

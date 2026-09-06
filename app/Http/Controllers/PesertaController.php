@@ -349,14 +349,15 @@ class PesertaController extends Controller
             ]);
         }
 
-        // Trigger Auto WhatsApp Notification: Pengiriman Pendaftaran Lomba (Multi-Notifikasi: Peserta, PIC, dan Bendahara)
+        // Trigger Auto WhatsApp Notification: Pengiriman Pendaftaran Lomba (Multi-Notifikasi: Peserta, Official, PIC, dan Bendahara)
         try {
+            $registration->loadMissing(['members', 'user', 'competition']);
             $firstMember = $registration->members->first();
-            $targetPhone = $registration->official_phone ?: ($user->phone ?: $firstMember?->phone);
+            $targetPhones = $registration->recipient_phones;
 
-            // 1. Ke Pendaftar / Peserta
+            // 1. Ke Pendaftar & Official (Keduanya dikirim jika diisi)
             WablasNotificationService::sendAutoNotification('registration_submitted', [
-                'phone' => $targetPhone,
+                'phone' => $targetPhones,
                 'nama_peserta' => $registration->display_name,
                 'nisn' => $firstMember?->nisn ?? ($user->nisn ?? '-'),
                 'nama_sekolah' => $registration->institution_name,

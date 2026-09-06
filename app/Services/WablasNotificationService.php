@@ -35,17 +35,30 @@ class WablasNotificationService
                 return false; // Gateway not configured
             }
 
-            // 3. Format Phone Number
-            $rawPhone = $data['phone'] ?? '';
-            if (empty($rawPhone)) {
-                return false;
-            }
+            // 3. Format Phone Numbers (Supports both single phone or array of phones)
+            $rawInput = $data['phones'] ?? ($data['phone'] ?? []);
+            $rawPhones = is_array($rawInput) ? $rawInput : [$rawInput];
 
-            $cleanPhone = preg_replace('/[^0-9]/', '', $rawPhone);
-            if (str_starts_with($cleanPhone, '0')) {
-                $cleanPhone = '62'.substr($cleanPhone, 1);
-            } elseif (str_starts_with($cleanPhone, '8')) {
-                $cleanPhone = '628'.substr($cleanPhone, 1);
+            $cleanPhones = [];
+            foreach ($rawPhones as $raw) {
+                if (empty($raw)) {
+                    continue;
+                }
+                $clean = preg_replace('/[^0-9]/', '', (string) $raw);
+                if (empty($clean)) {
+                    continue;
+                }
+                if (str_starts_with($clean, '0')) {
+                    $clean = '62'.substr($clean, 1);
+                } elseif (str_starts_with($clean, '8')) {
+                    $clean = '628'.substr($clean, 1);
+                }
+                $cleanPhones[] = $clean;
+            }
+            $cleanPhones = array_values(array_unique($cleanPhones));
+
+            if (empty($cleanPhones)) {
+                return false;
             }
 
             // 4. Build message with dynamic placeholders
@@ -53,6 +66,8 @@ class WablasNotificationService
             $appName = AppSetting::get('app_name', 'TALENTA');
             $eventName = AppSetting::get('event_name', 'Milad ke-57 MTsN 1 Blitar');
             $institutionName = AppSetting::get('institution_name', 'MTsN 1 Blitar');
+
+            $firstCleanPhone = $cleanPhones[0] ?? '';
 
             $placeholders = [
                 '{nama_peserta}' => $data['nama_peserta'] ?? ($data['nama_pendaftar'] ?? 'Bapak/Ibu Peserta'),
@@ -71,7 +86,7 @@ class WablasNotificationService
                 '{waktu_verifikasi}' => $data['waktu_verifikasi'] ?? now()->translatedFormat('d F Y H:i').' WIB',
                 '{link_scoreboard}' => $data['link_scoreboard'] ?? route('live.scoreboard'),
                 '{link_login}' => $data['link_login'] ?? route('login'),
-                '{no_wa}' => $data['phone_pendaftar'] ?? ($data['phone'] ?? $cleanPhone),
+                '{no_wa}' => $data['phone_pendaftar'] ?? ($data['phone'] ?? $firstCleanPhone),
                 '{nama_aplikasi}' => $appName,
                 '{nama_kegiatan}' => $eventName,
             ];
@@ -80,34 +95,44 @@ class WablasNotificationService
                 $msg = str_replace($tag, (string) $val, $msg);
             }
 
-            // 5. Send to Wablas API
+            // 5. Send to Wablas API for all unique phone numbers
             $authHeader = $wablasSecretKey ? ($wablasToken.'.'.$wablasSecretKey) : $wablasToken;
+            $anySuccess = false;
 
-            $res = Http::withoutVerifying()
-                ->timeout(8)
-                ->withHeaders([
-                    'Authorization' => $authHeader,
-                ])
-                ->post("{$wablasHost}/api/send-message", [
-                    'phone' => $cleanPhone,
-                    'message' => $msg,
-                    'token' => $wablasToken,
-                    'secret' => $wablasSecretKey,
-                ]);
+            foreach ($cleanPhones as $cleanPhone) {
+                try {
+                    $res = Http::withoutVerifying()
+                        ->timeout(8)
+                        ->withHeaders([
+                            'Authorization' => $authHeader,
+                        ])
+                        ->post("{$wablasHost}/api/send-message", [
+                            'phone' => $cleanPhone,
+                            'message' => $msg,
+                            'token' => $wablasToken,
+                            'secret' => $wablasSecretKey,
+                        ]);
 
-            $isSent = $res->successful() && $res->json('status') !== false;
+                    $isSent = $res->successful() && $res->json('status') !== false;
+                    if ($isSent) {
+                        $anySuccess = true;
+                    }
 
-            // 6. Record in BroadcastLog
-            BroadcastLog::create([
-                'sender_id' => auth()->id() ?? 1,
-                'target_audience' => 'auto_'.$templateCode,
-                'target_competition' => $data['cabang_lomba'] ?? 'Sistem Otomatis',
-                'recipients_count' => 1,
-                'message' => $msg,
-                'status' => $isSent ? 'sent' : 'failed',
-            ]);
+                    // Record each recipient delivery
+                    BroadcastLog::create([
+                        'sender_id' => auth()->id() ?? 1,
+                        'target_audience' => 'auto_'.$templateCode,
+                        'target_competition' => $data['cabang_lomba'] ?? 'Sistem Otomatis',
+                        'recipients_count' => 1,
+                        'message' => "Tujuan: {$cleanPhone}\n\n".$msg,
+                        'status' => $isSent ? 'sent' : 'failed',
+                    ]);
+                } catch (\Throwable $e) {
+                    Log::error("Wablas Auto Notification Error ({$templateCode}) to {$cleanPhone}: ".$e->getMessage());
+                }
+            }
 
-            return $isSent;
+            return $anySuccess;
         } catch (\Throwable $e) {
             Log::error("Wablas Auto Notification Error ({$templateCode}): ".$e->getMessage());
 
