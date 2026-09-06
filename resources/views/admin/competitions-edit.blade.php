@@ -228,49 +228,52 @@
                             </span>
                         </div>
 
-                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-                            <!-- 1. Koordinator PIC Utama -->
-                            <div class="lg:col-span-5 space-y-1.5">
-                                <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                    Koordinator PIC Utama
-                                </label>
-                                <select name="pic_id" class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-semibold">
-                                    <option value="">-- Belum Ditugaskan --</option>
-                                    @foreach($pics as $pic)
-                                        <option value="{{ $pic->id }}" {{ old('pic_id', $competition->pic_id) == $pic->id ? 'selected' : '' }}>
-                                            {{ $pic->name }} {{ $pic->phone ? '('.$pic->phone.')' : '' }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <p class="text-[10px] text-slate-500">Akun resmi dengan hak akses login mengelola lomba ini di Dashboard PIC.</p>
+                        <div class="space-y-4">
+                            <!-- Baris 1: PIC Utama (50%) & Saklar Notifikasi WA (50%) -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                                <!-- 1. Koordinator PIC Utama -->
+                                <div class="space-y-1.5">
+                                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                        Koordinator PIC Utama
+                                    </label>
+                                    <select name="pic_id" class="input-admin block w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold">
+                                        <option value="">-- Belum Ditugaskan --</option>
+                                        @foreach($pics as $pic)
+                                            <option value="{{ $pic->id }}" {{ old('pic_id', $competition->pic_id) == $pic->id ? 'selected' : '' }}>
+                                                {{ $pic->name }} {{ $pic->phone ? '('.$pic->phone.')' : '' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <p class="text-[10px] text-slate-500">Akun resmi dengan hak akses login mengelola lomba ini di Dashboard PIC.</p>
+                                </div>
+
+                                <!-- 2. Saklar Notifikasi WA -->
+                                <div class="space-y-1.5">
+                                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                        Status Notifikasi WhatsApp Pendaftar
+                                    </label>
+                                    <select name="notify_pic" class="input-admin block w-full px-3.5 py-2.5 rounded-xl text-xs font-bold {{ $competition->notify_pic ? 'text-emerald-400' : 'text-slate-400' }}">
+                                        <option value="1" {{ old('notify_pic', $competition->notify_pic) ? 'selected' : '' }}>🟢 AKTIF (Kirim Pesan WA Otomatis)</option>
+                                        <option value="0" {{ !old('notify_pic', $competition->notify_pic) ? 'selected' : '' }}>⚪ NONAKTIF (Cek via Dashboard Saja)</option>
+                                    </select>
+                                    <p class="text-[10px] text-slate-500">Pilihan untuk mengirimkan pesan WA otomatis ke panitia setiap ada pendaftar baru.</p>
+                                </div>
                             </div>
 
-                            <!-- 2. Saklar Notifikasi WA -->
-                            <div class="lg:col-span-3 space-y-1.5">
-                                <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                    Notifikasi WA Pendaftar
-                                </label>
-                                <select name="notify_pic" class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-bold {{ $competition->notify_pic ? 'text-emerald-400' : 'text-slate-400' }}">
-                                    <option value="1" {{ old('notify_pic', $competition->notify_pic) ? 'selected' : '' }}>🟢 AKTIF (Kirim WA)</option>
-                                    <option value="0" {{ !old('notify_pic', $competition->notify_pic) ? 'selected' : '' }}>⚪ NONAKTIF (Cek Web Saja)</option>
-                                </select>
-                                <p class="text-[10px] text-slate-500">Kirim pesan WhatsApp otomatis setiap ada siswa mendaftar.</p>
-                            </div>
-
-                            <!-- 3. Nomor Asisten / Panitia Lapangan -->
-                            <div class="lg:col-span-4 space-y-1.5">
-                                <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                                    <span>Nomor WA Tambahan / Asisten</span>
+                            <!-- Baris 2: Nomor Asisten / Panitia Lapangan (Lebar Penuh) -->
+                            <div class="space-y-1.5 pt-1">
+                                <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center justify-between">
+                                    <span>Nomor WhatsApp Tambahan / Asisten Lapangan</span>
                                     <span class="text-[9px] font-normal text-slate-500 font-mono">(Opsional)</span>
                                 </label>
-                                <input type="text" name="assistant_phones" value="{{ old('assistant_phones', $competition->assistant_phones) }}" placeholder="Contoh: 081234567890, 089876543210" class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-mono">
-                                <p class="text-[10px] text-slate-500">Nomor asisten/juri lapangan yang ikut menerima notifikasi (pisahkan koma).</p>
+                                <input type="text" name="assistant_phones" value="{{ old('assistant_phones', $competition->assistant_phones) }}" placeholder="Contoh: 081234567890, 089876543210 (pisahkan tanda koma jika lebih dari satu)" class="input-admin block w-full px-3.5 py-2.5 rounded-xl text-xs font-mono">
+                                <p class="text-[10px] text-slate-500">Masukkan 1 atau beberapa nomor WA panitia/juri pendamping (pisahkan koma). Mereka otomatis ikut menerima notifikasi saat saklar aktif.</p>
                             </div>
                         </div>
 
-                        <div class="pt-2 border-t border-white/[0.06] flex items-start gap-2 text-[11px] text-slate-400">
-                            <i data-lucide="info" class="w-3.5 h-3.5 text-[#84D0FF] shrink-0 mt-0.5"></i>
-                            <span>Jika status <strong>AKTIF</strong>, notifikasi WA peserta baru akan dikirimkan serentak ke nomor PIC Utama beserta nomor asisten tambahan yang didaftarkan.</span>
+                        <div class="pt-2 border-t border-white/[0.06] flex items-center gap-2 text-[11px] text-slate-400">
+                            <i data-lucide="info" class="w-3.5 h-3.5 text-[#84D0FF] shrink-0"></i>
+                            <span>Jika status <strong>AKTIF</strong>, notifikasi WA peserta baru akan dikirimkan ke PIC Utama dan nomor asisten tambahan yang didaftarkan.</span>
                         </div>
                     </div>
 
