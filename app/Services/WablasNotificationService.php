@@ -89,6 +89,9 @@ class WablasNotificationService
                 '{no_wa}' => $data['phone_pendaftar'] ?? ($data['phone'] ?? $firstCleanPhone),
                 '{nama_aplikasi}' => $appName,
                 '{nama_kegiatan}' => $eventName,
+                '{catatan_verifikasi}' => $data['catatan_verifikasi'] ?? ($data['catatan'] ?? ($data['alasan'] ?? 'Mohon periksa kembali kelengkapan berkas Anda.')),
+                '{catatan}' => $data['catatan'] ?? ($data['catatan_verifikasi'] ?? ($data['alasan'] ?? 'Mohon periksa kembali kelengkapan berkas Anda.')),
+                '{alasan}' => $data['alasan'] ?? ($data['catatan_verifikasi'] ?? ($data['catatan'] ?? 'Berkas belum memenuhi ketentuan.')),
             ];
 
             foreach ($placeholders as $tag => $val) {

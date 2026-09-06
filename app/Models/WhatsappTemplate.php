@@ -85,6 +85,22 @@ class WhatsappTemplate extends Model
                 'is_active' => true,
                 'is_system' => true,
             ],
+            [
+                'code' => 'registration_revision',
+                'name' => '8. Notifikasi Berkas Perlu Perbaikan / Revisi',
+                'description' => 'Terkirim otomatis ke WhatsApp peserta & official saat panitia/PIC meminta perbaikan data atau unggah ulang berkas.',
+                'message' => "Assalamu'alaikum Wr. Wb.\nYth. Official & Peserta {nama_peserta} ({nama_sekolah}),\n\n*PEMBERITAHUAN REVISI BERKAS PENDAFTARAN TALENTA 2026*\n\nBerdasarkan pemeriksaan panitia pada cabang *{cabang_lomba}*, berkas pendaftaran Anda membutuhkan *PERBAIKAN / REVISI*:\n\nDetail Pendaftaran:\n• Kode Registrasi: *{kode_pendaftaran}*\n• Cabang Lomba: {cabang_lomba}\n• Catatan Panitia: *{catatan_verifikasi}*\n\nSilakan login ke akun pendaftaran Anda untuk memperbaiki data / mengunggah ulang berkas perbaikan:\n{link_login}\n\nMohon segera diperbaiki agar pendaftaran Anda dapat segera diverifikasi sah.\nSalam hangat,\nPanitia TALENTA 2026 MTsN 1 Blitar",
+                'is_active' => true,
+                'is_system' => true,
+            ],
+            [
+                'code' => 'registration_rejected',
+                'name' => '9. Notifikasi Pendaftaran Ditolak',
+                'description' => 'Terkirim otomatis ke WhatsApp peserta & official saat panitia/PIC menolak pendaftaran.',
+                'message' => "Assalamu'alaikum Wr. Wb.\nYth. Official & Peserta {nama_peserta} ({nama_sekolah}),\n\n*PEMBERITAHUAN STATUS PENDAFTARAN TALENTA 2026*\n\nMohon maaf, pendaftaran Anda pada cabang *{cabang_lomba}* belum dapat kami terima / dinyatakan *DITOLAK*:\n\nDetail Pendaftaran:\n• Kode Registrasi: *{kode_pendaftaran}*\n• Cabang Lomba: {cabang_lomba}\n• Alasan Penolakan: *{catatan_verifikasi}*\n\nUntuk informasi lebih lanjut atau konfirmasi kendala, silakan hubungi kontak resmi panitia atau cek status pendaftaran Anda di portal:\n{link_login}\n\nSalam hormat,\nPanitia TALENTA 2026 MTsN 1 Blitar",
+                'is_active' => true,
+                'is_system' => true,
+            ],
         ];
 
         foreach ($defaults as $tmpl) {

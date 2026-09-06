@@ -770,6 +770,26 @@ class CollectiveRegistrationController extends Controller
                 ]);
             });
 
+            // Trigger WhatsApp Notification: Pendaftaran Kolektif Ditolak
+            try {
+                $invoice->loadMissing(['user', 'registrations.competition']);
+                $targetPhone = $invoice->user?->phone;
+                if (! empty($targetPhone)) {
+                    WablasNotificationService::sendAutoNotification('registration_rejected', [
+                        'phone' => $targetPhone,
+                        'nama_peserta' => $invoice->user->name,
+                        'nisn' => $invoice->user->nisn ?? '-',
+                        'nama_sekolah' => $invoice->user->institution_name ?? 'Sekolah/Madrasah',
+                        'cabang_lomba' => $invoice->registrations->count().' Peserta (Pendaftaran Kolektif)',
+                        'kode_pendaftaran' => $invoice->invoice_number,
+                        'catatan_verifikasi' => $request->rejection_reason ?? 'Bukti transfer / berkas tidak sesuai.',
+                        'link_login' => route('peserta.invoices.show', $invoice->id),
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                // Non-blocking
+            }
+
             return redirect()->route('admin.invoices.index')
                 ->with('info', 'Tagihan '.$invoice->invoice_number.' telah ditolak.');
         }
