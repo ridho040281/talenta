@@ -627,12 +627,12 @@
                                     @else
                                         @php $allPics = $comp->all_pics; @endphp
                                         @if($allPics->isNotEmpty())
-                                            <div class="flex flex-col gap-1.5">
+                                            <div class="flex flex-col items-start gap-1.5">
                                                 @foreach($allPics as $p)
-                                                    <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#4E6EFF]/10 text-slate-200 border border-[#4E6EFF]/20 text-xs">
+                                                    <span class="inline-flex items-center w-fit gap-1.5 px-2.5 py-1 rounded-lg bg-[#4E6EFF]/10 text-slate-200 border border-[#4E6EFF]/20 text-xs">
                                                         <i data-lucide="user-check" class="w-3.5 h-3.5 text-[#84D0FF] shrink-0"></i>
                                                         <span class="font-bold truncate">{{ $p->name }}</span>
-                                                    </div>
+                                                    </span>
                                                 @endforeach
                                             </div>
                                         @else
