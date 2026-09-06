@@ -139,7 +139,12 @@
                                     ($reg->competition->category->name ?? '') . ' ' . 
                                     ($reg->sub_category ?? '') . ' ' . 
                                     $reg->display_name . ' ' . 
-                                    ($reg->team_name ?? '')
+                                    ($reg->team_name ?? '') . ' ' . 
+                                    ($reg->institution_name ?? '') . ' ' . 
+                                    $reg->members->pluck('full_name')->implode(' ') . ' ' . 
+                                    $reg->members->pluck('nisn')->implode(' ') . ' ' . 
+                                    $reg->members->pluck('school_name')->implode(' ') . ' ' . 
+                                    $reg->members->pluck('birth_place')->implode(' ')
                                 );
                             @endphp
                             <tr 
@@ -187,24 +192,83 @@
                                     </div>
                                 </td>
 
-                                <!-- Nama Peserta / Tim -->
+                                <!-- Nama Peserta & Biodata Lengkap (NISN, Asal Sekolah, TTL) -->
                                 <td class="py-3.5 px-4">
-                                    <div class="space-y-0.5">
-                                        <div class="font-bold text-white flex items-center gap-1.5">
-                                            @if($reg->team_name)
-                                                <span class="text-blue-400 font-extrabold">Tim:</span>
-                                                <span>{{ $reg->team_name }}</span>
-                                            @else
-                                                <span>{{ $reg->display_name }}</span>
-                                            @endif
-                                        </div>
-                                        <p class="text-[11px] text-slate-400">
-                                            @if($reg->members && $reg->members->count() > 1)
-                                                <span class="text-blue-400 font-semibold">{{ $reg->members->count() }} Anggota</span> • {{ $reg->display_name }} (Ketua)
-                                            @else
-                                                <span>Peserta Individu</span>
-                                            @endif
-                                        </p>
+                                    <div class="space-y-1.5 min-w-[240px]">
+                                        @if($reg->members && $reg->members->count() > 1)
+                                            <div class="font-extrabold text-white text-xs sm:text-sm flex items-center gap-1.5">
+                                                <span class="px-2 py-0.5 rounded-lg bg-blue-500/20 text-blue-300 text-[10px] font-bold border border-blue-500/30">
+                                                    👥 {{ $reg->members->count() }} Anggota
+                                                </span>
+                                                <span>{{ $reg->team_name ?: $reg->display_name }}</span>
+                                            </div>
+                                            <div class="space-y-1 text-xs">
+                                                @foreach($reg->members as $idx => $m)
+                                                    @php
+                                                        $mBdate = $m->birth_date ? (strtotime($m->birth_date) ? \Carbon\Carbon::parse($m->birth_date)->format('d/m/Y') : $m->birth_date) : null;
+                                                        $mTTL = trim(($m->birth_place ? $m->birth_place : '').($m->birth_place && $mBdate ? ', ' : '').($mBdate ?: ''));
+                                                    @endphp
+                                                    <div class="p-1.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-0.5">
+                                                        <div class="font-bold text-slate-200 flex items-center justify-between text-[11px]">
+                                                            <span>#{{ $idx+1 }} {{ $m->full_name }}</span>
+                                                            <span class="text-[9px] px-1 py-0.2 rounded {{ $m->gender === 'L' ? 'bg-blue-500/20 text-blue-300' : 'bg-pink-500/20 text-pink-300' }} font-bold">
+                                                                {{ $m->gender === 'L' ? 'L' : 'P' }}
+                                                            </span>
+                                                        </div>
+                                                        <div class="flex flex-wrap items-center gap-x-2 text-[10px] text-slate-400 font-mono">
+                                                            @if($m->nisn)
+                                                                <span class="text-emerald-300">NISN: {{ $m->nisn }}</span>
+                                                            @endif
+                                                            @if($mTTL)
+                                                                <span>• TTL: {{ $mTTL }}</span>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                            <div class="text-[11px] text-slate-400 flex items-center gap-1.5 pt-0.5">
+                                                <i data-lucide="school" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i>
+                                                <span class="font-medium text-slate-300 truncate">{{ $reg->institution_name }}</span>
+                                            </div>
+                                        @else
+                                            @php
+                                                $m = $reg->members->first();
+                                                $fullName = $m->full_name ?? $reg->display_name;
+                                                $mBdate = ($m && $m->birth_date) ? (strtotime($m->birth_date) ? \Carbon\Carbon::parse($m->birth_date)->format('d/m/Y') : $m->birth_date) : null;
+                                                $mTTL = $m ? trim(($m->birth_place ? $m->birth_place : '').($m->birth_place && $mBdate ? ', ' : '').($mBdate ?: '')) : '';
+                                                $nisn = $m->nisn ?? null;
+                                                $school = $m->school_name ?? $reg->institution_name;
+                                                $gender = $m->gender ?? $reg->primary_gender;
+                                            @endphp
+                                            <div class="font-extrabold text-white text-xs sm:text-sm flex items-center gap-1.5">
+                                                <span>{{ $fullName }}</span>
+                                                @if($gender && in_array($gender, ['L', 'P']))
+                                                    <span class="text-[9px] px-1.5 py-0.2 rounded {{ $gender === 'L' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-pink-500/20 text-pink-300 border border-pink-500/30' }} font-bold">
+                                                        {{ $gender === 'L' ? '👦 PA' : '👧 PI' }}
+                                                    </span>
+                                                @endif
+                                            </div>
+                                            
+                                            <!-- NISN & TTL Badges -->
+                                            <div class="flex flex-wrap items-center gap-1.5 text-[10.5px]">
+                                                @if($nisn)
+                                                    <span class="font-mono text-[10px] font-bold text-emerald-300 bg-emerald-500/15 px-1.5 py-0.5 rounded-lg border border-emerald-500/25">
+                                                        NISN: {{ $nisn }}
+                                                    </span>
+                                                @endif
+                                                @if($mTTL)
+                                                    <span class="text-[10px] font-medium text-slate-300 bg-slate-800/80 px-1.5 py-0.5 rounded-lg border border-slate-700">
+                                                        TTL: {{ $mTTL }}
+                                                    </span>
+                                                @endif
+                                            </div>
+
+                                            <!-- Asal Sekolah -->
+                                            <div class="text-[11px] text-slate-400 flex items-center gap-1.5">
+                                                <i data-lucide="school" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i>
+                                                <span class="font-medium text-slate-300 truncate">{{ $school }}</span>
+                                            </div>
+                                        @endif
                                     </div>
                                 </td>
 

@@ -179,8 +179,9 @@
                         </span>
                     </div>
                     <h4 class="text-base font-bold text-white">{{ $member->full_name }}</h4>
-                    <p class="text-xs text-slate-400">NISN: <span class="font-mono text-slate-300">{{ $member->nisn ?? '-' }}</span></p>
-                    <p class="text-xs text-slate-400">TTL: {{ $member->birth_place ?? '-' }}, {{ $member->birth_date ? $member->birth_date->format('d M Y') : '-' }}</p>
+                    <p class="text-xs text-slate-400">Asal Sekolah: <span class="text-slate-200 font-semibold">{{ $member->school_name ?? $registration->institution_name }}</span></p>
+                    <p class="text-xs text-slate-400">NISN: <span class="font-mono text-slate-300 font-bold">{{ $member->nisn ?? '-' }}</span></p>
+                    <p class="text-xs text-slate-400">TTL: <span class="text-slate-200">{{ $member->birth_place ?? '-' }}, {{ $member->birth_date ? $member->birth_date->format('d/m/Y') : '-' }}</span></p>
                 </div>
             @endforeach
         </div>
