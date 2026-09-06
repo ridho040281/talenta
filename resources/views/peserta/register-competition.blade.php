@@ -521,30 +521,29 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 
-                <!-- 1. Upload Surat Rekomendasi / Kartu Pelajar -->
-                <!-- 1. Upload Surat Rekomendasi / Kartu Pelajar -->
+                <!-- 1. Upload Surat Keterangan / Surat Rekomendasi -->
                 <div class="p-6 rounded-2xl border-2 border-dashed border-slate-700 hover:border-emerald-500 bg-slate-900/60 transition text-center space-y-3">
                     <div class="w-12 h-12 mx-auto rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shadow-sm border border-emerald-500/30">
                         <i data-lucide="file-text" class="w-6 h-6"></i>
                     </div>
                     <div>
-                        <label class="block text-sm font-bold text-white">Surat Rekomendasi / Kartu Pelajar</label>
-                        <p class="text-[11px] text-slate-400 mt-0.5">Surat tugas kepala sekolah / kartu pelajar (PDF, JPG, PNG, maks 5 MB)</p>
+                        <label class="block text-sm font-bold text-white">Surat Keterangan / Surat Rekomendasi</label>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Surat tugas / keterangan / rekomendasi kepala sekolah / madrasah (PDF, JPG, PNG, maks 5 MB)</p>
                     </div>
                     <input type="file" name="document_file" class="block w-full text-xs text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer">
                 </div>
 
-                <!-- 2. Upload Bukti Transfer / Bukti Pendaftaran -->
+                <!-- 2. Upload Bukti Transfer / Struk / Slip Transfer -->
                 <div class="p-6 rounded-2xl border-2 border-dashed border-emerald-500/50 hover:border-emerald-400 bg-emerald-950/20 transition text-center space-y-3 relative">
                     <div class="w-12 h-12 mx-auto rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shadow-sm border border-emerald-500/30">
                         <i data-lucide="receipt" class="w-6 h-6"></i>
                     </div>
                     <div>
                         <label class="block text-sm font-bold text-white">
-                            Bukti Transfer / Slip Pendaftaran
+                            Bukti Transfer / Struk / Slip Transfer
                         </label>
                         <p class="text-[11px] text-slate-400 mt-0.5">
-                            Struk transfer bank / screenshot bukti pembayaran (JPG, PNG, PDF maks 5 MB)
+                            Struk transfer bank / screenshot bukti pembayaran / slip transfer (JPG, PNG, PDF maks 5 MB)
                         </p>
                     </div>
                     <input type="file" name="payment_proof" accept="image/*,application/pdf" class="block w-full text-xs text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-600 file:text-slate-950 hover:file:bg-emerald-500 cursor-pointer">
@@ -610,12 +609,12 @@
                         </svg>
                     </div>
                     <div class="flex-1 text-xs">
-                        <span class="font-bold text-rose-300 block">Bukti Transfer / Slip Pembayaran</span>
+                        <span class="font-bold text-rose-300 block">Bukti Transfer / Struk / Slip Transfer</span>
                         <p class="text-slate-300 text-[11px] mt-0.5">File bukti transfer belum dipilih. Bukti pembayaran diperlukan agar panitia dapat segera memverifikasi dan menerbitkan nomor peserta Anda.</p>
                     </div>
                 </div>
 
-                <!-- 2. Surat Rekomendasi -->
+                <!-- 2. Surat Keterangan / Surat Rekomendasi -->
                 <div x-show="isDocumentFileMissing" class="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3">
                     <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -623,8 +622,8 @@
                         </svg>
                     </div>
                     <div class="flex-1 text-xs">
-                        <span class="font-bold text-amber-300 block">Surat Rekomendasi / Kartu Pelajar</span>
-                        <p class="text-slate-300 text-[11px] mt-0.5">File surat tugas kepala sekolah atau kartu pelajar peserta belum dipilih.</p>
+                        <span class="font-bold text-amber-300 block">Surat Keterangan / Surat Rekomendasi</span>
+                        <p class="text-slate-300 text-[11px] mt-0.5">File surat keterangan atau surat tugas/rekomendasi kepala sekolah belum dipilih.</p>
                     </div>
                 </div>
             </div>

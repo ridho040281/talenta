@@ -192,7 +192,7 @@
                         
                         <!-- Surat Tugas / Dokumen -->
                         <div class="p-3 rounded-xl bg-white border border-slate-200 space-y-2">
-                            <span class="font-bold text-slate-700 block text-[11px]">📄 Surat Rekomendasi</span>
+                            <span class="font-bold text-slate-700 block text-[11px]">📄 Surat Keterangan / Rekomendasi</span>
                             <template x-if="selectedReg && selectedReg.document_file">
                                 <a :href="'/storage/' + selectedReg.document_file" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold hover:bg-emerald-100 transition">
                                     <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
@@ -206,7 +206,7 @@
 
                         <!-- Bukti Transfer / Pembayaran -->
                         <div class="p-3 rounded-xl bg-white border border-slate-200 space-y-2">
-                            <span class="font-bold text-slate-700 block text-[11px]">💳 Bukti Transfer Slip</span>
+                            <span class="font-bold text-slate-700 block text-[11px]">💳 Bukti Transfer / Struk / Slip</span>
                             <template x-if="selectedReg && (selectedReg.payment_proof || (selectedReg.invoice && selectedReg.invoice.payment_proof))">
                                 <a :href="'/storage/' + (selectedReg.payment_proof || selectedReg.invoice.payment_proof)" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold hover:bg-amber-100 transition">
                                     <i data-lucide="external-link" class="w-3.5 h-3.5"></i>

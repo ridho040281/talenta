@@ -721,7 +721,7 @@
                             
                             <!-- Surat Tugas / Dokumen -->
                             <div class="p-3 rounded-xl bg-[#161F30] border border-white/[0.08] space-y-2">
-                                <span class="font-bold text-slate-300 block text-[11px]">📄 Surat Rekomendasi</span>
+                                <span class="font-bold text-slate-300 block text-[11px]">📄 Surat Keterangan / Rekomendasi</span>
                                 <template x-if="selectedReg && selectedReg.document_file">
                                     <a :href="'{{ asset('storage') }}/' + selectedReg.document_file" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-xs font-bold hover:bg-emerald-500/25 transition">
                                         <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
@@ -735,7 +735,7 @@
 
                             <!-- Bukti Transfer / Pembayaran -->
                             <div class="p-3 rounded-xl bg-[#161F30] border border-white/[0.08] space-y-2">
-                                <span class="font-bold text-slate-300 block text-[11px]">💳 Bukti Transfer Slip</span>
+                                <span class="font-bold text-slate-300 block text-[11px]">💳 Bukti Transfer / Struk / Slip</span>
                                 <template x-if="selectedReg && (selectedReg.payment_proof || (selectedReg.invoice && selectedReg.invoice.payment_proof))">
                                     <a :href="'{{ asset('storage') }}/' + (selectedReg.payment_proof || selectedReg.invoice.payment_proof)" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/15 text-amber-400 border border-amber-500/30 text-xs font-bold hover:bg-amber-500/25 transition">
                                         <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
@@ -928,11 +928,11 @@
                         <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Ganti Berkas / Dokumen (Kosongkan jika tidak diubah):</span>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                             <div class="p-3 rounded-xl bg-[#161F30] border border-white/[0.08] space-y-1.5">
-                                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-300">📄 Ganti Surat Rekomendasi / Tugas</label>
+                                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-300">📄 Ganti Surat Keterangan / Rekomendasi</label>
                                 <input type="file" name="document_file" accept=".pdf,.jpg,.jpeg,.png" class="w-full text-xs text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-emerald-500/20 file:text-emerald-300 hover:file:bg-emerald-500/30">
                             </div>
                             <div class="p-3 rounded-xl bg-[#161F30] border border-white/[0.08] space-y-1.5">
-                                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-300">💳 Ganti Bukti Transfer Slip</label>
+                                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-300">💳 Ganti Bukti Transfer / Struk / Slip</label>
                                 <input type="file" name="payment_proof" accept=".pdf,.jpg,.jpeg,.png" class="w-full text-xs text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-amber-500/20 file:text-amber-300 hover:file:bg-amber-500/30">
                             </div>
                         </div>

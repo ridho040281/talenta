@@ -91,11 +91,11 @@
                 <h5 class="text-xs font-bold uppercase tracking-wider text-slate-300">Unggah Ulang Berkas Revisi</h5>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-300 mb-1">Dokumen Surat / Kartu Pelajar</label>
+                        <label class="block text-[11px] font-bold text-slate-300 mb-1">Surat Keterangan / Surat Rekomendasi</label>
                         <input type="file" name="document_file" class="block w-full text-xs text-slate-400 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-amber-500/20 file:text-amber-300 file:text-xs file:font-bold">
                     </div>
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-300 mb-1">Bukti Transfer / Pembayaran</label>
+                        <label class="block text-[11px] font-bold text-slate-300 mb-1">Bukti Transfer / Struk / Slip Transfer</label>
                         <input type="file" name="payment_proof" class="block w-full text-xs text-slate-400 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-amber-500/20 file:text-amber-300 file:text-xs file:font-bold">
                     </div>
                 </div>
@@ -201,14 +201,14 @@
                 </h3>
 
                 <div class="space-y-3">
-                    <!-- 1. Dokumen Surat Rekomendasi / Kartu Pelajar -->
+                    <!-- 1. Dokumen Surat Keterangan / Surat Rekomendasi -->
                     <div class="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center justify-between gap-3">
                         <div class="flex items-center gap-3 overflow-hidden">
                             <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
                                 <i data-lucide="file-text" class="w-4 h-4"></i>
                             </div>
                             <div class="overflow-hidden">
-                                <h5 class="text-xs font-bold text-white truncate">Surat Rekomendasi</h5>
+                                <h5 class="text-xs font-bold text-white truncate">Surat Keterangan / Rekomendasi</h5>
                                 <p class="text-[10px] text-slate-400">
                                     {{ $registration->document_file ? 'Berkas Terlampir' : 'Belum diunggah' }}
                                 </p>
@@ -222,14 +222,14 @@
                         @endif
                     </div>
 
-                    <!-- 2. Bukti Transfer / Pembayaran -->
+                    <!-- 2. Bukti Transfer / Struk / Slip Transfer -->
                     <div class="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center justify-between gap-3">
                         <div class="flex items-center gap-3 overflow-hidden">
                             <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30">
                                 <i data-lucide="receipt" class="w-4 h-4"></i>
                             </div>
                             <div class="overflow-hidden">
-                                <h5 class="text-xs font-bold text-white truncate">Bukti Transfer</h5>
+                                <h5 class="text-xs font-bold text-white truncate">Bukti Transfer / Struk / Slip</h5>
                                 <p class="text-[10px] text-slate-400">
                                     {{ $registration->payment_proof ? 'Slip Terlampir' : 'Tidak dilampirkan / Gratis' }}
                                 </p>
