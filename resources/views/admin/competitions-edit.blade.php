@@ -171,7 +171,7 @@
 
                     <!-- Row 2 -->
                     <div class="grid grid-cols-2 sm:grid-cols-12 gap-3">
-                        <div class="sm:col-span-3">
+                        <div class="sm:col-span-2">
                             <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Kategori Lomba</label>
                             <select name="type" required class="input-admin block w-full px-2.5 py-2.5 rounded-xl text-xs font-bold">
                                 <option value="individu" {{ $competition->type == 'individu' ? 'selected' : '' }}>Individu</option>
@@ -188,13 +188,19 @@
                             <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Maks Anggota</label>
                             <input name="max_members" type="number" min="1" required value="{{ old('max_members', $competition->max_members) }}" class="input-admin block w-full px-2.5 py-2.5 rounded-xl text-xs font-bold">
                         </div>
-                        <div class="col-span-2 sm:col-span-3">
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Lokasi / Venue</label>
-                            <input name="venue" type="text" value="{{ old('venue', $competition->venue) }}" placeholder="GOR MTsN 1 Blitar" class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-medium">
+                        <div class="sm:col-span-2">
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-amber-400 mb-1.5 flex items-center gap-1">
+                                <i data-lucide="calendar" class="w-3 h-3"></i> Tgl Pelaksanaan
+                            </label>
+                            <input name="schedule_date" type="date" value="{{ old('schedule_date', $competition->schedule_date ? (is_string($competition->schedule_date) ? $competition->schedule_date : $competition->schedule_date->format('Y-m-d')) : '') }}" class="input-admin block w-full px-2.5 py-2.5 rounded-xl text-xs font-medium">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Waktu Lomba</label>
+                            <input name="schedule_time" type="text" value="{{ old('schedule_time', $competition->schedule_time) }}" placeholder="08.00 WIB" class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-medium">
                         </div>
                         <div class="col-span-2 sm:col-span-2">
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Waktu</label>
-                            <input name="schedule_time" type="text" value="{{ old('schedule_time', $competition->schedule_time) }}" placeholder="08.00 WIB" class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-medium">
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Lokasi / Venue</label>
+                            <input name="venue" type="text" value="{{ old('venue', $competition->venue) }}" placeholder="GOR MTsN 1 Blitar" class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-medium">
                         </div>
                     </div>
 
