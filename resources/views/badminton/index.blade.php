@@ -39,14 +39,6 @@
         </div>
     </div>
 
-    <!-- ALERTS -->
-    @if(session('success'))
-    <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-semibold flex items-center gap-3">
-        <i data-lucide="check-circle" class="w-4 h-4 shrink-0 text-emerald-500"></i>
-        <span>{{ session('success') }}</span>
-    </div>
-    @endif
-
     <!-- FILTER BAR -->
     <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap items-center justify-between gap-3 text-xs">
         <form action="{{ route('badminton.index') }}" method="GET" class="flex flex-wrap items-center gap-2 w-full sm:w-auto">

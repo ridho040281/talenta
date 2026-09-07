@@ -330,10 +330,10 @@
 
     // Handle Laravel Session Flash Messages on Page Load
     document.addEventListener('DOMContentLoaded', function() {
-        @if(session('modal_success_title') || session('success'))
+        @if(session('modal_success_title') || session('success') || session('status'))
             @php
                 $title = session('modal_success_title', 'Berhasil Diproses');
-                $msg = session('modal_success_message', session('success', 'Aktivitas berhasil diselesaikan.'));
+                $msg = session('modal_success_message', session('success') ?? session('status', 'Aktivitas berhasil diselesaikan.'));
                 $tLower = strtolower($title . ' ' . $msg);
                 $type = 'success';
                 if (str_contains($tLower, 'hapus') || str_contains($tLower, 'delete') || str_contains($tLower, 'dihapus')) {
@@ -362,6 +362,18 @@
                 type: 'warning',
                 title: 'Perhatian',
                 message: "{!! addslashes(session('warning')) !!}"
+            });
+        @elseif(session('info'))
+            window.showAppModal({
+                type: 'update',
+                title: 'Informasi',
+                message: "{!! addslashes(session('info')) !!}"
+            });
+        @elseif(isset($errors) && $errors->any())
+            window.showAppModal({
+                type: 'error',
+                title: 'Validasi Tidak Lengkap',
+                message: "{!! addslashes(implode(' ', $errors->all())) !!}"
             });
         @endif
     });

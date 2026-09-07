@@ -45,13 +45,6 @@
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-xs font-bold flex items-center gap-2">
-            <i data-lucide="check-circle" class="w-4 h-4 shrink-0"></i>
-            <span>{{ session('success') }}</span>
-        </div>
-    @endif
-
     <!-- MAIN CONSOLE GRID -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         

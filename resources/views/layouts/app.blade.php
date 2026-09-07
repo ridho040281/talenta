@@ -344,39 +344,6 @@
         </div>
     </header>
 
-    <!-- Flash Messages -->
-    @if(session('success'))
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full" x-data="{ show: true }" x-show="show">
-            <div class="bg-[#161F30]/95 border border-[#7A5AF8]/40 text-slate-200 px-4 py-3 rounded-2xl flex items-center justify-between shadow-xl backdrop-blur-md">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#7A5AF8] to-[#4E6EFF] text-white flex items-center justify-center shrink-0 font-bold">
-                        <i data-lucide="check" class="w-5 h-5"></i>
-                    </div>
-                    <span class="text-xs sm:text-sm font-medium">{{ session('success') }}</span>
-                </div>
-                <button @click="show = false" class="text-slate-400 hover:text-white">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full" x-data="{ show: true }" x-show="show">
-            <div class="bg-[#161F30]/95 border border-rose-500/40 text-rose-200 px-4 py-3 rounded-2xl flex items-center justify-between shadow-xl backdrop-blur-md">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-xl bg-rose-500 text-white flex items-center justify-center shrink-0 font-bold">
-                        <i data-lucide="alert-circle" class="w-5 h-5"></i>
-                    </div>
-                    <span class="text-xs sm:text-sm font-medium">{{ session('error') }}</span>
-                </div>
-                <button @click="show = false" class="text-rose-400 hover:text-white">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-        </div>
-    @endif
-
     <!-- Main Content Body -->
     <main class="flex-grow relative z-10">
         @yield('content')
