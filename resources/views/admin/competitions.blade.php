@@ -348,18 +348,9 @@
                                             </div>
                                         </div>
                                     @elseif(in_array($comp->code, ['MTQ', 'POP']))
-                                        <div class="flex flex-col py-1">
-                                            <!-- 1. Individu PA -->
-                                            <div class="h-[36px] flex items-center gap-1.5 font-bold text-slate-200">
-                                                <i data-lucide="user" class="w-4 h-4 text-emerald-400"></i>
-                                                <span>Individu | PA</span>
-                                            </div>
-                                            <div class="border-t border-white/[0.08] my-1.5"></div>
-                                            <!-- 2. Individu PI -->
-                                            <div class="h-[36px] flex items-center gap-1.5 font-bold text-slate-200">
-                                                <i data-lucide="user" class="w-4 h-4 text-pink-400"></i>
-                                                <span>Individu | PI</span>
-                                            </div>
+                                        <div class="flex items-center gap-1.5 font-bold text-slate-200">
+                                            <i data-lucide="users" class="w-4 h-4 text-emerald-400"></i>
+                                            <span>Individu (PA & PI)</span>
                                         </div>
                                     @elseif($comp->code === 'TMJ')
                                         <div class="flex flex-col py-1">
@@ -435,21 +426,9 @@
                                             </div>
                                         </div>
                                     @elseif(in_array($comp->code, ['MTQ', 'POP']))
-                                        <div class="flex flex-col py-1">
-                                            <!-- 1. Biaya PA -->
-                                            <div class="h-[36px] flex items-center">
-                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 font-bold border border-emerald-500/30 text-xs">
-                                                    <span>Rp {{ number_format($comp->tier_fees['pa'] ?? $comp->registration_fee, 0, ',', '.') }}</span>
-                                                </span>
-                                            </div>
-                                            <div class="border-t border-white/[0.08] my-1.5"></div>
-                                            <!-- 2. Biaya PI -->
-                                            <div class="h-[36px] flex items-center">
-                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-pink-500/15 text-pink-400 font-bold border border-pink-500/30 text-xs">
-                                                    <span>Rp {{ number_format($comp->tier_fees['pi'] ?? $comp->registration_fee, 0, ',', '.') }}</span>
-                                                </span>
-                                            </div>
-                                        </div>
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 font-bold border border-emerald-500/30 text-xs">
+                                            <span>Rp {{ number_format($comp->registration_fee, 0, ',', '.') }}</span>
+                                        </span>
                                     @elseif($comp->code === 'TMJ')
                                         <div class="flex flex-col py-1">
                                             <!-- 1. Biaya Tunggal PA -->
@@ -518,19 +497,21 @@
                                             </div>
                                         </div>
                                     @elseif(in_array($comp->code, ['MTQ', 'POP']))
-                                        <div class="flex flex-col py-1 text-slate-400 text-xs">
+                                    @elseif(in_array($comp->code, ['MTQ', 'POP']))
+                                        <div class="flex flex-col items-center justify-center text-xs">
                                             @php
                                                 $countPa = $comp->registrations->filter(fn($r) => $r->primary_gender === 'L')->count();
                                                 $countPi = $comp->registrations->filter(fn($r) => $r->primary_gender === 'P')->count();
                                                 $totalMtqPop = $countPa + $countPi;
                                                 $quotaMtqPop = (int) ($comp->quota ?? 50);
                                             @endphp
-                                            <div class="h-[36px] flex items-center justify-center font-medium text-xs">
-                                                <div><span class="font-bold text-white">{{ $totalMtqPop }}</span>&nbsp;/ {{ $quotaMtqPop }}</div>
+                                            <div class="font-bold text-white font-mono text-sm">
+                                                <span>{{ $totalMtqPop }}</span> <span class="text-slate-500 font-normal">/</span> <span>{{ $quotaMtqPop }}</span>
                                             </div>
-                                            <div class="border-t border-white/[0.08] my-1.5"></div>
-                                            <div class="h-[36px] flex items-center justify-center font-medium text-[11px]">
-                                                <div><span class="font-bold text-emerald-400">{{ $countPa }} PA</span>&nbsp;• <span class="font-bold text-pink-400">{{ $countPi }} PI</span></div>
+                                            <div class="text-[10px] font-semibold mt-0.5 text-slate-400">
+                                                <span class="text-cyan-400">{{ $countPa }} PA</span>
+                                                <span class="text-slate-600">•</span>
+                                                <span class="text-pink-400">{{ $countPi }} PI</span>
                                             </div>
                                         </div>
                                     @elseif($comp->code === 'TMJ')
@@ -596,23 +577,26 @@
                                             </div>
                                         </div>
                                     @elseif(in_array($comp->code, ['MTQ', 'POP']))
-                                        <div class="flex flex-col py-1 text-xs">
-                                            <!-- PIC PA -->
-                                            <div class="h-[36px] flex items-center text-slate-300 font-medium">
-                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20" title="{{ $comp->pic_pa->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}">
-                                                    <i data-lucide="user-check" class="w-3.5 h-3.5 text-emerald-400 shrink-0"></i>
-                                                    <span class="truncate max-w-[140px]">{{ $comp->pic_pa->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}</span>
+                                        @php
+                                            $picPa = $comp->pic_pa;
+                                            $picPi = $comp->pic_pi;
+                                            $samePic = (!$picPi || ($picPa && $picPa->id === $picPi->id)) || (!$picPa && !$picPi);
+                                        @endphp
+                                        @if($samePic)
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 text-xs" title="{{ $picPa->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}">
+                                                <i data-lucide="user-check" class="w-3.5 h-3.5 text-emerald-400 shrink-0"></i>
+                                                <span class="font-bold truncate max-w-[150px]">{{ $picPa->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}</span>
+                                            </span>
+                                        @else
+                                            <div class="flex flex-col gap-1 text-xs">
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 text-[10px]" title="PA: {{ $picPa->name ?? '-' }}">
+                                                    <span>PA: {{ $picPa->name ?? '-' }}</span>
+                                                </span>
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-pink-500/10 text-pink-300 text-[10px]" title="PI: {{ $picPi->name ?? '-' }}">
+                                                    <span>PI: {{ $picPi->name ?? '-' }}</span>
                                                 </span>
                                             </div>
-                                            <div class="border-t border-white/[0.08] my-1.5"></div>
-                                            <!-- PIC PI -->
-                                            <div class="h-[36px] flex items-center text-slate-300 font-medium">
-                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-pink-500/10 text-pink-300 border border-pink-500/20" title="{{ $comp->pic_pi->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}">
-                                                    <i data-lucide="user-check" class="w-3.5 h-3.5 text-pink-400 shrink-0"></i>
-                                                    <span class="truncate max-w-[140px]">{{ $comp->pic_pi->name ?? $comp->pic->name ?? 'Belum Ditugaskan' }}</span>
-                                                </span>
-                                            </div>
-                                        </div>
+                                        @endif
                                     @elseif($comp->code === 'TMJ')
                                         <div class="flex flex-col py-1 text-xs">
                                             <!-- PIC Tunggal PA -->
@@ -718,23 +702,24 @@
                                             </div>
                                         </div>
                                     @elseif(in_array($comp->code, ['MTQ', 'POP']))
-                                        <div class="flex flex-col py-1 text-xs">
-                                            <!-- Status PA -->
-                                            <div class="h-[36px] flex items-center justify-center">
-                                                @php $stPa = $comp->status_pa ?? $comp->status; @endphp
-                                                <span class="px-2.5 py-1 rounded-full text-xs font-bold capitalize {{ $stPa === 'buka' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : ($stPa === 'tutup' ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' : 'bg-white/[0.05] text-slate-400 border border-white/[0.08]') }}">
-                                                    {{ $stPa }}
+                                        @php
+                                            $stPa = $comp->status_pa ?? $comp->status;
+                                            $stPi = $comp->status_pi ?? $comp->status;
+                                        @endphp
+                                        @if($stPa === $stPi)
+                                            <span class="px-2.5 py-1 rounded-full text-xs font-bold capitalize {{ $stPa === 'buka' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : ($stPa === 'tutup' ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' : 'bg-white/[0.05] text-slate-400 border border-white/[0.08]') }}">
+                                                {{ $stPa }}
+                                            </span>
+                                        @else
+                                            <div class="flex flex-col gap-1 items-center">
+                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold capitalize {{ $stPa === 'buka' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/15 text-rose-400 border border-rose-500/30' }}">
+                                                    PA: {{ $stPa }}
+                                                </span>
+                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold capitalize {{ $stPi === 'buka' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/15 text-rose-400 border border-rose-500/30' }}">
+                                                    PI: {{ $stPi }}
                                                 </span>
                                             </div>
-                                            <div class="border-t border-white/[0.08] my-1.5"></div>
-                                            <!-- Status PI -->
-                                            <div class="h-[36px] flex items-center justify-center">
-                                                @php $stPi = $comp->status_pi ?? $comp->status; @endphp
-                                                <span class="px-2.5 py-1 rounded-full text-xs font-bold capitalize {{ $stPi === 'buka' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : ($stPi === 'tutup' ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' : 'bg-white/[0.05] text-slate-400 border border-white/[0.08]') }}">
-                                                    {{ $stPi }}
-                                                </span>
-                                            </div>
-                                        </div>
+                                        @endif
                                     @elseif($comp->code === 'TMJ')
                                         <div class="flex flex-col py-1 text-xs">
                                             <!-- Status Tunggal PA (Kat A & B) -->
