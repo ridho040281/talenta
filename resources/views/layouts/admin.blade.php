@@ -290,19 +290,19 @@
     <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'" class="fixed inset-y-0 left-0 z-20 w-64 bg-[#090D17]/98 backdrop-blur-2xl text-slate-300 flex flex-col transition-transform duration-300 ease-in-out border-r border-white/[0.12] shadow-[4px_0_25px_rgba(0,0,0,0.6)]">
         
         <!-- Sidebar Brand Header -->
-        <div class="h-16 flex items-center justify-between px-5 border-b border-white/[0.08]">
-            <a href="{{ auth()->check() && auth()->user()->role === 'peserta' ? route('peserta.dashboard') : (auth()->check() && auth()->user()->role === 'superadmin' ? route('admin.dashboard') : route('home')) }}" class="flex items-center gap-3 overflow-hidden group">
+        <div class="h-16 flex items-center justify-between px-4 border-b border-white/[0.08]">
+            <a href="{{ auth()->check() && auth()->user()->role === 'peserta' ? route('peserta.dashboard') : (auth()->check() && auth()->user()->role === 'superadmin' ? route('admin.dashboard') : route('home')) }}" class="flex items-center gap-2.5 overflow-hidden group min-w-0">
                 @if(!empty($appSettings['app_logo']))
-                    <img src="{{ asset('storage/' . $appSettings['app_logo']) }}" alt="{{ $appSettings['app_name'] ?? 'TALENTA' }}" class="h-9 w-auto max-w-[140px] object-contain group-hover:scale-105 transition-transform duration-300">
+                    <img src="{{ asset('storage/' . $appSettings['app_logo']) }}" alt="{{ $appSettings['app_name'] ?? 'TALENTA' }}" class="h-9 w-9 object-contain rounded-xl shrink-0 group-hover:scale-105 transition-transform duration-300">
                 @else
                     <div class="w-9 h-9 rounded-2xl bg-gradient-to-tr from-[#7A5AF8] to-[#4E6EFF] flex items-center justify-center text-white shadow-lg shadow-[#7A5AF8]/30 shrink-0 group-hover:scale-105 transition-transform duration-300">
                         <i data-lucide="sparkles" class="w-5 h-5"></i>
                     </div>
-                    <div class="overflow-hidden">
-                        <span class="text-base font-black tracking-tight text-white block leading-none truncate font-display">{{ $appSettings['app_name'] ?? 'TALENTA' }}</span>
-                        <span class="text-[10px] font-bold tracking-widest text-[#7A5AF8] uppercase block truncate mt-0.5">{{ $appSettings['institution_name'] ?? 'MTsN 1 BLITAR' }}</span>
-                    </div>
                 @endif
+                <div class="overflow-hidden min-w-0">
+                    <span class="text-base font-black tracking-tight text-white block leading-none truncate font-display">{{ $appSettings['app_name'] ?? 'TALENTA' }}</span>
+                    <span class="text-[10px] font-bold tracking-widest text-[#7A5AF8] uppercase block truncate mt-1">{{ $appSettings['institution_name'] ?? 'MTsN 1 BLITAR' }}</span>
+                </div>
             </a>
             <button @click="sidebarOpen = false" class="lg:hidden text-slate-400 hover:text-white p-1 rounded-lg">
                 <i data-lucide="x" class="w-5 h-5"></i>
@@ -629,7 +629,7 @@
         </div>
 
         <!-- Main Workspace -->
-        <main class="flex-1 p-3.5 sm:p-6 lg:p-8 max-w-[1600px] w-full mx-auto">
+        <main class="flex-1 p-3.5 sm:p-5 lg:p-6 max-w-[1600px] w-full mx-auto">
             @yield('content')
         </main>
 

@@ -27,19 +27,19 @@
 
         <!-- Filter & Search Bar -->
         <form method="GET" action="{{ route('admin.users') }}" class="space-y-3 pt-3 border-t border-white/[0.08]">
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
-                <div class="sm:col-span-2 md:col-span-2 relative">
-                    <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3.5 top-3"></i>
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama, jabatan, email, no WA, atau instansi..." class="w-full pl-10 pr-9 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-medium text-white placeholder-slate-500 outline-none focus:border-[#7A5AF8] focus:ring-2 focus:ring-[#7A5AF8]/30">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2.5">
+                <div class="sm:col-span-2 lg:col-span-5 relative">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3.5 top-2.5"></i>
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama, jabatan, email, no WA, atau instansi..." class="w-full pl-9 pr-8 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-medium text-white placeholder-slate-500 outline-none focus:border-[#7A5AF8] focus:ring-1 focus:ring-[#7A5AF8]/30">
                     @if(request('search'))
-                        <a href="{{ route('admin.users', request()->except('search')) }}" class="absolute right-3 top-2.5 text-slate-400 hover:text-white" title="Hapus pencarian">
-                            <i data-lucide="x" class="w-4 h-4"></i>
+                        <a href="{{ route('admin.users', request()->except('search')) }}" class="absolute right-2.5 top-2 text-slate-400 hover:text-white p-0.5" title="Hapus pencarian">
+                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
                         </a>
                     @endif
                 </div>
 
-                <div>
-                    <select name="role" onchange="this.form.submit()" class="w-full px-3.5 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8] focus:ring-2 focus:ring-[#7A5AF8]/30 cursor-pointer">
+                <div class="lg:col-span-3">
+                    <select name="role" onchange="this.form.submit()" class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8] focus:ring-1 focus:ring-[#7A5AF8]/30 cursor-pointer">
                         <option value="all" {{ !request('role') || request('role') == 'all' ? 'selected' : '' }}>Semua Role / Hak Akses</option>
                         <option value="superadmin" {{ request('role') == 'superadmin' ? 'selected' : '' }}>👑 Super Administrator</option>
                         <option value="pic_lomba" {{ request('role') == 'pic_lomba' ? 'selected' : '' }}>🛡️ PIC Cabang Lomba</option>
@@ -48,22 +48,22 @@
                     </select>
                 </div>
 
-                <div>
-                    <select name="status" onchange="this.form.submit()" class="w-full px-3.5 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8] focus:ring-2 focus:ring-[#7A5AF8]/30 cursor-pointer">
+                <div class="lg:col-span-2">
+                    <select name="status" onchange="this.form.submit()" class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8] focus:ring-1 focus:ring-[#7A5AF8]/30 cursor-pointer">
                         <option value="all" {{ !request('status') || request('status') == 'all' ? 'selected' : '' }}>Semua Status</option>
                         <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>🟢 Hanya Aktif</option>
                         <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>🔴 Hanya Nonaktif</option>
                     </select>
                 </div>
 
-                <div class="flex items-center gap-2">
-                    <button type="submit" class="w-full py-2 px-4 rounded-xl bg-white/[0.08] hover:bg-white/[0.12] text-white text-xs font-bold transition flex items-center justify-center gap-1.5 border border-white/[0.1] cursor-pointer">
+                <div class="lg:col-span-2 flex items-center gap-1.5">
+                    <button type="submit" class="w-full py-2 px-3 rounded-xl bg-white/[0.08] hover:bg-white/[0.12] text-white text-xs font-bold transition flex items-center justify-center gap-1.5 border border-white/[0.1] cursor-pointer">
                         <i data-lucide="filter" class="w-3.5 h-3.5"></i>
                         <span>Terapkan</span>
                     </button>
                     @if(request('search') || (request('role') && request('role') !== 'all') || (request('status') && request('status') !== 'all'))
                         <a href="{{ route('admin.users') }}" class="p-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 transition shrink-0 flex items-center justify-center" title="Reset Semua Filter">
-                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
                         </a>
                     @endif
                 </div>
@@ -104,32 +104,32 @@
             <table class="w-full text-left text-xs text-slate-300">
                 <thead class="text-[11px] font-bold uppercase tracking-wider bg-[#0C111D]/90 text-slate-400 border-b border-white/[0.08]">
                     <tr>
-                        <th class="py-3.5 px-4 sm:px-5">Pengguna & Jabatan</th>
-                        <th class="py-3.5 px-4 sm:px-5">Kontak (Email / WA)</th>
-                        <th class="py-3.5 px-4 text-center">Role / Hak Akses</th>
-                        <th class="py-3.5 px-4 sm:px-5">Instansi / Asal Sekolah</th>
-                        <th class="py-3.5 px-3 text-center">Status Akun</th>
-                        <th class="py-3.5 px-4 sm:px-5 text-center">Aksi</th>
+                        <th class="py-3 px-3 sm:px-4">Pengguna & Jabatan</th>
+                        <th class="py-3 px-3 sm:px-4">Kontak (Email / WA)</th>
+                        <th class="py-3 px-2.5 text-center">Role / Akses</th>
+                        <th class="py-3 px-3 sm:px-4">Instansi</th>
+                        <th class="py-3 px-2.5 text-center">Status</th>
+                        <th class="py-3 px-3 sm:px-4 text-center w-24">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-white/[0.04] font-medium">
                     @forelse($users as $u)
                         <tr class="hover:bg-white/[0.025] transition {{ $u->status === 'inactive' ? 'opacity-60' : '' }}">
                             <!-- Kolom 1: Pengguna & Jabatan -->
-                            <td class="py-3 px-4 sm:px-5">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-[#7A5AF8]/30 to-[#4E6EFF]/30 text-white flex items-center justify-center font-bold text-xs shrink-0 border border-white/[0.1] shadow-xs">
+                            <td class="py-2.5 px-3 sm:px-4">
+                                <div class="flex items-center gap-2.5 min-w-0">
+                                    <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-[#7A5AF8]/30 to-[#4E6EFF]/30 text-white flex items-center justify-center font-bold text-xs shrink-0 border border-white/[0.1] shadow-xs">
                                         {{ strtoupper(substr($u->name, 0, 1)) }}
                                     </div>
                                     <div class="overflow-hidden min-w-0">
-                                        <div class="font-bold text-white truncate max-w-[200px] sm:max-w-[240px] text-xs sm:text-sm" title="{{ $u->name }}">
+                                        <div class="font-bold text-white truncate max-w-[180px] sm:max-w-[220px] text-xs sm:text-sm" title="{{ $u->name }}">
                                             {{ $u->name }}
                                         </div>
                                         @if(!empty($u->position))
                                             <div class="mt-0.5">
-                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30 font-bold text-[10px]" title="Jabatan: {{ $u->position }}">
-                                                    <i data-lucide="badge-check" class="w-3 h-3 text-[#4E6EFF] shrink-0"></i>
-                                                    <span class="truncate max-w-[170px]">{{ $u->position }}</span>
+                                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30 font-bold text-[10px]" title="Jabatan: {{ $u->position }}">
+                                                    <i data-lucide="badge-check" class="w-2.5 h-2.5 text-[#4E6EFF] shrink-0"></i>
+                                                    <span class="truncate max-w-[150px]">{{ $u->position }}</span>
                                                 </span>
                                             </div>
                                         @endif
@@ -138,9 +138,9 @@
                             </td>
 
                             <!-- Kolom 2: Kontak (Email & WA) -->
-                            <td class="py-3 px-4 sm:px-5">
-                                <div class="space-y-0.5">
-                                    <div class="font-mono text-xs text-slate-200 flex items-center gap-1.5 truncate max-w-[220px]" title="{{ $u->email }}">
+                            <td class="py-2.5 px-3 sm:px-4">
+                                <div class="space-y-0.5 min-w-0">
+                                    <div class="text-xs text-slate-200 flex items-center gap-1.5 truncate max-w-[200px]" title="{{ $u->email }}">
                                         <i data-lucide="mail" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i>
                                         <span class="truncate">{{ $u->email }}</span>
                                     </div>
@@ -154,8 +154,8 @@
                             </td>
 
                             <!-- Kolom 3: Role / Hak Akses -->
-                            <td class="py-3 px-4 text-center whitespace-nowrap">
-                                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold capitalize {{ match($u->role) {
+                            <td class="py-2.5 px-2.5 text-center whitespace-nowrap">
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold capitalize {{ match($u->role) {
                                     'superadmin' => 'bg-[#7A5AF8]/15 text-[#A594FD] border border-[#7A5AF8]/30',
                                     'pic_lomba' => 'bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30',
                                     'juri' => 'bg-[#FF58D5]/15 text-[#FFA0E7] border border-[#FF58D5]/30',
@@ -171,22 +171,22 @@
                             </td>
 
                             <!-- Kolom 4: Instansi / Asal Sekolah -->
-                            <td class="py-3 px-4 sm:px-5 text-xs text-slate-300">
-                                <div class="flex items-center gap-1.5">
+                            <td class="py-2.5 px-3 sm:px-4 text-xs text-slate-300">
+                                <div class="flex items-center gap-1.5 min-w-0">
                                     <i data-lucide="building" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i>
-                                    <span class="truncate max-w-[180px] font-medium" title="{{ $u->institution_name ?: '-' }}">{{ $u->institution_name ?: '-' }}</span>
+                                    <span class="truncate max-w-[160px] font-medium" title="{{ $u->institution_name ?: '-' }}">{{ $u->institution_name ?: '-' }}</span>
                                 </div>
                             </td>
 
                             <!-- Kolom 5: Status Akun (Aktif / Nonaktif) -->
-                            <td class="py-3 px-3 text-center whitespace-nowrap">
+                            <td class="py-2.5 px-2.5 text-center whitespace-nowrap">
                                 @if(($u->status ?? 'active') === 'active')
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
                                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                                         <span>Aktif</span>
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
                                         <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
                                         <span>Nonaktif</span>
                                     </span>
@@ -194,38 +194,38 @@
                             </td>
 
                             <!-- Kolom 6: Aksi -->
-                            <td class="py-3 px-4 sm:px-5 text-center whitespace-nowrap">
-                                <div class="inline-flex items-center gap-1.5 justify-center">
+                            <td class="py-2.5 px-3 sm:px-4 text-center whitespace-nowrap">
+                                <div class="inline-flex items-center gap-1 justify-center">
                                     <!-- 🔑 Tombol Reset Password -->
                                     <button type="button" 
                                             @click="openResetPassword(@js($u))" 
-                                            class="p-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 transition cursor-pointer shadow-xs" 
+                                            class="p-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 transition cursor-pointer shadow-xs" 
                                             title="Reset Kata Sandi Pengguna">
-                                        <i data-lucide="key" class="w-4 h-4"></i>
+                                        <i data-lucide="key" class="w-3.5 h-3.5"></i>
                                     </button>
 
                                     <!-- ✏️ Tombol Edit Akun -->
                                     <button type="button" 
                                             @click="openEditUser(@js($u))" 
-                                            class="p-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer shadow-xs" 
+                                            class="p-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] transition cursor-pointer shadow-xs" 
                                             title="Edit Data Pengguna & Status Akun">
-                                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                        <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                                     </button>
 
                                     <!-- 🗑️ Tombol Hapus Akun -->
                                     @if($u->id !== auth()->id())
                                         <button type="button"
                                                 @click="openDeleteModal(@js($u))"
-                                                class="p-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 transition cursor-pointer shadow-xs" 
+                                                class="p-1.5 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 transition cursor-pointer shadow-xs" 
                                                 title="Hapus Akun Pengguna">
-                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                         </button>
                                     @else
                                         <button type="button" 
                                                 disabled 
-                                                class="p-2 rounded-xl bg-white/[0.02] text-slate-600 border border-white/[0.04] cursor-not-allowed" 
+                                                class="p-1.5 rounded-lg bg-white/[0.02] text-slate-600 border border-white/[0.04] cursor-not-allowed" 
                                                 title="Akun Anda sedang aktif">
-                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                         </button>
                                     @endif
                                 </div>
