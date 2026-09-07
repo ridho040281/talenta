@@ -666,14 +666,15 @@
     @endphp
 
     @if($totalPamphlets > 0)
-        <section id="pamflet" class="py-6 lg:py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative"
+        <section id="pamflet" class="py-6 lg:py-10 max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 relative"
             x-data="{
                 active: 0,
                 total: {{ $totalPamphlets }},
                 autoTimer: null,
                 isHovered: false,
                 isZoomed: false,
-                zoomImage: '',
+                zoomUrl: '',
+                zoomType: 'image',
                 init() {
                     if (this.total > 1) {
                         this.startTimer();
@@ -684,7 +685,7 @@
                         if (!this.isHovered && !this.isZoomed) {
                             this.next();
                         }
-                    }, 4500);
+                    }, 5000);
                 },
                 stopTimer() {
                     if (this.autoTimer) clearInterval(this.autoTimer);
@@ -695,8 +696,9 @@
                 prev() {
                     this.active = (this.active - 1 + this.total) % this.total;
                 },
-                openZoom(url) {
-                    this.zoomImage = url;
+                openZoom(url, type = 'image') {
+                    this.zoomUrl = url;
+                    this.zoomType = type;
                     this.isZoomed = true;
                 }
             }"
@@ -704,10 +706,10 @@
             @mouseleave="isHovered = false"
             x-init="init()">
             
-            <div class="glass-card p-5 sm:p-7 lg:p-8 rounded-3xl border border-white/[0.08] shadow-2xl relative overflow-hidden space-y-5">
+            <div class="glass-card p-3 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl border border-white/[0.08] shadow-2xl relative overflow-hidden space-y-4 sm:space-y-6">
                 
                 <!-- Section Header -->
-                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-white/[0.08] pb-4">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-white/[0.08] pb-4 px-2 sm:px-0">
                     <div class="space-y-1.5">
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-500/15 border border-pink-500/30 text-pink-300 text-[11px] font-bold tracking-wider uppercase shadow-xs">
                             <i data-lucide="image" class="w-3.5 h-3.5 text-pink-400"></i>
@@ -723,7 +725,7 @@
 
                     @if($totalPamphlets > 1)
                         <!-- Carousel Counter Indicator -->
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 self-start sm:self-auto">
                             <span class="text-xs font-mono font-bold px-3 py-1 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/30">
                                 Pamflet <span x-text="active + 1"></span> dari <span x-text="total"></span>
                             </span>
@@ -731,11 +733,11 @@
                     @endif
                 </div>
 
-                <!-- Showcase / Carousel Slider Container (Option A: Center-Focused Poster Showcase) -->
-                <div class="relative w-full flex items-center justify-center py-2 sm:py-4">
+                <!-- Showcase / Carousel Slider Container (Responsive Large Frame) -->
+                <div class="relative w-full flex flex-col items-center justify-center py-1 sm:py-3">
                     
                     <!-- Ambient Glow Aura behind Poster -->
-                    <div class="absolute w-[320px] sm:w-[500px] h-[420px] sm:h-[650px] bg-gradient-to-tr from-pink-500/25 via-[#7A5AF8]/20 to-[#4E6EFF]/20 rounded-full blur-3xl pointer-events-none -z-0"></div>
+                    <div class="absolute w-[320px] sm:w-[600px] lg:w-[800px] h-[450px] sm:h-[800px] bg-gradient-to-tr from-pink-500/20 via-[#7A5AF8]/15 to-[#4E6EFF]/15 rounded-full blur-3xl pointer-events-none -z-0"></div>
 
                     <div class="relative z-10 w-full flex items-center justify-center">
                         @foreach($pamphletList as $idx => $item)
@@ -746,29 +748,53 @@
                                 x-transition:leave="transition ease-in duration-300 transform absolute"
                                 x-transition:leave-start="opacity-100 scale-100"
                                 x-transition:leave-end="opacity-0 scale-95"
-                                class="w-full flex items-center justify-center">
+                                class="w-full flex flex-col items-center justify-center">
 
                                 @if($item['type'] === 'image')
-                                    <div class="relative group cursor-zoom-in flex flex-col items-center justify-center" @click="openZoom('{{ $item['url'] }}')">
+                                    <!-- IMAGE POSTER: Full Responsive Scale on Mobile & Desktop -->
+                                    <div class="relative group cursor-zoom-in flex flex-col items-center justify-center w-full max-w-full sm:max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto" @click="openZoom('{{ $item['url'] }}', 'image')">
                                         <img src="{{ $item['url'] }}" 
                                             alt="Pamflet {{ $idx + 1 }}" 
-                                            class="w-auto max-w-full max-h-[68vh] sm:max-h-[78vh] lg:max-h-[82vh] h-auto object-contain rounded-2xl shadow-2xl border-2 border-white/[0.15] transition-transform duration-300 group-hover:scale-[1.01]">
+                                            class="w-full h-auto max-h-[85vh] sm:max-h-[90vh] object-contain rounded-2xl sm:rounded-3xl shadow-2xl border-2 border-white/[0.15] transition-transform duration-300 group-hover:scale-[1.01]">
                                         
                                         <!-- Zoom Hover Pill -->
-                                        <div class="absolute bottom-3 px-3.5 py-1.5 rounded-full bg-black/80 backdrop-blur-md border border-white/20 text-white text-xs font-bold flex items-center gap-1.5 opacity-90 group-hover:opacity-100 transition shadow-xl pointer-events-none">
-                                            <i data-lucide="zoom-in" class="w-3.5 h-3.5 text-pink-400"></i>
+                                        <div class="absolute bottom-3 px-4 py-2 rounded-full bg-black/85 backdrop-blur-md border border-white/20 text-white text-xs font-bold flex items-center gap-2 opacity-90 group-hover:opacity-100 transition shadow-xl pointer-events-none">
+                                            <i data-lucide="zoom-in" class="w-4 h-4 text-pink-400"></i>
                                             <span>Klik untuk Perbesar Layar Penuh</span>
                                         </div>
                                     </div>
                                 @else
-                                    <!-- Canva Embed Container (Snug Portrait Frame - Zero Black Sidebars) -->
-                                    <div class="w-full max-w-[390px] sm:max-w-[480px] lg:max-w-[520px] mx-auto aspect-[1/1.414] max-h-[75vh] sm:max-h-[82vh] rounded-2xl overflow-hidden bg-[#0C111D] border-2 border-white/[0.15] shadow-2xl relative">
-                                        <iframe loading="lazy" 
-                                            src="{{ $item['url'] }}" 
-                                            class="w-full h-full border-0 rounded-2xl" 
-                                            allowfullscreen="allowfullscreen" 
-                                            allow="fullscreen">
-                                        </iframe>
+                                    <!-- CANVA EMBED: Full Responsive Large Frame (Mobile & Desktop) -->
+                                    <div class="w-full max-w-full sm:max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto space-y-3">
+                                        
+                                        <!-- Canva Responsive Container (Aspect A4 / 1:1.414) -->
+                                        <div class="w-full aspect-[1/1.414] min-h-[500px] sm:min-h-[700px] md:min-h-[850px] lg:min-h-[960px] xl:min-h-[1050px] rounded-2xl sm:rounded-3xl overflow-hidden bg-[#0C111D] border-2 border-white/[0.15] shadow-2xl relative">
+                                            <iframe loading="lazy" 
+                                                src="{{ $item['url'] }}" 
+                                                class="w-full h-full border-0 rounded-2xl sm:rounded-3xl" 
+                                                allowfullscreen="allowfullscreen" 
+                                                allow="fullscreen">
+                                            </iframe>
+                                        </div>
+
+                                        <!-- Canva Quick Action Bar -->
+                                        <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-3 pt-1">
+                                            <button type="button" 
+                                                @click="openZoom('{{ $item['url'] }}', 'canva')" 
+                                                class="px-4 py-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-white border border-white/[0.12] text-xs font-bold transition flex items-center gap-2 shadow-sm cursor-pointer">
+                                                <i data-lucide="maximize" class="w-3.5 h-3.5 text-pink-400"></i>
+                                                <span>Mode Layar Penuh (Fullscreen)</span>
+                                            </button>
+
+                                            <a href="{{ $item['url'] }}" 
+                                                target="_blank" 
+                                                rel="noopener" 
+                                                class="px-4 py-2 rounded-xl bg-pink-500/20 hover:bg-pink-500/30 text-pink-300 border border-pink-500/40 text-xs font-bold transition flex items-center gap-2 shadow-sm">
+                                                <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                                                <span>Buka Desain Asli di Canva HD</span>
+                                            </a>
+                                        </div>
+
                                     </div>
                                 @endif
 
@@ -778,21 +804,21 @@
 
                     @if($totalPamphlets > 1)
                         <!-- Prev / Next Floating Navigation Buttons -->
-                        <button type="button" @click="prev()" class="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-black/70 hover:bg-pink-600 text-white border border-white/20 flex items-center justify-center transition shadow-xl hover:scale-110 active:scale-95 cursor-pointer z-20 backdrop-blur-md" title="Pamflet Sebelumnya">
+                        <button type="button" @click="prev()" class="absolute left-1 sm:left-4 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-12 sm:h-12 rounded-2xl bg-black/80 hover:bg-pink-600 text-white border border-white/20 flex items-center justify-center transition shadow-2xl hover:scale-110 active:scale-95 cursor-pointer z-20 backdrop-blur-md" title="Pamflet Sebelumnya">
                             <i data-lucide="chevron-left" class="w-4 h-4 sm:w-6 sm:h-6"></i>
                         </button>
                         
-                        <button type="button" @click="next()" class="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-black/70 hover:bg-pink-600 text-white border border-white/20 flex items-center justify-center transition shadow-xl hover:scale-110 active:scale-95 cursor-pointer z-20 backdrop-blur-md" title="Pamflet Selanjutnya">
+                        <button type="button" @click="next()" class="absolute right-1 sm:right-4 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-12 sm:h-12 rounded-2xl bg-black/80 hover:bg-pink-600 text-white border border-white/20 flex items-center justify-center transition shadow-2xl hover:scale-110 active:scale-95 cursor-pointer z-20 backdrop-blur-md" title="Pamflet Selanjutnya">
                             <i data-lucide="chevron-right" class="w-4 h-4 sm:w-6 sm:h-6"></i>
                         </button>
 
                         <!-- Bottom Dot Indicators -->
-                        <div class="absolute bottom-1 sm:bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/15 z-20">
+                        <div class="flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-md border border-white/15 z-20 mt-4">
                             @foreach($pamphletList as $idx => $item)
                                 <button type="button" 
                                     @click="active = {{ $idx }}" 
-                                    :class="active === {{ $idx }} ? 'w-5 sm:w-6 bg-pink-500' : 'w-1.5 sm:w-2 bg-white/40 hover:bg-white/70'"
-                                    class="h-1.5 sm:h-2 rounded-full transition-all duration-300 cursor-pointer"
+                                    :class="active === {{ $idx }} ? 'w-6 sm:w-8 bg-pink-500' : 'w-2 sm:w-2.5 bg-white/40 hover:bg-white/70'"
+                                    class="h-2 sm:h-2.5 rounded-full transition-all duration-300 cursor-pointer"
                                     title="Pindah ke Pamflet {{ $idx + 1 }}">
                                 </button>
                             @endforeach
@@ -803,7 +829,7 @@
 
             </div>
 
-            <!-- Fullscreen Lightbox Zoom Modal for Images -->
+            <!-- Fullscreen Lightbox Zoom Modal for Images & Canva -->
             <div x-show="isZoomed" 
                 x-transition:enter="transition ease-out duration-300"
                 x-transition:enter-start="opacity-0"
@@ -812,15 +838,22 @@
                 x-transition:leave-start="opacity-100"
                 x-transition:leave-end="opacity-0"
                 @keydown.escape.window="isZoomed = false"
-                class="fixed inset-0 z-50 bg-black/90 backdrop-blur-lg flex items-center justify-center p-4 sm:p-8"
+                class="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex items-center justify-center p-2 sm:p-6"
                 style="display: none;">
                 
-                <button type="button" @click="isZoomed = false" class="absolute top-4 right-4 sm:top-6 sm:right-6 w-11 h-11 rounded-full bg-white/10 hover:bg-rose-600 text-white flex items-center justify-center border border-white/20 transition cursor-pointer z-50 shadow-2xl">
+                <button type="button" @click="isZoomed = false" class="absolute top-3 right-3 sm:top-6 sm:right-6 w-11 h-11 rounded-full bg-white/10 hover:bg-rose-600 text-white flex items-center justify-center border border-white/20 transition cursor-pointer z-50 shadow-2xl">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
 
-                <div class="max-w-5xl max-h-[92vh] flex items-center justify-center relative select-none" @click.away="isZoomed = false">
-                    <img :src="zoomImage" alt="Pamflet Layar Penuh" class="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl border border-white/10">
+                <div class="w-full max-w-5xl max-h-[96vh] h-full flex items-center justify-center relative select-none p-2" @click.away="isZoomed = false">
+                    <template x-if="zoomType === 'image'">
+                        <img :src="zoomUrl" alt="Pamflet Layar Penuh" class="max-w-full max-h-[92vh] object-contain rounded-2xl shadow-2xl border border-white/15">
+                    </template>
+                    <template x-if="zoomType === 'canva'">
+                        <div class="w-full h-full max-h-[92vh] aspect-[1/1.414] rounded-2xl overflow-hidden border-2 border-white/20 shadow-2xl bg-[#0C111D]">
+                            <iframe :src="zoomUrl" class="w-full h-full border-0" allowfullscreen="allowfullscreen" allow="fullscreen"></iframe>
+                        </div>
+                    </template>
                 </div>
             </div>
 
