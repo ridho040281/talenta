@@ -629,8 +629,10 @@
             }
         }
 
-        // 2. Canva embed links
-        if (!empty($rawPamphletEmbed)) {
+        $showPamphletEmbed = ($appSettings['show_pamphlet_embed'] ?? '1') !== '0';
+
+        // 2. Canva embed links (if active)
+        if ($showPamphletEmbed && !empty($rawPamphletEmbed)) {
             $lines = preg_split('/[\r\n]+/', trim($rawPamphletEmbed));
             foreach ($lines as $line) {
                 $line = trim($line);

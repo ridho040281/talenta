@@ -563,13 +563,20 @@
                     </div>
 
                     <!-- Juknis PDF -->
-                    <div class="p-4 rounded-xl space-y-3" style="background: rgba(12,17,29,0.6); border: 1px solid rgba(255,255,255,0.07);">
-                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
-                            <i data-lucide="file-text" class="w-3.5 h-3.5 text-[#84D0FF]"></i>
-                            Embed Link Juknis PDF / Dokumen Resmi
-                        </label>
-                        <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md" style="background: rgba(78,110,255,0.12); color: #84D0FF; border: 1px solid rgba(78,110,255,0.2);">Google Drive / URL PDF / Upload</span>
-                        <input name="guidelines_file" type="text" value="{{ old('guidelines_file', $competition->guidelines_file) }}" placeholder="https://drive.google.com/..." class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-mono">
+                    <div class="p-4 rounded-xl space-y-3" style="background: rgba(12,17,29,0.6); border: 1px solid rgba(255,255,255,0.07);" x-data="{ showGuidelines: {{ $competition->show_guidelines ? 'true' : 'false' }} }">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                                <i data-lucide="file-text" class="w-3.5 h-3.5 text-[#84D0FF]"></i>
+                                <span>Embed Link Juknis PDF / Dokumen Resmi / Canva</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer select-none px-2.5 py-1 rounded-lg transition"
+                                   :style="showGuidelines ? 'background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.25);' : 'background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);'">
+                                <input name="show_guidelines" type="checkbox" value="1" x-model="showGuidelines" class="w-3.5 h-3.5 rounded text-emerald-500 bg-slate-900 border-slate-700 focus:ring-0 cursor-pointer">
+                                <span class="text-[10px] font-black tracking-wide" :class="showGuidelines ? 'text-emerald-400' : 'text-slate-400'" x-text="showGuidelines ? '✓ AKTIF (TAMPIL DI PESERTA)' : '✗ NONAKTIF (TIDAK TAMPIL)'"></span>
+                            </label>
+                        </div>
+                        <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md" style="background: rgba(78,110,255,0.12); color: #84D0FF; border: 1px solid rgba(78,110,255,0.2);">Google Drive / Canva Embed / URL PDF / Upload</span>
+                        <input name="guidelines_file" type="text" value="{{ old('guidelines_file', $competition->guidelines_file) }}" placeholder="https://drive.google.com/... atau https://www.canva.com/design/.../view?embed" class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-mono">
                         <p class="text-[10px] text-slate-600">atau upload file PDF baru:</p>
                         <input name="guidelines_pdf" type="file" accept=".pdf" class="block w-full text-xs text-slate-400 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold cursor-pointer" style="--tw-file-bg: rgba(78,110,255,0.12);">
                     </div>

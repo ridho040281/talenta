@@ -62,7 +62,7 @@
             </div>
             @endif
 
-            @if($competition->guidelines_embed_url)
+            @if($competition->show_guidelines && $competition->guidelines_embed_url)
             <!-- Petunjuk Teknis Lengkap (Juknis PDF Embed) -->
             <div class="glass-card rounded-3xl p-6 sm:p-8 border border-white/[0.08] shadow-2xl space-y-4">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.08] pb-4">

@@ -33,6 +33,7 @@
                 schedule_time: '',
                 rules: '',
                 show_rules: true,
+                show_guidelines: true,
                 show_criteria: true,
                 criteria: [
                     { name: 'Penilaian Umum', weight_percentage: 100, min_score: 0, max_score: 100, description: '' }
@@ -66,6 +67,7 @@
                 schedule_time: '',
                 rules: '',
                 show_rules: true,
+                show_guidelines: true,
                 show_criteria: true,
                 criteria: []
             },
@@ -135,6 +137,7 @@
                     schedule_time: '',
                     rules: '',
                     show_rules: true,
+                    show_guidelines: true,
                     show_criteria: true,
                     criteria: [
                         { name: 'Penilaian Umum', weight_percentage: 100, min_score: 0, max_score: 100, description: '' }
@@ -1043,9 +1046,19 @@
                         <div class="flex items-center justify-between mb-1.5">
                             <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
                                 <i data-lucide="file-text" class="w-4 h-4 text-brand-600"></i>
-                                <span>Embed Link Juknis PDF / Dokumen Resmi</span>
+                                <span>Embed Link Juknis PDF / Canva / Dokumen</span>
                             </label>
-                            <span class="text-[10px] text-slate-400 font-semibold">Google Drive / URL PDF / Upload</span>
+                            <div class="flex items-center gap-2">
+                                <input type="hidden" name="show_guidelines" :value="newCompetition.show_guidelines ? '1' : '0'">
+                                <button type="button" 
+                                        @click="newCompetition.show_guidelines = !newCompetition.show_guidelines"
+                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer"
+                                        :class="newCompetition.show_guidelines ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20' : 'bg-slate-200 hover:bg-slate-300 text-slate-700'"
+                                        :title="newCompetition.show_guidelines ? 'Klik untuk menyembunyikan embed juknis/Canva dari peserta' : 'Klik untuk menampilkan embed juknis/Canva ke peserta'">
+                                    <span class="w-1.5 h-1.5 rounded-full" :class="newCompetition.show_guidelines ? 'bg-emerald-200 animate-pulse' : 'bg-slate-400'"></span>
+                                    <span x-text="newCompetition.show_guidelines ? '✓ Aktif (Tampil)' : '✗ Nonaktif (Sembunyi)'"></span>
+                                </button>
+                            </div>
                         </div>
                         
                         <div class="space-y-2">

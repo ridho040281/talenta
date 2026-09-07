@@ -94,6 +94,7 @@ class AdminSettingsController extends Controller
             'sponsor_logos' => json_decode(AppSetting::get('sponsor_logos', '[]'), true) ?: [],
             'pamphlet_images' => json_decode(AppSetting::get('pamphlet_images', '[]'), true) ?: [],
             'pamphlet_embed_url' => AppSetting::get('pamphlet_embed_url', ''),
+            'show_pamphlet_embed' => AppSetting::get('show_pamphlet_embed', '1'),
             'footer_about' => AppSetting::get('footer_about', 'Sistem Pendaftaran & Manajemen Perlombaan Terpadu MTsN 1 Blitar. Mengusung arsitektur modern berkecepatan tinggi, sistem undian interaktif spin wheel, dan live scoreboard transparan.'),
         ];
 
@@ -319,6 +320,10 @@ class AdminSettingsController extends Controller
                 AppSetting::set($field, $data[$field]);
             }
         }
+
+        // Handle Boolean Toggle Settings
+        $showPamphletEmbed = $request->boolean('show_pamphlet_embed') ? '1' : '0';
+        AppSetting::set('show_pamphlet_embed', $showPamphletEmbed);
 
         return redirect()->back()->with('success', 'Pengaturan aplikasi dan konten landing page berhasil disimpan.');
     }

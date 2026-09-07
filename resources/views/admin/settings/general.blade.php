@@ -706,15 +706,22 @@
                         </div>
 
                         <!-- 2. Option B: Link Sematan Canva -->
-                        <div class="space-y-2.5 pt-3 border-t border-white/[0.08]">
-                            <div>
-                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-200 flex items-center gap-1.5">
-                                    <i data-lucide="link" class="w-3.5 h-3.5 text-pink-400"></i>
-                                    <span>Link Embed / Kode Canva (Opsional)</span>
+                        <div class="space-y-2.5 pt-3 border-t border-white/[0.08]" x-data="{ showCanva: {{ ($settings['show_pamphlet_embed'] ?? '1') !== '0' ? 'true' : 'false' }} }">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <div>
+                                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-200 flex items-center gap-1.5">
+                                        <i data-lucide="link" class="w-3.5 h-3.5 text-pink-400"></i>
+                                        <span>Link Embed / Kode Canva (Opsional)</span>
+                                    </label>
+                                    <p class="text-[11px] text-slate-400 mt-0.5">
+                                        Atau tempelkan link sematan Canva (misal: <code>https://www.canva.com/design/.../view?embed</code> atau kode <code>&lt;iframe&gt;</code>). Bisa masukkan lebih dari satu link (pisahkan dengan baris baru).
+                                    </p>
+                                </div>
+                                <label class="flex items-center gap-2 cursor-pointer select-none px-3 py-1.5 rounded-xl transition shrink-0"
+                                       :style="showCanva ? 'background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.25);' : 'background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);'">
+                                    <input name="show_pamphlet_embed" type="checkbox" value="1" x-model="showCanva" class="w-4 h-4 rounded text-emerald-500 bg-slate-900 border-slate-700 focus:ring-0 cursor-pointer">
+                                    <span class="text-xs font-black tracking-wide" :class="showCanva ? 'text-emerald-400' : 'text-slate-400'" x-text="showCanva ? '✓ AKTIF (TAMPIL DI LANDING PAGE)' : '✗ NONAKTIF (TIDAK TAMPIL)'"></span>
                                 </label>
-                                <p class="text-[11px] text-slate-400 mt-0.5">
-                                    Atau tempelkan link sematan Canva (misal: <code>https://www.canva.com/design/.../view?embed</code> atau kode <code>&lt;iframe&gt;</code>). Bisa masukkan lebih dari satu link (pisahkan dengan baris baru).
-                                </p>
                             </div>
 
                             <textarea name="pamphlet_embed_url" rows="3" placeholder="Contoh: https://www.canva.com/design/DAGxxxx/view?embed" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-mono placeholder-slate-500 focus:border-pink-500 focus:ring-1 focus:ring-pink-500/30 outline-none leading-relaxed">{{ old('pamphlet_embed_url', $settings['pamphlet_embed_url'] ?? '') }}</textarea>
