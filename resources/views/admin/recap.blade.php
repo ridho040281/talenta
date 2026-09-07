@@ -279,8 +279,11 @@
                                     Rp {{ number_format($reg->fee, 0, ',', '.') }}
                                 </td>
                                 <td class="py-3.5 px-4 text-center">
-                                    @if($reg->payment_proof)
-                                        <a href="{{ asset('storage/' . $reg->payment_proof) }}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#4E6EFF]/15 text-[#84D0FF] font-bold hover:bg-[#4E6EFF]/25 transition text-[11px] border border-[#4E6EFF]/30">
+                                    @php
+                                        $proofPath = $reg->payment_proof ?: ($reg->invoice?->payment_proof ?? null);
+                                    @endphp
+                                    @if($proofPath)
+                                        <a href="{{ asset('storage/' . $proofPath) }}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#4E6EFF]/15 text-[#84D0FF] font-bold hover:bg-[#4E6EFF]/25 transition text-[11px] border border-[#4E6EFF]/30">
                                             <i data-lucide="image" class="w-3.5 h-3.5"></i>
                                             <span>Struk</span>
                                         </a>

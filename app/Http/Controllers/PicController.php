@@ -666,6 +666,8 @@ class PicController extends Controller
             'match_type' => ['nullable', 'string', 'max:50'],
             'target_class' => ['nullable', 'string', 'max:50'],
             'status' => ['required', 'in:pending,verified'],
+            'payment_method' => ['required', 'in:tunai,transfer'],
+            'payment_proof' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:5120'],
             'verification_notes' => ['nullable', 'string', 'max:255'],
             'ignore_quota' => ['nullable'],
             // Optional Member 2 for Ganda BLT
@@ -677,6 +679,10 @@ class PicController extends Controller
             'full_name.required' => 'Nama lengkap peserta wajib diisi.',
             'gender.required' => 'Jenis kelamin peserta wajib dipilih.',
             'institution_name.required' => 'Nama asal sekolah/madrasah wajib diisi.',
+            'payment_method.required' => 'Metode pembayaran wajib dipilih (Tunai / Transfer).',
+            'payment_proof.required' => 'Bukti pembayaran (foto slip transfer atau kwitansi tunai meja PIC) wajib diunggah.',
+            'payment_proof.mimes' => 'Format berkas bukti pembayaran harus berupa JPG, PNG, atau PDF.',
+            'payment_proof.max' => 'Ukuran berkas bukti pembayaran maksimal 5MB.',
         ]);
 
         $competition = Competition::findOrFail($validated['competition_id']);
@@ -736,6 +742,12 @@ class PicController extends Controller
             }
         }
 
+        // Store payment proof file
+        $paymentProofPath = null;
+        if ($request->hasFile('payment_proof')) {
+            $paymentProofPath = $request->file('payment_proof')->store('payments', 'public');
+        }
+
         // Determine sub_category
         $subCategory = null;
         if (! empty($validated['target_class']) && ! empty($validated['match_type'])) {
@@ -752,7 +764,9 @@ class PicController extends Controller
         }
 
         $status = $validated['status'];
-        $notes = $validated['verification_notes'] ?: ($status === 'verified' ? 'Didaftarkan manual oleh '.$user->name.' (Lunas Tunai)' : 'Pendaftaran manual (Menunggu Verifikasi)');
+        $methodTag = $validated['payment_method'] === 'tunai' ? '[LUNAS TUNAI PIC: '.$user->name.']' : '[TRANSFER BANK: '.$user->name.']';
+        $userNotes = ! empty($validated['verification_notes']) ? ' - '.$validated['verification_notes'] : '';
+        $notes = $methodTag.$userNotes;
 
         $registration = Registration::create([
             'competition_id' => $competition->id,
@@ -767,6 +781,7 @@ class PicController extends Controller
             'official_name' => $user->name,
             'official_phone' => $validated['phone'] ?? $user->phone,
             'status' => $status,
+            'payment_proof' => $paymentProofPath,
             'verified_at' => $status === 'verified' ? now() : null,
             'verified_by' => $status === 'verified' ? $user->id : null,
             'verification_notes' => $notes,

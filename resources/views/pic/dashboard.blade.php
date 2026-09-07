@@ -16,6 +16,7 @@
     singlePrintModal: false,
     createModal: false,
     createCompId: '',
+    createPaymentMethod: 'tunai',
     get createCompCode() {
         const c = this.competitionsData.find(x => x.id === this.createCompId);
         return c ? c.code : '';
@@ -29,7 +30,59 @@
     selectedPrintCompetition: 'all',
     selectedPrintStatus: 'all',
     selectedPrintGender: 'all',
-    competitionsData: @js($competitions->map(fn($c) => ['id' => (string)$c->id, 'code' => $c->code, 'name' => $c->name])),
+    competitionsData: @js($competitions->map(fn($c) => ['id' => (string)$c->id, 'code' => $c->code, 'name' => $c->name, 'fee' => (float)$c->registration_fee])),
+    appFeeSettings: {
+        blt_fee_ganda_pa: {{ (float) \App\Models\AppSetting::get('blt_fee_ganda_pa', 200000) }},
+        blt_fee_ganda_pi: {{ (float) \App\Models\AppSetting::get('blt_fee_ganda_pi', 200000) }},
+        blt_fee_a_tunggal_pa: {{ (float) \App\Models\AppSetting::get('blt_fee_a_tunggal_pa', 130000) }},
+        blt_fee_a_tunggal_pi: {{ (float) \App\Models\AppSetting::get('blt_fee_a_tunggal_pi', 130000) }},
+        blt_fee_b_tunggal_pa: {{ (float) \App\Models\AppSetting::get('blt_fee_b_tunggal_pa', 150000) }},
+        blt_fee_b_tunggal_pi: {{ (float) \App\Models\AppSetting::get('blt_fee_b_tunggal_pi', 150000) }},
+        blt_fee_c_tunggal_pa: {{ (float) \App\Models\AppSetting::get('blt_fee_c_tunggal_pa', 150000) }},
+        blt_fee_c_tunggal_pi: {{ (float) \App\Models\AppSetting::get('blt_fee_c_tunggal_pi', 150000) }},
+        tmj_fee_a_tunggal_pa: {{ (float) \App\Models\AppSetting::get('tmj_fee_a_tunggal_pa', 35000) }},
+        tmj_fee_a_tunggal_pi: {{ (float) \App\Models\AppSetting::get('tmj_fee_a_tunggal_pi', 35000) }},
+        tmj_fee_b_tunggal_pa: {{ (float) \App\Models\AppSetting::get('tmj_fee_b_tunggal_pa', 35000) }},
+        tmj_fee_b_tunggal_pi: {{ (float) \App\Models\AppSetting::get('tmj_fee_b_tunggal_pi', 35000) }},
+        mtq_fee_pa: {{ (float) \App\Models\AppSetting::get('mtq_fee_pa', 35000) }},
+        mtq_fee_pi: {{ (float) \App\Models\AppSetting::get('mtq_fee_pi', 35000) }},
+        pop_fee_pa: {{ (float) \App\Models\AppSetting::get('pop_fee_pa', 35000) }},
+        pop_fee_pi: {{ (float) \App\Models\AppSetting::get('pop_fee_pi', 35000) }},
+    },
+    get currentManualFee() {
+        if (!this.createCompId) return 0;
+        const comp = this.competitionsData.find(c => c.id === this.createCompId);
+        if (!comp) return 0;
+        const isPi = this.createGender === 'P' || (this.createMatchType && this.createMatchType.includes('(PI)'));
+        if (comp.code === 'BLT') {
+            if (this.createMatchType && this.createMatchType.includes('Ganda')) {
+                return isPi ? this.appFeeSettings.blt_fee_ganda_pi : this.appFeeSettings.blt_fee_ganda_pa;
+            }
+            if (this.createTargetClass && this.createTargetClass.includes('Kategori A')) {
+                return isPi ? this.appFeeSettings.blt_fee_a_tunggal_pi : this.appFeeSettings.blt_fee_a_tunggal_pa;
+            }
+            if (this.createTargetClass && this.createTargetClass.includes('Kategori B')) {
+                return isPi ? this.appFeeSettings.blt_fee_b_tunggal_pi : this.appFeeSettings.blt_fee_b_tunggal_pa;
+            }
+            if (this.createTargetClass && this.createTargetClass.includes('Kategori C')) {
+                return isPi ? this.appFeeSettings.blt_fee_c_tunggal_pi : this.appFeeSettings.blt_fee_c_tunggal_pa;
+            }
+            return isPi ? this.appFeeSettings.blt_fee_a_tunggal_pi : this.appFeeSettings.blt_fee_a_tunggal_pa;
+        }
+        if (comp.code === 'TMJ') {
+            if (this.createTargetClass && (this.createTargetClass.includes('Kategori B') || this.createTargetClass.includes('4 - 6'))) {
+                return isPi ? this.appFeeSettings.tmj_fee_b_tunggal_pi : this.appFeeSettings.tmj_fee_b_tunggal_pa;
+            }
+            return isPi ? this.appFeeSettings.tmj_fee_a_tunggal_pi : this.appFeeSettings.tmj_fee_a_tunggal_pa;
+        }
+        if (comp.code === 'MTQ') {
+            return isPi ? this.appFeeSettings.mtq_fee_pi : this.appFeeSettings.mtq_fee_pa;
+        }
+        if (comp.code === 'POP') {
+            return isPi ? this.appFeeSettings.pop_fee_pi : this.appFeeSettings.pop_fee_pa;
+        }
+        return comp.fee || 35000;
+    },
     get currentCompCode() {
         if (this.selectedCompetition === 'all') return 'ALL';
         const comp = this.competitionsData.find(c => c.id === this.selectedCompetition);
@@ -1155,7 +1208,7 @@
                     </button>
                 </div>
 
-                <form action="{{ route('pic.store.participant') }}" method="POST" class="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+                <form action="{{ route('pic.store.participant') }}" method="POST" enctype="multipart/form-data" class="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
                     @csrf
 
                     <!-- Cabang Lomba Selection -->
@@ -1169,6 +1222,22 @@
                                 <option value="{{ $comp->id }}">{{ $comp->name }} ({{ $comp->code }})</option>
                             @endforeach
                         </select>
+
+                        <!-- Info Biaya Pendaftaran Resmi (Dynamic Fee Display) -->
+                        <div x-show="createCompId" class="p-3 rounded-xl bg-gradient-to-r from-[#7A5AF8]/15 via-[#4E6EFF]/15 to-transparent border border-[#7A5AF8]/30 flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-[#7A5AF8]/20 text-[#A594FD] flex items-center justify-center font-bold">
+                                    <i data-lucide="wallet" class="w-3.5 h-3.5"></i>
+                                </div>
+                                <div>
+                                    <span class="text-[9px] uppercase font-bold text-slate-400 block tracking-wider">Tarif Pendaftaran Resmi</span>
+                                    <span class="text-sm font-black text-emerald-400 font-mono" x-text="'Rp ' + (new Intl.NumberFormat('id-ID').format(currentManualFee))"></span>
+                                </div>
+                            </div>
+                            <span class="px-2 py-0.5 rounded-md text-[9px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase tracking-wider">
+                                Wajib Lunas
+                            </span>
+                        </div>
 
                         <!-- Sektor Bulu Tangkis (BLT) -->
                         <template x-if="createCompCode === 'BLT'">
@@ -1279,33 +1348,66 @@
                         </div>
                     </div>
 
-                    <!-- Status & Catatan Verifikasi -->
-                    <div class="p-4 rounded-2xl bg-[#0C111D] border border-white/[0.08] space-y-3">
-                        <span class="text-[11px] font-black uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                            <i data-lucide="shield-check" class="w-4 h-4"></i>
-                            <span>Status Pendaftaran & Dispensasi</span>
+                    <!-- Validasi Pembayaran & Upload Bukti -->
+                    <div class="p-4 rounded-2xl bg-[#0C111D] border border-white/[0.08] space-y-3.5">
+                        <span class="text-[11px] font-black uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+                            <i data-lucide="receipt" class="w-4 h-4"></i>
+                            <span>Validasi Pembayaran & Bukti Transaksi</span>
                         </span>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <!-- Metode Pembayaran -->
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Status Langsung <span class="text-rose-400">*</span></label>
-                                <select name="status" required class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-bold text-white">
-                                    <option value="verified" selected>✅ Terverifikasi (Lunas Tunai / Sah)</option>
-                                    <option value="pending">⏳ Pending (Menunggu Pembayaran / Berkas)</option>
+                                <label class="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                                    Metode Pembayaran <span class="text-rose-400">*</span>
+                                </label>
+                                <select name="payment_method" x-model="createPaymentMethod" required class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.12] text-xs font-bold text-white focus:border-[#7A5AF8] outline-none">
+                                    <option value="tunai">💵 Tunai (Diterima di Meja PIC/Sekretariat)</option>
+                                    <option value="transfer">🏦 Transfer Bank (Rekening Panitia)</option>
                                 </select>
                             </div>
 
+                            <!-- Status Langsung -->
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Catatan Panitia / Kwitansi</label>
-                                <input type="text" name="verification_notes" placeholder="Misal: Lunas tunai di sekretariat" class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-bold text-white">
+                                <label class="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                                    Status Pendaftaran <span class="text-rose-400">*</span>
+                                </label>
+                                <select name="status" required class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.12] text-xs font-bold text-white focus:border-[#7A5AF8] outline-none">
+                                    <option value="verified" selected>✅ Terverifikasi (Lunas & Sah)</option>
+                                    <option value="pending">⏳ Pending (Menunggu Verifikasi)</option>
+                                </select>
+                            </div>
+
+                            <!-- Unggah Bukti Pembayaran (Wajib) -->
+                            <div class="sm:col-span-2 pt-1">
+                                <label class="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                                    Unggah Bukti Bayar / Kwitansi Meja <span class="text-rose-400">*</span>
+                                </label>
+                                <input type="file" 
+                                       name="payment_proof" 
+                                       id="manual_payment_proof" 
+                                       accept="image/jpeg,image/png,image/webp,application/pdf" 
+                                       required 
+                                       class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.12] text-xs text-slate-300 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-[#7A5AF8] file:text-white hover:file:bg-[#6842f5] file:cursor-pointer">
+                                <p class="text-[10px] text-slate-400 mt-1">
+                                    Wajib unggah foto slip transfer bank atau foto nota/kwitansi penerimaan uang fisik di meja PIC (JPG, PNG, PDF max 5MB).
+                                </p>
+                            </div>
+
+                            <!-- Catatan Tambahan / Kwitansi -->
+                            <div class="sm:col-span-2">
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                                    Catatan / No. Kwitansi Fisik / Ref Bank
+                                </label>
+                                <input type="text" name="verification_notes" placeholder="Misal: Diterima tunai meja 1 / Ref BCA an Budi..." class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-bold text-white focus:border-[#7A5AF8] outline-none">
                             </div>
                         </div>
 
-                        <!-- Opsi Abaikan Kuota (Dispensasi) -->
+                        <!-- Opsi Abaikan Kuota (Dispensasi Kuota Panitia) -->
                         <div class="pt-2 border-t border-white/[0.06] flex items-center gap-2">
                             <input type="checkbox" name="ignore_quota" id="ignore_quota" value="1" class="w-4 h-4 rounded text-emerald-600 bg-[#161F30] border-white/[0.2] focus:ring-emerald-500 cursor-pointer">
                             <label for="ignore_quota" class="text-xs text-amber-300 font-semibold cursor-pointer select-none">
-                                Abaikan batas kuota (Gunakan sebagai kuota dispensasi khusus panitia)
+                                Abaikan batas kuota (Gunakan sebagai kuota dispensasi khusus panitia jika kuota penuh)
                             </label>
                         </div>
                     </div>
