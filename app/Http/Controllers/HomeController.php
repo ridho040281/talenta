@@ -33,8 +33,14 @@ class HomeController extends Controller
 
     public function competitionDetail($slug)
     {
-        $competition = Competition::with(['category', 'criteria', 'pic'])->where('slug', $slug)->firstOrFail();
-        $verifiedCount = $competition->verifiedRegistrations()->count();
+        $competition = Competition::with([
+            'category',
+            'criteria',
+            'pic',
+            'registrations.members',
+            'verifiedRegistrations.members',
+        ])->where('slug', $slug)->firstOrFail();
+        $verifiedCount = $competition->verifiedRegistrations->count();
 
         return view('public.competition-detail', compact('competition', 'verifiedCount'));
     }

@@ -146,76 +146,196 @@
                     </div>
                 </div>
 
-                <div class="space-y-3 text-xs text-slate-300 border-t border-white/[0.08] pt-4">
+                <div class="space-y-4 text-xs text-slate-300 border-t border-white/[0.08] pt-4">
                     @if(!empty($regInfo['deadline_formatted']))
                     <div class="flex items-center justify-between">
                         <span class="text-slate-400">Batas Pendaftaran:</span>
                         <span class="font-bold text-xs text-amber-300">{{ $regInfo['deadline_formatted'] }} WIB</span>
                     </div>
                     @endif
-                    <div class="flex items-start justify-between gap-2">
-                        <span class="text-slate-400 shrink-0">Biaya Pendaftaran:</span>
-                        <span class="font-bold text-sm {{ in_array($competition->code, ['BLT', 'TMJ']) ? 'text-amber-300' : 'text-white' }} text-right">{{ $competition->fee_display }}</span>
-                    </div>
 
-                    @if($competition->code === 'BLT')
-                        <div class="p-3 rounded-2xl bg-black/40 border border-white/[0.06] text-[11px] space-y-1.5 mt-1">
-                            <div class="flex items-center justify-between text-slate-300">
-                                <span>Tunggal Kat A (Kls 1–2):</span>
-                                <span class="font-bold font-mono text-emerald-400">Rp {{ number_format($competition->tier_fees['A_tunggal_pa'] ?? 100000, 0, ',', '.') }}</span>
+                    @php
+                        $vRegs = $competition->verifiedRegistrations ?? collect();
+                        $isBlt = $competition->code === 'BLT';
+                        $isTmj = $competition->code === 'TMJ';
+                        $isMtqPop = in_array($competition->code, ['MTQ', 'POP']);
+
+                        $detailTiers = [];
+
+                        if ($isBlt) {
+                            $countBltTunggalPaA = $vRegs->filter(fn($r) => $r->primary_gender === 'L' && $r->members->count() <= 1 && (stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'a') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'kelas 1') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'kelas 2') !== false))->count();
+                            $countBltTunggalPaB = $vRegs->filter(fn($r) => $r->primary_gender === 'L' && $r->members->count() <= 1 && (stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'b') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'kelas 3') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'kelas 4') !== false))->count();
+                            $countBltTunggalPaC = $vRegs->filter(fn($r) => $r->primary_gender === 'L' && $r->members->count() <= 1 && (stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'c') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'kelas 5') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'kelas 6') !== false))->count();
+                            
+                            $countBltTunggalPiA = $vRegs->filter(fn($r) => $r->primary_gender === 'P' && $r->members->count() <= 1 && (stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'a') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'kelas 1') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'kelas 2') !== false))->count();
+                            $countBltTunggalPiB = $vRegs->filter(fn($r) => $r->primary_gender === 'P' && $r->members->count() <= 1 && (stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'b') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'kelas 3') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'kelas 4') !== false))->count();
+                            $countBltTunggalPiC = $vRegs->filter(fn($r) => $r->primary_gender === 'P' && $r->members->count() <= 1 && (stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'c') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'kelas 5') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'kelas 6') !== false))->count();
+                            
+                            $countBltGandaPa = $vRegs->filter(fn($r) => $r->primary_gender === 'L' && ($r->members->count() > 1 || stripos($r->match_type ?? '', 'ganda') !== false || stripos($r->sub_category ?? '', 'ganda') !== false))->count();
+                            $countBltGandaPi = $vRegs->filter(fn($r) => $r->primary_gender === 'P' && ($r->members->count() > 1 || stripos($r->match_type ?? '', 'ganda') !== false || stripos($r->sub_category ?? '', 'ganda') !== false))->count();
+
+                            $detailTiers = [
+                                ['group' => 'Tunggal Putra (PA)', 'icon' => 'user', 'color' => 'emerald', 'name' => 'Kat A (Kelas 1–2 SD/MI)', 'fee' => $competition->tier_fees['A_tunggal_pa'] ?? 130000, 'quota' => $competition->tier_quotas['A_tunggal_pa'] ?? 16, 'count' => $countBltTunggalPaA, 'unit' => 'Peserta'],
+                                ['group' => 'Tunggal Putra (PA)', 'icon' => 'user', 'color' => 'emerald', 'name' => 'Kat B (Kelas 3–4 SD/MI)', 'fee' => $competition->tier_fees['B_tunggal_pa'] ?? 150000, 'quota' => $competition->tier_quotas['B_tunggal_pa'] ?? 16, 'count' => $countBltTunggalPaB, 'unit' => 'Peserta'],
+                                ['group' => 'Tunggal Putra (PA)', 'icon' => 'user', 'color' => 'emerald', 'name' => 'Kat C (Kelas 5–6 SD/MI)', 'fee' => $competition->tier_fees['C_tunggal_pa'] ?? 150000, 'quota' => $competition->tier_quotas['C_tunggal_pa'] ?? 16, 'count' => $countBltTunggalPaC, 'unit' => 'Peserta'],
+
+                                ['group' => 'Tunggal Putri (PI)', 'icon' => 'user', 'color' => 'pink', 'name' => 'Kat A (Kelas 1–2 SD/MI)', 'fee' => $competition->tier_fees['A_tunggal_pi'] ?? 130000, 'quota' => $competition->tier_quotas['A_tunggal_pi'] ?? 16, 'count' => $countBltTunggalPiA, 'unit' => 'Peserta'],
+                                ['group' => 'Tunggal Putri (PI)', 'icon' => 'user', 'color' => 'pink', 'name' => 'Kat B (Kelas 3–4 SD/MI)', 'fee' => $competition->tier_fees['B_tunggal_pi'] ?? 150000, 'quota' => $competition->tier_quotas['B_tunggal_pi'] ?? 16, 'count' => $countBltTunggalPiB, 'unit' => 'Peserta'],
+                                ['group' => 'Tunggal Putri (PI)', 'icon' => 'user', 'color' => 'pink', 'name' => 'Kat C (Kelas 5–6 SD/MI)', 'fee' => $competition->tier_fees['C_tunggal_pi'] ?? 150000, 'quota' => $competition->tier_quotas['C_tunggal_pi'] ?? 16, 'count' => $countBltTunggalPiC, 'unit' => 'Peserta'],
+
+                                ['group' => 'Nomor Ganda (Kls 3–6)', 'icon' => 'users', 'color' => 'purple', 'name' => 'Ganda Putra (PA)', 'fee' => $competition->tier_fees['ganda_pa'] ?? 200000, 'quota' => $competition->tier_quotas['ganda_pa'] ?? 10, 'count' => $countBltGandaPa, 'unit' => 'Pasangan'],
+                                ['group' => 'Nomor Ganda (Kls 3–6)', 'icon' => 'users', 'color' => 'purple', 'name' => 'Ganda Putri (PI)', 'fee' => $competition->tier_fees['ganda_pi'] ?? 200000, 'quota' => $competition->tier_quotas['ganda_pi'] ?? 10, 'count' => $countBltGandaPi, 'unit' => 'Pasangan'],
+                            ];
+                        } elseif ($isTmj) {
+                            $countTmjTunggalPaA = $vRegs->filter(fn($r) => $r->primary_gender === 'L' && (stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'a') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), '1') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), '2') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), '3') !== false))->count();
+                            $countTmjTunggalPaB = $vRegs->filter(fn($r) => $r->primary_gender === 'L' && (stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'b') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), '4') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), '5') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), '6') !== false))->count();
+                            $countTmjTunggalPiA = $vRegs->filter(fn($r) => $r->primary_gender === 'P' && (stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'a') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), '1') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), '2') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), '3') !== false))->count();
+                            $countTmjTunggalPiB = $vRegs->filter(fn($r) => $r->primary_gender === 'P' && (stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'b') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), '4') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), '5') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), '6') !== false))->count();
+
+                            $detailTiers = [
+                                ['group' => 'Tunggal Putra (PA)', 'icon' => 'user', 'color' => 'emerald', 'name' => 'Kat A (Kelas 1–3 SD/MI)', 'fee' => $competition->tier_fees['A_tunggal_pa'] ?? 35000, 'quota' => $competition->tier_quotas['A_tunggal_pa'] ?? 10, 'count' => $countTmjTunggalPaA, 'unit' => 'Peserta'],
+                                ['group' => 'Tunggal Putra (PA)', 'icon' => 'user', 'color' => 'emerald', 'name' => 'Kat B (Kelas 4–6 SD/MI)', 'fee' => $competition->tier_fees['B_tunggal_pa'] ?? 40000, 'quota' => $competition->tier_quotas['B_tunggal_pa'] ?? 10, 'count' => $countTmjTunggalPaB, 'unit' => 'Peserta'],
+                                ['group' => 'Tunggal Putri (PI)', 'icon' => 'user', 'color' => 'pink', 'name' => 'Kat A (Kelas 1–3 SD/MI)', 'fee' => $competition->tier_fees['A_tunggal_pi'] ?? 35000, 'quota' => $competition->tier_quotas['A_tunggal_pi'] ?? 10, 'count' => $countTmjTunggalPiA, 'unit' => 'Peserta'],
+                                ['group' => 'Tunggal Putri (PI)', 'icon' => 'user', 'color' => 'pink', 'name' => 'Kat B (Kelas 4–6 SD/MI)', 'fee' => $competition->tier_fees['B_tunggal_pi'] ?? 40000, 'quota' => $competition->tier_quotas['B_tunggal_pi'] ?? 10, 'count' => $countTmjTunggalPiB, 'unit' => 'Peserta'],
+                            ];
+                        } elseif ($isMtqPop && (($competition->tier_fees['pa'] ?? 0) != ($competition->tier_fees['pi'] ?? 0) || !empty($competition->tier_quotas['pa']))) {
+                            $countPa = $vRegs->filter(fn($r) => $r->primary_gender === 'L')->count();
+                            $countPi = $vRegs->filter(fn($r) => $r->primary_gender === 'P')->count();
+
+                            $detailTiers = [
+                                ['group' => 'Kategori Peserta', 'icon' => 'user', 'color' => 'emerald', 'name' => 'Putra (PA)', 'fee' => $competition->tier_fees['pa'] ?? $competition->registration_fee, 'quota' => $competition->tier_quotas['pa'] ?? (int) ceil($competition->quota / 2), 'count' => $countPa, 'unit' => 'Peserta'],
+                                ['group' => 'Kategori Peserta', 'icon' => 'user', 'color' => 'pink', 'name' => 'Putri (PI)', 'fee' => $competition->tier_fees['pi'] ?? $competition->registration_fee, 'quota' => $competition->tier_quotas['pi'] ?? (int) floor($competition->quota / 2), 'count' => $countPi, 'unit' => 'Peserta'],
+                            ];
+                        }
+
+                        $verifiedUnit = match(strtolower($competition->type)) {
+                            'regu' => 'Regu',
+                            'tim' => 'Tim',
+                            'kelompok' => 'Kelompok',
+                            'pasangan' => 'Pasangan',
+                            default => 'Peserta',
+                        };
+                    @endphp
+
+                    @if(!empty($detailTiers))
+                        <!-- Multi-tier: Rincian Biaya, Kuota, dan Terverifikasi Per Kategori / Kelas -->
+                        <div class="space-y-4 pt-1">
+                            <div class="flex items-center justify-between pb-1 border-b border-white/[0.08]">
+                                <span class="text-xs font-black uppercase tracking-wider text-[#A594FD] flex items-center gap-1.5">
+                                    <i data-lucide="layers" class="w-4 h-4"></i>
+                                    <span>Rincian Per Kategori / Kelas</span>
+                                </span>
+                                <span class="text-[11px] font-bold text-slate-300 font-mono">Total: <strong class="text-[#84D0FF]">{{ $verifiedCount }}</strong> Terverifikasi</span>
                             </div>
-                            <div class="flex items-center justify-between text-slate-300">
-                                <span>Tunggal Kat B (Kls 3–4):</span>
-                                <span class="font-bold font-mono text-emerald-400">Rp {{ number_format($competition->tier_fees['B_tunggal_pa'] ?? 130000, 0, ',', '.') }}</span>
-                            </div>
-                            <div class="flex items-center justify-between text-slate-300">
-                                <span>Tunggal Kat C (Kls 5–6):</span>
-                                <span class="font-bold font-mono text-emerald-400">Rp {{ number_format($competition->tier_fees['C_tunggal_pa'] ?? 150000, 0, ',', '.') }}</span>
-                            </div>
-                            <div class="flex items-center justify-between text-slate-300 border-t border-white/[0.06] pt-1">
-                                <span>Ganda (PA & PI):</span>
-                                <span class="font-bold font-mono text-[#84D0FF]">Rp {{ number_format($competition->tier_fees['ganda_pa'] ?? 200000, 0, ',', '.') }}</span>
-                            </div>
+
+                            @php
+                                $groupedTiers = collect($detailTiers)->groupBy('group');
+                            @endphp
+
+                            @foreach($groupedTiers as $groupName => $tiers)
+                                <div class="space-y-2">
+                                    <div class="flex items-center gap-1.5 text-[11px] font-extrabold text-slate-300 uppercase tracking-wider">
+                                        <span class="w-1.5 h-1.5 rounded-full {{ str_contains(strtolower($groupName), 'putra') ? 'bg-emerald-400' : (str_contains(strtolower($groupName), 'putri') ? 'bg-pink-400' : 'bg-[#7A5AF8]') }}"></span>
+                                        <span>{{ $groupName }}</span>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 gap-2">
+                                        @foreach($tiers as $tier)
+                                            @php
+                                                $quota = (int) $tier['quota'];
+                                                $count = (int) $tier['count'];
+                                                $isUnlimited = ($quota <= 0);
+                                                $sisa = $isUnlimited ? 999 : max(0, $quota - $count);
+                                                $isFull = !$isUnlimited && ($sisa <= 0);
+                                                $isLow = !$isUnlimited && ($sisa > 0 && $sisa <= 5);
+                                                $pct = $isUnlimited ? ($count > 0 ? 50 : 0) : min(100, ($count / max(1, $quota)) * 100);
+                                            @endphp
+                                            <div class="p-3 rounded-2xl bg-black/40 border border-white/[0.08] hover:border-white/[0.16] transition space-y-2">
+                                                <div class="flex items-start justify-between gap-2">
+                                                    <div>
+                                                        <h4 class="text-xs font-bold text-white">{{ $tier['name'] }}</h4>
+                                                    </div>
+                                                    <span class="text-xs font-black font-mono text-amber-300 shrink-0">
+                                                        {{ $tier['fee'] > 0 ? 'Rp ' . number_format($tier['fee'], 0, ',', '.') : 'GRATIS' }}
+                                                    </span>
+                                                </div>
+
+                                                <div class="grid grid-cols-2 gap-2 text-[11px] pt-1.5 border-t border-white/[0.06]">
+                                                    <div class="flex items-center justify-between text-slate-300">
+                                                        <span class="text-slate-400 text-[10px]">Kuota:</span>
+                                                        <span class="font-bold text-white font-mono">{{ $isUnlimited ? '∞ Bebas' : $quota . ' ' . $tier['unit'] }}</span>
+                                                    </div>
+                                                    <div class="flex items-center justify-between text-slate-300">
+                                                        <span class="text-slate-400 text-[10px]">Terverifikasi:</span>
+                                                        <span class="font-bold text-[#A594FD] font-mono">{{ $count }} {{ $tier['unit'] }}</span>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Progress & Status Sisa Kuota -->
+                                                <div class="space-y-1 pt-0.5">
+                                                    <div class="flex items-center justify-between text-[10px]">
+                                                        @if($isUnlimited)
+                                                            <span class="text-purple-300 font-bold">Kuota Bebas</span>
+                                                            <span class="text-slate-400 font-mono">{{ $count }} / ∞</span>
+                                                        @elseif($isFull)
+                                                            <span class="text-rose-400 font-black">Kuota Penuh</span>
+                                                            <span class="text-slate-400 font-mono">{{ $count }}/{{ $quota }}</span>
+                                                        @else
+                                                            <span class="{{ $isLow ? 'text-amber-300 font-bold' : 'text-emerald-400 font-semibold' }}">
+                                                                Sisa Kuota: {{ $sisa }} {{ $tier['unit'] }}
+                                                            </span>
+                                                            <span class="text-slate-400 font-mono">{{ $count }}/{{ $quota }}</span>
+                                                        @endif
+                                                    </div>
+                                                    <div class="w-full bg-white/[0.08] h-1.5 rounded-full overflow-hidden">
+                                                        <div class="bg-gradient-to-r {{ $isFull ? 'from-rose-500 to-red-600' : ($isLow ? 'from-amber-400 to-orange-500' : 'from-[#7A5AF8] to-[#4E6EFF]') }} h-full rounded-full transition-all duration-300" style="width: {{ $pct }}%"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endforeach
                         </div>
-                    @elseif($competition->code === 'TMJ')
-                        <div class="p-3 rounded-2xl bg-black/40 border border-white/[0.06] text-[11px] space-y-1.5 mt-1">
-                            <div class="flex items-center justify-between text-slate-300">
-                                <span>Tunggal Kat A (Kls 1–3 SD/MI):</span>
-                                <span class="font-bold font-mono text-emerald-400">Rp {{ number_format($competition->tier_fees['A_tunggal_pa'] ?? 35000, 0, ',', '.') }}</span>
+                    @else
+                        <!-- Standar Single Category -->
+                        <div class="space-y-3 pt-1">
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="text-slate-400">Biaya Pendaftaran:</span>
+                                <span class="font-bold font-mono text-sm {{ $competition->registration_fee > 0 ? 'text-amber-300' : 'text-emerald-400' }}">
+                                    {{ ((float)$competition->registration_fee) > 0 ? 'Rp ' . number_format($competition->registration_fee, 0, ',', '.') : 'GRATIS' }}
+                                </span>
                             </div>
-                            <div class="flex items-center justify-between text-slate-300">
-                                <span>Tunggal Kat B (Kls 4–6 SD/MI):</span>
-                                <span class="font-bold font-mono text-emerald-400">Rp {{ number_format($competition->tier_fees['B_tunggal_pa'] ?? 40000, 0, ',', '.') }}</span>
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="text-slate-400">Kuota Peserta:</span>
+                                <span class="font-bold text-sm text-white font-mono">{{ $competition->quota_display }}</span>
                             </div>
-                        </div>
-                    @elseif(in_array($competition->code, ['MTQ', 'POP']) && ($competition->tier_fees['pa'] ?? 0) != ($competition->tier_fees['pi'] ?? 0))
-                        <div class="p-3 rounded-2xl bg-black/40 border border-white/[0.06] text-[11px] space-y-1.5 mt-1">
-                            <div class="flex items-center justify-between text-slate-300">
-                                <span>Putra (PA):</span>
-                                <span class="font-bold font-mono text-emerald-400">Rp {{ number_format($competition->tier_fees['pa'] ?? $competition->registration_fee, 0, ',', '.') }}</span>
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="text-slate-400">Peserta Terverifikasi:</span>
+                                <span class="font-bold text-sm text-[#A594FD] font-mono">{{ $verifiedCount }} {{ $verifiedUnit }}</span>
                             </div>
-                            <div class="flex items-center justify-between text-slate-300">
-                                <span>Putri (PI):</span>
-                                <span class="font-bold font-mono text-pink-400">Rp {{ number_format($competition->tier_fees['pi'] ?? $competition->registration_fee, 0, ',', '.') }}</span>
-                            </div>
+
+                            @if(!$competition->isUnlimitedQuota())
+                                @php
+                                    $sisa = max(0, $competition->quota - $verifiedCount);
+                                    $isFull = $sisa <= 0;
+                                    $isLow = $sisa > 0 && $sisa <= 5;
+                                    $pct = min(100, ($verifiedCount / max(1, $competition->quota)) * 100);
+                                @endphp
+                                <div class="space-y-1 pt-1">
+                                    <div class="flex items-center justify-between text-[11px]">
+                                        <span class="{{ $isFull ? 'text-rose-400 font-black' : ($isLow ? 'text-amber-300 font-bold' : 'text-emerald-400 font-bold') }}">
+                                            {{ $isFull ? 'Kuota Penuh' : 'Sisa Kuota: ' . $sisa . ' ' . $verifiedUnit }}
+                                        </span>
+                                        <span class="text-slate-400 font-mono">{{ $verifiedCount }}/{{ $competition->quota }}</span>
+                                    </div>
+                                    <div class="w-full bg-white/[0.08] h-2 rounded-full overflow-hidden p-0.5 border border-white/[0.05]">
+                                        <div class="bg-gradient-to-r {{ $isFull ? 'from-rose-500 to-red-600' : ($isLow ? 'from-amber-400 to-orange-500' : 'from-[#7A5AF8] to-[#4E6EFF]') }} h-full rounded-full transition-all duration-300" style="width: {{ $pct }}%"></div>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
                     @endif
-                    <div class="flex items-center justify-between">
-                        <span class="text-slate-400">Kuota Peserta:</span>
-                        <span class="font-bold text-sm text-white text-right">{{ $competition->quota_display }}</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-slate-400">Peserta Terverifikasi:</span>
-                        @php
-                            $verifiedUnit = match(strtolower($competition->type)) {
-                                'regu' => 'Regu',
-                                'tim' => 'Tim',
-                                'kelompok' => 'Kelompok',
-                                default => 'Peserta',
-                            };
-                        @endphp
-                        <span class="font-bold text-sm text-[#A594FD]">{{ $verifiedCount }} {{ $verifiedUnit }}</span>
-                    </div>
                 </div>
 
                 @if($isCompOpen)
