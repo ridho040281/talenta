@@ -325,7 +325,8 @@ class AdminSettingsController extends Controller
         $showPamphletEmbed = $request->boolean('show_pamphlet_embed') ? '1' : '0';
         AppSetting::set('show_pamphlet_embed', $showPamphletEmbed);
 
-        return redirect()->back()->with('success', 'Pengaturan aplikasi dan konten landing page berhasil disimpan.');
+        $activeTab = $request->input('active_tab', 'landing');
+        return redirect()->route('admin.settings.general', ['tab' => $activeTab])->with('success', 'Pengaturan aplikasi dan konten landing page berhasil disimpan.');
     }
 
     /**
@@ -355,7 +356,10 @@ class AdminSettingsController extends Controller
             ]);
         }
 
-        return redirect()->back()->with('success', 'Logo sponsor berhasil dihapus.');
+        return redirect()->route('admin.settings.general', ['tab' => 'landing'])
+            ->with('success', 'Logo sponsor berhasil dihapus.')
+            ->with('modal_success_title', 'Logo Berhasil Dihapus')
+            ->with('modal_success_message', 'Logo sponsor telah berhasil dihapus dari sistem.');
     }
 
     /**
@@ -385,7 +389,10 @@ class AdminSettingsController extends Controller
             ]);
         }
 
-        return redirect()->back()->with('success', 'Gambar pamflet berhasil dihapus.');
+        return redirect()->route('admin.settings.general', ['tab' => 'landing'])
+            ->with('success', 'Gambar pamflet berhasil dihapus.')
+            ->with('modal_success_title', 'Pamflet Berhasil Dihapus')
+            ->with('modal_success_message', 'Gambar pamflet telah berhasil dihapus dari sistem.');
     }
 
     /**
