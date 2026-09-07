@@ -438,22 +438,42 @@ class Competition extends Model
             $val = $matches[1];
         }
 
-        // Google Drive link: /file/d/{ID}/view... -> /file/d/{ID}/preview
-        if (preg_match('/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/', $val, $matches)) {
+        // 1. Google Drive File: /file/d/{ID}/..., /file/u/0/d/{ID}/..., open?id={ID}, uc?id={ID}
+        if (preg_match('/drive\.google\.com\/(?:file\/(?:u\/\d+\/)?d\/|open\?id=|uc\?(?:[^&]*&)*id=)([a-zA-Z0-9_-]+)/', $val, $matches)) {
             return "https://drive.google.com/file/d/{$matches[1]}/preview";
         }
 
-        // Google Drive link: open?id={ID}
-        if (preg_match('/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/', $val, $matches)) {
-            return "https://drive.google.com/file/d/{$matches[1]}/preview";
+        // 2. Google Drive Folder: /drive/folders/{ID} or /drive/u/0/folders/{ID}
+        if (preg_match('/drive\.google\.com\/drive\/(?:u\/\d+\/)?folders\/([a-zA-Z0-9_-]+)/', $val, $matches)) {
+            return "https://drive.google.com/embeddedfolderview?id={$matches[1]}#list";
         }
 
-        // Google Docs link: /document/d/{ID}/edit... -> /preview
-        if (preg_match('/docs\.google\.com\/document\/d\/([a-zA-Z0-9_-]+)/', $val, $matches)) {
+        // 3. Google Docs link: /document/d/{ID}/...
+        if (preg_match('/docs\.google\.com\/document\/(?:u\/\d+\/)?d\/([a-zA-Z0-9_-]+)/', $val, $matches)) {
             return "https://docs.google.com/document/d/{$matches[1]}/preview";
         }
 
-        // Local uploaded file path
+        // 4. Google Sheets link: /spreadsheets/d/{ID}/...
+        if (preg_match('/docs\.google\.com\/spreadsheets\/(?:u\/\d+\/)?d\/([a-zA-Z0-9_-]+)/', $val, $matches)) {
+            return "https://docs.google.com/spreadsheets/d/{$matches[1]}/preview";
+        }
+
+        // 5. Google Slides / Presentations: /presentation/d/{ID}/...
+        if (preg_match('/docs\.google\.com\/presentation\/(?:u\/\d+\/)?d\/([a-zA-Z0-9_-]+)/', $val, $matches)) {
+            return "https://docs.google.com/presentation/d/{$matches[1]}/preview";
+        }
+
+        // 6. Canva link
+        if (preg_match('/canva\.com\/design\/([a-zA-Z0-9_-]+)(?:\/([a-zA-Z0-9_-]+))?/', $val, $matches)) {
+            $designId = $matches[1];
+            $secondPart = $matches[2] ?? '';
+            if (in_array(strtolower($secondPart), ['view', 'watch', 'edit', 'embed', 'preview', ''])) {
+                return "https://www.canva.com/design/{$designId}/view?embed";
+            }
+            return "https://www.canva.com/design/{$designId}/{$secondPart}/view?embed";
+        }
+
+        // 7. Local uploaded file path
         if (! str_starts_with($val, 'http://') && ! str_starts_with($val, 'https://')) {
             return asset('storage/'.ltrim($val, '/'));
         }
@@ -473,17 +493,42 @@ class Competition extends Model
             $val = $matches[1];
         }
 
-        // Google Drive link: /file/d/{ID}/view
-        if (preg_match('/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/', $val, $matches)) {
+        // 1. Google Drive File: /file/d/{ID}/view
+        if (preg_match('/drive\.google\.com\/(?:file\/(?:u\/\d+\/)?d\/|open\?id=|uc\?(?:[^&]*&)*id=)([a-zA-Z0-9_-]+)/', $val, $matches)) {
             return "https://drive.google.com/file/d/{$matches[1]}/view?usp=sharing";
         }
 
-        // Google Drive link: open?id={ID}
-        if (preg_match('/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/', $val, $matches)) {
-            return "https://drive.google.com/file/d/{$matches[1]}/view?usp=sharing";
+        // 2. Google Drive Folder: /drive/folders/{ID}
+        if (preg_match('/drive\.google\.com\/drive\/(?:u\/\d+\/)?folders\/([a-zA-Z0-9_-]+)/', $val, $matches)) {
+            return "https://drive.google.com/drive/folders/{$matches[1]}?usp=sharing";
         }
 
-        // Local uploaded file path
+        // 3. Google Docs link
+        if (preg_match('/docs\.google\.com\/document\/(?:u\/\d+\/)?d\/([a-zA-Z0-9_-]+)/', $val, $matches)) {
+            return "https://docs.google.com/document/d/{$matches[1]}/edit?usp=sharing";
+        }
+
+        // 4. Google Sheets link
+        if (preg_match('/docs\.google\.com\/spreadsheets\/(?:u\/\d+\/)?d\/([a-zA-Z0-9_-]+)/', $val, $matches)) {
+            return "https://docs.google.com/spreadsheets/d/{$matches[1]}/edit?usp=sharing";
+        }
+
+        // 5. Google Slides link
+        if (preg_match('/docs\.google\.com\/presentation\/(?:u\/\d+\/)?d\/([a-zA-Z0-9_-]+)/', $val, $matches)) {
+            return "https://docs.google.com/presentation/d/{$matches[1]}/edit?usp=sharing";
+        }
+
+        // 6. Canva link
+        if (preg_match('/canva\.com\/design\/([a-zA-Z0-9_-]+)(?:\/([a-zA-Z0-9_-]+))?/', $val, $matches)) {
+            $designId = $matches[1];
+            $secondPart = $matches[2] ?? '';
+            if (in_array(strtolower($secondPart), ['view', 'watch', 'edit', 'embed', 'preview', ''])) {
+                return "https://www.canva.com/design/{$designId}/view";
+            }
+            return "https://www.canva.com/design/{$designId}/{$secondPart}/view";
+        }
+
+        // 7. Local uploaded file path
         if (! str_starts_with($val, 'http://') && ! str_starts_with($val, 'https://')) {
             return asset('storage/'.ltrim($val, '/'));
         }

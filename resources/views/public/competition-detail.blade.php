@@ -62,7 +62,7 @@
             </div>
             @endif
 
-            @if($competition->show_guidelines && $competition->guidelines_embed_url)
+            @if(($competition->show_guidelines ?? true) && $competition->guidelines_embed_url)
             <!-- Petunjuk Teknis Lengkap (Juknis PDF Embed) -->
             <div class="glass-card rounded-3xl p-6 sm:p-8 border border-white/[0.08] shadow-2xl space-y-4">
                 <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-white/[0.08] pb-4">
@@ -92,7 +92,7 @@
                 <div class="relative w-full rounded-2xl overflow-hidden border border-white/[0.08] bg-[#0C111D] shadow-inner">
                     <iframe src="{{ $competition->guidelines_embed_url }}" 
                             class="w-full h-[600px] sm:h-[750px] border-0 rounded-2xl bg-white" 
-                            allow="autoplay"
+                            allow="autoplay; fullscreen"
                             loading="lazy">
                     </iframe>
                 </div>
