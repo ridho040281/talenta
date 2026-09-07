@@ -156,6 +156,13 @@
 
                     @php
                         $vRegs = $competition->verifiedRegistrations ?? collect();
+                        $verifiedUnit = match(strtolower($competition->type ?? 'individu')) {
+                            'regu' => 'Regu',
+                            'tim' => 'Tim',
+                            'kelompok' => 'Kelompok',
+                            'pasangan' => 'Pasangan',
+                            default => 'Peserta',
+                        };
                         $isBlt = $competition->code === 'BLT';
                         $isTmj = $competition->code === 'TMJ';
                         $isMtqPop = in_array($competition->code, ['MTQ', 'POP']);
