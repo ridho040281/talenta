@@ -862,6 +862,32 @@
         </section>
     @endif
 
+    <style>
+        /* Strict Responsive Visibility for Timeline Section */
+        @media (max-width: 767px) {
+            .timeline-desktop-view {
+                display: none !important;
+            }
+            .timeline-mobile-view {
+                display: block !important;
+            }
+            .timeline-desktop-ctrls {
+                display: none !important;
+            }
+        }
+        @media (min-width: 768px) {
+            .timeline-desktop-view {
+                display: block !important;
+            }
+            .timeline-mobile-view {
+                display: none !important;
+            }
+            .timeline-desktop-ctrls {
+                display: flex !important;
+            }
+        }
+    </style>
+
     <!-- TIMELINE & ROADMAP RANGKAIAN ACARA (Clean Compact Horizontal Infographic Style) -->
     <section id="jadwal" class="py-6 lg:py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         
@@ -908,7 +934,7 @@
                     </h2>
                 </div>
 
-                <div class="hidden md:flex items-center gap-3">
+                <div class="timeline-desktop-ctrls items-center gap-3">
                     <div class="flex items-center gap-1.5 text-xs text-slate-400">
                         <i data-lucide="mouse-pointer" class="w-3.5 h-3.5 text-[#7A5AF8]"></i>
                         <span>Klik & drag mouse untuk menggeser timeline:</span>
@@ -997,8 +1023,8 @@
                 $calculatedMinWidth = max(900, $totalTimelines * 200);
             @endphp
 
-            <!-- 1. MOBILE RESPONSIVE VERTICAL TIMELINE (Shown on Mobile screens < md) -->
-            <div class="block md:hidden space-y-4 pt-1">
+            <!-- 1. MOBILE RESPONSIVE VERTICAL TIMELINE (Shown ONLY on Mobile screens < 768px) -->
+            <div class="timeline-mobile-view space-y-4 pt-1">
                 <div class="relative pl-6 space-y-5 before:absolute before:left-3 before:top-3 before:bottom-3 before:w-0.5 before:bg-gradient-to-b before:from-amber-400 before:via-emerald-400 before:via-[#4E6EFF] before:via-[#7A5AF8] before:to-[#FF58D5]">
                     @forelse($timelines as $index => $item)
                         @php
@@ -1045,7 +1071,7 @@
                 </div>
             </div>
 
-            <!-- 2. DESKTOP HORIZONTAL INFOGRAPHIC RIBBON FLOW (Shown on Tablet/Desktop md and up) -->
+            <!-- 2. DESKTOP HORIZONTAL INFOGRAPHIC RIBBON FLOW (Shown ONLY on Tablet/Desktop >= 768px) -->
             <div 
                 x-ref="timelineScroll"
                 @mousedown="startDrag($event)"
@@ -1055,7 +1081,7 @@
                 x-on:wheel.passive="false"
                 x-on:wheel="wheelScroll($event)"
                 :class="isDown ? 'cursor-grabbing select-none' : 'cursor-grab select-none'"
-                class="hidden md:block overflow-x-auto no-scrollbar pb-6 pt-2"
+                class="timeline-desktop-view overflow-x-auto no-scrollbar pb-6 pt-2"
             >
                 <div class="relative px-4" style="min-width: {{ $calculatedMinWidth }}px;">
                     
