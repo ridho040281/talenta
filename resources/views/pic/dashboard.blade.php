@@ -239,47 +239,34 @@
 
     <!-- Master Filter & Action Header (AIStarterKit Design) -->
     <div class="ai-card rounded-3xl p-5 sm:p-6 border border-white/[0.08] shadow-xl space-y-4 relative z-30">
-        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5">
+        
+        <!-- Row 1: Search Bar & Quick Actions -->
+        <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-3.5">
             
             <!-- Search input -->
-            <div class="relative flex-1">
+            <div class="relative flex-1 min-w-[240px]">
                 <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
                 <input type="text" x-model="searchQuery" placeholder="Cari nama peserta, NISN, asal sekolah, atau nomor registrasi..." class="w-full pl-10 pr-4 py-2.5 text-xs rounded-xl bg-[#0C111D] border border-white/[0.1] text-white placeholder-slate-500 focus:border-[#7A5AF8] focus:ring-2 focus:ring-[#7A5AF8]/20 outline-none">
             </div>
 
-            <!-- Gender Filter Pills (PA / PI) -->
-            <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
-                <button type="button" @click="selectedGender = 'all'" :class="selectedGender === 'all' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-black shadow-md' : 'bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 font-bold border border-white/[0.08]'" class="px-3.5 py-2 rounded-xl text-xs transition cursor-pointer whitespace-nowrap">
-                    <span>Semua Gender</span>
-                </button>
-                <button type="button" @click="selectedGender = 'L'" :class="selectedGender === 'L' ? 'bg-blue-600 text-white font-black shadow-md' : 'bg-[#4E6EFF]/15 text-[#84D0FF] hover:bg-[#4E6EFF]/25 font-bold border border-[#4E6EFF]/30'" class="px-3.5 py-2 rounded-xl text-xs transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
-                    <span>👦 Putra (PA)</span>
-                    <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-blue-500/20 font-bold" x-text="countPa"></span>
-                </button>
-                <button type="button" @click="selectedGender = 'P'" :class="selectedGender === 'P' ? 'bg-rose-600 text-white font-black shadow-md' : 'bg-[#FF58D5]/15 text-[#FFA0E7] hover:bg-[#FF58D5]/25 font-bold border border-[#FF58D5]/30'" class="px-3.5 py-2 rounded-xl text-xs transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
-                    <span>👧 Putri (PI)</span>
-                    <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-rose-500/20 font-bold" x-text="countPi"></span>
-                </button>
-            </div>
-
-            <!-- Action Buttons: Tambah Peserta, Cetak/Export & Spin Wheel -->
-            <div class="flex items-center gap-2 shrink-0">
+            <!-- Action Buttons: Tambah Peserta, Cetak/Export, Spin Wheel & Layar Panggung -->
+            <div class="flex flex-wrap items-center gap-2">
 
                 <!-- Tambah Peserta Manual Button -->
-                <button @click="createModal = true; $nextTick(() => { if (window.lucide) lucide.createIcons(); })" type="button" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 transition cursor-pointer">
+                <button @click="createModal = true; $nextTick(() => { if (window.lucide) lucide.createIcons(); })" type="button" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 transition cursor-pointer shrink-0">
                     <i data-lucide="user-plus" class="w-4 h-4"></i>
                     <span>+ Tambah Peserta</span>
                 </button>
                 
                 <!-- Print & Export Modal Launcher Button -->
-                <button @click="selectedPrintCompetition = selectedCompetition; exportModal = true" type="button" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#4E6EFF]/15 hover:bg-[#4E6EFF]/25 text-[#84D0FF] border border-[#4E6EFF]/30 font-black text-xs transition cursor-pointer">
+                <button @click="selectedPrintCompetition = selectedCompetition; exportModal = true" type="button" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#4E6EFF]/15 hover:bg-[#4E6EFF]/25 text-[#84D0FF] border border-[#4E6EFF]/30 font-black text-xs transition cursor-pointer shrink-0">
                     <i data-lucide="printer" class="w-4 h-4"></i>
                     <span>Cetak & Export</span>
                 </button>
 
                 <!-- Spin Wheel Launcher Button -->
                 <div class="relative" x-data="{ spinMenuOpen: false }">
-                    <button @click="spinMenuOpen = !spinMenuOpen" type="button" class="gradient-btn inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-white font-black text-xs shadow-lg shadow-[#7A5AF8]/25 transition cursor-pointer">
+                    <button @click="spinMenuOpen = !spinMenuOpen" type="button" class="gradient-btn inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-white font-black text-xs shadow-lg shadow-[#7A5AF8]/25 transition cursor-pointer shrink-0">
                         <i data-lucide="disc" class="w-4 h-4"></i>
                         <span>Putar Spin Wheel</span>
                         <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
@@ -303,7 +290,7 @@
 
                 <!-- Stage Timer & Layar Panggung Launcher Button -->
                 <div class="relative" x-data="{ stageMenuOpen: false }">
-                    <button @click="stageMenuOpen = !stageMenuOpen" type="button" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 font-black text-xs transition cursor-pointer">
+                    <button @click="stageMenuOpen = !stageMenuOpen" type="button" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 font-black text-xs transition cursor-pointer shrink-0">
                         <i data-lucide="tv" class="w-4 h-4 text-amber-400"></i>
                         <span>Layar Panggung</span>
                         <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
@@ -339,12 +326,30 @@
 
         </div>
 
-        <!-- 3 Filter Dropdowns -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-3 border-t border-white/[0.08] text-xs">
-            <!-- Dropdown 1: Cabang Lomba -->
+        <!-- Row 2: Gender Segment & 3 Filter Dropdowns (4-Column Balanced Grid) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 pt-3.5 border-t border-white/[0.08] text-xs items-end">
+            <!-- Filter 1: Gender Segmented Buttons -->
+            <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Filter Gender:</label>
+                <div class="flex items-center gap-1 bg-[#0C111D] border border-white/[0.1] p-1 rounded-xl h-[42px]">
+                    <button type="button" @click="selectedGender = 'all'" :class="selectedGender === 'all' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-black shadow-md' : 'text-slate-400 hover:text-white font-bold'" class="flex-1 h-full rounded-lg text-xs transition cursor-pointer flex items-center justify-center">
+                        <span>Semua</span>
+                    </button>
+                    <button type="button" @click="selectedGender = 'L'" :class="selectedGender === 'L' ? 'bg-blue-600 text-white font-black shadow-md' : 'text-[#84D0FF] hover:text-white font-bold'" class="flex-1 h-full rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1">
+                        <span>PA</span>
+                        <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-blue-500/20 font-bold" x-text="countPa"></span>
+                    </button>
+                    <button type="button" @click="selectedGender = 'P'" :class="selectedGender === 'P' ? 'bg-rose-600 text-white font-black shadow-md' : 'text-[#FFA0E7] hover:text-white font-bold'" class="flex-1 h-full rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1">
+                        <span>PI</span>
+                        <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-rose-500/20 font-bold" x-text="countPi"></span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter 2: Cabang Lomba -->
             <div>
                 <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Cabang Lomba:</label>
-                <select x-model="selectedCompetition" @change="selectedSector = 'all'" class="w-full px-3 py-2.5 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8] cursor-pointer">
+                <select x-model="selectedCompetition" @change="selectedSector = 'all'" class="w-full px-3 py-2.5 h-[42px] rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8] cursor-pointer">
                     <option value="all">Semua Cabang Lomba ({{ $competitions->count() }})</option>
                     @foreach($competitions as $comp)
                         <option value="{{ $comp->id }}">{{ $comp->name }} ({{ $comp->registrations->count() }} Pendaftar)</option>
@@ -352,20 +357,20 @@
                 </select>
             </div>
 
-            <!-- Dropdown 2: Sektor / Kategori Tanding (Dinamis Sesuai Cabang Lomba) -->
+            <!-- Filter 3: Sektor / Kategori Tanding -->
             <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1" x-text="currentCompCode === 'BLT' ? 'Sektor / Kelas Bulu Tangkis:' : (currentCompCode === 'TMJ' ? 'Kategori Tenis Meja:' : (['MTQ', 'POP'].includes(currentCompCode) ? 'Kategori Sektor (PA/PI):' : 'Kategori Lomba:'))"></label>
-                <select x-model="selectedSector" :disabled="sectorOptions.length <= 1" :class="sectorOptions.length <= 1 ? 'opacity-70 bg-[#0C111D]/60' : 'cursor-pointer'" class="w-full px-3 py-2.5 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8]">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 truncate" x-text="currentCompCode === 'BLT' ? 'Sektor / Kelas Bulu Tangkis:' : (currentCompCode === 'TMJ' ? 'Kategori Tenis Meja:' : (['MTQ', 'POP'].includes(currentCompCode) ? 'Kategori Sektor (PA/PI):' : 'Kategori Lomba:'))"></label>
+                <select x-model="selectedSector" :disabled="sectorOptions.length <= 1" :class="sectorOptions.length <= 1 ? 'opacity-70 bg-[#0C111D]/60' : 'cursor-pointer'" class="w-full px-3 py-2.5 h-[42px] rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8]">
                     <template x-for="opt in sectorOptions" :key="opt.value">
                         <option :value="opt.value" x-text="opt.label"></option>
                     </template>
                 </select>
             </div>
 
-            <!-- Dropdown 3: Status Keabsahan -->
+            <!-- Filter 4: Status Keabsahan -->
             <div>
                 <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Status Keabsahan:</label>
-                <select x-model="selectedStatus" class="w-full px-3 py-2.5 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8] cursor-pointer">
+                <select x-model="selectedStatus" class="w-full px-3 py-2.5 h-[42px] rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8] cursor-pointer">
                     <option value="all">Semua Status</option>
                     <option value="verified">✅ Terverifikasi ({{ $stats['verified_registrations'] ?? 0 }})</option>
                     <option value="pending">⏳ Menunggu ({{ $stats['pending_registrations'] ?? $stats['pending_verifications'] ?? 0 }})</option>
