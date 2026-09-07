@@ -862,33 +862,7 @@
         </section>
     @endif
 
-    <style>
-        /* Strict Responsive Visibility for Timeline Section */
-        @media (max-width: 767px) {
-            .timeline-desktop-view {
-                display: none !important;
-            }
-            .timeline-mobile-view {
-                display: block !important;
-            }
-            .timeline-desktop-ctrls {
-                display: none !important;
-            }
-        }
-        @media (min-width: 768px) {
-            .timeline-desktop-view {
-                display: block !important;
-            }
-            .timeline-mobile-view {
-                display: none !important;
-            }
-            .timeline-desktop-ctrls {
-                display: flex !important;
-            }
-        }
-    </style>
-
-    <!-- TIMELINE & ROADMAP RANGKAIAN ACARA (Clean Compact Horizontal Infographic Style) -->
+    <!-- TIMELINE & ROADMAP RANGKAIAN ACARA (Compact Horizontal Infographic Style - Swipeable on Mobile & Desktop) -->
     <section id="jadwal" class="py-6 lg:py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         
         <div x-data="{
@@ -920,32 +894,35 @@
                     this.$refs.timelineScroll.scrollLeft += (e.deltaY * 1.5);
                 }
             }
-        }" class="glass-card p-5 sm:p-7 lg:p-9 rounded-2xl border border-white/[0.08] shadow-2xl relative overflow-hidden space-y-6">
+        }" class="glass-card p-4 sm:p-7 lg:p-9 rounded-2xl border border-white/[0.08] shadow-2xl relative overflow-hidden space-y-5">
             
             <!-- Section Header -->
-            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/[0.08] pb-4">
-                <div class="space-y-1.5">
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-white/[0.08] pb-4">
+                <div class="space-y-1">
                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#7A5AF8]/15 border border-[#7A5AF8]/30 text-[#A594FD] text-[11px] font-bold tracking-wider uppercase">
                         <i data-lucide="calendar" class="w-3 h-3"></i>
                         <span>{{ $appSettings['timeline_tagline'] ?? ('Agenda & Jadwal Resmi ' . ($appSettings['app_name'] ?? 'TALENTA') . ' ' . ($appSettings['event_year'] ?? '2026')) }}</span>
                     </span>
-                    <h2 class="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight font-display">
+                    <h2 class="text-lg sm:text-2xl lg:text-3xl font-black text-white tracking-tight font-display">
                         {{ $appSettings['timeline_title'] ?? 'Timeline Rangkaian Kegiatan' }}
                     </h2>
                 </div>
 
-                <div class="timeline-desktop-ctrls items-center gap-3">
+                <div class="flex items-center justify-between sm:justify-end gap-2.5 pt-1 sm:pt-0">
                     <div class="flex items-center gap-1.5 text-xs text-slate-400">
-                        <i data-lucide="mouse-pointer" class="w-3.5 h-3.5 text-[#7A5AF8]"></i>
-                        <span>Klik & drag mouse untuk menggeser timeline:</span>
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/[0.04] border border-white/[0.08] text-[11px] font-semibold text-slate-300">
+                            <i data-lucide="move-horizontal" class="w-3.5 h-3.5 text-[#7A5AF8]"></i>
+                            <span class="hidden sm:inline">Klik & drag untuk menggeser timeline</span>
+                            <span class="sm:hidden">Swipe / Geser untuk melihat alur</span>
+                        </span>
                     </div>
 
                     <!-- Scroll Navigation Buttons -->
-                    <div class="flex items-center gap-1 bg-[#0C111D] p-1 rounded-xl border border-white/[0.1]">
-                        <button type="button" @click="scrollContainer(-350)" class="w-8 h-8 rounded-lg bg-white/[0.05] hover:bg-white/[0.15] text-slate-300 hover:text-white flex items-center justify-center transition cursor-pointer" title="Geser ke Kiri">
+                    <div class="flex items-center gap-1 bg-[#0C111D] p-1 rounded-xl border border-white/[0.1] shrink-0">
+                        <button type="button" @click="scrollContainer(-320)" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/[0.05] hover:bg-white/[0.15] active:bg-[#7A5AF8]/30 text-slate-300 hover:text-white flex items-center justify-center transition cursor-pointer" title="Geser ke Kiri">
                             <i data-lucide="chevron-left" class="w-4 h-4"></i>
                         </button>
-                        <button type="button" @click="scrollContainer(350)" class="w-8 h-8 rounded-lg bg-white/[0.05] hover:bg-white/[0.15] text-slate-300 hover:text-white flex items-center justify-center transition cursor-pointer" title="Geser ke Kanan">
+                        <button type="button" @click="scrollContainer(320)" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/[0.05] hover:bg-white/[0.15] active:bg-[#7A5AF8]/30 text-slate-300 hover:text-white flex items-center justify-center transition cursor-pointer" title="Geser ke Kanan">
                             <i data-lucide="chevron-right" class="w-4 h-4"></i>
                         </button>
                     </div>
@@ -1020,58 +997,10 @@
                     ],
                 ];
                 $totalTimelines = count($timelines);
-                $calculatedMinWidth = max(900, $totalTimelines * 200);
+                $calculatedMinWidth = max(900, $totalTimelines * 210);
             @endphp
 
-            <!-- 1. MOBILE RESPONSIVE VERTICAL TIMELINE (Shown ONLY on Mobile screens < 768px) -->
-            <div class="timeline-mobile-view space-y-4 pt-1">
-                <div class="relative pl-6 space-y-5 before:absolute before:left-3 before:top-3 before:bottom-3 before:w-0.5 before:bg-gradient-to-b before:from-amber-400 before:via-emerald-400 before:via-[#4E6EFF] before:via-[#7A5AF8] before:to-[#FF58D5]">
-                    @forelse($timelines as $index => $item)
-                        @php
-                            $stepNum = $item->order ?? ($index + 1);
-                            $themeKey = ($index % count($infographicThemes)) + 1;
-                            $t = $infographicThemes[$themeKey];
-                        @endphp
-                        <div class="relative flex items-start gap-3.5 group">
-                            <!-- Glowing Node Indicator Circle -->
-                            <div class="absolute -left-6 top-1.5 w-6 h-6 rounded-full border-2 {{ $t['ring'] }} bg-[#0C111D] shadow-md {{ $t['glow'] }} flex items-center justify-center shrink-0 z-10">
-                                <div class="w-2.5 h-2.5 rounded-full {{ $t['bg'] }}"></div>
-                            </div>
-
-                            <!-- Card Box -->
-                            <div class="w-full p-4 rounded-2xl bg-[#0C111D]/90 border border-white/[0.08] shadow-lg space-y-2 hover:border-white/[0.18] transition">
-                                <div class="flex items-center justify-between gap-2 flex-wrap">
-                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider {{ $t['bg'] }} shadow-sm">
-                                        Tahap {{ $stepNum }}
-                                    </span>
-                                    <div class="text-right">
-                                        <span class="text-xs font-black font-mono tracking-wider {{ $t['text'] }} block">
-                                            {{ $item->date_label }}
-                                        </span>
-                                        <span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider block">Pelaksanaan</span>
-                                    </div>
-                                </div>
-                                
-                                <h4 class="text-sm font-black text-white leading-snug">
-                                    {{ $item->title }}
-                                </h4>
-
-                                @if(!empty($item->description))
-                                    <p class="text-xs text-slate-400 leading-relaxed">
-                                        {{ $item->description }}
-                                    </p>
-                                @endif
-                            </div>
-                        </div>
-                    @empty
-                        <div class="text-center py-6 text-slate-400 text-xs italic">
-                            Belum ada jadwal rangkaian acara yang diatur.
-                        </div>
-                    @endforelse
-                </div>
-            </div>
-
-            <!-- 2. DESKTOP HORIZONTAL INFOGRAPHIC RIBBON FLOW (Shown ONLY on Tablet/Desktop >= 768px) -->
+            <!-- HORIZONTAL INFOGRAPHIC RIBBON FLOW (Swipeable on Mobile / Drag on Desktop) -->
             <div 
                 x-ref="timelineScroll"
                 @mousedown="startDrag($event)"
@@ -1081,7 +1010,8 @@
                 x-on:wheel.passive="false"
                 x-on:wheel="wheelScroll($event)"
                 :class="isDown ? 'cursor-grabbing select-none' : 'cursor-grab select-none'"
-                class="timeline-desktop-view overflow-x-auto no-scrollbar pb-6 pt-2"
+                class="overflow-x-auto no-scrollbar pb-6 pt-2"
+                style="-webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; overscroll-behavior-x: contain;"
             >
                 <div class="relative px-4" style="min-width: {{ $calculatedMinWidth }}px;">
                     
@@ -1089,7 +1019,7 @@
                     <div class="absolute top-[145px] left-12 right-12 h-2.5 bg-gradient-to-r from-amber-400 via-emerald-400 via-teal-400 via-[#4E6EFF] via-[#7A5AF8] to-[#FF58D5] rounded-full shadow-lg opacity-85 z-0"></div>
 
                     <!-- Steps Dynamic Grid Container -->
-                    <div class="grid gap-3 relative z-10" style="grid-template-columns: repeat({{ max(1, $totalTimelines) }}, minmax(0, 1fr));">
+                    <div class="grid gap-3 relative z-10" style="grid-template-columns: repeat({{ max(1, $totalTimelines) }}, minmax(200px, 1fr));">
                         @forelse($timelines as $index => $item)
                             @php
                                 $stepNum = $item->order ?? ($index + 1);
@@ -1098,7 +1028,7 @@
                                 $t = $infographicThemes[$themeKey];
                             @endphp
 
-                            <div class="flex flex-col items-center text-center px-1">
+                            <div class="flex flex-col items-center text-center px-1 min-w-[200px]">
                                 
                                 <!-- Top Area (Height: 110px) -->
                                 <div class="h-[110px] w-full flex flex-col justify-end items-center mb-3 space-y-1 px-1">
