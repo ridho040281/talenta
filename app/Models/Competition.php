@@ -795,11 +795,7 @@ class Competition extends Model
         }
 
         if (in_array($this->code, ['MTQ', 'POP'])) {
-            $pa = $this->tier_quotas['pa'] ?? (int) ceil($this->quota / 2);
-            $pi = $this->tier_quotas['pi'] ?? (int) floor($this->quota / 2);
-            $total = $pa + $pi;
-
-            return "{$total} Peserta ({$pa} PA / {$pi} PI)";
+            return "{$this->quota} Peserta (Gabungan PA & PI)";
         }
 
         if ($this->code === 'TMJ') {

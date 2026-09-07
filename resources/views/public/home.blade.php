@@ -280,8 +280,8 @@
                                 } elseif ($isMtqPop) {
                                     $countPa = $comp->registrations->filter(fn($r) => $r->primary_gender === 'L')->count();
                                     $countPi = $comp->registrations->filter(fn($r) => $r->primary_gender === 'P')->count();
-                                    $quotaPa = $comp->tier_quotas['pa'] ?? (int) ceil($comp->quota / 2);
-                                    $quotaPi = $comp->tier_quotas['pi'] ?? (int) floor($comp->quota / 2);
+                                    $totalMtqPop = $countPa + $countPi;
+                                    $quotaMtqPop = (int) ($comp->quota ?? 50);
                                 }
 
                                 $renderTierQuota = function($count, $quota, $unit = 'Peserta') {
@@ -423,18 +423,12 @@
                                             </div>
                                         </div>
                                     @elseif($isMtqPop)
-                                        <div class="flex flex-col py-1">
-                                            <!-- 1. Individu PA -->
-                                            <div class="py-0.5 flex items-center gap-1.5 font-bold text-emerald-400 text-xs">
-                                                <i data-lucide="user" class="w-3.5 h-3.5"></i>
-                                                <span>Individu | PA</span>
+                                        <div class="flex flex-col py-1 space-y-0.5">
+                                            <div class="flex items-center gap-1.5 font-bold text-emerald-400 text-xs">
+                                                <i data-lucide="users" class="w-3.5 h-3.5"></i>
+                                                <span>Individu (PA & PI)</span>
                                             </div>
-                                            <div class="border-t border-white/[0.08] my-2"></div>
-                                            <!-- 2. Individu PI -->
-                                            <div class="py-0.5 flex items-center gap-1.5 font-bold text-pink-400 text-xs">
-                                                <i data-lucide="user" class="w-3.5 h-3.5"></i>
-                                                <span>Individu | PI</span>
-                                            </div>
+                                            <span class="text-[10px] text-slate-400 font-medium">Sektor PA & PI Dipisah</span>
                                         </div>
                                     @elseif($isTmj)
                                         <div class="flex flex-col py-1">
@@ -503,12 +497,22 @@
                                             {!! $renderTierQuota($countBltGandaPi, $comp->tier_quotas['ganda_pi'] ?? 0, 'Pasangan') !!}
                                         </div>
                                     @elseif($isMtqPop)
-                                        <div class="flex flex-col py-1 text-slate-400 text-xs min-w-[210px]">
-                                            <!-- PA -->
-                                            {!! $renderTierQuota($countPa, $quotaPa, 'Peserta') !!}
-                                            <div class="border-t border-white/[0.08] my-2"></div>
-                                            <!-- PI -->
-                                            {!! $renderTierQuota($countPi, $quotaPi, 'Peserta') !!}
+                                        <div class="flex flex-col py-1 text-slate-400 text-xs min-w-[210px] space-y-2">
+                                            <!-- Main Combined Quota Bar (Total 50) -->
+                                            {!! $renderTierQuota($totalMtqPop, $quotaMtqPop, 'Peserta') !!}
+                                            
+                                            <!-- Real-time Gender Composition Breakdown -->
+                                            <div class="flex items-center justify-between gap-1.5 px-2.5 py-1 rounded-xl bg-white/[0.04] border border-white/[0.08] text-[10px] font-bold">
+                                                <span class="text-cyan-300 flex items-center gap-1">
+                                                    <i data-lucide="user" class="w-3 h-3 text-cyan-400"></i>
+                                                    <span>{{ $countPa }} Putra</span>
+                                                </span>
+                                                <span class="text-slate-500">•</span>
+                                                <span class="text-pink-300 flex items-center gap-1">
+                                                    <i data-lucide="user" class="w-3 h-3 text-pink-400"></i>
+                                                    <span>{{ $countPi }} Putri</span>
+                                                </span>
+                                            </div>
                                         </div>
                                     @elseif($isTmj)
                                         <div class="flex flex-col py-1 text-slate-400 text-xs min-w-[210px]">

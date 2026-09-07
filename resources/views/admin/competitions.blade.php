@@ -522,15 +522,15 @@
                                             @php
                                                 $countPa = $comp->registrations->filter(fn($r) => $r->primary_gender === 'L')->count();
                                                 $countPi = $comp->registrations->filter(fn($r) => $r->primary_gender === 'P')->count();
-                                                $quotaPa = $comp->tier_quotas['pa'] ?? (int) ceil($comp->quota / 2);
-                                                $quotaPi = $comp->tier_quotas['pi'] ?? (int) floor($comp->quota / 2);
+                                                $totalMtqPop = $countPa + $countPi;
+                                                $quotaMtqPop = (int) ($comp->quota ?? 50);
                                             @endphp
                                             <div class="h-[36px] flex items-center justify-center font-medium text-xs">
-                                                <div><span class="font-bold text-white">{{ $countPa }}</span>&nbsp;/ {{ $quotaPa }}</div>
+                                                <div><span class="font-bold text-white">{{ $totalMtqPop }}</span>&nbsp;/ {{ $quotaMtqPop }}</div>
                                             </div>
                                             <div class="border-t border-white/[0.08] my-1.5"></div>
-                                            <div class="h-[36px] flex items-center justify-center font-medium text-xs">
-                                                <div><span class="font-bold text-white">{{ $countPi }}</span>&nbsp;/ {{ $quotaPi }}</div>
+                                            <div class="h-[36px] flex items-center justify-center font-medium text-[11px]">
+                                                <div><span class="font-bold text-emerald-400">{{ $countPa }} PA</span>&nbsp;• <span class="font-bold text-pink-400">{{ $countPi }} PI</span></div>
                                             </div>
                                         </div>
                                     @elseif($comp->code === 'TMJ')

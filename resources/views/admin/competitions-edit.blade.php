@@ -384,9 +384,16 @@
                                                 <option value="tutup" {{ $status_pi === 'tutup' ? 'selected' : '' }}>Tutup</option>
                                                 <option value="selesai" {{ $status_pi === 'selesai' ? 'selected' : '' }}>Selesai</option>
                                             </select>
-                                        </div>
+                                </div>
+
+                                <div class="p-3.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-xs flex items-start gap-2.5">
+                                    <i data-lucide="info" class="w-4 h-4 shrink-0 text-cyan-400 mt-0.5"></i>
+                                    <div>
+                                        <p class="font-bold text-white">Sistem Kuota Fleksibel (Total Pool):</p>
+                                        <p class="text-[11px] text-slate-300 mt-0.5">Total kuota pendaftaran adalah gabungan (Kuota PA + Kuota PI). Pendaftaran tidak dibatasi kaku per gender (misal PA bisa lebih banyak atau sebaliknya), namun undian giliran nomor peserta dan penjurian tetap dipisah secara otomatis.</p>
                                     </div>
                                 </div>
+                            </div>
 
                                 <!-- KHUSUS POP SINGER: DAFTAR LAGU PILIHAN -->
                                 @if($competition->code === 'POP' || \Illuminate\Support\Str::contains(strtolower($competition->slug), 'pop') || \Illuminate\Support\Str::contains(strtolower($competition->name), 'pop'))

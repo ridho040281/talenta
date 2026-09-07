@@ -321,6 +321,9 @@ class CollectiveRegistrationController extends Controller
 
                     $subCategory = $targetClass.' - '.$matchType;
                 }
+            } elseif (in_array($code, ['MTQ', 'POP'])) {
+                $matchType = ($gender === 'P') ? 'Putri (PI)' : 'Putra (PA)';
+                $subCategory = $matchType;
             }
 
             $teamName = trim($row['I'] ?? '');
@@ -563,15 +566,24 @@ class CollectiveRegistrationController extends Controller
                     $regCode = strtoupper($comp->code).'-'.strtoupper(Str::random(6));
                 }
 
+                $matchType = $row['match_type'] ?? null;
+                $subCategory = $row['sub_category'] ?? null;
+
+                if (in_array($comp->code, ['MTQ', 'POP'])) {
+                    $rowGender = ! empty($row['gender']) ? $row['gender'] : 'L';
+                    $matchType = ($rowGender === 'P') ? 'Putri (PI)' : 'Putra (PA)';
+                    $subCategory = $matchType;
+                }
+
                 $registration = Registration::create([
                     'competition_id' => $comp->id,
                     'user_id' => $user->id,
                     'invoice_id' => $invoice->id,
                     'registration_code' => $regCode,
                     'team_name' => ! empty($row['team_name']) ? $row['team_name'] : null,
-                    'sub_category' => $row['sub_category'] ?? null,
+                    'sub_category' => $subCategory,
                     'target_class' => $row['target_class'] ?? null,
-                    'match_type' => $row['match_type'] ?? null,
+                    'match_type' => $matchType,
                     'chosen_song' => ! empty($row['chosen_song']) ? $row['chosen_song'] : null,
                     'institution_name' => ! empty($row['institution_name']) ? $row['institution_name'] : ($user->institution_name ?? 'Mandiri'),
                     'official_name' => ! empty($row['official_name']) ? $row['official_name'] : $user->name,

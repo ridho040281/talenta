@@ -289,7 +289,7 @@
                                     @if($c->code === 'BLT')
                                         Kuota: <strong class="text-slate-200">{{ ($c->tier_quotas['A_tunggal_pa'] ?? 16) + ($c->tier_quotas['B_tunggal_pa'] ?? 16) + ($c->tier_quotas['C_tunggal_pa'] ?? 16) + ($c->tier_quotas['A_tunggal_pi'] ?? 16) + ($c->tier_quotas['B_tunggal_pi'] ?? 16) + ($c->tier_quotas['C_tunggal_pi'] ?? 16) }} Tunggal / {{ ($c->tier_quotas['ganda_pa'] ?? 10) + ($c->tier_quotas['ganda_pi'] ?? 10) }} Ganda</strong> • <span class="capitalize font-semibold text-slate-300">Tunggal & Ganda PA/PI</span>
                                     @elseif(in_array($c->code, ['MTQ', 'POP']))
-                                        Kuota: <strong class="text-slate-200">{{ $c->tier_quotas['pa'] ?? ceil($c->quota / 2) }} PA / {{ $c->tier_quotas['pi'] ?? floor($c->quota / 2) }} PI</strong> • <span class="font-semibold text-slate-300">Individu PA & PI</span>
+                                        Kuota: <strong class="text-slate-200">{{ $c->quota }} Peserta</strong> • <span class="font-semibold text-slate-300">Gabungan PA & PI</span>
                                     @elseif($c->code === 'TMJ')
                                         Kuota: <strong class="text-slate-200">{{ ($c->tier_quotas['A_tunggal_pa'] ?? 10) + ($c->tier_quotas['B_tunggal_pa'] ?? 10) + ($c->tier_quotas['A_tunggal_pi'] ?? 10) + ($c->tier_quotas['B_tunggal_pi'] ?? 10) }} Total</strong> • <span class="font-semibold text-slate-300">Tunggal Kat A & B (PA/PI)</span>
                                     @elseif($c->isUnlimitedQuota())

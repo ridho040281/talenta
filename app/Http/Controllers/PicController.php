@@ -684,7 +684,7 @@ class PicController extends Controller
 
         // Check quota if ignore_quota is not checked
         if (! $request->boolean('ignore_quota')) {
-            if ($competition->quota > 0 && ! in_array($competition->code, ['BLT', 'TMJ', 'MTQ', 'POP'])) {
+            if ($competition->quota > 0 && ! in_array($competition->code, ['BLT', 'TMJ'])) {
                 $currentTotal = Registration::where('competition_id', $competition->id)
                     ->whereIn('status', ['pending', 'verified'])
                     ->count();

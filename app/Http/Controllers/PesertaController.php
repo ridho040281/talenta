@@ -120,7 +120,7 @@ class PesertaController extends Controller
         }
 
         // Enforce quota limit only if quota is explicitly greater than 0 (0 = unlimited)
-        if ($competition->quota > 0 && ! in_array($competition->code, ['BLT', 'TMJ', 'MTQ', 'POP'])) {
+        if ($competition->quota > 0 && ! in_array($competition->code, ['BLT', 'TMJ'])) {
             $currentTotal = Registration::where('competition_id', $competition->id)
                 ->whereIn('status', ['pending', 'verified'])
                 ->count();
@@ -193,27 +193,6 @@ class PesertaController extends Controller
                     if ($currentTierTotal >= $maxQuota) {
                         return back()->with('error', "Mohon maaf, kuota pendaftaran Bulu Tangkis untuk {$targetClass} - {$matchType} telah penuh ({$maxQuota} peserta).");
                     }
-                }
-            }
-        }
-
-        // Enforce tier quotas for MTQ & Pop Singer (PA / PI)
-        if (in_array($competition->code, ['MTQ', 'POP'])) {
-            $tierQuotas = $competition->tier_quotas;
-            $firstGender = $request->input('members.0.gender', 'L');
-            $sectorKey = ($firstGender === 'P') ? 'pi' : 'pa';
-            $maxQuota = (int) ($tierQuotas[$sectorKey] ?? 0);
-            if ($maxQuota > 0) {
-                $currentSectorTotal = Registration::where('competition_id', $competition->id)
-                    ->whereIn('status', ['pending', 'verified'])
-                    ->whereHas('members', function ($q) use ($firstGender) {
-                        $q->where('gender', $firstGender);
-                    })
-                    ->count();
-                if ($currentSectorTotal >= $maxQuota) {
-                    $sectorLabel = ($firstGender === 'P') ? 'Putri (PI)' : 'Putra (PA)';
-
-                    return back()->with('error', "Mohon maaf, kuota pendaftaran {$competition->name} untuk sektor {$sectorLabel} telah penuh ({$maxQuota} peserta).");
                 }
             }
         }
@@ -323,6 +302,7 @@ class PesertaController extends Controller
         } elseif ($isPopSinger || $competition->code === 'MTQ') {
             $firstGender = $validated['members'][0]['gender'] ?? 'L';
             $subCategory = ($firstGender === 'P') ? 'Putri (PI)' : 'Putra (PA)';
+            $validated['match_type'] = $subCategory;
         }
 
         $teamName = $validated['team_name'] ?? null;

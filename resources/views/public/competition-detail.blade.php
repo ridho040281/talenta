@@ -198,23 +198,7 @@
                                 ['group' => 'Tunggal Putri (PI)', 'icon' => 'user', 'color' => 'pink', 'name' => 'Kat A (Kelas 1–3 SD/MI)', 'fee' => $competition->tier_fees['A_tunggal_pi'] ?? 35000, 'quota' => $competition->tier_quotas['A_tunggal_pi'] ?? 10, 'count' => $countTmjTunggalPiA, 'unit' => 'Peserta'],
                                 ['group' => 'Tunggal Putri (PI)', 'icon' => 'user', 'color' => 'pink', 'name' => 'Kat B (Kelas 4–6 SD/MI)', 'fee' => $competition->tier_fees['B_tunggal_pi'] ?? 40000, 'quota' => $competition->tier_quotas['B_tunggal_pi'] ?? 10, 'count' => $countTmjTunggalPiB, 'unit' => 'Peserta'],
                             ];
-                        } elseif ($isMtqPop && (($competition->tier_fees['pa'] ?? 0) != ($competition->tier_fees['pi'] ?? 0) || !empty($competition->tier_quotas['pa']))) {
-                            $countPa = $vRegs->filter(fn($r) => $r->primary_gender === 'L')->count();
-                            $countPi = $vRegs->filter(fn($r) => $r->primary_gender === 'P')->count();
-
-                            $detailTiers = [
-                                ['group' => 'Kategori Peserta', 'icon' => 'user', 'color' => 'emerald', 'name' => 'Putra (PA)', 'fee' => $competition->tier_fees['pa'] ?? $competition->registration_fee, 'quota' => $competition->tier_quotas['pa'] ?? (int) ceil($competition->quota / 2), 'count' => $countPa, 'unit' => 'Peserta'],
-                                ['group' => 'Kategori Peserta', 'icon' => 'user', 'color' => 'pink', 'name' => 'Putri (PI)', 'fee' => $competition->tier_fees['pi'] ?? $competition->registration_fee, 'quota' => $competition->tier_quotas['pi'] ?? (int) floor($competition->quota / 2), 'count' => $countPi, 'unit' => 'Peserta'],
-                            ];
                         }
-
-                        $verifiedUnit = match(strtolower($competition->type)) {
-                            'regu' => 'Regu',
-                            'tim' => 'Tim',
-                            'kelompok' => 'Kelompok',
-                            'pasangan' => 'Pasangan',
-                            default => 'Peserta',
-                        };
                     @endphp
 
                     @if(!empty($detailTiers))
@@ -331,6 +315,27 @@
                                     </div>
                                     <div class="w-full bg-white/[0.08] h-2 rounded-full overflow-hidden p-0.5 border border-white/[0.05]">
                                         <div class="bg-gradient-to-r {{ $isFull ? 'from-rose-500 to-red-600' : ($isLow ? 'from-amber-400 to-orange-500' : 'from-[#7A5AF8] to-[#4E6EFF]') }} h-full rounded-full transition-all duration-300" style="width: {{ $pct }}%"></div>
+                                    </div>
+                                </div>
+                            @endif
+
+                            @if($isMtqPop)
+                                @php
+                                    $countPa = $vRegs->filter(fn($r) => $r->primary_gender === 'L')->count();
+                                    $countPi = $vRegs->filter(fn($r) => $r->primary_gender === 'P')->count();
+                                @endphp
+                                <div class="flex items-center justify-between gap-2 pt-1">
+                                    <div class="flex-1 bg-cyan-500/10 border border-cyan-500/20 rounded-xl px-3 py-1.5 flex items-center justify-between text-[11px]">
+                                        <span class="text-cyan-300 font-medium flex items-center gap-1">
+                                            <i data-lucide="user" class="w-3.5 h-3.5 text-cyan-400"></i> Putra (PA)
+                                        </span>
+                                        <span class="font-bold text-cyan-400 font-mono">{{ $countPa }}</span>
+                                    </div>
+                                    <div class="flex-1 bg-pink-500/10 border border-pink-500/20 rounded-xl px-3 py-1.5 flex items-center justify-between text-[11px]">
+                                        <span class="text-pink-300 font-medium flex items-center gap-1">
+                                            <i data-lucide="user" class="w-3.5 h-3.5 text-pink-400"></i> Putri (PI)
+                                        </span>
+                                        <span class="font-bold text-pink-400 font-mono">{{ $countPi }}</span>
                                     </div>
                                 </div>
                             @endif
