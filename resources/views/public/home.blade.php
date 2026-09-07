@@ -1209,7 +1209,10 @@
                 <div class="relative z-10 flex flex-wrap items-center justify-center gap-4 sm:gap-8 pt-2 pb-1">
                     @foreach($sponsorLogos as $logo)
                         <div class="p-3 sm:p-4 rounded-2xl bg-[#0C111D]/80 border border-white/[0.08] hover:border-[#7A5AF8]/50 hover:bg-[#0C111D] transition-all duration-300 group flex items-center justify-center shadow-lg">
-                            <img src="{{ asset('storage/' . $logo) }}" alt="Logo Sponsor" class="h-12 sm:h-16 lg:h-20 w-auto max-w-[160px] sm:max-w-[200px] object-contain drop-shadow-md group-hover:scale-105 transition-transform duration-300">
+                            <img src="{{ asset('storage/' . $logo) }}" 
+                                 alt="Logo Sponsor" 
+                                 class="h-12 sm:h-16 lg:h-20 w-auto max-w-[160px] sm:max-w-[200px] object-contain drop-shadow-md group-hover:scale-105 transition-transform duration-300"
+                                 onerror="this.closest('.group')?.remove();">
                         </div>
                     @endforeach
                 </div>
