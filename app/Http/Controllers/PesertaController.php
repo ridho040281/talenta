@@ -430,7 +430,7 @@ class PesertaController extends Controller
             WablasNotificationService::notifyPicNewRegistration($registration);
 
             // 3. Ke Bendahara Panitia (Pembayaran Masuk & Cek Mutasi Rekening)
-            WablasNotificationService::notifyTreasurerNewPayment($registration, $fee);
+            WablasNotificationService::notifyTreasurerNewPayment($registration, $registration->fee);
         } catch (\Throwable $e) {
             // Non-blocking
         }

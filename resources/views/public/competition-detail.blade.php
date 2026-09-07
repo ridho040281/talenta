@@ -153,14 +153,53 @@
                         <span class="font-bold text-xs text-amber-300">{{ $regInfo['deadline_formatted'] }} WIB</span>
                     </div>
                     @endif
-                    <div class="flex items-center justify-between">
-                        <span class="text-slate-400">Biaya Pendaftaran:</span>
-                        @if($competition->code === 'BLT')
-                            <span class="font-bold text-xs text-amber-300 text-right">Rp 130k – Rp 200k (Tunggal & Ganda PA/PI)</span>
-                        @else
-                            <span class="font-bold text-sm text-white">{{ $competition->registration_fee > 0 ? 'Rp ' . number_format($competition->registration_fee, 0, ',', '.') : 'GRATIS' }}</span>
-                        @endif
+                    <div class="flex items-start justify-between gap-2">
+                        <span class="text-slate-400 shrink-0">Biaya Pendaftaran:</span>
+                        <span class="font-bold text-sm {{ in_array($competition->code, ['BLT', 'TMJ']) ? 'text-amber-300' : 'text-white' }} text-right">{{ $competition->fee_display }}</span>
                     </div>
+
+                    @if($competition->code === 'BLT')
+                        <div class="p-3 rounded-2xl bg-black/40 border border-white/[0.06] text-[11px] space-y-1.5 mt-1">
+                            <div class="flex items-center justify-between text-slate-300">
+                                <span>Tunggal Kat A (Kls 1–2):</span>
+                                <span class="font-bold font-mono text-emerald-400">Rp {{ number_format($competition->tier_fees['A_tunggal_pa'] ?? 100000, 0, ',', '.') }}</span>
+                            </div>
+                            <div class="flex items-center justify-between text-slate-300">
+                                <span>Tunggal Kat B (Kls 3–4):</span>
+                                <span class="font-bold font-mono text-emerald-400">Rp {{ number_format($competition->tier_fees['B_tunggal_pa'] ?? 130000, 0, ',', '.') }}</span>
+                            </div>
+                            <div class="flex items-center justify-between text-slate-300">
+                                <span>Tunggal Kat C (Kls 5–6):</span>
+                                <span class="font-bold font-mono text-emerald-400">Rp {{ number_format($competition->tier_fees['C_tunggal_pa'] ?? 150000, 0, ',', '.') }}</span>
+                            </div>
+                            <div class="flex items-center justify-between text-slate-300 border-t border-white/[0.06] pt-1">
+                                <span>Ganda (PA & PI):</span>
+                                <span class="font-bold font-mono text-[#84D0FF]">Rp {{ number_format($competition->tier_fees['ganda_pa'] ?? 200000, 0, ',', '.') }}</span>
+                            </div>
+                        </div>
+                    @elseif($competition->code === 'TMJ')
+                        <div class="p-3 rounded-2xl bg-black/40 border border-white/[0.06] text-[11px] space-y-1.5 mt-1">
+                            <div class="flex items-center justify-between text-slate-300">
+                                <span>Tunggal Kat A (Kls 1–3 SD/MI):</span>
+                                <span class="font-bold font-mono text-emerald-400">Rp {{ number_format($competition->tier_fees['A_tunggal_pa'] ?? 35000, 0, ',', '.') }}</span>
+                            </div>
+                            <div class="flex items-center justify-between text-slate-300">
+                                <span>Tunggal Kat B (Kls 4–6 SD/MI):</span>
+                                <span class="font-bold font-mono text-emerald-400">Rp {{ number_format($competition->tier_fees['B_tunggal_pa'] ?? 40000, 0, ',', '.') }}</span>
+                            </div>
+                        </div>
+                    @elseif(in_array($competition->code, ['MTQ', 'POP']) && ($competition->tier_fees['pa'] ?? 0) != ($competition->tier_fees['pi'] ?? 0))
+                        <div class="p-3 rounded-2xl bg-black/40 border border-white/[0.06] text-[11px] space-y-1.5 mt-1">
+                            <div class="flex items-center justify-between text-slate-300">
+                                <span>Putra (PA):</span>
+                                <span class="font-bold font-mono text-emerald-400">Rp {{ number_format($competition->tier_fees['pa'] ?? $competition->registration_fee, 0, ',', '.') }}</span>
+                            </div>
+                            <div class="flex items-center justify-between text-slate-300">
+                                <span>Putri (PI):</span>
+                                <span class="font-bold font-mono text-pink-400">Rp {{ number_format($competition->tier_fees['pi'] ?? $competition->registration_fee, 0, ',', '.') }}</span>
+                            </div>
+                        </div>
+                    @endif
                     <div class="flex items-center justify-between">
                         <span class="text-slate-400">Kuota Peserta:</span>
                         <span class="font-bold text-sm text-white text-right">{{ $competition->quota_display }}</span>
@@ -232,9 +271,18 @@
             </div>
 
             <!-- Contact Coordinator -->
+            @php
+                $picPhone = $competition->all_pic_phones[0] ?? ($competition->pic?->phone ?? \App\Models\AppSetting::get('whatsapp_admin_number', '6281234567890'));
+                $cleanPicPhone = preg_replace('/[^0-9]/', '', (string)$picPhone);
+                if (str_starts_with($cleanPicPhone, '0')) {
+                    $cleanPicPhone = '62' . substr($cleanPicPhone, 1);
+                } elseif (str_starts_with($cleanPicPhone, '8')) {
+                    $cleanPicPhone = '628' . substr($cleanPicPhone, 1);
+                }
+            @endphp
             <div class="glass-card rounded-3xl p-6 border border-white/[0.08] shadow-2xl text-center space-y-3">
                 <p class="text-xs font-bold text-slate-300">Butuh Bantuan Mengenai Cabang Lomba Ini?</p>
-                <a href="https://wa.me/6281234567890?text=Halo%20Panitia%20TALENTA,%20saya%20ingin%20bertanya%20tentang%20lomba%20{{ urlencode($competition->name) }}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black transition shadow-lg shadow-emerald-500/20">
+                <a href="https://wa.me/{{ $cleanPicPhone }}?text=Halo%20Panitia%20TALENTA,%20saya%20ingin%20bertanya%20tentang%20lomba%20{{ urlencode($competition->name) }}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black transition shadow-lg shadow-emerald-500/20">
                     <i data-lucide="message-circle" class="w-4 h-4"></i>
                     <span>Chat WhatsApp Koordinator</span>
                 </a>

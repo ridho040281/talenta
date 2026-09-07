@@ -53,6 +53,7 @@ class Competition extends Model
     }
 
     protected $appends = [
+        'fee_display',
         'tier_fees',
         'tier_quotas',
         'status_a_tunggal_pa',
@@ -534,6 +535,67 @@ class Competition extends Model
         }
 
         return $val;
+    }
+
+    public function getFeeDisplayAttribute(): string
+    {
+        if ($this->code === 'BLT') {
+            $tiers = $this->tier_fees;
+            $fees = array_values(array_filter([
+                $tiers['A_tunggal_pa'] ?? null,
+                $tiers['B_tunggal_pa'] ?? null,
+                $tiers['C_tunggal_pa'] ?? null,
+                $tiers['A_tunggal_pi'] ?? null,
+                $tiers['B_tunggal_pi'] ?? null,
+                $tiers['C_tunggal_pi'] ?? null,
+                $tiers['ganda_pa'] ?? null,
+                $tiers['ganda_pi'] ?? null,
+            ]));
+
+            if (! empty($fees)) {
+                $min = min($fees);
+                $max = max($fees);
+                if ($min == $max) {
+                    return $min > 0 ? 'Rp '.number_format($min, 0, ',', '.') : 'GRATIS';
+                }
+
+                return 'Rp '.number_format($min, 0, ',', '.').' – Rp '.number_format($max, 0, ',', '.').' (Tunggal & Ganda)';
+            }
+        }
+
+        if ($this->code === 'TMJ') {
+            $tiers = $this->tier_fees;
+            $fees = array_values(array_filter([
+                $tiers['A_tunggal_pa'] ?? null,
+                $tiers['B_tunggal_pa'] ?? null,
+                $tiers['A_tunggal_pi'] ?? null,
+                $tiers['B_tunggal_pi'] ?? null,
+            ]));
+
+            if (! empty($fees)) {
+                $min = min($fees);
+                $max = max($fees);
+                if ($min == $max) {
+                    return $min > 0 ? 'Rp '.number_format($min, 0, ',', '.') : 'GRATIS';
+                }
+
+                return 'Rp '.number_format($min, 0, ',', '.').' – Rp '.number_format($max, 0, ',', '.').' (Kat A & B)';
+            }
+        }
+
+        if (in_array($this->code, ['MTQ', 'POP'])) {
+            $prefix = strtolower($this->code);
+            $fPa = (float) AppSetting::get($prefix.'_fee_pa', $this->registration_fee);
+            $fPi = (float) AppSetting::get($prefix.'_fee_pi', $this->registration_fee);
+
+            if ($fPa == $fPi) {
+                return $fPa > 0 ? 'Rp '.number_format($fPa, 0, ',', '.') : 'GRATIS';
+            }
+
+            return 'Rp '.number_format($fPa, 0, ',', '.').' (PA) / Rp '.number_format($fPi, 0, ',', '.').' (PI)';
+        }
+
+        return ((float) $this->registration_fee) > 0 ? 'Rp '.number_format((float) $this->registration_fee, 0, ',', '.') : 'GRATIS';
     }
 
     public function getTierFee(string $tier): float

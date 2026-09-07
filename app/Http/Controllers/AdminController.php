@@ -382,9 +382,11 @@ class AdminController extends Controller
                              + (int) $request->input('blt_quota_a_tunggal_pi', 16)
                              + (int) $request->input('blt_quota_b_tunggal_pi', 16)
                              + (int) $request->input('blt_quota_c_tunggal_pi', 16);
+            $fA_pa = $request->filled('blt_fee_a_tunggal_pa') ? (float) $request->input('blt_fee_a_tunggal_pa') : (float) AppSetting::get('blt_fee_a_tunggal_pa', 130000);
             $competition->update([
                 'pic_id' => $primaryPic ?: $competition->pic_id,
                 'quota' => $bltTotalTunggal,
+                'registration_fee' => $fA_pa,
             ]);
         }
 
@@ -510,9 +512,11 @@ class AdminController extends Controller
             $qB_pa = $request->filled('tmj_quota_b_tunggal_pa') ? (int) $request->input('tmj_quota_b_tunggal_pa') : (int) AppSetting::get('tmj_quota_b_tunggal_pa', 10);
             $qA_pi = $request->filled('tmj_quota_a_tunggal_pi') ? (int) $request->input('tmj_quota_a_tunggal_pi') : (int) AppSetting::get('tmj_quota_a_tunggal_pi', 10);
             $qB_pi = $request->filled('tmj_quota_b_tunggal_pi') ? (int) $request->input('tmj_quota_b_tunggal_pi') : (int) AppSetting::get('tmj_quota_b_tunggal_pi', 10);
+            $fA_pa = $request->filled('tmj_fee_a_tunggal_pa') ? (float) $request->input('tmj_fee_a_tunggal_pa') : (float) AppSetting::get('tmj_fee_a_tunggal_pa', $competition->registration_fee ?: 35000);
             $competition->update([
                 'pic_id' => $primaryPic ?: $competition->pic_id,
                 'quota' => ($qA_pa + $qB_pa + $qA_pi + $qB_pi),
+                'registration_fee' => $fA_pa,
             ]);
         }
 
