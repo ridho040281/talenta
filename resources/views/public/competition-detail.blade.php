@@ -65,23 +65,23 @@
             @if($competition->show_guidelines && $competition->guidelines_embed_url)
             <!-- Petunjuk Teknis Lengkap (Juknis PDF Embed) -->
             <div class="glass-card rounded-3xl p-6 sm:p-8 border border-white/[0.08] shadow-2xl space-y-4">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.08] pb-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-2xl bg-rose-500/15 text-rose-400 border border-rose-500/30 flex items-center justify-center">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-white/[0.08] pb-4">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 rounded-2xl bg-rose-500/15 text-rose-400 border border-rose-500/30 flex items-center justify-center shrink-0">
                             <i data-lucide="file-text" class="w-5 h-5"></i>
                         </div>
-                        <div>
+                        <div class="min-w-0">
                             <h2 class="text-lg sm:text-xl font-black text-white font-display">Petunjuk Teknis (Juknis Resmi)</h2>
                             <p class="text-xs text-slate-400">Dokumen panduan, regulasi, dan petunjuk operasional pelaksanaan perlombaan</p>
                         </div>
                     </div>
 
-                    <div class="flex flex-wrap items-center gap-2">
-                        <a href="{{ $competition->guidelines_download_url ?? $competition->guidelines_embed_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-200 text-xs font-bold transition border border-white/[0.08]">
+                    <div class="flex items-center gap-2.5 shrink-0 flex-nowrap">
+                        <a href="{{ $competition->guidelines_download_url ?? $competition->guidelines_embed_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-200 text-xs font-bold transition border border-white/[0.08] whitespace-nowrap">
                             <i data-lucide="external-link" class="w-3.5 h-3.5 text-[#84D0FF]"></i>
                             <span>Buka di Tab Baru</span>
                         </a>
-                        <a href="{{ $competition->guidelines_download_url ?? $competition->guidelines_embed_url }}" target="_blank" rel="noopener noreferrer" download class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 text-xs font-bold transition">
+                        <a href="{{ $competition->guidelines_download_url ?? $competition->guidelines_embed_url }}" target="_blank" rel="noopener noreferrer" download class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 text-xs font-bold transition whitespace-nowrap">
                             <i data-lucide="download" class="w-3.5 h-3.5"></i>
                             <span>Unduh PDF</span>
                         </a>
