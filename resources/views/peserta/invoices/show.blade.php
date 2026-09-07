@@ -41,7 +41,11 @@
             <div class="text-right">
                 <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Total Pembayaran</span>
                 <span class="text-3xl font-black text-emerald-400 block font-mono">{{ $invoice->formatted_final_amount }}</span>
-                <span class="text-[11px] text-slate-500 font-medium">Nominal Pas Resmi</span>
+                @if($invoice->bonus_discount > 0)
+                    <span class="text-[11px] text-amber-300 font-bold block">🎁 Termasuk Bonus 10 Get 1 (-Rp {{ number_format($invoice->bonus_discount, 0, ',', '.') }})</span>
+                @else
+                    <span class="text-[11px] text-slate-500 font-medium">Nominal Pas Resmi</span>
+                @endif
             </div>
         </div>
 

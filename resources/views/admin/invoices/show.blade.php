@@ -67,7 +67,11 @@
                 <div class="p-4 rounded-2xl bg-slate-900 text-white space-y-1">
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Tagihan Yang Harus Dibayar:</span>
                     <p class="text-2xl font-black text-emerald-400">{{ $invoice->formatted_final_amount }}</p>
-                    <p class="text-[11px] text-slate-400">Total Biaya: {{ $invoice->formatted_total }} + Kode Unik: {{ $invoice->unique_code }}</p>
+                    @if($invoice->bonus_discount > 0)
+                        <p class="text-[11px] text-amber-300 font-bold">🎁 Termasuk Bonus 10 Get 1: Potongan -Rp {{ number_format($invoice->bonus_discount, 0, ',', '.') }} (Total Kotor: {{ $invoice->formatted_total }})</p>
+                    @else
+                        <p class="text-[11px] text-slate-400">Total Biaya: {{ $invoice->formatted_total }} + Kode Unik: {{ $invoice->unique_code }}</p>
+                    @endif
                 </div>
             </div>
 

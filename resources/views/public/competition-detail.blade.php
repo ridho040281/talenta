@@ -297,6 +297,12 @@
                                     {{ ((float)$competition->registration_fee) > 0 ? 'Rp ' . number_format($competition->registration_fee, 0, ',', '.') : 'GRATIS' }}
                                 </span>
                             </div>
+                            @if($competition->code === 'MIPA')
+                                <div class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300 flex items-start gap-2">
+                                    <i data-lucide="gift" class="w-4 h-4 text-amber-400 shrink-0 mt-0.5"></i>
+                                    <span><strong>Bonus Pendaftaran:</strong> Setiap kelipatan 10 peserta pada pendaftaran kolektif mendapatkan <strong>Bonus 1 peserta gratis</strong> (Daftar 10 Cukup Bayar 9)!</span>
+                                </div>
+                            @endif
                             <div class="flex items-center justify-between text-xs">
                                 <span class="text-slate-400">Kuota Peserta:</span>
                                 <span class="font-bold text-sm text-white font-mono">{{ $competition->quota_display }}</span>

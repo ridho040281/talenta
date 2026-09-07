@@ -36,17 +36,48 @@
                 <p class="text-2xl font-black text-emerald-300 font-display">{{ $validRowCount }}</p>
             </div>
 
-            <div class="p-4 rounded-2xl {{ $errorRowCount > 0 ? 'bg-rose-500/10 border border-rose-500/30' : 'bg-slate-900/80 border border-slate-800' }} space-y-1">
-                <span class="text-[11px] font-bold {{ $errorRowCount > 0 ? 'text-rose-400' : 'text-slate-400' }} uppercase tracking-wider">Data Bermasalah</span>
-                <p class="text-2xl font-black {{ $errorRowCount > 0 ? 'text-rose-300' : 'text-slate-300' }} font-display">{{ $errorRowCount }}</p>
-            </div>
+            @if(!empty($totalBonusDiscount) && $totalBonusDiscount > 0)
+                <div class="p-4 rounded-2xl bg-amber-500/15 border border-amber-500/40 space-y-1">
+                    <span class="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                        <i data-lucide="gift" class="w-3.5 h-3.5"></i>
+                        <span>Bonus 10 Get 1</span>
+                    </span>
+                    <p class="text-xl sm:text-2xl font-black text-amber-300 font-display font-mono">-Rp {{ number_format($totalBonusDiscount, 0, ',', '.') }}</p>
+                    <p class="text-[10px] text-amber-200/80 font-medium">Hemat biaya pendaftaran</p>
+                </div>
+            @else
+                <div class="p-4 rounded-2xl {{ $errorRowCount > 0 ? 'bg-rose-500/10 border border-rose-500/30' : 'bg-slate-900/80 border border-slate-800' }} space-y-1">
+                    <span class="text-[11px] font-bold {{ $errorRowCount > 0 ? 'text-rose-400' : 'text-slate-400' }} uppercase tracking-wider">Data Bermasalah</span>
+                    <p class="text-2xl font-black {{ $errorRowCount > 0 ? 'text-rose-300' : 'text-slate-300' }} font-display">{{ $errorRowCount }}</p>
+                </div>
+            @endif
 
             <div class="p-4 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-700 text-white space-y-1 shadow-lg shadow-emerald-600/20">
                 <span class="text-[10px] font-bold text-emerald-200 uppercase tracking-wider">Total Tagihan Invoice</span>
                 <p class="text-xl sm:text-2xl font-black font-display font-mono">Rp {{ number_format($finalAmount, 0, ',', '.') }}</p>
-                <p class="text-[10px] text-emerald-100 font-medium">Termasuk kode unik: +{{ $uniqueCode }}</p>
+                @if(!empty($totalBonusDiscount) && $totalBonusDiscount > 0)
+                    <p class="text-[10px] text-emerald-100 font-medium line-through opacity-75">Rp {{ number_format($totalFee, 0, ',', '.') }}</p>
+                @else
+                    <p class="text-[10px] text-emerald-100 font-medium">Nominal Pas Resmi</p>
+                @endif
             </div>
         </div>
+
+        @if(!empty($totalBonusDiscount) && $totalBonusDiscount > 0)
+            <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-amber-300 text-xs shadow-lg">
+                <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30">
+                    <i data-lucide="gift" class="w-4 h-4"></i>
+                </div>
+                <div class="space-y-1">
+                    <span class="font-bold block text-amber-200 text-sm">🎉 Selamat! Anda Berhak Mendapatkan Bonus Pendaftaran (10 Get 1)</span>
+                    <span class="text-slate-300 leading-relaxed">
+                        @foreach($bonusDiscounts as $b)
+                            Cabang <strong>{{ $b['competition_name'] }}</strong> ({{ $b['count'] }} Peserta) berhak mendapatkan <strong>Bonus {{ $b['free_count'] }} Peserta Gratis</strong> dengan potongan <strong class="text-emerald-400 font-mono">Rp {{ number_format($b['discount'], 0, ',', '.') }}</strong>.
+                        @endforeach
+                    </span>
+                </div>
+            </div>
+        @endif
 
         @if($errorRowCount > 0)
             <div class="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-3 text-rose-300 text-xs">
@@ -158,6 +189,9 @@
                         <div class="text-right">
                             <span class="text-[10px] text-slate-400 block uppercase font-bold">Total yang Harus Ditransfer</span>
                             <span class="text-lg font-black text-amber-400 font-mono">Rp {{ number_format($finalAmount, 0, ',', '.') }}</span>
+                            @if(!empty($totalBonusDiscount) && $totalBonusDiscount > 0)
+                                <span class="text-[10px] text-emerald-400 block font-bold">🎁 Hemat Bonus: -Rp {{ number_format($totalBonusDiscount, 0, ',', '.') }}</span>
+                            @endif
                         </div>
                     </div>
 

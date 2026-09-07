@@ -372,9 +372,16 @@
                             <tr x-show="activeCategory === 'all' || activeCategory === '{{ $comp->category->slug }}'" class="{{ $rowTheme['bg'] }} {{ $rowTheme['border_l'] }} transition-colors duration-150 border-b border-white/[0.05]">
                                 
                                 <td class="py-3.5 px-5 min-w-[200px] align-middle">
-                                    <a href="{{ route('competition.detail', $comp->slug) }}" class="font-extrabold text-white hover:text-[#A594FD] transition text-sm sm:text-base block">
-                                        {{ $comp->name }}
-                                    </a>
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <a href="{{ route('competition.detail', $comp->slug) }}" class="font-extrabold text-white hover:text-[#A594FD] transition text-sm sm:text-base block">
+                                            {{ $comp->name }}
+                                        </a>
+                                        @if($comp->code === 'MIPA')
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 shadow-sm shadow-amber-500/20">
+                                                🎁 Bonus 10 Get 1
+                                            </span>
+                                        @endif
+                                    </div>
                                     <span class="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
                                         <i data-lucide="map-pin" class="w-3 h-3 text-[#4E6EFF] shrink-0"></i>
                                         <span>{{ $comp->venue ?? 'Kampus MTsN 1 Blitar' }}</span>

@@ -89,7 +89,12 @@
                                 </span>
                             </td>
                             <td class="py-4 px-6 font-black text-emerald-400 text-sm whitespace-nowrap">
-                                {{ $inv->formatted_final_amount }}
+                                <div>{{ $inv->formatted_final_amount }}</div>
+                                @if($inv->bonus_discount > 0)
+                                    <span class="inline-flex items-center gap-1 text-[10px] text-amber-300 font-bold">
+                                        🎁 Bonus -Rp {{ number_format($inv->bonus_discount, 0, ',', '.') }}
+                                    </span>
+                                @endif
                             </td>
                             <td class="py-4 px-6 text-center">
                                 @if($inv->payment_proof)

@@ -480,9 +480,15 @@ class CollectiveRegistrationController extends Controller
             return back()->with('error', 'Tidak ada baris data peserta yang dapat dibaca pada file Excel.');
         }
 
+        $validRows = array_filter($parsedRows, fn ($item) => ! empty($item['is_valid']) && ! empty($item['competition_id']));
+        $bonusResult = self::calculateBonusDiscounts($validRows, $competitions);
+        $totalBonusDiscount = $bonusResult['total_bonus_discount'];
+        $bonusDiscounts = $bonusResult['bonus_discounts'];
+        $bonusSummaryList = $bonusResult['bonus_summary_list'];
+
         // Exact nominal amount without unique rupiah code
         $uniqueCode = 0;
-        $finalAmount = $totalFee;
+        $finalAmount = max(0, $totalFee - $totalBonusDiscount);
 
         $bankInfo = [
             'bank_name' => AppSetting::get('bank_name', 'Bank Syariah Indonesia (BSI)'),
@@ -495,10 +501,73 @@ class CollectiveRegistrationController extends Controller
             'validRowCount',
             'errorRowCount',
             'totalFee',
+            'totalBonusDiscount',
+            'bonusDiscounts',
+            'bonusSummaryList',
             'uniqueCode',
             'finalAmount',
             'bankInfo'
         ));
+    }
+
+    /**
+     * Calculate Bonus (10 Get 1) discounts for collective registration rows
+     */
+    public static function calculateBonusDiscounts(array $validRows, $competitions = null): array
+    {
+        $validRowsByComp = [];
+        foreach ($validRows as $row) {
+            $code = $row['competition_code'] ?? '';
+            if (! empty($code)) {
+                $validRowsByComp[$code][] = $row;
+            }
+        }
+
+        $bonusDiscounts = [];
+        $totalBonusDiscount = 0;
+        $bonusSummaryList = [];
+
+        foreach ($validRowsByComp as $compCode => $rowsInComp) {
+            $compObj = ($competitions && isset($competitions[$compCode]))
+                ? $competitions[$compCode]
+                : Competition::where('code', $compCode)->first();
+
+            if (! $compObj) {
+                continue;
+            }
+
+            // Bonus rule: MIPA is default active (10 get 1), or if explicitly configured in AppSetting
+            $isBonusActive = ($compCode === 'MIPA') || (AppSetting::get('bonus_active_'.strtolower($compCode), '0') === '1');
+            $minQuota = (int) AppSetting::get('bonus_min_'.strtolower($compCode), 10);
+            $freeCountPerBatch = (int) AppSetting::get('bonus_free_'.strtolower($compCode), 1);
+
+            $count = count($rowsInComp);
+            if ($isBonusActive && $minQuota > 0 && $count >= $minQuota) {
+                $freeCount = (int) (floor($count / $minQuota) * $freeCountPerBatch);
+                $unitFee = (float) $compObj->registration_fee;
+                $discount = $freeCount * $unitFee;
+
+                if ($discount > 0) {
+                    $totalBonusDiscount += $discount;
+                    $bonusDiscounts[$compCode] = [
+                        'competition_name' => $compObj->name,
+                        'competition_code' => $compCode,
+                        'count' => $count,
+                        'free_count' => $freeCount,
+                        'discount' => $discount,
+                        'unit_fee' => $unitFee,
+                        'text' => "Bonus {$freeCount} Peserta Gratis ({$count} Peserta didaftarkan)",
+                    ];
+                    $bonusSummaryList[] = "Bonus {$compObj->name}: {$freeCount} Peserta Gratis (-Rp ".number_format($discount, 0, ',', '.').')';
+                }
+            }
+        }
+
+        return [
+            'bonus_discounts' => $bonusDiscounts,
+            'total_bonus_discount' => $totalBonusDiscount,
+            'bonus_summary_list' => $bonusSummaryList,
+        ];
     }
 
     /**
@@ -535,9 +604,18 @@ class CollectiveRegistrationController extends Controller
         }
 
         $totalFee = array_sum(array_column($validRows, 'fee'));
+        $bonusResult = self::calculateBonusDiscounts($validRows);
+        $totalBonusDiscount = $bonusResult['total_bonus_discount'];
+        $bonusSummaryList = $bonusResult['bonus_summary_list'];
+
         $uniqueCode = 0;
-        $finalAmount = $totalFee;
+        $finalAmount = max(0, $totalFee - $totalBonusDiscount);
         $invoiceNumber = 'INV-'.date('Ymd').'-'.strtoupper(Str::random(5));
+
+        $notes = 'Pendaftaran kolektif '.count($validRows).' peserta dari '.($user->institution_name ?? $user->name);
+        if (! empty($bonusSummaryList)) {
+            $notes .= ' • '.implode(', ', $bonusSummaryList);
+        }
 
         // Store payment proof file
         $paymentProofPath = $request->file('payment_proof')->store('payments', 'public');
@@ -554,7 +632,7 @@ class CollectiveRegistrationController extends Controller
                 'final_amount' => $finalAmount,
                 'payment_proof' => $paymentProofPath,
                 'status' => 'pending',
-                'notes' => 'Pendaftaran kolektif '.count($validRows).' peserta dari '.($user->institution_name ?? $user->name),
+                'notes' => $notes,
             ]);
 
             // 2. Create Registrations & Registration Members
