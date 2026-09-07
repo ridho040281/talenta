@@ -269,4 +269,56 @@ class WablasNotificationService
             return false;
         }
     }
+
+    /**
+     * Send collective invoice notification alert specifically to Treasurer (Bendahara)
+     */
+    public static function notifyTreasurerCollectiveInvoice($invoice): bool
+    {
+        try {
+            if (! $invoice) {
+                return false;
+            }
+
+            // Get Treasurer Phone from AppSetting or role
+            $treasurerPhone = trim(AppSetting::get('treasurer_phone_number', ''));
+            if (empty($treasurerPhone)) {
+                // Fallback to superadmin phone if available
+                $superAdmin = User::where('role', 'superadmin')->whereNotNull('phone')->first();
+                $treasurerPhone = $superAdmin->phone ?? '';
+            }
+
+            if (empty($treasurerPhone)) {
+                return false; // No treasurer phone configured
+            }
+
+            $user = $invoice->user;
+            $institutionName = $user->institution_name ?: ($invoice->notes ?? 'Sekolah/Lembaga');
+            $regCount = $invoice->registrations()->count();
+
+            // Try dedicated template 'treasurer_collective_invoice', fallback to 'treasurer_new_payment'
+            $templateCode = WhatsappTemplate::where('code', 'treasurer_collective_invoice')->where('is_active', true)->exists()
+                ? 'treasurer_collective_invoice'
+                : 'treasurer_new_payment';
+
+            return static::sendAutoNotification($templateCode, [
+                'phone' => $treasurerPhone,
+                'nama_peserta' => $user->name ?? 'Official Sekolah',
+                'nama_pendaftar' => $user->name ?? 'Official Sekolah',
+                'nama_sekolah' => $institutionName,
+                'nama_instansi' => $institutionName,
+                'cabang_lomba' => "{$regCount} Peserta (Kolektif)",
+                'kode_pendaftaran' => $invoice->invoice_number,
+                'nominal_biaya' => $invoice->final_amount,
+                'jumlah_peserta' => $regCount,
+                'phone_pendaftar' => $user->phone ?? '-',
+                'waktu_daftar' => now()->translatedFormat('d M Y H:i').' WIB',
+                'link_login' => route('admin.invoices.show', $invoice->id),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('notifyTreasurerCollectiveInvoice Error: '.$e->getMessage());
+
+            return false;
+        }
+    }
 }

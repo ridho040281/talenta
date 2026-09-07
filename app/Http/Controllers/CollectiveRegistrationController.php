@@ -696,15 +696,14 @@ class CollectiveRegistrationController extends Controller
                         'nama_sekolah' => $user->institution_name ?? 'Sekolah/Madrasah',
                         'cabang_lomba' => count($validRows).' Peserta (Kolektif)',
                         'kode_pendaftaran' => $invoice->invoice_number,
+                        'nominal_biaya' => $finalAmount,
+                        'jumlah_peserta' => count($validRows),
                         'link_login' => route('peserta.invoices.show', $invoice->id),
                     ]);
                 }
 
-                // 2. Notify Treasurer about New Collective Payment
-                $firstReg = Registration::with('competition')->where('invoice_id', $invoice->id)->first();
-                if ($firstReg) {
-                    WablasNotificationService::notifyTreasurerNewPayment($firstReg, $finalAmount);
-                }
+                // 2. Notify Treasurer specifically about New Collective Invoice & Payment Proof
+                WablasNotificationService::notifyTreasurerCollectiveInvoice($invoice);
             } catch (\Throwable $e) {
                 // Non-blocking
             }
@@ -777,6 +776,13 @@ class CollectiveRegistrationController extends Controller
             'payment_proof' => $path,
             'status' => 'pending',
         ]);
+
+        // Trigger WhatsApp Notification to Treasurer about uploaded proof
+        try {
+            WablasNotificationService::notifyTreasurerCollectiveInvoice($invoice);
+        } catch (\Throwable $e) {
+            // Non-blocking
+        }
 
         return back()->with('success', 'Bukti transfer berhasil diunggah! Panitia akan segera memverifikasi pendaftaran kolektif Anda.');
     }
@@ -872,14 +878,21 @@ class CollectiveRegistrationController extends Controller
                 $invoice->loadMissing(['user', 'registrations.competition']);
                 $targetPhone = $invoice->user?->phone;
                 if (! empty($targetPhone)) {
-                    WablasNotificationService::sendAutoNotification('registration_verified', [
+                    $templateCode = \App\Models\WhatsappTemplate::where('code', 'collective_invoice_verified')->where('is_active', true)->exists()
+                        ? 'collective_invoice_verified'
+                        : 'registration_verified';
+
+                    WablasNotificationService::sendAutoNotification($templateCode, [
                         'phone' => $targetPhone,
                         'nama_peserta' => $invoice->user->name,
+                        'nama_pendaftar' => $invoice->user->name,
                         'nisn' => $invoice->user->nisn ?? '-',
                         'nama_sekolah' => $invoice->user->institution_name ?? 'Sekolah/Madrasah',
                         'cabang_lomba' => $invoice->registrations->count().' Peserta (Pendaftaran Kolektif)',
                         'no_peserta' => 'Invoice: '.$invoice->invoice_number,
                         'kode_pendaftaran' => $invoice->invoice_number,
+                        'nominal_biaya' => $invoice->final_amount,
+                        'jumlah_peserta' => $invoice->registrations->count(),
                         'link_scoreboard' => url('/'),
                         'link_login' => route('peserta.invoices.show', $invoice->id),
                     ]);
@@ -910,13 +923,20 @@ class CollectiveRegistrationController extends Controller
                 $invoice->loadMissing(['user', 'registrations.competition']);
                 $targetPhone = $invoice->user?->phone;
                 if (! empty($targetPhone)) {
-                    WablasNotificationService::sendAutoNotification('registration_rejected', [
+                    $templateCode = \App\Models\WhatsappTemplate::where('code', 'collective_invoice_rejected')->where('is_active', true)->exists()
+                        ? 'collective_invoice_rejected'
+                        : 'registration_rejected';
+
+                    WablasNotificationService::sendAutoNotification($templateCode, [
                         'phone' => $targetPhone,
                         'nama_peserta' => $invoice->user->name,
+                        'nama_pendaftar' => $invoice->user->name,
                         'nisn' => $invoice->user->nisn ?? '-',
                         'nama_sekolah' => $invoice->user->institution_name ?? 'Sekolah/Madrasah',
                         'cabang_lomba' => $invoice->registrations->count().' Peserta (Pendaftaran Kolektif)',
                         'kode_pendaftaran' => $invoice->invoice_number,
+                        'nominal_biaya' => $invoice->final_amount,
+                        'jumlah_peserta' => $invoice->registrations->count(),
                         'catatan_verifikasi' => $request->rejection_reason ?? 'Bukti transfer / berkas tidak sesuai.',
                         'link_login' => route('peserta.invoices.show', $invoice->id),
                     ]);

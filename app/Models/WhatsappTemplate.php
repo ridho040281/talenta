@@ -101,6 +101,30 @@ class WhatsappTemplate extends Model
                 'is_active' => true,
                 'is_system' => true,
             ],
+            [
+                'code' => 'treasurer_collective_invoice',
+                'name' => '10. Alert Bendahara: Pendaftaran Kolektif Masuk (Cek Mutasi)',
+                'description' => 'Terkirim otomatis ke WhatsApp Bendahara saat sekolah mengirim pendaftaran kolektif rombongan beserta bukti transfer.',
+                'message' => "🏢 *ALERT BENDAHARA - PENDAFTARAN KOLEKTIF MASUK*\n\nAssalamu'alaikum Wr. Wb.\nYth. Bendahara Panitia {nama_kegiatan},\n\nTelah masuk pendaftaran kolektif (rombongan sekolah) baru beserta bukti transfer bank yang *SIAP DICEK MUTASI & DIVERIFIKASI*:\n\n🏫 *Asal Sekolah / Lembaga:* {nama_sekolah}\n👤 *Official / Penanggung Jawab:* {nama_pendaftar} ({no_wa})\n👥 *Total Siswa Didaftarkan:* {jumlah_peserta} Peserta\n📑 *No. Invoice Tagihan:* {kode_pendaftaran}\n💵 *Total Nominal Transfer:* Rp {nominal_biaya}\n\n📌 Bukti transfer bank telah diunggah oleh official. Silakan periksa mutasi rekening dan klik tautan berikut untuk verifikasi invoice:\n{link_login}\n\n_Sistem Keuangan Kolektif {nama_aplikasi} {nama_instansi}_",
+                'is_active' => true,
+                'is_system' => true,
+            ],
+            [
+                'code' => 'collective_invoice_verified',
+                'name' => '11. Notifikasi Kolektif: Tagihan Lunas & Siswa Terverifikasi Sah',
+                'description' => 'Terkirim otomatis ke WhatsApp official sekolah saat bendahara menyetujui invoice pendaftaran kolektif.',
+                'message' => "Assalamu'alaikum Wr. Wb.\nYth. Official & Pembina {nama_sekolah} ({nama_pendaftar}),\n\nALHAMDULILLAH! Pembayaran pendaftaran kolektif Anda ({kode_pendaftaran}) sebesar *Rp {nominal_biaya}* untuk *{jumlah_peserta} peserta* telah dinyatakan *LUNAS & DIVERIFIKASI RESMI OLEH BENDAHARA*.\n\nSeluruh delegasi siswa Anda kini telah resmi terdaftar dan berkas pendaftaran serta kartu peserta resmi sudah dapat dicetak secara kolektif di:\n{link_login}\n\nPantau jadwal perlombaan dan live scoreboard melalui:\n{link_scoreboard}\n\nTerima kasih atas partisipasi aktif {nama_sekolah}!\nPanitia {nama_kegiatan}",
+                'is_active' => true,
+                'is_system' => true,
+            ],
+            [
+                'code' => 'collective_invoice_rejected',
+                'name' => '12. Notifikasi Kolektif: Pembayaran Tagihan Ditolak',
+                'description' => 'Terkirim otomatis ke WhatsApp official sekolah saat bendahara menolak invoice pendaftaran kolektif.',
+                'message' => "Assalamu'alaikum Wr. Wb.\nYth. Official & Pembina {nama_sekolah} ({nama_pendaftar}),\n\n*PEMBERITAHUAN STATUS TAGIHAN KOLEKTIF {nama_kegiatan}*\n\nMohon maaf, tagihan pendaftaran kolektif Anda ({kode_pendaftaran}) belum dapat disetujui / dinyatakan *DITOLAK* oleh Bendahara:\n\nDetail Tagihan:\n• No. Invoice: *{kode_pendaftaran}*\n• Asal Sekolah: {nama_sekolah}\n• Catatan Bendahara: *{catatan_verifikasi}*\n\nSilakan login ke akun Anda untuk memeriksa rincian atau mengunggah ulang bukti transfer yang sesuai:\n{link_login}\n\nSalam hormat,\nBendahara Panitia {nama_kegiatan}",
+                'is_active' => true,
+                'is_system' => true,
+            ],
         ];
 
         foreach ($defaults as $tmpl) {
