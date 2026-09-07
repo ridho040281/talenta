@@ -65,6 +65,8 @@ class AdminSettingsController extends Controller
             'bank_account_holder' => AppSetting::get('bank_account_holder', 'WIJIATIN'),
             'treasurer_name' => AppSetting::get('treasurer_name', 'WIJIATIN, S.Pd'),
             'treasurer_nip' => AppSetting::get('treasurer_nip', '198310102023212035'),
+            'treasurer_phone_number' => AppSetting::get('treasurer_phone_number', ''),
+            'treasurer_assistant_phones' => AppSetting::get('treasurer_assistant_phones', ''),
             'announcement_banner' => AppSetting::get('announcement_banner', 'Registrasi TALENTA 2026 resmi dibuka!'),
 
             // Landing Page Content & Narratives
@@ -205,6 +207,8 @@ class AdminSettingsController extends Controller
             'bank_account_holder' => 'nullable|string|max:100',
             'treasurer_name' => 'nullable|string|max:255',
             'treasurer_nip' => 'nullable|string|max:50',
+            'treasurer_phone_number' => 'nullable|string|max:50',
+            'treasurer_assistant_phones' => 'nullable|string|max:255',
             'announcement_banner' => 'nullable|string|max:500',
 
             // Landing Page Content & Narratives
