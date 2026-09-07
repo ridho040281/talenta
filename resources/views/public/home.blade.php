@@ -423,12 +423,9 @@
                                             </div>
                                         </div>
                                     @elseif($isMtqPop)
-                                        <div class="flex flex-col py-1 space-y-0.5">
-                                            <div class="flex items-center gap-1.5 font-bold text-emerald-400 text-xs">
-                                                <i data-lucide="users" class="w-3.5 h-3.5"></i>
-                                                <span>Individu (PA & PI)</span>
-                                            </div>
-                                            <span class="text-[10px] text-slate-400 font-medium">Sektor PA & PI Dipisah</span>
+                                        <div class="flex items-center gap-1.5 font-bold text-emerald-400 text-xs py-1">
+                                            <i data-lucide="users" class="w-3.5 h-3.5"></i>
+                                            <span>Individu (PA & PI)</span>
                                         </div>
                                     @elseif($isTmj)
                                         <div class="flex flex-col py-1">
