@@ -668,22 +668,40 @@
                     <div class="space-y-5 bg-[#0C111D]/80 p-5 rounded-2xl border border-white/[0.08]">
                         
                         <!-- 1. Upload File Gambar Pamflet (Direct Image Files) -->
-                        <div class="space-y-3">
-                            <div>
+                        <div class="space-y-3" x-data="{ selectedPamphletsCount: 0, uploadingPamphlet: false }">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                                 <label class="block text-xs font-bold uppercase tracking-wider text-slate-200 flex items-center gap-1.5">
                                     <i data-lucide="upload" class="w-3.5 h-3.5 text-pink-400"></i>
                                     <span>Upload Gambar Pamflet / Brosur (Bisa Banyak File Sekaligus)</span>
                                 </label>
-                                <p class="text-[11px] text-slate-400 mt-0.5">
-                                    Unggah satu atau banyak file gambar pamflet (.PNG, .JPG, .WEBP). Di landing page, pamflet akan otomatis tampil besar, tajam, dan berputar otomatis (Auto-Slide Carousel) dengan tombol zoom layar penuh.
-                                </p>
+                                <span class="text-[10px] text-pink-400/80 font-semibold">Maks. 10MB / file (JPG, PNG, WEBP)</span>
                             </div>
+                            <p class="text-[11px] text-slate-400">
+                                Unggah satu atau banyak file gambar pamflet (.PNG, .JPG, .WEBP). Di landing page, pamflet akan otomatis tampil besar, tajam, dan berputar otomatis (Auto-Slide Carousel) dengan tombol zoom layar penuh.
+                            </p>
 
                             <div class="p-5 rounded-2xl bg-[#161F30] border-2 border-dashed border-white/[0.12] flex flex-col items-center justify-center text-center hover:border-pink-500/50 transition">
                                 <i data-lucide="image-plus" class="w-8 h-8 text-pink-400 mb-2"></i>
-                                <input type="file" name="pamphlet_images[]" multiple accept="image/png,image/jpeg,image/jpg,image/webp" class="text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-pink-500/20 file:text-pink-300 hover:file:bg-pink-500/30 cursor-pointer">
+                                <input type="file" 
+                                       id="pamphletImagesInput"
+                                       name="pamphlet_images[]" 
+                                       multiple 
+                                       accept="image/png,image/jpeg,image/jpg,image/webp" 
+                                       @change="selectedPamphletsCount = $event.target.files.length"
+                                       class="text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-pink-500/20 file:text-pink-300 hover:file:bg-pink-500/30 cursor-pointer">
                                 <p class="text-[10px] text-slate-500 mt-2">Format: JPG, PNG, WEBP (Bisa pilih 1 sampai 10+ file gambar sekaligus)</p>
+
+                                <div x-show="selectedPamphletsCount > 0" class="mt-3.5" x-cloak>
+                                    <button type="button" 
+                                            @click="uploadingPamphlet = true; uploadPamphletImagesDirect().finally(() => uploadingPamphlet = false)" 
+                                            :disabled="uploadingPamphlet"
+                                            class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-pink-600 to-rose-500 text-white font-black text-xs shadow-lg shadow-pink-500/30 flex items-center gap-2 cursor-pointer hover:scale-105 active:scale-95 transition disabled:opacity-50">
+                                        <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+                                        <span>Unggah <span x-text="selectedPamphletsCount"></span> Pamflet Sekarang (Instan)</span>
+                                    </button>
+                                </div>
                             </div>
+                        </div>
 
                             <!-- Existing Uploaded Pamphlet Images List -->
                             @if(!empty($settings['pamphlet_images']) && count($settings['pamphlet_images']) > 0)
@@ -766,14 +784,38 @@
                         </div>
 
                         <!-- Upload New Sponsor Logos -->
-                        <div class="space-y-2 bg-[#0C111D]/80 p-4 rounded-2xl border border-white/[0.08]">
-                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">
-                                Upload Logo Sponsor / Mitra (Bisa Pilih Banyak File Sekaligus)
-                            </label>
-                            <div class="p-6 rounded-2xl bg-[#161F30] border-2 border-dashed border-white/[0.12] flex flex-col items-center justify-center text-center hover:border-[#7A5AF8]/50 transition">
+                        <div class="space-y-3 bg-[#0C111D]/80 p-5 rounded-2xl border border-white/[0.08]" x-data="{ selectedSponsorCount: 0, uploadingSponsor: false }">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                                    <i data-lucide="upload-cloud" class="w-4 h-4 text-[#A594FD]"></i>
+                                    <span>Upload Logo Sponsor / Mitra (Bisa Pilih Banyak File Sekaligus)</span>
+                                </label>
+                                <span class="text-[10px] text-[#A594FD] font-semibold">Maks. 10MB / file (PNG, SVG, JPG, WEBP)</span>
+                            </div>
+                            <p class="text-[11px] text-slate-400">
+                                Disarankan format PNG transparan atau SVG. Anda bisa memilih beberapa logo sekaligus.
+                            </p>
+
+                            <div class="p-6 rounded-2xl bg-[#161F30] border-2 border-dashed border-white/[0.12] flex flex-col items-center justify-center text-center hover:border-[#7A5AF8]/50 transition relative">
                                 <i data-lucide="upload-cloud" class="w-8 h-8 text-[#A594FD] mb-2"></i>
-                                <input type="file" name="sponsor_logos[]" multiple accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp" class="text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#7A5AF8]/20 file:text-[#A594FD] hover:file:bg-[#7A5AF8]/30 cursor-pointer">
-                                <p class="text-[11px] text-slate-500 mt-2">Disarankan format PNG transparan atau SVG (Maks. 3MB per file)</p>
+                                <input type="file" 
+                                       id="sponsorLogosInput"
+                                       name="sponsor_logos[]" 
+                                       multiple 
+                                       accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp" 
+                                       @change="selectedSponsorCount = $event.target.files.length"
+                                       class="text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#7A5AF8]/20 file:text-[#A594FD] hover:file:bg-[#7A5AF8]/30 cursor-pointer">
+                                <p class="text-[11px] text-slate-500 mt-2">Disarankan format PNG transparan atau SVG (Maks. 10MB per file)</p>
+
+                                <div x-show="selectedSponsorCount > 0" class="mt-3.5" x-cloak>
+                                    <button type="button" 
+                                            @click="uploadingSponsor = true; uploadSponsorLogosDirect().finally(() => uploadingSponsor = false)" 
+                                            :disabled="uploadingSponsor"
+                                            class="gradient-btn px-6 py-2.5 rounded-xl text-white font-black text-xs shadow-lg shadow-[#7A5AF8]/30 flex items-center gap-2 cursor-pointer hover:scale-105 active:scale-95 transition disabled:opacity-50">
+                                        <i data-lucide="upload" class="w-4 h-4"></i>
+                                        <span>Unggah <span x-text="selectedSponsorCount"></span> Logo Sponsor Sekarang (Instan)</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -1277,6 +1319,96 @@
             document.getElementById('directDeleteImage').value = imgPath;
             document.getElementById('directDeleteLogo').value = '';
             form.submit();
+        }
+    }
+
+    async function uploadSponsorLogosDirect() {
+        const fileInput = document.getElementById('sponsorLogosInput');
+        if (!fileInput || fileInput.files.length === 0) {
+            alert('Silakan pilih setidaknya 1 file gambar logo sponsor terlebih dahulu.');
+            return;
+        }
+
+        const formData = new FormData();
+        for (let i = 0; i < fileInput.files.length; i++) {
+            formData.append('sponsor_logos[]', fileInput.files[i]);
+        }
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
+
+        try {
+            const response = await fetch('{{ route('admin.settings.sponsor.upload') }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                showSuccessCenterModal('Logo Berhasil Diunggah', result.message || 'Logo sponsor telah berhasil diunggah.');
+                setTimeout(() => {
+                    window.location.href = '{{ route('admin.settings.general', ['tab' => 'landing']) }}';
+                }, 1200);
+            } else {
+                let errorMsg = result.message || 'Gagal mengunggah logo sponsor.';
+                if (result.errors) {
+                    errorMsg += '\n' + Object.values(result.errors).flat().join('\n');
+                }
+                alert(errorMsg);
+            }
+        } catch (err) {
+            console.error('Upload error:', err);
+            alert('Terjadi kesalahan saat mengunggah logo: ' + err.message);
+        }
+    }
+
+    async function uploadPamphletImagesDirect() {
+        const fileInput = document.getElementById('pamphletImagesInput');
+        if (!fileInput || fileInput.files.length === 0) {
+            alert('Silakan pilih setidaknya 1 file gambar pamflet terlebih dahulu.');
+            return;
+        }
+
+        const formData = new FormData();
+        for (let i = 0; i < fileInput.files.length; i++) {
+            formData.append('pamphlet_images[]', fileInput.files[i]);
+        }
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
+
+        try {
+            const response = await fetch('{{ route('admin.settings.pamphlet.upload') }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                showSuccessCenterModal('Pamflet Berhasil Diunggah', result.message || 'Gambar pamflet telah berhasil diunggah.');
+                setTimeout(() => {
+                    window.location.href = '{{ route('admin.settings.general', ['tab' => 'landing']) }}';
+                }, 1200);
+            } else {
+                let errorMsg = result.message || 'Gagal mengunggah gambar pamflet.';
+                if (result.errors) {
+                    errorMsg += '\n' + Object.values(result.errors).flat().join('\n');
+                }
+                alert(errorMsg);
+            }
+        } catch (err) {
+            console.error('Upload error:', err);
+            alert('Terjadi kesalahan saat mengunggah pamflet: ' + err.message);
         }
     }
 

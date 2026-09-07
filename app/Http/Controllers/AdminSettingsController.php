@@ -266,8 +266,11 @@ class AdminSettingsController extends Controller
         }
 
         if ($request->hasFile('sponsor_logos')) {
+            if (!Storage::disk('public')->exists('sponsors')) {
+                Storage::disk('public')->makeDirectory('sponsors');
+            }
             foreach ($request->file('sponsor_logos') as $sponsorFile) {
-                if ($sponsorFile->isValid()) {
+                if ($sponsorFile && $sponsorFile->isValid()) {
                     $path = $sponsorFile->store('sponsors', 'public');
                     $currentSponsorLogos[] = $path;
                 }
@@ -289,8 +292,11 @@ class AdminSettingsController extends Controller
         }
 
         if ($request->hasFile('pamphlet_images')) {
+            if (!Storage::disk('public')->exists('pamphlets')) {
+                Storage::disk('public')->makeDirectory('pamphlets');
+            }
             foreach ($request->file('pamphlet_images') as $pamphletFile) {
-                if ($pamphletFile->isValid()) {
+                if ($pamphletFile && $pamphletFile->isValid()) {
                     $path = $pamphletFile->store('pamphlets', 'public');
                     $currentPamphletImages[] = $path;
                 }
@@ -328,6 +334,100 @@ class AdminSettingsController extends Controller
 
         $activeTab = $request->input('active_tab', 'landing');
         return redirect()->route('admin.settings.general', ['tab' => $activeTab])->with('success', 'Pengaturan aplikasi dan konten landing page berhasil disimpan.');
+    }
+
+    /**
+     * Upload sponsor logos immediately (via AJAX or POST)
+     */
+    public function uploadSponsorLogos(Request $request)
+    {
+        $request->validate([
+            'sponsor_logos' => 'required|array',
+            'sponsor_logos.*' => 'required|image|mimes:jpeg,png,jpg,svg,webp|max:10240',
+        ]);
+
+        $currentSponsorLogos = json_decode(AppSetting::get('sponsor_logos', '[]'), true) ?: [];
+        $uploaded = [];
+
+        if (!Storage::disk('public')->exists('sponsors')) {
+            Storage::disk('public')->makeDirectory('sponsors');
+        }
+
+        if ($request->hasFile('sponsor_logos')) {
+            foreach ($request->file('sponsor_logos') as $sponsorFile) {
+                if ($sponsorFile && $sponsorFile->isValid()) {
+                    $path = $sponsorFile->store('sponsors', 'public');
+                    $currentSponsorLogos[] = $path;
+                    $uploaded[] = [
+                        'path' => $path,
+                        'url' => asset('storage/' . $path),
+                        'id' => md5($path),
+                        'name' => basename($path),
+                    ];
+                }
+            }
+        }
+
+        AppSetting::set('sponsor_logos', json_encode(array_values($currentSponsorLogos)));
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => count($uploaded) . ' logo sponsor berhasil diunggah.',
+                'uploaded' => $uploaded,
+                'total_count' => count($currentSponsorLogos),
+            ]);
+        }
+
+        return redirect()->route('admin.settings.general', ['tab' => 'landing'])
+            ->with('success', count($uploaded) . ' logo sponsor berhasil diunggah.');
+    }
+
+    /**
+     * Upload pamphlet images immediately (via AJAX or POST)
+     */
+    public function uploadPamphletImages(Request $request)
+    {
+        $request->validate([
+            'pamphlet_images' => 'required|array',
+            'pamphlet_images.*' => 'required|image|mimes:jpeg,png,jpg,svg,webp|max:10240',
+        ]);
+
+        $currentPamphletImages = json_decode(AppSetting::get('pamphlet_images', '[]'), true) ?: [];
+        $uploaded = [];
+
+        if (!Storage::disk('public')->exists('pamphlets')) {
+            Storage::disk('public')->makeDirectory('pamphlets');
+        }
+
+        if ($request->hasFile('pamphlet_images')) {
+            foreach ($request->file('pamphlet_images') as $pamphletFile) {
+                if ($pamphletFile && $pamphletFile->isValid()) {
+                    $path = $pamphletFile->store('pamphlets', 'public');
+                    $currentPamphletImages[] = $path;
+                    $uploaded[] = [
+                        'path' => $path,
+                        'url' => asset('storage/' . $path),
+                        'id' => md5($path),
+                        'name' => basename($path),
+                    ];
+                }
+            }
+        }
+
+        AppSetting::set('pamphlet_images', json_encode(array_values($currentPamphletImages)));
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => count($uploaded) . ' gambar pamflet berhasil diunggah.',
+                'uploaded' => $uploaded,
+                'total_count' => count($currentPamphletImages),
+            ]);
+        }
+
+        return redirect()->route('admin.settings.general', ['tab' => 'landing'])
+            ->with('success', count($uploaded) . ' gambar pamflet berhasil diunggah.');
     }
 
     /**
