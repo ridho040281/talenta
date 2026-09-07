@@ -684,20 +684,41 @@
 
                             <!-- Existing Uploaded Pamphlet Images List -->
                             @if(!empty($settings['pamphlet_images']) && count($settings['pamphlet_images']) > 0)
-                                <div class="space-y-2 pt-2 border-t border-white/[0.06]">
-                                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">
-                                        Gambar Pamflet yang Terpasang Saat Ini ({{ count($settings['pamphlet_images']) }} Pamflet):
+                                <div class="space-y-3 pt-3 border-t border-white/[0.06]">
+                                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                                        <span>Gambar Pamflet yang Terpasang Saat Ini</span>
+                                        <span class="px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 text-[10px] font-mono font-bold">{{ count($settings['pamphlet_images']) }} Pamflet</span>
                                     </label>
-                                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5">
                                         @foreach($settings['pamphlet_images'] as $index => $img)
-                                            <div class="p-2.5 rounded-2xl bg-[#0C111D] border border-white/[0.08] flex flex-col items-center justify-between gap-2.5 text-center relative group">
+                                            <div class="p-2.5 rounded-2xl bg-[#0C111D] border border-white/[0.08] hover:border-white/[0.15] flex flex-col items-center justify-between gap-2.5 text-center relative group transition shadow-sm">
+                                                <!-- Direct Delete Button (Top Right) -->
+                                                <button type="button" 
+                                                        onclick="deleteSinglePamphlet('{{ $img }}')" 
+                                                        class="absolute top-2 right-2 p-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500 text-rose-400 hover:text-white border border-rose-500/30 transition shadow-sm cursor-pointer z-10" 
+                                                        title="Hapus Gambar Pamflet Ini Langsung">
+                                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                                </button>
+
                                                 <div class="w-full h-36 rounded-xl overflow-hidden bg-slate-900 border border-white/[0.06] flex items-center justify-center">
-                                                    <img src="{{ asset('storage/' . $img) }}" alt="Pamflet {{ $index + 1 }}" class="w-full h-full object-cover">
+                                                    <img src="{{ asset('storage/' . $img) }}" 
+                                                         alt="Pamflet {{ $index + 1 }}" 
+                                                         class="w-full h-full object-cover"
+                                                         onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'text-rose-400 text-[11px] font-bold flex flex-col items-center gap-1\'><i data-lucide=\'image-off\' class=\'w-4 h-4\'></i><span>File Rusak / Hilang</span></div>'; if(window.lucide) window.lucide.createIcons();">
                                                 </div>
-                                                <label class="inline-flex items-center gap-1.5 text-[11px] font-bold text-rose-400 cursor-pointer hover:text-rose-300">
-                                                    <input type="checkbox" name="delete_pamphlet_images[]" value="{{ $img }}" class="rounded border-rose-400/40 text-rose-600 focus:ring-rose-500">
-                                                    <span>Hapus</span>
-                                                </label>
+
+                                                <div class="w-full flex items-center justify-between pt-1 border-t border-white/[0.06] gap-1">
+                                                    <label class="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-400 hover:text-rose-300 cursor-pointer select-none">
+                                                        <input type="checkbox" name="delete_pamphlet_images[]" value="{{ $img }}" class="rounded border-rose-400/40 text-rose-600 focus:ring-0">
+                                                        <span>Tandai Hapus</span>
+                                                    </label>
+                                                    <button type="button" 
+                                                            onclick="deleteSinglePamphlet('{{ $img }}')" 
+                                                            class="text-[10px] font-bold text-rose-400 hover:text-rose-300 hover:underline flex items-center gap-0.5 cursor-pointer">
+                                                        <span>Hapus</span>
+                                                        <i data-lucide="chevron-right" class="w-3 h-3"></i>
+                                                    </button>
+                                                </div>
                                             </div>
                                         @endforeach
                                     </div>
@@ -757,18 +778,52 @@
 
                         <!-- Existing Sponsor Logos List -->
                         @if(!empty($settings['sponsor_logos']) && count($settings['sponsor_logos']) > 0)
-                            <div class="space-y-2 pt-2">
-                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">Logo Sponsor yang Terpasang Saat Ini:</label>
-                                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                            <div class="space-y-3 pt-3 border-t border-white/[0.08]">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                    <div>
+                                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-200 flex items-center gap-2">
+                                            <span>Logo Sponsor yang Terpasang Saat Ini</span>
+                                            <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-mono font-bold">{{ count($settings['sponsor_logos']) }} Logo</span>
+                                        </label>
+                                        <p class="text-[11px] text-slate-400 mt-0.5">
+                                            Klik tombol <span class="text-rose-400 font-bold">🗑️ Hapus</span> pada logo untuk menghapus seketika, atau centang lalu tekan tombol Simpan di bawah.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
                                     @foreach($settings['sponsor_logos'] as $index => $logo)
-                                        <div class="p-3.5 rounded-2xl bg-[#0C111D] border border-white/[0.08] flex flex-col items-center justify-between gap-3 text-center relative group">
-                                            <div class="h-14 flex items-center justify-center">
-                                                <img src="{{ asset('storage/' . $logo) }}" alt="Sponsor {{ $index + 1 }}" class="max-h-12 w-auto object-contain">
+                                        <div class="p-3.5 rounded-2xl bg-[#0C111D] border border-white/[0.08] hover:border-white/[0.15] flex flex-col items-center justify-between gap-3 text-center relative group transition shadow-sm">
+                                            
+                                            <!-- Direct Delete Quick Action (Top Right) -->
+                                            <button type="button" 
+                                                    onclick="deleteSingleSponsor('{{ $logo }}')" 
+                                                    class="absolute top-2 right-2 p-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500 text-rose-400 hover:text-white border border-rose-500/30 transition shadow-sm cursor-pointer z-10" 
+                                                    title="Hapus Logo Sponsor Ini Langsung">
+                                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                            </button>
+
+                                            <!-- Logo Preview Container (With slight contrast for dark logos) -->
+                                            <div class="w-full h-16 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center p-2.5 overflow-hidden">
+                                                <img src="{{ asset('storage/' . $logo) }}" 
+                                                     alt="Sponsor {{ $index + 1 }}" 
+                                                     class="max-h-12 max-w-full object-contain filter drop-shadow"
+                                                     onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'text-rose-400 text-[11px] font-bold flex flex-col items-center gap-1\'><i data-lucide=\'image-off\' class=\'w-4 h-4\'></i><span>File Rusak / Hilang</span></div>'; if(window.lucide) window.lucide.createIcons();">
                                             </div>
-                                            <label class="inline-flex items-center gap-1.5 text-[11px] font-bold text-rose-400 cursor-pointer hover:text-rose-300">
-                                                <input type="checkbox" name="delete_sponsor_logos[]" value="{{ $logo }}" class="rounded border-rose-400/40 text-rose-600 focus:ring-rose-500">
-                                                <span>Centang untuk Hapus</span>
-                                            </label>
+
+                                            <!-- Bottom Action: Checkbox & Instant Delete Button -->
+                                            <div class="w-full flex items-center justify-between pt-1 border-t border-white/[0.06] gap-1">
+                                                <label class="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-400 hover:text-rose-300 cursor-pointer select-none">
+                                                    <input type="checkbox" name="delete_sponsor_logos[]" value="{{ $logo }}" class="rounded border-rose-400/40 text-rose-600 focus:ring-0">
+                                                    <span>Tandai Hapus</span>
+                                                </label>
+                                                <button type="button" 
+                                                        onclick="deleteSingleSponsor('{{ $logo }}')" 
+                                                        class="text-[10px] font-bold text-rose-400 hover:text-rose-300 hover:underline flex items-center gap-0.5 cursor-pointer">
+                                                    <span>Hapus</span>
+                                                    <i data-lucide="chevron-right" class="w-3 h-3"></i>
+                                                </button>
+                                            </div>
                                         </div>
                                     @endforeach
                                 </div>
@@ -1037,6 +1092,35 @@
 
         </div>
     </div>
+
+    <!-- Form Khusus Hapus Langsung Logo Sponsor / Gambar Pamflet -->
+    <form id="directDeleteForm" method="POST" class="hidden">
+        @csrf
+        <input type="hidden" name="logo" id="directDeleteLogo">
+        <input type="hidden" name="image" id="directDeleteImage">
+    </form>
+
+    <script>
+    function deleteSingleSponsor(logoPath) {
+        if (confirm('Apakah Anda yakin ingin menghapus logo sponsor ini sekarang?')) {
+            const form = document.getElementById('directDeleteForm');
+            form.action = '{{ route('admin.settings.sponsor.delete') }}';
+            document.getElementById('directDeleteLogo').value = logoPath;
+            document.getElementById('directDeleteImage').value = '';
+            form.submit();
+        }
+    }
+
+    function deleteSinglePamphlet(imgPath) {
+        if (confirm('Apakah Anda yakin ingin menghapus gambar pamflet ini sekarang?')) {
+            const form = document.getElementById('directDeleteForm');
+            form.action = '{{ route('admin.settings.pamphlet.delete') }}';
+            document.getElementById('directDeleteImage').value = imgPath;
+            document.getElementById('directDeleteLogo').value = '';
+            form.submit();
+        }
+    }
+    </script>
 
 </div>
 @endsection

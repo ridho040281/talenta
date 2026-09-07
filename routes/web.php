@@ -194,7 +194,9 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->name('admin.')-
     Route::prefix('settings')->name('settings.')->group(function () {
         Route::get('/general', [AdminSettingsController::class, 'generalSettings'])->name('general');
         Route::post('/general', [AdminSettingsController::class, 'updateGeneralSettings'])->name('general.update');
-        Route::post('/activity-logs/clear', [AdminSettingsController::class, 'clearActivityLogs'])->name('activity_logs.clear');
+        Route::post('/sponsor-logo/delete', [AdminSettingsController::class, 'deleteSingleSponsorLogo'])->name('sponsor.delete');
+        Route::post('/pamphlet-image/delete', [AdminSettingsController::class, 'deleteSinglePamphletImage'])->name('pamphlet.delete');
+        Route::post('/activity_logs/clear', [AdminSettingsController::class, 'clearActivityLogs'])->name('activity_logs.clear');
         Route::get('/whatsapp-blast', [AdminSettingsController::class, 'whatsappBlast'])->name('whatsapp.blast');
         Route::get('/whatsapp-blast/check-status', [AdminSettingsController::class, 'checkWablasStatus'])->name('whatsapp.blast.check-status');
         Route::get('/whatsapp-blast/template', [AdminSettingsController::class, 'downloadWhatsappTemplate'])->name('whatsapp.blast.template');

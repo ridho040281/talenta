@@ -329,6 +329,66 @@ class AdminSettingsController extends Controller
     }
 
     /**
+     * Delete a single sponsor logo immediately (via AJAX or POST)
+     */
+    public function deleteSingleSponsorLogo(Request $request)
+    {
+        $request->validate([
+            'logo' => 'required|string',
+        ]);
+
+        $logoToDelete = $request->input('logo');
+        $current = json_decode(AppSetting::get('sponsor_logos', '[]'), true) ?: [];
+
+        if (Storage::disk('public')->exists($logoToDelete)) {
+            Storage::disk('public')->delete($logoToDelete);
+        }
+
+        $filtered = array_values(array_filter($current, fn ($item) => $item !== $logoToDelete));
+        AppSetting::set('sponsor_logos', json_encode($filtered));
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Logo sponsor berhasil dihapus.',
+                'remaining_count' => count($filtered),
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Logo sponsor berhasil dihapus.');
+    }
+
+    /**
+     * Delete a single pamphlet image immediately (via AJAX or POST)
+     */
+    public function deleteSinglePamphletImage(Request $request)
+    {
+        $request->validate([
+            'image' => 'required|string',
+        ]);
+
+        $imageToDelete = $request->input('image');
+        $current = json_decode(AppSetting::get('pamphlet_images', '[]'), true) ?: [];
+
+        if (Storage::disk('public')->exists($imageToDelete)) {
+            Storage::disk('public')->delete($imageToDelete);
+        }
+
+        $filtered = array_values(array_filter($current, fn ($item) => $item !== $imageToDelete));
+        AppSetting::set('pamphlet_images', json_encode($filtered));
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Gambar pamflet berhasil dihapus.',
+                'remaining_count' => count($filtered),
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Gambar pamflet berhasil dihapus.');
+    }
+
+    /**
      * WhatsApp Blast Management
      */
     public function whatsappBlast()
