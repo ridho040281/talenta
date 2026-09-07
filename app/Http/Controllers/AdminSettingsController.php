@@ -168,12 +168,13 @@ class AdminSettingsController extends Controller
             'event_year' => 'nullable|string|max:10',
 
             // Files
-            'app_logo' => 'nullable|image|mimes:jpeg,png,jpg,svg,webp|max:3072',
-            'favicon' => 'nullable|image|mimes:jpeg,png,jpg,svg,webp,ico|max:1024',
-            'event_logo' => 'nullable|image|mimes:jpeg,png,jpg,svg,webp|max:3072',
-            'letterhead_image' => 'nullable|image|mimes:jpeg,png,jpg,svg,webp|max:4096',
-            'certificate_header_image' => 'nullable|image|mimes:jpeg,png,jpg,svg,webp|max:4096',
-            'sponsor_logos.*' => 'nullable|image|mimes:jpeg,png,jpg,svg,webp|max:3072',
+            'app_logo' => 'nullable|image|mimes:jpeg,png,jpg,svg,webp|max:10240',
+            'favicon' => 'nullable|image|mimes:jpeg,png,jpg,svg,webp,ico|max:5120',
+            'event_logo' => 'nullable|image|mimes:jpeg,png,jpg,svg,webp|max:10240',
+            'letterhead_image' => 'nullable|image|mimes:jpeg,png,jpg,svg,webp|max:10240',
+            'certificate_header_image' => 'nullable|image|mimes:jpeg,png,jpg,svg,webp|max:10240',
+            'sponsor_logos.*' => 'nullable|image|mimes:jpeg,png,jpg,svg,webp|max:10240',
+            'pamphlet_images.*' => 'nullable|image|mimes:jpeg,png,jpg,svg,webp|max:10240',
             'delete_sponsor_logos' => 'nullable|array',
             'delete_sponsor_logos.*' => 'nullable|string',
 

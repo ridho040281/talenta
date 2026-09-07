@@ -573,6 +573,37 @@
                 </div>
             @endif
 
+            @if(isset($errors) && $errors->any())
+                <div x-data="{ show: false }" 
+                     x-init="setTimeout(() => show = true, 50); setTimeout(() => show = false, 8000)" 
+                     x-show="show"
+                     x-cloak
+                     x-transition:enter="transition ease-out duration-400 transform"
+                     x-transition:enter-start="opacity-0 -translate-y-4 scale-95"
+                     x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                     x-transition:leave="transition ease-in duration-500 transform"
+                     x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                     x-transition:leave-end="opacity-0 -translate-y-4 scale-95"
+                     class="pointer-events-auto bg-[#161F30]/95 backdrop-blur-xl border border-rose-500/40 shadow-2xl shadow-rose-500/20 rounded-2xl p-4 flex items-start justify-between gap-3.5 text-slate-200 ring-1 ring-rose-500/30">
+                    <div class="flex items-start gap-3 min-w-0">
+                        <div class="w-9 h-9 rounded-xl bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-rose-500/30 mt-0.5">
+                            <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <h5 class="text-xs font-black text-rose-300 leading-tight">Terjadi Kesalahan Validasi:</h5>
+                            <ul class="text-[11px] text-slate-300 font-medium mt-1 list-disc list-inside space-y-0.5">
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+                    <button @click="show = false" class="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-white/[0.08] transition cursor-pointer shrink-0" title="Tutup">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            @endif
+
             @if(session('error'))
                 <div x-data="{ show: false }" 
                      x-init="setTimeout(() => show = true, 50); setTimeout(() => show = false, 5500)" 

@@ -694,13 +694,17 @@
                                     </label>
                                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5">
                                         @foreach($settings['pamphlet_images'] as $index => $img)
+                                            @php
+                                                $cleanImgPath = ltrim(str_replace(['public/', 'storage/'], '', $img), '/');
+                                                $imgUrl = \Illuminate\Support\Str::startsWith($img, ['http://', 'https://']) ? $img : asset('storage/' . $cleanImgPath);
+                                            @endphp
                                             <div id="pamphlet-card-{{ md5($img) }}" class="p-2.5 rounded-2xl bg-[#0C111D] border border-white/[0.08] hover:border-white/[0.15] flex flex-col items-center justify-between gap-2.5 text-center relative group transition shadow-sm">
                                                 
                                                 <div class="w-full h-36 rounded-xl overflow-hidden bg-slate-900 border border-white/[0.06] flex items-center justify-center">
-                                                    <img src="{{ asset('storage/' . $img) }}" 
+                                                    <img src="{{ $imgUrl }}" 
                                                          alt="Pamflet {{ $index + 1 }}" 
                                                          class="w-full h-full object-cover"
-                                                         onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'text-rose-400 text-[11px] font-bold flex flex-col items-center gap-1\'><i data-lucide=\'image-off\' class=\'w-4 h-4\'></i><span>File Rusak / Hilang</span></div>'; if(window.lucide) window.lucide.createIcons();">
+                                                         onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'text-rose-400 text-[10px] font-bold flex flex-col items-center justify-center gap-0.5 py-2 px-1\'><i data-lucide=\'image-off\' class=\'w-4 h-4\'></i><span>File Rusak / Hilang</span><span class=\'text-[9px] text-slate-500 font-mono truncate max-w-[130px]\' title=\'{{ basename($img) }}\'>{{ basename($img) }}</span></div>'; if(window.lucide) window.lucide.createIcons();">
                                                 </div>
 
                                                 <!-- Bottom Action: Checkbox & Single Trash Button (Tanpa Kata Hapus) -->
@@ -790,14 +794,18 @@
 
                                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
                                     @foreach($settings['sponsor_logos'] as $index => $logo)
+                                        @php
+                                            $cleanLogoPath = ltrim(str_replace(['public/', 'storage/'], '', $logo), '/');
+                                            $logoUrl = \Illuminate\Support\Str::startsWith($logo, ['http://', 'https://']) ? $logo : asset('storage/' . $cleanLogoPath);
+                                        @endphp
                                         <div id="sponsor-card-{{ md5($logo) }}" class="p-3.5 rounded-2xl bg-[#0C111D] border border-white/[0.08] hover:border-white/[0.15] flex flex-col items-center justify-between gap-3 text-center relative group transition shadow-sm">
                                             
                                             <!-- Logo Preview Container (With slight contrast for dark logos) -->
                                             <div class="w-full h-16 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center p-2.5 overflow-hidden">
-                                                <img src="{{ asset('storage/' . $logo) }}" 
+                                                <img src="{{ $logoUrl }}" 
                                                      alt="Sponsor {{ $index + 1 }}" 
                                                      class="max-h-12 max-w-full object-contain filter drop-shadow"
-                                                     onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'text-rose-400 text-[11px] font-bold flex flex-col items-center gap-1\'><i data-lucide=\'image-off\' class=\'w-4 h-4\'></i><span>File Rusak / Hilang</span></div>'; if(window.lucide) window.lucide.createIcons();">
+                                                     onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'text-rose-400 text-[10px] font-bold flex flex-col items-center justify-center gap-0.5 py-1\'><i data-lucide=\'image-off\' class=\'w-4 h-4\'></i><span>File Rusak / Hilang</span><span class=\'text-[9px] text-slate-500 font-mono truncate max-w-[130px] px-1\' title=\'{{ basename($logo) }}\'>{{ basename($logo) }}</span></div>'; if(window.lucide) window.lucide.createIcons();">
                                             </div>
 
                                             <!-- Bottom Action: Checkbox & Single Trash Button (Tanpa Kata Hapus) -->
