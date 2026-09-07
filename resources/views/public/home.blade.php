@@ -906,13 +906,10 @@
                     <h2 class="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight font-display">
                         {{ $appSettings['timeline_title'] ?? 'Timeline Rangkaian Kegiatan' }}
                     </h2>
-                    <p class="text-xs text-slate-400 max-w-xl">
-                        {{ $appSettings['timeline_subtitle'] ?? 'Rangkaian tahapan pelaksanaan dari pendaftaran online hingga penganugerahan piala bergilir juara umum.' }}
-                    </p>
                 </div>
 
-                <div class="flex items-center gap-3">
-                    <div class="hidden sm:flex items-center gap-1.5 text-xs text-slate-400">
+                <div class="hidden md:flex items-center gap-3">
+                    <div class="flex items-center gap-1.5 text-xs text-slate-400">
                         <i data-lucide="mouse-pointer" class="w-3.5 h-3.5 text-[#7A5AF8]"></i>
                         <span>Klik & drag mouse untuk menggeser timeline:</span>
                     </div>
@@ -1000,7 +997,55 @@
                 $calculatedMinWidth = max(900, $totalTimelines * 200);
             @endphp
 
-            <!-- Horizontal Infographic Ribbon Flow (Scrollable & Drag-to-Scroll Enabled) -->
+            <!-- 1. MOBILE RESPONSIVE VERTICAL TIMELINE (Shown on Mobile screens < md) -->
+            <div class="block md:hidden space-y-4 pt-1">
+                <div class="relative pl-6 space-y-5 before:absolute before:left-3 before:top-3 before:bottom-3 before:w-0.5 before:bg-gradient-to-b before:from-amber-400 before:via-emerald-400 before:via-[#4E6EFF] before:via-[#7A5AF8] before:to-[#FF58D5]">
+                    @forelse($timelines as $index => $item)
+                        @php
+                            $stepNum = $item->order ?? ($index + 1);
+                            $themeKey = ($index % count($infographicThemes)) + 1;
+                            $t = $infographicThemes[$themeKey];
+                        @endphp
+                        <div class="relative flex items-start gap-3.5 group">
+                            <!-- Glowing Node Indicator Circle -->
+                            <div class="absolute -left-6 top-1.5 w-6 h-6 rounded-full border-2 {{ $t['ring'] }} bg-[#0C111D] shadow-md {{ $t['glow'] }} flex items-center justify-center shrink-0 z-10">
+                                <div class="w-2.5 h-2.5 rounded-full {{ $t['bg'] }}"></div>
+                            </div>
+
+                            <!-- Card Box -->
+                            <div class="w-full p-4 rounded-2xl bg-[#0C111D]/90 border border-white/[0.08] shadow-lg space-y-2 hover:border-white/[0.18] transition">
+                                <div class="flex items-center justify-between gap-2 flex-wrap">
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider {{ $t['bg'] }} shadow-sm">
+                                        Tahap {{ $stepNum }}
+                                    </span>
+                                    <div class="text-right">
+                                        <span class="text-xs font-black font-mono tracking-wider {{ $t['text'] }} block">
+                                            {{ $item->date_label }}
+                                        </span>
+                                        <span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider block">Pelaksanaan</span>
+                                    </div>
+                                </div>
+                                
+                                <h4 class="text-sm font-black text-white leading-snug">
+                                    {{ $item->title }}
+                                </h4>
+
+                                @if(!empty($item->description))
+                                    <p class="text-xs text-slate-400 leading-relaxed">
+                                        {{ $item->description }}
+                                    </p>
+                                @endif
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-center py-6 text-slate-400 text-xs italic">
+                            Belum ada jadwal rangkaian acara yang diatur.
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+
+            <!-- 2. DESKTOP HORIZONTAL INFOGRAPHIC RIBBON FLOW (Shown on Tablet/Desktop md and up) -->
             <div 
                 x-ref="timelineScroll"
                 @mousedown="startDrag($event)"
@@ -1010,7 +1055,7 @@
                 x-on:wheel.passive="false"
                 x-on:wheel="wheelScroll($event)"
                 :class="isDown ? 'cursor-grabbing select-none' : 'cursor-grab select-none'"
-                class="overflow-x-auto no-scrollbar pb-6 pt-2"
+                class="hidden md:block overflow-x-auto no-scrollbar pb-6 pt-2"
             >
                 <div class="relative px-4" style="min-width: {{ $calculatedMinWidth }}px;">
                     
@@ -1104,12 +1149,6 @@
                     </div>
 
                 </div>
-            </div>
-
-            <!-- Mobile Touch Indicator -->
-            <div class="flex sm:hidden items-center justify-center gap-2 text-xs font-semibold text-[#A594FD] pt-2 border-t border-white/[0.08]">
-                <i data-lucide="arrow-right-left" class="w-4 h-4 text-[#7A5AF8] animate-pulse"></i>
-                <span>Geser ke samping untuk melihat seluruh tahapan</span>
             </div>
 
         </div>
