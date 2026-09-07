@@ -751,7 +751,6 @@
                                     </div>
                                 </div>
                             @endif
-                        </div>
 
                         <!-- 2. Option B: Link Sematan Canva -->
                         <div class="space-y-2.5 pt-3 border-t border-white/[0.08]" x-data="{ showCanva: {{ ($settings['show_pamphlet_embed'] ?? '1') !== '0' ? 'true' : 'false' }} }">
