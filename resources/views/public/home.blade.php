@@ -755,7 +755,7 @@
                                     <div class="relative group cursor-zoom-in flex flex-col items-center justify-center w-full max-w-full sm:max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto" @click="openZoom('{{ $item['url'] }}', 'image')">
                                         <img src="{{ $item['url'] }}" 
                                             alt="Pamflet {{ $idx + 1 }}" 
-                                            class="w-full h-auto max-h-[85vh] sm:max-h-[90vh] object-contain rounded-2xl sm:rounded-3xl shadow-2xl border-2 border-white/[0.15] transition-transform duration-300 group-hover:scale-[1.01]">
+                                            class="w-full h-auto max-h-[88vh] sm:max-h-[92vh] object-contain rounded-2xl sm:rounded-3xl shadow-2xl border-2 border-white/[0.15] transition-transform duration-300 group-hover:scale-[1.01]">
                                         
                                         <!-- Zoom Hover Pill -->
                                         <div class="absolute bottom-3 px-4 py-2 rounded-full bg-black/85 backdrop-blur-md border border-white/20 text-white text-xs font-bold flex items-center gap-2 opacity-90 group-hover:opacity-100 transition shadow-xl pointer-events-none">
@@ -764,35 +764,27 @@
                                         </div>
                                     </div>
                                 @else
-                                    <!-- CANVA EMBED: Full Responsive Large Frame (Mobile & Desktop) -->
+                                    <!-- EMBED PAMFLET: Exact A4 Portrait Proportions (Large on Mobile & Desktop) -->
                                     <div class="w-full max-w-full sm:max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto space-y-3">
                                         
-                                        <!-- Canva Responsive Container (Aspect A4 / 1:1.414) -->
-                                        <div class="w-full aspect-[1/1.414] min-h-[500px] sm:min-h-[700px] md:min-h-[850px] lg:min-h-[960px] xl:min-h-[1050px] rounded-2xl sm:rounded-3xl overflow-hidden bg-[#0C111D] border-2 border-white/[0.15] shadow-2xl relative">
+                                        <!-- Portrait Container: 141.4286% Aspect Ratio (A4 Standard) -->
+                                        <div style="position: relative; width: 100%; height: 0; padding-top: 141.4286%; overflow: hidden; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); border: 2px solid rgba(255, 255, 255, 0.15); background: #0C111D;">
                                             <iframe loading="lazy" 
+                                                style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; border: none; padding: 0; margin: 0;"
                                                 src="{{ $item['url'] }}" 
-                                                class="w-full h-full border-0 rounded-2xl sm:rounded-3xl" 
                                                 allowfullscreen="allowfullscreen" 
                                                 allow="fullscreen">
                                             </iframe>
                                         </div>
 
-                                        <!-- Canva Quick Action Bar -->
-                                        <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-3 pt-1">
+                                        <!-- Clean Fullscreen Button -->
+                                        <div class="flex items-center justify-center pt-1">
                                             <button type="button" 
                                                 @click="openZoom('{{ $item['url'] }}', 'canva')" 
-                                                class="px-4 py-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-white border border-white/[0.12] text-xs font-bold transition flex items-center gap-2 shadow-sm cursor-pointer">
+                                                class="px-5 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-white border border-white/[0.12] text-xs font-bold transition flex items-center gap-2 shadow-sm cursor-pointer">
                                                 <i data-lucide="maximize" class="w-3.5 h-3.5 text-pink-400"></i>
                                                 <span>Mode Layar Penuh (Fullscreen)</span>
                                             </button>
-
-                                            <a href="{{ $item['url'] }}" 
-                                                target="_blank" 
-                                                rel="noopener" 
-                                                class="px-4 py-2 rounded-xl bg-pink-500/20 hover:bg-pink-500/30 text-pink-300 border border-pink-500/40 text-xs font-bold transition flex items-center gap-2 shadow-sm">
-                                                <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-                                                <span>Buka Desain Asli di Canva HD</span>
-                                            </a>
                                         </div>
 
                                     </div>
