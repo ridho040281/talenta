@@ -98,6 +98,19 @@ class AdminSettingsController extends Controller
             'footer_about' => AppSetting::get('footer_about', 'Sistem Pendaftaran & Manajemen Perlombaan Terpadu MTsN 1 Blitar. Mengusung arsitektur modern berkecepatan tinggi, sistem undian interaktif spin wheel, dan live scoreboard transparan.'),
         ];
 
+        // Ensure physical files are synchronized and readable in public storage
+        foreach (['app_logo', 'favicon', 'event_logo', 'letterhead_image', 'kop_lembaga', 'kop_kegiatan', 'certificate_header_image'] as $k) {
+            if (!empty($settings[$k])) {
+                self::ensurePublicStorageSync($settings[$k]);
+            }
+        }
+        foreach ($settings['sponsor_logos'] as $logo) {
+            self::ensurePublicStorageSync($logo);
+        }
+        foreach ($settings['pamphlet_images'] as $img) {
+            self::ensurePublicStorageSync($img);
+        }
+
         $systemInfo = [
             'framework' => 'Laravel '.app()->version(),
             'php_version' => PHP_VERSION,
@@ -237,6 +250,8 @@ class AdminSettingsController extends Controller
                     self::autoCropImageMargins($fullPath);
                 }
 
+                self::ensurePublicStorageSync($path);
+
                 AppSetting::set($fileKey, $path);
             }
         }
@@ -246,8 +261,15 @@ class AdminSettingsController extends Controller
         foreach ($deleteKeys as $deleteInput => $settingKey) {
             if ($request->boolean($deleteInput)) {
                 $old = AppSetting::get($settingKey);
-                if ($old && Storage::disk('public')->exists($old)) {
-                    Storage::disk('public')->delete($old);
+                if ($old) {
+                    $cleanOld = ltrim(str_replace(['public/', 'storage/'], '', $old), '/');
+                    if (Storage::disk('public')->exists($cleanOld)) {
+                        Storage::disk('public')->delete($cleanOld);
+                    }
+                    $publicOld = public_path('storage/' . $cleanOld);
+                    if (file_exists($publicOld)) {
+                        @unlink($publicOld);
+                    }
                 }
                 AppSetting::set($settingKey, null);
             }
@@ -258,10 +280,15 @@ class AdminSettingsController extends Controller
 
         if ($request->has('delete_sponsor_logos') && is_array($request->delete_sponsor_logos)) {
             foreach ($request->delete_sponsor_logos as $toDelete) {
-                if (Storage::disk('public')->exists($toDelete)) {
-                    Storage::disk('public')->delete($toDelete);
+                $cleanDel = ltrim(str_replace(['public/', 'storage/'], '', $toDelete), '/');
+                if (Storage::disk('public')->exists($cleanDel)) {
+                    Storage::disk('public')->delete($cleanDel);
                 }
-                $currentSponsorLogos = array_values(array_filter($currentSponsorLogos, fn ($item) => $item !== $toDelete));
+                $pubDel = public_path('storage/' . $cleanDel);
+                if (file_exists($pubDel)) {
+                    @unlink($pubDel);
+                }
+                $currentSponsorLogos = array_values(array_filter($currentSponsorLogos, fn ($item) => $item !== $toDelete && ltrim(str_replace(['public/', 'storage/'], '', $item), '/') !== $cleanDel));
             }
         }
 
@@ -272,6 +299,7 @@ class AdminSettingsController extends Controller
             foreach ($request->file('sponsor_logos') as $sponsorFile) {
                 if ($sponsorFile && $sponsorFile->isValid()) {
                     $path = $sponsorFile->store('sponsors', 'public');
+                    self::ensurePublicStorageSync($path);
                     $currentSponsorLogos[] = $path;
                 }
             }
@@ -284,10 +312,15 @@ class AdminSettingsController extends Controller
 
         if ($request->has('delete_pamphlet_images') && is_array($request->delete_pamphlet_images)) {
             foreach ($request->delete_pamphlet_images as $toDelete) {
-                if (Storage::disk('public')->exists($toDelete)) {
-                    Storage::disk('public')->delete($toDelete);
+                $cleanDel = ltrim(str_replace(['public/', 'storage/'], '', $toDelete), '/');
+                if (Storage::disk('public')->exists($cleanDel)) {
+                    Storage::disk('public')->delete($cleanDel);
                 }
-                $currentPamphletImages = array_values(array_filter($currentPamphletImages, fn ($item) => $item !== $toDelete));
+                $pubDel = public_path('storage/' . $cleanDel);
+                if (file_exists($pubDel)) {
+                    @unlink($pubDel);
+                }
+                $currentPamphletImages = array_values(array_filter($currentPamphletImages, fn ($item) => $item !== $toDelete && ltrim(str_replace(['public/', 'storage/'], '', $item), '/') !== $cleanDel));
             }
         }
 
@@ -298,6 +331,7 @@ class AdminSettingsController extends Controller
             foreach ($request->file('pamphlet_images') as $pamphletFile) {
                 if ($pamphletFile && $pamphletFile->isValid()) {
                     $path = $pamphletFile->store('pamphlets', 'public');
+                    self::ensurePublicStorageSync($path);
                     $currentPamphletImages[] = $path;
                 }
             }
@@ -357,6 +391,7 @@ class AdminSettingsController extends Controller
             foreach ($request->file('sponsor_logos') as $sponsorFile) {
                 if ($sponsorFile && $sponsorFile->isValid()) {
                     $path = $sponsorFile->store('sponsors', 'public');
+                    self::ensurePublicStorageSync($path);
                     $currentSponsorLogos[] = $path;
                     $uploaded[] = [
                         'path' => $path,
@@ -404,6 +439,7 @@ class AdminSettingsController extends Controller
             foreach ($request->file('pamphlet_images') as $pamphletFile) {
                 if ($pamphletFile && $pamphletFile->isValid()) {
                     $path = $pamphletFile->store('pamphlets', 'public');
+                    self::ensurePublicStorageSync($path);
                     $currentPamphletImages[] = $path;
                     $uploaded[] = [
                         'path' => $path,
@@ -440,13 +476,21 @@ class AdminSettingsController extends Controller
         ]);
 
         $logoToDelete = $request->input('logo');
+        $cleanPath = ltrim(str_replace(['public/', 'storage/'], '', $logoToDelete), '/');
         $current = json_decode(AppSetting::get('sponsor_logos', '[]'), true) ?: [];
 
-        if (Storage::disk('public')->exists($logoToDelete)) {
-            Storage::disk('public')->delete($logoToDelete);
+        if (Storage::disk('public')->exists($cleanPath)) {
+            Storage::disk('public')->delete($cleanPath);
+        }
+        $publicFile = public_path('storage/' . $cleanPath);
+        if (file_exists($publicFile)) {
+            @unlink($publicFile);
         }
 
-        $filtered = array_values(array_filter($current, fn ($item) => $item !== $logoToDelete));
+        $filtered = array_values(array_filter($current, function ($item) use ($logoToDelete, $cleanPath) {
+            $itemClean = ltrim(str_replace(['public/', 'storage/'], '', $item), '/');
+            return $item !== $logoToDelete && $itemClean !== $cleanPath;
+        }));
         AppSetting::set('sponsor_logos', json_encode($filtered));
 
         if ($request->wantsJson() || $request->ajax()) {
@@ -473,13 +517,21 @@ class AdminSettingsController extends Controller
         ]);
 
         $imageToDelete = $request->input('image');
+        $cleanPath = ltrim(str_replace(['public/', 'storage/'], '', $imageToDelete), '/');
         $current = json_decode(AppSetting::get('pamphlet_images', '[]'), true) ?: [];
 
-        if (Storage::disk('public')->exists($imageToDelete)) {
-            Storage::disk('public')->delete($imageToDelete);
+        if (Storage::disk('public')->exists($cleanPath)) {
+            Storage::disk('public')->delete($cleanPath);
+        }
+        $publicFile = public_path('storage/' . $cleanPath);
+        if (file_exists($publicFile)) {
+            @unlink($publicFile);
         }
 
-        $filtered = array_values(array_filter($current, fn ($item) => $item !== $imageToDelete));
+        $filtered = array_values(array_filter($current, function ($item) use ($imageToDelete, $cleanPath) {
+            $itemClean = ltrim(str_replace(['public/', 'storage/'], '', $item), '/');
+            return $item !== $imageToDelete && $itemClean !== $cleanPath;
+        }));
         AppSetting::set('pamphlet_images', json_encode($filtered));
 
         if ($request->wantsJson() || $request->ajax()) {
@@ -510,7 +562,11 @@ class AdminSettingsController extends Controller
             $validSponsors = [];
             foreach ($sponsors as $logo) {
                 $cleanPath = ltrim(str_replace(['public/', 'storage/'], '', $logo), '/');
-                if (Storage::disk('public')->exists($cleanPath)) {
+                $src = storage_path('app/public/' . $cleanPath);
+                $dest = public_path('storage/' . $cleanPath);
+
+                if (file_exists($src) || file_exists($dest)) {
+                    self::ensurePublicStorageSync($cleanPath);
                     $validSponsors[] = $cleanPath;
                 } else {
                     $cleanedSponsors++;
@@ -524,7 +580,11 @@ class AdminSettingsController extends Controller
             $validPamphlets = [];
             foreach ($pamphlets as $img) {
                 $cleanPath = ltrim(str_replace(['public/', 'storage/'], '', $img), '/');
-                if (Storage::disk('public')->exists($cleanPath)) {
+                $src = storage_path('app/public/' . $cleanPath);
+                $dest = public_path('storage/' . $cleanPath);
+
+                if (file_exists($src) || file_exists($dest)) {
+                    self::ensurePublicStorageSync($cleanPath);
                     $validPamphlets[] = $cleanPath;
                 } else {
                     $cleanedPamphlets++;
@@ -1739,5 +1799,47 @@ class AdminSettingsController extends Controller
         AppSetting::set('popup_version', 'v_' . time());
 
         return redirect()->route('admin.settings.popup.index')->with('success', 'Status Informasi berhasil di-reset. Pengumuman akan muncul kembali satu kali kepada seluruh pengunjung dan peserta.');
+    }
+
+    /**
+     * Ensure a stored file in storage/app/public is mirrored into public/storage and has readable permissions.
+     */
+    public static function ensurePublicStorageSync(?string $relativePath): void
+    {
+        if (empty($relativePath)) {
+            return;
+        }
+
+        $cleanPath = ltrim(str_replace(['public/', 'storage/'], '', $relativePath), '/');
+        $srcPath = storage_path('app/public/' . $cleanPath);
+        $destPath = public_path('storage/' . $cleanPath);
+
+        // If source file exists in storage/app/public
+        if (file_exists($srcPath)) {
+            @chmod($srcPath, 0664);
+            $destDir = dirname($destPath);
+            if (!file_exists($destDir)) {
+                @mkdir($destDir, 0775, true);
+            }
+            if (!file_exists($destPath) || (file_exists($srcPath) && filemtime($srcPath) > filemtime($destPath))) {
+                @copy($srcPath, $destPath);
+            }
+            if (file_exists($destPath)) {
+                @chmod($destPath, 0664);
+            }
+        } elseif (file_exists($destPath)) {
+            // If exists only in public/storage, reverse sync to storage/app/public
+            @chmod($destPath, 0664);
+            $srcDir = dirname($srcPath);
+            if (!file_exists($srcDir)) {
+                @mkdir($srcDir, 0775, true);
+            }
+            if (!file_exists($srcPath)) {
+                @copy($destPath, $srcPath);
+            }
+            if (file_exists($srcPath)) {
+                @chmod($srcPath, 0664);
+            }
+        }
     }
 }

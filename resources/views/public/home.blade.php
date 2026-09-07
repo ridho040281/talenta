@@ -1191,6 +1191,7 @@
             }
         }
     @endphp
+    @if(count($sponsorLogos) > 0)
     <section class="py-3 lg:py-4 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="glass-card rounded-2xl py-4 px-6 sm:py-4 sm:px-8 border border-white/[0.08] shadow-xl relative overflow-hidden text-center space-y-3">
             
@@ -1205,21 +1206,24 @@
             </div>
 
             <!-- Sponsor Logos Grid / Flex Centered -->
-            @if(count($sponsorLogos) > 0)
-                <div class="relative z-10 flex flex-wrap items-center justify-center gap-4 sm:gap-8 pt-2 pb-1">
-                    @foreach($sponsorLogos as $logo)
-                        <div class="p-3 sm:p-4 rounded-2xl bg-[#0C111D]/80 border border-white/[0.08] hover:border-[#7A5AF8]/50 hover:bg-[#0C111D] transition-all duration-300 group flex items-center justify-center shadow-lg">
-                            <img src="{{ asset('storage/' . $logo) }}" 
-                                 alt="Logo Sponsor" 
-                                 class="h-12 sm:h-16 lg:h-20 w-auto max-w-[160px] sm:max-w-[200px] object-contain drop-shadow-md group-hover:scale-105 transition-transform duration-300"
-                                 onerror="this.closest('.group')?.remove();">
-                        </div>
-                    @endforeach
-                </div>
-            @endif
+            <div class="relative z-10 flex flex-wrap items-center justify-center gap-4 sm:gap-8 pt-2 pb-1">
+                @foreach($sponsorLogos as $logo)
+                    @php
+                        $cleanLogo = ltrim(str_replace(['public/', 'storage/'], '', $logo), '/');
+                        $logoUrl = \Illuminate\Support\Str::startsWith($logo, ['http://', 'https://']) ? $logo : asset('storage/' . $cleanLogo);
+                    @endphp
+                    <div class="p-3 sm:p-4 rounded-2xl bg-[#0C111D]/80 border border-white/[0.08] hover:border-[#7A5AF8]/50 hover:bg-[#0C111D] transition-all duration-300 group flex items-center justify-center shadow-lg">
+                        <img src="{{ $logoUrl }}" 
+                             alt="Logo Sponsor" 
+                             class="h-12 sm:h-16 lg:h-20 w-auto max-w-[160px] sm:max-w-[200px] object-contain drop-shadow-md group-hover:scale-105 transition-transform duration-300"
+                             onerror="this.closest('.group')?.remove();">
+                    </div>
+                @endforeach
+            </div>
 
         </div>
     </section>
+    @endif
 
 </div>
 @endsection

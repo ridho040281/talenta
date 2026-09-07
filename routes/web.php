@@ -228,3 +228,24 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->name('admin.')-
         Route::get('/app-info', [AdminSettingsController::class, 'appInfo'])->name('app.info');
     });
 });
+
+// Direct Dynamic Media Serving Fallback (Protects against symlink or server permissions issues)
+Route::get('/storage/{folder}/{filename}', function ($folder, $filename) {
+    if (!in_array($folder, ['sponsors', 'pamphlets', 'settings', 'certificates', 'avatars', 'payments', 'qrcodes'])) {
+        abort(404);
+    }
+    $cleanFilename = basename($filename);
+    $path = storage_path("app/public/{$folder}/{$cleanFilename}");
+    if (!file_exists($path)) {
+        $path = public_path("storage/{$folder}/{$cleanFilename}");
+    }
+    if (file_exists($path)) {
+        $mime = mime_content_type($path) ?: 'image/png';
+        return response()->file($path, [
+            'Content-Type' => $mime,
+            'Cache-Control' => 'public, max-age=86400',
+        ]);
+    }
+    abort(404);
+})->where('filename', '[A-Za-z0-9_\-\.]+');
+
