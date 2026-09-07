@@ -706,10 +706,18 @@
                             <!-- Existing Uploaded Pamphlet Images List -->
                             @if(!empty($settings['pamphlet_images']) && count($settings['pamphlet_images']) > 0)
                                 <div id="pamphlet-list-section" class="space-y-3 pt-3 border-t border-white/[0.06]">
-                                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-                                        <span>Gambar Pamflet yang Terpasang Saat Ini</span>
-                                        <span id="pamphlet-count-badge" class="px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 text-[10px] font-mono font-bold">{{ count($settings['pamphlet_images']) }} Pamflet</span>
-                                    </label>
+                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                                            <span>Gambar Pamflet yang Terpasang Saat Ini</span>
+                                            <span id="pamphlet-count-badge" class="px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 text-[10px] font-mono font-bold">{{ count($settings['pamphlet_images']) }} Pamflet</span>
+                                        </label>
+                                        <button type="button" 
+                                                onclick="cleanBrokenMediaDirect('pamphlet')" 
+                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[11px] font-bold transition shrink-0 cursor-pointer shadow-sm">
+                                            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i>
+                                            <span>Bersihkan File Rusak / Hilang</span>
+                                        </button>
+                                    </div>
                                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5">
                                         @foreach($settings['pamphlet_images'] as $index => $img)
                                             @php
@@ -832,6 +840,12 @@
                                             Klik tombol <span class="text-rose-400 font-bold">🗑️</span> pada logo untuk menghapus seketika, atau centang <span class="text-slate-300 font-semibold">Tandai Hapus</span> lalu tekan tombol Simpan di bawah.
                                         </p>
                                     </div>
+                                    <button type="button" 
+                                            onclick="cleanBrokenMediaDirect('sponsor')" 
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[11px] font-bold transition shrink-0 cursor-pointer shadow-sm">
+                                        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i>
+                                        <span>Bersihkan File Rusak / Hilang</span>
+                                    </button>
                                 </div>
 
                                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
@@ -1409,6 +1423,41 @@
         } catch (err) {
             console.error('Upload error:', err);
             alert('Terjadi kesalahan saat mengunggah pamflet: ' + err.message);
+        }
+    }
+
+    async function cleanBrokenMediaDirect(type) {
+        if (!confirm('Apakah Anda ingin memindai dan membersihkan seluruh file yang rusak/hilang dari database secara otomatis?')) {
+            return;
+        }
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
+
+        try {
+            const response = await fetch('{{ route('admin.settings.clean_broken_media') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ type: type })
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                showSuccessCenterModal('Pembersihan Selesai', result.message);
+                setTimeout(() => {
+                    window.location.href = '{{ route('admin.settings.general', ['tab' => 'landing']) }}';
+                }, 1200);
+            } else {
+                alert(result.message || 'Gagal membersihkan file rusak.');
+            }
+        } catch (err) {
+            console.error('Clean error:', err);
+            alert('Terjadi kesalahan saat membersihkan: ' + err.message);
         }
     }
 

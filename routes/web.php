@@ -198,6 +198,7 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->name('admin.')-
         Route::post('/sponsor-logo/delete', [AdminSettingsController::class, 'deleteSingleSponsorLogo'])->name('sponsor.delete');
         Route::post('/pamphlet-image/upload', [AdminSettingsController::class, 'uploadPamphletImages'])->name('pamphlet.upload');
         Route::post('/pamphlet-image/delete', [AdminSettingsController::class, 'deleteSinglePamphletImage'])->name('pamphlet.delete');
+        Route::post('/clean-broken-media', [AdminSettingsController::class, 'cleanBrokenMedia'])->name('clean_broken_media');
         Route::post('/activity_logs/clear', [AdminSettingsController::class, 'clearActivityLogs'])->name('activity_logs.clear');
         Route::get('/whatsapp-blast', [AdminSettingsController::class, 'whatsappBlast'])->name('whatsapp.blast');
         Route::get('/whatsapp-blast/check-status', [AdminSettingsController::class, 'checkWablasStatus'])->name('whatsapp.blast.check-status');

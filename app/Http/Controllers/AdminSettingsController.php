@@ -497,6 +497,63 @@ class AdminSettingsController extends Controller
     }
 
     /**
+     * Clean up broken/missing sponsor logos and pamphlet records from database
+     */
+    public function cleanBrokenMedia(Request $request)
+    {
+        $type = $request->input('type', 'all');
+        $cleanedSponsors = 0;
+        $cleanedPamphlets = 0;
+
+        if ($type === 'sponsor' || $type === 'all') {
+            $sponsors = json_decode(AppSetting::get('sponsor_logos', '[]'), true) ?: [];
+            $validSponsors = [];
+            foreach ($sponsors as $logo) {
+                $cleanPath = ltrim(str_replace(['public/', 'storage/'], '', $logo), '/');
+                if (Storage::disk('public')->exists($cleanPath)) {
+                    $validSponsors[] = $cleanPath;
+                } else {
+                    $cleanedSponsors++;
+                }
+            }
+            AppSetting::set('sponsor_logos', json_encode(array_values($validSponsors)));
+        }
+
+        if ($type === 'pamphlet' || $type === 'all') {
+            $pamphlets = json_decode(AppSetting::get('pamphlet_images', '[]'), true) ?: [];
+            $validPamphlets = [];
+            foreach ($pamphlets as $img) {
+                $cleanPath = ltrim(str_replace(['public/', 'storage/'], '', $img), '/');
+                if (Storage::disk('public')->exists($cleanPath)) {
+                    $validPamphlets[] = $cleanPath;
+                } else {
+                    $cleanedPamphlets++;
+                }
+            }
+            AppSetting::set('pamphlet_images', json_encode(array_values($validPamphlets)));
+        }
+
+        $totalCleaned = $cleanedSponsors + $cleanedPamphlets;
+        $msg = $totalCleaned > 0 
+            ? "Berhasil membersihkan {$totalCleaned} file yang rusak/hilang dari database." 
+            : "Semua file logo dan pamflet dalam kondisi baik dan valid.";
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $msg,
+                'cleaned_sponsors' => $cleanedSponsors,
+                'cleaned_pamphlets' => $cleanedPamphlets,
+            ]);
+        }
+
+        return redirect()->route('admin.settings.general', ['tab' => 'landing'])
+            ->with('success', $msg)
+            ->with('modal_success_title', 'Pembersihan Selesai')
+            ->with('modal_success_message', $msg);
+    }
+
+    /**
      * WhatsApp Blast Management
      */
     public function whatsappBlast()
