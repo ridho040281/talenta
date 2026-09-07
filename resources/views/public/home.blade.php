@@ -589,18 +589,10 @@
 
                                 <td class="py-3.5 px-4 text-center whitespace-nowrap min-w-[120px] align-middle">
                                     <div class="inline-flex items-center justify-center gap-1.5">
-                                        @if(($comp->show_guidelines ?? true) && !empty($comp->guidelines_file))
-                                            <a href="{{ $comp->guidelines_download_url ?? $comp->guidelines_embed_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.05] hover:bg-gradient-to-r hover:from-[#7A5AF8] hover:to-[#4E6EFF] hover:text-white text-slate-200 text-xs font-bold border border-white/[0.1] transition-all duration-200 shadow-sm group" title="Buka Petunjuk Teknis {{ $comp->name }} (Google Drive / Dokumen)">
-                                                <i data-lucide="file-text" class="w-3.5 h-3.5 text-[#A594FD] group-hover:text-white transition-colors"></i>
-                                                <span>Juknis</span>
-                                                <i data-lucide="external-link" class="w-3 h-3 text-slate-400 group-hover:text-white/80"></i>
-                                            </a>
-                                        @else
-                                            <a href="{{ route('competition.detail', $comp->slug) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.05] hover:bg-gradient-to-r hover:from-[#7A5AF8] hover:to-[#4E6EFF] hover:text-white text-slate-200 text-xs font-bold border border-white/[0.1] transition-all duration-200 shadow-sm group" title="Detail & Aturan Lomba {{ $comp->name }}">
-                                                <i data-lucide="book-open" class="w-3.5 h-3.5 text-[#A594FD] group-hover:text-white transition-colors"></i>
-                                                <span>Detail</span>
-                                            </a>
-                                        @endif
+                                        <a href="{{ route('competition.detail', $comp->slug) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.05] hover:bg-gradient-to-r hover:from-[#7A5AF8] hover:to-[#4E6EFF] hover:text-white text-slate-200 text-xs font-bold border border-white/[0.1] transition-all duration-200 shadow-sm group" title="Lihat Juknis & Detail {{ $comp->name }}">
+                                            <i data-lucide="file-text" class="w-3.5 h-3.5 text-[#A594FD] group-hover:text-white transition-colors"></i>
+                                            <span>Juknis & Detail</span>
+                                        </a>
 
                                         @if(!empty($comp->whatsapp_group_url))
                                             <a href="{{ $comp->whatsapp_group_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 text-xs font-bold border border-emerald-500/30 hover:border-emerald-500 transition-all duration-200 shadow-sm shadow-emerald-500/10 group" title="Gabung Grup WhatsApp Resmi {{ $comp->name }}">

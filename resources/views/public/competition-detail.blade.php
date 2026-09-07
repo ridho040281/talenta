@@ -46,6 +46,32 @@
                 </p>
             </div>
 
+            @if($competition->show_criteria && $competition->criteria->isNotEmpty())
+            <!-- Kriteria Penilaian Dewan Juri -->
+            <div class="glass-card rounded-3xl p-6 sm:p-8 border border-white/[0.08] shadow-2xl space-y-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center">
+                        <i data-lucide="scale" class="w-5 h-5"></i>
+                    </div>
+                    <h2 class="text-lg sm:text-xl font-black text-white font-display">Kriteria Penilaian Dewan Juri</h2>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    @foreach($competition->criteria as $crit)
+                        <div class="p-4 rounded-2xl bg-[#0C111D]/80 border border-white/[0.08] flex items-start justify-between">
+                            <div>
+                                <h4 class="text-sm font-bold text-slate-200">{{ $crit->name }}</h4>
+                                <p class="text-xs text-slate-400 mt-1">{{ $crit->description ?? 'Rentang nilai ' . $crit->min_score . ' - ' . $crit->max_score }}</p>
+                            </div>
+                            <span class="px-2.5 py-1 text-xs font-black rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">
+                                {{ $crit->weight_percentage }}%
+                            </span>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
             @if($competition->show_rules && !empty($competition->rules))
             <!-- Petunjuk Teknis & Aturan Lomba -->
             <div class="glass-card rounded-3xl p-6 sm:p-8 border border-white/[0.08] shadow-2xl space-y-4">
@@ -95,32 +121,6 @@
                             allow="autoplay; fullscreen"
                             loading="lazy">
                     </iframe>
-                </div>
-            </div>
-            @endif
-
-            @if($competition->show_criteria && $competition->criteria->isNotEmpty())
-            <!-- Kriteria Penilaian Dewan Juri -->
-            <div class="glass-card rounded-3xl p-6 sm:p-8 border border-white/[0.08] shadow-2xl space-y-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-2xl bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center">
-                        <i data-lucide="scale" class="w-5 h-5"></i>
-                    </div>
-                    <h2 class="text-lg sm:text-xl font-black text-white font-display">Kriteria Penilaian Dewan Juri</h2>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    @foreach($competition->criteria as $crit)
-                        <div class="p-4 rounded-2xl bg-[#0C111D]/80 border border-white/[0.08] flex items-start justify-between">
-                            <div>
-                                <h4 class="text-sm font-bold text-slate-200">{{ $crit->name }}</h4>
-                                <p class="text-xs text-slate-400 mt-1">{{ $crit->description ?? 'Rentang nilai ' . $crit->min_score . ' - ' . $crit->max_score }}</p>
-                            </div>
-                            <span class="px-2.5 py-1 text-xs font-black rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">
-                                {{ $crit->weight_percentage }}%
-                            </span>
-                        </div>
-                    @endforeach
                 </div>
             </div>
             @endif
