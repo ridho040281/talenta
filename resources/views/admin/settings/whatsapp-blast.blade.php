@@ -877,24 +877,12 @@
                         </div>
                         <input :type="showSecret ? 'text' : 'password'" name="secret_key" x-model="secretKey" placeholder="Masukkan Secret Key jika akun Wablas Anda mengaktifkannya..." class="block w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/[0.1] text-xs sm:text-sm font-mono text-white placeholder-slate-500 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400/30 tracking-wider">
                     </div>
-                    <!-- 4. Treasurer Phone Box -->
-                    <div class="p-4 rounded-2xl bg-[#0C111D] border border-white/[0.08] space-y-2 hover:border-teal-400/40 transition">
-                        <div class="flex items-center justify-between">
-                            <label class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                                <span class="text-teal-400 text-sm">💰</span>
-                                <span>Nomor WhatsApp Bendahara Panitia (Alert Pembayaran Masuk)</span>
-                            </label>
-                            <span class="text-[10px] font-mono text-teal-300 font-bold px-2 py-0.5 rounded-md bg-teal-500/15 border border-teal-500/25">Alert Keuangan</span>
-                        </div>
-                        <input type="text" name="treasurer_phone_number" value="{{ \App\Models\AppSetting::get('treasurer_phone_number', '') }}" placeholder="Contoh: 081234567890" class="block w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/[0.1] text-xs sm:text-sm font-mono text-white placeholder-slate-500 outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 tracking-wider">
-                        <p class="text-[10px] text-slate-400">Setiap ada pendaftar baru yang mengirim formulir pendaftaran & tagihan biaya, sistem otomatis mengirim alert WA ke nomor Bendahara ini untuk memeriksa mutasi bank.</p>
-                    </div>
 
                     <!-- Button: Save Credentials -->
                     <div class="pt-2">
                         <button type="submit" class="w-full py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm transition shadow-xl shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer">
                             <i data-lucide="save" class="w-4 h-4"></i>
-                            <span>Simpan Pengaturan Gateway & Nomor Bendahara</span>
+                            <span>Simpan Kredensial API Wablas</span>
                         </button>
                     </div>
                 </form>

@@ -223,7 +223,57 @@ class WablasNotificationService
     }
 
     /**
-     * Send payment notification alert to Treasurer (Bendahara)
+     * Get all valid phone numbers of Treasurer & Assistants formatted for WhatsApp.
+     */
+    public static function getAllTreasurerPhones(): array
+    {
+        $phones = collect();
+
+        // 1. Primary Treasurer Phone from AppSetting
+        $primaryPhone = trim(AppSetting::get('treasurer_phone_number', ''));
+        if (! empty($primaryPhone)) {
+            $phones->push($primaryPhone);
+        }
+
+        // 2. Assistant Treasurer / Financial Team Phones (comma or newline separated)
+        $assistantPhones = trim(AppSetting::get('treasurer_assistant_phones', ''));
+        if (! empty($assistantPhones)) {
+            $rawList = preg_split('/[\r\n,;]+/', $assistantPhones);
+            foreach ($rawList as $raw) {
+                $trimmed = trim($raw);
+                if (! empty($trimmed)) {
+                    $phones->push($trimmed);
+                }
+            }
+        }
+
+        // 3. Fallback to Superadmin user phone if absolutely no numbers configured
+        if ($phones->isEmpty()) {
+            $superAdmin = User::where('role', 'superadmin')->whereNotNull('phone')->where('phone', '!=', '')->first();
+            if ($superAdmin && ! empty($superAdmin->phone)) {
+                $phones->push($superAdmin->phone);
+            }
+        }
+
+        return $phones
+            ->map(function ($phone) {
+                $clean = preg_replace('/[^0-9]/', '', (string) $phone);
+                if (str_starts_with($clean, '0')) {
+                    $clean = '62'.substr($clean, 1);
+                } elseif (str_starts_with($clean, '8')) {
+                    $clean = '628'.substr($clean, 1);
+                }
+
+                return $clean;
+            })
+            ->filter(fn ($p) => strlen($p) >= 9)
+            ->unique()
+            ->values()
+            ->toArray();
+    }
+
+    /**
+     * Send payment notification alert to Treasurer (Bendahara) & Financial Assistants
      */
     public static function notifyTreasurerNewPayment($registration, $customAmount = null): bool
     {
@@ -232,15 +282,8 @@ class WablasNotificationService
                 return false;
             }
 
-            // Get Treasurer Phone from AppSetting or role
-            $treasurerPhone = trim(AppSetting::get('treasurer_phone_number', ''));
-            if (empty($treasurerPhone)) {
-                // Fallback to superadmin phone if available
-                $superAdmin = User::where('role', 'superadmin')->whereNotNull('phone')->first();
-                $treasurerPhone = $superAdmin->phone ?? '';
-            }
-
-            if (empty($treasurerPhone)) {
+            $phones = static::getAllTreasurerPhones();
+            if (empty($phones)) {
                 return false; // No treasurer phone configured
             }
 
@@ -250,19 +293,27 @@ class WablasNotificationService
             $primaryMember = $registration->members->first();
             $namaPeserta = $primaryMember->full_name ?? ($registration->user->name ?? 'Pendaftar Baru');
 
-            return static::sendAutoNotification('treasurer_new_payment', [
-                'phone' => $treasurerPhone,
-                'nama_peserta' => $namaPeserta,
-                'nama_pendaftar' => $registration->user->name ?? $namaPeserta,
-                'nama_sekolah' => $registration->institution_name ?: ($registration->user->institution_name ?? '-'),
-                'nama_instansi' => $registration->institution_name ?: ($registration->user->institution_name ?? '-'),
-                'cabang_lomba' => $compName,
-                'kode_pendaftaran' => $registration->registration_code,
-                'nominal_biaya' => $fee,
-                'jumlah_peserta' => $registration->members->count() ?: 1,
-                'waktu_daftar' => now()->translatedFormat('d M Y H:i').' WIB',
-                'link_login' => route('admin.dashboard'),
-            ]);
+            $allSent = true;
+            foreach ($phones as $treasurerPhone) {
+                $sent = static::sendAutoNotification('treasurer_new_payment', [
+                    'phone' => $treasurerPhone,
+                    'nama_peserta' => $namaPeserta,
+                    'nama_pendaftar' => $registration->user->name ?? $namaPeserta,
+                    'nama_sekolah' => $registration->institution_name ?: ($registration->user->institution_name ?? '-'),
+                    'nama_instansi' => $registration->institution_name ?: ($registration->user->institution_name ?? '-'),
+                    'cabang_lomba' => $compName,
+                    'kode_pendaftaran' => $registration->registration_code,
+                    'nominal_biaya' => $fee,
+                    'jumlah_peserta' => $registration->members->count() ?: 1,
+                    'waktu_daftar' => now()->translatedFormat('d M Y H:i').' WIB',
+                    'link_login' => route('admin.dashboard'),
+                ]);
+                if (! $sent) {
+                    $allSent = false;
+                }
+            }
+
+            return $allSent;
         } catch (\Throwable $e) {
             Log::error('notifyTreasurerNewPayment Error: '.$e->getMessage());
 
@@ -271,7 +322,7 @@ class WablasNotificationService
     }
 
     /**
-     * Send collective invoice notification alert specifically to Treasurer (Bendahara)
+     * Send collective invoice notification alert specifically to Treasurer & Financial Assistants
      */
     public static function notifyTreasurerCollectiveInvoice($invoice): bool
     {
@@ -280,15 +331,8 @@ class WablasNotificationService
                 return false;
             }
 
-            // Get Treasurer Phone from AppSetting or role
-            $treasurerPhone = trim(AppSetting::get('treasurer_phone_number', ''));
-            if (empty($treasurerPhone)) {
-                // Fallback to superadmin phone if available
-                $superAdmin = User::where('role', 'superadmin')->whereNotNull('phone')->first();
-                $treasurerPhone = $superAdmin->phone ?? '';
-            }
-
-            if (empty($treasurerPhone)) {
+            $phones = static::getAllTreasurerPhones();
+            if (empty($phones)) {
                 return false; // No treasurer phone configured
             }
 
@@ -301,20 +345,28 @@ class WablasNotificationService
                 ? 'treasurer_collective_invoice'
                 : 'treasurer_new_payment';
 
-            return static::sendAutoNotification($templateCode, [
-                'phone' => $treasurerPhone,
-                'nama_peserta' => $user->name ?? 'Official Sekolah',
-                'nama_pendaftar' => $user->name ?? 'Official Sekolah',
-                'nama_sekolah' => $institutionName,
-                'nama_instansi' => $institutionName,
-                'cabang_lomba' => "{$regCount} Peserta (Kolektif)",
-                'kode_pendaftaran' => $invoice->invoice_number,
-                'nominal_biaya' => $invoice->final_amount,
-                'jumlah_peserta' => $regCount,
-                'phone_pendaftar' => $user->phone ?? '-',
-                'waktu_daftar' => now()->translatedFormat('d M Y H:i').' WIB',
-                'link_login' => route('admin.invoices.show', $invoice->id),
-            ]);
+            $allSent = true;
+            foreach ($phones as $treasurerPhone) {
+                $sent = static::sendAutoNotification($templateCode, [
+                    'phone' => $treasurerPhone,
+                    'nama_peserta' => $user->name ?? 'Official Sekolah',
+                    'nama_pendaftar' => $user->name ?? 'Official Sekolah',
+                    'nama_sekolah' => $institutionName,
+                    'nama_instansi' => $institutionName,
+                    'cabang_lomba' => "{$regCount} Peserta (Kolektif)",
+                    'kode_pendaftaran' => $invoice->invoice_number,
+                    'nominal_biaya' => $invoice->final_amount,
+                    'jumlah_peserta' => $regCount,
+                    'phone_pendaftar' => $user->phone ?? '-',
+                    'waktu_daftar' => now()->translatedFormat('d M Y H:i').' WIB',
+                    'link_login' => route('admin.invoices.show', $invoice->id),
+                ]);
+                if (! $sent) {
+                    $allSent = false;
+                }
+            }
+
+            return $allSent;
         } catch (\Throwable $e) {
             Log::error('notifyTreasurerCollectiveInvoice Error: '.$e->getMessage());
 

@@ -198,25 +198,58 @@
 
                 </div>
 
-                <!-- Identitas Bendahara Panitia (Tampil di Kwitansi & Invoice) -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-white/[0.08]">
-                    
-                    <div class="space-y-1.5 bg-[#0C111D]/80 p-4 rounded-2xl border border-white/[0.08]">
-                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">
-                            Nama Bendahara Panitia <span class="text-rose-400">*</span>
-                        </label>
-                        <p class="text-[10px] text-slate-500">Nama bendahara yang dicetak pada tanda tangan Kwitansi / Invoice</p>
-                        <input type="text" name="treasurer_name" value="{{ old('treasurer_name', $settings['treasurer_name'] ?? 'WIJIATIN, S.Pd') }}" placeholder="Contoh: WIJIATIN / HJ. SITI KHADIJAH, S.E." class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-bold focus:border-[#7A5AF8] outline-none">
+                <!-- Identitas Bendahara Panitia & Notifikasi Keuangan -->
+                <div class="space-y-4 pt-2 border-t border-white/[0.08]">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="user-check" class="w-4 h-4 text-amber-400"></i>
+                        <h4 class="text-xs font-black uppercase tracking-wider text-slate-300">Identitas Bendahara & Notifikasi Keuangan</h4>
                     </div>
 
-                    <div class="space-y-1.5 bg-[#0C111D]/80 p-4 rounded-2xl border border-white/[0.08]">
-                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">
-                            NIP Bendahara Panitia <span class="text-[10px] text-slate-400 font-normal lowercase">(opsional)</span>
-                        </label>
-                        <p class="text-[10px] text-slate-500">Nomor Induk Pegawai bendahara (kosongkan jika tidak ada)</p>
-                        <input type="text" name="treasurer_nip" value="{{ old('treasurer_nip', $settings['treasurer_nip'] ?? '198310102023212035') }}" placeholder="Contoh: 19800101 200501 2 001" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-mono focus:border-[#7A5AF8] outline-none">
-                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Nama Bendahara -->
+                        <div class="space-y-1.5 bg-[#0C111D]/80 p-4 rounded-2xl border border-white/[0.08]">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                                Nama Bendahara Panitia <span class="text-rose-400">*</span>
+                            </label>
+                            <p class="text-[10px] text-slate-500">Nama bendahara yang dicetak pada tanda tangan Kwitansi / Invoice</p>
+                            <input type="text" name="treasurer_name" value="{{ old('treasurer_name', $settings['treasurer_name'] ?? 'WIJIATIN, S.Pd') }}" placeholder="Contoh: WIJIATIN / HJ. SITI KHADIJAH, S.E." class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-bold focus:border-[#7A5AF8] outline-none">
+                        </div>
 
+                        <!-- NIP Bendahara -->
+                        <div class="space-y-1.5 bg-[#0C111D]/80 p-4 rounded-2xl border border-white/[0.08]">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                                NIP Bendahara Panitia <span class="text-[10px] text-slate-400 font-normal lowercase">(opsional)</span>
+                            </label>
+                            <p class="text-[10px] text-slate-500">Nomor Induk Pegawai bendahara (kosongkan jika tidak ada)</p>
+                            <input type="text" name="treasurer_nip" value="{{ old('treasurer_nip', $settings['treasurer_nip'] ?? '198310102023212035') }}" placeholder="Contoh: 19800101 200501 2 001" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-mono focus:border-[#7A5AF8] outline-none">
+                        </div>
+
+                        <!-- No WhatsApp Utama Bendahara -->
+                        <div class="space-y-1.5 bg-[#0C111D]/80 p-4 rounded-2xl border border-white/[0.08] hover:border-teal-400/40 transition">
+                            <div class="flex items-center justify-between">
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                                    <span class="text-teal-400">📱</span>
+                                    <span>No. WhatsApp Utama Bendahara</span>
+                                </label>
+                                <span class="text-[10px] font-mono text-teal-300 font-bold px-2 py-0.5 rounded-md bg-teal-500/15 border border-teal-500/25">Alert Keuangan</span>
+                            </div>
+                            <p class="text-[10px] text-slate-500">Menerima notifikasi otomatis setiap ada pembayaran / invoice baru</p>
+                            <input type="text" name="treasurer_phone_number" value="{{ old('treasurer_phone_number', $settings['treasurer_phone_number'] ?? '') }}" placeholder="Contoh: 081234567890" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-teal-300 text-xs font-mono font-bold focus:border-teal-400 outline-none">
+                        </div>
+
+                        <!-- No WhatsApp Asisten Bendahara / Tim Keuangan -->
+                        <div class="space-y-1.5 bg-[#0C111D]/80 p-4 rounded-2xl border border-white/[0.08] hover:border-indigo-400/40 transition">
+                            <div class="flex items-center justify-between">
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                                    <span class="text-indigo-400">👥</span>
+                                    <span>No. WA Asisten / Tim Keuangan</span>
+                                </label>
+                                <span class="text-[10px] font-mono text-indigo-300 font-bold px-2 py-0.5 rounded-md bg-indigo-500/15 border border-indigo-500/25">Multi-Nomor</span>
+                            </div>
+                            <p class="text-[10px] text-slate-500">Bisa diisi 1 atau lebih nomor (pisahkan tanda koma <code class="text-indigo-300">,</code> jika lebih dari satu)</p>
+                            <input type="text" name="treasurer_assistant_phones" value="{{ old('treasurer_assistant_phones', $settings['treasurer_assistant_phones'] ?? '') }}" placeholder="Contoh: 081234567891, 089876543210" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-indigo-300 text-xs font-mono font-bold focus:border-indigo-400 outline-none">
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Preview Rekening Box -->
