@@ -875,6 +875,8 @@
                                 </button>
                             </div>
                         </div>
+                        <input :type="showSecret ? 'text' : 'password'" name="secret_key" x-model="secretKey" placeholder="Masukkan Secret Key jika akun Wablas Anda mengaktifkannya..." class="block w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/[0.1] text-xs sm:text-sm font-mono text-white placeholder-slate-500 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400/30 tracking-wider">
+                    </div>
                     <!-- 4. Treasurer Phone Box -->
                     <div class="p-4 rounded-2xl bg-[#0C111D] border border-white/[0.08] space-y-2 hover:border-teal-400/40 transition">
                         <div class="flex items-center justify-between">
