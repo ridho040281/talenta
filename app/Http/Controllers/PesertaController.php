@@ -8,6 +8,7 @@ use App\Models\Competition;
 use App\Models\Invoice;
 use App\Models\Registration;
 use App\Models\RegistrationMember;
+use App\Services\ImageOptimizerService;
 use App\Services\WablasNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -219,7 +220,7 @@ class PesertaController extends Controller
             'official_name' => ['nullable', 'string', 'max:255'],
             'official_phone' => ['nullable', 'string', 'max:20'],
             'official_gender' => [$isPramuka ? 'required' : 'nullable', 'in:L,P'],
-            'official_photo' => [$isPramuka ? 'required' : 'nullable', 'file', 'image', 'mimes:jpg,jpeg,png', 'max:3072'],
+            'official_photo' => [$isPramuka ? 'required' : 'nullable', 'file', 'image', 'mimes:jpg,jpeg,png,webp,bmp', 'max:25600'],
             'members' => ['required', 'array', "min:{$minMembers}", "max:{$maxMembers}"],
             'members.*.full_name' => ['required', 'string', 'max:255'],
             'members.*.school_name' => ['nullable', 'string', 'max:255'],
@@ -229,18 +230,18 @@ class PesertaController extends Controller
             'members.*.birth_date' => ['nullable', 'date'],
             'members.*.phone' => ['nullable', 'string', 'max:20'],
             'members.*.role_in_team' => ['nullable', 'string', 'max:100'],
-            'members.*.photo' => [$isPramuka ? 'required' : 'nullable', 'file', 'image', 'mimes:jpg,jpeg,png', 'max:3072'],
+            'members.*.photo' => [$isPramuka ? 'required' : 'nullable', 'file', 'image', 'mimes:jpg,jpeg,png,webp,bmp', 'max:25600'],
             'chosen_song' => [$isPopSinger ? 'required' : 'nullable', 'string', 'max:255'],
             'document_file' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,zip', 'max:5120'],
             'payment_proof' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
         ], [
             'official_gender.required' => 'Jenis kelamin pembina / pendamping wajib dipilih.',
             'official_photo.required' => 'Foto pembina / pendamping wajib diunggah untuk cabang lomba Pramuka.',
-            'official_photo.max' => 'Ukuran foto pembina / pendamping maksimal 3 MB.',
-            'official_photo.mimes' => 'Format foto pembina / pendamping harus berupa JPG, JPEG, atau PNG.',
+            'official_photo.max' => 'Ukuran berkas foto pembina / pendamping maksimal 25 MB.',
+            'official_photo.mimes' => 'Format foto pembina / pendamping harus berupa gambar (JPG, JPEG, PNG, atau WEBP).',
             'members.*.photo.required' => 'Foto peserta wajib diunggah untuk cabang lomba Pramuka.',
-            'members.*.photo.max' => 'Ukuran foto peserta maksimal 3 MB.',
-            'members.*.photo.mimes' => 'Format foto peserta harus berupa JPG, JPEG, atau PNG.',
+            'members.*.photo.max' => 'Ukuran berkas foto peserta maksimal 25 MB.',
+            'members.*.photo.mimes' => 'Format foto peserta harus berupa gambar (JPG, JPEG, PNG, atau WEBP).',
             'chosen_song.required' => 'Judul lagu pilihan wajib dipilih untuk cabang lomba Pop Singer.',
             'target_class.required' => 'Kategori kelas wajib dipilih.',
             'match_type.required' => 'Kategori sektor pertandingan (Tunggal PA/PI) wajib dipilih.',
@@ -322,22 +323,27 @@ class PesertaController extends Controller
             $institutionName = $validated['institution_name'] ?? $user->institution_name ?? 'Kontingen Mandiri';
         }
 
-        // Upload & Auto-Naming Foto Official/Pendamping
+        // Upload & Auto-Naming + Auto-Kompresi (Maks ~200KB) Foto Official/Pendamping
         $officialPhotoPath = null;
         if ($request->hasFile('official_photo')) {
             $officialFile = $request->file('official_photo');
-            $ext = $officialFile->getClientOriginalExtension() ?: 'jpg';
             $rawOfficialName = trim($validated['official_name'] ?? $user->name ?? 'Pendamping');
             $officialGender = $validated['official_gender'] ?? 'L';
             $rawPangkalan = trim($institutionName ?: ($user->institution_name ?: 'Pangkalan'));
 
-            // Format: Nama Pendamping_Jeniskelamin (L/P)_Pangkalan.ext
+            // Format: Nama Pendamping_Jeniskelamin (L/P)_Pangkalan.jpg
             // Contoh: Sulis_L_MIN 3 Malang.jpg
             $cleanOfficialName = preg_replace('/[\\\\\/:\*\?"<>|]/', '', $rawOfficialName);
             $cleanPangkalan = preg_replace('/[\\\\\/:\*\?"<>|]/', '', $rawPangkalan);
-            $officialFileName = "{$cleanOfficialName}_{$officialGender}_{$cleanPangkalan}.{$ext}";
+            $officialFileName = "{$cleanOfficialName}_{$officialGender}_{$cleanPangkalan}.jpg";
 
-            $officialPhotoPath = $officialFile->storeAs('photos/pramuka/officials', $officialFileName, 'public');
+            $officialPhotoPath = ImageOptimizerService::optimizeAndStore(
+                $officialFile,
+                'photos/pramuka/officials',
+                $officialFileName,
+                1080,
+                200
+            );
         }
 
         $registration = Registration::create([
@@ -363,16 +369,21 @@ class PesertaController extends Controller
             $memberPhotoPath = null;
             if ($request->hasFile("members.{$index}.photo")) {
                 $memberFile = $request->file("members.{$index}.photo");
-                $ext = $memberFile->getClientOriginalExtension() ?: 'jpg';
                 $rawNisn = ! empty($memberData['nisn']) ? preg_replace('/[^0-9]/', '', $memberData['nisn']) : 'NONISN';
                 $rawMemberName = trim($memberData['full_name']);
                 $cleanMemberName = preg_replace('/[\\\\\/:\*\?"<>|]/', '', $rawMemberName);
 
-                // Format: NISN_Nama.ext
+                // Format: NISN_Nama.jpg
                 // Contoh: 3123412231_Joko Kelana.jpg
-                $memberFileName = "{$rawNisn}_{$cleanMemberName}.{$ext}";
+                $memberFileName = "{$rawNisn}_{$cleanMemberName}.jpg";
 
-                $memberPhotoPath = $memberFile->storeAs('photos/pramuka/members', $memberFileName, 'public');
+                $memberPhotoPath = ImageOptimizerService::optimizeAndStore(
+                    $memberFile,
+                    'photos/pramuka/members',
+                    $memberFileName,
+                    1080,
+                    200
+                );
             }
 
             RegistrationMember::create([
