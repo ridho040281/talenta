@@ -865,10 +865,39 @@
     <!-- TIMELINE & ROADMAP RANGKAIAN ACARA (Clean Compact Horizontal Infographic Style) -->
     <section id="jadwal" class="py-6 lg:py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         
-        <div class="glass-card p-5 sm:p-7 lg:p-9 rounded-2xl border border-white/[0.08] shadow-2xl relative overflow-hidden space-y-6">
+        <div x-data="{
+            isDown: false,
+            startX: 0,
+            scrollLeft: 0,
+            scrollContainer(amount) {
+                this.$refs.timelineScroll.scrollBy({ left: amount, behavior: 'smooth' });
+            },
+            startDrag(e) {
+                if (e.button !== 0) return;
+                this.isDown = true;
+                this.startX = e.pageX - this.$refs.timelineScroll.offsetLeft;
+                this.scrollLeft = this.$refs.timelineScroll.scrollLeft;
+            },
+            stopDrag() {
+                this.isDown = false;
+            },
+            moveDrag(e) {
+                if (!this.isDown) return;
+                e.preventDefault();
+                const x = e.pageX - this.$refs.timelineScroll.offsetLeft;
+                const walk = (x - this.startX) * 1.6;
+                this.$refs.timelineScroll.scrollLeft = this.scrollLeft - walk;
+            },
+            wheelScroll(e) {
+                if (e.deltaY !== 0 && this.$refs.timelineScroll.scrollWidth > this.$refs.timelineScroll.clientWidth) {
+                    e.preventDefault();
+                    this.$refs.timelineScroll.scrollLeft += (e.deltaY * 1.5);
+                }
+            }
+        }" class="glass-card p-5 sm:p-7 lg:p-9 rounded-2xl border border-white/[0.08] shadow-2xl relative overflow-hidden space-y-6">
             
             <!-- Section Header -->
-            <div class="flex flex-col md:flex-row md:items-end justify-between gap-3 border-b border-white/[0.08] pb-4">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/[0.08] pb-4">
                 <div class="space-y-1.5">
                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#7A5AF8]/15 border border-[#7A5AF8]/30 text-[#A594FD] text-[11px] font-bold tracking-wider uppercase">
                         <i data-lucide="calendar" class="w-3 h-3"></i>
@@ -882,9 +911,21 @@
                     </p>
                 </div>
 
-                <div class="hidden sm:flex items-center gap-2 text-xs text-slate-400">
-                    <i data-lucide="arrow-right-left" class="w-4 h-4 text-[#7A5AF8]"></i>
-                    <span>Geser ke samping jika menggunakan layar kecil</span>
+                <div class="flex items-center gap-3">
+                    <div class="hidden sm:flex items-center gap-1.5 text-xs text-slate-400">
+                        <i data-lucide="mouse-pointer" class="w-3.5 h-3.5 text-[#7A5AF8]"></i>
+                        <span>Klik & drag mouse untuk menggeser timeline:</span>
+                    </div>
+
+                    <!-- Scroll Navigation Buttons -->
+                    <div class="flex items-center gap-1 bg-[#0C111D] p-1 rounded-xl border border-white/[0.1]">
+                        <button type="button" @click="scrollContainer(-350)" class="w-8 h-8 rounded-lg bg-white/[0.05] hover:bg-white/[0.15] text-slate-300 hover:text-white flex items-center justify-center transition cursor-pointer" title="Geser ke Kiri">
+                            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                        </button>
+                        <button type="button" @click="scrollContainer(350)" class="w-8 h-8 rounded-lg bg-white/[0.05] hover:bg-white/[0.15] text-slate-300 hover:text-white flex items-center justify-center transition cursor-pointer" title="Geser ke Kanan">
+                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -959,8 +1000,18 @@
                 $calculatedMinWidth = max(900, $totalTimelines * 200);
             @endphp
 
-            <!-- Horizontal Infographic Ribbon Flow (Scrollable on small screens, Spacious on Desktop) -->
-            <div class="overflow-x-auto no-scrollbar pb-6 pt-2">
+            <!-- Horizontal Infographic Ribbon Flow (Scrollable & Drag-to-Scroll Enabled) -->
+            <div 
+                x-ref="timelineScroll"
+                @mousedown="startDrag($event)"
+                @mouseleave="stopDrag()"
+                @mouseup="stopDrag()"
+                @mousemove="moveDrag($event)"
+                x-on:wheel.passive="false"
+                x-on:wheel="wheelScroll($event)"
+                :class="isDown ? 'cursor-grabbing select-none' : 'cursor-grab select-none'"
+                class="overflow-x-auto no-scrollbar pb-6 pt-2"
+            >
                 <div class="relative px-4" style="min-width: {{ $calculatedMinWidth }}px;">
                     
                     <!-- Horizontal Track Line with Connecting Gradient Ribbon spanning across ALL steps -->
