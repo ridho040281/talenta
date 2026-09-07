@@ -740,6 +740,9 @@
         @include('partials.popup-announcement', ['context' => 'dashboard'])
     @endif
 
+    <!-- Global Feedback Modal & Loading Indicator Engine -->
+    @include('partials.global-feedback')
+
     <!-- Initialize Lucide Icons -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {

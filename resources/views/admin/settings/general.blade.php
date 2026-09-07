@@ -1145,41 +1145,6 @@
         </div>
     </div>
 
-    <!-- Modal Dialog Berhasil Dihapus di Tengah Layar (Center Success Modal) -->
-    <div id="centerSuccessModal" 
-         class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden opacity-0 transition-all duration-300">
-        <div class="relative w-full max-w-sm sm:max-w-md bg-gradient-to-b from-[#161F30] to-[#0C111D] border border-white/[0.12] rounded-3xl p-6 sm:p-8 text-center shadow-2xl space-y-5 transform scale-95 transition-all duration-300">
-            
-            <!-- Glow Badge & Success Icon -->
-            <div class="relative mx-auto w-20 h-20 flex items-center justify-center">
-                <div class="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping opacity-40"></div>
-                <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/30 text-white">
-                    <i data-lucide="check-circle-2" class="w-9 h-9"></i>
-                </div>
-            </div>
-
-            <!-- Title & Message -->
-            <div class="space-y-2">
-                <h3 id="centerModalTitle" class="text-lg sm:text-xl font-black text-white font-display tracking-tight">
-                    {{ session('modal_success_title', 'Berhasil Dihapus') }}
-                </h3>
-                <p id="centerModalMessage" class="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                    {{ session('modal_success_message', 'Data berhasil dihapus dari sistem.') }}
-                </p>
-            </div>
-
-            <!-- Action Button -->
-            <div class="pt-2">
-                <button type="button" 
-                        onclick="closeSuccessCenterModal()" 
-                        class="w-full gradient-btn py-3 px-6 rounded-2xl text-white font-black text-xs sm:text-sm tracking-wide shadow-lg shadow-[#7A5AF8]/30 hover:scale-[1.02] active:scale-[0.98] transition cursor-pointer flex items-center justify-center gap-2">
-                    <i data-lucide="check" class="w-4 h-4"></i>
-                    <span>Tutup & Lanjutkan</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
     <!-- Form Khusus Hapus Langsung Logo Sponsor / Gambar Pamflet (Fallback Standard Post) -->
     <form id="directDeleteForm" method="POST" class="hidden">
         @csrf
@@ -1188,49 +1153,13 @@
     </form>
 
     <script>
-    function showSuccessCenterModal(title, message) {
-        const modal = document.getElementById('centerSuccessModal');
-        const titleEl = document.getElementById('centerModalTitle');
-        const msgEl = document.getElementById('centerModalMessage');
-        
-        if (titleEl && title) titleEl.textContent = title;
-        if (msgEl && message) msgEl.textContent = message;
-
-        if (modal) {
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                const card = modal.querySelector('div.relative');
-                if (card) {
-                    card.classList.remove('scale-95');
-                    card.classList.add('scale-100');
-                }
-            }, 10);
-        }
-        if (window.lucide) window.lucide.createIcons();
-    }
-
-    function closeSuccessCenterModal() {
-        const modal = document.getElementById('centerSuccessModal');
-        if (modal) {
-            modal.classList.add('opacity-0');
-            const card = modal.querySelector('div.relative');
-            if (card) {
-                card.classList.remove('scale-100');
-                card.classList.add('scale-95');
-            }
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 250);
-        }
-    }
-
     async function deleteSingleSponsor(logoPath, cardId) {
         if (!confirm('Apakah Anda yakin ingin menghapus logo sponsor ini sekarang?')) {
             return;
         }
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
+        window.showAppLoading('Sedang Menghapus Logo...', 'Mohon tunggu sebentar, file logo sponsor sedang dihapus.', 'trash-2');
 
         try {
             const response = await fetch('{{ route('admin.settings.sponsor.delete') }}', {
@@ -1245,6 +1174,7 @@
             });
 
             const result = await response.json();
+            window.hideAppLoading();
 
             if (response.ok && result.success) {
                 if (cardId) {
@@ -1266,11 +1196,20 @@
                     }
                 }
 
-                showSuccessCenterModal('Logo Sponsor Berhasil Dihapus', 'Logo sponsor telah berhasil dihapus dari sistem.');
+                window.showAppModal({
+                    type: 'delete',
+                    title: 'Logo Sponsor Berhasil Dihapus',
+                    message: 'Logo sponsor telah berhasil dihapus dari sistem.'
+                });
             } else {
-                alert(result.message || 'Gagal menghapus logo sponsor.');
+                window.showAppModal({
+                    type: 'error',
+                    title: 'Gagal Menghapus Logo',
+                    message: result.message || 'Gagal menghapus logo sponsor.'
+                });
             }
         } catch (err) {
+            window.hideAppLoading();
             console.warn('AJAX delete error, using form submission fallback:', err);
             const form = document.getElementById('directDeleteForm');
             form.action = '{{ route('admin.settings.sponsor.delete') }}';
@@ -1286,6 +1225,7 @@
         }
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
+        window.showAppLoading('Sedang Menghapus Pamflet...', 'Mohon tunggu sebentar, gambar pamflet sedang dihapus.', 'trash-2');
 
         try {
             const response = await fetch('{{ route('admin.settings.pamphlet.delete') }}', {
@@ -1300,6 +1240,7 @@
             });
 
             const result = await response.json();
+            window.hideAppLoading();
 
             if (response.ok && result.success) {
                 if (cardId) {
@@ -1321,11 +1262,20 @@
                     }
                 }
 
-                showSuccessCenterModal('Gambar Pamflet Berhasil Dihapus', 'Gambar pamflet telah berhasil dihapus dari sistem.');
+                window.showAppModal({
+                    type: 'delete',
+                    title: 'Gambar Pamflet Berhasil Dihapus',
+                    message: 'Gambar pamflet telah berhasil dihapus dari sistem.'
+                });
             } else {
-                alert(result.message || 'Gagal menghapus gambar pamflet.');
+                window.showAppModal({
+                    type: 'error',
+                    title: 'Gagal Menghapus Pamflet',
+                    message: result.message || 'Gagal menghapus gambar pamflet.'
+                });
             }
         } catch (err) {
+            window.hideAppLoading();
             console.warn('AJAX delete error, using form submission fallback:', err);
             const form = document.getElementById('directDeleteForm');
             form.action = '{{ route('admin.settings.pamphlet.delete') }}';
@@ -1348,6 +1298,7 @@
         }
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
+        window.showAppLoading('Sedang Mengunggah Logo...', 'Mohon tunggu sebentar, berkas logo sponsor sedang diproses ke server.', 'upload-cloud');
 
         try {
             const response = await fetch('{{ route('admin.settings.sponsor.upload') }}', {
@@ -1361,22 +1312,39 @@
             });
 
             const result = await response.json();
+            window.hideAppLoading();
 
             if (response.ok && result.success) {
-                showSuccessCenterModal('Logo Berhasil Diunggah', result.message || 'Logo sponsor telah berhasil diunggah.');
+                window.showAppModal({
+                    type: 'upload',
+                    title: 'Logo Berhasil Diunggah',
+                    message: result.message || 'Logo sponsor telah berhasil diunggah.',
+                    callback: () => {
+                        window.location.href = '{{ route('admin.settings.general', ['tab' => 'landing']) }}';
+                    }
+                });
                 setTimeout(() => {
                     window.location.href = '{{ route('admin.settings.general', ['tab' => 'landing']) }}';
-                }, 1200);
+                }, 1400);
             } else {
                 let errorMsg = result.message || 'Gagal mengunggah logo sponsor.';
                 if (result.errors) {
                     errorMsg += '\n' + Object.values(result.errors).flat().join('\n');
                 }
-                alert(errorMsg);
+                window.showAppModal({
+                    type: 'error',
+                    title: 'Gagal Mengunggah',
+                    message: errorMsg
+                });
             }
         } catch (err) {
+            window.hideAppLoading();
             console.error('Upload error:', err);
-            alert('Terjadi kesalahan saat mengunggah logo: ' + err.message);
+            window.showAppModal({
+                type: 'error',
+                title: 'Terjadi Kesalahan',
+                message: 'Terjadi kesalahan saat mengunggah logo: ' + err.message
+            });
         }
     }
 
@@ -1393,6 +1361,7 @@
         }
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
+        window.showAppLoading('Sedang Mengunggah Pamflet...', 'Mohon tunggu sebentar, berkas pamflet sedang diproses ke server.', 'upload-cloud');
 
         try {
             const response = await fetch('{{ route('admin.settings.pamphlet.upload') }}', {
@@ -1406,22 +1375,39 @@
             });
 
             const result = await response.json();
+            window.hideAppLoading();
 
             if (response.ok && result.success) {
-                showSuccessCenterModal('Pamflet Berhasil Diunggah', result.message || 'Gambar pamflet telah berhasil diunggah.');
+                window.showAppModal({
+                    type: 'upload',
+                    title: 'Pamflet Berhasil Diunggah',
+                    message: result.message || 'Gambar pamflet telah berhasil diunggah.',
+                    callback: () => {
+                        window.location.href = '{{ route('admin.settings.general', ['tab' => 'landing']) }}';
+                    }
+                });
                 setTimeout(() => {
                     window.location.href = '{{ route('admin.settings.general', ['tab' => 'landing']) }}';
-                }, 1200);
+                }, 1400);
             } else {
                 let errorMsg = result.message || 'Gagal mengunggah gambar pamflet.';
                 if (result.errors) {
                     errorMsg += '\n' + Object.values(result.errors).flat().join('\n');
                 }
-                alert(errorMsg);
+                window.showAppModal({
+                    type: 'error',
+                    title: 'Gagal Mengunggah',
+                    message: errorMsg
+                });
             }
         } catch (err) {
+            window.hideAppLoading();
             console.error('Upload error:', err);
-            alert('Terjadi kesalahan saat mengunggah pamflet: ' + err.message);
+            window.showAppModal({
+                type: 'error',
+                title: 'Terjadi Kesalahan',
+                message: 'Terjadi kesalahan saat mengunggah pamflet: ' + err.message
+            });
         }
     }
 
@@ -1431,6 +1417,7 @@
         }
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
+        window.showAppLoading('Sedang Membersihkan File...', 'Mohon tunggu sebentar, sistem sedang memindai dan membersihkan database.', 'sparkles');
 
         try {
             const response = await fetch('{{ route('admin.settings.clean_broken_media') }}', {
@@ -1445,26 +1432,37 @@
             });
 
             const result = await response.json();
+            window.hideAppLoading();
 
             if (response.ok && result.success) {
-                showSuccessCenterModal('Pembersihan Selesai', result.message);
+                window.showAppModal({
+                    type: 'delete',
+                    title: 'Pembersihan Selesai',
+                    message: result.message,
+                    callback: () => {
+                        window.location.href = '{{ route('admin.settings.general', ['tab' => 'landing']) }}';
+                    }
+                });
                 setTimeout(() => {
                     window.location.href = '{{ route('admin.settings.general', ['tab' => 'landing']) }}';
-                }, 1200);
+                }, 1400);
             } else {
-                alert(result.message || 'Gagal membersihkan file rusak.');
+                window.showAppModal({
+                    type: 'error',
+                    title: 'Gagal Membersihkan',
+                    message: result.message || 'Gagal membersihkan file rusak.'
+                });
             }
         } catch (err) {
+            window.hideAppLoading();
             console.error('Clean error:', err);
-            alert('Terjadi kesalahan saat membersihkan: ' + err.message);
+            window.showAppModal({
+                type: 'error',
+                title: 'Terjadi Kesalahan',
+                message: 'Terjadi kesalahan saat membersihkan: ' + err.message
+            });
         }
     }
-
-    @if(session('modal_success_message'))
-        document.addEventListener('DOMContentLoaded', function() {
-            showSuccessCenterModal("{{ session('modal_success_title', 'Berhasil Dihapus') }}", "{!! addslashes(session('modal_success_message')) !!}");
-        });
-    @endif
     </script>
 
 </div>

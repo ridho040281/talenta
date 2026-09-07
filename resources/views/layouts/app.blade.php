@@ -455,6 +455,9 @@
         @include('partials.popup-announcement', ['context' => 'landing'])
     @endif
 
+    <!-- Global Feedback Modal & Loading Indicator Engine -->
+    @include('partials.global-feedback')
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
