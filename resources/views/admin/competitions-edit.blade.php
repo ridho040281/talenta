@@ -300,18 +300,39 @@
                         @if(in_array($competition->code, ['MTQ', 'POP']))
                             @php
                                 $prefix = strtolower($competition->code);
+                                $quota_total = old($prefix . '_quota_total', $competition->quota ?? 50);
                                 $fee_pa = old($prefix . '_fee_pa', \App\Models\AppSetting::get($prefix . '_fee_pa', $competition->registration_fee));
-                                $quota_pa = old($prefix . '_quota_pa', \App\Models\AppSetting::get($prefix . '_quota_pa', ceil($competition->quota / 2)));
                                 $pic_pa = old($prefix . '_pic_pa', \App\Models\AppSetting::get($prefix . '_pic_pa', $competition->pic_id));
                                 $status_pa = old($prefix . '_status_pa', \App\Models\AppSetting::get($prefix . '_status_pa', $competition->status ?? 'buka'));
 
                                 $fee_pi = old($prefix . '_fee_pi', \App\Models\AppSetting::get($prefix . '_fee_pi', $competition->registration_fee));
-                                $quota_pi = old($prefix . '_quota_pi', \App\Models\AppSetting::get($prefix . '_quota_pi', floor($competition->quota / 2)));
                                 $pic_pi = old($prefix . '_pic_pi', \App\Models\AppSetting::get($prefix . '_pic_pi', $competition->pic_id));
                                 $status_pi = old($prefix . '_status_pi', \App\Models\AppSetting::get($prefix . '_status_pi', $competition->status ?? 'buka'));
                             @endphp
 
                             <div class="space-y-4 pt-1">
+                                <!-- KUOTA TOTAL GABUNGAN (POOL) -->
+                                <div class="p-4 sm:p-5 rounded-2xl space-y-3" style="background: rgba(122,90,248,0.06); border: 1px solid rgba(122,90,248,0.22);">
+                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2" style="border-bottom: 1px solid rgba(122,90,248,0.18);">
+                                        <div class="flex items-center gap-2">
+                                            <i data-lucide="users" class="w-4 h-4 text-[#A594FD]"></i>
+                                            <span class="text-xs font-black text-[#A594FD] uppercase tracking-wider">Total Kuota Pendaftaran (Gabungan PA & PI)</span>
+                                        </div>
+                                        <span class="text-[10px] font-bold text-[#A594FD] px-2 py-0.5 rounded font-mono" style="background: rgba(122,90,248,0.18);">Sistem Kuota Fleksibel</span>
+                                    </div>
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                                        <div>
+                                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Total Kuota (Peserta)</label>
+                                            <input name="{{ $prefix }}_quota_total" type="number" min="0" value="{{ $quota_total }}" class="input-admin block w-full px-3 py-2 rounded-xl text-sm font-bold text-white font-mono">
+                                        </div>
+                                        <div class="sm:col-span-2">
+                                            <p class="text-xs text-slate-300 leading-relaxed">
+                                                Kuota pendaftaran ini berlaku secara <strong>gabungan</strong> (bebas rasio putra/putri hingga mencapai total kuota). Sektor PA & PI tetap dipisah otomatis saat undian giliran tampil dan penilaian juri.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <!-- SEKTOR PUTRA (PA) -->
                                 <div class="p-4 sm:p-5 rounded-2xl space-y-3.5 transition {{ $mode === 'pa' ? 'ring-2 ring-emerald-400' : '' }}" style="background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.22);">
                                     <div class="flex items-center justify-between pb-2" style="border-bottom: 1px solid rgba(16,185,129,0.18);">
@@ -321,14 +342,10 @@
                                         </span>
                                         <span class="text-[10px] font-bold text-emerald-300 px-2 py-0.5 rounded font-mono" style="background: rgba(16,185,129,0.18);">Individu • PA</span>
                                     </div>
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                         <div>
                                             <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Biaya Putra (Rp)</label>
                                             <input name="{{ $prefix }}_fee_pa" type="number" step="1000" min="0" value="{{ $fee_pa }}" class="input-admin block w-full px-3 py-2 rounded-xl text-xs font-mono font-bold text-emerald-400">
-                                        </div>
-                                        <div>
-                                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Kuota Putra (Peserta)</label>
-                                            <input name="{{ $prefix }}_quota_pa" type="number" min="0" value="{{ $quota_pa }}" class="input-admin block w-full px-3 py-2 rounded-xl text-xs font-bold text-white">
                                         </div>
                                         <div>
                                             <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Petugas PIC Putra</label>
@@ -359,14 +376,10 @@
                                         </span>
                                         <span class="text-[10px] font-bold text-pink-300 px-2 py-0.5 rounded font-mono" style="background: rgba(236,72,153,0.18);">Individu • PI</span>
                                     </div>
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                         <div>
                                             <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Biaya Putri (Rp)</label>
                                             <input name="{{ $prefix }}_fee_pi" type="number" step="1000" min="0" value="{{ $fee_pi }}" class="input-admin block w-full px-3 py-2 rounded-xl text-xs font-mono font-bold text-pink-400">
-                                        </div>
-                                        <div>
-                                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Kuota Putri (Peserta)</label>
-                                            <input name="{{ $prefix }}_quota_pi" type="number" min="0" value="{{ $quota_pi }}" class="input-admin block w-full px-3 py-2 rounded-xl text-xs font-bold text-white">
                                         </div>
                                         <div>
                                             <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Petugas PIC Putri</label>
@@ -384,16 +397,9 @@
                                                 <option value="tutup" {{ $status_pi === 'tutup' ? 'selected' : '' }}>Tutup</option>
                                                 <option value="selesai" {{ $status_pi === 'selesai' ? 'selected' : '' }}>Selesai</option>
                                             </select>
-                                </div>
-
-                                <div class="p-3.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-xs flex items-start gap-2.5">
-                                    <i data-lucide="info" class="w-4 h-4 shrink-0 text-cyan-400 mt-0.5"></i>
-                                    <div>
-                                        <p class="font-bold text-white">Sistem Kuota Fleksibel (Total Pool):</p>
-                                        <p class="text-[11px] text-slate-300 mt-0.5">Total kuota pendaftaran adalah gabungan (Kuota PA + Kuota PI). Pendaftaran tidak dibatasi kaku per gender (misal PA bisa lebih banyak atau sebaliknya), namun undian giliran nomor peserta dan penjurian tetap dipisah secara otomatis.</p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
                                 <!-- KHUSUS POP SINGER: DAFTAR LAGU PILIHAN -->
                                 @if($competition->code === 'POP' || \Illuminate\Support\Str::contains(strtolower($competition->slug), 'pop') || \Illuminate\Support\Str::contains(strtolower($competition->name), 'pop'))

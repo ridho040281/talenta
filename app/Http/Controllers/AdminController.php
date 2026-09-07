@@ -402,12 +402,17 @@ class AdminController extends Controller
                 AppSetting::set($prefix.'_fee_pi', (float) $request->input($prefix.'_fee_pi'), 'pricing');
             }
 
-            // Kuota PA & PI
-            if ($request->filled($prefix.'_quota_pa')) {
-                AppSetting::set($prefix.'_quota_pa', (int) $request->input($prefix.'_quota_pa'), 'pricing');
-            }
-            if ($request->filled($prefix.'_quota_pi')) {
-                AppSetting::set($prefix.'_quota_pi', (int) $request->input($prefix.'_quota_pi'), 'pricing');
+            // Kuota Total Gabungan
+            $totalQuota = $competition->quota;
+            if ($request->filled($prefix.'_quota_total')) {
+                $totalQuota = (int) $request->input($prefix.'_quota_total');
+                AppSetting::set($prefix.'_quota_total', $totalQuota, 'pricing');
+            } elseif ($request->filled($prefix.'_quota_pa') || $request->filled($prefix.'_quota_pi')) {
+                $qPa = (int) $request->input($prefix.'_quota_pa', 0);
+                $qPi = (int) $request->input($prefix.'_quota_pi', 0);
+                $totalQuota = $qPa + $qPi;
+            } elseif ($request->filled('quota')) {
+                $totalQuota = (int) $request->input('quota');
             }
 
             // PIC PA & PI
@@ -427,12 +432,10 @@ class AdminController extends Controller
             }
 
             $primaryPic = $request->input($prefix.'_pic_pa') ?: ($request->input($prefix.'_pic_pi') ?: null);
-            $qPa = $request->filled($prefix.'_quota_pa') ? (int) $request->input($prefix.'_quota_pa') : (int) AppSetting::get($prefix.'_quota_pa', 50);
-            $qPi = $request->filled($prefix.'_quota_pi') ? (int) $request->input($prefix.'_quota_pi') : (int) AppSetting::get($prefix.'_quota_pi', 50);
             $fPa = $request->filled($prefix.'_fee_pa') ? (float) $request->input($prefix.'_fee_pa') : (float) AppSetting::get($prefix.'_fee_pa', $competition->registration_fee);
             $competition->update([
                 'pic_id' => $primaryPic ?: $competition->pic_id,
-                'quota' => ($qPa + $qPi),
+                'quota' => $totalQuota,
                 'registration_fee' => $fPa,
             ]);
 
