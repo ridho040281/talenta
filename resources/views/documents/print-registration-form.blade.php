@@ -350,7 +350,7 @@
                             <div class="invisible select-none leading-tight">Tanggal</div>
                             <div>Guru Official / Atlet,</div>
                         </div>
-                        <div class="pt-8">
+                        <div class="pt-10">
                             <div class="font-black text-slate-950 underline underline-offset-2">
                                 {{ $registration->official_name ?: $registration->display_name }}
                             </div>
@@ -360,12 +360,24 @@
                     <div class="text-center w-56 flex flex-col justify-between">
                         <div>
                             <div class="leading-tight">Blitar, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</div>
-                            <div class="font-bold">Verifikator,</div>
+                            <div class="font-bold">Verifikator / PIC Lomba,</div>
                         </div>
-                        <div class="pt-8">
-                            <div class="font-black text-slate-950 underline underline-offset-2">
-                                {{ $registration->verifier ? $registration->verifier->name : 'PANITIA PELAKSANA' }}
+                        <div class="py-1 flex flex-col items-center justify-center">
+                            @php
+                                $verifyUrl = \App\Services\QrSignatureService::registrationFormUrl($registration);
+                            @endphp
+                            <div class="p-1 bg-white border border-slate-200 rounded-lg shadow-xs inline-block">
+                                {!! \App\Services\QrSignatureService::generateSvg($verifyUrl, 52) !!}
                             </div>
+                            <span class="text-[7.5px] font-mono text-slate-400 mt-0.5">TTD Digital Terverifikasi</span>
+                        </div>
+                        <div>
+                            <div class="font-black text-slate-950 underline underline-offset-2">
+                                {{ $registration->verifier ? $registration->verifier->name : ($registration->competition->pic->name ?? 'PANITIA PELAKSANA') }}
+                            </div>
+                            @if($registration->verifier && !empty($registration->verifier->position))
+                                <div class="text-[10px] text-slate-500">{{ $registration->verifier->position }}</div>
+                            @endif
                         </div>
                     </div>
                 </div>

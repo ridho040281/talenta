@@ -134,6 +134,28 @@
 
                     </div>
 
+                    <!-- Digital Signature & Validation Meta Banner -->
+                    @if($reg->status === 'verified')
+                        <div class="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                                </div>
+                                <div>
+                                    <div class="font-bold text-emerald-300">Tanda Tangan Elektronik & Pengesahan Sah</div>
+                                    <div class="text-[11px] text-slate-400">
+                                        Diverifikasi oleh: <strong class="text-slate-200">{{ $reg->verifier ? $reg->verifier->name : 'Panitia Pelaksana' }}</strong> • 
+                                        <span>{{ $reg->verified_at ? $reg->verified_at->translatedFormat('d F Y, H:i') : date('d/m/Y') }} WIB</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-900 border border-emerald-500/30 text-emerald-400 font-mono text-[11px] shrink-0 font-bold">
+                                <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i>
+                                <span>DOKUMEN ASLI & RESMI</span>
+                            </div>
+                        </div>
+                    @endif
+
                     <!-- Members / Participants List if Available -->
                     @if($reg->members->isNotEmpty())
                         <div class="pt-4 border-t border-slate-800/80">

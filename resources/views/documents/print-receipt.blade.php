@@ -263,7 +263,7 @@
                             <div class="invisible select-none font-bold">Instansi</div>
                             <div class="font-bold">Penyetor / Official,</div>
                         </div>
-                        <div class="pt-12">
+                        <div class="pt-10">
                             <div class="font-black text-slate-950 underline underline-offset-2">
                                 {{ $registration->official_name ?: $registration->display_name }}
                             </div>
@@ -277,9 +277,18 @@
                             <div class="font-bold">Bendahara Panitia</div>
                             <div class="font-bold">{{ $appSettings['institution_name'] ?? 'MTsN 1 Blitar' }}</div>
                         </div>
-                        <div class="pt-12">
+                        <div class="py-1 flex flex-col items-center justify-center">
+                            @php
+                                $receiptUrl = \App\Services\QrSignatureService::receiptUrl($registration);
+                            @endphp
+                            <div class="p-1 bg-white border border-slate-200 rounded-lg shadow-xs inline-block">
+                                {!! \App\Services\QrSignatureService::generateSvg($receiptUrl, 52) !!}
+                            </div>
+                            <span class="text-[7.5px] font-mono text-emerald-700 font-bold mt-0.5">Lunas & Sah Digital</span>
+                        </div>
+                        <div>
                             <div class="font-black text-slate-950 underline underline-offset-2">
-                                {{ !empty($appSettings['treasurer_name']) ? $appSettings['treasurer_name'] : ($appSettings['bank_account_holder'] ?? 'WIJIATIN') }}
+                                {{ !empty($appSettings['treasurer_name']) ? $appSettings['treasurer_name'] : ($appSettings['bank_account_holder'] ?? 'WIJIATIN, S.Pd') }}
                             </div>
                             @if(!empty($appSettings['treasurer_nip']))
                                 <div class="text-[10px] text-slate-600 font-mono">NIP. {{ $appSettings['treasurer_nip'] }}</div>

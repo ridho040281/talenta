@@ -47,14 +47,17 @@ class HomeController extends Controller
 
     public function checkStatus(Request $request)
     {
-        $query = $request->input('q');
+        $query = trim($request->input('q', $request->input('code', '')));
         $results = collect();
 
         if ($query) {
-            $results = Registration::with(['competition', 'members'])
+            $results = Registration::with(['competition.category', 'members', 'verifier', 'invoice'])
                 ->where('registration_code', 'LIKE', "%{$query}%")
                 ->orWhere('institution_name', 'LIKE', "%{$query}%")
                 ->orWhere('participant_number', 'LIKE', "%{$query}%")
+                ->orWhereHas('invoice', function ($q) use ($query) {
+                    $q->where('invoice_number', 'LIKE', "%{$query}%");
+                })
                 ->orWhereHas('members', function ($q) use ($query) {
                     $q->where('full_name', 'LIKE', "%{$query}%")
                         ->orWhere('nisn', 'LIKE', "%{$query}%");

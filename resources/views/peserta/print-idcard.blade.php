@@ -110,16 +110,19 @@
             <!-- Verification Stamp & QR Area -->
             <div class="pt-4 border-t border-slate-200/80 flex items-center justify-between gap-4">
                 
-                <!-- QR Code Box Placeholder -->
-                <div class="w-20 h-20 bg-slate-50 border-2 border-slate-300 rounded-2xl flex flex-col items-center justify-center p-1 text-center shrink-0">
-                    <i data-lucide="qr-code" class="w-12 h-12 text-slate-800"></i>
-                    <span class="text-[8px] font-mono font-bold text-slate-500 truncate w-full">{{ substr($registration->registration_code, -6) }}</span>
+                <!-- Live QR Code Box -->
+                <div class="p-1.5 bg-slate-50 border-2 border-slate-300 rounded-2xl flex flex-col items-center justify-center text-center shrink-0">
+                    @php
+                        $cardUrl = \App\Services\QrSignatureService::registrationFormUrl($registration);
+                    @endphp
+                    {!! \App\Services\QrSignatureService::generateSvg($cardUrl, 56) !!}
+                    <span class="text-[8px] font-mono font-bold text-slate-600 truncate w-full mt-0.5">{{ substr($registration->registration_code, -6) }}</span>
                 </div>
 
                 <!-- Official Panitia Validation Sign -->
                 <div class="text-right space-y-1">
                     <span class="text-[10px] text-slate-400 block">Diverifikasi Sah Oleh:</span>
-                    <span class="text-xs font-black text-slate-900 block">Panitia TALENTA 2026</span>
+                    <span class="text-xs font-black text-slate-900 block">{{ $registration->verifier ? $registration->verifier->name : ($appSettings['committee_chairman_name'] ?? 'Panitia TALENTA 2026') }}</span>
                     <span class="inline-block px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[9px] font-bold uppercase tracking-wider">
                         STATUS: VERIFIED
                     </span>
