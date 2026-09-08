@@ -447,7 +447,7 @@
                         <div class="text-center w-56 flex flex-col justify-between">
                             <div>
                                 <div class="leading-tight">Blitar, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</div>
-                                <div class="font-bold">Verifikator / PIC Lomba,</div>
+                                <div class="font-bold">Verifikator Cabang {{ $registration->competition->name ?? 'Lomba' }},</div>
                             </div>
                             <div class="py-1 flex flex-col items-center justify-center">
                                 @php
