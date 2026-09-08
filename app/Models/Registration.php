@@ -286,4 +286,40 @@ class Registration extends Model
 
         return array_values(array_unique($cleanPhones));
     }
+
+    /**
+     * Get the designated PIC User for this registration based on competition & sector settings.
+     */
+    public function getPicUserAttribute(): ?User
+    {
+        $comp = $this->competition;
+        if (! $comp) {
+            return $this->verifier;
+        }
+
+        $isGanda = $this->members->count() > 1 || (stripos($this->match_type ?? '', 'ganda') !== false && stripos($this->match_type ?? '', 'tunggal') === false) || (empty($this->match_type) && stripos($this->sub_category ?? '', 'ganda') !== false && stripos($this->sub_category ?? '', 'tunggal') === false);
+        $isPa = ($this->primary_gender === 'L');
+
+        if ($comp->code === 'BLT') {
+            if ($isGanda) {
+                return $isPa ? ($comp->pic_ganda_pa ?: $comp->pic) : ($comp->pic_ganda_pi ?: $comp->pic);
+            } else {
+                return $isPa ? ($comp->pic_tunggal_pa ?: $comp->pic) : ($comp->pic_tunggal_pi ?: $comp->pic);
+            }
+        }
+
+        if (in_array($comp->code, ['TMJ', 'MTQ', 'POP'])) {
+            return $isPa ? ($comp->pic_pa ?: $comp->pic) : ($comp->pic_pi ?: $comp->pic);
+        }
+
+        return $comp->pic ?: $this->verifier;
+    }
+
+    /**
+     * Get the designated PIC Name for this registration.
+     */
+    public function getPicNameAttribute(): string
+    {
+        return $this->pic_user?->name ?: ($this->competition?->pic?->name ?: ($this->verifier?->name ?: 'PANITIA PELAKSANA'));
+    }
 }

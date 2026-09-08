@@ -444,7 +444,7 @@
                         </div>
                         <div>
                             <div class="font-black text-slate-950 underline underline-offset-2">
-                                {{ $registration->verifier ? $registration->verifier->name : ($registration->competition->pic->name ?? 'PANITIA PELAKSANA') }}
+                                {{ $registration->pic_name }}
                             </div>
                         </div>
                     </div>
