@@ -398,6 +398,27 @@
                     </div>
                 </div>
 
+                <!-- Website Madrasah & Link CBT Olimpiade -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="space-y-1 bg-[#0C111D]/80 p-4 rounded-2xl border border-white/[0.08]">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                            Website Resmi Madrasah
+                        </label>
+                        <input type="url" name="school_website" value="{{ old('school_website', $settings['school_website'] ?? 'https://mtsn1blitar.sch.id') }}" placeholder="https://mtsn1blitar.sch.id" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-semibold focus:border-[#7A5AF8] outline-none">
+                    </div>
+
+                    <div class="space-y-1 bg-[#0C111D]/80 p-4 rounded-2xl border border-indigo-500/30">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-indigo-300">
+                                🖥️ Link / Alamat CBT Olimpiade
+                            </label>
+                            <span class="text-[10px] text-indigo-400 font-mono">Formulir Peserta</span>
+                        </div>
+                        <input type="url" name="cbt_url" value="{{ old('cbt_url', $settings['cbt_url'] ?? 'https://www.e-ujian.com/login') }}" placeholder="https://www.e-ujian.com/login" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-indigo-500/40 text-indigo-200 text-xs font-semibold focus:border-indigo-400 outline-none">
+                        <span class="text-[10px] text-slate-400 block">Tautan login CBT yang tertera pada kartu pendaftaran & akun ujian siswa olimpiade.</span>
+                    </div>
+                </div>
+
                 <!-- SECTION: LOGO APLIKASI & FAVICON -->
                 <div class="pt-4 border-t border-white/[0.08] space-y-4">
                     <h4 class="text-xs font-black text-white uppercase tracking-wider">Logo Aplikasi & Icon</h4>

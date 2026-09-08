@@ -40,6 +40,7 @@ class AdminSettingsController extends Controller
             'contact_phone' => AppSetting::get('contact_phone', '+62 812-3456-7890'),
             'contact_email' => AppSetting::get('contact_email', 'talenta@mtsn1blitar.sch.id'),
             'school_website' => AppSetting::get('school_website', 'https://mtsn1blitar.sch.id'),
+            'cbt_url' => AppSetting::get('cbt_url', 'https://www.e-ujian.com/login'),
             'event_year' => AppSetting::get('event_year', '2026'),
 
             // Uploaded Images
@@ -180,6 +181,7 @@ class AdminSettingsController extends Controller
             'contact_phone' => 'nullable|string|max:50',
             'contact_email' => 'nullable|email|max:100',
             'school_website' => 'nullable|url|max:255',
+            'cbt_url' => 'nullable|url|max:255',
             'event_year' => 'nullable|string|max:10',
 
             // Files
@@ -357,7 +359,7 @@ class AdminSettingsController extends Controller
             'catalog_tagline', 'catalog_title', 'timeline_tagline', 'timeline_title',
             'timeline_subtitle', 'cta_tagline', 'cta_title', 'cta_subtitle',
             'cta_button_text', 'sponsor_title', 'pamphlet_embed_url', 'footer_about',
-            'treasurer_phone_number', 'treasurer_assistant_phones',
+            'treasurer_phone_number', 'treasurer_assistant_phones', 'cbt_url',
         ];
 
         foreach ($textFields as $field) {
