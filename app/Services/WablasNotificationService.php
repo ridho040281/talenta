@@ -163,6 +163,8 @@ class WablasNotificationService
                 return false;
             }
 
+            $registration->loadMissing(['members', 'user', 'competition']);
+
             $competition = $registration->competition;
             if (! $competition) {
                 return false;
@@ -195,16 +197,21 @@ class WablasNotificationService
             $namaPeserta = $primaryMember->full_name ?? ($registration->user->name ?? 'Peserta Baru');
             $pendaftarPhone = $registration->user->phone ?? ($primaryMember->phone ?? '-');
 
+            $memberNisns = $registration->members->pluck('nisn')->filter()->unique();
+            $nisn = $memberNisns->isNotEmpty() ? $memberNisns->implode(' / ') : ($registration->user->nisn ?? '-');
+
             $allSent = true;
             foreach ($phones as $picPhone) {
                 $sent = static::sendAutoNotification('pic_new_registration', [
                     'phone' => $picPhone,
                     'nama_peserta' => $namaPeserta,
                     'nama_pendaftar' => $registration->user->name ?? $namaPeserta,
+                    'nisn' => $nisn,
                     'nama_sekolah' => $registration->institution_name ?: ($registration->user->institution_name ?? '-'),
                     'nama_instansi' => $registration->institution_name ?: ($registration->user->institution_name ?? '-'),
                     'cabang_lomba' => $competition->name,
                     'kode_pendaftaran' => $registration->registration_code,
+                    'no_peserta' => $registration->participant_number ?: $registration->registration_code,
                     'phone_pendaftar' => $pendaftarPhone,
                     'waktu_daftar' => now()->translatedFormat('d M Y H:i').' WIB',
                     'link_login' => route('pic.dashboard'),
@@ -282,6 +289,8 @@ class WablasNotificationService
                 return false;
             }
 
+            $registration->loadMissing(['members', 'user', 'competition']);
+
             $phones = static::getAllTreasurerPhones();
             if (empty($phones)) {
                 return false; // No treasurer phone configured
@@ -293,16 +302,21 @@ class WablasNotificationService
             $primaryMember = $registration->members->first();
             $namaPeserta = $primaryMember->full_name ?? ($registration->user->name ?? 'Pendaftar Baru');
 
+            $memberNisns = $registration->members->pluck('nisn')->filter()->unique();
+            $nisn = $memberNisns->isNotEmpty() ? $memberNisns->implode(' / ') : ($registration->user->nisn ?? '-');
+
             $allSent = true;
             foreach ($phones as $treasurerPhone) {
                 $sent = static::sendAutoNotification('treasurer_new_payment', [
                     'phone' => $treasurerPhone,
                     'nama_peserta' => $namaPeserta,
                     'nama_pendaftar' => $registration->user->name ?? $namaPeserta,
+                    'nisn' => $nisn,
                     'nama_sekolah' => $registration->institution_name ?: ($registration->user->institution_name ?? '-'),
                     'nama_instansi' => $registration->institution_name ?: ($registration->user->institution_name ?? '-'),
                     'cabang_lomba' => $compName,
                     'kode_pendaftaran' => $registration->registration_code,
+                    'no_peserta' => $registration->participant_number ?: $registration->registration_code,
                     'nominal_biaya' => $fee,
                     'jumlah_peserta' => $registration->members->count() ?: 1,
                     'waktu_daftar' => now()->translatedFormat('d M Y H:i').' WIB',
@@ -351,6 +365,7 @@ class WablasNotificationService
                     'phone' => $treasurerPhone,
                     'nama_peserta' => $user->name ?? 'Official Sekolah',
                     'nama_pendaftar' => $user->name ?? 'Official Sekolah',
+                    'nisn' => $user->nisn ?? '-',
                     'nama_sekolah' => $institutionName,
                     'nama_instansi' => $institutionName,
                     'cabang_lomba' => "{$regCount} Peserta (Kolektif)",

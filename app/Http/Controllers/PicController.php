@@ -461,14 +461,15 @@ class PicController extends Controller
         // Trigger Auto WhatsApp Notification: Status Verifikasi (Sah, Revisi, atau Tolak)
         try {
             $registration->loadMissing(['members', 'user', 'competition']);
-            $firstMember = $registration->members->first();
+            $memberNisns = $registration->members->pluck('nisn')->filter()->unique();
+            $nisn = $memberNisns->isNotEmpty() ? $memberNisns->implode(' / ') : ($registration->user?->nisn ?? '-');
             $targetPhones = $registration->recipient_phones;
 
             if ($validated['status'] === 'verified') {
                 WablasNotificationService::sendAutoNotification('registration_verified', [
                     'phone' => $targetPhones,
                     'nama_peserta' => $registration->pure_name,
-                    'nisn' => $firstMember?->nisn ?? ($registration->user?->nisn ?? '-'),
+                    'nisn' => $nisn,
                     'nama_sekolah' => $registration->institution_name,
                     'cabang_lomba' => $registration->competition->name,
                     'no_peserta' => $registration->participant_number ?: $registration->registration_code,
@@ -480,7 +481,7 @@ class PicController extends Controller
                 WablasNotificationService::sendAutoNotification('registration_revision', [
                     'phone' => $targetPhones,
                     'nama_peserta' => $registration->pure_name,
-                    'nisn' => $firstMember?->nisn ?? ($registration->user?->nisn ?? '-'),
+                    'nisn' => $nisn,
                     'nama_sekolah' => $registration->institution_name,
                     'cabang_lomba' => $registration->competition->name,
                     'kode_pendaftaran' => $registration->registration_code,
@@ -491,7 +492,7 @@ class PicController extends Controller
                 WablasNotificationService::sendAutoNotification('registration_rejected', [
                     'phone' => $targetPhones,
                     'nama_peserta' => $registration->pure_name,
-                    'nisn' => $firstMember?->nisn ?? ($registration->user?->nisn ?? '-'),
+                    'nisn' => $nisn,
                     'nama_sekolah' => $registration->institution_name,
                     'cabang_lomba' => $registration->competition->name,
                     'kode_pendaftaran' => $registration->registration_code,
@@ -926,11 +927,14 @@ class PicController extends Controller
                 }
 
                 // 2. Notifikasi Pendaftaran / Verifikasi ke Peserta & Official
+                $memberNisns = $registration->members->pluck('nisn')->filter()->unique();
+                $regNisn = $memberNisns->isNotEmpty() ? $memberNisns->implode(' / ') : ($nisnClean ?: ($participantUser->nisn ?: '-'));
+
                 if ($status === 'verified') {
                     WablasNotificationService::sendAutoNotification('registration_verified', [
                         'phone' => $targetPhones,
                         'nama_peserta' => $validated['full_name'],
-                        'nisn' => $nisnClean ?: ($participantUser->nisn ?: '-'),
+                        'nisn' => $regNisn,
                         'nama_sekolah' => $validated['institution_name'],
                         'cabang_lomba' => $competition->name,
                         'no_peserta' => $registration->participant_number ?: $registration->registration_code,
@@ -942,7 +946,7 @@ class PicController extends Controller
                     WablasNotificationService::sendAutoNotification('registration_submitted', [
                         'phone' => $targetPhones,
                         'nama_peserta' => $validated['full_name'],
-                        'nisn' => $nisnClean ?: ($participantUser->nisn ?: '-'),
+                        'nisn' => $regNisn,
                         'nama_sekolah' => $validated['institution_name'],
                         'cabang_lomba' => $competition->name,
                         'kode_pendaftaran' => $registration->registration_code,
@@ -1091,13 +1095,14 @@ class PicController extends Controller
         // Trigger Auto WhatsApp Notification: Hasil Undian Spin Wheel / Hacker Draw
         try {
             $registration->loadMissing(['members', 'user', 'competition']);
-            $firstMember = $registration->members->first();
+            $memberNisns = $registration->members->pluck('nisn')->filter()->unique();
+            $nisn = $memberNisns->isNotEmpty() ? $memberNisns->implode(' / ') : ($registration->user?->nisn ?? '-');
             $targetPhones = $registration->recipient_phones;
 
             WablasNotificationService::sendAutoNotification('draw_result_picked', [
                 'phone' => $targetPhones,
                 'nama_peserta' => $registration->pure_name,
-                'nisn' => $firstMember?->nisn ?? ($registration->user?->nisn ?? '-'),
+                'nisn' => $nisn,
                 'nama_sekolah' => $registration->institution_name,
                 'cabang_lomba' => $competition->name,
                 'no_peserta' => $registration->participant_number ?: $registration->registration_code,
