@@ -512,9 +512,7 @@ class PicController extends Controller
         $registration = Registration::with(['competition', 'members'])->findOrFail($registration_id);
         $user = Auth::user();
 
-        if ($user->role === 'pic_lomba' && $registration->competition->pic_id !== $user->id) {
-            abort(403);
-        }
+        $this->authorizeCompetitionManagement($user, $registration->competition_id);
 
         $validated = $request->validate([
             'institution_name' => ['required', 'string', 'max:255'],
@@ -598,9 +596,7 @@ class PicController extends Controller
         $registration = Registration::with(['competition', 'invoice.registrations'])->findOrFail($registration_id);
         $user = Auth::user();
 
-        if ($user->role === 'pic_lomba' && $registration->competition->pic_id !== $user->id) {
-            abort(403);
-        }
+        $this->authorizeCompetitionManagement($user, $registration->competition_id);
 
         $registration->status = 'pending';
         $registration->verified_at = null;
@@ -669,7 +665,7 @@ class PicController extends Controller
             'target_class' => ['nullable', 'string', 'max:50'],
             'status' => ['required', 'in:pending,verified'],
             'payment_method' => ['required', 'in:tunai,transfer'],
-            'payment_proof' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:5120'],
+            'payment_proof' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:5120'],
             'verification_notes' => ['nullable', 'string', 'max:255'],
             'ignore_quota' => ['nullable'],
             // Optional Member 2 for Ganda BLT
@@ -682,13 +678,61 @@ class PicController extends Controller
             'gender.required' => 'Jenis kelamin peserta wajib dipilih.',
             'institution_name.required' => 'Nama asal sekolah/madrasah wajib diisi.',
             'payment_method.required' => 'Metode pembayaran wajib dipilih (Tunai / Transfer).',
-            'payment_proof.required' => 'Bukti pembayaran (foto slip transfer atau kwitansi tunai meja PIC) wajib diunggah.',
             'payment_proof.mimes' => 'Format berkas bukti pembayaran harus berupa JPG, PNG, atau PDF.',
             'payment_proof.max' => 'Ukuran berkas bukti pembayaran maksimal 5MB.',
         ]);
 
         $competition = Competition::findOrFail($validated['competition_id']);
         $this->authorizeCompetitionManagement($user, $competition->id);
+
+        // Harmonize gender & category/match_type based on competition rules
+        $gender = $validated['gender'];
+        $matchType = $validated['match_type'] ?? null;
+        $targetClass = $validated['target_class'] ?? null;
+        $subCategory = null;
+
+        if ($competition->code === 'BLT') {
+            $isGanda = ! empty($matchType) && stripos($matchType, 'ganda') !== false;
+            $isPutri = ! empty($matchType) && (stripos($matchType, 'putri') !== false || stripos($matchType, '(pi)') !== false);
+            $isPutra = ! empty($matchType) && (stripos($matchType, 'putra') !== false || stripos($matchType, '(pa)') !== false);
+
+            if ($isPutri) {
+                $gender = 'P';
+            } elseif ($isPutra) {
+                $gender = 'L';
+            }
+
+            if ($isGanda) {
+                $targetClass = 'Ganda (Semua Kelas)';
+                $subCategory = $matchType;
+            } elseif (! empty($targetClass) && ! empty($matchType)) {
+                $subCategory = $targetClass.' - '.$matchType;
+            } elseif (! empty($matchType)) {
+                $subCategory = $matchType;
+            }
+        } elseif ($competition->code === 'TMJ') {
+            $isPutri = ! empty($matchType) && (stripos($matchType, 'putri') !== false || stripos($matchType, '(pi)') !== false);
+            $isPutra = ! empty($matchType) && (stripos($matchType, 'putra') !== false || stripos($matchType, '(pa)') !== false);
+
+            if ($isPutri) {
+                $gender = 'P';
+            } elseif ($isPutra) {
+                $gender = 'L';
+            }
+
+            if (! empty($targetClass) && ! empty($matchType)) {
+                $subCategory = $targetClass.' - '.$matchType;
+            } elseif (! empty($matchType)) {
+                $subCategory = $matchType;
+            }
+        } elseif (in_array($competition->code, ['MTQ', 'POP'])) {
+            $subCategory = ($gender === 'P') ? 'Putri (PI)' : 'Putra (PA)';
+            $matchType = $subCategory;
+        } elseif (! empty($targetClass) && ! empty($matchType)) {
+            $subCategory = $targetClass.' - '.$matchType;
+        } elseif (! empty($matchType)) {
+            $subCategory = $matchType;
+        }
 
         // Check quota if ignore_quota is not checked
         if (! $request->boolean('ignore_quota')) {
@@ -748,14 +792,7 @@ class PicController extends Controller
         $paymentProofPath = null;
         if ($request->hasFile('payment_proof')) {
             $paymentProofPath = $request->file('payment_proof')->store('payments', 'public');
-        }
-
-        // Determine sub_category
-        $subCategory = null;
-        if (! empty($validated['target_class']) && ! empty($validated['match_type'])) {
-            $subCategory = $validated['target_class'].' - '.$validated['match_type'];
-        } elseif (! empty($validated['match_type'])) {
-            $subCategory = $validated['match_type'];
+            AdminSettingsController::ensurePublicStorageSync($paymentProofPath);
         }
 
         $regCode = 'REG-'.date('Y').'-'.$competition->code.'-'.strtoupper(Str::random(5));
@@ -777,8 +814,8 @@ class PicController extends Controller
             'team_name' => $teamName,
             'sub_category' => $subCategory,
             'chosen_song' => $request->input('chosen_song') ?: null,
-            'target_class' => $validated['target_class'] ?? null,
-            'match_type' => $validated['match_type'] ?? null,
+            'target_class' => $targetClass,
+            'match_type' => $matchType,
             'institution_name' => $validated['institution_name'],
             'official_name' => $user->name,
             'official_phone' => $validated['phone'] ?? $user->phone,
@@ -800,7 +837,7 @@ class PicController extends Controller
             'full_name' => $validated['full_name'],
             'school_name' => $validated['institution_name'],
             'nisn' => $nisnClean,
-            'gender' => $validated['gender'],
+            'gender' => $gender,
             'phone' => $validated['phone'] ?? null,
             'role_in_team' => ! empty($validated['member2_name']) ? 'Pemain 1' : 'Peserta Utama',
         ]);
@@ -812,7 +849,7 @@ class PicController extends Controller
                 'full_name' => $validated['member2_name'],
                 'school_name' => $validated['member2_school'] ?: $validated['institution_name'],
                 'nisn' => ! empty($validated['member2_nisn']) ? trim($validated['member2_nisn']) : null,
-                'gender' => $validated['gender'],
+                'gender' => $gender,
                 'role_in_team' => 'Pemain 2',
             ]);
         }

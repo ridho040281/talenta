@@ -1269,7 +1269,7 @@
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-white/[0.06]">
                                 <div>
                                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Sektor Pertandingan <span class="text-rose-400">*</span></label>
-                                    <select name="match_type" x-model="createMatchType" required class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-bold text-white">
+                                    <select name="match_type" x-model="createMatchType" @change="if(createMatchType.includes('Putri') || createMatchType.includes('(PI)')) createGender = 'P'; else if(createMatchType.includes('Putra') || createMatchType.includes('(PA)')) createGender = 'L';" required class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-bold text-white">
                                         <option value="">-- Pilih Sektor --</option>
                                         <option value="Tunggal Putra (PA)">Tunggal Putra (PA)</option>
                                         <option value="Tunggal Putri (PI)">Tunggal Putri (PI)</option>
@@ -1279,7 +1279,7 @@
                                 </div>
                                 <div x-show="!createMatchType.includes('Ganda')">
                                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Kategori Jenjang Kelas <span class="text-rose-400">*</span></label>
-                                    <select name="target_class" x-model="createTargetClass" :required="!createMatchType.includes('Ganda')" class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-bold text-white">
+                                    <select name="target_class" x-model="createTargetClass" :disabled="createMatchType.includes('Ganda')" :required="!createMatchType.includes('Ganda')" class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-bold text-white">
                                         <option value="">-- Pilih Kategori --</option>
                                         <option value="Kategori A (Kelas 1 - 2)">Kategori A (Kelas 1–2 SD/MI)</option>
                                         <option value="Kategori B (Kelas 3 - 4)">Kategori B (Kelas 3–4 SD/MI)</option>
@@ -1294,7 +1294,7 @@
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-white/[0.06]">
                                 <div>
                                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Sektor Pertandingan <span class="text-rose-400">*</span></label>
-                                    <select name="match_type" x-model="createMatchType" required class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-bold text-white">
+                                    <select name="match_type" x-model="createMatchType" @change="if(createMatchType.includes('Putri') || createMatchType.includes('(PI)')) createGender = 'P'; else if(createMatchType.includes('Putra') || createMatchType.includes('(PA)')) createGender = 'L';" required class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-bold text-white">
                                         <option value="">-- Pilih Sektor --</option>
                                         <option value="Tunggal Putra (PA)">Tunggal Putra (PA)</option>
                                         <option value="Tunggal Putri (PI)">Tunggal Putri (PI)</option>
@@ -1359,16 +1359,16 @@
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div class="sm:col-span-2">
-                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nama Pemain 2</label>
-                                <input type="text" name="member2_name" placeholder="Nama lengkap pasangan ganda" class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-bold text-white focus:border-[#7A5AF8] outline-none">
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nama Pemain 2 <span class="text-rose-400">*</span></label>
+                                <input type="text" name="member2_name" :disabled="!(createCompCode === 'BLT' && createMatchType.includes('Ganda'))" :required="createCompCode === 'BLT' && createMatchType.includes('Ganda')" placeholder="Nama lengkap pasangan ganda" class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-bold text-white focus:border-[#7A5AF8] outline-none">
                             </div>
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">NISN Pemain 2</label>
-                                <input type="text" name="member2_nisn" placeholder="Opsional" class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-mono font-bold text-white">
+                                <input type="text" name="member2_nisn" :disabled="!(createCompCode === 'BLT' && createMatchType.includes('Ganda'))" placeholder="Opsional" class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-mono font-bold text-white">
                             </div>
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Asal Sekolah Pemain 2</label>
-                                <input type="text" name="member2_school" placeholder="Kosongkan jika sama dengan pemain 1" class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-bold text-white">
+                                <input type="text" name="member2_school" :disabled="!(createCompCode === 'BLT' && createMatchType.includes('Ganda'))" placeholder="Kosongkan jika sama dengan pemain 1" class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-bold text-white">
                             </div>
                         </div>
                     </div>
@@ -1403,19 +1403,18 @@
                                 </select>
                             </div>
 
-                            <!-- Unggah Bukti Pembayaran (Wajib) -->
+                            <!-- Unggah Bukti Pembayaran (Opsional untuk PIC) -->
                             <div class="sm:col-span-2 pt-1">
                                 <label class="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
-                                    Unggah Bukti Bayar / Kwitansi Meja <span class="text-rose-400">*</span>
+                                    Unggah Bukti Bayar / Slip / Kwitansi Fisik <span class="text-slate-500 font-normal">(Opsional untuk entri meja PIC)</span>
                                 </label>
                                 <input type="file" 
                                        name="payment_proof" 
                                        id="manual_payment_proof" 
                                        accept="image/jpeg,image/png,image/webp,application/pdf" 
-                                       required 
                                        class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-white/[0.12] text-xs text-slate-300 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-[#7A5AF8] file:text-white hover:file:bg-[#6842f5] file:cursor-pointer">
                                 <p class="text-[10px] text-slate-400 mt-1">
-                                    Wajib unggah foto slip transfer bank atau foto nota/kwitansi penerimaan uang fisik di meja PIC (JPG, PNG, PDF max 5MB).
+                                    Opsional jika diterima tunai langsung di meja PIC / Sekretariat. Format JPG, PNG, PDF max 5MB.
                                 </p>
                             </div>
 
