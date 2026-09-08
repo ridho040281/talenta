@@ -2,7 +2,8 @@
 
 <!-- 1. GLOBAL LOADING OVERLAY (Modern Dual-Orbit Glowing Spinner) -->
 <div id="globalAppLoading" 
-     class="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden opacity-0 transition-all duration-300 select-none">
+     style="position: fixed !important; inset: 0 !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background: rgba(5, 9, 20, 0.88) !important; backdrop-filter: blur(14px) !important; -webkit-backdrop-filter: blur(14px) !important; z-index: 99999999 !important; display: none; align-items: center !important; justify-content: center !important; padding: 1.25rem !important;"
+     class="opacity-0 transition-all duration-300 select-none">
     <div class="relative w-full max-w-xs sm:max-w-sm bg-gradient-to-b from-[#161F30]/95 to-[#0C111D]/95 border border-white/[0.12] rounded-3xl p-6 sm:p-8 text-center shadow-2xl space-y-4 transform scale-95 transition-all duration-300 ring-1 ring-white/[0.08]">
         
         <!-- Animated Glowing Orbit Spinner -->
@@ -43,13 +44,15 @@
 
 <!-- 2. GLOBAL AESTHETIC CENTER MODAL NOTIFICATION -->
 <div id="globalAppModal" 
-     class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden opacity-0 transition-all duration-300"
+     style="position: fixed !important; inset: 0 !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background: rgba(5, 9, 20, 0.85) !important; backdrop-filter: blur(14px) !important; -webkit-backdrop-filter: blur(14px) !important; z-index: 9999999 !important; display: none; align-items: center !important; justify-content: center !important; padding: 1.25rem !important;"
+     class="opacity-0 transition-all duration-300 select-none"
      role="dialog"
      aria-modal="true">
     
-    <!-- Modal Dialog Card -->
+    <!-- Modal Dialog Card (High-Impact Opaque Design, Prevents Background Leak) -->
     <div id="globalAppModalCard" 
-         class="relative w-full max-w-sm sm:max-w-md bg-gradient-to-b from-[#161F30] to-[#0C111D] border border-white/[0.12] rounded-3xl p-6 sm:p-8 text-center shadow-2xl space-y-5 transform scale-95 transition-all duration-300 ring-1 ring-white/[0.08]">
+         style="position: relative !important; width: 100% !important; max-width: 28rem !important; background-color: #0f172a !important; border: 1.5px solid rgba(255, 255, 255, 0.18) !important; border-radius: 1.75rem !important; box-shadow: 0 30px 70px -10px rgba(0, 0, 0, 0.95), 0 0 60px rgba(122, 90, 248, 0.35) !important; padding: 2rem !important; text-align: center !important; z-index: 10000000 !important; margin: auto !important;"
+         class="transform scale-95 transition-all duration-300 space-y-5">
         
         <!-- Glow Badge & Dynamic Action Icon -->
         <div class="relative mx-auto w-20 h-20 flex items-center justify-center">
@@ -132,6 +135,13 @@
             btnText: 'Tutup & Lanjutkan',
             defaultTitle: 'Berhasil'
         },
+        'info': {
+            badge: 'bg-gradient-to-tr from-cyan-600 to-blue-500 shadow-cyan-500/40',
+            ping: 'bg-cyan-500/25',
+            icon: 'info',
+            btnText: 'Tutup & Lanjutkan',
+            defaultTitle: 'Informasi'
+        },
         'warning': {
             badge: 'bg-gradient-to-tr from-amber-500 to-orange-500 shadow-amber-500/40',
             ping: 'bg-amber-500/25',
@@ -192,12 +202,15 @@
         }
 
         // Show modal with smooth scale-up animation
+        modal.style.display = 'flex';
         modal.classList.remove('hidden');
         requestAnimationFrame(() => {
             modal.classList.remove('opacity-0');
             card.classList.remove('scale-95');
             card.classList.add('scale-100');
         });
+
+        window.dispatchEvent(new CustomEvent('app-modal-opened', { detail: { type, options } }));
     };
 
     /**
@@ -214,6 +227,8 @@
 
         setTimeout(() => {
             modal.classList.add('hidden');
+            modal.style.display = 'none';
+            window.dispatchEvent(new CustomEvent('app-modal-closed'));
             if (modalCallback) {
                 const cb = modalCallback;
                 modalCallback = null;
@@ -244,6 +259,7 @@
         }
 
         const card = loading.querySelector('div');
+        loading.style.display = 'flex';
         loading.classList.remove('hidden');
         requestAnimationFrame(() => {
             loading.classList.remove('opacity-0');
@@ -259,7 +275,7 @@
      */
     window.hideAppLoading = function() {
         const loading = document.getElementById('globalAppLoading');
-        if (!loading || loading.classList.contains('hidden')) return;
+        if (!loading || loading.classList.contains('hidden') || loading.style.display === 'none') return;
 
         const card = loading.querySelector('div');
         if (card) {
@@ -270,6 +286,7 @@
 
         setTimeout(() => {
             loading.classList.add('hidden');
+            loading.style.display = 'none';
         }, 200);
     };
 
@@ -365,7 +382,7 @@
             });
         @elseif(session('info'))
             window.showAppModal({
-                type: 'update',
+                type: 'info',
                 title: 'Informasi',
                 message: "{!! addslashes(session('info')) !!}"
             });

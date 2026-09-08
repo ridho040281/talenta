@@ -23,14 +23,29 @@
         storageKey: 'talenta_popup_seen_{{ $popupVersion }}',
         init() {
             if (!localStorage.getItem(this.storageKey)) {
-                setTimeout(() => {
+                const tryShow = () => {
+                    const globalModal = document.getElementById('globalAppModal');
+                    const isGlobalActive = globalModal && (globalModal.style.display === 'flex' || (!globalModal.classList.contains('hidden') && !globalModal.classList.contains('opacity-0')));
+                    if (isGlobalActive) {
+                        // Wait for user to dismiss the feedback modal first
+                        window.addEventListener('app-modal-closed', () => {
+                            setTimeout(() => {
+                                if (!this.showModal && !localStorage.getItem(this.storageKey)) {
+                                    this.showModal = true;
+                                    this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
+                                }
+                            }, 300);
+                        }, { once: true });
+                        return;
+                    }
                     this.showModal = true;
                     this.$nextTick(() => {
                         if (window.lucide) {
                             window.lucide.createIcons();
                         }
                     });
-                }, 200);
+                };
+                setTimeout(tryShow, 300);
             }
         },
         closeModal() {
