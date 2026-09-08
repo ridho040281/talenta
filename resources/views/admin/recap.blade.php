@@ -4,11 +4,12 @@
 @section('page_title', 'Rekapitulasi Terpadu & Hasil Lomba')
 
 @section('content')
-<div class="space-y-6" x-data="{ 
+<div class="space-y-5" x-data="{ 
     activeTab: 'keuangan',
     searchQuery: '',
     selectedCategory: 'all',
     selectedStatus: 'all',
+    showBranchBreakdown: true,
     items: @js($allRegistrations->map(function($r) {
         $firstMember = $r->members->first();
         return [
@@ -43,64 +44,153 @@
     }
 }">
 
-    <!-- Quick Financial & Registration Stat Cards (AIStarterKit Design) -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Compact Global Overview Stat Cards (Hemat Ruang & Modern) -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <!-- Card 1: Total Pendaftar -->
-        <div class="ai-card rounded-3xl p-5 border border-white/[0.08] shadow-lg space-y-1 hover:border-[#4E6EFF]/50 transition">
-            <div class="flex items-center justify-between">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Pendaftar</span>
-                <div class="w-8 h-8 rounded-xl bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30 flex items-center justify-center">
-                    <i data-lucide="users" class="w-4 h-4"></i>
+        <div class="ai-card rounded-2xl p-3.5 border border-white/[0.08] shadow-md flex items-center justify-between hover:border-[#4E6EFF]/50 transition">
+            <div class="space-y-0.5">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Pendaftar</span>
+                <div class="flex items-baseline gap-1.5">
+                    <span class="text-lg sm:text-xl font-black text-white font-mono">{{ $grandTotals['total_registrations'] }}</span>
+                    <span class="text-[10px] text-slate-400 font-medium">/ {{ $grandTotals['total_quota'] }} Kuota</span>
                 </div>
+                <span class="text-[10px] text-[#84D0FF] font-semibold block">{{ $competitions->count() }} Cabang Lomba</span>
             </div>
-            <div>
-                <span class="text-xl sm:text-2xl font-black text-white">{{ $grandTotals['total_registrations'] }}</span>
-                <span class="text-[11px] text-slate-400 font-medium"> / {{ $grandTotals['total_quota'] }} Kuota</span>
+            <div class="w-8 h-8 rounded-xl bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30 flex items-center justify-center shrink-0">
+                <i data-lucide="users" class="w-4 h-4"></i>
             </div>
-            <p class="text-[10px] text-slate-400">{{ $competitions->count() }} Cabang Lomba</p>
         </div>
 
         <!-- Card 2: Terverifikasi (Lunas) -->
-        <div class="ai-card rounded-3xl p-5 border border-white/[0.08] shadow-lg space-y-1 hover:border-emerald-500/50 transition">
-            <div class="flex items-center justify-between">
-                <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Terverifikasi (Lunas)</span>
-                <div class="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center">
-                    <i data-lucide="check-circle" class="w-4 h-4"></i>
+        <div class="ai-card rounded-2xl p-3.5 border border-white/[0.08] shadow-md flex items-center justify-between hover:border-emerald-500/50 transition">
+            <div class="space-y-0.5">
+                <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">Terverifikasi (Lunas)</span>
+                <div class="flex items-baseline gap-1.5">
+                    <span class="text-lg sm:text-xl font-black text-emerald-400 font-mono">{{ $grandTotals['verified_registrations'] }}</span>
+                    <span class="text-[10px] text-emerald-300/80 font-medium">Siswa Valid</span>
                 </div>
+                <span class="text-[10px] text-emerald-400 font-semibold block">Siap tanding 100%</span>
             </div>
-            <div>
-                <span class="text-xl sm:text-2xl font-black text-emerald-400">{{ $grandTotals['verified_registrations'] }}</span>
-                <span class="text-[11px] text-slate-400 font-medium"> Siswa</span>
+            <div class="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                <i data-lucide="check-circle" class="w-4 h-4"></i>
             </div>
-            <p class="text-[10px] text-emerald-400 font-semibold">Telah valid & siap lomba</p>
         </div>
 
         <!-- Card 3: Uang Pendaftaran Masuk (Lunas) -->
-        <div class="ai-card rounded-3xl p-5 border border-white/[0.08] shadow-lg space-y-1 hover:border-emerald-500/50 transition">
-            <div class="flex items-center justify-between">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Dana Masuk (Lunas)</span>
-                <div class="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center">
-                    <i data-lucide="wallet" class="w-4 h-4"></i>
+        <div class="ai-card rounded-2xl p-3.5 border border-white/[0.08] shadow-md flex items-center justify-between hover:border-emerald-500/50 transition">
+            <div class="space-y-0.5">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Dana Masuk (Lunas)</span>
+                <div>
+                    <span class="text-base sm:text-lg font-black text-emerald-400 font-mono">Rp {{ number_format($grandTotals['verified_income'], 0, ',', '.') }}</span>
                 </div>
+                <span class="text-[10px] text-slate-400 block">Dana registrasi valid</span>
             </div>
-            <div>
-                <span class="text-xl sm:text-2xl font-black text-emerald-400 font-mono">Rp {{ number_format($grandTotals['verified_income'], 0, ',', '.') }}</span>
+            <div class="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                <i data-lucide="wallet" class="w-4 h-4"></i>
             </div>
-            <p class="text-[10px] text-slate-400">Dana registrasi terverifikasi</p>
         </div>
 
         <!-- Card 4: Potensi Total Dana -->
-        <div class="ai-card rounded-3xl p-5 border border-white/[0.08] shadow-lg space-y-1 bg-gradient-to-tr from-[#7A5AF8]/30 to-[#4E6EFF]/30 hover:border-[#7A5AF8]/50 transition">
-            <div class="flex items-center justify-between">
-                <span class="text-[10px] font-bold text-[#A594FD] uppercase tracking-wider">Total Potensi Dana</span>
-                <div class="w-8 h-8 rounded-xl bg-[#7A5AF8]/20 text-white border border-[#7A5AF8]/30 flex items-center justify-center">
-                    <i data-lucide="coins" class="w-4 h-4"></i>
+        <div class="ai-card rounded-2xl p-3.5 border border-white/[0.08] shadow-md flex items-center justify-between bg-gradient-to-tr from-[#7A5AF8]/20 to-[#4E6EFF]/20 hover:border-[#7A5AF8]/50 transition">
+            <div class="space-y-0.5">
+                <span class="text-[10px] font-bold text-[#A594FD] uppercase tracking-wider block">Total Potensi Dana</span>
+                <div>
+                    <span class="text-base sm:text-lg font-black text-white font-mono">Rp {{ number_format($grandTotals['total_potential_income'], 0, ',', '.') }}</span>
+                </div>
+                <span class="text-[10px] text-[#A594FD] font-medium block">{{ $grandTotals['pending_registrations'] }} pendaftar pending</span>
+            </div>
+            <div class="w-8 h-8 rounded-xl bg-[#7A5AF8]/20 text-white border border-[#7A5AF8]/30 flex items-center justify-center shrink-0">
+                <i data-lucide="coins" class="w-4 h-4"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section: Rincian Pendaftar & Keuangan Per Cabang (Kompak, Elegan & Rinci) -->
+    <div class="ai-card rounded-3xl p-4 sm:p-5 border border-white/[0.08] shadow-xl space-y-3.5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-white/[0.08] pb-3">
+            <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-xl bg-gradient-to-tr from-[#7A5AF8] to-[#4E6EFF] text-white flex items-center justify-center text-xs shadow-sm">
+                    <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+                </div>
+                <div>
+                    <h4 class="text-xs sm:text-sm font-black text-white">Rincian Pendaftar & Keuangan Per Cabang</h4>
+                    <p class="text-[10px] text-slate-400">Rincian peserta, nominal masuk, serta pembagian kelas Bulu Tangkis & Tenis Meja</p>
                 </div>
             </div>
-            <div>
-                <span class="text-xl sm:text-2xl font-black text-white font-mono">Rp {{ number_format($grandTotals['total_potential_income'], 0, ',', '.') }}</span>
+
+            <div class="flex items-center gap-2 self-end sm:self-auto">
+                <button type="button" @click="showBranchBreakdown = !showBranchBreakdown" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-300 hover:text-white text-[11px] font-bold border border-white/[0.08] transition cursor-pointer">
+                    <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5 text-[#84D0FF]"></i>
+                    <span x-text="showBranchBreakdown ? 'Sembunyikan Rincian Kelas' : 'Tampilkan Rincian Kelas (BLT & TMJ)'"></span>
+                </button>
             </div>
-            <p class="text-[10px] text-[#A594FD] font-medium">{{ $grandTotals['pending_registrations'] }} pendaftar pending</p>
+        </div>
+
+        <!-- Grid Cards Per Cabang -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3">
+            @foreach($branchStats as $branch)
+                @php
+                    $hasBreakdown = !empty($branch['breakdown']);
+                    $fillPercent = $branch['quota'] > 0 ? min(100, round(($branch['total_regs'] / $branch['quota']) * 100)) : 0;
+                @endphp
+                <div class="rounded-2xl border border-white/[0.07] bg-[#0A0E1A]/80 p-3.5 space-y-2.5 hover:border-[#7A5AF8]/40 transition group cursor-pointer"
+                     @click="activeTab = 'peserta'; selectedCategory = '{{ $branch['id'] }}'"
+                     title="Klik untuk melihat peserta cabang {{ $branch['name'] }}">
+                    
+                    <!-- Card Header -->
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2 overflow-hidden">
+                            <span class="px-2 py-0.5 rounded-lg text-[10px] font-mono font-black text-[#84D0FF] bg-[#4E6EFF]/15 border border-[#4E6EFF]/30 shrink-0">
+                                {{ $branch['code'] }}
+                            </span>
+                            <h5 class="text-xs font-bold text-white truncate group-hover:text-[#84D0FF] transition">{{ $branch['name'] }}</h5>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-400 bg-white/[0.04] px-2 py-0.5 rounded-full border border-white/[0.06] shrink-0">
+                            {{ $branch['total_regs'] }}@if($branch['quota'] > 0)/{{ $branch['quota'] }}@endif
+                        </span>
+                    </div>
+
+                    <!-- Summary Numbers (Pendaftar & Nominal Uang) -->
+                    <div class="grid grid-cols-2 gap-2 bg-[#060911]/80 rounded-xl p-2 border border-white/[0.04]">
+                        <div>
+                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Pendaftar</span>
+                            <div class="flex items-baseline gap-1">
+                                <span class="text-sm font-black text-white font-mono">{{ $branch['total_regs'] }}</span>
+                                <span class="text-[10px] text-emerald-400 font-bold">({{ $branch['verified_count'] }} Lunas)</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Dana Lunas</span>
+                            <span class="text-xs sm:text-sm font-black text-emerald-400 font-mono block">
+                                Rp {{ number_format($branch['verified_income'], 0, ',', '.') }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="w-full bg-[#0C111D] h-1 rounded-full overflow-hidden border border-white/[0.04]">
+                        <div class="bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] h-full rounded-full" style="width: {{ $fillPercent }}%"></div>
+                    </div>
+
+                    <!-- Class/Category Breakdown (Khusus BLT, TMJ, dll) -->
+                    @if($hasBreakdown)
+                        <div x-show="showBranchBreakdown" class="space-y-1 pt-1 border-t border-white/[0.06]">
+                            <span class="text-[9px] font-black uppercase text-slate-400 tracking-wider block mb-1">Rincian Kategori / Kelas:</span>
+                            <div class="space-y-1">
+                                @foreach($branch['breakdown'] as $bItem)
+                                    <div class="flex items-center justify-between text-[10px] px-2 py-1 rounded-lg bg-white/[0.03] border border-white/[0.04]">
+                                        <span class="text-slate-300 font-medium truncate max-w-[130px]">{{ $bItem['label'] }}</span>
+                                        <div class="flex items-center gap-2 shrink-0">
+                                            <span class="font-bold text-white font-mono">{{ $bItem['count'] }} <span class="text-[9px] text-slate-400">psrt</span></span>
+                                            <span class="font-bold text-emerald-400 font-mono">Rp {{ number_format($bItem['income'], 0, ',', '.') }}</span>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            @endforeach
         </div>
     </div>
 

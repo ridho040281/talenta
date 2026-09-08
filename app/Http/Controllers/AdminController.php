@@ -948,13 +948,117 @@ class AdminController extends Controller
             ];
         })->sortByDesc('total_poin')->values();
 
+        // 6. Branch & Category Breakdown for Compact Stat Cards
+        $branchStats = [];
+        foreach ($competitions as $comp) {
+            $regs = $comp->registrations;
+            $totalRegs = $regs->count();
+            $verifiedRegs = $regs->where('status', 'verified');
+            $pendingRegs = $regs->where('status', 'pending');
+            $verifiedIncome = $verifiedRegs->sum(fn ($r) => $r->fee);
+            $totalIncome = $regs->sum(fn ($r) => $r->fee);
+
+            $breakdown = [];
+
+            if ($comp->code === 'BLT') {
+                $katA = $regs->filter(function($r) {
+                    $isGanda = $r->members->count() > 1 || (stripos($r->match_type ?? '', 'ganda') !== false && stripos($r->match_type ?? '', 'tunggal') === false);
+                    $targetStr = strtolower(($r->target_class ?? '') . ' ' . ($r->sub_category ?? '') . ' ' . ($r->team_name ?? ''));
+                    return !$isGanda && (stripos($targetStr, 'kategori a') !== false || stripos($targetStr, 'kat a') !== false || stripos($targetStr, 'kelas 1') !== false || stripos($targetStr, 'kelas 2') !== false || stripos($targetStr, '-a-') !== false || stripos($targetStr, 'kat_a') !== false);
+                });
+
+                $katB = $regs->filter(function($r) {
+                    $isGanda = $r->members->count() > 1 || (stripos($r->match_type ?? '', 'ganda') !== false && stripos($r->match_type ?? '', 'tunggal') === false);
+                    $targetStr = strtolower(($r->target_class ?? '') . ' ' . ($r->sub_category ?? '') . ' ' . ($r->team_name ?? ''));
+                    return !$isGanda && (stripos($targetStr, 'kategori b') !== false || stripos($targetStr, 'kat b') !== false || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, 'kelas 4') !== false || stripos($targetStr, '-b-') !== false || stripos($targetStr, 'kat_b') !== false);
+                });
+
+                $katC = $regs->filter(function($r) {
+                    $isGanda = $r->members->count() > 1 || (stripos($r->match_type ?? '', 'ganda') !== false && stripos($r->match_type ?? '', 'tunggal') === false);
+                    $targetStr = strtolower(($r->target_class ?? '') . ' ' . ($r->sub_category ?? '') . ' ' . ($r->team_name ?? ''));
+                    return !$isGanda && (stripos($targetStr, 'kategori c') !== false || stripos($targetStr, 'kat c') !== false || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '-c-') !== false || stripos($targetStr, 'kat_c') !== false);
+                });
+
+                $ganda = $regs->filter(function($r) {
+                    return $r->members->count() > 1 || (stripos($r->match_type ?? '', 'ganda') !== false && stripos($r->match_type ?? '', 'tunggal') === false) || (empty($r->match_type) && stripos($r->sub_category ?? '', 'ganda') !== false && stripos($r->sub_category ?? '', 'tunggal') === false);
+                });
+
+                $breakdown = [
+                    [
+                        'label' => 'Kat. A (Kelas 1-2)',
+                        'count' => $katA->count(),
+                        'verified_count' => $katA->where('status', 'verified')->count(),
+                        'income' => $katA->where('status', 'verified')->sum(fn($r) => $r->fee),
+                    ],
+                    [
+                        'label' => 'Kat. B (Kelas 3-4)',
+                        'count' => $katB->count(),
+                        'verified_count' => $katB->where('status', 'verified')->count(),
+                        'income' => $katB->where('status', 'verified')->sum(fn($r) => $r->fee),
+                    ],
+                    [
+                        'label' => 'Kat. C (Kelas 5-6)',
+                        'count' => $katC->count(),
+                        'verified_count' => $katC->where('status', 'verified')->count(),
+                        'income' => $katC->where('status', 'verified')->sum(fn($r) => $r->fee),
+                    ],
+                    [
+                        'label' => 'Ganda (Semua Kelas)',
+                        'count' => $ganda->count(),
+                        'verified_count' => $ganda->where('status', 'verified')->count(),
+                        'income' => $ganda->where('status', 'verified')->sum(fn($r) => $r->fee),
+                    ],
+                ];
+            } elseif ($comp->code === 'TMJ') {
+                $katA = $regs->filter(function($r) {
+                    $targetStr = strtolower(($r->target_class ?? '') . ' ' . ($r->sub_category ?? '') . ' ' . ($r->team_name ?? ''));
+                    return stripos($targetStr, 'kategori a') !== false || stripos($targetStr, 'kat a') !== false || stripos($targetStr, 'kelas 1') !== false || stripos($targetStr, 'kelas 2') !== false || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, '-a-') !== false || stripos($targetStr, 'kat_a') !== false;
+                });
+
+                $katB = $regs->filter(function($r) {
+                    $targetStr = strtolower(($r->target_class ?? '') . ' ' . ($r->sub_category ?? '') . ' ' . ($r->team_name ?? ''));
+                    return stripos($targetStr, 'kategori b') !== false || stripos($targetStr, 'kat b') !== false || stripos($targetStr, 'kelas 4') !== false || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '-b-') !== false || stripos($targetStr, 'kat_b') !== false;
+                });
+
+                $breakdown = [
+                    [
+                        'label' => 'Kat. A (Kelas 1-3)',
+                        'count' => $katA->count(),
+                        'verified_count' => $katA->where('status', 'verified')->count(),
+                        'income' => $katA->where('status', 'verified')->sum(fn($r) => $r->fee),
+                    ],
+                    [
+                        'label' => 'Kat. B (Kelas 4-6)',
+                        'count' => $katB->count(),
+                        'verified_count' => $katB->where('status', 'verified')->count(),
+                        'income' => $katB->where('status', 'verified')->sum(fn($r) => $r->fee),
+                    ],
+                ];
+            }
+
+            $branchStats[] = [
+                'id' => $comp->id,
+                'name' => $comp->name,
+                'code' => $comp->code,
+                'type' => $comp->type,
+                'quota' => $comp->quota,
+                'total_regs' => $totalRegs,
+                'verified_count' => $verifiedRegs->count(),
+                'pending_count' => $pendingRegs->count(),
+                'verified_income' => $verifiedIncome,
+                'total_income' => $totalIncome,
+                'breakdown' => $breakdown,
+            ];
+        }
+
         return view('admin.recap', compact(
             'competitions',
             'financeRecap',
             'grandTotals',
             'allRegistrations',
             'winnersByCompetition',
-            'standings'
+            'standings',
+            'branchStats'
         ));
     }
 
