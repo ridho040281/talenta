@@ -308,7 +308,6 @@
                         <div>
                             <div class="leading-tight">Blitar, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</div>
                             <div class="font-bold">Bendahara Panitia</div>
-                            <div class="font-bold">{{ $appSettings['institution_name'] ?? 'MTsN 1 Blitar' }}</div>
                         </div>
                         <div class="py-1 flex flex-col items-center justify-center">
                             @php
@@ -317,7 +316,6 @@
                             <div class="p-1 bg-white border border-slate-200 rounded-lg shadow-xs inline-block">
                                 {!! \App\Services\QrSignatureService::generateSvg($receiptUrl, 52) !!}
                             </div>
-                            <span class="text-[7.5px] font-mono text-emerald-700 font-bold mt-0.5">Lunas & Sah Digital</span>
                         </div>
                         <div>
                             <div class="font-black text-slate-950 underline underline-offset-2">
@@ -326,7 +324,6 @@
                             @if(!empty($appSettings['treasurer_nip']))
                                 <div class="text-[10px] text-slate-600 font-mono">NIP. {{ $appSettings['treasurer_nip'] }}</div>
                             @endif
-                            <div class="text-[10px] text-slate-500">{{ $appSettings['event_name'] ?? 'Milad ke-57' }} • {{ $appSettings['institution_name'] ?? 'MTsN 1 Blitar' }}</div>
                         </div>
                     </div>
                 </div>
@@ -334,7 +331,7 @@
 
             <!-- Footer Meta (Tetap di bagian paling bawah halaman) -->
             <div class="pt-2 border-t border-slate-200 flex items-center justify-between text-[9px] text-slate-400 font-mono">
-                <span>{{ $appSettings['event_name'] ?? 'Milad ke-57' }} {{ $appSettings['institution_name'] ?? 'MTsN 1 Blitar' }} • Aplikasi {{ $appSettings['app_name'] ?? 'TALENTA' }}</span>
+                <span>Panitia {{ $appSettings['event_name'] ?? 'Milad ke-57' }} {{ $appSettings['institution_name'] ?? 'MTsN 1 Blitar' }} • Aplikasi {{ $appSettings['app_name'] ?? 'TALENTA' }}</span>
                 <span>Dicetak pada: {{ now()->format('d/m/Y H:i:s') }}</span>
             </div>
         </div>
