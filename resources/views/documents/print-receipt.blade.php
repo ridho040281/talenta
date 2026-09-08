@@ -183,7 +183,7 @@
                         <span class="font-bold text-slate-500">Uang Sejumlah</span>
                         <div class="col-span-2">
                             @php
-                                $amount = $registration->invoice ? $registration->invoice->final_amount : ($registration->competition->price ?? 0);
+                                $amount = (float) ($registration->invoice ? $registration->invoice->final_amount : ($registration->fee ?: ($registration->competition->registration_fee ?? 0)));
                                 $terbilangWords = class_exists(\App\Helpers\Terbilang::class) ? \App\Helpers\Terbilang::make($amount) : '';
                             @endphp
                             <span class="font-black text-emerald-800 text-sm font-mono block">
@@ -202,12 +202,21 @@
                     <div class="grid grid-cols-3 gap-2 py-1.5 border-b border-slate-100">
                         <span class="font-bold text-slate-500">Untuk Pembayaran</span>
                         <div class="col-span-2 space-y-1">
-                            <span class="font-bold text-slate-900">
-                                Biaya Registrasi Pendaftaran Cabang Perlombaan {{ $registration->competition->name }}
-                            </span>
-                            <div class="text-[11px] text-slate-600">
-                                Peserta / Tim: <strong>{{ $registration->display_name }}</strong> (Kode: {{ $registration->registration_code }})
-                            </div>
+                            @if($registration->invoice && $registration->invoice->registrations->count() > 1)
+                                <span class="font-bold text-slate-900">
+                                    Biaya Registrasi Pendaftaran Kolektif ({{ $registration->invoice->registrations->count() }} Pendaftaran Peserta)
+                                </span>
+                                <div class="text-[11px] text-slate-600">
+                                    No. Tagihan: <strong>{{ $registration->invoice->invoice_number }}</strong> • Instansi: {{ $registration->institution_name }}
+                                </div>
+                            @else
+                                <span class="font-bold text-slate-900">
+                                    Biaya Registrasi Pendaftaran Cabang Perlombaan {{ $registration->competition->name }}
+                                </span>
+                                <div class="text-[11px] text-slate-600">
+                                    Peserta / Tim: <strong>{{ $registration->display_name }}</strong> (Kode: {{ $registration->registration_code }})
+                                </div>
+                            @endif
                         </div>
                     </div>
 
@@ -234,17 +243,41 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-200">
-                            <tr>
-                                <td class="py-2.5 px-3 font-bold">1</td>
-                                <td class="py-2.5 px-3 font-bold">
-                                    {{ $registration->competition->name }} - {{ $registration->institution_name }}
-                                    <div class="text-[10px] text-slate-500 font-normal">Nama: {{ $registration->display_name }}</div>
-                                </td>
-                                <td class="py-2.5 px-3 text-center font-bold">1</td>
-                                <td class="py-2.5 px-3 text-right font-mono font-bold">
-                                    Rp {{ number_format($registration->competition->price ?? 0, 0, ',', '.') }}
-                                </td>
-                            </tr>
+                            @if($registration->invoice && $registration->invoice->registrations->count() > 1)
+                                @foreach($registration->invoice->registrations as $idx => $invReg)
+                                    <tr>
+                                        <td class="py-2 px-3 font-bold">{{ $idx + 1 }}</td>
+                                        <td class="py-2 px-3 font-bold">
+                                            {{ $invReg->competition->name }} - {{ $invReg->institution_name }}
+                                            <div class="text-[10px] text-slate-500 font-normal">Peserta: {{ $invReg->display_name }} ({{ $invReg->registration_code }})</div>
+                                        </td>
+                                        <td class="py-2 px-3 text-center font-bold">1</td>
+                                        <td class="py-2 px-3 text-right font-mono font-bold">
+                                            Rp {{ number_format((float) ($invReg->fee ?: ($invReg->competition->registration_fee ?? 0)), 0, ',', '.') }}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                                @if($registration->invoice->bonus_discount > 0)
+                                    <tr class="bg-amber-50/50 text-amber-900 font-bold">
+                                        <td colspan="3" class="py-1.5 px-3 text-right text-[11px]">Potongan Promo / Bonus:</td>
+                                        <td class="py-1.5 px-3 text-right font-mono text-rose-600 text-xs">
+                                            - Rp {{ number_format($registration->invoice->bonus_discount, 0, ',', '.') }}
+                                        </td>
+                                    </tr>
+                                @endif
+                            @else
+                                <tr>
+                                    <td class="py-2.5 px-3 font-bold">1</td>
+                                    <td class="py-2.5 px-3 font-bold">
+                                        {{ $registration->competition->name }} - {{ $registration->institution_name }}
+                                        <div class="text-[10px] text-slate-500 font-normal">Nama: {{ $registration->display_name }}</div>
+                                    </td>
+                                    <td class="py-2.5 px-3 text-center font-bold">1</td>
+                                    <td class="py-2.5 px-3 text-right font-mono font-bold">
+                                        Rp {{ number_format((float) ($registration->fee ?: ($registration->competition->registration_fee ?? 0)), 0, ',', '.') }}
+                                    </td>
+                                </tr>
+                            @endif
                             <tr class="bg-slate-50 font-black text-slate-900 border-t border-slate-300">
                                 <td colspan="3" class="py-2.5 px-3 text-right uppercase">Total Pembayaran:</td>
                                 <td class="py-2.5 px-3 text-right font-mono text-emerald-800 text-sm">
