@@ -221,18 +221,89 @@
                             </div>
                             <span class="font-bold text-emerald-700">Status: {{ ucfirst($registration->status) }}</span>
                         </div>
-                        <div class="p-3 grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                        @php
+                            $rawSub = $registration->sub_category ?? '';
+                            $rawClass = $registration->target_class ?? '';
+                            $compCode = $registration->competition->code ?? '';
+
+                            // Clean Sector Name & Style
+                            $cleanSector = $rawSub;
+                            $sectorIcon = '👦';
+                            $sectorBadgeClass = 'bg-blue-50 text-blue-900 border-blue-200';
+
+                            if (stripos($rawSub, 'Ganda Putra') !== false || ($registration->members->count() > 1 && $registration->primary_gender === 'L')) {
+                                $cleanSector = 'Ganda Putra (PA)';
+                                $sectorIcon = '👥';
+                                $sectorBadgeClass = 'bg-blue-50 text-blue-900 border-blue-200';
+                            } elseif (stripos($rawSub, 'Ganda Putri') !== false || ($registration->members->count() > 1 && $registration->primary_gender === 'P')) {
+                                $cleanSector = 'Ganda Putri (PI)';
+                                $sectorIcon = '👥';
+                                $sectorBadgeClass = 'bg-rose-50 text-rose-900 border-rose-200';
+                            } elseif (stripos($rawSub, 'Ganda') !== false) {
+                                $cleanSector = 'Ganda / Beregu';
+                                $sectorIcon = '👥';
+                                $sectorBadgeClass = 'bg-purple-50 text-purple-900 border-purple-200';
+                            } elseif (stripos($rawSub, 'Tunggal Putra') !== false || stripos($rawSub, 'Putra') !== false || $registration->primary_gender === 'L') {
+                                $cleanSector = in_array($compCode, ['BLT', 'TMJ']) ? 'Tunggal Putra (PA)' : 'Kelompok Putra (PA)';
+                                $sectorIcon = '👦';
+                                $sectorBadgeClass = 'bg-blue-50 text-blue-900 border-blue-200';
+                            } elseif (stripos($rawSub, 'Tunggal Putri') !== false || stripos($rawSub, 'Putri') !== false || $registration->primary_gender === 'P') {
+                                $cleanSector = in_array($compCode, ['BLT', 'TMJ']) ? 'Tunggal Putri (PI)' : 'Kelompok Putri (PI)';
+                                $sectorIcon = '👧';
+                                $sectorBadgeClass = 'bg-rose-50 text-rose-900 border-rose-200';
+                            } elseif (empty($cleanSector)) {
+                                $cleanSector = 'Umum SD/MI';
+                                $sectorIcon = '👥';
+                                $sectorBadgeClass = 'bg-slate-100 text-slate-800 border-slate-200';
+                            }
+
+                            // Clean Class Category
+                            $cleanClass = $rawClass;
+                            if (empty($cleanClass)) {
+                                if ($compCode === 'BLT') {
+                                    if (stripos($rawSub, 'Kat A') !== false || stripos($rawSub, 'Kelas 1') !== false || stripos($rawSub, 'Kelas 2') !== false) {
+                                        $cleanClass = 'Kategori A (Kelas 1–2)';
+                                    } elseif (stripos($rawSub, 'Kat B') !== false || stripos($rawSub, 'Kelas 3') !== false || stripos($rawSub, 'Kelas 4') !== false) {
+                                        $cleanClass = 'Kategori B (Kelas 3–4)';
+                                    } elseif (stripos($rawSub, 'Kat C') !== false || stripos($rawSub, 'Kelas 5') !== false || stripos($rawSub, 'Kelas 6') !== false) {
+                                        $cleanClass = 'Kategori C (Kelas 5–6)';
+                                    } elseif (stripos($cleanSector, 'Ganda') !== false) {
+                                        $cleanClass = 'Semua Kelas (Ganda)';
+                                    }
+                                } elseif ($compCode === 'TMJ') {
+                                    if (stripos($rawSub, 'Kat A') !== false || stripos($rawSub, '1 - 3') !== false || stripos($rawSub, '1-3') !== false) {
+                                        $cleanClass = 'Kategori A (Kelas 1–3)';
+                                    } elseif (stripos($rawSub, 'Kat B') !== false || stripos($rawSub, '4 - 6') !== false || stripos($rawSub, '4-6') !== false) {
+                                        $cleanClass = 'Kategori B (Kelas 4–6)';
+                                    }
+                                }
+                            }
+                            if (empty($cleanClass)) {
+                                $cleanClass = 'Semua Kelas';
+                            }
+                        @endphp
+                        <div class="p-3 grid grid-cols-1 sm:grid-cols-3 gap-2.5 items-center">
                             <div>
                                 <span class="text-slate-400 block text-[10px] uppercase font-bold">Cabang Lomba</span>
-                                <span class="font-black text-slate-900 text-sm">{{ $registration->competition->name }}</span>
+                                <span class="font-black text-slate-900 text-sm block mt-0.5">{{ $registration->competition->name }}</span>
                             </div>
                             <div>
                                 <span class="text-slate-400 block text-[10px] uppercase font-bold">Sektor / Kelompok</span>
-                                <span class="font-bold text-slate-800">{{ $registration->sub_category ?: 'Umum SD/MI' }}</span>
+                                <div class="mt-1">
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-bold border {{ $sectorBadgeClass }}">
+                                        <span>{{ $sectorIcon }}</span>
+                                        <span>{{ $cleanSector }}</span>
+                                    </span>
+                                </div>
                             </div>
                             <div>
                                 <span class="text-slate-400 block text-[10px] uppercase font-bold">Kategori Kelas</span>
-                                <span class="font-bold text-purple-800">{{ $registration->target_class ?: 'Semua Kelas' }}</span>
+                                <div class="mt-1">
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-bold bg-purple-50 text-purple-900 border border-purple-200">
+                                        <span>🎯</span>
+                                        <span>{{ $cleanClass }}</span>
+                                    </span>
+                                </div>
                             </div>
                         </div>
 
