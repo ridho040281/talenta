@@ -235,7 +235,6 @@
                     <div class="text-center w-56 flex flex-col justify-between">
                         <div>
                             <div class="invisible select-none leading-tight">Tanggal</div>
-                            <div class="invisible select-none font-bold">Instansi</div>
                             <div class="font-bold">Pembuat / Pemilik Akun,</div>
                         </div>
                         <div class="pt-10">
@@ -249,8 +248,7 @@
                     <div class="text-center w-56 flex flex-col justify-between">
                         <div>
                             <div class="leading-tight">Blitar, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</div>
-                            <div class="font-bold">Panitia Milad ke-57</div>
-                            <div class="font-bold">{{ $appSettings['institution_name'] ?? 'MTsN 1 Blitar' }}</div>
+                            <div class="font-bold">Ketua Panitia</div>
                         </div>
                         <div class="py-1 flex flex-col items-center justify-center">
                             @php
@@ -259,7 +257,6 @@
                             <div class="p-1 bg-white border border-slate-200 rounded-lg shadow-xs inline-block">
                                 {!! \App\Services\QrSignatureService::generateSvg($accUrl, 52) !!}
                             </div>
-                            <span class="text-[7.5px] font-mono text-slate-500 mt-0.5">Pengesahan Ketua Panitia</span>
                         </div>
                         <div>
                             <div class="font-black text-slate-950 underline underline-offset-2">{{ $appSettings['committee_chairman_name'] ?? 'KHOIRUL ANAM, S.Pd' }}</div>

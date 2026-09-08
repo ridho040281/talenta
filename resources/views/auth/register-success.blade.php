@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -339,7 +339,6 @@
                 <div class="text-center w-56 flex flex-col justify-between">
                     <div>
                         <div class="invisible select-none leading-tight">Tanggal</div>
-                        <div class="invisible select-none font-bold">Instansi</div>
                         <div class="font-bold">Pembuat / Pemilik Akun,</div>
                     </div>
                     <div class="pt-14">
@@ -353,8 +352,7 @@
                 <div class="text-center w-56 flex flex-col justify-between">
                     <div>
                         <div class="leading-tight">Blitar, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</div>
-                        <div class="font-bold">Panitia Milad ke-57</div>
-                        <div class="font-bold">MTsN 1 Blitar</div>
+                        <div class="font-bold">Ketua Panitia</div>
                     </div>
                     <div class="pt-14">
                         <div class="font-black text-slate-950 underline underline-offset-2">{{ $appSettings['committee_chairman_name'] ?? 'KHOIRUL ANAM, S.Pd' }}</div>
