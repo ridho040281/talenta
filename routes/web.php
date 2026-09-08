@@ -231,7 +231,11 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->name('admin.')-
 
 // Direct Dynamic Media Serving Fallback (Protects against symlink or server permissions issues)
 Route::get('/storage/{folder}/{filename}', function ($folder, $filename) {
-    if (!in_array($folder, ['sponsors', 'pamphlets', 'settings', 'certificates', 'avatars', 'payments', 'qrcodes'])) {
+    $allowedFolders = [
+        'documents', 'payments', 'payment_proofs', 'sponsors', 'pamphlets', 'popups',
+        'settings', 'guidelines', 'certificates', 'avatars', 'qrcodes', 'invoices'
+    ];
+    if (!in_array($folder, $allowedFolders)) {
         abort(404);
     }
     $cleanFilename = basename($filename);
@@ -240,9 +244,11 @@ Route::get('/storage/{folder}/{filename}', function ($folder, $filename) {
         $path = public_path("storage/{$folder}/{$cleanFilename}");
     }
     if (file_exists($path)) {
-        $mime = mime_content_type($path) ?: 'image/png';
+        $mime = mime_content_type($path) ?: 'application/octet-stream';
+        $disposition = in_array(strtolower(pathinfo($path, PATHINFO_EXTENSION)), ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'svg', 'gif']) ? 'inline' : 'attachment';
         return response()->file($path, [
             'Content-Type' => $mime,
+            'Content-Disposition' => "{$disposition}; filename=\"{$cleanFilename}\"",
             'Cache-Control' => 'public, max-age=86400',
         ]);
     }

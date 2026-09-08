@@ -563,9 +563,11 @@ class PicController extends Controller
 
         if ($request->hasFile('document_file')) {
             $registration->document_file = $request->file('document_file')->store('documents', 'public');
+            AdminSettingsController::ensurePublicStorageSync($registration->document_file);
         }
         if ($request->hasFile('payment_proof')) {
             $registration->payment_proof = $request->file('payment_proof')->store('payments', 'public');
+            AdminSettingsController::ensurePublicStorageSync($registration->payment_proof);
         }
 
         $registration->save();

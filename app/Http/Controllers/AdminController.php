@@ -88,6 +88,7 @@ class AdminController extends Controller
         $guidelinesPath = $request->input('guidelines_file');
         if ($request->hasFile('guidelines_pdf')) {
             $guidelinesPath = $request->file('guidelines_pdf')->store('guidelines', 'public');
+            AdminSettingsController::ensurePublicStorageSync($guidelinesPath);
         }
 
         $nextOrder = $validated['order'] ?? (Competition::withoutGlobalScope('order')->max('order') + 1);
@@ -201,6 +202,7 @@ class AdminController extends Controller
         $guidelinesPath = $competition->guidelines_file;
         if ($request->hasFile('guidelines_pdf')) {
             $guidelinesPath = $request->file('guidelines_pdf')->store('guidelines', 'public');
+            AdminSettingsController::ensurePublicStorageSync($guidelinesPath);
         } elseif ($request->has('guidelines_file')) {
             $guidelinesPath = $request->input('guidelines_file');
         }

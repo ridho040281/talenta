@@ -619,6 +619,7 @@ class CollectiveRegistrationController extends Controller
 
         // Store payment proof file
         $paymentProofPath = $request->file('payment_proof')->store('payments', 'public');
+        AdminSettingsController::ensurePublicStorageSync($paymentProofPath);
 
         DB::beginTransaction();
         try {
@@ -765,6 +766,7 @@ class CollectiveRegistrationController extends Controller
         $file = $request->file('payment_proof');
         $filename = 'proof_'.$invoice->invoice_number.'_'.time().'.'.$file->getClientOriginalExtension();
         $path = $file->storeAs('payment_proofs', $filename, 'public');
+        AdminSettingsController::ensurePublicStorageSync($path);
 
         $invoice->update([
             'payment_proof' => $path,

@@ -781,7 +781,7 @@
                             <div class="p-3 rounded-xl bg-[#161F30] border border-white/[0.08] space-y-2">
                                 <span class="font-bold text-slate-300 block text-[11px]">📄 Surat Keterangan / Rekomendasi</span>
                                 <template x-if="selectedReg && selectedReg.document_file">
-                                    <a :href="'{{ asset('storage') }}/' + selectedReg.document_file" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-xs font-bold hover:bg-emerald-500/25 transition">
+                                    <a :href="'{{ url('storage') }}/' + selectedReg.document_file.replace(/^(public\/|storage\/)+/, '')" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-xs font-bold hover:bg-emerald-500/25 transition">
                                         <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
                                         <span>Buka Surat</span>
                                     </a>
@@ -795,7 +795,7 @@
                             <div class="p-3 rounded-xl bg-[#161F30] border border-white/[0.08] space-y-2">
                                 <span class="font-bold text-slate-300 block text-[11px]">💳 Bukti Transfer / Struk / Slip</span>
                                 <template x-if="selectedReg && (selectedReg.payment_proof || (selectedReg.invoice && selectedReg.invoice.payment_proof))">
-                                    <a :href="'{{ asset('storage') }}/' + (selectedReg.payment_proof || selectedReg.invoice.payment_proof)" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/15 text-amber-400 border border-amber-500/30 text-xs font-bold hover:bg-amber-500/25 transition">
+                                    <a :href="'{{ url('storage') }}/' + (selectedReg.payment_proof || selectedReg.invoice.payment_proof).replace(/^(public\/|storage\/)+/, '')" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/15 text-amber-400 border border-amber-500/30 text-xs font-bold hover:bg-amber-500/25 transition">
                                         <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
                                         <span>Buka Slip Transfer</span>
                                     </a>

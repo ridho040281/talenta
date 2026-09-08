@@ -280,11 +280,13 @@ class PesertaController extends Controller
         $docPath = null;
         if ($request->hasFile('document_file')) {
             $docPath = $request->file('document_file')->store('documents', 'public');
+            AdminSettingsController::ensurePublicStorageSync($docPath);
         }
 
         $paymentPath = null;
         if ($request->hasFile('payment_proof')) {
             $paymentPath = $request->file('payment_proof')->store('payments', 'public');
+            AdminSettingsController::ensurePublicStorageSync($paymentPath);
         }
 
         $targetClass = $validated['target_class'] ?? null;
@@ -452,11 +454,13 @@ class PesertaController extends Controller
 
         if ($request->hasFile('document_file')) {
             $docPath = $request->file('document_file')->store('documents', 'public');
+            AdminSettingsController::ensurePublicStorageSync($docPath);
             $registration->document_file = $docPath;
         }
 
         if ($request->hasFile('payment_proof')) {
             $paymentPath = $request->file('payment_proof')->store('payments', 'public');
+            AdminSettingsController::ensurePublicStorageSync($paymentPath);
             $registration->payment_proof = $paymentPath;
         }
 
