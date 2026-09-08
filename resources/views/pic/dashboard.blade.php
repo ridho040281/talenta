@@ -207,7 +207,7 @@
     },
     items: @js($allRegistrations->map(function($r) {
         $firstMember = $r->members->first();
-        $isGanda = $r->members->count() > 1 || stripos($r->match_type ?? '', 'ganda') !== false || stripos($r->sub_category ?? '', 'ganda') !== false;
+        $isGanda = $r->members->count() > 1 || (stripos($r->match_type ?? '', 'ganda') !== false && stripos($r->match_type ?? '', 'tunggal') === false) || (empty($r->match_type) && stripos($r->sub_category ?? '', 'ganda') !== false && stripos($r->sub_category ?? '', 'tunggal') === false);
         $targetStr = strtolower(($r->target_class ?? '') . ' ' . ($r->sub_category ?? '') . ' ' . ($r->team_name ?? ''));
         $gender = $r->primary_gender;
         return [
@@ -479,7 +479,7 @@
                     @forelse($allRegistrations as $index => $reg)
                         @php
                             $firstMember = $reg->members->first();
-                            $isGanda = $reg->members->count() > 1 || stripos($reg->match_type ?? '', 'ganda') !== false || stripos($reg->sub_category ?? '', 'ganda') !== false;
+                            $isGanda = $reg->members->count() > 1 || (stripos($reg->match_type ?? '', 'ganda') !== false && stripos($reg->match_type ?? '', 'tunggal') === false) || (empty($reg->match_type) && stripos($reg->sub_category ?? '', 'ganda') !== false && stripos($reg->sub_category ?? '', 'tunggal') === false);
                             $gender = $reg->primary_gender;
                             $targetStr = strtolower(($reg->target_class ?? '') . ' ' . ($reg->sub_category ?? '') . ' ' . ($reg->team_name ?? ''));
                             $isKatA = (stripos($targetStr, 'kategori a') !== false || stripos($targetStr, 'kat a') !== false || stripos($targetStr, 'kelas 1') !== false || stripos($targetStr, 'kelas 2') !== false || stripos($targetStr, '-a-') !== false || stripos($targetStr, 'kat_a') !== false);

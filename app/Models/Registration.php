@@ -123,7 +123,7 @@ class Registration extends Model
         }
 
         if ($this->competition->code === 'BLT') {
-            $isGanda = stripos($this->match_type ?? '', 'Ganda') !== false || stripos($this->sub_category ?? '', 'Ganda') !== false || stripos($this->team_name ?? '', 'Ganda') !== false;
+            $isGanda = $this->members->count() > 1 || (stripos($this->match_type ?? '', 'Ganda') !== false && stripos($this->match_type ?? '', 'Tunggal') === false) || (empty($this->match_type) && stripos($this->sub_category ?? '', 'Ganda') !== false && stripos($this->sub_category ?? '', 'Tunggal') === false);
             $isPutri = stripos($this->match_type ?? '', 'Putri') !== false || stripos($this->match_type ?? '', '(PI)') !== false || $this->primary_gender === 'P';
 
             if ($isGanda) {

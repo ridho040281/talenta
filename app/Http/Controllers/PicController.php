@@ -555,8 +555,13 @@ class PicController extends Controller
             if ($registration->match_type && stripos($registration->match_type, 'ganda') !== false) {
                 $registration->target_class = 'Ganda (Semua Kelas)';
                 $registration->sub_category = $registration->match_type;
-            } elseif (! empty($registration->target_class) && ! empty($registration->match_type)) {
-                $registration->sub_category = $registration->target_class.' - '.$registration->match_type;
+            } else {
+                if (empty($registration->target_class) || stripos($registration->target_class, 'ganda') !== false) {
+                    $registration->target_class = 'Kategori A (Kelas 1 - 2)';
+                }
+                if (! empty($registration->match_type)) {
+                    $registration->sub_category = $registration->target_class.' - '.$registration->match_type;
+                }
             }
         }
 
@@ -706,10 +711,13 @@ class PicController extends Controller
             if ($isGanda) {
                 $targetClass = 'Ganda (Semua Kelas)';
                 $subCategory = $matchType;
-            } elseif (! empty($targetClass) && ! empty($matchType)) {
-                $subCategory = $targetClass.' - '.$matchType;
-            } elseif (! empty($matchType)) {
-                $subCategory = $matchType;
+            } else {
+                if (empty($targetClass) || stripos($targetClass, 'ganda') !== false) {
+                    $targetClass = 'Kategori A (Kelas 1 - 2)';
+                }
+                if (! empty($matchType)) {
+                    $subCategory = $targetClass.' - '.$matchType;
+                }
             }
         } elseif ($competition->code === 'TMJ') {
             $isPutri = ! empty($matchType) && (stripos($matchType, 'putri') !== false || stripos($matchType, '(pi)') !== false);

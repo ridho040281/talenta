@@ -77,7 +77,7 @@
                         </label>
 
                         <div x-show="!matchType.includes('Ganda')">
-                            <select name="target_class" x-model="targetClass" :required="!matchType.includes('Ganda')" class="block w-full px-4 py-3 rounded-2xl bg-slate-950 border border-slate-700 text-white text-sm font-bold focus:border-emerald-500 outline-none">
+                            <select name="target_class" x-model="targetClass" :disabled="matchType.includes('Ganda')" :required="!matchType.includes('Ganda')" class="block w-full px-4 py-3 rounded-2xl bg-slate-950 border border-slate-700 text-white text-sm font-bold focus:border-emerald-500 outline-none">
                                 <option value="Kategori A (Kelas 1 - 2)">
                                     🏸 Kategori A (Kelas 1 – 2 SD/MI) — <span x-text="matchType.includes('(PI)') ? 'Rp {{ number_format($competition->tier_fees['A_tunggal_pi'] ?? 130000, 0, ',', '.') }}' : 'Rp {{ number_format($competition->tier_fees['A_tunggal_pa'] ?? 130000, 0, ',', '.') }}'"></span>
                                 </option>
@@ -92,7 +92,7 @@
                         </div>
 
                         <div x-show="matchType.includes('Ganda')" class="p-3.5 rounded-2xl bg-blue-950/60 border border-blue-600/60 space-y-1">
-                            <input type="hidden" name="target_class" value="Ganda (Semua Kelas)">
+                            <input type="hidden" name="target_class" value="Ganda (Semua Kelas)" :disabled="!matchType.includes('Ganda')">
                             <div class="flex items-center gap-2 text-xs font-bold text-blue-300">
                                 <i data-lucide="info" class="w-4 h-4 text-blue-400"></i>
                                 <span>Kategori Ganda (Tanpa Kelas A, B, C)</span>

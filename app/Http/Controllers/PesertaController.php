@@ -356,8 +356,12 @@ class PesertaController extends Controller
             if ($isGandaBlt) {
                 $targetClass = 'Ganda (Semua Kelas)';
                 $subCategory = $validated['match_type'] ?? 'Ganda';
-            } elseif (! empty($validated['target_class']) && ! empty($validated['match_type'])) {
-                $subCategory = $validated['target_class'].' - '.$validated['match_type'];
+            } else {
+                // Sektor Tunggal
+                if (empty($targetClass) || stripos($targetClass, 'ganda') !== false) {
+                    $targetClass = 'Kategori A (Kelas 1 - 2)';
+                }
+                $subCategory = $targetClass.' - '.$validated['match_type'];
             }
         } elseif ($isTenisMeja) {
             if (! empty($validated['target_class']) && ! empty($validated['match_type'])) {
