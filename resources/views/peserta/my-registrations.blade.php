@@ -314,7 +314,7 @@
                                         <div class="space-y-1 text-xs">
                                             @foreach($reg->members as $idx => $m)
                                                 @php
-                                                    $mBdate = $m->birth_date ? (strtotime($m->birth_date) ? \Carbon\Carbon::parse($m->birth_date)->format('d/m/Y') : $m->birth_date) : null;
+                                                    $mBdate = $m->formatted_birth_date ?: ($m->birth_date ? (strtotime($m->birth_date) ? \Carbon\Carbon::parse($m->birth_date)->translatedFormat('d F Y') : $m->birth_date) : null);
                                                     $mTTL = trim(($m->birth_place ? $m->birth_place : '').($m->birth_place && $mBdate ? ', ' : '').($mBdate ?: ''));
                                                 @endphp
                                                 <div class="text-[11px] text-slate-300">
@@ -325,7 +325,7 @@
                                     @else
                                         @php
                                             $m = $reg->members->first();
-                                            $mBdate = ($m && $m->birth_date) ? (strtotime($m->birth_date) ? \Carbon\Carbon::parse($m->birth_date)->format('d/m/Y') : $m->birth_date) : null;
+                                            $mBdate = $m ? ($m->formatted_birth_date ?: ($m->birth_date ? (strtotime($m->birth_date) ? \Carbon\Carbon::parse($m->birth_date)->translatedFormat('d F Y') : $m->birth_date) : null)) : null;
                                             $mTTL = $m ? trim(($m->birth_place ? $m->birth_place : '').($m->birth_place && $mBdate ? ', ' : '').($mBdate ?: '')) : '';
                                         @endphp
                                         <span class="text-xs text-slate-300 font-medium">

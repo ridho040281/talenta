@@ -180,6 +180,31 @@
             ];
         }
     },
+    formatTTL(place, date) {
+        if (!place && !date) return '-';
+        let formattedDate = '';
+        if (date) {
+            const str = String(date).split('T')[0];
+            const parts = str.split('-');
+            if (parts.length === 3) {
+                const months = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                const day = parseInt(parts[2], 10);
+                const mIdx = parseInt(parts[1], 10);
+                const year = parts[0];
+                if (!isNaN(day) && mIdx >= 1 && mIdx <= 12) {
+                    formattedDate = `${day} ${months[mIdx]} ${year}`;
+                } else {
+                    formattedDate = str;
+                }
+            } else {
+                formattedDate = date;
+            }
+        }
+        if (place && formattedDate) {
+            return `${place}, ${formattedDate}`;
+        }
+        return place || formattedDate || '-';
+    },
     items: @js($allRegistrations->map(function($r) {
         $firstMember = $r->members->first();
         $isGanda = $r->members->count() > 1 || stripos($r->match_type ?? '', 'ganda') !== false || stripos($r->sub_category ?? '', 'ganda') !== false;
@@ -653,7 +678,7 @@
                                     </button>
 
                                     <!-- 2. Icon Edit: Edit Data Peserta -->
-                                    <button type="button" @click="selectedEditReg = {{ $reg->toJson() }}; editModal = true" class="w-8 h-8 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] flex items-center justify-center transition cursor-pointer" title="Edit Data Peserta">
+                                    <button type="button" @click="selectedEditReg = JSON.parse(JSON.stringify({{ $reg->toJson() }})); if(selectedEditReg && selectedEditReg.members) { selectedEditReg.members.forEach(m => { if(m.birth_date) m.birth_date = String(m.birth_date).split('T')[0]; }); } editModal = true" class="w-8 h-8 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] flex items-center justify-center transition cursor-pointer" title="Edit Data Peserta">
                                         <i data-lucide="edit-3" class="w-4 h-4"></i>
                                     </button>
 
@@ -728,7 +753,7 @@
                                         <div class="grid grid-cols-2 gap-2 text-slate-400 pt-1">
                                             <div class="col-span-2"><span class="text-slate-500">Asal Sekolah:</span> <span class="font-bold text-slate-200" x-text="m.school_name || (selectedReg ? selectedReg.institution_name : '-')"></span></div>
                                             <div><span class="text-slate-500">NISN:</span> <span class="font-mono font-bold text-slate-300" x-text="m.nisn || '-'"></span></div>
-                                            <div><span class="text-slate-500">TTL:</span> <span class="font-medium text-slate-300" x-text="(m.birth_place || '') + (m.birth_date ? ', ' + m.birth_date : '')"></span></div>
+                                            <div><span class="text-slate-500">TTL:</span> <span class="font-medium text-slate-300" x-text="formatTTL(m.birth_place, m.formatted_birth_date || m.birth_date)"></span></div>
                                             <div><span class="text-slate-500">No HP/WA:</span> <span class="font-medium text-slate-300" x-text="m.phone || '-'"></span></div>
                                             <div><span class="text-slate-500">Peran:</span> <span class="font-medium text-slate-300" x-text="m.role_in_team || 'Peserta Utama'"></span></div>
                                         </div>

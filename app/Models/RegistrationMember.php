@@ -26,8 +26,27 @@ class RegistrationMember extends Model
     protected function casts(): array
     {
         return [
-            'birth_date' => 'date',
+            'birth_date' => 'date:Y-m-d',
         ];
+    }
+
+    protected $appends = [
+        'formatted_birth_date',
+    ];
+
+    public function getFormattedBirthDateAttribute(): ?string
+    {
+        if (! $this->birth_date) {
+            return null;
+        }
+
+        try {
+            return $this->birth_date instanceof \Carbon\Carbon
+                ? $this->birth_date->translatedFormat('d F Y')
+                : \Carbon\Carbon::parse($this->birth_date)->translatedFormat('d F Y');
+        } catch (\Throwable $e) {
+            return (string) $this->birth_date;
+        }
     }
 
     public function registration(): BelongsTo

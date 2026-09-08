@@ -150,16 +150,7 @@
             <div class="space-y-3">
                 @foreach($registration->members as $index => $member)
                     @php
-                        $bDateStr = null;
-                        if ($member->birth_date) {
-                            if ($member->birth_date instanceof \Carbon\Carbon) {
-                                $bDateStr = $member->birth_date->format('d/m/Y');
-                            } elseif (is_string($member->birth_date) && strtotime($member->birth_date)) {
-                                $bDateStr = \Carbon\Carbon::parse($member->birth_date)->format('d/m/Y');
-                            } else {
-                                $bDateStr = $member->birth_date;
-                            }
-                        }
+                        $bDateStr = $member->formatted_birth_date ?: ($member->birth_date ? \Carbon\Carbon::parse($member->birth_date)->translatedFormat('d F Y') : null);
                         $ttl = trim(($member->birth_place ? $member->birth_place : '').($member->birth_place && $bDateStr ? ', ' : '').($bDateStr ?: ''));
                     @endphp
                     <div class="p-3.5 sm:p-4 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition space-y-3">
