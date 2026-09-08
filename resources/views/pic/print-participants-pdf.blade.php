@@ -253,16 +253,14 @@
                             </tbody>
                         </table>
                     </div>
-                </div>
 
-                    <!-- ==================== TANDA TANGAN RESMI ==================== -->
-                    <div class="mt-8 pt-4">
-                        <div class="flex justify-between items-stretch text-xs text-slate-800">
+                    <!-- ==================== TANDA TANGAN RESMI (DINAMIS MENGIKUTI TABEL AKHIR) ==================== -->
+                    <div class="mt-6 pt-2" style="page-break-inside: avoid; break-inside: avoid;">
+                        <div class="flex justify-between items-start text-xs text-slate-800">
                             <div class="text-center w-56 flex flex-col justify-between">
                                 <div>
                                     <div>Mengetahui,</div>
                                     <div class="font-bold">Ketua Panitia</div>
-                                    <div class="font-bold">MTsN 1 Blitar</div>
                                 </div>
                                 <div class="pt-12">
                                     <div class="font-black text-slate-950 underline underline-offset-2">{{ $appSettings['committee_chairman_name'] ?? 'KHOIRUL ANAM, S.Pd' }}</div>
@@ -270,25 +268,25 @@
                                 </div>
                             </div>
 
-                            <div class="text-center w-56 flex flex-col justify-between">
+                            <div class="text-center w-60 flex flex-col justify-between">
                                 <div>
                                     <div>Blitar, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</div>
-                                    <div class="font-bold">Koordinator Cabang Lomba</div>
-                                    <div class="font-bold">MTsN 1 Blitar</div>
+                                    <div class="font-bold">Koordinator Cabang {{ $page['competition_name'] }}</div>
                                 </div>
                                 <div class="pt-12">
                                     <div class="font-black text-slate-950 underline underline-offset-2">
-                                        {{ Auth::user()->name ?: 'PANITIA PELAKSANA' }}
+                                        {{ $page['pic_name'] ?? (Auth::user()->name ?: 'PANITIA PELAKSANA') }}
                                     </div>
-                                    <div class="text-[10px] text-slate-500">{{ $appSettings['event_name'] ?? 'Milad ke-57' }} • {{ $appSettings['institution_name'] ?? 'MTsN 1 Blitar' }}</div>
+                                    <div class="text-[10px] text-slate-500">{{ $page['pic_position'] ?? 'Panitia Pelaksana' }}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
+
                 </div>
 
                 <!-- Footer Page Info (Tetap di bagian paling bawah halaman) -->
-                <div class="mt-4 pt-2 border-t border-slate-200 flex items-center justify-between text-[9px] text-slate-400 font-mono">
+                <div class="mt-auto pt-3 border-t border-slate-200 flex items-center justify-between text-[9px] text-slate-400 font-mono">
                     <span>Dokumen Resmi Panitia {{ $appSettings['event_name'] ?? 'Milad ke-57' }} {{ $appSettings['institution_name'] ?? 'MTsN 1 Blitar' }} • Aplikasi {{ $appSettings['app_name'] ?? 'TALENTA' }}</span>
                     <span>Halaman {{ $pageIndex + 1 }} dari {{ count($pages) }}</span>
                 </div>

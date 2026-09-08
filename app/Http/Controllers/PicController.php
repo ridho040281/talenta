@@ -125,7 +125,7 @@ class PicController extends Controller
         $genderFilter = $request->query('gender', 'all');
 
         $managedCompIds = self::getManagedCompetitionIds($user);
-        $query = Registration::with(['competition.category', 'members', 'user'])
+        $query = Registration::with(['competition.category', 'competition.pic', 'members', 'user'])
             ->whereIn('competition_id', $managedCompIds)
             ->when($competitionId !== 'all', function ($q) use ($competitionId) {
                 $q->where('competition_id', $competitionId);
@@ -147,6 +147,8 @@ class PicController extends Controller
 
         foreach ($competitions as $compId => $compRegs) {
             $comp = $compRegs->first()->competition;
+            $picName = (Auth::check() && Auth::user()->isPic()) ? Auth::user()->name : ($comp->pic->name ?? Auth::user()->name ?? 'Panitia Pelaksana');
+            $picPosition = !empty($comp->pic?->position) ? $comp->pic->position : 'Panitia Pelaksana';
             $isBuluTangkis = ($comp->code === 'BLT' || stripos($comp->name, 'bulu tangkis') !== false || stripos($comp->name, 'badminton') !== false);
 
             if ($isBuluTangkis) {
@@ -182,20 +184,26 @@ class PicController extends Controller
 
                         if ($paRegs->isNotEmpty()) {
                             $pages[] = [
+                                'competition' => $comp,
                                 'competition_name' => $comp->name,
                                 'sub_group_title' => '👦 KELOMPOK PUTRA (PA)',
                                 'sector_title' => $catLabel.' - TUNGGAL PUTRA',
                                 'gender_badge_class' => 'bg-blue-100 text-blue-900',
                                 'registrations' => $paRegs,
+                                'pic_name' => $picName,
+                                'pic_position' => $picPosition,
                             ];
                         }
                         if ($piRegs->isNotEmpty()) {
                             $pages[] = [
+                                'competition' => $comp,
                                 'competition_name' => $comp->name,
                                 'sub_group_title' => '👧 KELOMPOK PUTRI (PI)',
                                 'sector_title' => $catLabel.' - TUNGGAL PUTRI',
                                 'gender_badge_class' => 'bg-rose-100 text-rose-900',
                                 'registrations' => $piRegs,
+                                'pic_name' => $picName,
+                                'pic_position' => $picPosition,
                             ];
                         }
                     }
@@ -214,20 +222,26 @@ class PicController extends Controller
 
                     if ($gandaPa->isNotEmpty()) {
                         $pages[] = [
+                            'competition' => $comp,
                             'competition_name' => $comp->name,
                             'sub_group_title' => '👥 KELOMPOK GANDA PUTRA (PA)',
                             'sector_title' => 'GANDA PUTRA (PA) - SEMUA KELAS',
                             'gender_badge_class' => 'bg-blue-100 text-blue-900',
                             'registrations' => $gandaPa,
+                            'pic_name' => $picName,
+                            'pic_position' => $picPosition,
                         ];
                     }
                     if ($gandaPi->isNotEmpty()) {
                         $pages[] = [
+                            'competition' => $comp,
                             'competition_name' => $comp->name,
                             'sub_group_title' => '👥 KELOMPOK GANDA PUTRI (PI)',
                             'sector_title' => 'GANDA PUTRI (PI) - SEMUA KELAS',
                             'gender_badge_class' => 'bg-rose-100 text-rose-900',
                             'registrations' => $gandaPi,
+                            'pic_name' => $picName,
+                            'pic_position' => $picPosition,
                         ];
                     }
                 }
@@ -239,29 +253,38 @@ class PicController extends Controller
 
                 if ($paRegs->isNotEmpty() || ($piRegs->isEmpty() && $otherRegs->isEmpty())) {
                     $pages[] = [
+                        'competition' => $comp,
                         'competition_name' => $comp->name,
                         'sub_group_title' => '👦 KELOMPOK PUTRA (PA)',
                         'sector_title' => $comp->category->name ?? 'Tingkat SD/MI',
                         'gender_badge_class' => 'bg-blue-100 text-blue-900',
                         'registrations' => $paRegs,
+                        'pic_name' => $picName,
+                        'pic_position' => $picPosition,
                     ];
                 }
                 if ($piRegs->isNotEmpty()) {
                     $pages[] = [
+                        'competition' => $comp,
                         'competition_name' => $comp->name,
                         'sub_group_title' => '👧 KELOMPOK PUTRI (PI)',
                         'sector_title' => $comp->category->name ?? 'Tingkat SD/MI',
                         'gender_badge_class' => 'bg-rose-100 text-rose-900',
                         'registrations' => $piRegs,
+                        'pic_name' => $picName,
+                        'pic_position' => $picPosition,
                     ];
                 }
                 if ($otherRegs->isNotEmpty()) {
                     $pages[] = [
+                        'competition' => $comp,
                         'competition_name' => $comp->name,
                         'sub_group_title' => '👥 KELOMPOK BEREGU / CAMPURAN',
                         'sector_title' => $comp->category->name ?? 'Tingkat SD/MI',
                         'gender_badge_class' => 'bg-purple-100 text-purple-900',
                         'registrations' => $otherRegs,
+                        'pic_name' => $picName,
+                        'pic_position' => $picPosition,
                     ];
                 }
             }
