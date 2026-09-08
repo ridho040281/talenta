@@ -25,7 +25,7 @@
         <!-- Glass Card Login -->
         <div class="glass-card p-8 rounded-3xl border border-slate-800 shadow-2xl space-y-6">
             
-            <form action="{{ route('login.post') }}" method="POST" class="space-y-5" id="loginForm">
+            <form action="{{ route('login.post') }}" method="POST" class="space-y-5" id="loginForm" data-no-loading>
                 @csrf
 
                 <!-- NISN or Email -->

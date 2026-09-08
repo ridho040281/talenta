@@ -114,8 +114,7 @@ class AuthController extends Controller
 
             ActivityLog::record('LOGIN_SUCCESS', 'Berhasil login ke sistem sebagai role: '.strtoupper($user->role), $user, 'success', $loginInput);
 
-            return $this->redirectBasedOnRole($user)
-                ->with('success', 'Selamat datang kembali, '.$user->name.'!');
+            return $this->redirectBasedOnRole($user);
         }
 
         static::generateMathCaptcha();

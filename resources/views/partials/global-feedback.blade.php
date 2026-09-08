@@ -340,6 +340,10 @@
             loadingTitle = 'Sedang Memverifikasi...';
             loadingMsg = 'Mohon tunggu sebentar, status verifikasi sedang diperbarui.';
             icon = 'shield-check';
+        } else if (btnText.includes('masuk') || btnText.includes('login') || (form.action && form.action.includes('login'))) {
+            loadingTitle = 'Sedang Masuk...';
+            loadingMsg = 'Memverifikasi akun dan hak akses Anda...';
+            icon = 'log-in';
         }
 
         window.showAppLoading(loadingTitle, loadingMsg, icon);
@@ -352,6 +356,7 @@
                 $title = session('modal_success_title', 'Berhasil Diproses');
                 $msg = session('modal_success_message', session('success') ?? session('status', 'Aktivitas berhasil diselesaikan.'));
                 $tLower = strtolower($title . ' ' . $msg);
+                $isWelcomeMessage = str_contains($tLower, 'selamat datang');
                 $type = 'success';
                 if (str_contains($tLower, 'hapus') || str_contains($tLower, 'delete') || str_contains($tLower, 'dihapus')) {
                     $type = 'delete';
@@ -363,11 +368,13 @@
                     $type = 'send';
                 }
             @endphp
+            @if(!$isWelcomeMessage)
             window.showAppModal({
                 type: '{{ $type }}',
                 title: "{!! addslashes($title) !!}",
                 message: "{!! addslashes($msg) !!}"
             });
+            @endif
         @elseif(session('error'))
             window.showAppModal({
                 type: 'error',
