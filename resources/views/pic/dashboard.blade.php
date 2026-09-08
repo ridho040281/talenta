@@ -208,17 +208,29 @@
     items: @js($allRegistrations->map(function($r) {
         $firstMember = $r->members->first();
         $isGanda = $r->members->count() > 1 || (stripos($r->match_type ?? '', 'ganda') !== false && stripos($r->match_type ?? '', 'tunggal') === false) || (empty($r->match_type) && stripos($r->sub_category ?? '', 'ganda') !== false && stripos($r->sub_category ?? '', 'tunggal') === false);
-        $targetStr = strtolower(($r->target_class ?? '') . ' ' . ($r->sub_category ?? '') . ' ' . ($r->team_name ?? ''));
+        $targetStr = strtolower(($r->target_class ?? '') . ' ' . ($r->sub_category ?? '') . ' ' . ($r->team_name ?? '') . ' ' . ($r->match_type ?? ''));
         $gender = $r->primary_gender;
+        $compCode = $r->competition?->code ?? '';
+
+        if ($compCode === 'TMJ') {
+            $isKatA = (stripos($targetStr, 'kategori a') !== false || stripos($targetStr, 'kat a') !== false || stripos($targetStr, '1 - 3') !== false || stripos($targetStr, '1-3') !== false || stripos($targetStr, 'kelas 1') !== false || stripos($targetStr, 'kelas 2') !== false || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, '-a-') !== false || stripos($targetStr, 'kat_a') !== false);
+            $isKatB = (stripos($targetStr, 'kategori b') !== false || stripos($targetStr, 'kat b') !== false || stripos($targetStr, '4 - 6') !== false || stripos($targetStr, '4-6') !== false || stripos($targetStr, 'kelas 4') !== false || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '-b-') !== false || stripos($targetStr, 'kat_b') !== false);
+            $isKatC = false;
+        } else {
+            $isKatA = (stripos($targetStr, 'kategori a') !== false || stripos($targetStr, 'kat a') !== false || stripos($targetStr, 'kelas 1') !== false || stripos($targetStr, 'kelas 2') !== false || stripos($targetStr, '-a-') !== false || stripos($targetStr, 'kat_a') !== false);
+            $isKatB = (stripos($targetStr, 'kategori b') !== false || stripos($targetStr, 'kat b') !== false || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, 'kelas 4') !== false || stripos($targetStr, '-b-') !== false || stripos($targetStr, 'kat_b') !== false);
+            $isKatC = (stripos($targetStr, 'kategori c') !== false || stripos($targetStr, 'kat c') !== false || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '-c-') !== false || stripos($targetStr, 'kat_c') !== false);
+        }
+
         return [
             'id' => $r->id,
             'comp_id' => (string) $r->competition_id,
             'gender' => $gender,
             'status' => $r->status,
             'is_ganda' => $isGanda,
-            'is_kat_a' => (stripos($targetStr, 'kategori a') !== false || stripos($targetStr, 'kat a') !== false || stripos($targetStr, 'kelas 1') !== false || stripos($targetStr, 'kelas 2') !== false || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, '-a-') !== false || stripos($targetStr, 'kat_a') !== false || stripos($targetStr, 'kat a') !== false),
-            'is_kat_b' => (stripos($targetStr, 'kategori b') !== false || stripos($targetStr, 'kat b') !== false || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, 'kelas 4') !== false || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '-b-') !== false || stripos($targetStr, 'kat_b') !== false),
-            'is_kat_c' => (stripos($targetStr, 'kategori c') !== false || stripos($targetStr, 'kat c') !== false || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '-c-') !== false || stripos($targetStr, 'kat_c') !== false),
+            'is_kat_a' => $isKatA,
+            'is_kat_b' => $isKatB,
+            'is_kat_c' => $isKatC,
             'search' => strtolower($r->display_name . ' ' . $r->registration_code . ' ' . ($r->participant_number ?? '') . ' ' . $r->institution_name . ' ' . ($firstMember?->nisn ?? ''))
         ];
     })),
@@ -261,6 +273,12 @@
     },
     get countPi() {
         return this.activeList.filter(i => i.gender === 'P').length;
+    },
+    get activeIds() {
+        return new Set(this.activeList.map(i => i.id));
+    },
+    isItemVisible(id) {
+        return this.activeIds.has(id);
     }
 }">
 
@@ -481,40 +499,20 @@
                             $firstMember = $reg->members->first();
                             $isGanda = $reg->members->count() > 1 || (stripos($reg->match_type ?? '', 'ganda') !== false && stripos($reg->match_type ?? '', 'tunggal') === false) || (empty($reg->match_type) && stripos($reg->sub_category ?? '', 'ganda') !== false && stripos($reg->sub_category ?? '', 'tunggal') === false);
                             $gender = $reg->primary_gender;
-                            $targetStr = strtolower(($reg->target_class ?? '') . ' ' . ($reg->sub_category ?? '') . ' ' . ($reg->team_name ?? ''));
-                            $isKatA = (stripos($targetStr, 'kategori a') !== false || stripos($targetStr, 'kat a') !== false || stripos($targetStr, 'kelas 1') !== false || stripos($targetStr, 'kelas 2') !== false || stripos($targetStr, '-a-') !== false || stripos($targetStr, 'kat_a') !== false);
-                            $isKatB = (stripos($targetStr, 'kategori b') !== false || stripos($targetStr, 'kat b') !== false || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, 'kelas 4') !== false || stripos($targetStr, '-b-') !== false || stripos($targetStr, 'kat_b') !== false);
-                            $isKatC = (stripos($targetStr, 'kategori c') !== false || stripos($targetStr, 'kat c') !== false || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '-c-') !== false || stripos($targetStr, 'kat_c') !== false);
-                            $searchBlob = strtolower($reg->display_name . ' ' . $reg->registration_code . ' ' . ($reg->participant_number ?? '') . ' ' . $reg->institution_name . ' ' . ($firstMember?->nisn ?? ''));
+                            $targetStr = strtolower(($reg->target_class ?? '') . ' ' . ($reg->sub_category ?? '') . ' ' . ($reg->team_name ?? '') . ' ' . ($reg->match_type ?? ''));
+                            $compCode = $reg->competition?->code ?? '';
+
+                            if ($compCode === 'TMJ') {
+                                $isKatA = (stripos($targetStr, 'kategori a') !== false || stripos($targetStr, 'kat a') !== false || stripos($targetStr, '1 - 3') !== false || stripos($targetStr, '1-3') !== false || stripos($targetStr, 'kelas 1') !== false || stripos($targetStr, 'kelas 2') !== false || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, '-a-') !== false || stripos($targetStr, 'kat_a') !== false);
+                                $isKatB = (stripos($targetStr, 'kategori b') !== false || stripos($targetStr, 'kat b') !== false || stripos($targetStr, '4 - 6') !== false || stripos($targetStr, '4-6') !== false || stripos($targetStr, 'kelas 4') !== false || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '-b-') !== false || stripos($targetStr, 'kat_b') !== false);
+                                $isKatC = false;
+                            } else {
+                                $isKatA = (stripos($targetStr, 'kategori a') !== false || stripos($targetStr, 'kat a') !== false || stripos($targetStr, 'kelas 1') !== false || stripos($targetStr, 'kelas 2') !== false || stripos($targetStr, '-a-') !== false || stripos($targetStr, 'kat_a') !== false);
+                                $isKatB = (stripos($targetStr, 'kategori b') !== false || stripos($targetStr, 'kat b') !== false || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, 'kelas 4') !== false || stripos($targetStr, '-b-') !== false || stripos($targetStr, 'kat_b') !== false);
+                                $isKatC = (stripos($targetStr, 'kategori c') !== false || stripos($targetStr, 'kat c') !== false || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '-c-') !== false || stripos($targetStr, 'kat_c') !== false);
+                            }
                         @endphp
-                        <tr class="hover:bg-white/[0.025] transition"
-                            x-show="
-                                (selectedCompetition === 'all' || selectedCompetition == '{{ $reg->competition_id }}') &&
-                                (selectedStatus === 'all' || selectedStatus === '{{ $reg->status }}') &&
-                                (selectedGender === 'all' || '{{ $gender }}' === selectedGender) &&
-                                (
-                                    selectedSector === 'all' ||
-                                    (selectedSector === 'tunggal_pa' && (!{{ $isGanda ? 'true' : 'false' }} && '{{ $gender }}' === 'L')) ||
-                                    (selectedSector === 'tunggal_pa_a' && (!{{ $isGanda ? 'true' : 'false' }} && '{{ $gender }}' === 'L' && {{ $isKatA ? 'true' : 'false' }})) ||
-                                    (selectedSector === 'tunggal_pa_b' && (!{{ $isGanda ? 'true' : 'false' }} && '{{ $gender }}' === 'L' && {{ $isKatB ? 'true' : 'false' }})) ||
-                                    (selectedSector === 'tunggal_pa_c' && (!{{ $isGanda ? 'true' : 'false' }} && '{{ $gender }}' === 'L' && {{ $isKatC ? 'true' : 'false' }})) ||
-                                    (selectedSector === 'tunggal_pi' && (!{{ $isGanda ? 'true' : 'false' }} && '{{ $gender }}' === 'P')) ||
-                                    (selectedSector === 'tunggal_pi_a' && (!{{ $isGanda ? 'true' : 'false' }} && '{{ $gender }}' === 'P' && {{ $isKatA ? 'true' : 'false' }})) ||
-                                    (selectedSector === 'tunggal_pi_b' && (!{{ $isGanda ? 'true' : 'false' }} && '{{ $gender }}' === 'P' && {{ $isKatB ? 'true' : 'false' }})) ||
-                                    (selectedSector === 'tunggal_pi_c' && (!{{ $isGanda ? 'true' : 'false' }} && '{{ $gender }}' === 'P' && {{ $isKatC ? 'true' : 'false' }})) ||
-                                    (selectedSector === 'ganda_all' && {{ $isGanda ? 'true' : 'false' }}) ||
-                                    (selectedSector === 'ganda' && {{ $isGanda ? 'true' : 'false' }}) ||
-                                    (selectedSector === 'ganda_pa' && ({{ $isGanda ? 'true' : 'false' }} && '{{ $gender }}' === 'L')) ||
-                                    (selectedSector === 'ganda_pi' && ({{ $isGanda ? 'true' : 'false' }} && '{{ $gender }}' === 'P')) ||
-                                    (selectedSector === 'individu_pa' && (!{{ $isGanda ? 'true' : 'false' }} && '{{ $gender }}' === 'L')) ||
-                                    (selectedSector === 'individu_pi' && (!{{ $isGanda ? 'true' : 'false' }} && '{{ $gender }}' === 'P')) ||
-                                    (selectedSector === 'tunggal' && !{{ $isGanda ? 'true' : 'false' }}) ||
-                                    (selectedSector === 'kat_a' && {{ $isKatA ? 'true' : 'false' }}) ||
-                                    (selectedSector === 'kat_b' && {{ $isKatB ? 'true' : 'false' }}) ||
-                                    (selectedSector === 'kat_c' && {{ $isKatC ? 'true' : 'false' }})
-                                ) &&
-                                (searchQuery === '' || '{{ $searchBlob }}'.includes(searchQuery.toLowerCase()))
-                            ">
+                        <tr class="hover:bg-white/[0.025] transition" x-show="isItemVisible({{ $reg->id }})">
                             <!-- Kode & No Reg -->
                             <td class="py-3 px-3.5 sm:px-4">
                                 <span class="font-mono font-bold text-[#84D0FF] block text-xs">{{ $reg->participant_number ?: '-' }}</span>
@@ -573,6 +571,17 @@
                                                 {{ $gender === 'L' ? '👥 Ganda PA (Putra)' : '👥 Ganda PI (Putri)' }}
                                             </span>
                                             <span class="text-[10px] text-slate-300 font-bold bg-white/[0.05] border border-white/[0.08] px-1.5 py-0.2 rounded">Semua Kelas</span>
+                                        @endif
+                                    @elseif($reg->competition->code === 'TMJ')
+                                        <span class="text-[10px] font-bold px-1.5 py-0.2 rounded {{ $gender === 'L' ? 'bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30' : 'bg-[#FF58D5]/15 text-[#FFA0E7] border border-[#FF58D5]/30' }}">
+                                            {{ $gender === 'L' ? '👦 Tunggal PA' : '👧 Tunggal PI' }}
+                                        </span>
+                                        @if($isKatA)
+                                            <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/15 px-1.5 py-0.2 rounded border border-emerald-500/30">Kat A (Kelas 1–3)</span>
+                                        @elseif($isKatB)
+                                            <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/15 px-1.5 py-0.2 rounded border border-emerald-500/30">Kat B (Kelas 4–6)</span>
+                                        @elseif($reg->target_class)
+                                            <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/15 px-1.5 py-0.2 rounded border border-emerald-500/30">{{ $reg->target_class }}</span>
                                         @endif
                                     @elseif(in_array($reg->competition->code, ['MTQ', 'POP']))
                                         <span class="text-[10px] font-bold px-1.5 py-0.2 rounded {{ $gender === 'L' ? 'bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30' : 'bg-[#FF58D5]/15 text-[#FFA0E7] border border-[#FF58D5]/30' }}">
