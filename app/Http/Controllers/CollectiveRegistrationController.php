@@ -371,24 +371,52 @@ class CollectiveRegistrationController extends Controller
 
                     // Check duplicate registration in the SAME competition
                     if (! empty($nisn)) {
+                        $isBltGanda = ($code === 'BLT' && ! empty($matchType) && stripos($matchType, 'ganda') !== false);
+                        $batchKey = ($code === 'BLT') ? ($code.'_'.($isBltGanda ? 'ganda' : 'tunggal')) : $code;
+
                         // A. Check duplicate in same Excel batch
-                        if (isset($registeredNisnsInBatch[$code][$nisn])) {
-                            $prevRow = $registeredNisnsInBatch[$code][$nisn];
-                            $errors[] = "Siswa dengan NISN '{$nisn}' didaftarkan ganda pada cabang {$comp->name} (duplikat baris {$prevRow})";
+                        if (isset($registeredNisnsInBatch[$batchKey][$nisn])) {
+                            $prevRow = $registeredNisnsInBatch[$batchKey][$nisn];
+                            $sectorText = ($code === 'BLT') ? (' sektor '.($isBltGanda ? 'Ganda' : 'Tunggal')) : '';
+                            $errors[] = "Siswa dengan NISN '{$nisn}' didaftarkan ganda pada cabang {$comp->name}{$sectorText} (duplikat baris {$prevRow})";
                         } else {
-                            $registeredNisnsInBatch[$code][$nisn] = $i;
+                            $registeredNisnsInBatch[$batchKey][$nisn] = $i;
                         }
 
-                        // B. Check duplicate in database for the same competition
+                        // B. Check duplicate in database for the same competition / sector
                         $alreadyInDb = RegistrationMember::where('nisn', $nisn)
-                            ->whereHas('registration', function ($q) use ($comp) {
+                            ->whereHas('registration', function ($q) use ($comp, $code, $isBltGanda) {
                                 $q->where('competition_id', $comp->id)
                                     ->whereIn('status', ['pending', 'verified']);
+
+                                if ($code === 'BLT') {
+                                    if ($isBltGanda) {
+                                        $q->where(function ($sub) {
+                                            $sub->where('match_type', 'like', '%ganda%')
+                                                ->orWhere('target_class', 'like', '%ganda%')
+                                                ->orWhere('sub_category', 'like', '%ganda%');
+                                        });
+                                    } else {
+                                        $q->where(function ($sub) {
+                                            $sub->where(function ($s) {
+                                                $s->whereNull('match_type')
+                                                    ->orWhere('match_type', 'not like', '%ganda%');
+                                            })->where(function ($s) {
+                                                $s->whereNull('target_class')
+                                                    ->orWhere('target_class', 'not like', '%ganda%');
+                                            })->where(function ($s) {
+                                                $s->whereNull('sub_category')
+                                                    ->orWhere('sub_category', 'not like', '%ganda%');
+                                            });
+                                        });
+                                    }
+                                }
                             })
                             ->exists();
 
                         if ($alreadyInDb) {
-                            $errors[] = "Siswa dengan NISN '{$nisn}' sudah terdaftar sebelumnya pada cabang {$comp->name}";
+                            $sectorText = ($code === 'BLT') ? (' sektor '.($isBltGanda ? 'Ganda' : 'Tunggal')) : '';
+                            $errors[] = "Siswa dengan NISN '{$nisn}' sudah terdaftar sebelumnya pada cabang {$comp->name}{$sectorText}";
                         }
                     }
                 }

@@ -774,17 +774,61 @@ class PicController extends Controller
             $isNewUser = true;
         }
 
-        // Prevent duplicate NISN in same competition
+        // Prevent duplicate NISN in same competition / sector
+        $nisnsToCheck = [];
         if ($nisnClean) {
-            $existingMember = RegistrationMember::where('nisn', $nisnClean)
-                ->whereHas('registration', function ($q) use ($competition) {
+            $nisnsToCheck[] = [
+                'nisn' => $nisnClean,
+                'name' => $validated['full_name'],
+                'role' => 'Pemain 1 / Peserta Utama',
+            ];
+        }
+        $member2NisnClean = ! empty($validated['member2_nisn']) ? trim($validated['member2_nisn']) : null;
+        if ($member2NisnClean) {
+            $nisnsToCheck[] = [
+                'nisn' => $member2NisnClean,
+                'name' => $validated['member2_name'] ?? 'Pemain 2',
+                'role' => 'Pemain 2',
+            ];
+        }
+
+        $isBltGanda = ($competition->code === 'BLT') && (! empty($matchType) && stripos($matchType, 'ganda') !== false);
+
+        foreach ($nisnsToCheck as $item) {
+            $existingMemberQuery = RegistrationMember::where('nisn', $item['nisn'])
+                ->whereHas('registration', function ($q) use ($competition, $isBltGanda) {
                     $q->where('competition_id', $competition->id)
                         ->whereIn('status', ['pending', 'verified']);
-                })
-                ->first();
 
+                    if ($competition->code === 'BLT') {
+                        if ($isBltGanda) {
+                            $q->where(function ($sub) {
+                                $sub->where('match_type', 'like', '%ganda%')
+                                    ->orWhere('target_class', 'like', '%ganda%')
+                                    ->orWhere('sub_category', 'like', '%ganda%');
+                            });
+                        } else {
+                            $q->where(function ($sub) {
+                                $sub->where(function ($s) {
+                                    $s->whereNull('match_type')
+                                        ->orWhere('match_type', 'not like', '%ganda%');
+                                })->where(function ($s) {
+                                    $s->whereNull('target_class')
+                                        ->orWhere('target_class', 'not like', '%ganda%');
+                                })->where(function ($s) {
+                                    $s->whereNull('sub_category')
+                                        ->orWhere('sub_category', 'not like', '%ganda%');
+                                });
+                            });
+                        }
+                    }
+                });
+
+            $existingMember = $existingMemberQuery->first();
             if ($existingMember) {
-                return back()->with('error', "Peserta dengan NISN '{$nisnClean}' ({$existingMember->full_name}) sudah terdaftar pada cabang {$competition->name}.")->withInput();
+                $sectorText = ($competition->code === 'BLT') ? ('sektor '.($isBltGanda ? 'Ganda' : 'Tunggal').' ') : '';
+
+                return back()->with('error', "Peserta ({$item['name']}) dengan NISN '{$item['nisn']}' sudah terdaftar pada {$sectorText}cabang {$competition->name}.")->withInput();
             }
         }
 

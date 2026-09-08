@@ -255,20 +255,45 @@ class PesertaController extends Controller
             'members.*.gender.required' => 'Jenis kelamin peserta wajib dipilih.',
         ]);
 
-        // Prevent duplicate registration for member with same NISN in the SAME competition
+        // Prevent duplicate registration for member with same NISN in the SAME competition / sector
         foreach ($validated['members'] as $memberData) {
             if (! empty($memberData['nisn'])) {
                 $checkNisn = trim($memberData['nisn']);
                 $existingMember = RegistrationMember::where('nisn', $checkNisn)
-                    ->whereHas('registration', function ($q) use ($competition) {
+                    ->whereHas('registration', function ($q) use ($competition, $isBuluTangkis, $isGandaBlt) {
                         $q->where('competition_id', $competition->id)
                             ->whereIn('status', ['pending', 'verified']);
+
+                        if ($isBuluTangkis) {
+                            if ($isGandaBlt) {
+                                $q->where(function ($sub) {
+                                    $sub->where('match_type', 'like', '%ganda%')
+                                        ->orWhere('target_class', 'like', '%ganda%')
+                                        ->orWhere('sub_category', 'like', '%ganda%');
+                                });
+                            } else {
+                                $q->where(function ($sub) {
+                                    $sub->where(function ($s) {
+                                        $s->whereNull('match_type')
+                                            ->orWhere('match_type', 'not like', '%ganda%');
+                                    })->where(function ($s) {
+                                        $s->whereNull('target_class')
+                                            ->orWhere('target_class', 'not like', '%ganda%');
+                                    })->where(function ($s) {
+                                        $s->whereNull('sub_category')
+                                            ->orWhere('sub_category', 'not like', '%ganda%');
+                                    });
+                                });
+                            }
+                        }
                     })
                     ->first();
 
                 if ($existingMember) {
+                    $sectorText = $isBuluTangkis ? ('sektor '.($isGandaBlt ? 'Ganda' : 'Tunggal').' ') : '';
+
                     return back()->withErrors([
-                        'members' => "Peserta dengan NISN '{$checkNisn}' ({$existingMember->full_name}) sudah terdaftar pada cabang lomba {$competition->name}.",
+                        'members' => "Peserta dengan NISN '{$checkNisn}' ({$existingMember->full_name}) sudah terdaftar pada {$sectorText}cabang lomba {$competition->name}.",
                     ])->withInput();
                 }
             }
