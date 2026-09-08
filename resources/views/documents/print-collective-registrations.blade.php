@@ -447,7 +447,7 @@
                         <div class="text-center w-56 flex flex-col justify-between">
                             <div>
                                 <div class="leading-tight">Blitar, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</div>
-                                <div class="font-bold">Koordinator Cabang {{ $registration->competition->name ?? 'Lomba' }},</div>
+                                <div class="font-bold">Verifikator / PIC Lomba,</div>
                             </div>
                             <div class="py-1 flex flex-col items-center justify-center">
                                 @php
@@ -460,7 +460,7 @@
                             </div>
                             <div>
                                 <div class="font-black text-slate-950 underline underline-offset-2">
-                                    {{ $registration->pic_name }}
+                                    {{ $registration->verifier ? $registration->verifier->name : ($registration->competition->pic->name ?? 'PANITIA PELAKSANA') }}
                                 </div>
                             </div>
                         </div>
