@@ -8,7 +8,39 @@
     activeTab: 'keuangan',
     searchQuery: '',
     selectedCategory: 'all',
-    selectedStatus: 'all'
+    selectedStatus: 'all',
+    items: @js($allRegistrations->map(function($r) {
+        $firstMember = $r->members->first();
+        return [
+            'id' => $r->id,
+            'comp_id' => (string) $r->competition_id,
+            'status' => $r->status,
+            'search' => strtolower(($r->team_name ?: ($firstMember?->full_name ?? '')) . ' ' . ($firstMember?->nisn ?? '') . ' ' . $r->institution_name . ' ' . $r->registration_code . ' ' . ($r->competition->name ?? '') . ' ' . ($r->sub_category ?? ''))
+        ];
+    })),
+    get filteredItems() {
+        const query = (this.searchQuery || '').toLowerCase().trim();
+        return this.items.filter(item => {
+            const matchComp = (this.selectedCategory === 'all' || item.comp_id === String(this.selectedCategory));
+            const matchStatus = (this.selectedStatus === 'all' || item.status === this.selectedStatus);
+            const matchSearch = (!query || item.search.includes(query));
+            return matchComp && matchStatus && matchSearch;
+        });
+    },
+    isItemVisible(id) {
+        const query = (this.searchQuery || '').toLowerCase().trim();
+        const item = this.items.find(i => i.id === id);
+        if (!item) return false;
+        const matchComp = (this.selectedCategory === 'all' || item.comp_id === String(this.selectedCategory));
+        const matchStatus = (this.selectedStatus === 'all' || item.status === this.selectedStatus);
+        const matchSearch = (!query || item.search.includes(query));
+        return matchComp && matchStatus && matchSearch;
+    },
+    resetFilters() {
+        this.searchQuery = '';
+        this.selectedCategory = 'all';
+        this.selectedStatus = 'all';
+    }
 }">
 
     <!-- Quick Financial & Registration Stat Cards (AIStarterKit Design) -->
@@ -98,30 +130,30 @@
 
     <!-- ==================== TAB 1: REKAP KEUANGAN & LOMBA ==================== -->
     <div x-show="activeTab === 'keuangan'" x-transition class="space-y-6">
-        <div class="ai-card rounded-3xl border border-white/[0.08] shadow-xl p-6 sm:p-8 space-y-6">
+        <div class="ai-card rounded-3xl border border-white/[0.08] shadow-xl p-5 sm:p-7 lg:p-8 space-y-6">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.08] pb-4">
                 <div>
                     <h3 class="text-lg font-black text-white">Rekapitulasi Keuangan & Kuota Pendaftaran Cabang Lomba</h3>
                     <p class="text-xs text-slate-400">Rincian pendapatan registrasi dan keterisian kuota peserta per cabang lomba</p>
                 </div>
-                <div class="text-right">
+                <div class="text-left sm:text-right">
                     <span class="text-xs text-slate-400 block uppercase font-bold">Total Dana Lunas Masuk</span>
                     <span class="text-xl font-black text-emerald-400 font-mono">Rp {{ number_format($grandTotals['verified_income'], 0, ',', '.') }}</span>
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs text-slate-300">
+            <div class="overflow-x-auto rounded-2xl border border-white/[0.08] bg-[#0A0E1A]/40 shadow-inner">
+                <table class="w-full min-w-[950px] text-left text-xs text-slate-300 border-collapse">
                     <thead class="text-[10px] font-bold uppercase tracking-wider bg-[#0C111D]/90 text-slate-400 border-b border-white/[0.08]">
                         <tr>
-                            <th class="py-3.5 px-4">KODE</th>
-                            <th class="py-3.5 px-4">NAMA CABANG LOMBA</th>
-                            <th class="py-3.5 px-4 text-center">KUOTA</th>
-                            <th class="py-3.5 px-4 text-center">PENDAFTAR</th>
-                            <th class="py-3.5 px-4 text-center text-emerald-700">VERIFIKASI (LUNAS)</th>
-                            <th class="py-3.5 px-4 text-center text-amber-700">PENDING</th>
-                            <th class="py-3.5 px-4 text-right">DANA LUNAS MASUK</th>
-                            <th class="py-3.5 px-4 text-right">POTENSI TOTAL</th>
+                            <th class="py-3.5 px-4 whitespace-nowrap">KODE</th>
+                            <th class="py-3.5 px-4 whitespace-nowrap min-w-[200px]">NAMA CABANG LOMBA</th>
+                            <th class="py-3.5 px-4 text-center whitespace-nowrap">KUOTA</th>
+                            <th class="py-3.5 px-4 text-center whitespace-nowrap">PENDAFTAR</th>
+                            <th class="py-3.5 px-4 text-center text-emerald-400 whitespace-nowrap">VERIFIKASI (LUNAS)</th>
+                            <th class="py-3.5 px-4 text-center text-amber-400 whitespace-nowrap">PENDING</th>
+                            <th class="py-3.5 px-4 text-right whitespace-nowrap">DANA LUNAS MASUK</th>
+                            <th class="py-3.5 px-4 text-right whitespace-nowrap">POTENSI TOTAL</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-white/[0.04] font-medium">
@@ -131,40 +163,40 @@
                                 $fillPercent = $item['quota'] > 0 ? min(100, round(($item['total_regs'] / $item['quota']) * 100)) : 0;
                             @endphp
                             <tr class="hover:bg-white/[0.025] transition">
-                                <td class="py-3.5 px-4 font-mono font-bold text-[#84D0FF]">
+                                <td class="py-3.5 px-4 font-mono font-bold text-[#84D0FF] whitespace-nowrap">
                                     {{ $c->code }}
                                 </td>
-                                <td class="py-3.5 px-4">
+                                <td class="py-3.5 px-4 min-w-[200px]">
                                     <span class="font-bold text-white text-sm block">{{ $c->name }}</span>
                                     <span class="text-[11px] text-slate-400">{{ $c->category->name ?? 'Lomba' }} • PIC: {{ $c->pic->name ?? '-' }}</span>
                                 </td>
-                                <td class="py-3.5 px-4 text-center font-bold text-slate-200">
+                                <td class="py-3.5 px-4 text-center font-bold text-slate-200 whitespace-nowrap">
                                     @if($item['quota'] <= 0)
-                                        <span class="text-purple-300 bg-purple-500/20 px-2 py-0.5 rounded-full text-[10px] font-black border border-purple-500/30">∞ Tak Terbatas</span>
+                                        <span class="text-purple-300 bg-purple-500/20 px-2 py-0.5 rounded-full text-[10px] font-black border border-purple-500/30 whitespace-nowrap">∞ Tak Terbatas</span>
                                     @else
                                         {{ $item['quota'] }}
                                     @endif
                                 </td>
-                                <td class="py-3.5 px-4 text-center">
+                                <td class="py-3.5 px-4 text-center whitespace-nowrap">
                                     <span class="font-bold text-white">{{ $item['total_regs'] }}</span>
                                     <div class="w-16 bg-[#0C111D] h-1.5 rounded-full mx-auto mt-1 overflow-hidden border border-white/[0.06]">
                                         <div class="bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] h-full rounded-full" style="width: {{ $fillPercent }}%"></div>
                                     </div>
                                 </td>
-                                <td class="py-3.5 px-4 text-center">
-                                    <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                                    <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
                                         {{ $item['verified_count'] }}
                                     </span>
                                 </td>
-                                <td class="py-3.5 px-4 text-center">
-                                    <span class="px-2.5 py-1 rounded-full text-[10px] font-black {{ $item['pending_count'] > 0 ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30' : 'bg-white/[0.05] text-slate-500 border border-white/[0.08]' }}">
+                                <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                                    <span class="px-2.5 py-1 rounded-full text-[10px] font-black {{ $item['pending_count'] > 0 ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30' : 'bg-white/[0.05] text-slate-500 border border-white/[0.08]' }} whitespace-nowrap">
                                         {{ $item['pending_count'] }}
                                     </span>
                                 </td>
-                                <td class="py-3.5 px-4 text-right font-black text-emerald-400 font-mono text-sm">
+                                <td class="py-3.5 px-4 text-right font-black text-emerald-400 font-mono text-sm whitespace-nowrap">
                                     Rp {{ number_format($item['verified_income'], 0, ',', '.') }}
                                 </td>
-                                <td class="py-3.5 px-4 text-right font-bold text-slate-200 font-mono">
+                                <td class="py-3.5 px-4 text-right font-bold text-slate-200 font-mono whitespace-nowrap">
                                     Rp {{ number_format($item['total_income'], 0, ',', '.') }}
                                 </td>
                             </tr>
@@ -172,15 +204,15 @@
                     </tbody>
                     <tfoot class="bg-[#0C111D] text-white font-bold border-t-2 border-white/[0.1]">
                         <tr>
-                            <td colspan="2" class="py-4 px-4 font-black uppercase text-xs">GRAND TOTAL KESELURUHAN:</td>
-                            <td class="py-4 px-4 text-center font-black">{{ $grandTotals['total_quota'] }}</td>
-                            <td class="py-4 px-4 text-center font-black">{{ $grandTotals['total_registrations'] }}</td>
-                            <td class="py-4 px-4 text-center font-black text-emerald-300">{{ $grandTotals['verified_registrations'] }}</td>
-                            <td class="py-4 px-4 text-center font-black text-amber-300">{{ $grandTotals['pending_registrations'] }}</td>
-                            <td class="py-4 px-4 text-right font-black text-emerald-400 font-mono text-base">
+                            <td colspan="2" class="py-4 px-4 font-black uppercase text-xs whitespace-nowrap">GRAND TOTAL KESELURUHAN:</td>
+                            <td class="py-4 px-4 text-center font-black whitespace-nowrap">{{ $grandTotals['total_quota'] }}</td>
+                            <td class="py-4 px-4 text-center font-black whitespace-nowrap">{{ $grandTotals['total_registrations'] }}</td>
+                            <td class="py-4 px-4 text-center font-black text-emerald-300 whitespace-nowrap">{{ $grandTotals['verified_registrations'] }}</td>
+                            <td class="py-4 px-4 text-center font-black text-amber-300 whitespace-nowrap">{{ $grandTotals['pending_registrations'] }}</td>
+                            <td class="py-4 px-4 text-right font-black text-emerald-400 font-mono text-base whitespace-nowrap">
                                 Rp {{ number_format($grandTotals['verified_income'], 0, ',', '.') }}
                             </td>
-                            <td class="py-4 px-4 text-right font-black text-white font-mono text-base">
+                            <td class="py-4 px-4 text-right font-black text-white font-mono text-base whitespace-nowrap">
                                 Rp {{ number_format($grandTotals['total_potential_income'], 0, ',', '.') }}
                             </td>
                         </tr>
@@ -192,126 +224,177 @@
 
     <!-- ==================== TAB 2: MASTER SEMUA PESERTA ==================== -->
     <div x-show="activeTab === 'peserta'" x-transition class="space-y-6">
-        <div class="ai-card rounded-3xl border border-white/[0.08] shadow-xl p-6 sm:p-8 space-y-6">
+        <div class="ai-card rounded-3xl border border-white/[0.08] shadow-xl p-5 sm:p-7 lg:p-8 space-y-6">
             
-            <!-- Filters & Search Bar -->
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/[0.08] pb-6">
-                <div>
-                    <h3 class="text-lg font-black text-white">Master Data Seluruh Peserta Terdaftar</h3>
-                    <p class="text-xs text-slate-400">Daftar lengkap seluruh delegasi siswa dari seluruh cabang lomba TALENTA 2026</p>
+            <!-- Header & Responsive Filter Bar -->
+            <div class="space-y-4 border-b border-white/[0.08] pb-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <h3 class="text-lg font-black text-white">Master Data Seluruh Peserta Terdaftar</h3>
+                        <p class="text-xs text-slate-400">Daftar lengkap seluruh delegasi siswa dari seluruh cabang lomba TALENTA 2026</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#0C111D] text-slate-300 border border-white/[0.08] whitespace-nowrap">
+                            Menampilkan <strong class="text-[#84D0FF]" x-text="filteredItems.length"></strong> dari {{ $allRegistrations->count() }} Peserta
+                        </span>
+                    </div>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-3">
+                <!-- Filter Controls Toolbar (Responsive Grid/Flex) -->
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
                     <!-- Search Input -->
-                    <div class="relative min-w-[220px]">
-                        <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
-                        <input type="text" x-model="searchQuery" placeholder="Cari nama / NISN / sekolah..." class="w-full pl-9 pr-4 py-2.5 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs text-white placeholder-slate-500 focus:border-[#7A5AF8] focus:ring-2 focus:ring-[#7A5AF8]/20 outline-none">
+                    <div class="sm:col-span-5 lg:col-span-5 relative">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                        <input type="text" x-model="searchQuery" placeholder="Cari nama, NISN, sekolah, no. reg..." class="w-full pl-9 pr-8 py-2.5 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs text-white placeholder-slate-500 focus:border-[#7A5AF8] focus:ring-2 focus:ring-[#7A5AF8]/20 outline-none">
+                        <button x-show="searchQuery" @click="searchQuery = ''" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs p-1 cursor-pointer" title="Hapus pencarian">
+                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                        </button>
                     </div>
 
-                    <!-- Category / Competition Filter -->
-                    <select x-model="selectedCategory" class="px-3 py-2.5 rounded-xl border border-white/[0.1] text-xs font-bold text-slate-200 bg-[#0C111D] focus:border-[#7A5AF8] outline-none">
-                        <option value="all">Semua Cabang Lomba</option>
-                        @foreach($competitions as $c)
-                            <option value="{{ $c->id }}">{{ $c->name }} ({{ $c->code }})</option>
-                        @endforeach
-                    </select>
+                    <!-- Competition Filter -->
+                    <div class="sm:col-span-4 lg:col-span-4">
+                        <select x-model="selectedCategory" class="w-full px-3 py-2.5 rounded-xl border border-white/[0.1] text-xs font-bold text-slate-200 bg-[#0C111D] focus:border-[#7A5AF8] outline-none cursor-pointer">
+                            <option value="all">Semua Cabang Lomba ({{ $competitions->count() }})</option>
+                            @foreach($competitions as $c)
+                                <option value="{{ $c->id }}">{{ $c->name }} ({{ $c->code }})</option>
+                            @endforeach
+                        </select>
+                    </div>
 
-                    <!-- Status Filter -->
-                    <select x-model="selectedStatus" class="px-3 py-2.5 rounded-xl border border-white/[0.1] text-xs font-bold text-slate-200 bg-[#0C111D] focus:border-[#7A5AF8] outline-none">
-                        <option value="all">Semua Status</option>
-                        <option value="verified">Lunas / Terverifikasi</option>
-                        <option value="pending">Menunggu Verifikasi</option>
-                        <option value="rejected">Ditolak</option>
-                    </select>
+                    <!-- Status Filter & Reset -->
+                    <div class="sm:col-span-3 lg:col-span-3 flex items-center gap-2">
+                        <select x-model="selectedStatus" class="w-full px-3 py-2.5 rounded-xl border border-white/[0.1] text-xs font-bold text-slate-200 bg-[#0C111D] focus:border-[#7A5AF8] outline-none cursor-pointer">
+                            <option value="all">Semua Status</option>
+                            <option value="verified">Lunas / Terverifikasi</option>
+                            <option value="pending">Menunggu Verifikasi</option>
+                            <option value="rejected">Ditolak</option>
+                        </select>
+
+                        <button x-show="searchQuery !== '' || selectedCategory !== 'all' || selectedStatus !== 'all'" @click="resetFilters()" class="p-2.5 rounded-xl bg-white/[0.08] hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-white/[0.08] transition shrink-0 cursor-pointer" title="Reset Semua Filter">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Master Participants Table -->
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs text-slate-300">
+            <!-- Master Participants Table (Responsive with min-w) -->
+            <div class="overflow-x-auto rounded-2xl border border-white/[0.08] bg-[#0A0E1A]/40 shadow-inner">
+                <table class="w-full min-w-[1020px] text-left text-xs text-slate-300 border-collapse">
                     <thead class="text-[10px] font-bold uppercase tracking-wider bg-[#0C111D]/90 text-slate-400 border-b border-white/[0.08]">
                         <tr>
-                            <th class="py-3.5 px-4">NO. REGISTRASI</th>
-                            <th class="py-3.5 px-4">NAMA PESERTA / TIM</th>
-                            <th class="py-3.5 px-4">ASAL SEKOLAH / MADRASAH</th>
-                            <th class="py-3.5 px-4">CABANG LOMBA & KATEGORI</th>
-                            <th class="py-3.5 px-4 text-right">BIAYA DAFTAR</th>
-                            <th class="py-3.5 px-4 text-center">BUKTI / STRUK</th>
-                            <th class="py-3.5 px-4 text-center">STATUS</th>
+                            <th class="py-3.5 px-4 whitespace-nowrap w-[160px]">NO. REGISTRASI</th>
+                            <th class="py-3.5 px-4 whitespace-nowrap min-w-[200px]">NAMA PESERTA / TIM</th>
+                            <th class="py-3.5 px-4 whitespace-nowrap min-w-[180px]">ASAL SEKOLAH / MADRASAH</th>
+                            <th class="py-3.5 px-4 whitespace-nowrap min-w-[220px]">CABANG LOMBA & KATEGORI</th>
+                            <th class="py-3.5 px-4 text-right whitespace-nowrap w-[130px]">BIAYA DAFTAR</th>
+                            <th class="py-3.5 px-4 text-center whitespace-nowrap w-[110px]">BUKTI / STRUK</th>
+                            <th class="py-3.5 px-4 text-center whitespace-nowrap w-[160px]">STATUS</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-white/[0.04] font-medium">
                         @forelse($allRegistrations as $reg)
-                            @php
-                                $firstName = $reg->members->first()->full_name ?? $reg->team_name;
-                                $firstNisn = $reg->members->first()->nisn ?? '-';
-                                $filterSearch = strtolower($firstName . ' ' . $firstNisn . ' ' . $reg->institution_name . ' ' . $reg->registration_code);
-                            @endphp
-                            <tr x-show="(selectedCategory === 'all' || selectedCategory == '{{ $reg->competition_id }}') &&
-                                        (selectedStatus === 'all' || selectedStatus === '{{ $reg->status }}') &&
-                                        (searchQuery === '' || '{{ addslashes($filterSearch) }}'.includes(searchQuery.toLowerCase()))"
-                                class="hover:bg-white/[0.025] transition">
-                                <td class="py-3.5 px-4 font-mono font-bold text-[#84D0FF]">
-                                    {{ $reg->registration_code }}
+                            <tr x-show="isItemVisible({{ $reg->id }})" class="hover:bg-white/[0.025] transition">
+                                <!-- No. Registrasi -->
+                                <td class="py-3.5 px-4 whitespace-nowrap">
+                                    <span class="font-mono font-bold text-[#84D0FF] tracking-tight bg-[#4E6EFF]/10 px-2.5 py-1 rounded-lg border border-[#4E6EFF]/20 inline-block">
+                                        {{ $reg->registration_code }}
+                                    </span>
                                 </td>
-                                <td class="py-3.5 px-4">
-                                    <div class="font-bold text-white text-sm">
+
+                                <!-- Nama Peserta / Tim -->
+                                <td class="py-3.5 px-4 min-w-[200px]">
+                                    <div class="font-bold text-white text-sm leading-snug">
                                         {{ $reg->team_name ?: ($reg->members->first()->full_name ?? 'Peserta #' . $reg->id) }}
                                     </div>
-                                    <div class="text-[11px] text-slate-400">
-                                        NISN: {{ $reg->members->first()->nisn ?? '-' }} • {{ $reg->members->count() }} Anggota
+                                    <div class="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5 whitespace-nowrap">
+                                        <span>NISN: <span class="font-mono text-slate-300">{{ $reg->members->first()->nisn ?? '-' }}</span></span>
+                                        <span>•</span>
+                                        <span>{{ $reg->members->count() }} Anggota</span>
                                     </div>
                                 </td>
-                                <td class="py-3.5 px-4 font-bold text-slate-200">
-                                    {{ $reg->institution_name }}
+
+                                <!-- Asal Sekolah / Madrasah -->
+                                <td class="py-3.5 px-4 min-w-[180px]">
+                                    <span class="font-bold text-slate-200 block text-xs">
+                                        {{ $reg->institution_name }}
+                                    </span>
                                 </td>
-                                <td class="py-3.5 px-4">
-                                    <span class="font-bold text-white">{{ $reg->competition->name }}</span>
+
+                                <!-- Cabang Lomba & Kategori -->
+                                <td class="py-3.5 px-4 min-w-[220px]">
+                                    <span class="font-bold text-white block text-xs">
+                                        {{ $reg->competition->name }}
+                                    </span>
                                     @if($reg->sub_category)
-                                        <span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                                        <span class="inline-flex items-center mt-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 whitespace-nowrap">
                                             {{ $reg->sub_category }}
                                         </span>
                                     @else
-                                        <span class="block text-[10px] text-slate-400 uppercase font-mono">{{ $reg->competition->code }} ({{ $reg->competition->type }})</span>
+                                        <span class="inline-block mt-0.5 text-[10px] text-slate-400 uppercase font-mono">{{ $reg->competition->code }} ({{ $reg->competition->type }})</span>
                                     @endif
                                 </td>
-                                <td class="py-3.5 px-4 text-right font-black text-emerald-400 font-mono text-sm">
-                                    Rp {{ number_format($reg->fee, 0, ',', '.') }}
+
+                                <!-- Biaya Daftar -->
+                                <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                                    <span class="font-black text-emerald-400 font-mono text-sm">
+                                        Rp {{ number_format($reg->fee, 0, ',', '.') }}
+                                    </span>
                                 </td>
-                                <td class="py-3.5 px-4 text-center">
+
+                                <!-- Bukti / Struk -->
+                                <td class="py-3.5 px-4 text-center whitespace-nowrap">
                                     @php
                                         $proofPath = $reg->payment_proof ?: ($reg->invoice?->payment_proof ?? null);
                                     @endphp
                                     @if($proofPath)
-                                        <a href="{{ asset('storage/' . $proofPath) }}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#4E6EFF]/15 text-[#84D0FF] font-bold hover:bg-[#4E6EFF]/25 transition text-[11px] border border-[#4E6EFF]/30">
+                                        <a href="{{ asset('storage/' . $proofPath) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#4E6EFF]/15 text-[#84D0FF] font-bold hover:bg-[#4E6EFF]/25 transition text-xs border border-[#4E6EFF]/30 shadow-xs">
                                             <i data-lucide="image" class="w-3.5 h-3.5"></i>
                                             <span>Struk</span>
                                         </a>
                                     @else
-                                        <span class="text-slate-500 italic text-[11px]">-</span>
+                                        <span class="text-slate-500 italic text-xs">-</span>
                                     @endif
                                 </td>
-                                <td class="py-3.5 px-4 text-center">
+
+                                <!-- Status -->
+                                <td class="py-3.5 px-4 text-center whitespace-nowrap">
                                     @if($reg->status === 'verified')
-                                        <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                                            ✔ LUNAS / TERVERIFIKASI
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
+                                            <i data-lucide="check-circle" class="w-3 h-3"></i>
+                                            <span>✔ LUNAS / TERVERIFIKASI</span>
                                         </span>
                                     @elseif($reg->status === 'rejected')
-                                        <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-rose-500/15 text-rose-400 border border-rose-500/30">
-                                            ✕ DITOLAK
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-rose-500/15 text-rose-400 border border-rose-500/30 whitespace-nowrap">
+                                            <i data-lucide="x-circle" class="w-3 h-3"></i>
+                                            <span>✕ DITOLAK</span>
                                         </span>
                                     @else
-                                        <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-500/15 text-amber-400 border border-amber-500/30">
-                                            ⏳ PENDING
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-500/15 text-amber-400 border border-amber-500/30 whitespace-nowrap">
+                                            <i data-lucide="clock" class="w-3 h-3"></i>
+                                            <span>⏳ PENDING</span>
                                         </span>
                                     @endif
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="py-8 text-center text-slate-500">Belum ada peserta terdaftar.</td>
+                                <td colspan="7" class="py-12 text-center text-slate-500">Belum ada peserta terdaftar.</td>
                             </tr>
                         @endforelse
+
+                        <!-- Empty state when search filters yield no results -->
+                        <tr x-show="filteredItems.length === 0 && {{ $allRegistrations->count() }} > 0">
+                            <td colspan="7" class="py-12 text-center text-slate-400">
+                                <div class="flex flex-col items-center justify-center space-y-2">
+                                    <i data-lucide="search-x" class="w-8 h-8 text-slate-500"></i>
+                                    <p class="font-bold text-sm text-slate-300">Tidak ada peserta yang cocok dengan filter pencarian</p>
+                                    <p class="text-xs text-slate-500">Coba gunakan kata kunci lain atau reset filter</p>
+                                    <button @click="resetFilters()" class="mt-2 px-3.5 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-xs font-bold text-white transition cursor-pointer">
+                                        Reset Filter
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -320,7 +403,7 @@
 
     <!-- ==================== TAB 3: REKAP SEMUA PERAIH JUARA ==================== -->
     <div x-show="activeTab === 'juara'" x-transition class="space-y-6">
-        <div class="ai-card rounded-3xl border border-white/[0.08] shadow-xl p-6 sm:p-8 space-y-6">
+        <div class="ai-card rounded-3xl border border-white/[0.08] shadow-xl p-5 sm:p-7 lg:p-8 space-y-6">
             <div class="flex items-center justify-between border-b border-white/[0.08] pb-4">
                 <div>
                     <h3 class="text-lg font-black text-white">Rekapitulasi Peraih Juara (1, 2, 3 & Harapan)</h3>
@@ -410,7 +493,7 @@
 
     <!-- ==================== TAB 4: REKAP JUARA UMUM ==================== -->
     <div x-show="activeTab === 'juara-umum'" x-transition class="space-y-6">
-        <div class="ai-card rounded-3xl border border-white/[0.08] shadow-xl overflow-hidden space-y-6 p-6 sm:p-8">
+        <div class="ai-card rounded-3xl border border-white/[0.08] shadow-xl overflow-hidden space-y-6 p-5 sm:p-7 lg:p-8">
             <div class="flex items-center justify-between border-b border-white/[0.08] pb-4">
                 <div>
                     <h3 class="text-base font-bold text-white">Klasemen Perolehan Medali & Juara Umum Kontingen</h3>
@@ -418,23 +501,23 @@
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-slate-300">
+            <div class="overflow-x-auto rounded-2xl border border-white/[0.08] bg-[#0A0E1A]/40 shadow-inner">
+                <table class="w-full min-w-[850px] text-left text-sm text-slate-300 border-collapse">
                     <thead class="text-xs font-bold uppercase tracking-wider bg-[#0C111D]/90 text-slate-400 border-b border-white/[0.08]">
                         <tr>
-                            <th class="py-4 px-6 text-center w-16">Peringkat</th>
-                            <th class="py-4 px-6">Nama Asal Sekolah / Madrasah</th>
-                            <th class="py-4 px-4 text-center">🥇 Emas (5p)</th>
-                            <th class="py-4 px-4 text-center">🥈 Perak (3p)</th>
-                            <th class="py-4 px-4 text-center">🥉 Perunggu (1p)</th>
-                            <th class="py-4 px-6 text-center">Total Medali</th>
-                            <th class="py-4 px-6 text-right">Total Poin</th>
+                            <th class="py-4 px-6 text-center w-16 whitespace-nowrap">Peringkat</th>
+                            <th class="py-4 px-6 min-w-[220px] whitespace-nowrap">Nama Asal Sekolah / Madrasah</th>
+                            <th class="py-4 px-4 text-center whitespace-nowrap">🥇 Emas (5p)</th>
+                            <th class="py-4 px-4 text-center whitespace-nowrap">🥈 Perak (3p)</th>
+                            <th class="py-4 px-4 text-center whitespace-nowrap">🥉 Perunggu (1p)</th>
+                            <th class="py-4 px-6 text-center whitespace-nowrap">Total Medali</th>
+                            <th class="py-4 px-6 text-right whitespace-nowrap">Total Poin</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-white/[0.04] font-medium">
                         @forelse($standings as $index => $item)
                             <tr class="hover:bg-white/[0.025] transition {{ $index === 0 ? 'bg-amber-500/10' : '' }}">
-                                <td class="py-4 px-6 text-center">
+                                <td class="py-4 px-6 text-center whitespace-nowrap">
                                     @if($index === 0)
                                         <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-400 text-slate-950 font-black text-sm shadow-md">1</span>
                                     @elseif($index === 1)
@@ -445,7 +528,7 @@
                                         <span class="text-slate-400 font-bold">{{ $index + 1 }}</span>
                                     @endif
                                 </td>
-                                <td class="py-4 px-6 font-bold text-white text-base">
+                                <td class="py-4 px-6 font-bold text-white text-base min-w-[220px] whitespace-nowrap">
                                     {{ $item['institution'] }}
                                     @if($index === 0)
                                         <span class="ml-2 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-400 text-slate-950">
@@ -453,11 +536,11 @@
                                         </span>
                                     @endif
                                 </td>
-                                <td class="py-4 px-4 text-center font-black text-amber-400 text-base">{{ $item['emas'] }}</td>
-                                <td class="py-4 px-4 text-center font-black text-slate-300 text-base">{{ $item['perak'] }}</td>
-                                <td class="py-4 px-4 text-center font-black text-amber-500 text-base">{{ $item['perunggu'] }}</td>
-                                <td class="py-4 px-6 text-center font-bold text-slate-200">{{ $item['total_medali'] }}</td>
-                                <td class="py-4 px-6 text-right">
+                                <td class="py-4 px-4 text-center font-black text-amber-400 text-base whitespace-nowrap">{{ $item['emas'] }}</td>
+                                <td class="py-4 px-4 text-center font-black text-slate-300 text-base whitespace-nowrap">{{ $item['perak'] }}</td>
+                                <td class="py-4 px-4 text-center font-black text-amber-500 text-base whitespace-nowrap">{{ $item['perunggu'] }}</td>
+                                <td class="py-4 px-6 text-center font-bold text-slate-200 whitespace-nowrap">{{ $item['total_medali'] }}</td>
+                                <td class="py-4 px-6 text-right whitespace-nowrap">
                                     <span class="text-2xl font-black text-emerald-400">{{ $item['total_poin'] }}</span>
                                 </td>
                             </tr>
@@ -472,5 +555,7 @@
                 </table>
             </div>
         </div>
+    </div>
 </div>
 @endsection
+
