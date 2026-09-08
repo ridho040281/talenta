@@ -359,6 +359,10 @@
                         <i data-lucide="bar-chart-3" class="w-4 h-4 {{ request()->routeIs('admin.recap*') || request()->routeIs('admin.scores*') ? 'text-white' : 'text-amber-400' }}"></i>
                         <span>Rekapitulasi</span>
                     </a>
+                    <a href="{{ route('admin.berita-acara.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('admin.berita-acara*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
+                        <i data-lucide="file-text" class="w-4 h-4 {{ request()->routeIs('admin.berita-acara*') ? 'text-white' : 'text-emerald-400' }}"></i>
+                        <span>Berita Acara</span>
+                    </a>
                 </div>
 
                 <!-- Group: PENGATURAN & TOOLS -->
@@ -397,6 +401,10 @@
                     <a href="{{ route('pic.undian') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('pic.undian*') || request()->routeIs('pic.hacker.draw*') || request()->routeIs('pic.spin.wheel*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
                         <i data-lucide="disc" class="w-4 h-4 text-[#FF58D5]"></i>
                         <span>Undi Peserta</span>
+                    </a>
+                    <a href="{{ route('pic.berita-acara.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('pic.berita-acara*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
+                        <i data-lucide="file-text" class="w-4 h-4 text-emerald-400"></i>
+                        <span>Berita Acara</span>
                     </a>
                     @if(auth()->user()->managesBadminton())
                     <a href="{{ route('badminton.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('badminton.*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">

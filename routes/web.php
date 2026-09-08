@@ -8,6 +8,7 @@ use App\Http\Controllers\CollectiveRegistrationController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JuriController;
+use App\Http\Controllers\OfficialReportController;
 use App\Http\Controllers\PesertaController;
 use App\Http\Controllers\PicController;
 use App\Http\Controllers\StageController;
@@ -122,6 +123,10 @@ Route::middleware(['auth', 'role:pic_lomba,superadmin'])->prefix('pic')->name('p
     Route::get('/lomba/{competition_id}/stage-control', [StageController::class, 'operatorPanel'])->name('stage.control');
     Route::post('/lomba/{competition_id}/stage-control/action', [StageController::class, 'handleAction'])->name('stage.control.action');
     Route::post('/lomba/{competition_id}/stage-control/reset-all', [StageController::class, 'resetAllStage'])->name('stage.control.reset_all');
+
+    // Berita Acara Lomba
+    Route::get('/berita-acara', [OfficialReportController::class, 'index'])->name('berita-acara.index');
+    Route::get('/berita-acara/cetak', [OfficialReportController::class, 'print'])->name('berita-acara.print');
 });
 
 /*
@@ -178,6 +183,8 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->name('admin.')-
     Route::post('/users/{id}/delete', [AdminController::class, 'deleteUser'])->name('users.delete');
     Route::get('/recap', [AdminController::class, 'recap'])->name('recap');
     Route::get('/rekap-nilai', [AdminController::class, 'recap'])->name('scores');
+    Route::get('/berita-acara', [OfficialReportController::class, 'index'])->name('berita-acara.index');
+    Route::get('/berita-acara/cetak', [OfficialReportController::class, 'print'])->name('berita-acara.print');
 
     // Operational & Competition Routes (Super Admin Access)
     Route::get('/verifikasi', [PicController::class, 'dashboard'])->name('verifications');
