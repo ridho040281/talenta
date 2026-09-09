@@ -169,7 +169,7 @@ class OfficialReportController extends Controller
                     return true;
                 });
 
-                // Rank winners by average locked score
+                // Rank winners by average locked score (only participants who have locked scores > 0)
                 $ranked = $filteredRegs->map(function ($r) {
                     $lockedScores = $r->scores->where('is_locked', true);
                     $avgScore = $lockedScores->isNotEmpty() ? round($lockedScores->avg('total_score'), 2) : 0;
@@ -181,8 +181,11 @@ class OfficialReportController extends Controller
                         'display_name' => $participantName,
                         'institution_name' => $schoolName,
                         'score' => $avgScore > 0 ? $avgScore : '',
+                        'has_score' => ($lockedScores->isNotEmpty() && $avgScore > 0),
                     ];
-                })->sortByDesc(fn($item) => (float) $item['score'])->values();
+                })
+                ->filter(fn($item) => $item['has_score'])
+                ->sortByDesc(fn($item) => (float) $item['score'])->values();
 
                 $emptyWinner = [
                     'registration' => null,
@@ -205,6 +208,7 @@ class OfficialReportController extends Controller
                     'definition' => $secDef,
                     'tiers' => $tiers,
                     'total_participants' => $filteredRegs->count(),
+                    'has_scored_winners' => $ranked->isNotEmpty(),
                 ];
             }
 
@@ -332,8 +336,11 @@ class OfficialReportController extends Controller
                             'nama' => $participantName,
                             'sekolah' => $schoolName,
                             'nilai' => $avgScore > 0 ? (string) $avgScore : '',
+                            'has_score' => ($lockedScores->isNotEmpty() && $avgScore > 0),
                         ];
-                    })->sortByDesc(fn($item) => (float) $item['nilai'])->values();
+                    })
+                    ->filter(fn($item) => $item['has_score'])
+                    ->sortByDesc(fn($item) => (float) $item['nilai'])->values();
 
                     foreach ($tiers as $idx => &$t) {
                         if (isset($ranked[$idx])) {

@@ -147,6 +147,17 @@
                                 <span class="text-[11px] text-slate-400 font-medium">
                                     {{ $sector['total_participants'] }} Peserta Terverifikasi
                                 </span>
+                                @if(!empty($sector['has_scored_winners']))
+                                    <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[10px] font-bold flex items-center gap-1">
+                                        <i data-lucide="check-circle" class="w-3 h-3"></i>
+                                        <span>Nilai Juri Terkunci</span>
+                                    </span>
+                                @else
+                                    <span class="px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] font-bold flex items-center gap-1">
+                                        <i data-lucide="clock" class="w-3 h-3"></i>
+                                        <span>Menunggu Penilaian Juri</span>
+                                    </span>
+                                @endif
                                 @if(count($sectorsData) > 1)
                                     <button type="button" @click="printLive('{{ $secKey }}')" class="px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-300 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
                                         <i data-lucide="printer" class="w-3.5 h-3.5"></i>
@@ -155,6 +166,16 @@
                                 @endif
                             </div>
                         </div>
+
+                        @if(empty($sector['has_scored_winners']))
+                            <div class="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs flex items-center gap-3">
+                                <i data-lucide="info" class="w-4 h-4 shrink-0 text-amber-400"></i>
+                                <div>
+                                    <span class="font-bold">Belum ada penilaian yang dikunci oleh {{ $isSports ? 'Dewan Wasit' : 'Dewan Juri' }}.</span>
+                                    <span class="text-slate-400 block text-[11px] mt-0.5">Nama pemenang (Juara 1 s.d. Harapan) otomatis terisi & diurutkan dari skor tertinggi setelah juri mengunci nilai di portal juri. Bila ingin formulir cetak untuk penilaian tulis tangan, silakan gunakan <strong>Tab 2 (Template Blank)</strong>.</span>
+                                </div>
+                            </div>
+                        @endif
 
                         <div class="overflow-x-auto">
                             <table class="w-full text-left text-xs text-slate-300">
