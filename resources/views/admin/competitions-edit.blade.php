@@ -670,13 +670,17 @@
                     @endif
 
                     <!-- Aturan & Petunjuk Teknis -->
-                    <div x-data="{ showRules: {{ $competition->show_rules ? 'true' : 'false' }} }">
+                    @php $isRulesActive = (bool) old('show_rules', $competition->show_rules); @endphp
+                    <div x-data="{ showRules: {{ $isRulesActive ? 'true' : 'false' }} }">
                         <div class="flex items-center justify-between mb-1.5">
                             <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400">Aturan & Petunjuk Teknis Singkat</label>
-                            <label class="flex items-center gap-2 cursor-pointer select-none px-2.5 py-1 rounded-lg transition"
-                                   :style="showRules ? 'background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.25);' : 'background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);'">
-                                <input name="show_rules" type="checkbox" value="1" x-model="showRules" class="w-3.5 h-3.5 rounded text-emerald-500 bg-slate-900 border-slate-700 focus:ring-0 cursor-pointer">
-                                <span class="text-[10px] font-black tracking-wide" :class="showRules ? 'text-emerald-400' : 'text-slate-400'" x-text="showRules ? '✓ AKTIF (TAMPIL DI PESERTA)' : '✗ NONAKTIF (TIDAK TAMPIL)'"></span>
+                            <label class="flex items-center gap-2 cursor-pointer select-none px-2.5 py-1.5 rounded-lg transition"
+                                   :style="showRules ? 'background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.35);' : 'background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);'"
+                                   style="{{ $isRulesActive ? 'background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.35);' : 'background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);' }}">
+                                <input name="show_rules" type="checkbox" value="1" {{ $isRulesActive ? 'checked' : '' }} @change="showRules = $el.checked" class="w-4 h-4 rounded text-emerald-500 accent-emerald-500 bg-slate-900 border-slate-700 cursor-pointer">
+                                <span class="text-[10px] font-black tracking-wide" :class="showRules ? 'text-emerald-400' : 'text-slate-400'" x-text="showRules ? '✓ AKTIF (TAMPIL DI PESERTA)' : '✗ NONAKTIF (TIDAK TAMPIL)'">
+                                    {{ $isRulesActive ? '✓ AKTIF (TAMPIL DI PESERTA)' : '✗ NONAKTIF (TIDAK TAMPIL)' }}
+                                </span>
                             </label>
                         </div>
                         <textarea name="rules" rows="4" class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-medium resize-none" placeholder="Tuliskan petunjuk teknis / aturan singkat...">{{ old('rules', $competition->rules) }}</textarea>
@@ -684,16 +688,20 @@
                     </div>
 
                     <!-- Juknis PDF -->
-                    <div class="p-4 rounded-xl space-y-3" style="background: rgba(12,17,29,0.6); border: 1px solid rgba(255,255,255,0.07);" x-data="{ showGuidelines: {{ $competition->show_guidelines ? 'true' : 'false' }} }">
+                    @php $isGuideActive = (bool) old('show_guidelines', $competition->show_guidelines); @endphp
+                    <div class="p-4 rounded-xl space-y-3" style="background: rgba(12,17,29,0.6); border: 1px solid rgba(255,255,255,0.07);" x-data="{ showGuidelines: {{ $isGuideActive ? 'true' : 'false' }} }">
                         <div class="flex items-center justify-between">
                             <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
                                 <i data-lucide="file-text" class="w-3.5 h-3.5 text-[#84D0FF]"></i>
                                 <span>Embed Link Juknis PDF / Dokumen Resmi / Canva</span>
                             </label>
-                            <label class="flex items-center gap-2 cursor-pointer select-none px-2.5 py-1 rounded-lg transition"
-                                   :style="showGuidelines ? 'background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.25);' : 'background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);'">
-                                <input name="show_guidelines" type="checkbox" value="1" x-model="showGuidelines" class="w-3.5 h-3.5 rounded text-emerald-500 bg-slate-900 border-slate-700 focus:ring-0 cursor-pointer">
-                                <span class="text-[10px] font-black tracking-wide" :class="showGuidelines ? 'text-emerald-400' : 'text-slate-400'" x-text="showGuidelines ? '✓ AKTIF (TAMPIL DI PESERTA)' : '✗ NONAKTIF (TIDAK TAMPIL)'"></span>
+                            <label class="flex items-center gap-2 cursor-pointer select-none px-2.5 py-1.5 rounded-lg transition"
+                                   :style="showGuidelines ? 'background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.35);' : 'background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);'"
+                                   style="{{ $isGuideActive ? 'background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.35);' : 'background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);' }}">
+                                <input name="show_guidelines" type="checkbox" value="1" {{ $isGuideActive ? 'checked' : '' }} @change="showGuidelines = $el.checked" class="w-4 h-4 rounded text-emerald-500 accent-emerald-500 bg-slate-900 border-slate-700 cursor-pointer">
+                                <span class="text-[10px] font-black tracking-wide" :class="showGuidelines ? 'text-emerald-400' : 'text-slate-400'" x-text="showGuidelines ? '✓ AKTIF (TAMPIL DI PESERTA)' : '✗ NONAKTIF (TIDAK TAMPIL)'">
+                                    {{ $isGuideActive ? '✓ AKTIF (TAMPIL DI PESERTA)' : '✗ NONAKTIF (TIDAK TAMPIL)' }}
+                                </span>
                             </label>
                         </div>
                         <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md" style="background: rgba(78,110,255,0.12); color: #84D0FF; border: 1px solid rgba(78,110,255,0.2);">Google Drive / Canva Embed / URL PDF / Upload</span>
@@ -715,11 +723,11 @@
                     <!-- Checkboxes -->
                     <div class="flex flex-col sm:flex-row gap-3">
                         <label class="flex items-center gap-3 p-3 rounded-xl flex-1 cursor-pointer" style="background: rgba(122,90,248,0.08); border: 1px solid rgba(122,90,248,0.18);">
-                            <input name="is_live_score" type="checkbox" value="1" {{ $competition->is_live_score ? 'checked' : '' }} class="w-4 h-4 rounded accent-violet-500">
+                            <input name="is_live_score" type="checkbox" value="1" {{ old('is_live_score', $competition->is_live_score) ? 'checked' : '' }} class="w-4 h-4 rounded accent-violet-500">
                             <span class="text-xs font-bold" style="color: #c4b5fd;">Tampilkan di Live Score Publik</span>
                         </label>
                         <label class="flex items-center gap-3 p-3 rounded-xl flex-1 cursor-pointer" style="background: rgba(16,185,129,0.07); border: 1px solid rgba(16,185,129,0.18);">
-                            <input name="show_criteria" type="checkbox" value="1" {{ $competition->show_criteria ? 'checked' : '' }} class="w-4 h-4 rounded accent-emerald-500">
+                            <input name="show_criteria" type="checkbox" value="1" {{ old('show_criteria', $competition->show_criteria) ? 'checked' : '' }} class="w-4 h-4 rounded accent-emerald-500">
                             <span class="text-xs font-bold text-emerald-400">Tampilkan Kriteria Penilaian ke Publik</span>
                         </label>
                     </div>
@@ -728,7 +736,8 @@
             </div>
 
             <!-- PENGATURAN LAYAR PANGGUNG & STAGE TIMER CARD -->
-            <div class="card-admin rounded-2xl p-5 sm:p-7 space-y-5" x-data="{ stageEnabled: {{ $competition->has_stage_timer ? 'true' : 'false' }} }">
+            @php $isStageActive = (bool) old('has_stage_timer', $competition->has_stage_timer); @endphp
+            <div class="card-admin rounded-2xl p-5 sm:p-7 space-y-5" x-data="{ stageEnabled: {{ $isStageActive ? 'true' : 'false' }} }">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/[0.07]">
                     <div class="flex items-center gap-3">
                         <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.22);">
@@ -758,7 +767,7 @@
                     <!-- Toggle Aktifkan -->
                     <label class="flex items-start gap-3 p-3.5 rounded-xl cursor-pointer select-none transition" 
                            :style="stageEnabled ? 'background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3);' : 'background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08);'">
-                        <input name="has_stage_timer" type="checkbox" value="1" x-model="stageEnabled" class="mt-0.5 w-4 h-4 rounded text-amber-500 bg-slate-900 border-slate-700 focus:ring-0 cursor-pointer">
+                        <input name="has_stage_timer" type="checkbox" value="1" {{ $isStageActive ? 'checked' : '' }} @change="stageEnabled = $el.checked" class="mt-0.5 w-4 h-4 rounded text-amber-500 accent-amber-500 bg-slate-900 border-slate-700 cursor-pointer">
                         <div class="flex-1">
                             <span class="text-xs font-bold text-white block">Aktifkan Fitur Stage Timer & Layar Panggung untuk Cabang Ini</span>
                             <span class="text-[11px] text-slate-400 block mt-0.5">Sangat direkomendasikan untuk lomba panggung (Pop Singer, MTQ, Tari, Teater, Pidato/Debat, dll).</span>
