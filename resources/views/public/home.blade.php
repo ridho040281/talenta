@@ -208,10 +208,15 @@
                                 <i data-lucide="clock" class="w-3.5 h-3.5 text-amber-400"></i>
                                 <span>Buka: {{ $regInfo['start_date_formatted'] }} WIB</span>
                             </span>
-                        @elseif($regInfo['deadline_formatted'])
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold {{ $regInfo['is_open'] ? 'bg-indigo-500/15 text-indigo-300 border border-indigo-500/30' : 'bg-rose-500/15 text-rose-300 border border-rose-500/30' }}">
-                                <i data-lucide="{{ $regInfo['is_open'] ? 'timer' : 'alert-circle' }}" class="w-3.5 h-3.5 {{ $regInfo['is_open'] ? 'text-amber-400' : 'text-rose-400' }}"></i>
-                                <span>{{ $regInfo['is_open'] ? 'Batas Akhir: ' . $regInfo['deadline_formatted'] . ' WIB' : 'Pendaftaran Ditutup' }}</span>
+                        @elseif(!$regInfo['is_open'])
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-500/15 text-rose-300 border border-rose-500/30">
+                                <i data-lucide="alert-circle" class="w-3.5 h-3.5 text-rose-400"></i>
+                                <span>Pendaftaran Ditutup</span>
+                            </span>
+                        @else
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30" title="Batas waktu penutupan pendaftaran disesuaikan dengan jadwal masing-masing cabang lomba">
+                                <i data-lucide="calendar-clock" class="w-3.5 h-3.5 text-amber-400"></i>
+                                <span>Penutupan: Sesuai Jadwal Masing-Masing Cabang</span>
                             </span>
                         @endif
                         <span class="text-xs font-medium text-slate-400 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.06]">

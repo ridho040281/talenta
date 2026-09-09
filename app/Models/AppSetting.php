@@ -67,10 +67,24 @@ class AppSetting extends Model
             }
 
             $deadline = static::get('registration_deadline');
-            if (!empty($deadline) && strtotime($deadline)) {
-                if ($now->gt(\Carbon\Carbon::parse($deadline))) {
-                    return false;
+            $effectiveDeadline = !empty($deadline) && strtotime($deadline) ? \Carbon\Carbon::parse($deadline) : null;
+            try {
+                $latestCompDeadline = \App\Models\Competition::where('status', 'buka')
+                    ->whereNotNull('registration_end_at')
+                    ->max('registration_end_at');
+
+                if ($latestCompDeadline) {
+                    $latestCompCarbon = \Carbon\Carbon::parse($latestCompDeadline);
+                    if (!$effectiveDeadline || $latestCompCarbon->gt($effectiveDeadline)) {
+                        $effectiveDeadline = $latestCompCarbon;
+                    }
                 }
+            } catch (\Throwable $e) {
+                // fallback
+            }
+
+            if ($effectiveDeadline && $now->gt($effectiveDeadline)) {
+                return false;
             }
         }
 
@@ -93,8 +107,25 @@ class AppSetting extends Model
             $isStarted = $now->gte(\Carbon\Carbon::parse($startDate));
         }
 
-        if (!empty($deadline) && strtotime($deadline)) {
-            $isExpired = $now->gt(\Carbon\Carbon::parse($deadline));
+        // Determine effective latest deadline across global setting & individual active competitions
+        $effectiveDeadline = !empty($deadline) && strtotime($deadline) ? \Carbon\Carbon::parse($deadline) : null;
+        try {
+            $latestCompDeadline = \App\Models\Competition::where('status', 'buka')
+                ->whereNotNull('registration_end_at')
+                ->max('registration_end_at');
+
+            if ($latestCompDeadline) {
+                $latestCompCarbon = \Carbon\Carbon::parse($latestCompDeadline);
+                if (!$effectiveDeadline || $latestCompCarbon->gt($effectiveDeadline)) {
+                    $effectiveDeadline = $latestCompCarbon;
+                }
+            }
+        } catch (\Throwable $e) {
+            // fallback
+        }
+
+        if ($effectiveDeadline) {
+            $isExpired = $now->gt($effectiveDeadline);
         }
 
         $isOpen = ($status !== 'closed');

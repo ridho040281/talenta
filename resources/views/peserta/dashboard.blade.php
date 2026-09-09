@@ -115,10 +115,15 @@
                                 <i data-lucide="clock" class="w-3.5 h-3.5"></i>
                                 <span>Buka: {{ $regInfo['start_date_formatted'] }} WIB</span>
                             </span>
-                        @elseif($regInfo['deadline_formatted'])
-                            <span class="inline-flex items-center gap-1 font-bold {{ $regInfo['is_open'] ? 'text-amber-400' : 'text-rose-400' }}">
-                                <i data-lucide="{{ $regInfo['is_open'] ? 'timer' : 'lock' }}" class="w-3.5 h-3.5"></i>
-                                <span>Batas Akhir: {{ $regInfo['deadline_formatted'] }} WIB</span>
+                        @elseif(!$regInfo['is_open'])
+                            <span class="inline-flex items-center gap-1 font-bold text-rose-400">
+                                <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+                                <span>Pendaftaran Ditutup</span>
+                            </span>
+                        @else
+                            <span class="inline-flex items-center gap-1 font-bold text-amber-400" title="Batas waktu penutupan disesuaikan dengan jadwal masing-masing cabang lomba">
+                                <i data-lucide="calendar-clock" class="w-3.5 h-3.5"></i>
+                                <span>Penutupan: Sesuai Jadwal Cabang</span>
                             </span>
                         @endif
                     </div>
