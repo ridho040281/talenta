@@ -173,6 +173,7 @@
                             <!-- Hidden input for standard form POST -->
                             <input type="hidden" name="popup_enabled" :value="enabled">
 
+                            <!-- Loading indicator during AJAX save -->
                             <span x-show="isToggling" x-cloak class="text-[11px] text-amber-300 font-bold flex items-center gap-1.5 bg-amber-500/10 px-2.5 py-1 rounded-xl border border-amber-500/25">
                                 <svg class="animate-spin h-3.5 w-3.5 text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -181,31 +182,28 @@
                                 <span>Menyimpan...</span>
                             </span>
 
+                            <!-- Status label beside switch -->
+                            <span class="text-xs font-black tracking-wider transition-colors duration-200 uppercase"
+                                :class="enabled == '1' ? 'text-emerald-400' : 'text-slate-500'"
+                                x-text="enabled == '1' ? 'Aktif' : 'Nonaktif'">
+                            </span>
+
+                            <!-- Ultra-sleek Modern Switch Button -->
                             <button type="button" 
                                 @click="toggleStatus()" 
                                 :disabled="isToggling"
                                 :title="enabled == '1' ? 'Klik untuk mematikan pop-up' : 'Klik untuk mengaktifkan pop-up'"
-                                class="relative inline-flex items-center cursor-pointer transition-all duration-300 focus:outline-none select-none rounded-full shadow-lg"
-                                :style="{
-                                    width: '3.6rem',
-                                    height: '2rem',
-                                    backgroundColor: (enabled == '1') ? '#10b981' : '#334155',
-                                    padding: '3px',
-                                    boxShadow: (enabled == '1') ? '0 0 18px rgba(16, 185, 129, 0.45)' : 'none',
-                                    border: '1.5px solid ' + ((enabled == '1') ? '#34d399' : '#475569')
-                                }">
-                                <span class="inline-block transform transition-transform duration-300 ease-in-out bg-white rounded-full shadow-md flex items-center justify-center"
-                                    :style="{
-                                        width: '1.5rem',
-                                        height: '1.5rem',
-                                        transform: (enabled == '1') ? 'translateX(1.6rem)' : 'translateX(0)'
-                                    }">
-                                    <template x-if="enabled == '1'">
-                                        <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600"></i>
-                                    </template>
-                                    <template x-if="enabled != '1'">
-                                        <i data-lucide="x" class="w-3.5 h-3.5 text-slate-400"></i>
-                                    </template>
+                                class="relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full p-1 transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:ring-offset-2 focus:ring-offset-[#161F30] select-none shadow-inner"
+                                :class="enabled == '1' 
+                                    ? 'bg-gradient-to-r from-emerald-500 to-teal-400 border border-emerald-400/50 shadow-emerald-500/25' 
+                                    : 'bg-slate-700/80 hover:bg-slate-700 border border-white/[0.12]'">
+                                
+                                <span class="sr-only">Toggle Status Pop-up</span>
+
+                                <!-- Pure tactile white thumb with subtle depth -->
+                                <span aria-hidden="true" 
+                                    class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition-transform duration-300 ease-in-out"
+                                    :class="enabled == '1' ? 'translate-x-5' : 'translate-x-0'">
                                 </span>
                             </button>
                         </div>
@@ -218,10 +216,15 @@
                             </label>
                             <p class="text-[10px] text-slate-500">Otomatis tersimpan permanen saat saklar ditekan</p>
                             <div class="flex items-center gap-2 pt-1">
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-all duration-300" 
-                                    :class="enabled == '1' ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30 shadow-sm shadow-emerald-500/20' : 'bg-rose-500/15 text-rose-300 border-rose-500/30 shadow-sm shadow-rose-500/20'">
-                                    <span class="w-2 h-2 rounded-full" :class="enabled == '1' ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'"></span>
-                                    <span x-text="enabled == '1' ? '🟢 AKTIF (Tampil Otomatis)' : '🔴 NONAKTIF (Dimatikan)'"></span>
+                                <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all duration-300" 
+                                    :class="enabled == '1' 
+                                        ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30 shadow-sm shadow-emerald-500/20' 
+                                        : 'bg-slate-800/80 text-slate-400 border-white/[0.1]'">
+                                    <span class="relative flex h-2 w-2">
+                                        <span x-show="enabled == '1'" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                        <span class="relative inline-flex rounded-full h-2 w-2" :class="enabled == '1' ? 'bg-emerald-400' : 'bg-slate-500'"></span>
+                                    </span>
+                                    <span x-text="enabled == '1' ? 'Aktif (Tampil Otomatis)' : 'Nonaktif (Dimatikan)'" class="tracking-wide"></span>
                                 </span>
                             </div>
                         </div>
