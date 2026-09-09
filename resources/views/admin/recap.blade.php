@@ -40,37 +40,35 @@
         }
 
         setTimeout(() => {
-            if (typeof html2canvas === 'undefined') {
-                alert('Pustaka html2canvas belum selesai dimuat. Silakan tunggu beberapa detik atau muat ulang halaman.');
+            if (typeof htmlToImage === 'undefined') {
+                alert('Pustaka htmlToImage belum selesai dimuat. Silakan muat ulang halaman (Ctrl+F5).');
                 this.downloadingPng = false;
                 return;
             }
 
-            html2canvas(target, {
-                scale: 2,
-                useCORS: true,
-                allowTaint: true,
+            htmlToImage.toPng(target, {
+                pixelRatio: 2,
                 backgroundColor: '#0C111D',
-                logging: false,
-                windowWidth: 1200
-            }).then(canvas => {
+                cacheBust: true,
+                imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+            }).then(dataUrl => {
                 const link = document.createElement('a');
                 const now = new Date();
                 const pad = (n) => String(n).padStart(2, '0');
                 const timeTag = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`;
                 link.download = `REKAP-PENDAFTAR-TALENTA-2026-${timeTag}.png`;
-                link.href = canvas.toDataURL('image/png');
+                link.href = dataUrl;
                 link.click();
                 this.downloadingPng = false;
                 if (typeof confetti === 'function') {
-                    confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+                    confetti({ particleCount: 60, spread: 70, origin: { y: 0.7 } });
                 }
             }).catch(err => {
-                console.error('Error saat mengekspor gambar:', err);
+                console.error('Error saat mengekspor gambar via htmlToImage:', err);
                 alert('Gagal membuat file gambar: ' + (err.message || err));
                 this.downloadingPng = false;
             });
-        }, 300);
+        }, 200);
     },
     items: @js($allRegistrations->map(function($r) {
         $firstMember = $r->members->first();
@@ -1187,6 +1185,6 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
 @endpush
 
