@@ -85,9 +85,10 @@
             // Buat container staging off-screen dengan lebar pasti 1100px
             // Bebas dari kendala lebar layar HP, laptop kecil, zoom browser, sidebar, dan overflow parent
             container = document.createElement('div');
+            container.setAttribute('x-ignore', '');
             container.style.position = 'fixed';
-            container.style.left = '-99999px';
-            container.style.top = '0';
+            container.style.top = '-99999px';
+            container.style.left = '0';
             container.style.width = '1100px';
             container.style.zIndex = '-99999';
             container.style.opacity = '1';
@@ -95,6 +96,7 @@
 
             // Kloning kartu infografis
             const clone = originalCard.cloneNode(true);
+            clone.setAttribute('x-ignore', '');
             clone.id = 'rekapPendaftarCard_exportClone';
             
             // Format styling kloning agar tidak terpotong sama sekali
@@ -107,6 +109,31 @@
             clone.style.backgroundColor = '#0C111D';
             clone.style.borderRadius = '24px';
             clone.style.overflow = 'visible';
+
+            // Bersihkan semua atribut Alpine (x-show, x-data, dll) dari klon agar MutationObserver Alpine tidak menyembunyikan baris
+            clone.removeAttribute('x-data');
+            clone.querySelectorAll('*').forEach(el => {
+                Array.from(el.attributes).forEach(attr => {
+                    if (attr.name.startsWith('x-')) {
+                        el.removeAttribute(attr.name);
+                    }
+                });
+            });
+
+            // Pastikan seluruh baris data tabel yang sesuai filter aktif tampil 100% utuh
+            const activeCat = this.recapCategory || 'all';
+            const allRows = clone.querySelectorAll('tbody tr');
+            allRows.forEach(row => {
+                const rowCat = row.getAttribute('data-category') || '';
+                if (activeCat === 'all' || rowCat === activeCat) {
+                    row.style.setProperty('display', 'table-row', 'important');
+                    row.style.setProperty('visibility', 'visible', 'important');
+                    row.style.setProperty('opacity', '1', 'important');
+                    row.removeAttribute('hidden');
+                } else {
+                    row.style.setProperty('display', 'none', 'important');
+                }
+            });
 
             // Pastikan kontainer tabel di dalam klon tidak memiliki scrollbar atau pemotongan overflow
             const tableContainers = clone.querySelectorAll('.rekap-table-container');
@@ -844,7 +871,7 @@
                                 };
                             @endphp
 
-                            <tr x-show="recapCategory === 'all' || recapCategory === '{{ $comp->category->slug ?? '' }}'" class="{{ $rowTheme['bg'] }} {{ $rowTheme['border_l'] }} transition-colors duration-150 border-b border-white/[0.05]">
+                            <tr data-category="{{ $comp->category->slug ?? '' }}" x-show="recapCategory === 'all' || recapCategory === '{{ $comp->category->slug ?? '' }}'" class="{{ $rowTheme['bg'] }} {{ $rowTheme['border_l'] }} transition-colors duration-150 border-b border-white/[0.05]">
                                 
                                 <!-- Nama Lomba & Lokasi -->
                                 <td class="py-3.5 px-5 w-[32%] min-w-[270px] align-middle">
