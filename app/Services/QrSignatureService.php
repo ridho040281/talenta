@@ -46,8 +46,26 @@ class QrSignatureService
     /**
      * Generate QR Code URL for Account Proof / Ketua Panitia
      */
-    public static function accountProofUrl($registration): string
+    public static function accountProofUrl($target): string
     {
-        return url('/cek-status?q=' . urlencode($registration->registration_code));
+        if ($target instanceof \App\Models\Registration) {
+            return url('/cek-status?q=' . urlencode($target->registration_code));
+        }
+
+        if ($target instanceof \App\Models\User) {
+            $identifier = $target->nisn ?: ($target->email ?: $target->name);
+            return url('/cek-status?q=' . urlencode($identifier));
+        }
+
+        if (is_array($target)) {
+            $identifier = $target['nisn'] ?? ($target['email'] ?? ($target['name'] ?? ''));
+            return url('/cek-status?q=' . urlencode($identifier));
+        }
+
+        if (is_string($target) && !empty($target)) {
+            return url('/cek-status?q=' . urlencode($target));
+        }
+
+        return url('/cek-status');
     }
 }

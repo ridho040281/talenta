@@ -49,9 +49,14 @@ class HomeController extends Controller
     {
         $query = trim($request->input('q', $request->input('code', '')));
         $results = collect();
+        $userAccount = null;
 
         if ($query) {
-            $results = Registration::with(['competition.category', 'members', 'verifier', 'invoice'])
+            $userAccount = \App\Models\User::where('nisn', $query)
+                ->orWhere('email', $query)
+                ->first();
+
+            $results = Registration::with(['competition.category', 'members', 'verifier', 'invoice', 'user'])
                 ->where('registration_code', 'LIKE', "%{$query}%")
                 ->orWhere('institution_name', 'LIKE', "%{$query}%")
                 ->orWhere('participant_number', 'LIKE', "%{$query}%")
@@ -62,12 +67,16 @@ class HomeController extends Controller
                     $q->where('full_name', 'LIKE', "%{$query}%")
                         ->orWhere('nisn', 'LIKE', "%{$query}%");
                 })
+                ->orWhereHas('user', function ($q) use ($query) {
+                    $q->where('nisn', 'LIKE', "%{$query}%")
+                        ->orWhere('email', 'LIKE', "%{$query}%");
+                })
                 ->latest()
                 ->take(15)
                 ->get();
         }
 
-        return view('public.check-status', compact('query', 'results'));
+        return view('public.check-status', compact('query', 'results', 'userAccount'));
     }
 
     public function liveScoreboard(Request $request, $slug = null)

@@ -176,17 +176,54 @@
 
                 </div>
             @empty
-                <div class="glass-card p-12 rounded-3xl border border-slate-800 text-center space-y-4 max-w-md mx-auto">
-                    <div class="w-16 h-16 mx-auto rounded-3xl bg-slate-900 border border-slate-800 text-slate-400 flex items-center justify-center font-bold">
-                        <i data-lucide="file-question" class="w-8 h-8 text-amber-400"></i>
+                @if(isset($userAccount) && $userAccount)
+                    <div class="glass-card p-6 sm:p-8 rounded-3xl border border-emerald-500/40 bg-emerald-950/20 shadow-2xl space-y-4 max-w-xl mx-auto">
+                        <div class="flex items-center gap-3 border-b border-emerald-500/20 pb-4">
+                            <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                                <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <span class="px-2.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 text-[10px] font-black uppercase tracking-wider border border-emerald-500/30">
+                                    ✓ Akun Terdaftar & Terverifikasi
+                                </span>
+                                <h4 class="text-lg font-black text-white mt-1">{{ $userAccount->name }}</h4>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-300">
+                            <div>
+                                <span class="text-slate-400 text-[10px] uppercase font-bold block">NISN / Username:</span>
+                                <span class="font-mono font-bold text-white">{{ $userAccount->nisn ?: '-' }}</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-400 text-[10px] uppercase font-bold block">Asal Lembaga / Sekolah:</span>
+                                <span class="font-bold text-slate-200">{{ $userAccount->institution_name ?: '-' }}</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-400 text-[10px] uppercase font-bold block">Nomor WhatsApp:</span>
+                                <span class="font-mono text-slate-200">{{ $userAccount->phone ?: '-' }}</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-400 text-[10px] uppercase font-bold block">Waktu Registrasi Akun:</span>
+                                <span class="text-slate-200">{{ $userAccount->created_at ? $userAccount->created_at->translatedFormat('d F Y, H:i') . ' WIB' : '-' }}</span>
+                            </div>
+                        </div>
+                        <div class="pt-2 text-center text-xs text-emerald-300 bg-emerald-500/10 rounded-xl p-3 border border-emerald-500/20">
+                            Tanda bukti pembuatan akun ini sah dan terdaftar resmi di database panitia {{ $appSettings['app_name'] ?? 'TALENTA 2026' }}.
+                        </div>
                     </div>
-                    <div class="space-y-1">
-                        <h4 class="text-lg font-black text-white">Data Tidak Ditemukan</h4>
-                        <p class="text-xs text-slate-400 leading-relaxed">
-                            Tidak ada peserta yang cocok dengan kata kunci <strong class="text-white">"{{ $query }}"</strong>. Pastikan ejaan nama peserta, asal sekolah, atau kode registrasi sudah benar.
-                        </p>
+                @else
+                    <div class="glass-card p-12 rounded-3xl border border-slate-800 text-center space-y-4 max-w-md mx-auto">
+                        <div class="w-16 h-16 mx-auto rounded-3xl bg-slate-900 border border-slate-800 text-slate-400 flex items-center justify-center font-bold">
+                            <i data-lucide="file-question" class="w-8 h-8 text-amber-400"></i>
+                        </div>
+                        <div class="space-y-1">
+                            <h4 class="text-lg font-black text-white">Data Tidak Ditemukan</h4>
+                            <p class="text-xs text-slate-400 leading-relaxed">
+                                Tidak ada peserta yang cocok dengan kata kunci <strong class="text-white">"{{ $query }}"</strong>. Pastikan ejaan nama peserta, asal sekolah, atau kode registrasi sudah benar.
+                            </p>
+                        </div>
                     </div>
-                </div>
+                @endif
             @endforelse
         </div>
     @else
