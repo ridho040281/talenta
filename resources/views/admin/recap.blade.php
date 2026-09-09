@@ -7,14 +7,15 @@
 <style>
     /* Styling during PNG export to ensure a pristine, widescreen, unclipped infographic */
     .exporting-infographic {
-        width: 1280px !important;
-        min-width: 1280px !important;
-        max-width: 1280px !important;
+        width: 1100px !important;
+        min-width: 1100px !important;
+        max-width: 1100px !important;
         margin: 0 !important;
-        padding: 44px 48px !important;
+        padding: 40px 44px 48px 44px !important;
         background-color: #0C111D !important;
-        border-radius: 28px !important;
+        border-radius: 24px !important;
         box-shadow: none !important;
+        overflow: visible !important;
     }
     .exporting-infographic * {
         scrollbar-width: none !important;
@@ -63,10 +64,12 @@
             this.expandAllBranches();
         }
     },
-    downloadPNG() {
+    async downloadPNG() {
+        if (this.downloadingPng) return;
         this.downloadingPng = true;
-        const target = document.getElementById('rekapPendaftarCard');
-        if (!target) {
+        
+        const originalCard = document.getElementById('rekapPendaftarCard');
+        if (!originalCard) {
             this.downloadingPng = false;
             return;
         }
@@ -77,37 +80,83 @@
             return;
         }
 
-        // Apply exporting class to expand to fixed 1200px widescreen layout and remove scrollbars
-        target.classList.add('exporting-infographic');
+        let container = null;
+        try {
+            // Buat container staging off-screen dengan lebar pasti 1100px
+            // Bebas dari kendala lebar layar HP, laptop kecil, zoom browser, sidebar, dan overflow parent
+            container = document.createElement('div');
+            container.style.position = 'fixed';
+            container.style.left = '-99999px';
+            container.style.top = '0';
+            container.style.width = '1100px';
+            container.style.zIndex = '-99999';
+            container.style.opacity = '1';
+            container.style.pointerEvents = 'none';
 
-        // Allow browser 250ms to complete layout reflow at 1200px width
-        setTimeout(() => {
-            htmlToImage.toPng(target, {
+            // Kloning kartu infografis
+            const clone = originalCard.cloneNode(true);
+            clone.id = 'rekapPendaftarCard_exportClone';
+            
+            // Format styling kloning agar tidak terpotong sama sekali
+            clone.style.width = '1100px';
+            clone.style.minWidth = '1100px';
+            clone.style.maxWidth = '1100px';
+            clone.style.margin = '0';
+            clone.style.padding = '40px 44px 48px 44px';
+            clone.style.boxSizing = 'border-box';
+            clone.style.backgroundColor = '#0C111D';
+            clone.style.borderRadius = '24px';
+            clone.style.overflow = 'visible';
+
+            // Pastikan kontainer tabel di dalam klon tidak memiliki scrollbar atau pemotongan overflow
+            const tableContainers = clone.querySelectorAll('.rekap-table-container');
+            tableContainers.forEach(el => {
+                el.style.overflow = 'visible';
+                el.style.overflowX = 'visible';
+                el.style.width = '100%';
+            });
+
+            container.appendChild(clone);
+            document.body.appendChild(container);
+
+            // Berikan waktu 250ms untuk layout reflow, webfonts, dan aset gambar ter-render sempurna
+            await new Promise(resolve => setTimeout(resolve, 250));
+
+            // Ukur dimensi elemen sesungguhnya secara akurat
+            const exportWidth = clone.offsetWidth || 1100;
+            const exportHeight = (clone.scrollHeight || clone.offsetHeight) + 12;
+
+            // Generate gambar beresolusi tinggi dengan htmlToImage
+            const dataUrl = await htmlToImage.toPng(clone, {
                 pixelRatio: 2,
-                width: 1200,
+                width: exportWidth,
+                height: exportHeight,
                 backgroundColor: '#0C111D',
                 cacheBust: true,
                 imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
-            }).then(dataUrl => {
-                target.classList.remove('exporting-infographic');
-                const link = document.createElement('a');
-                const now = new Date();
-                const pad = (n) => String(n).padStart(2, '0');
-                const timeTag = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`;
-                link.download = `REKAP-PENDAFTAR-TALENTA-2026-${timeTag}.png`;
-                link.href = dataUrl;
-                link.click();
-                this.downloadingPng = false;
-                if (typeof confetti === 'function') {
-                    confetti({ particleCount: 60, spread: 70, origin: { y: 0.7 } });
-                }
-            }).catch(err => {
-                target.classList.remove('exporting-infographic');
-                console.error('Error saat mengekspor gambar via htmlToImage:', err);
-                alert('Gagal membuat file gambar: ' + (err.message || err));
-                this.downloadingPng = false;
             });
-        }, 200);
+
+            // Eksekusi download file PNG
+            const link = document.createElement('a');
+            const now = new Date();
+            const pad = (n) => String(n).padStart(2, '0');
+            const timeTag = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`;
+            link.download = `REKAP-PENDAFTAR-TALENTA-2026-${timeTag}.png`;
+            link.href = dataUrl;
+            link.click();
+
+            if (typeof confetti === 'function') {
+                confetti({ particleCount: 60, spread: 70, origin: { y: 0.7 } });
+            }
+        } catch (err) {
+            console.error('Error saat mengekspor gambar via htmlToImage:', err);
+            alert('Gagal membuat file gambar: ' + (err.message || err));
+        } finally {
+            if (container && container.parentNode) {
+                container.parentNode.removeChild(container);
+            }
+            this.downloadingPng = false;
+        }
     },
     items: @js($allRegistrations->map(function($r) {
         $firstMember = $r->members->first();
@@ -619,7 +668,7 @@
         </div>
 
         <!-- ==================== EXPORTABLE INFOGRAPHIC CARD CONTAINER ==================== -->
-        <div id="rekapPendaftarCard" class="w-full max-w-5xl mx-auto rounded-3xl p-6 sm:p-9 lg:p-11 space-y-8 relative overflow-hidden shadow-2xl border border-white/[0.12]" style="background-color: #0C111D; color: #F8FAFC;">
+        <div id="rekapPendaftarCard" class="w-full max-w-5xl mx-auto rounded-3xl p-6 sm:p-8 lg:p-10 pb-8 sm:pb-10 space-y-7 relative overflow-hidden shadow-2xl border border-white/[0.12]" style="background-color: #0C111D; color: #F8FAFC;">
             
             <!-- Ambient Glow for Aesthetic Quality -->
             <div class="absolute inset-0 bg-gradient-to-b from-[#7A5AF8]/10 via-[#4E6EFF]/5 to-transparent pointer-events-none"></div>
@@ -634,7 +683,7 @@
                         <img src="{{ asset('storage/' . $recapHeaderLogo) }}" 
                              alt="Logo" 
                              crossorigin="anonymous"
-                             class="h-32 sm:h-40 md:h-44 w-auto max-w-[360px] sm:max-w-[420px] object-contain drop-shadow-2xl">
+                             class="h-28 sm:h-36 md:h-40 w-auto max-w-[340px] sm:max-w-[400px] object-contain drop-shadow-2xl">
                     </div>
                 @endif
 
@@ -666,7 +715,7 @@
             </div>
 
             <!-- Divider Line -->
-            <div class="relative z-10 w-full h-[2px] bg-gradient-to-r from-transparent via-[#7A5AF8]/60 to-transparent my-6"></div>
+            <div class="relative z-10 w-full h-[2px] bg-gradient-to-r from-transparent via-[#7A5AF8]/60 to-transparent my-5"></div>
 
             <!-- TABEL KUOTA REKAPITULASI (PERSIS LANDING PAGE) -->
             @php
@@ -681,15 +730,15 @@
                             : '<div class="bg-slate-700/40 h-full rounded-full" style="width: 0%"></div>';
                             
                         return '
-                        <div>
+                        <div class="w-full">
                             <div class="flex items-center justify-between text-sm sm:text-base font-bold gap-3">
-                                <span class="text-purple-300 font-black flex items-center gap-1.5">
+                                <span class="text-purple-300 font-black flex items-center gap-1.5 shrink-0">
                                     <span class="text-base sm:text-lg leading-none font-sans">∞</span>
                                     <span>Tak Terbatas</span>
                                 </span>
-                                <span class="text-slate-300 font-bold text-xs sm:text-sm font-mono">' . $count . ' / ∞</span>
+                                <span class="text-slate-300 font-bold text-xs sm:text-sm font-mono shrink-0 pr-1.5">' . $count . ' / ∞</span>
                             </div>
-                            <div class="w-full bg-white/[0.08] h-3 rounded-full overflow-hidden mt-1 p-0.5 border border-white/[0.05]">
+                            <div class="w-full bg-white/[0.08] h-3 rounded-full overflow-hidden mt-1.5 p-0.5 border border-white/[0.05]">
                                 ' . $barHtml . '
                             </div>
                         </div>';
@@ -702,12 +751,12 @@
                         $barWidth = min(100, ($count / max(1, $quota)) * 100);
                         $barGradient = $isFull ? 'from-rose-500 to-red-600' : ($isLow ? 'from-amber-400 to-orange-500' : 'from-[#7A5AF8] to-[#4E6EFF]');
                         return '
-                        <div>
+                        <div class="w-full">
                             <div class="flex items-center justify-between text-sm sm:text-base font-bold gap-3">
-                                <span class="' . $textColor . '">' . $sisaText . '</span>
-                                <span class="text-slate-300 font-bold text-xs sm:text-sm font-mono">' . $count . '/' . $quota . '</span>
+                                <span class="' . $textColor . ' shrink-0">' . $sisaText . '</span>
+                                <span class="text-slate-300 font-bold text-xs sm:text-sm font-mono shrink-0 pr-1.5">' . $count . '/' . $quota . '</span>
                             </div>
-                            <div class="w-full bg-white/[0.08] h-3 rounded-full overflow-hidden mt-1 p-0.5 border border-white/[0.05]">
+                            <div class="w-full bg-white/[0.08] h-3 rounded-full overflow-hidden mt-1.5 p-0.5 border border-white/[0.05]">
                                 <div class="bg-gradient-to-r ' . $barGradient . ' h-full rounded-full transition-all duration-300" style="width: ' . $barWidth . '%"></div>
                             </div>
                         </div>';
@@ -719,9 +768,9 @@
                 <table class="w-full text-left text-sm sm:text-base text-slate-300 border-collapse">
                     <thead class="text-xs sm:text-sm font-black uppercase tracking-wider bg-[#0C111D]/95 text-slate-200 border-b border-white/[0.08]">
                         <tr>
-                            <th class="py-4 px-6 whitespace-nowrap w-[340px] min-w-[340px]">Nama Lomba</th>
-                            <th class="py-4 px-6 whitespace-nowrap w-[360px] min-w-[360px]">Kategori</th>
-                            <th class="py-4 px-6 whitespace-nowrap w-auto min-w-[460px]">Sisa Kuota</th>
+                            <th class="py-3.5 px-5 whitespace-nowrap w-[32%] min-w-[270px]">Nama Lomba</th>
+                            <th class="py-3.5 px-5 whitespace-nowrap w-[26%] min-w-[220px]">Kategori</th>
+                            <th class="py-3.5 px-5 whitespace-nowrap w-[42%] min-w-[340px]">Sisa Kuota</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-white/[0.05] font-medium text-sm sm:text-base">
@@ -798,7 +847,7 @@
                             <tr x-show="recapCategory === 'all' || recapCategory === '{{ $comp->category->slug ?? '' }}'" class="{{ $rowTheme['bg'] }} {{ $rowTheme['border_l'] }} transition-colors duration-150 border-b border-white/[0.05]">
                                 
                                 <!-- Nama Lomba & Lokasi -->
-                                <td class="py-4 px-6 w-[340px] min-w-[340px] align-middle">
+                                <td class="py-3.5 px-5 w-[32%] min-w-[270px] align-middle">
                                     <div class="flex items-center gap-2">
                                         <span class="font-black text-white text-base sm:text-lg leading-snug whitespace-nowrap block">
                                             {{ $comp->name }}
@@ -816,7 +865,7 @@
                                 </td>
 
                                 <!-- Kategori -->
-                                <td class="py-4 px-6 whitespace-nowrap align-middle w-[360px] min-w-[360px]">
+                                <td class="py-3.5 px-5 whitespace-nowrap align-middle w-[26%] min-w-[220px]">
                                     @if($isBlt)
                                         <div class="flex flex-col py-1">
                                             <!-- Tunggal PA -->
@@ -894,7 +943,7 @@
                                 </td>
 
                                 <!-- Sisa Kuota & Progress Bar -->
-                                <td class="py-4 px-6 whitespace-nowrap align-middle w-auto min-w-[460px]">
+                                <td class="py-3.5 px-5 whitespace-nowrap align-middle w-[42%] min-w-[340px]">
                                     @if($isBlt)
                                         <div class="flex flex-col py-1 text-slate-400 text-xs sm:text-sm w-full">
                                             <!-- Kuota Tunggal PA -->
@@ -930,12 +979,12 @@
                                             
                                             <!-- Gender Composition Breakdown -->
                                             <div class="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-white/[0.05] border border-white/[0.1] text-xs sm:text-sm font-bold">
-                                                <span class="text-cyan-300 flex items-center gap-1.5">
+                                                <span class="text-cyan-300 flex items-center gap-1.5 shrink-0">
                                                     <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
                                                     <span class="font-extrabold">{{ $countPa }} Putra</span>
                                                 </span>
                                                 <span class="text-slate-500">•</span>
-                                                <span class="text-pink-300 flex items-center gap-1.5">
+                                                <span class="text-pink-300 flex items-center gap-1.5 shrink-0">
                                                     <svg class="w-3.5 h-3.5 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
                                                     <span class="font-extrabold">{{ $countPi }} Putri</span>
                                                 </span>
@@ -975,11 +1024,11 @@
                                             @endphp
                                             <div class="space-y-1.5 w-full">
                                                 <div class="flex items-center justify-between gap-3">
-                                                    <span class="text-sm sm:text-base text-purple-300 font-black flex items-center gap-1.5">
+                                                    <span class="text-sm sm:text-base text-purple-300 font-black flex items-center gap-1.5 shrink-0">
                                                         <span class="text-base sm:text-lg leading-none font-sans">∞</span>
                                                         <span>Tak Terbatas</span>
                                                     </span>
-                                                    <span class="text-xs sm:text-sm font-bold text-slate-300 font-mono">
+                                                    <span class="text-xs sm:text-sm font-bold text-slate-300 font-mono shrink-0 pr-1.5">
                                                         {{ $regCount }} / ∞
                                                     </span>
                                                 </div>
@@ -999,10 +1048,10 @@
                                             @endphp
                                             <div class="space-y-1.5 w-full">
                                                 <div class="flex items-center justify-between gap-3">
-                                                    <span class="text-sm sm:text-base {{ $isFull ? 'text-rose-400 font-black' : ($isLow ? 'text-amber-300 font-black' : 'text-emerald-400 font-black') }}">
+                                                    <span class="text-sm sm:text-base {{ $isFull ? 'text-rose-400 font-black' : ($isLow ? 'text-amber-300 font-black' : 'text-emerald-400 font-black') }} shrink-0">
                                                         {{ $isFull ? 'Kuota Penuh' : 'Sisa: ' . $sisa . ' ' . $unitWord }}
                                                     </span>
-                                                    <span class="text-xs sm:text-sm font-bold text-slate-300 font-mono">
+                                                    <span class="text-xs sm:text-sm font-bold text-slate-300 font-mono shrink-0 pr-1.5">
                                                         {{ $regCount }}/{{ $regQuota }}
                                                     </span>
                                                 </div>
@@ -1057,9 +1106,9 @@
             @endif
 
             <!-- Watermark & Footer Info -->
-            <div class="relative z-10 pt-4 border-t border-white/[0.06] text-[11px] text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <div class="relative z-10 pt-5 pb-3 border-t border-white/[0.08] text-xs text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-2">
                 <span>© {{ date('Y') }} Panitia Milad ke-57 MTsN 1 Blitar</span>
-                <span class="font-medium text-slate-400">Sistem Informasi Pendaftaran & Manajemen Lomba TALENTA 2026</span>
+                <span class="font-medium text-slate-400">Sistem Informasi Pendaftaran &amp; Manajemen Lomba TALENTA 2026</span>
             </div>
 
         </div>
