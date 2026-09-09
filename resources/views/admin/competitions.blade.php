@@ -194,37 +194,20 @@
         @php
             $regInfo = \App\Models\AppSetting::getRegistrationStatusInfo();
         @endphp
-        <!-- Global Registration Control Panel (Opsi C) -->
-        <div class="ai-card rounded-3xl p-5 sm:p-6 border border-indigo-500/30 bg-gradient-to-r from-[#101828]/95 via-[#161F30]/95 to-[#1E293B]/95 shadow-2xl relative overflow-hidden">
-            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+        <!-- Global Registration Quick Control Bar (Pilihan A) -->
+        <div class="ai-card rounded-2xl p-4 sm:p-5 border border-indigo-500/30 bg-gradient-to-r from-[#101828]/95 via-[#161F30]/95 to-[#1E293B]/95 shadow-xl relative overflow-hidden">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 
-                <!-- Left: Status Indicator & Date Information -->
-                <div class="space-y-2">
-                    <div class="flex flex-wrap items-center gap-2.5">
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black tracking-wide border {{ $regInfo['status_color'] === 'emerald' ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' : ($regInfo['status_color'] === 'amber' ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' : 'bg-rose-500/15 text-rose-300 border-rose-500/30') }}">
-                            <span class="w-2.5 h-2.5 rounded-full {{ $regInfo['status_color'] === 'emerald' ? 'bg-emerald-400 animate-pulse' : ($regInfo['status_color'] === 'amber' ? 'bg-amber-400' : 'bg-rose-400') }}"></span>
-                            <span class="uppercase">Status Global: {{ $regInfo['status_label'] }}</span>
-                        </span>
-                        
-                        @if($regInfo['auto_close'])
-                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
-                                <i data-lucide="clock" class="w-3 h-3"></i>
-                                <span>Auto-Schedule Aktif</span>
-                            </span>
-                        @endif
-                    </div>
+                <!-- Left: Status Indicator & Info -->
+                <div class="flex flex-wrap items-center gap-3">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black tracking-wide border {{ $regInfo['status_color'] === 'emerald' ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' : ($regInfo['status_color'] === 'amber' ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' : 'bg-rose-500/15 text-rose-300 border-rose-500/30') }}">
+                        <span class="w-2 h-2 rounded-full {{ $regInfo['status_color'] === 'emerald' ? 'bg-emerald-400 animate-pulse' : ($regInfo['status_color'] === 'amber' ? 'bg-amber-400' : 'bg-rose-400') }}"></span>
+                        <span class="uppercase">Status Pendaftaran: {{ $regInfo['status_label'] }}</span>
+                    </span>
 
-                    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-300">
-                        <div class="flex items-center gap-1.5 font-medium">
-                            <i data-lucide="calendar" class="w-3.5 h-3.5 text-cyan-400 shrink-0"></i>
-                            <span>Mulai: <strong class="text-white">{{ $regInfo['start_date_formatted'] ?: '-' }} WIB</strong></span>
-                        </div>
-                        <span class="text-slate-600 hidden sm:inline">•</span>
-                        <div class="flex items-center gap-1.5 font-medium">
-                            <i data-lucide="timer" class="w-3.5 h-3.5 text-amber-400 shrink-0"></i>
-                            <span>Batas Akhir (Deadline): <strong class="text-amber-300 font-mono">{{ $regInfo['deadline_formatted'] ?: '-' }} WIB</strong></span>
-                        </div>
-                    </div>
+                    <span class="text-xs text-slate-400 font-medium hidden sm:inline">
+                        (Jadwal batas penutupan diatur mandiri per cabang lomba di bawah)
+                    </span>
                 </div>
 
                 <!-- Right: Quick Bulk Actions (1-Click) -->
@@ -232,8 +215,8 @@
                     <form action="{{ route('admin.competitions.toggle-all-status') }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin MEMBUKA pendaftaran untuk seluruh cabang lomba dan seluruh sektor?')">
                         @csrf
                         <input type="hidden" name="action" value="buka">
-                        <button type="submit" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/25 transition cursor-pointer">
-                            <i data-lucide="check-circle" class="w-4 h-4 text-slate-950"></i>
+                        <button type="submit" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow-md shadow-emerald-500/20 transition cursor-pointer">
+                            <i data-lucide="check-circle" class="w-3.5 h-3.5 text-slate-950"></i>
                             <span>Buka Semua Cabang</span>
                         </button>
                     </form>
@@ -241,15 +224,15 @@
                     <form action="{{ route('admin.competitions.toggle-all-status') }}" method="POST" onsubmit="return confirm('PERINGATAN: Apakah Anda yakin ingin MENUTUP pendaftaran untuk seluruh cabang lomba serentak?')">
                         @csrf
                         <input type="hidden" name="action" value="tutup">
-                        <button type="submit" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white border border-rose-500/40 font-bold text-xs transition cursor-pointer">
-                            <i data-lucide="x-circle" class="w-4 h-4"></i>
+                        <button type="submit" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white border border-rose-500/40 font-bold text-xs transition cursor-pointer">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5"></i>
                             <span>Tutup Semua Cabang</span>
                         </button>
                     </form>
 
-                    <a href="{{ route('admin.settings.general') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-300 hover:text-white font-bold text-xs border border-white/[0.1] transition cursor-pointer">
-                        <i data-lucide="settings" class="w-3.5 h-3.5 text-indigo-400"></i>
-                        <span>Atur Jadwal</span>
+                    <a href="{{ route('admin.settings.general', ['tab' => 'jadwal']) }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-300 hover:text-white font-bold text-xs border border-white/[0.1] transition cursor-pointer" title="Kelola jadwal dan tanggal batas pendaftaran di Pengaturan">
+                        <i data-lucide="calendar-cog" class="w-3.5 h-3.5 text-indigo-400"></i>
+                        <span>Pengaturan Jadwal</span>
                     </a>
                 </div>
 
