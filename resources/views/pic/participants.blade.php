@@ -81,8 +81,8 @@
                                     </span>
                                 @endif
                             </td>
-                            <td class="py-4 px-6 text-xs">
-                                {{ $reg->institution_name }}
+                            <td class="py-4 px-6 text-xs font-semibold text-slate-800">
+                                {{ $reg->display_school }}
                             </td>
                             <td class="py-4 px-6 text-xs">
                                 <div class="flex items-center gap-1.5">

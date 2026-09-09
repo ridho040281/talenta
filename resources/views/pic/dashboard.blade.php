@@ -217,7 +217,7 @@
             'is_kat_a' => $r->isKatA(),
             'is_kat_b' => $r->isKatB(),
             'is_kat_c' => $r->isKatC(),
-            'search' => strtolower($r->display_name . ' ' . $r->registration_code . ' ' . ($r->participant_number ?? '') . ' ' . $r->institution_name . ' ' . ($firstMember?->nisn ?? ''))
+            'search' => strtolower($r->display_name . ' ' . $r->registration_code . ' ' . ($r->participant_number ?? '') . ' ' . $r->display_school . ' ' . $r->institution_name . ' ' . ($firstMember?->nisn ?? '') . ' ' . $r->members->pluck('school_name')->filter()->implode(' '))
         ];
     })),
     get activeList() {
@@ -600,7 +600,7 @@
 
                             <!-- Asal Sekolah -->
                             <td class="py-3 px-3.5 sm:px-4">
-                                <span class="text-xs font-bold text-slate-200 block">{{ $reg->institution_name }}</span>
+                                <span class="text-xs font-bold text-slate-200 block">{{ $reg->display_school }}</span>
                                 <span class="text-[10px] text-slate-400">{{ $reg->official_name ? 'Official: ' . $reg->official_name : '' }}</span>
                             </td>
 
@@ -673,7 +673,18 @@
                                     </button>
 
                                     <!-- 2. Icon Edit: Edit Data Peserta -->
-                                    <button type="button" @click="selectedEditReg = JSON.parse(JSON.stringify({{ $reg->toJson() }})); if(selectedEditReg && selectedEditReg.members) { selectedEditReg.members.forEach(m => { if(m.birth_date) m.birth_date = String(m.birth_date).split('T')[0]; }); } editModal = true" class="w-8 h-8 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] flex items-center justify-center transition cursor-pointer" title="Edit Data Peserta">
+                                    <button type="button" @click="
+                                        selectedEditReg = JSON.parse(JSON.stringify({{ $reg->toJson() }})); 
+                                        if(selectedEditReg && selectedEditReg.members) { 
+                                            selectedEditReg.members.forEach(m => { 
+                                                if(m.birth_date) m.birth_date = String(m.birth_date).split('T')[0]; 
+                                            }); 
+                                            if(selectedEditReg.members.length === 1 && selectedEditReg.members[0].school_name) {
+                                                selectedEditReg.institution_name = selectedEditReg.members[0].school_name;
+                                            }
+                                        } 
+                                        editModal = true;
+                                    " class="w-8 h-8 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] flex items-center justify-center transition cursor-pointer" title="Edit Data Peserta">
                                         <i data-lucide="edit-3" class="w-4 h-4"></i>
                                     </button>
 
@@ -746,7 +757,7 @@
                                             <span class="text-[10px] px-2 py-0.5 rounded font-black" :class="m.gender === 'L' ? 'bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30' : 'bg-[#FF58D5]/15 text-[#FFA0E7] border border-[#FF58D5]/30'" x-text="m.gender === 'L' ? '👦 Putra (PA)' : '👧 Putri (PI)'"></span>
                                         </div>
                                         <div class="grid grid-cols-2 gap-2 text-slate-400 pt-1">
-                                            <div class="col-span-2"><span class="text-slate-500">Asal Sekolah:</span> <span class="font-bold text-slate-200" x-text="m.school_name || (selectedReg ? selectedReg.institution_name : '-')"></span></div>
+                                            <div class="col-span-2"><span class="text-slate-500">Asal Sekolah:</span> <span class="font-bold text-slate-200" x-text="m.school_name || (selectedReg ? (selectedReg.display_school || selectedReg.institution_name) : '-')"></span></div>
                                             <div><span class="text-slate-500">NISN:</span> <span class="font-mono font-bold text-slate-300" x-text="m.nisn || '-'"></span></div>
                                             <div><span class="text-slate-500">TTL:</span> <span class="font-medium text-slate-300" x-text="formatTTL(m.birth_place, m.formatted_birth_date || m.birth_date)"></span></div>
                                             <div><span class="text-slate-500">No HP/WA:</span> <span class="font-medium text-slate-300" x-text="m.phone || '-'"></span></div>
@@ -876,7 +887,7 @@
                             <span class="text-xs font-mono font-bold text-amber-400 px-2.5 py-1 bg-amber-500/15 border border-amber-500/30 rounded-lg" x-text="selectedEditReg ? selectedEditReg.registration_code : ''"></span>
                             <span class="text-xs font-bold text-slate-400">Edit Data Pendaftaran Peserta (Admin)</span>
                         </div>
-                        <h3 class="text-lg font-black text-white mt-2" x-text="selectedEditReg ? selectedEditReg.institution_name : ''"></h3>
+                        <h3 class="text-lg font-black text-white mt-2" x-text="selectedEditReg ? (selectedEditReg.institution_name || (selectedEditReg.members && selectedEditReg.members[0] ? selectedEditReg.members[0].school_name : '')) : ''"></h3>
                     </div>
                     <button @click="editModal = false" class="text-slate-400 hover:text-white transition cursor-pointer">
                         <i data-lucide="x" class="w-5 h-5"></i>
@@ -906,7 +917,9 @@
                                             </div>
                                             <div>
                                                 <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Asal Sekolah Siswa</label>
-                                                <input type="text" :name="'members[' + idx + '][school_name]'" x-model="m.school_name" placeholder="Nama Sekolah..." class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-white outline-none focus:border-[#7A5AF8]">
+                                                <input type="text" :name="'members[' + idx + '][school_name]'" x-model="m.school_name" 
+                                                    @input="if(selectedEditReg && selectedEditReg.members && selectedEditReg.members.length === 1) { selectedEditReg.institution_name = m.school_name; }"
+                                                    placeholder="Nama Sekolah..." class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-white outline-none focus:border-[#7A5AF8]">
                                             </div>
                                             <div>
                                                 <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">NISN</label>
@@ -956,8 +969,11 @@
                         </span>
 
                         <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Asal Sekolah / Madrasah</label>
-                            <input type="text" name="institution_name" x-model="selectedEditReg ? selectedEditReg.institution_name : ''" required class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-white outline-none focus:border-[#7A5AF8]">
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Asal Sekolah / Madrasah Utama (Kontingen)</label>
+                            <input type="text" name="institution_name" x-model="selectedEditReg ? selectedEditReg.institution_name : ''" 
+                                @input="if(selectedEditReg && selectedEditReg.members && selectedEditReg.members.length === 1 && selectedEditReg.members[0]) { selectedEditReg.members[0].school_name = selectedEditReg.institution_name; }"
+                                required class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-white outline-none focus:border-[#7A5AF8]">
+                            <p class="text-[10px] text-slate-400 mt-1">Nama sekolah/instansi resmi yang tampil pada tabel data peserta, bagan pertandingan, dan cetak sertifikat.</p>
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">

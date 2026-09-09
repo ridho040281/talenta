@@ -68,7 +68,7 @@
                             <h4 class="text-xl sm:text-2xl font-black text-white font-display">{{ $reg->display_name }}</h4>
                             <p class="text-xs sm:text-sm text-slate-400 flex items-center gap-1.5">
                                 <i data-lucide="school" class="w-4 h-4 text-blue-400 shrink-0"></i>
-                                <span>{{ $reg->institution_name }}</span>
+                                <span>{{ $reg->display_school }}</span>
                             </p>
                         </div>
                         

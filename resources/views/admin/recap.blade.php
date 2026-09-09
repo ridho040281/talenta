@@ -115,7 +115,7 @@
             'id' => $r->id,
             'comp_id' => (string) $r->competition_id,
             'status' => $r->status,
-            'search' => strtolower(($r->team_name ?: ($firstMember?->full_name ?? '')) . ' ' . ($firstMember?->nisn ?? '') . ' ' . $r->institution_name . ' ' . $r->registration_code . ' ' . ($r->competition->name ?? '') . ' ' . ($r->sub_category ?? ''))
+            'search' => strtolower(($r->team_name ?: ($firstMember?->full_name ?? '')) . ' ' . ($firstMember?->nisn ?? '') . ' ' . $r->display_school . ' ' . $r->institution_name . ' ' . $r->registration_code . ' ' . ($r->competition->name ?? '') . ' ' . ($r->sub_category ?? ''))
         ];
     })),
     get filteredItems() {
@@ -483,7 +483,7 @@
                                 <!-- Asal Sekolah / Madrasah -->
                                 <td class="py-3.5 px-4 min-w-[180px]">
                                     <span class="font-bold text-slate-200 block text-xs">
-                                        {{ $reg->institution_name }}
+                                        {{ $reg->display_school }}
                                     </span>
                                 </td>
 

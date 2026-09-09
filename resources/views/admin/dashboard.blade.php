@@ -183,7 +183,7 @@
                                     {{ $reg->registration_code }}
                                 </td>
                                 <td class="py-3.5 px-4 text-slate-300">
-                                    {{ $reg->institution_name }}
+                                    {{ $reg->display_school }}
                                 </td>
                                 <td class="py-3.5 px-4 text-center whitespace-nowrap">
                                     @if($reg->status === 'verified')

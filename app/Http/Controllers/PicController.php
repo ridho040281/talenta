@@ -559,7 +559,22 @@ class PicController extends Controller
             'payment_proof' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
         ]);
 
-        $registration->institution_name = $validated['institution_name'];
+        $finalInstitutionName = trim($validated['institution_name']);
+
+        // Synchronize school name for single participant or ganda
+        if (count($validated['members']) === 1 && ! empty($validated['members'][0]['school_name'])) {
+            $firstSchool = trim($validated['members'][0]['school_name']);
+            // Prioritize the member's school name so that editing "Asal Sekolah Siswa" updates the institution
+            $finalInstitutionName = $firstSchool;
+        } elseif (count($validated['members']) > 1) {
+            $memberSchools = array_unique(array_filter(array_map('trim', array_column($validated['members'], 'school_name'))));
+            // If member schools are multiple and different, and institution_name wasn't custom-changed
+            if (count($memberSchools) > 1 && $validated['institution_name'] === $registration->getOriginal('institution_name')) {
+                $finalInstitutionName = implode(' / ', $memberSchools);
+            }
+        }
+
+        $registration->institution_name = $finalInstitutionName;
         $registration->official_name = $validated['official_name'];
         $registration->official_phone = $validated['official_phone'];
         $registration->team_name = $validated['team_name'] ?? null;
@@ -603,9 +618,10 @@ class PicController extends Controller
             if (! empty($mData['id'])) {
                 $member = RegistrationMember::where('registration_id', $registration->id)->find($mData['id']);
                 if ($member) {
+                    $mSchool = ! empty($mData['school_name']) ? trim($mData['school_name']) : (count($validated['members']) === 1 ? $finalInstitutionName : null);
                     $member->update([
                         'full_name' => $mData['full_name'],
-                        'school_name' => $mData['school_name'] ?? null,
+                        'school_name' => $mSchool,
                         'nisn' => $mData['nisn'] ?? null,
                         'gender' => $mData['gender'],
                         'birth_place' => $mData['birth_place'] ?? null,

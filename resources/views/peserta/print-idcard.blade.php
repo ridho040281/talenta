@@ -92,7 +92,7 @@
                     {{ $registration->display_name }}
                 </h2>
                 <p class="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full inline-block border border-emerald-200">
-                    {{ $registration->institution_name }}
+                    {{ $registration->display_school }}
                 </p>
             </div>
 

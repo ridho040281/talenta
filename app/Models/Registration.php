@@ -50,6 +50,10 @@ class Registration extends Model
         ];
     }
 
+    protected $appends = [
+        'display_school',
+    ];
+
     public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class);
@@ -85,15 +89,39 @@ class Registration extends Model
         return $this->hasMany(DrawAllocation::class);
     }
 
-    public function getDisplayNameAttribute(): string
+    /**
+     * Get display school / institution name for table & reports
+     */
+    public function getDisplaySchoolAttribute(): string
     {
-        if ($this->team_name) {
-            return $this->team_name.' ('.$this->institution_name.')';
+        $members = $this->relationLoaded('members') ? $this->members : $this->members()->get();
+        if ($members && $members->count() === 1 && ! empty($members->first()->school_name)) {
+            return $members->first()->school_name;
         }
 
-        $firstMember = $this->members->first();
+        if ($members && $members->count() > 1) {
+            $uniqueSchools = $members->pluck('school_name')->filter()->unique();
+            if ($uniqueSchools->count() > 1) {
+                return $uniqueSchools->implode(' / ');
+            } elseif ($uniqueSchools->count() === 1) {
+                return $uniqueSchools->first();
+            }
+        }
+
+        return $this->institution_name ?: '-';
+    }
+
+    public function getDisplayNameAttribute(): string
+    {
+        $school = $this->display_school;
+
+        if ($this->team_name) {
+            return $this->team_name.' ('.$school.')';
+        }
+
+        $firstMember = $this->relationLoaded('members') ? $this->members->first() : $this->members()->first();
         if ($firstMember) {
-            return $firstMember->full_name.' ('.$this->institution_name.')';
+            return $firstMember->full_name.' ('.$school.')';
         }
 
         return 'Peserta #'.$this->id;
