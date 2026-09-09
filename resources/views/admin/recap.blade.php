@@ -7,9 +7,9 @@
 <style>
     /* Styling during PNG export to ensure a pristine, widescreen, unclipped infographic */
     .exporting-infographic {
-        width: 1200px !important;
-        min-width: 1200px !important;
-        max-width: 1200px !important;
+        width: 1280px !important;
+        min-width: 1280px !important;
+        max-width: 1280px !important;
         margin: 0 !important;
         padding: 44px 48px !important;
         background-color: #0C111D !important;
@@ -625,35 +625,33 @@
             <div class="absolute inset-0 bg-gradient-to-b from-[#7A5AF8]/10 via-[#4E6EFF]/5 to-transparent pointer-events-none"></div>
 
             <!-- HEADER / JUDUL INFOGRAFIS SESUAI INSTRUKSI -->
-            <div class="text-center relative z-10 space-y-3">
+            <div class="text-center relative z-10 space-y-1 sm:space-y-1.5">
                 @php
                     $recapHeaderLogo = !empty($appSettings['event_logo']) ? $appSettings['event_logo'] : (!empty($appSettings['app_logo']) ? $appSettings['app_logo'] : null);
                 @endphp
                 @if(!empty($recapHeaderLogo))
-                    <div class="flex items-center justify-center mb-3">
+                    <div class="flex items-center justify-center mb-2">
                         <img src="{{ asset('storage/' . $recapHeaderLogo) }}" 
                              alt="Logo" 
                              crossorigin="anonymous"
-                             class="h-20 w-auto max-w-[220px] object-contain drop-shadow-xl">
+                             class="h-32 sm:h-40 md:h-44 w-auto max-w-[360px] sm:max-w-[420px] object-contain drop-shadow-2xl">
                     </div>
                 @endif
 
                 <div class="text-2xl sm:text-3xl lg:text-4xl font-black tracking-wider text-white uppercase font-display drop-shadow-md leading-tight whitespace-nowrap">
                     REKAPITULASI
                 </div>
-                <div class="text-base sm:text-lg lg:text-xl font-extrabold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-blue-200 via-indigo-200 to-purple-200 uppercase leading-snug whitespace-nowrap">
+                <div class="text-base sm:text-lg lg:text-xl font-extrabold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-blue-200 via-indigo-200 to-purple-200 uppercase leading-tight whitespace-nowrap">
                     PENDAFTAR PERLOMBAAN &amp; PERTANDINGAN
                 </div>
-                <div class="py-1">
-                    <div class="text-xl sm:text-2xl lg:text-3xl font-black tracking-wide text-amber-400 uppercase font-display drop-shadow-sm leading-normal whitespace-nowrap inline-block">
-                        TALENTA MILAD KE-57
-                    </div>
+                <div class="text-xl sm:text-2xl lg:text-3xl font-black tracking-wide text-amber-400 uppercase font-display drop-shadow-sm leading-tight whitespace-nowrap inline-block">
+                    TALENTA MILAD KE-57
                 </div>
-                <div class="text-sm sm:text-base font-extrabold tracking-widest text-slate-300 uppercase leading-snug whitespace-nowrap">
+                <div class="text-sm sm:text-base font-extrabold tracking-widest text-slate-300 uppercase leading-tight whitespace-nowrap">
                     {{ $appSettings['institution_name'] ?? 'MTSN 1 BLITAR' }}
                 </div>
                 <div class="pt-0.5">
-                    <span class="inline-block px-5 py-1 rounded-full bg-white/[0.08] border border-white/[0.15] text-xs sm:text-sm font-black text-[#84D0FF] tracking-widest uppercase font-mono">
+                    <span class="inline-block px-5 py-0.5 rounded-full bg-white/[0.08] border border-white/[0.15] text-xs sm:text-sm font-black text-[#84D0FF] tracking-widest uppercase font-mono leading-normal">
                         2026
                     </span>
                 </div>
@@ -684,14 +682,14 @@
                             
                         return '
                         <div>
-                            <div class="flex items-center justify-between text-xs font-bold gap-3">
-                                <span class="text-purple-300 font-black flex items-center gap-1">
-                                    <span class="text-sm leading-none font-sans">∞</span>
+                            <div class="flex items-center justify-between text-sm sm:text-base font-bold gap-3">
+                                <span class="text-purple-300 font-black flex items-center gap-1.5">
+                                    <span class="text-base sm:text-lg leading-none font-sans">∞</span>
                                     <span>Tak Terbatas</span>
                                 </span>
-                                <span class="text-slate-400 font-semibold text-[11px] font-mono">' . $count . ' / ∞</span>
+                                <span class="text-slate-300 font-bold text-xs sm:text-sm font-mono">' . $count . ' / ∞</span>
                             </div>
-                            <div class="w-full bg-white/[0.08] h-2 rounded-full overflow-hidden mt-1 p-0.5 border border-white/[0.05]">
+                            <div class="w-full bg-white/[0.08] h-3 rounded-full overflow-hidden mt-1 p-0.5 border border-white/[0.05]">
                                 ' . $barHtml . '
                             </div>
                         </div>';
@@ -699,17 +697,17 @@
                         $sisa = max(0, $quota - $count);
                         $isFull = ($sisa <= 0);
                         $isLow = ($sisa > 0 && $sisa <= 5);
-                        $textColor = $isFull ? 'text-rose-400 font-black' : ($isLow ? 'text-amber-300 font-black' : 'text-emerald-400 font-extrabold');
+                        $textColor = $isFull ? 'text-rose-400 font-black' : ($isLow ? 'text-amber-300 font-black' : 'text-emerald-400 font-black');
                         $sisaText = $isFull ? 'Penuh' : 'Sisa: ' . $sisa . ' ' . $unit;
                         $barWidth = min(100, ($count / max(1, $quota)) * 100);
                         $barGradient = $isFull ? 'from-rose-500 to-red-600' : ($isLow ? 'from-amber-400 to-orange-500' : 'from-[#7A5AF8] to-[#4E6EFF]');
                         return '
                         <div>
-                            <div class="flex items-center justify-between text-xs font-bold gap-3">
+                            <div class="flex items-center justify-between text-sm sm:text-base font-bold gap-3">
                                 <span class="' . $textColor . '">' . $sisaText . '</span>
-                                <span class="text-slate-400 font-medium text-[11px] font-mono">' . $count . '/' . $quota . '</span>
+                                <span class="text-slate-300 font-bold text-xs sm:text-sm font-mono">' . $count . '/' . $quota . '</span>
                             </div>
-                            <div class="w-full bg-white/[0.08] h-2 rounded-full overflow-hidden mt-1 p-0.5 border border-white/[0.05]">
+                            <div class="w-full bg-white/[0.08] h-3 rounded-full overflow-hidden mt-1 p-0.5 border border-white/[0.05]">
                                 <div class="bg-gradient-to-r ' . $barGradient . ' h-full rounded-full transition-all duration-300" style="width: ' . $barWidth . '%"></div>
                             </div>
                         </div>';
@@ -718,15 +716,15 @@
             @endphp
 
             <div class="rekap-table-container relative z-10 overflow-x-auto rounded-2xl border border-white/[0.08] bg-[#0A0E1A]/80 shadow-xl">
-                <table class="w-full text-left text-sm text-slate-300 border-collapse">
-                    <thead class="text-xs font-bold uppercase tracking-wider bg-[#0C111D]/95 text-slate-400 border-b border-white/[0.08]">
+                <table class="w-full text-left text-sm sm:text-base text-slate-300 border-collapse">
+                    <thead class="text-xs sm:text-sm font-black uppercase tracking-wider bg-[#0C111D]/95 text-slate-200 border-b border-white/[0.08]">
                         <tr>
-                            <th class="py-4 px-6 whitespace-nowrap w-[320px] min-w-[320px]">Nama Lomba</th>
-                            <th class="py-4 px-6 whitespace-nowrap w-[340px] min-w-[340px]">Kategori</th>
-                            <th class="py-4 px-6 whitespace-nowrap w-auto min-w-[440px]">Sisa Kuota</th>
+                            <th class="py-4 px-6 whitespace-nowrap w-[340px] min-w-[340px]">Nama Lomba</th>
+                            <th class="py-4 px-6 whitespace-nowrap w-[360px] min-w-[360px]">Kategori</th>
+                            <th class="py-4 px-6 whitespace-nowrap w-auto min-w-[460px]">Sisa Kuota</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-white/[0.04] font-medium text-xs sm:text-sm">
+                    <tbody class="divide-y divide-white/[0.05] font-medium text-sm sm:text-base">
                         @foreach($competitions as $comp)
                             @php
                                 $isBlt = $comp->code === 'BLT';
@@ -800,34 +798,34 @@
                             <tr x-show="recapCategory === 'all' || recapCategory === '{{ $comp->category->slug ?? '' }}'" class="{{ $rowTheme['bg'] }} {{ $rowTheme['border_l'] }} transition-colors duration-150 border-b border-white/[0.05]">
                                 
                                 <!-- Nama Lomba & Lokasi -->
-                                <td class="py-4 px-6 w-[320px] min-w-[320px] align-middle">
+                                <td class="py-4 px-6 w-[340px] min-w-[340px] align-middle">
                                     <div class="flex items-center gap-2">
-                                        <span class="font-extrabold text-white text-base leading-normal whitespace-nowrap block">
+                                        <span class="font-black text-white text-base sm:text-lg leading-snug whitespace-nowrap block">
                                             {{ $comp->name }}
                                         </span>
                                         @if($comp->code === 'MIPA')
-                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 shadow-sm shadow-amber-500/20 shrink-0 whitespace-nowrap">
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 shadow-sm shadow-amber-500/20 shrink-0 whitespace-nowrap">
                                                 🎁 Bonus 10 Get 1
                                             </span>
                                         @endif
                                     </div>
-                                    <div class="text-[11px] text-slate-400 flex items-center gap-1.5 mt-2 whitespace-nowrap">
-                                        <svg class="w-3.5 h-3.5 text-[#4E6EFF] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+                                    <div class="text-xs sm:text-sm text-slate-300 font-medium flex items-center gap-1.5 mt-2 whitespace-nowrap">
+                                        <svg class="w-4 h-4 text-[#4E6EFF] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
                                         <span>{{ $comp->venue ?? 'Kampus MTsN 1 Blitar' }}</span>
                                     </div>
                                 </td>
 
                                 <!-- Kategori -->
-                                <td class="py-4 px-6 text-xs whitespace-nowrap align-middle w-[340px] min-w-[340px]">
+                                <td class="py-4 px-6 whitespace-nowrap align-middle w-[360px] min-w-[360px]">
                                     @if($isBlt)
                                         <div class="flex flex-col py-1">
                                             <!-- Tunggal PA -->
                                             <div class="flex flex-col justify-center">
-                                                <div class="flex items-center gap-1.5 font-bold text-emerald-400 text-xs mb-1">
-                                                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                                                <div class="flex items-center gap-1.5 font-black text-emerald-400 text-sm mb-1.5">
+                                                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
                                                     <span>Tunggal | PA</span>
                                                 </div>
-                                                <div class="space-y-1.5 text-[10px] text-slate-400 pl-5">
+                                                <div class="space-y-1.5 text-xs sm:text-sm font-semibold text-slate-300 pl-5">
                                                     <div class="py-0.5">Kat A (Kelas 1–2)</div>
                                                     <div class="py-0.5">Kat B (Kelas 3–4)</div>
                                                     <div class="py-0.5">Kat C (Kelas 5–6)</div>
@@ -836,11 +834,11 @@
                                             <div class="border-t border-white/[0.08] my-2"></div>
                                             <!-- Tunggal PI -->
                                             <div class="flex flex-col justify-center">
-                                                <div class="flex items-center gap-1.5 font-bold text-pink-400 text-xs mb-1">
-                                                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                                                <div class="flex items-center gap-1.5 font-black text-pink-400 text-sm mb-1.5">
+                                                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
                                                     <span>Tunggal | PI</span>
                                                 </div>
-                                                <div class="space-y-1.5 text-[10px] text-slate-400 pl-5">
+                                                <div class="space-y-1.5 text-xs sm:text-sm font-semibold text-slate-300 pl-5">
                                                     <div class="py-0.5">Kat A (Kelas 1–2)</div>
                                                     <div class="py-0.5">Kat B (Kelas 3–4)</div>
                                                     <div class="py-0.5">Kat C (Kelas 5–6)</div>
@@ -848,31 +846,31 @@
                                             </div>
                                             <div class="border-t border-white/[0.08] my-2"></div>
                                             <!-- Ganda PA -->
-                                            <div class="py-0.5 flex items-center gap-1.5 font-bold text-[#A594FD] text-xs">
-                                                <svg class="w-3.5 h-3.5 shrink-0 text-[#7A5AF8]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.999-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
+                                            <div class="py-0.5 flex items-center gap-1.5 font-black text-[#A594FD] text-sm">
+                                                <svg class="w-4 h-4 shrink-0 text-[#7A5AF8]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.999-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
                                                 <span>Ganda | PA</span>
                                             </div>
                                             <div class="border-t border-white/[0.08] my-2"></div>
                                             <!-- Ganda PI -->
-                                            <div class="py-0.5 flex items-center gap-1.5 font-bold text-amber-300 text-xs">
-                                                <svg class="w-3.5 h-3.5 shrink-0 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.999-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
+                                            <div class="py-0.5 flex items-center gap-1.5 font-black text-amber-300 text-sm">
+                                                <svg class="w-4 h-4 shrink-0 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.999-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
                                                 <span>Ganda | PI</span>
                                             </div>
                                         </div>
                                     @elseif($isMtqPop)
-                                        <div class="flex items-center gap-1.5 font-bold text-emerald-400 text-xs py-1">
-                                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.999-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
+                                        <div class="flex items-center gap-2 font-black text-emerald-400 text-sm sm:text-base py-1">
+                                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.999-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
                                             <span>Individu (PA &amp; PI)</span>
                                         </div>
                                     @elseif($isTmj)
                                         <div class="flex flex-col py-1">
                                             <!-- Tunggal PA -->
                                             <div class="flex flex-col justify-center">
-                                                <div class="flex items-center gap-1.5 font-bold text-emerald-400 text-xs mb-1">
-                                                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                                                <div class="flex items-center gap-1.5 font-black text-emerald-400 text-sm mb-1.5">
+                                                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
                                                     <span>Tunggal | PA</span>
                                                 </div>
-                                                <div class="space-y-1.5 text-[10px] text-slate-400 pl-5">
+                                                <div class="space-y-1.5 text-xs sm:text-sm font-semibold text-slate-300 pl-5">
                                                     <div class="py-0.5">Kat A (Kelas 1–3)</div>
                                                     <div class="py-0.5">Kat B (Kelas 4–6)</div>
                                                 </div>
@@ -880,25 +878,25 @@
                                             <div class="border-t border-white/[0.08] my-2"></div>
                                             <!-- Tunggal PI -->
                                             <div class="flex flex-col justify-center">
-                                                <div class="flex items-center gap-1.5 font-bold text-pink-400 text-xs mb-1">
-                                                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                                                <div class="flex items-center gap-1.5 font-black text-pink-400 text-sm mb-1.5">
+                                                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
                                                     <span>Tunggal | PI</span>
                                                 </div>
-                                                <div class="space-y-1.5 text-[10px] text-slate-400 pl-5">
+                                                <div class="space-y-1.5 text-xs sm:text-sm font-semibold text-slate-300 pl-5">
                                                     <div class="py-0.5">Kat A (Kelas 1–3)</div>
                                                     <div class="py-0.5">Kat B (Kelas 4–6)</div>
                                                 </div>
                                             </div>
                                         </div>
                                     @else
-                                        <span class="capitalize text-slate-200 font-bold text-xs">{{ $comp->type }}</span>
+                                        <span class="capitalize text-slate-100 font-extrabold text-sm sm:text-base">{{ $comp->type }}</span>
                                     @endif
                                 </td>
 
                                 <!-- Sisa Kuota & Progress Bar -->
-                                <td class="py-4 px-6 whitespace-nowrap align-middle w-auto min-w-[440px]">
+                                <td class="py-4 px-6 whitespace-nowrap align-middle w-auto min-w-[460px]">
                                     @if($isBlt)
-                                        <div class="flex flex-col py-1 text-slate-400 text-xs w-full">
+                                        <div class="flex flex-col py-1 text-slate-400 text-xs sm:text-sm w-full">
                                             <!-- Kuota Tunggal PA -->
                                             <div class="space-y-1.5">
                                                 {!! $renderTierQuota($countBltTunggalPaA, $comp->tier_quotas['A_tunggal_pa'] ?? 16, 'Peserta') !!}
@@ -926,25 +924,25 @@
                                             {!! $renderTierQuota($countBltGandaPi, $comp->tier_quotas['ganda_pi'] ?? 0, 'Pasangan') !!}
                                         </div>
                                     @elseif($isMtqPop)
-                                        <div class="flex flex-col py-1 text-slate-400 text-xs w-full space-y-2">
+                                        <div class="flex flex-col py-1 text-slate-400 text-xs sm:text-sm w-full space-y-2">
                                             <!-- Main Combined Quota Bar -->
                                             {!! $renderTierQuota($totalMtqPop, $quotaMtqPop, 'Peserta') !!}
                                             
                                             <!-- Gender Composition Breakdown -->
-                                            <div class="flex items-center justify-between gap-1.5 px-2.5 py-1 rounded-xl bg-white/[0.04] border border-white/[0.08] text-[10px] font-bold">
-                                                <span class="text-cyan-300 flex items-center gap-1">
-                                                    <svg class="w-3 h-3 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
-                                                    <span>{{ $countPa }} Putra</span>
+                                            <div class="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-white/[0.05] border border-white/[0.1] text-xs sm:text-sm font-bold">
+                                                <span class="text-cyan-300 flex items-center gap-1.5">
+                                                    <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                                                    <span class="font-extrabold">{{ $countPa }} Putra</span>
                                                 </span>
                                                 <span class="text-slate-500">•</span>
-                                                <span class="text-pink-300 flex items-center gap-1">
-                                                    <svg class="w-3 h-3 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
-                                                    <span>{{ $countPi }} Putri</span>
+                                                <span class="text-pink-300 flex items-center gap-1.5">
+                                                    <svg class="w-3.5 h-3.5 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                                                    <span class="font-extrabold">{{ $countPi }} Putri</span>
                                                 </span>
                                             </div>
                                         </div>
                                     @elseif($isTmj)
-                                        <div class="flex flex-col py-1 text-slate-400 text-xs w-full">
+                                        <div class="flex flex-col py-1 text-slate-400 text-xs sm:text-sm w-full">
                                             <!-- Kuota Tunggal PA -->
                                             <div class="space-y-1.5">
                                                 {!! $renderTierQuota($countTmjTunggalPaA, $comp->tier_quotas['A_tunggal_pa'] ?? 10, 'Peserta') !!}
@@ -977,15 +975,15 @@
                                             @endphp
                                             <div class="space-y-1.5 w-full">
                                                 <div class="flex items-center justify-between gap-3">
-                                                    <span class="text-xs sm:text-sm text-purple-300 font-black flex items-center gap-1">
-                                                        <span class="text-sm leading-none font-sans">∞</span>
+                                                    <span class="text-sm sm:text-base text-purple-300 font-black flex items-center gap-1.5">
+                                                        <span class="text-base sm:text-lg leading-none font-sans">∞</span>
                                                         <span>Tak Terbatas</span>
                                                     </span>
-                                                    <span class="text-[11px] sm:text-xs font-semibold text-slate-400 font-mono">
+                                                    <span class="text-xs sm:text-sm font-bold text-slate-300 font-mono">
                                                         {{ $regCount }} / ∞
                                                     </span>
                                                 </div>
-                                                <div class="w-full bg-white/[0.08] h-2.5 rounded-full overflow-hidden p-0.5 border border-white/[0.05]">
+                                                <div class="w-full bg-white/[0.08] h-3 rounded-full overflow-hidden p-0.5 border border-white/[0.05]">
                                                     @if($hasRegs)
                                                         <div class="bg-gradient-to-r from-purple-500 via-indigo-500 to-[#4E6EFF] h-full rounded-full shadow-sm shadow-purple-500/30" style="width: {{ $barWidth }}%"></div>
                                                     @else
@@ -1001,14 +999,14 @@
                                             @endphp
                                             <div class="space-y-1.5 w-full">
                                                 <div class="flex items-center justify-between gap-3">
-                                                    <span class="text-xs sm:text-sm {{ $isFull ? 'text-rose-400 font-black' : ($isLow ? 'text-amber-300 font-black' : 'text-emerald-400 font-black') }}">
+                                                    <span class="text-sm sm:text-base {{ $isFull ? 'text-rose-400 font-black' : ($isLow ? 'text-amber-300 font-black' : 'text-emerald-400 font-black') }}">
                                                         {{ $isFull ? 'Kuota Penuh' : 'Sisa: ' . $sisa . ' ' . $unitWord }}
                                                     </span>
-                                                    <span class="text-[11px] sm:text-xs font-semibold text-slate-400 font-mono">
+                                                    <span class="text-xs sm:text-sm font-bold text-slate-300 font-mono">
                                                         {{ $regCount }}/{{ $regQuota }}
                                                     </span>
                                                 </div>
-                                                <div class="w-full bg-white/[0.08] h-2.5 rounded-full overflow-hidden p-0.5 border border-white/[0.05]">
+                                                <div class="w-full bg-white/[0.08] h-3 rounded-full overflow-hidden p-0.5 border border-white/[0.05]">
                                                     <div class="bg-gradient-to-r {{ $isFull ? 'from-rose-500 to-red-600' : ($isLow ? 'from-amber-400 to-orange-500' : 'from-[#7A5AF8] to-[#4E6EFF]') }} h-full rounded-full transition-all duration-300 shadow-sm" style="width: {{ min(100, ($regCount / max(1, $regQuota)) * 100) }}%"></div>
                                                 </div>
                                             </div>
