@@ -18,7 +18,7 @@
         window.location.href = '{{ route('admin.berita-acara.index') }}?competition_id=' + id + '&tab=' + this.activeTab;
     },
     
-    printLive() {
+    printLive(sector = null) {
         const url = new URL('{{ route('admin.berita-acara.print') }}', window.location.origin);
         url.searchParams.set('competition_id', this.selectedCompId);
         url.searchParams.set('type', 'live');
@@ -28,13 +28,19 @@
         url.searchParams.set('judge1', this.judge1);
         url.searchParams.set('judge2', this.judge2);
         url.searchParams.set('judge3', this.judge3);
+        if (sector) {
+            url.searchParams.set('sector', sector);
+        }
         window.open(url.toString(), '_blank');
     },
 
-    printBlank() {
+    printBlank(sector = null) {
         const url = new URL('{{ route('admin.berita-acara.print') }}', window.location.origin);
         url.searchParams.set('competition_id', this.selectedCompId);
         url.searchParams.set('type', 'blank');
+        if (sector) {
+            url.searchParams.set('sector', sector);
+        }
         window.open(url.toString(), '_blank');
     }
 }">
@@ -132,14 +138,22 @@
             <div class="space-y-6">
                 @foreach($sectorsData as $secKey => $sector)
                     <div class="ai-card p-5 rounded-3xl border border-white/[0.08] shadow-lg space-y-3">
-                        <div class="flex items-center justify-between">
+                        <div class="flex items-center justify-between flex-wrap gap-2">
                             <div class="flex items-center gap-2">
                                 <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
                                 <h4 class="font-bold text-white text-sm sm:text-base">{{ $sector['definition']['title'] }}</h4>
                             </div>
-                            <span class="text-[11px] text-slate-400 font-medium">
-                                {{ $sector['total_participants'] }} Peserta Terverifikasi
-                            </span>
+                            <div class="flex items-center gap-3">
+                                <span class="text-[11px] text-slate-400 font-medium">
+                                    {{ $sector['total_participants'] }} Peserta Terverifikasi
+                                </span>
+                                @if(count($sectorsData) > 1)
+                                    <button type="button" @click="printLive('{{ $secKey }}')" class="px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-300 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
+                                        <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                                        <span>Cetak Kategori Ini</span>
+                                    </button>
+                                @endif
+                            </div>
                         </div>
 
                         <div class="overflow-x-auto">

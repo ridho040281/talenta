@@ -173,11 +173,13 @@ class OfficialReportController extends Controller
                 $ranked = $filteredRegs->map(function ($r) {
                     $lockedScores = $r->scores->where('is_locked', true);
                     $avgScore = $lockedScores->isNotEmpty() ? round($lockedScores->avg('total_score'), 2) : 0;
+                    $participantName = $r->pure_name ?: ($r->team_name ?: ($r->members->first()?->full_name ?? ('Peserta #' . $r->id)));
+                    $schoolName = $r->display_school ?: ($r->institution_name ?: '-');
                     return [
                         'registration' => $r,
                         'participant_number' => $r->participant_number ?: $r->registration_code,
-                        'display_name' => $r->display_name,
-                        'institution_name' => $r->institution_name,
+                        'display_name' => $participantName,
+                        'institution_name' => $schoolName,
                         'score' => $avgScore > 0 ? $avgScore : '',
                     ];
                 })->sortByDesc(fn($item) => (float) $item['score'])->values();
@@ -249,6 +251,11 @@ class OfficialReportController extends Controller
         $isSports = self::isSportsCompetition($competition);
         $sectorsDef = self::getCompetitionSectors($competition);
 
+        $sectorFilter = $request->query('sector');
+        if ($sectorFilter && isset($sectorsDef[$sectorFilter])) {
+            $sectorsDef = [$sectorFilter => $sectorsDef[$sectorFilter]];
+        }
+
         // Date customization from query or current date
         $reqDate = $request->query('date');
         $carbonDate = $reqDate ? Carbon::parse($reqDate) : Carbon::now();
@@ -318,10 +325,12 @@ class OfficialReportController extends Controller
                     $ranked = $filteredRegs->map(function ($r) {
                         $lockedScores = $r->scores->where('is_locked', true);
                         $avgScore = $lockedScores->isNotEmpty() ? round($lockedScores->avg('total_score'), 2) : 0;
+                        $participantName = $r->pure_name ?: ($r->team_name ?: ($r->members->first()?->full_name ?? ('Peserta #' . $r->id)));
+                        $schoolName = $r->display_school ?: ($r->institution_name ?: '-');
                         return [
                             'no_peserta' => $r->participant_number ?: $r->registration_code,
-                            'nama' => $r->display_name,
-                            'sekolah' => $r->institution_name,
+                            'nama' => $participantName,
+                            'sekolah' => $schoolName,
                             'nilai' => $avgScore > 0 ? (string) $avgScore : '',
                         ];
                     })->sortByDesc(fn($item) => (float) $item['nilai'])->values();
