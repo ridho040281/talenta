@@ -134,12 +134,11 @@ class Registration extends Model
             $feeB = (float) AppSetting::get($isPutri ? 'blt_fee_b_tunggal_pi' : 'blt_fee_b_tunggal_pa', 150000);
             $feeC = (float) AppSetting::get($isPutri ? 'blt_fee_c_tunggal_pi' : 'blt_fee_c_tunggal_pa', 150000);
 
-            $target = ($this->target_class ?? '').' '.($this->sub_category ?? '');
-            if (stripos($target, 'Kategori A') !== false || stripos($target, 'Kat A') !== false || stripos($target, '-A-') !== false) {
+            if ($this->isKatA()) {
                 return $feeA;
-            } elseif (stripos($target, 'Kategori B') !== false || stripos($target, 'Kat B') !== false || stripos($target, '-B-') !== false) {
+            } elseif ($this->isKatB()) {
                 return $feeB;
-            } elseif (stripos($target, 'Kategori C') !== false || stripos($target, 'Kat C') !== false || stripos($target, '-C-') !== false) {
+            } elseif ($this->isKatC()) {
                 return $feeC;
             }
 
@@ -148,8 +147,7 @@ class Registration extends Model
 
         if ($this->competition->code === 'TMJ') {
             $isPutri = stripos($this->match_type ?? '', 'Putri') !== false || stripos($this->match_type ?? '', '(PI)') !== false || $this->primary_gender === 'P';
-            $target = ($this->target_class ?? '').' '.($this->sub_category ?? '');
-            if (stripos($target, 'Kategori B') !== false || stripos($target, 'Kat B') !== false || stripos($target, '4 - 6') !== false) {
+            if ($this->isKatB()) {
                 return (float) AppSetting::get($isPutri ? 'tmj_fee_b_tunggal_pi' : 'tmj_fee_b_tunggal_pa', $this->competition->registration_fee ?: 35000);
             }
             return (float) AppSetting::get($isPutri ? 'tmj_fee_a_tunggal_pi' : 'tmj_fee_a_tunggal_pa', $this->competition->registration_fee ?: 35000);
@@ -321,5 +319,36 @@ class Registration extends Model
     public function getPicNameAttribute(): string
     {
         return $this->pic_user?->name ?: ($this->competition?->pic?->name ?: ($this->verifier?->name ?: 'PANITIA PELAKSANA'));
+    }
+
+    public function isGanda(): bool
+    {
+        return $this->members->count() > 1
+            || (stripos($this->match_type ?? '', 'ganda') !== false && stripos($this->match_type ?? '', 'tunggal') === false)
+            || (empty($this->match_type) && stripos($this->sub_category ?? '', 'ganda') !== false && stripos($this->sub_category ?? '', 'tunggal') === false);
+    }
+
+    public function isKatA(): bool
+    {
+        $targetStr = strtolower(($this->target_class ?? '') . ' ' . ($this->sub_category ?? '') . ' ' . ($this->team_name ?? '') . ' ' . ($this->match_type ?? ''));
+        if ($this->competition?->code === 'TMJ') {
+            return stripos($targetStr, 'kategori a') !== false || stripos($targetStr, 'kat a') !== false || stripos($targetStr, '1 - 3') !== false || stripos($targetStr, '1-3') !== false || stripos($targetStr, 'kelas 1') !== false || stripos($targetStr, 'kelas 2') !== false || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, '-a-') !== false || stripos($targetStr, 'kat_a') !== false;
+        }
+        return stripos($targetStr, 'kategori a') !== false || stripos($targetStr, 'kat a') !== false || stripos($targetStr, 'kelas 1') !== false || stripos($targetStr, 'kelas 2') !== false || stripos($targetStr, '-a-') !== false || stripos($targetStr, 'kat_a') !== false;
+    }
+
+    public function isKatB(): bool
+    {
+        $targetStr = strtolower(($this->target_class ?? '') . ' ' . ($this->sub_category ?? '') . ' ' . ($this->team_name ?? '') . ' ' . ($this->match_type ?? ''));
+        if ($this->competition?->code === 'TMJ') {
+            return stripos($targetStr, 'kategori b') !== false || stripos($targetStr, 'kat b') !== false || stripos($targetStr, '4 - 6') !== false || stripos($targetStr, '4-6') !== false || stripos($targetStr, 'kelas 4') !== false || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '-b-') !== false || stripos($targetStr, 'kat_b') !== false;
+        }
+        return stripos($targetStr, 'kategori b') !== false || stripos($targetStr, 'kat b') !== false || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, 'kelas 4') !== false || stripos($targetStr, '-b-') !== false || stripos($targetStr, 'kat_b') !== false;
+    }
+
+    public function isKatC(): bool
+    {
+        $targetStr = strtolower(($this->target_class ?? '') . ' ' . ($this->sub_category ?? '') . ' ' . ($this->team_name ?? '') . ' ' . ($this->match_type ?? ''));
+        return stripos($targetStr, 'kategori c') !== false || stripos($targetStr, 'kat c') !== false || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '-c-') !== false || stripos($targetStr, 'kat_c') !== false;
     }
 }

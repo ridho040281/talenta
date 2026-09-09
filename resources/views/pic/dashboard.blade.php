@@ -207,30 +207,16 @@
     },
     items: @js($allRegistrations->map(function($r) {
         $firstMember = $r->members->first();
-        $isGanda = $r->members->count() > 1 || (stripos($r->match_type ?? '', 'ganda') !== false && stripos($r->match_type ?? '', 'tunggal') === false) || (empty($r->match_type) && stripos($r->sub_category ?? '', 'ganda') !== false && stripos($r->sub_category ?? '', 'tunggal') === false);
-        $targetStr = strtolower(($r->target_class ?? '') . ' ' . ($r->sub_category ?? '') . ' ' . ($r->team_name ?? '') . ' ' . ($r->match_type ?? ''));
-        $gender = $r->primary_gender;
-        $compCode = $r->competition?->code ?? '';
-
-        if ($compCode === 'TMJ') {
-            $isKatA = (stripos($targetStr, 'kategori a') !== false || stripos($targetStr, 'kat a') !== false || stripos($targetStr, '1 - 3') !== false || stripos($targetStr, '1-3') !== false || stripos($targetStr, 'kelas 1') !== false || stripos($targetStr, 'kelas 2') !== false || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, '-a-') !== false || stripos($targetStr, 'kat_a') !== false);
-            $isKatB = (stripos($targetStr, 'kategori b') !== false || stripos($targetStr, 'kat b') !== false || stripos($targetStr, '4 - 6') !== false || stripos($targetStr, '4-6') !== false || stripos($targetStr, 'kelas 4') !== false || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '-b-') !== false || stripos($targetStr, 'kat_b') !== false);
-            $isKatC = false;
-        } else {
-            $isKatA = (stripos($targetStr, 'kategori a') !== false || stripos($targetStr, 'kat a') !== false || stripos($targetStr, 'kelas 1') !== false || stripos($targetStr, 'kelas 2') !== false || stripos($targetStr, '-a-') !== false || stripos($targetStr, 'kat_a') !== false);
-            $isKatB = (stripos($targetStr, 'kategori b') !== false || stripos($targetStr, 'kat b') !== false || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, 'kelas 4') !== false || stripos($targetStr, '-b-') !== false || stripos($targetStr, 'kat_b') !== false);
-            $isKatC = (stripos($targetStr, 'kategori c') !== false || stripos($targetStr, 'kat c') !== false || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '-c-') !== false || stripos($targetStr, 'kat_c') !== false);
-        }
 
         return [
             'id' => $r->id,
             'comp_id' => (string) $r->competition_id,
-            'gender' => $gender,
+            'gender' => $r->primary_gender,
             'status' => $r->status,
-            'is_ganda' => $isGanda,
-            'is_kat_a' => $isKatA,
-            'is_kat_b' => $isKatB,
-            'is_kat_c' => $isKatC,
+            'is_ganda' => $r->isGanda(),
+            'is_kat_a' => $r->isKatA(),
+            'is_kat_b' => $r->isKatB(),
+            'is_kat_c' => $r->isKatC(),
             'search' => strtolower($r->display_name . ' ' . $r->registration_code . ' ' . ($r->participant_number ?? '') . ' ' . $r->institution_name . ' ' . ($firstMember?->nisn ?? ''))
         ];
     })),

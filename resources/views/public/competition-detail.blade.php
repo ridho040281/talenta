@@ -170,16 +170,16 @@
                         $detailTiers = [];
 
                         if ($isBlt) {
-                            $countBltTunggalPaA = $vRegs->filter(fn($r) => $r->primary_gender === 'L' && $r->members->count() <= 1 && (stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'a') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'kelas 1') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'kelas 2') !== false))->count();
-                            $countBltTunggalPaB = $vRegs->filter(fn($r) => $r->primary_gender === 'L' && $r->members->count() <= 1 && (stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'b') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'kelas 3') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'kelas 4') !== false))->count();
-                            $countBltTunggalPaC = $vRegs->filter(fn($r) => $r->primary_gender === 'L' && $r->members->count() <= 1 && (stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'c') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'kelas 5') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'kelas 6') !== false))->count();
+                            $countBltTunggalPaA = $vRegs->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'L' && $r->isKatA())->count();
+                            $countBltTunggalPaB = $vRegs->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'L' && $r->isKatB())->count();
+                            $countBltTunggalPaC = $vRegs->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'L' && $r->isKatC())->count();
                             
-                            $countBltTunggalPiA = $vRegs->filter(fn($r) => $r->primary_gender === 'P' && $r->members->count() <= 1 && (stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'a') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'kelas 1') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'kelas 2') !== false))->count();
-                            $countBltTunggalPiB = $vRegs->filter(fn($r) => $r->primary_gender === 'P' && $r->members->count() <= 1 && (stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'b') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'kelas 3') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'kelas 4') !== false))->count();
-                            $countBltTunggalPiC = $vRegs->filter(fn($r) => $r->primary_gender === 'P' && $r->members->count() <= 1 && (stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'c') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'kelas 5') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'kelas 6') !== false))->count();
+                            $countBltTunggalPiA = $vRegs->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'P' && $r->isKatA())->count();
+                            $countBltTunggalPiB = $vRegs->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'P' && $r->isKatB())->count();
+                            $countBltTunggalPiC = $vRegs->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'P' && $r->isKatC())->count();
                             
-                            $countBltGandaPa = $vRegs->filter(fn($r) => $r->primary_gender === 'L' && ($r->members->count() > 1 || stripos($r->match_type ?? '', 'ganda') !== false || stripos($r->sub_category ?? '', 'ganda') !== false))->count();
-                            $countBltGandaPi = $vRegs->filter(fn($r) => $r->primary_gender === 'P' && ($r->members->count() > 1 || stripos($r->match_type ?? '', 'ganda') !== false || stripos($r->sub_category ?? '', 'ganda') !== false))->count();
+                            $countBltGandaPa = $vRegs->filter(fn($r) => $r->isGanda() && $r->primary_gender === 'L')->count();
+                            $countBltGandaPi = $vRegs->filter(fn($r) => $r->isGanda() && $r->primary_gender === 'P')->count();
 
                             $detailTiers = [
                                 ['group' => 'Tunggal Putra (PA)', 'icon' => 'user', 'color' => 'emerald', 'name' => 'Kat A (Kelas 1–2 SD/MI)', 'fee' => $competition->tier_fees['A_tunggal_pa'] ?? 130000, 'quota' => $competition->tier_quotas['A_tunggal_pa'] ?? 16, 'count' => $countBltTunggalPaA, 'unit' => 'Peserta'],
@@ -194,10 +194,10 @@
                                 ['group' => 'Nomor Ganda (Kls 3–6)', 'icon' => 'users', 'color' => 'purple', 'name' => 'Ganda Putri (PI)', 'fee' => $competition->tier_fees['ganda_pi'] ?? 200000, 'quota' => $competition->tier_quotas['ganda_pi'] ?? 10, 'count' => $countBltGandaPi, 'unit' => 'Pasangan'],
                             ];
                         } elseif ($isTmj) {
-                            $countTmjTunggalPaA = $vRegs->filter(fn($r) => $r->primary_gender === 'L' && (stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'a') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), '1') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), '2') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), '3') !== false))->count();
-                            $countTmjTunggalPaB = $vRegs->filter(fn($r) => $r->primary_gender === 'L' && (stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'b') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), '4') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), '5') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), '6') !== false))->count();
-                            $countTmjTunggalPiA = $vRegs->filter(fn($r) => $r->primary_gender === 'P' && (stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'a') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), '1') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), '2') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), '3') !== false))->count();
-                            $countTmjTunggalPiB = $vRegs->filter(fn($r) => $r->primary_gender === 'P' && (stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), 'b') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), '4') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), '5') !== false || stripos(($r->target_class ?? '') . ' ' . ($r->sub_category ?? ''), '6') !== false))->count();
+                            $countTmjTunggalPaA = $vRegs->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'L' && $r->isKatA())->count();
+                            $countTmjTunggalPaB = $vRegs->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'L' && $r->isKatB())->count();
+                            $countTmjTunggalPiA = $vRegs->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'P' && $r->isKatA())->count();
+                            $countTmjTunggalPiB = $vRegs->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'P' && $r->isKatB())->count();
 
                             $detailTiers = [
                                 ['group' => 'Tunggal Putra (PA)', 'icon' => 'user', 'color' => 'emerald', 'name' => 'Kat A (Kelas 1–3 SD/MI)', 'fee' => $competition->tier_fees['A_tunggal_pa'] ?? 35000, 'quota' => $competition->tier_quotas['A_tunggal_pa'] ?? 10, 'count' => $countTmjTunggalPaA, 'unit' => 'Peserta'],

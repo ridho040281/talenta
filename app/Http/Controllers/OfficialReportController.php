@@ -147,10 +147,8 @@ class OfficialReportController extends Controller
             foreach ($sectorsDef as $secKey => $secDef) {
                 // Filter registrations belonging to this sector
                 $filteredRegs = $regs->filter(function ($r) use ($secDef, $selectedComp) {
-                    $firstMember = $r->members->first();
-                    $isGanda = $r->members->count() > 1 || (stripos($r->match_type ?? '', 'ganda') !== false && stripos($r->match_type ?? '', 'tunggal') === false) || (empty($r->match_type) && stripos($r->sub_category ?? '', 'ganda') !== false && stripos($r->sub_category ?? '', 'tunggal') === false);
+                    $isGanda = $r->isGanda();
                     $gender = $r->primary_gender;
-                    $targetStr = strtolower(($r->target_class ?? '') . ' ' . ($r->sub_category ?? '') . ' ' . ($r->team_name ?? '') . ' ' . ($r->match_type ?? ''));
 
                     // Match Ganda
                     if ($secDef['is_ganda'] && !$isGanda) return false;
@@ -161,19 +159,11 @@ class OfficialReportController extends Controller
 
                     // Match Category / Class
                     if ($secDef['kat'] === 'a') {
-                        $isA = (stripos($targetStr, 'kategori a') !== false || stripos($targetStr, 'kat a') !== false || stripos($targetStr, 'kelas 1') !== false || stripos($targetStr, 'kelas 2') !== false || stripos($targetStr, '-a-') !== false || stripos($targetStr, 'kat_a') !== false);
-                        if ($selectedComp->code === 'TMJ') {
-                            $isA = ($isA || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, '1 - 3') !== false || stripos($targetStr, '1-3') !== false);
-                        }
-                        return $isA;
+                        return $r->isKatA();
                     } elseif ($secDef['kat'] === 'b') {
-                        $isB = (stripos($targetStr, 'kategori b') !== false || stripos($targetStr, 'kat b') !== false || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, 'kelas 4') !== false || stripos($targetStr, '-b-') !== false || stripos($targetStr, 'kat_b') !== false);
-                        if ($selectedComp->code === 'TMJ') {
-                            $isB = ($isB || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '4 - 6') !== false || stripos($targetStr, '4-6') !== false);
-                        }
-                        return $isB;
+                        return $r->isKatB();
                     } elseif ($secDef['kat'] === 'c') {
-                        return (stripos($targetStr, 'kategori c') !== false || stripos($targetStr, 'kat c') !== false || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '-c-') !== false || stripos($targetStr, 'kat_c') !== false);
+                        return $r->isKatC();
                     }
 
                     return true;
@@ -307,28 +297,19 @@ class OfficialReportController extends Controller
                 } else {
                     // Auto-rank from system scores
                     $filteredRegs = $regs->filter(function ($r) use ($secDef, $competition) {
-                        $isGanda = $r->members->count() > 1 || (stripos($r->match_type ?? '', 'ganda') !== false && stripos($r->match_type ?? '', 'tunggal') === false) || (empty($r->match_type) && stripos($r->sub_category ?? '', 'ganda') !== false && stripos($r->sub_category ?? '', 'tunggal') === false);
+                        $isGanda = $r->isGanda();
                         $gender = $r->primary_gender;
-                        $targetStr = strtolower(($r->target_class ?? '') . ' ' . ($r->sub_category ?? '') . ' ' . ($r->team_name ?? '') . ' ' . ($r->match_type ?? ''));
 
                         if ($secDef['is_ganda'] && !$isGanda) return false;
                         if (!$secDef['is_ganda'] && $isGanda && in_array($competition->code, ['BLT', 'TMJ'])) return false;
                         if ($secDef['gender'] !== 'all' && $gender !== $secDef['gender']) return false;
 
                         if ($secDef['kat'] === 'a') {
-                            $isA = (stripos($targetStr, 'kategori a') !== false || stripos($targetStr, 'kat a') !== false || stripos($targetStr, 'kelas 1') !== false || stripos($targetStr, 'kelas 2') !== false || stripos($targetStr, '-a-') !== false || stripos($targetStr, 'kat_a') !== false);
-                            if ($competition->code === 'TMJ') {
-                                $isA = ($isA || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, '1 - 3') !== false || stripos($targetStr, '1-3') !== false);
-                            }
-                            return $isA;
+                            return $r->isKatA();
                         } elseif ($secDef['kat'] === 'b') {
-                            $isB = (stripos($targetStr, 'kategori b') !== false || stripos($targetStr, 'kat b') !== false || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, 'kelas 4') !== false || stripos($targetStr, '-b-') !== false || stripos($targetStr, 'kat_b') !== false);
-                            if ($competition->code === 'TMJ') {
-                                $isB = ($isB || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '4 - 6') !== false || stripos($targetStr, '4-6') !== false);
-                            }
-                            return $isB;
+                            return $r->isKatB();
                         } elseif ($secDef['kat'] === 'c') {
-                            return (stripos($targetStr, 'kategori c') !== false || stripos($targetStr, 'kat c') !== false || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '-c-') !== false || stripos($targetStr, 'kat_c') !== false);
+                            return $r->isKatC();
                         }
 
                         return true;

@@ -869,27 +869,10 @@ class AdminController extends Controller
             $breakdown = [];
 
             if ($comp->code === 'BLT') {
-                $katA = $regs->filter(function($r) {
-                    $isGanda = $r->members->count() > 1 || (stripos($r->match_type ?? '', 'ganda') !== false && stripos($r->match_type ?? '', 'tunggal') === false);
-                    $targetStr = strtolower(($r->target_class ?? '') . ' ' . ($r->sub_category ?? '') . ' ' . ($r->team_name ?? ''));
-                    return !$isGanda && (stripos($targetStr, 'kategori a') !== false || stripos($targetStr, 'kat a') !== false || stripos($targetStr, 'kelas 1') !== false || stripos($targetStr, 'kelas 2') !== false || stripos($targetStr, '-a-') !== false || stripos($targetStr, 'kat_a') !== false);
-                });
-
-                $katB = $regs->filter(function($r) {
-                    $isGanda = $r->members->count() > 1 || (stripos($r->match_type ?? '', 'ganda') !== false && stripos($r->match_type ?? '', 'tunggal') === false);
-                    $targetStr = strtolower(($r->target_class ?? '') . ' ' . ($r->sub_category ?? '') . ' ' . ($r->team_name ?? ''));
-                    return !$isGanda && (stripos($targetStr, 'kategori b') !== false || stripos($targetStr, 'kat b') !== false || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, 'kelas 4') !== false || stripos($targetStr, '-b-') !== false || stripos($targetStr, 'kat_b') !== false);
-                });
-
-                $katC = $regs->filter(function($r) {
-                    $isGanda = $r->members->count() > 1 || (stripos($r->match_type ?? '', 'ganda') !== false && stripos($r->match_type ?? '', 'tunggal') === false);
-                    $targetStr = strtolower(($r->target_class ?? '') . ' ' . ($r->sub_category ?? '') . ' ' . ($r->team_name ?? ''));
-                    return !$isGanda && (stripos($targetStr, 'kategori c') !== false || stripos($targetStr, 'kat c') !== false || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '-c-') !== false || stripos($targetStr, 'kat_c') !== false);
-                });
-
-                $ganda = $regs->filter(function($r) {
-                    return $r->members->count() > 1 || (stripos($r->match_type ?? '', 'ganda') !== false && stripos($r->match_type ?? '', 'tunggal') === false) || (empty($r->match_type) && stripos($r->sub_category ?? '', 'ganda') !== false && stripos($r->sub_category ?? '', 'tunggal') === false);
-                });
+                $katA = $regs->filter(fn($r) => !$r->isGanda() && $r->isKatA());
+                $katB = $regs->filter(fn($r) => !$r->isGanda() && $r->isKatB());
+                $katC = $regs->filter(fn($r) => !$r->isGanda() && $r->isKatC());
+                $ganda = $regs->filter(fn($r) => $r->isGanda());
 
                 $breakdown = [
                     [
@@ -926,15 +909,8 @@ class AdminController extends Controller
                     ],
                 ];
             } elseif ($comp->code === 'TMJ') {
-                $katA = $regs->filter(function($r) {
-                    $targetStr = strtolower(($r->target_class ?? '') . ' ' . ($r->sub_category ?? '') . ' ' . ($r->team_name ?? ''));
-                    return stripos($targetStr, 'kategori a') !== false || stripos($targetStr, 'kat a') !== false || stripos($targetStr, 'kelas 1') !== false || stripos($targetStr, 'kelas 2') !== false || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, '-a-') !== false || stripos($targetStr, 'kat_a') !== false;
-                });
-
-                $katB = $regs->filter(function($r) {
-                    $targetStr = strtolower(($r->target_class ?? '') . ' ' . ($r->sub_category ?? '') . ' ' . ($r->team_name ?? ''));
-                    return stripos($targetStr, 'kategori b') !== false || stripos($targetStr, 'kat b') !== false || stripos($targetStr, 'kelas 4') !== false || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '-b-') !== false || stripos($targetStr, 'kat_b') !== false;
-                });
+                $katA = $regs->filter(fn($r) => !$r->isGanda() && $r->isKatA());
+                $katB = $regs->filter(fn($r) => !$r->isGanda() && $r->isKatB());
 
                 $breakdown = [
                     [

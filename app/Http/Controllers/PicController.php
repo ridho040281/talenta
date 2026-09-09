@@ -161,18 +161,17 @@ class PicController extends Controller
 
                 foreach ($bltCategories as $catKey => $catLabel) {
                     $catRegs = $compRegs->filter(function ($r) use ($catKey) {
-                        $targetStr = strtolower(($r->target_class ?? '').' '.($r->sub_category ?? '').' '.($r->match_type ?? ''));
-                        if (stripos($targetStr, 'ganda') !== false) {
+                        if ($r->isGanda()) {
                             return false;
                         }
                         if ($catKey === 'kat_a') {
-                            return stripos($targetStr, 'kategori a') !== false || stripos($targetStr, 'kat a') !== false || stripos($targetStr, 'kat_a') !== false || stripos($targetStr, 'kelas 1') !== false || stripos($targetStr, 'kelas 2') !== false || stripos($targetStr, '-a-') !== false;
+                            return $r->isKatA();
                         }
                         if ($catKey === 'kat_b') {
-                            return stripos($targetStr, 'kategori b') !== false || stripos($targetStr, 'kat b') !== false || stripos($targetStr, 'kat_b') !== false || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, 'kelas 4') !== false || stripos($targetStr, '-b-') !== false;
+                            return $r->isKatB();
                         }
                         if ($catKey === 'kat_c') {
-                            return stripos($targetStr, 'kategori c') !== false || stripos($targetStr, 'kat c') !== false || stripos($targetStr, 'kat_c') !== false || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '-c-') !== false;
+                            return $r->isKatC();
                         }
 
                         return false;
