@@ -653,83 +653,103 @@
                                             <!-- Status Tunggal PA (3 Baris Kat A, B, C) -->
                                             <div class="h-[84px] flex flex-col justify-center gap-1.5 font-bold text-[11px]">
                                                 @php
-                                                    $stPaA = $comp->status_a_tunggal_pa ?? $comp->status;
-                                                    $stPaB = $comp->status_b_tunggal_pa ?? $comp->status;
-                                                    $stPaC = $comp->status_c_tunggal_pa ?? $comp->status;
+                                                    $stPaA = $comp->getTierRegistrationStatusInfo('a_tunggal_pa');
+                                                    $stPaB = $comp->getTierRegistrationStatusInfo('b_tunggal_pa');
+                                                    $stPaC = $comp->getTierRegistrationStatusInfo('c_tunggal_pa');
                                                 @endphp
-                                                <div class="h-[22px] flex items-center justify-center">
-                                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize {{ $stPaA === 'buka' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : ($stPaA === 'tutup' ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' : 'bg-white/[0.05] text-slate-400 border border-white/[0.08]') }}">
-                                                        {{ $stPaA }}
+                                                <div class="h-[22px] flex items-center justify-center gap-1.5">
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold capitalize {{ $stPaA['badge_class'] }}">
+                                                        {{ $stPaA['status_label'] }}
                                                     </span>
+                                                    @if($stPaA['deadline'])
+                                                        <span class="text-[9px] font-mono {{ $stPaA['has_custom_deadline'] ? 'text-amber-300' : 'text-slate-400' }}" title="{{ $stPaA['has_custom_deadline'] ? 'Deadline Khusus' : 'Deadline Global' }}: {{ $stPaA['deadline']->translatedFormat('d M Y H:i') }} WIB">
+                                                            {{ $stPaA['deadline']->format('d/m H:i') }}
+                                                        </span>
+                                                    @endif
                                                 </div>
-                                                <div class="h-[22px] flex items-center justify-center">
-                                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize {{ $stPaB === 'buka' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : ($stPaB === 'tutup' ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' : 'bg-white/[0.05] text-slate-400 border border-white/[0.08]') }}">
-                                                        {{ $stPaB }}
+                                                <div class="h-[22px] flex items-center justify-center gap-1.5">
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold capitalize {{ $stPaB['badge_class'] }}">
+                                                        {{ $stPaB['status_label'] }}
                                                     </span>
+                                                    @if($stPaB['deadline'])
+                                                        <span class="text-[9px] font-mono {{ $stPaB['has_custom_deadline'] ? 'text-amber-300' : 'text-slate-400' }}" title="{{ $stPaB['has_custom_deadline'] ? 'Deadline Khusus' : 'Deadline Global' }}: {{ $stPaB['deadline']->translatedFormat('d M Y H:i') }} WIB">
+                                                            {{ $stPaB['deadline']->format('d/m H:i') }}
+                                                        </span>
+                                                    @endif
                                                 </div>
-                                                <div class="h-[22px] flex items-center justify-center">
-                                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize {{ $stPaC === 'buka' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : ($stPaC === 'tutup' ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' : 'bg-white/[0.05] text-slate-400 border border-white/[0.08]') }}">
-                                                        {{ $stPaC }}
+                                                <div class="h-[22px] flex items-center justify-center gap-1.5">
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold capitalize {{ $stPaC['badge_class'] }}">
+                                                        {{ $stPaC['status_label'] }}
                                                     </span>
+                                                    @if($stPaC['deadline'])
+                                                        <span class="text-[9px] font-mono {{ $stPaC['has_custom_deadline'] ? 'text-amber-300' : 'text-slate-400' }}" title="{{ $stPaC['has_custom_deadline'] ? 'Deadline Khusus' : 'Deadline Global' }}: {{ $stPaC['deadline']->translatedFormat('d M Y H:i') }} WIB">
+                                                            {{ $stPaC['deadline']->format('d/m H:i') }}
+                                                        </span>
+                                                    @endif
                                                 </div>
                                             </div>
                                             <div class="border-t border-white/[0.08] my-1.5"></div>
                                             <!-- Status Tunggal PI (3 Baris Kat A, B, C) -->
                                             <div class="h-[84px] flex flex-col justify-center gap-1.5 font-bold text-[11px]">
                                                 @php
-                                                    $stPiA = $comp->status_a_tunggal_pi ?? $comp->status;
-                                                    $stPiB = $comp->status_b_tunggal_pi ?? $comp->status;
-                                                    $stPiC = $comp->status_c_tunggal_pi ?? $comp->status;
+                                                    $stPiA = $comp->getTierRegistrationStatusInfo('a_tunggal_pi');
+                                                    $stPiB = $comp->getTierRegistrationStatusInfo('b_tunggal_pi');
+                                                    $stPiC = $comp->getTierRegistrationStatusInfo('c_tunggal_pi');
                                                 @endphp
-                                                <div class="h-[22px] flex items-center justify-center">
-                                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize {{ $stPiA === 'buka' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : ($stPiA === 'tutup' ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' : 'bg-white/[0.05] text-slate-400 border border-white/[0.08]') }}">
-                                                        {{ $stPiA }}
+                                                <div class="h-[22px] flex items-center justify-center gap-1.5">
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold capitalize {{ $stPiA['badge_class'] }}">
+                                                        {{ $stPiA['status_label'] }}
                                                     </span>
+                                                    @if($stPiA['deadline'])
+                                                        <span class="text-[9px] font-mono {{ $stPiA['has_custom_deadline'] ? 'text-amber-300' : 'text-slate-400' }}" title="{{ $stPiA['has_custom_deadline'] ? 'Deadline Khusus' : 'Deadline Global' }}: {{ $stPiA['deadline']->translatedFormat('d M Y H:i') }} WIB">
+                                                            {{ $stPiA['deadline']->format('d/m H:i') }}
+                                                        </span>
+                                                    @endif
                                                 </div>
-                                                <div class="h-[22px] flex items-center justify-center">
-                                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize {{ $stPiB === 'buka' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : ($stPiB === 'tutup' ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' : 'bg-white/[0.05] text-slate-400 border border-white/[0.08]') }}">
-                                                        {{ $stPiB }}
+                                                <div class="h-[22px] flex items-center justify-center gap-1.5">
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold capitalize {{ $stPiB['badge_class'] }}">
+                                                        {{ $stPiB['status_label'] }}
                                                     </span>
+                                                    @if($stPiB['deadline'])
+                                                        <span class="text-[9px] font-mono {{ $stPiB['has_custom_deadline'] ? 'text-amber-300' : 'text-slate-400' }}" title="{{ $stPiB['has_custom_deadline'] ? 'Deadline Khusus' : 'Deadline Global' }}: {{ $stPiB['deadline']->translatedFormat('d M Y H:i') }} WIB">
+                                                            {{ $stPiB['deadline']->format('d/m H:i') }}
+                                                        </span>
+                                                    @endif
                                                 </div>
-                                                <div class="h-[22px] flex items-center justify-center">
-                                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize {{ $stPiC === 'buka' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : ($stPiC === 'tutup' ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' : 'bg-white/[0.05] text-slate-400 border border-white/[0.08]') }}">
-                                                        {{ $stPiC }}
+                                                <div class="h-[22px] flex items-center justify-center gap-1.5">
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold capitalize {{ $stPiC['badge_class'] }}">
+                                                        {{ $stPiC['status_label'] }}
                                                     </span>
+                                                    @if($stPiC['deadline'])
+                                                        <span class="text-[9px] font-mono {{ $stPiC['has_custom_deadline'] ? 'text-amber-300' : 'text-slate-400' }}" title="{{ $stPiC['has_custom_deadline'] ? 'Deadline Khusus' : 'Deadline Global' }}: {{ $stPiC['deadline']->translatedFormat('d M Y H:i') }} WIB">
+                                                            {{ $stPiC['deadline']->format('d/m H:i') }}
+                                                        </span>
+                                                    @endif
                                                 </div>
                                             </div>
                                             <div class="border-t border-white/[0.08] my-1.5"></div>
                                             <!-- Status Ganda PA -->
-                                            <div class="h-[36px] flex items-center justify-center">
-                                                @php $sgPa = $comp->status_ganda_pa ?? $comp->status; @endphp
-                                                <span class="px-2.5 py-1 rounded-full text-xs font-bold capitalize {{ $sgPa === 'buka' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : ($sgPa === 'tutup' ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' : 'bg-white/[0.05] text-slate-400 border border-white/[0.08]') }}">
-                                                    {{ $sgPa }}
+                                            <div class="h-[36px] flex items-center justify-center gap-1.5">
+                                                @php $sgPa = $comp->getTierRegistrationStatusInfo('ganda_pa'); @endphp
+                                                <span class="px-2.5 py-1 rounded-full text-xs font-bold capitalize {{ $sgPa['badge_class'] }}">
+                                                    {{ $sgPa['status_label'] }}
                                                 </span>
+                                                @if($sgPa['deadline'])
+                                                    <span class="text-[9px] font-mono {{ $sgPa['has_custom_deadline'] ? 'text-amber-300' : 'text-slate-400' }}" title="{{ $sgPa['has_custom_deadline'] ? 'Deadline Khusus' : 'Deadline Global' }}: {{ $sgPa['deadline']->translatedFormat('d M Y H:i') }} WIB">
+                                                        {{ $sgPa['deadline']->format('d/m H:i') }}
+                                                    </span>
+                                                @endif
                                             </div>
                                             <div class="border-t border-white/[0.08] my-1.5"></div>
                                             <!-- Status Ganda PI -->
-                                            <div class="h-[36px] flex items-center justify-center">
-                                                @php $sgPi = $comp->status_ganda_pi ?? $comp->status; @endphp
-                                                <span class="px-2.5 py-1 rounded-full text-xs font-bold capitalize {{ $sgPi === 'buka' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : ($sgPi === 'tutup' ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' : 'bg-white/[0.05] text-slate-400 border border-white/[0.08]') }}">
-                                                    {{ $sgPi }}
+                                            <div class="h-[36px] flex items-center justify-center gap-1.5">
+                                                @php $sgPi = $comp->getTierRegistrationStatusInfo('ganda_pi'); @endphp
+                                                <span class="px-2.5 py-1 rounded-full text-xs font-bold capitalize {{ $sgPi['badge_class'] }}">
+                                                    {{ $sgPi['status_label'] }}
                                                 </span>
-                                            </div>
-
-                                            <!-- Status Master & Deadline BLT -->
-                                            <div class="border-t border-white/[0.1] pt-2 mt-1 flex flex-col items-center gap-1">
-                                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize {{ $regStatus['badge_class'] }}">
-                                                    {{ $regStatus['status_label'] }}
-                                                </span>
-                                                @if($hasCustomDeadline)
-                                                    <span class="text-[10px] text-amber-300 font-mono flex items-center gap-1" title="Batas Deadline Khusus: {{ $comp->deadline_display }}">
-                                                        <i data-lucide="clock" class="w-3 h-3 text-amber-400"></i>
-                                                        <span>{{ $comp->registration_end_at->format('d/m/y H:i') }}</span>
-                                                        <span class="text-[9px] px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 font-sans font-semibold">Khusus</span>
-                                                    </span>
-                                                @elseif($effectiveEnd)
-                                                    <span class="text-[10px] text-slate-400 font-mono flex items-center gap-1" title="Batas Deadline Global: {{ $comp->deadline_display }}">
-                                                        <i data-lucide="calendar" class="w-3 h-3 text-slate-500"></i>
-                                                        <span>{{ $effectiveEnd->format('d/m/y H:i') }}</span>
-                                                        <span class="text-[9px] px-1 py-0.2 rounded bg-white/[0.06] text-slate-400 font-sans font-semibold">Global</span>
+                                                @if($sgPi['deadline'])
+                                                    <span class="text-[9px] font-mono {{ $sgPi['has_custom_deadline'] ? 'text-amber-300' : 'text-slate-400' }}" title="{{ $sgPi['has_custom_deadline'] ? 'Deadline Khusus' : 'Deadline Global' }}: {{ $sgPi['deadline']->translatedFormat('d M Y H:i') }} WIB">
+                                                        {{ $sgPi['deadline']->format('d/m H:i') }}
                                                     </span>
                                                 @endif
                                             </div>
@@ -768,57 +788,57 @@
                                             <!-- Status Tunggal PA (Kat A & B) -->
                                             <div class="h-[56px] flex flex-col justify-center gap-1.5 font-bold text-[11px]">
                                                 @php
-                                                    $stPaA = $comp->status_a_tunggal_pa ?? $comp->status;
-                                                    $stPaB = $comp->status_b_tunggal_pa ?? $comp->status;
+                                                    $stPaA = $comp->getTierRegistrationStatusInfo('a_tunggal_pa');
+                                                    $stPaB = $comp->getTierRegistrationStatusInfo('b_tunggal_pa');
                                                 @endphp
-                                                <div class="h-[22px] flex items-center justify-center">
-                                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize {{ $stPaA === 'buka' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : ($stPaA === 'tutup' ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' : 'bg-white/[0.05] text-slate-400 border border-white/[0.08]') }}">
-                                                        {{ $stPaA }}
+                                                <div class="h-[22px] flex items-center justify-center gap-1.5">
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold capitalize {{ $stPaA['badge_class'] }}">
+                                                        {{ $stPaA['status_label'] }}
                                                     </span>
+                                                    @if($stPaA['deadline'])
+                                                        <span class="text-[9px] font-mono {{ $stPaA['has_custom_deadline'] ? 'text-amber-300' : 'text-slate-400' }}" title="{{ $stPaA['has_custom_deadline'] ? 'Deadline Khusus' : 'Deadline Global' }}: {{ $stPaA['deadline']->translatedFormat('d M Y H:i') }} WIB">
+                                                            {{ $stPaA['deadline']->format('d/m H:i') }}
+                                                        </span>
+                                                    @endif
                                                 </div>
-                                                <div class="h-[22px] flex items-center justify-center">
-                                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize {{ $stPaB === 'buka' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : ($stPaB === 'tutup' ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' : 'bg-white/[0.05] text-slate-400 border border-white/[0.08]') }}">
-                                                        {{ $stPaB }}
+                                                <div class="h-[22px] flex items-center justify-center gap-1.5">
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold capitalize {{ $stPaB['badge_class'] }}">
+                                                        {{ $stPaB['status_label'] }}
                                                     </span>
+                                                    @if($stPaB['deadline'])
+                                                        <span class="text-[9px] font-mono {{ $stPaB['has_custom_deadline'] ? 'text-amber-300' : 'text-slate-400' }}" title="{{ $stPaB['has_custom_deadline'] ? 'Deadline Khusus' : 'Deadline Global' }}: {{ $stPaB['deadline']->translatedFormat('d M Y H:i') }} WIB">
+                                                            {{ $stPaB['deadline']->format('d/m H:i') }}
+                                                        </span>
+                                                    @endif
                                                 </div>
                                             </div>
                                             <div class="border-t border-white/[0.08] my-1.5"></div>
                                             <!-- Status Tunggal PI (Kat A & B) -->
                                             <div class="h-[56px] flex flex-col justify-center gap-1.5 font-bold text-[11px]">
                                                 @php
-                                                    $stPiA = $comp->status_a_tunggal_pi ?? $comp->status;
-                                                    $stPiB = $comp->status_b_tunggal_pi ?? $comp->status;
+                                                    $stPiA = $comp->getTierRegistrationStatusInfo('a_tunggal_pi');
+                                                    $stPiB = $comp->getTierRegistrationStatusInfo('b_tunggal_pi');
                                                 @endphp
-                                                <div class="h-[22px] flex items-center justify-center">
-                                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize {{ $stPiA === 'buka' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : ($stPiA === 'tutup' ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' : 'bg-white/[0.05] text-slate-400 border border-white/[0.08]') }}">
-                                                        {{ $stPiA }}
+                                                <div class="h-[22px] flex items-center justify-center gap-1.5">
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold capitalize {{ $stPiA['badge_class'] }}">
+                                                        {{ $stPiA['status_label'] }}
                                                     </span>
+                                                    @if($stPiA['deadline'])
+                                                        <span class="text-[9px] font-mono {{ $stPiA['has_custom_deadline'] ? 'text-amber-300' : 'text-slate-400' }}" title="{{ $stPiA['has_custom_deadline'] ? 'Deadline Khusus' : 'Deadline Global' }}: {{ $stPiA['deadline']->translatedFormat('d M Y H:i') }} WIB">
+                                                            {{ $stPiA['deadline']->format('d/m H:i') }}
+                                                        </span>
+                                                    @endif
                                                 </div>
-                                                <div class="h-[22px] flex items-center justify-center">
-                                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize {{ $stPiB === 'buka' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : ($stPiB === 'tutup' ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' : 'bg-white/[0.05] text-slate-400 border border-white/[0.08]') }}">
-                                                        {{ $stPiB }}
+                                                <div class="h-[22px] flex items-center justify-center gap-1.5">
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold capitalize {{ $stPiB['badge_class'] }}">
+                                                        {{ $stPiB['status_label'] }}
                                                     </span>
+                                                    @if($stPiB['deadline'])
+                                                        <span class="text-[9px] font-mono {{ $stPiB['has_custom_deadline'] ? 'text-amber-300' : 'text-slate-400' }}" title="{{ $stPiB['has_custom_deadline'] ? 'Deadline Khusus' : 'Deadline Global' }}: {{ $stPiB['deadline']->translatedFormat('d M Y H:i') }} WIB">
+                                                            {{ $stPiB['deadline']->format('d/m H:i') }}
+                                                        </span>
+                                                    @endif
                                                 </div>
-                                            </div>
-
-                                            <!-- Status Master & Deadline TMJ -->
-                                            <div class="border-t border-white/[0.1] pt-2 mt-1 flex flex-col items-center gap-1">
-                                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize {{ $regStatus['badge_class'] }}">
-                                                    {{ $regStatus['status_label'] }}
-                                                </span>
-                                                @if($hasCustomDeadline)
-                                                    <span class="text-[10px] text-amber-300 font-mono flex items-center gap-1" title="Batas Deadline Khusus: {{ $comp->deadline_display }}">
-                                                        <i data-lucide="clock" class="w-3 h-3 text-amber-400"></i>
-                                                        <span>{{ $comp->registration_end_at->format('d/m/y H:i') }}</span>
-                                                        <span class="text-[9px] px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 font-sans font-semibold">Khusus</span>
-                                                    </span>
-                                                @elseif($effectiveEnd)
-                                                    <span class="text-[10px] text-slate-400 font-mono flex items-center gap-1" title="Batas Deadline Global: {{ $comp->deadline_display }}">
-                                                        <i data-lucide="calendar" class="w-3 h-3 text-slate-500"></i>
-                                                        <span>{{ $effectiveEnd->format('d/m/y H:i') }}</span>
-                                                        <span class="text-[9px] px-1 py-0.2 rounded bg-white/[0.06] text-slate-400 font-sans font-semibold">Global</span>
-                                                    </span>
-                                                @endif
                                             </div>
                                         </div>
                                     @else

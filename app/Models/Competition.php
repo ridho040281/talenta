@@ -431,6 +431,219 @@ class Competition extends Model
         return AppSetting::get('blt_status_ganda_pi', $this->status ?? 'buka');
     }
 
+    public function getTierEffectiveStart(string $tierKey): ?\Carbon\Carbon
+    {
+        $prefix = strtolower($this->code);
+        $tierStart = AppSetting::get("{$prefix}_start_{$tierKey}");
+        if (! empty($tierStart) && strtotime($tierStart)) {
+            return \Carbon\Carbon::parse($tierStart);
+        }
+
+        return $this->effective_registration_start;
+    }
+
+    public function getTierEffectiveEnd(string $tierKey): ?\Carbon\Carbon
+    {
+        $prefix = strtolower($this->code);
+        $tierEnd = AppSetting::get("{$prefix}_end_{$tierKey}");
+        if (! empty($tierEnd) && strtotime($tierEnd)) {
+            return \Carbon\Carbon::parse($tierEnd);
+        }
+
+        return $this->effective_registration_end;
+    }
+
+    public function isTierQuotaFull(string $tierKey): bool
+    {
+        $prefix = strtolower($this->code);
+        $tierQuotas = $this->tier_quotas;
+
+        if ($prefix === 'blt') {
+            $mappedQuotaKey = match ($tierKey) {
+                'a_tunggal_pa' => 'A_tunggal_pa',
+                'b_tunggal_pa' => 'B_tunggal_pa',
+                'c_tunggal_pa' => 'C_tunggal_pa',
+                'a_tunggal_pi' => 'A_tunggal_pi',
+                'b_tunggal_pi' => 'B_tunggal_pi',
+                'c_tunggal_pi' => 'C_tunggal_pi',
+                'ganda_pa' => 'ganda_pa',
+                'ganda_pi' => 'ganda_pi',
+                default => $tierKey,
+            };
+
+            $maxQuota = (int) ($tierQuotas[$mappedQuotaKey] ?? 0);
+            if ($maxQuota <= 0) {
+                return false;
+            }
+
+            $regs = $this->relationLoaded('registrations')
+                ? $this->registrations->filter(fn ($r) => in_array($r->status, ['pending', 'verified']))
+                : $this->registrations()->with('members')->whereIn('status', ['pending', 'verified'])->get();
+
+            $isPa = str_contains($tierKey, 'pa');
+            $isGanda = str_contains($tierKey, 'ganda');
+
+            if ($isGanda) {
+                $count = $regs->filter(fn ($r) => $r->isGanda() && $r->primary_gender === ($isPa ? 'L' : 'P'))->count();
+            } else {
+                $kat = strtoupper(substr($tierKey, 0, 1)); // 'A', 'B', or 'C'
+                $count = $regs->filter(function ($r) use ($isPa, $kat) {
+                    if ($r->isGanda() || $r->primary_gender !== ($isPa ? 'L' : 'P')) {
+                        return false;
+                    }
+
+                    return match ($kat) {
+                        'A' => $r->isKatA(),
+                        'B' => $r->isKatB(),
+                        'C' => $r->isKatC(),
+                        default => false,
+                    };
+                })->count();
+            }
+
+            return $count >= $maxQuota;
+        }
+
+        if ($prefix === 'tmj') {
+            $mappedQuotaKey = match ($tierKey) {
+                'a_tunggal_pa' => 'A_tunggal_pa',
+                'b_tunggal_pa' => 'B_tunggal_pa',
+                'a_tunggal_pi' => 'A_tunggal_pi',
+                'b_tunggal_pi' => 'B_tunggal_pi',
+                default => $tierKey,
+            };
+
+            $maxQuota = (int) ($tierQuotas[$mappedQuotaKey] ?? 0);
+            if ($maxQuota <= 0) {
+                return false;
+            }
+
+            $regs = $this->relationLoaded('registrations')
+                ? $this->registrations->filter(fn ($r) => in_array($r->status, ['pending', 'verified']))
+                : $this->registrations()->with('members')->whereIn('status', ['pending', 'verified'])->get();
+
+            $isPa = str_contains($tierKey, 'pa');
+            $kat = strtoupper(substr($tierKey, 0, 1)); // 'A' or 'B'
+
+            $count = $regs->filter(function ($r) use ($isPa, $kat) {
+                if ($r->primary_gender !== ($isPa ? 'L' : 'P')) {
+                    return false;
+                }
+
+                return match ($kat) {
+                    'A' => $r->isKatA(),
+                    'B' => $r->isKatB(),
+                    default => false,
+                };
+            })->count();
+
+            return $count >= $maxQuota;
+        }
+
+        return false;
+    }
+
+    public function getTierRegistrationStatusInfo(string $tierKey): array
+    {
+        $prefix = strtolower($this->code);
+
+        // 1. Manual status override for this tier / competition
+        $tierStatus = AppSetting::get("{$prefix}_status_{$tierKey}", $this->status ?? 'buka');
+        $effectiveEnd = $this->getTierEffectiveEnd($tierKey);
+        $hasCustomDeadline = ! empty(AppSetting::get("{$prefix}_end_{$tierKey}")) || ! empty($this->registration_end_at);
+
+        if ($this->status === 'tutup' || $tierStatus === 'tutup') {
+            return [
+                'is_open' => false,
+                'status_code' => 'closed_manual',
+                'status_label' => 'Tutup',
+                'status_color' => 'rose',
+                'badge_class' => 'bg-rose-500/15 text-rose-400 border border-rose-500/30',
+                'deadline' => $effectiveEnd,
+                'has_custom_deadline' => $hasCustomDeadline,
+            ];
+        }
+
+        if ($this->status === 'selesai' || $tierStatus === 'selesai') {
+            return [
+                'is_open' => false,
+                'status_code' => 'finished',
+                'status_label' => 'Selesai',
+                'status_color' => 'slate',
+                'badge_class' => 'bg-white/[0.05] text-slate-400 border border-white/[0.08]',
+                'deadline' => $effectiveEnd,
+                'has_custom_deadline' => $hasCustomDeadline,
+            ];
+        }
+
+        // 2. Global application status
+        $globalStatus = AppSetting::get('global_registration_status', 'open');
+        if ($globalStatus === 'closed') {
+            return [
+                'is_open' => false,
+                'status_code' => 'closed_global',
+                'status_label' => 'Tutup',
+                'status_color' => 'rose',
+                'badge_class' => 'bg-rose-500/15 text-rose-400 border border-rose-500/30',
+                'deadline' => $effectiveEnd,
+                'has_custom_deadline' => $hasCustomDeadline,
+            ];
+        }
+
+        // 3. Date & Deadline Check for this tier
+        $now = now();
+        $autoClose = AppSetting::get('registration_auto_close', '1') == '1';
+        $startDate = $this->getTierEffectiveStart($tierKey);
+
+        if ($autoClose && $startDate && $now->lt($startDate)) {
+            return [
+                'is_open' => false,
+                'status_code' => 'not_started',
+                'status_label' => 'Belum Buka',
+                'status_color' => 'amber',
+                'badge_class' => 'bg-amber-500/15 text-amber-300 border border-amber-500/30',
+                'deadline' => $effectiveEnd,
+                'has_custom_deadline' => $hasCustomDeadline,
+            ];
+        }
+
+        if ($autoClose && $effectiveEnd && $now->gt($effectiveEnd)) {
+            return [
+                'is_open' => false,
+                'status_code' => 'closed_expired',
+                'status_label' => 'Berakhir',
+                'status_color' => 'rose',
+                'badge_class' => 'bg-rose-500/15 text-rose-400 border border-rose-500/30',
+                'deadline' => $effectiveEnd,
+                'has_custom_deadline' => $hasCustomDeadline,
+            ];
+        }
+
+        // 4. Quota check for this tier
+        if ($this->isTierQuotaFull($tierKey)) {
+            return [
+                'is_open' => false,
+                'status_code' => 'closed_quota',
+                'status_label' => 'Penuh',
+                'status_color' => 'purple',
+                'badge_class' => 'bg-purple-500/15 text-purple-400 border border-purple-500/30',
+                'deadline' => $effectiveEnd,
+                'has_custom_deadline' => $hasCustomDeadline,
+            ];
+        }
+
+        // 5. Open / Aktif
+        return [
+            'is_open' => true,
+            'status_code' => 'open',
+            'status_label' => 'Buka',
+            'status_color' => 'emerald',
+            'badge_class' => 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
+            'deadline' => $effectiveEnd,
+            'has_custom_deadline' => $hasCustomDeadline,
+        ];
+    }
+
     public function getGuidelinesEmbedUrlAttribute(): ?string
     {
         $val = trim($this->guidelines_file ?? '');

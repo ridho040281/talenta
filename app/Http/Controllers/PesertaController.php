@@ -107,6 +107,39 @@ class PesertaController extends Controller
             return back()->with('error', $statusInfo['message']);
         }
 
+        // Per-tier category validation for BLT & TMJ
+        if (in_array($competition->code, ['BLT', 'TMJ'])) {
+            $matchType = $request->input('match_type', '');
+            $targetClass = $request->input('target_class', '');
+            $isPa = stripos($matchType, 'Putra') !== false || stripos($matchType, 'PA') !== false;
+            $gender = $isPa ? 'pa' : 'pi';
+
+            if ($competition->code === 'BLT' && stripos($matchType, 'Ganda') !== false) {
+                $tierKey = 'ganda_'.$gender;
+            } else {
+                $kat = 'a';
+                if (stripos($targetClass, 'Kategori B') !== false || stripos($targetClass, 'Kat B') !== false || stripos($targetClass, '4 - 6') !== false || stripos($targetClass, '3 - 4') !== false) {
+                    $kat = 'b';
+                } elseif (stripos($targetClass, 'Kategori C') !== false || stripos($targetClass, 'Kat C') !== false || stripos($targetClass, '5 - 6') !== false) {
+                    $kat = 'c';
+                }
+                $tierKey = $kat.'_tunggal_'.$gender;
+            }
+
+            $tierStatusInfo = $competition->getTierRegistrationStatusInfo($tierKey);
+            if (! $tierStatusInfo['is_open'] && ! $user->isTester()) {
+                $msg = match ($tierStatusInfo['status_code']) {
+                    'not_started' => 'Pendaftaran untuk kategori ini belum dibuka. Pendaftaran dibuka pada '.($tierStatusInfo['start_time'] ? $tierStatusInfo['start_time']->translatedFormat('d F Y H:i').' WIB' : 'jadwal yang ditentukan').'.',
+                    'deadline_passed' => 'Pendaftaran untuk kategori ini telah ditutup karena batas akhir pendaftaran telah berakhir ('.($tierStatusInfo['deadline'] ? $tierStatusInfo['deadline']->translatedFormat('d F Y H:i').' WIB' : '').').',
+                    'quota_full' => 'Mohon maaf, kuota pendaftaran untuk kategori ini telah penuh.',
+                    'finished' => 'Pendaftaran untuk kategori ini telah selesai.',
+                    default => 'Mohon maaf, pendaftaran untuk kategori ini sedang ditutup.',
+                };
+
+                return back()->with('error', $msg);
+            }
+        }
+
         // Prevent duplicate registration in the same competition / sector for this user account
         $existingUserRegs = Registration::where('user_id', $user->id)
             ->where('competition_id', $competition->id)

@@ -507,6 +507,11 @@
                                         $pic = old($picKey, \App\Models\AppSetting::get($picKey, $competition->pic_id));
                                         $status = old('tmj_status_' . $t['key'], \App\Models\AppSetting::get('tmj_status_' . $t['key'], $competition->status ?? 'buka'));
                                         $isPa = $t['color'] === 'emerald';
+
+                                        $startVal = old('tmj_start_' . $t['key'], \App\Models\AppSetting::get('tmj_start_' . $t['key']));
+                                        $startValFormatted = $startVal && strtotime($startVal) ? date('Y-m-d\TH:i', strtotime($startVal)) : '';
+                                        $endVal = old('tmj_end_' . $t['key'], \App\Models\AppSetting::get('tmj_end_' . $t['key']));
+                                        $endValFormatted = $endVal && strtotime($endVal) ? date('Y-m-d\TH:i', strtotime($endVal)) : '';
                                     @endphp
                                     <div class="p-4 sm:p-5 rounded-2xl space-y-3.5 transition {{ $mode === $t['mode_match'] ? 'ring-2 ' . ($isPa ? 'ring-emerald-400' : 'ring-pink-400') : '' }}" style="background: {{ $isPa ? 'rgba(16,185,129,0.06)' : 'rgba(236,72,153,0.06)' }}; border: 1px solid {{ $isPa ? 'rgba(16,185,129,0.22)' : 'rgba(236,72,153,0.22)' }};">
                                         <div class="flex items-center justify-between pb-2" style="border-bottom: 1px solid {{ $isPa ? 'rgba(16,185,129,0.18)' : 'rgba(236,72,153,0.18)' }};">
@@ -543,6 +548,26 @@
                                                 </select>
                                             </div>
                                         </div>
+
+                                        <!-- Jadwal Khusus Kategori TMJ -->
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2.5 border-t border-white/[0.08]">
+                                            <div>
+                                                <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 flex items-center gap-1.5">
+                                                    <i data-lucide="calendar-check" class="w-3.5 h-3.5 text-emerald-400"></i>
+                                                    <span>Tgl & Jam Mulai Dibuka (Kategori)</span>
+                                                </label>
+                                                <input name="tmj_start_{{ $t['key'] }}" type="datetime-local" value="{{ $startValFormatted }}" class="input-admin block w-full px-3 py-2 rounded-xl text-xs font-mono font-bold text-emerald-300">
+                                                <p class="text-[9px] text-slate-500 mt-0.5">Kosongkan jika mengikuti jadwal master cabang / global.</p>
+                                            </div>
+                                            <div>
+                                                <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 flex items-center gap-1.5">
+                                                    <i data-lucide="calendar-x" class="w-3.5 h-3.5 text-rose-400"></i>
+                                                    <span>Batas Akhir / Deadline Penutupan (Kategori)</span>
+                                                </label>
+                                                <input name="tmj_end_{{ $t['key'] }}" type="datetime-local" value="{{ $endValFormatted }}" class="input-admin block w-full px-3 py-2 rounded-xl text-xs font-mono font-bold text-rose-300">
+                                                <p class="text-[9px] text-slate-500 mt-0.5">Kosongkan jika mengikuti batas akhir master cabang / global.</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 @endforeach
                             </div>
@@ -553,16 +578,16 @@
                             @php
                                 $mode = request('mode', 'all');
                                 $bltTiers = [
-                                    ['fee_k' => 'blt_fee_a_tunggal_pa', 'quota_k' => 'blt_quota_a_tunggal_pa', 'pic_k' => 'blt_pic_tunggal_pa', 'stat_k' => 'blt_status_a_tunggal_pa', 'label' => 'Tunggal Putra (PA) — Kat A (Kelas 1–2 SD/MI)', 'badge' => 'Tunggal PA • Kat A', 'type' => 'pa', 'def_fee' => 130000, 'def_q' => 16, 'mode_match' => 'tunggal_pa_a'],
-                                    ['fee_k' => 'blt_fee_b_tunggal_pa', 'quota_k' => 'blt_quota_b_tunggal_pa', 'pic_k' => 'blt_pic_tunggal_pa', 'stat_k' => 'blt_status_b_tunggal_pa', 'label' => 'Tunggal Putra (PA) — Kat B (Kelas 3–4 SD/MI)', 'badge' => 'Tunggal PA • Kat B', 'type' => 'pa', 'def_fee' => 150000, 'def_q' => 16, 'mode_match' => 'tunggal_pa_b'],
-                                    ['fee_k' => 'blt_fee_c_tunggal_pa', 'quota_k' => 'blt_quota_c_tunggal_pa', 'pic_k' => 'blt_pic_tunggal_pa', 'stat_k' => 'blt_status_c_tunggal_pa', 'label' => 'Tunggal Putra (PA) — Kat C (Kelas 5–6 SD/MI)', 'badge' => 'Tunggal PA • Kat C', 'type' => 'pa', 'def_fee' => 150000, 'def_q' => 16, 'mode_match' => 'tunggal_pa_c'],
+                                    ['key' => 'a_tunggal_pa', 'fee_k' => 'blt_fee_a_tunggal_pa', 'quota_k' => 'blt_quota_a_tunggal_pa', 'pic_k' => 'blt_pic_tunggal_pa', 'stat_k' => 'blt_status_a_tunggal_pa', 'label' => 'Tunggal Putra (PA) — Kat A (Kelas 1–2 SD/MI)', 'badge' => 'Tunggal PA • Kat A', 'type' => 'pa', 'def_fee' => 130000, 'def_q' => 16, 'mode_match' => 'tunggal_pa_a'],
+                                    ['key' => 'b_tunggal_pa', 'fee_k' => 'blt_fee_b_tunggal_pa', 'quota_k' => 'blt_quota_b_tunggal_pa', 'pic_k' => 'blt_pic_tunggal_pa', 'stat_k' => 'blt_status_b_tunggal_pa', 'label' => 'Tunggal Putra (PA) — Kat B (Kelas 3–4 SD/MI)', 'badge' => 'Tunggal PA • Kat B', 'type' => 'pa', 'def_fee' => 150000, 'def_q' => 16, 'mode_match' => 'tunggal_pa_b'],
+                                    ['key' => 'c_tunggal_pa', 'fee_k' => 'blt_fee_c_tunggal_pa', 'quota_k' => 'blt_quota_c_tunggal_pa', 'pic_k' => 'blt_pic_tunggal_pa', 'stat_k' => 'blt_status_c_tunggal_pa', 'label' => 'Tunggal Putra (PA) — Kat C (Kelas 5–6 SD/MI)', 'badge' => 'Tunggal PA • Kat C', 'type' => 'pa', 'def_fee' => 150000, 'def_q' => 16, 'mode_match' => 'tunggal_pa_c'],
 
-                                    ['fee_k' => 'blt_fee_a_tunggal_pi', 'quota_k' => 'blt_quota_a_tunggal_pi', 'pic_k' => 'blt_pic_tunggal_pi', 'stat_k' => 'blt_status_a_tunggal_pi', 'label' => 'Tunggal Putri (PI) — Kat A (Kelas 1–2 SD/MI)', 'badge' => 'Tunggal PI • Kat A', 'type' => 'pi', 'def_fee' => 130000, 'def_q' => 16, 'mode_match' => 'tunggal_pi_a'],
-                                    ['fee_k' => 'blt_fee_b_tunggal_pi', 'quota_k' => 'blt_quota_b_tunggal_pi', 'pic_k' => 'blt_pic_tunggal_pi', 'stat_k' => 'blt_status_b_tunggal_pi', 'label' => 'Tunggal Putri (PI) — Kat B (Kelas 3–4 SD/MI)', 'badge' => 'Tunggal PI • Kat B', 'type' => 'pi', 'def_fee' => 150000, 'def_q' => 16, 'mode_match' => 'tunggal_pi_b'],
-                                    ['fee_k' => 'blt_fee_c_tunggal_pi', 'quota_k' => 'blt_quota_c_tunggal_pi', 'pic_k' => 'blt_pic_tunggal_pi', 'stat_k' => 'blt_status_c_tunggal_pi', 'label' => 'Tunggal Putri (PI) — Kat C (Kelas 5–6 SD/MI)', 'badge' => 'Tunggal PI • Kat C', 'type' => 'pi', 'def_fee' => 150000, 'def_q' => 16, 'mode_match' => 'tunggal_pi_c'],
+                                    ['key' => 'a_tunggal_pi', 'fee_k' => 'blt_fee_a_tunggal_pi', 'quota_k' => 'blt_quota_a_tunggal_pi', 'pic_k' => 'blt_pic_tunggal_pi', 'stat_k' => 'blt_status_a_tunggal_pi', 'label' => 'Tunggal Putri (PI) — Kat A (Kelas 1–2 SD/MI)', 'badge' => 'Tunggal PI • Kat A', 'type' => 'pi', 'def_fee' => 130000, 'def_q' => 16, 'mode_match' => 'tunggal_pi_a'],
+                                    ['key' => 'b_tunggal_pi', 'fee_k' => 'blt_fee_b_tunggal_pi', 'quota_k' => 'blt_quota_b_tunggal_pi', 'pic_k' => 'blt_pic_tunggal_pi', 'stat_k' => 'blt_status_b_tunggal_pi', 'label' => 'Tunggal Putri (PI) — Kat B (Kelas 3–4 SD/MI)', 'badge' => 'Tunggal PI • Kat B', 'type' => 'pi', 'def_fee' => 150000, 'def_q' => 16, 'mode_match' => 'tunggal_pi_b'],
+                                    ['key' => 'c_tunggal_pi', 'fee_k' => 'blt_fee_c_tunggal_pi', 'quota_k' => 'blt_quota_c_tunggal_pi', 'pic_k' => 'blt_pic_tunggal_pi', 'stat_k' => 'blt_status_c_tunggal_pi', 'label' => 'Tunggal Putri (PI) — Kat C (Kelas 5–6 SD/MI)', 'badge' => 'Tunggal PI • Kat C', 'type' => 'pi', 'def_fee' => 150000, 'def_q' => 16, 'mode_match' => 'tunggal_pi_c'],
 
-                                    ['fee_k' => 'blt_fee_ganda_pa', 'quota_k' => 'blt_quota_ganda_pa', 'pic_k' => 'blt_pic_ganda_pa', 'stat_k' => 'blt_status_ganda_pa', 'label' => 'Ganda Putra (PA) — (Kelas 3–6 SD/MI)', 'badge' => 'Ganda • PA', 'type' => 'ganda_pa', 'def_fee' => 200000, 'def_q' => 10, 'mode_match' => 'ganda_pa'],
-                                    ['fee_k' => 'blt_fee_ganda_pi', 'quota_k' => 'blt_quota_ganda_pi', 'pic_k' => 'blt_pic_ganda_pi', 'stat_k' => 'blt_status_ganda_pi', 'label' => 'Ganda Putri (PI) — (Kelas 3–6 SD/MI)', 'badge' => 'Ganda • PI', 'type' => 'ganda_pi', 'def_fee' => 200000, 'def_q' => 10, 'mode_match' => 'ganda_pi'],
+                                    ['key' => 'ganda_pa', 'fee_k' => 'blt_fee_ganda_pa', 'quota_k' => 'blt_quota_ganda_pa', 'pic_k' => 'blt_pic_ganda_pa', 'stat_k' => 'blt_status_ganda_pa', 'label' => 'Ganda Putra (PA) — (Kelas 3–6 SD/MI)', 'badge' => 'Ganda • PA', 'type' => 'ganda_pa', 'def_fee' => 200000, 'def_q' => 10, 'mode_match' => 'ganda_pa'],
+                                    ['key' => 'ganda_pi', 'fee_k' => 'blt_fee_ganda_pi', 'quota_k' => 'blt_quota_ganda_pi', 'pic_k' => 'blt_pic_ganda_pi', 'stat_k' => 'blt_status_ganda_pi', 'label' => 'Ganda Putri (PI) — (Kelas 3–6 SD/MI)', 'badge' => 'Ganda • PI', 'type' => 'ganda_pi', 'def_fee' => 200000, 'def_q' => 10, 'mode_match' => 'ganda_pi'],
                                 ];
                             @endphp
 
@@ -577,6 +602,11 @@
                                         $bgStyle = $colorClass === 'emerald' ? 'rgba(16,185,129,0.06)' : ($colorClass === 'pink' ? 'rgba(236,72,153,0.06)' : 'rgba(245,158,11,0.06)');
                                         $borderStyle = $colorClass === 'emerald' ? 'rgba(16,185,129,0.22)' : ($colorClass === 'pink' ? 'rgba(236,72,153,0.22)' : 'rgba(245,158,11,0.22)');
                                         $textColor = $colorClass === 'emerald' ? '#34d399' : ($colorClass === 'pink' ? '#f472b6' : '#fbbf24');
+
+                                        $startVal = old('blt_start_' . $bt['key'], \App\Models\AppSetting::get('blt_start_' . $bt['key']));
+                                        $startValFormatted = $startVal && strtotime($startVal) ? date('Y-m-d\TH:i', strtotime($startVal)) : '';
+                                        $endVal = old('blt_end_' . $bt['key'], \App\Models\AppSetting::get('blt_end_' . $bt['key']));
+                                        $endValFormatted = $endVal && strtotime($endVal) ? date('Y-m-d\TH:i', strtotime($endVal)) : '';
                                     @endphp
                                     <div class="p-4 sm:p-5 rounded-2xl space-y-3.5 transition {{ $mode === $bt['mode_match'] ? 'ring-2 ring-emerald-400' : '' }}" style="background: {{ $bgStyle }}; border: 1px solid {{ $borderStyle }};">
                                         <div class="flex items-center justify-between pb-2" style="border-bottom: 1px solid {{ $borderStyle }};">
@@ -611,6 +641,26 @@
                                                     <option value="tutup" {{ $status === 'tutup' ? 'selected' : '' }}>Tutup</option>
                                                     <option value="selesai" {{ $status === 'selesai' ? 'selected' : '' }}>Selesai</option>
                                                 </select>
+                                            </div>
+                                        </div>
+
+                                        <!-- Jadwal Khusus Kategori BLT -->
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2.5 border-t border-white/[0.08]">
+                                            <div>
+                                                <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 flex items-center gap-1.5">
+                                                    <i data-lucide="calendar-check" class="w-3.5 h-3.5 text-emerald-400"></i>
+                                                    <span>Tgl & Jam Mulai Dibuka (Kategori)</span>
+                                                </label>
+                                                <input name="blt_start_{{ $bt['key'] }}" type="datetime-local" value="{{ $startValFormatted }}" class="input-admin block w-full px-3 py-2 rounded-xl text-xs font-mono font-bold text-emerald-300">
+                                                <p class="text-[9px] text-slate-500 mt-0.5">Kosongkan jika mengikuti jadwal master cabang / global.</p>
+                                            </div>
+                                            <div>
+                                                <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 flex items-center gap-1.5">
+                                                    <i data-lucide="calendar-x" class="w-3.5 h-3.5 text-rose-400"></i>
+                                                    <span>Batas Akhir / Deadline Penutupan (Kategori)</span>
+                                                </label>
+                                                <input name="blt_end_{{ $bt['key'] }}" type="datetime-local" value="{{ $endValFormatted }}" class="input-admin block w-full px-3 py-2 rounded-xl text-xs font-mono font-bold text-rose-300">
+                                                <p class="text-[9px] text-slate-500 mt-0.5">Kosongkan jika mengikuti batas akhir master cabang / global.</p>
                                             </div>
                                         </div>
                                     </div>

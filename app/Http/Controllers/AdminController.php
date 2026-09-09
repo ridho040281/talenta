@@ -386,6 +386,17 @@ class AdminController extends Controller
                 AppSetting::set('blt_status_tunggal_pi', $request->input('blt_status_tunggal_pi') ?: 'buka', 'general');
             }
 
+            // Tanggal Mulai & Deadline - per Kategori & Sektor BLT
+            $bltTiersList = ['a_tunggal_pa', 'b_tunggal_pa', 'c_tunggal_pa', 'a_tunggal_pi', 'b_tunggal_pi', 'c_tunggal_pi', 'ganda_pa', 'ganda_pi'];
+            foreach ($bltTiersList as $tierKey) {
+                if ($request->has('blt_start_'.$tierKey)) {
+                    AppSetting::set('blt_start_'.$tierKey, $request->input('blt_start_'.$tierKey) ?: null, 'general');
+                }
+                if ($request->has('blt_end_'.$tierKey)) {
+                    AppSetting::set('blt_end_'.$tierKey, $request->input('blt_end_'.$tierKey) ?: null, 'general');
+                }
+            }
+
             $primaryPic = $request->input('blt_pic_tunggal_pa') ?: ($request->input('blt_pic_tunggal_pi') ?: ($request->input('blt_pic_ganda_pa') ?: null));
             $bltTotalTunggal = (int) $request->input('blt_quota_a_tunggal_pa', 16)
                              + (int) $request->input('blt_quota_b_tunggal_pa', 16)
@@ -519,6 +530,17 @@ class AdminController extends Controller
             }
             if ($request->has('tmj_status_tunggal_pi')) {
                 AppSetting::set('tmj_status_tunggal_pi', $request->input('tmj_status_tunggal_pi') ?: 'buka', 'general');
+            }
+
+            // Tanggal Mulai & Deadline - per Kategori & Sektor TMJ
+            $tmjTiersList = ['a_tunggal_pa', 'b_tunggal_pa', 'a_tunggal_pi', 'b_tunggal_pi'];
+            foreach ($tmjTiersList as $tierKey) {
+                if ($request->has('tmj_start_'.$tierKey)) {
+                    AppSetting::set('tmj_start_'.$tierKey, $request->input('tmj_start_'.$tierKey) ?: null, 'general');
+                }
+                if ($request->has('tmj_end_'.$tierKey)) {
+                    AppSetting::set('tmj_end_'.$tierKey, $request->input('tmj_end_'.$tierKey) ?: null, 'general');
+                }
             }
 
             $primaryPic = $request->input('tmj_pic_tunggal_pa') ?: ($request->input('tmj_pic_tunggal_pi') ?: null);
