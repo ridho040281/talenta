@@ -220,6 +220,16 @@
             'search' => strtolower($r->display_name . ' ' . $r->registration_code . ' ' . ($r->participant_number ?? '') . ' ' . $r->display_school . ' ' . $r->institution_name . ' ' . ($firstMember?->nisn ?? '') . ' ' . $r->members->pluck('school_name')->filter()->implode(' '))
         ];
     })),
+    currentPage: 1,
+    perPage: 10,
+    init() {
+        this.$watch('searchQuery', () => { this.currentPage = 1; });
+        this.$watch('selectedCompetition', () => { this.currentPage = 1; });
+        this.$watch('selectedGender', () => { this.currentPage = 1; });
+        this.$watch('selectedSector', () => { this.currentPage = 1; });
+        this.$watch('selectedStatus', () => { this.currentPage = 1; });
+        this.$watch('perPage', () => { this.currentPage = 1; });
+    },
     get activeList() {
         return this.items.filter(item => {
             const matchComp = (this.selectedCompetition === 'all' || item.comp_id === this.selectedCompetition);
@@ -260,11 +270,62 @@
     get countPi() {
         return this.activeList.filter(i => i.gender === 'P').length;
     },
-    get activeIds() {
-        return new Set(this.activeList.map(i => i.id));
+    get totalPages() {
+        return Math.max(1, Math.ceil(this.activeList.length / this.perPage));
+    },
+    get paginatedList() {
+        const page = Math.min(Math.max(1, this.currentPage), this.totalPages);
+        const start = (page - 1) * this.perPage;
+        return this.activeList.slice(start, start + this.perPage);
+    },
+    get paginatedIds() {
+        return new Set(this.paginatedList.map(i => i.id));
     },
     isItemVisible(id) {
-        return this.activeIds.has(id);
+        return this.paginatedIds.has(id);
+    },
+    goToPage(p) {
+        if (typeof p !== 'number') return;
+        if (p < 1) p = 1;
+        if (p > this.totalPages) p = this.totalPages;
+        this.currentPage = p;
+        const card = document.getElementById('participantsTableCard');
+        if (card) {
+            card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    },
+    prevPage() {
+        if (this.currentPage > 1) {
+            this.goToPage(this.currentPage - 1);
+        }
+    },
+    nextPage() {
+        if (this.currentPage < this.totalPages) {
+            this.goToPage(this.currentPage + 1);
+        }
+    },
+    get paginationPages() {
+        const total = this.totalPages;
+        const current = Math.min(Math.max(1, this.currentPage), total);
+        if (total <= 7) {
+            return Array.from({ length: total }, (_, i) => i + 1);
+        }
+        if (current <= 4) {
+            return [1, 2, 3, 4, 5, '...', total];
+        }
+        if (current >= total - 3) {
+            return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+        }
+        return [1, '...', current - 1, current, current + 1, '...', total];
+    },
+    get paginationStart() {
+        if (this.activeList.length === 0) return 0;
+        const page = Math.min(Math.max(1, this.currentPage), this.totalPages);
+        return (page - 1) * this.perPage + 1;
+    },
+    get paginationEnd() {
+        const page = Math.min(Math.max(1, this.currentPage), this.totalPages);
+        return Math.min(page * this.perPage, this.activeList.length);
     }
 }">
 
@@ -464,7 +525,7 @@
     </div>
 
     <!-- Unified Data Table (AIStarterKit Design) -->
-    <div class="ai-card rounded-3xl border border-white/[0.08] shadow-xl overflow-hidden">
+    <div id="participantsTableCard" class="ai-card rounded-3xl border border-white/[0.08] shadow-xl overflow-hidden scroll-mt-6">
         <div class="overflow-x-auto">
             <table class="w-full text-left text-xs sm:text-sm text-slate-300">
                 <thead class="text-[11px] font-bold uppercase tracking-wider bg-[#0C111D]/90 text-slate-400 border-b border-white/[0.08]">
@@ -710,8 +771,103 @@
                             </td>
                         </tr>
                     @endforelse
+
+                    <!-- Empty Filter State -->
+                    <tr x-show="items.length > 0 && activeList.length === 0" x-cloak>
+                        <td colspan="8" class="text-center py-12 text-slate-400 text-xs">
+                            <div class="flex flex-col items-center justify-center gap-2">
+                                <div class="w-10 h-10 rounded-2xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-slate-400">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"/></svg>
+                                </div>
+                                <div class="font-bold text-slate-300 text-sm">Tidak ada peserta yang cocok dengan filter atau pencarian</div>
+                                <p class="text-xs text-slate-500 max-w-sm">Coba ubah kata kunci atau setel ulang filter cabang lomba, status, atau sektor.</p>
+                                <button type="button" @click="searchQuery = ''; selectedCompetition = 'all'; selectedSector = 'all'; selectedStatus = 'all'; selectedGender = 'all'" class="mt-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-[#84D0FF] border border-white/[0.1] text-xs font-bold transition cursor-pointer">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                    <span>Reset Semua Filter</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
+        </div>
+
+        <!-- Table Pagination Footer (Tailwind Style) -->
+        <div class="px-4 sm:px-6 py-4 border-t border-white/[0.08] bg-[#0C111D]/80 flex flex-col md:flex-row items-center justify-between gap-4">
+            <!-- Left: Info & Per Page Selector -->
+            <div class="flex flex-wrap items-center justify-center sm:justify-start gap-3 text-xs text-slate-400">
+                <div>
+                    Menampilkan <span class="font-bold text-white font-mono" x-text="paginationStart"></span>
+                    sampai <span class="font-bold text-white font-mono" x-text="paginationEnd"></span>
+                    dari <span class="font-bold text-[#84D0FF] font-mono" x-text="countAll"></span> peserta
+                    <span x-show="countAll < items.length" class="text-slate-500 text-[11px]">
+                        (total data: <span x-text="items.length"></span>)
+                    </span>
+                </div>
+
+                <span class="text-white/[0.1] hidden sm:inline">•</span>
+
+                <!-- Rows Per Page Selector -->
+                <div class="flex items-center gap-1.5">
+                    <span class="text-[11px] text-slate-400">Tampilkan:</span>
+                    <select x-model.number="perPage" class="px-2.5 py-1 rounded-xl bg-[#161F30] border border-white/[0.12] text-xs font-bold text-slate-200 focus:border-[#7A5AF8] outline-none cursor-pointer">
+                        <option :value="10">10 baris</option>
+                        <option :value="25">25 baris</option>
+                        <option :value="50">50 baris</option>
+                        <option :value="100">100 baris</option>
+                        <option :value="999999">Semua</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Right: Pagination Buttons -->
+            <div class="flex items-center gap-1 sm:gap-1.5" x-show="totalPages > 1">
+                <!-- Prev Button -->
+                <button 
+                    type="button" 
+                    @click="prevPage()" 
+                    :disabled="currentPage === 1"
+                    :class="currentPage === 1 ? 'opacity-30 cursor-not-allowed text-slate-500 border-white/[0.04]' : 'hover:bg-white/[0.1] text-slate-200 border-white/[0.1] hover:text-white cursor-pointer'"
+                    class="px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold border transition flex items-center gap-1 bg-white/[0.04]"
+                    title="Halaman Sebelumnya">
+                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+                    <span class="hidden sm:inline">Sebelumnya</span>
+                </button>
+
+                <!-- Page Numbers -->
+                <div class="flex items-center gap-1">
+                    <template x-for="(p, idx) in paginationPages" :key="idx">
+                        <div>
+                            <!-- Ellipsis -->
+                            <template x-if="p === '...'">
+                                <span class="px-2 py-1 text-slate-500 text-xs font-bold select-none">...</span>
+                            </template>
+                            <!-- Number Button -->
+                            <template x-if="p !== '...'">
+                                <button 
+                                    type="button" 
+                                    @click="goToPage(p)" 
+                                    :class="currentPage === p ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-black shadow-md shadow-[#7A5AF8]/30 border-transparent' : 'bg-white/[0.04] hover:bg-white/[0.1] text-slate-300 hover:text-white border-white/[0.08]'"
+                                    class="min-w-[32px] sm:min-w-[34px] h-[32px] sm:h-[34px] px-2 rounded-xl text-xs font-bold border transition flex items-center justify-center cursor-pointer"
+                                    x-text="p">
+                                </button>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Next Button -->
+                <button 
+                    type="button" 
+                    @click="nextPage()" 
+                    :disabled="currentPage === totalPages"
+                    :class="currentPage === totalPages ? 'opacity-30 cursor-not-allowed text-slate-500 border-white/[0.04]' : 'hover:bg-white/[0.1] text-slate-200 border-white/[0.1] hover:text-white cursor-pointer'"
+                    class="px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold border transition flex items-center gap-1 bg-white/[0.04]"
+                    title="Halaman Berikutnya">
+                    <span class="hidden sm:inline">Berikutnya</span>
+                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+                </button>
+            </div>
         </div>
     </div>
 

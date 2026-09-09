@@ -194,6 +194,14 @@
             'search' => strtolower(($r->team_name ?: ($firstMember?->full_name ?? '')) . ' ' . ($firstMember?->nisn ?? '') . ' ' . $r->display_school . ' ' . $r->institution_name . ' ' . $r->registration_code . ' ' . ($r->competition->name ?? '') . ' ' . ($r->sub_category ?? ''))
         ];
     })),
+    pesertaCurrentPage: 1,
+    pesertaPerPage: 10,
+    init() {
+        this.$watch('searchQuery', () => { this.pesertaCurrentPage = 1; });
+        this.$watch('selectedCategory', () => { this.pesertaCurrentPage = 1; });
+        this.$watch('selectedStatus', () => { this.pesertaCurrentPage = 1; });
+        this.$watch('pesertaPerPage', () => { this.pesertaCurrentPage = 1; });
+    },
     get filteredItems() {
         const query = (this.searchQuery || '').toLowerCase().trim();
         return this.items.filter(item => {
@@ -203,19 +211,56 @@
             return matchComp && matchStatus && matchSearch;
         });
     },
+    get pesertaTotalPages() {
+        return Math.max(1, Math.ceil(this.filteredItems.length / this.pesertaPerPage));
+    },
+    get paginatedPesertaList() {
+        const page = Math.min(Math.max(1, this.pesertaCurrentPage), this.pesertaTotalPages);
+        const start = (page - 1) * this.pesertaPerPage;
+        return this.filteredItems.slice(start, start + this.pesertaPerPage);
+    },
+    get paginatedPesertaIds() {
+        return new Set(this.paginatedPesertaList.map(i => i.id));
+    },
     isItemVisible(id) {
-        const query = (this.searchQuery || '').toLowerCase().trim();
-        const item = this.items.find(i => i.id === id);
-        if (!item) return false;
-        const matchComp = (this.selectedCategory === 'all' || item.comp_id === String(this.selectedCategory));
-        const matchStatus = (this.selectedStatus === 'all' || item.status === this.selectedStatus);
-        const matchSearch = (!query || item.search.includes(query));
-        return matchComp && matchStatus && matchSearch;
+        return this.paginatedPesertaIds.has(id);
+    },
+    goToPesertaPage(p) {
+        if (typeof p !== 'number') return;
+        if (p < 1) p = 1;
+        if (p > this.pesertaTotalPages) p = this.pesertaTotalPages;
+        this.pesertaCurrentPage = p;
+        const el = document.getElementById('recapPesertaTableCard');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    },
+    prevPesertaPage() {
+        if (this.pesertaCurrentPage > 1) this.goToPesertaPage(this.pesertaCurrentPage - 1);
+    },
+    nextPesertaPage() {
+        if (this.pesertaCurrentPage < this.pesertaTotalPages) this.goToPesertaPage(this.pesertaCurrentPage + 1);
+    },
+    get pesertaPaginationPages() {
+        const total = this.pesertaTotalPages;
+        const current = Math.min(Math.max(1, this.pesertaCurrentPage), total);
+        if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+        if (current <= 4) return [1, 2, 3, 4, 5, '...', total];
+        if (current >= total - 3) return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+        return [1, '...', current - 1, current, current + 1, '...', total];
+    },
+    get pesertaPaginationStart() {
+        if (this.filteredItems.length === 0) return 0;
+        const page = Math.min(Math.max(1, this.pesertaCurrentPage), this.pesertaTotalPages);
+        return (page - 1) * this.pesertaPerPage + 1;
+    },
+    get pesertaPaginationEnd() {
+        const page = Math.min(Math.max(1, this.pesertaCurrentPage), this.pesertaTotalPages);
+        return Math.min(page * this.pesertaPerPage, this.filteredItems.length);
     },
     resetFilters() {
         this.searchQuery = '';
         this.selectedCategory = 'all';
         this.selectedStatus = 'all';
+        this.pesertaCurrentPage = 1;
     }
 }">
 
@@ -467,7 +512,7 @@
 
     <!-- ==================== TAB 2: MASTER SEMUA PESERTA ==================== -->
     <div x-show="activeTab === 'peserta'" x-transition class="space-y-6">
-        <div class="ai-card rounded-3xl border border-white/[0.08] shadow-xl p-5 sm:p-7 lg:p-8 space-y-6">
+        <div id="recapPesertaTableCard" class="ai-card rounded-3xl border border-white/[0.08] shadow-xl p-5 sm:p-7 lg:p-8 space-y-6 scroll-mt-6">
             
             <!-- Header & Responsive Filter Bar -->
             <div class="space-y-4 border-b border-white/[0.08] pb-6">
@@ -626,7 +671,7 @@
                         @endforelse
 
                         <!-- Empty state when search filters yield no results -->
-                        <tr x-show="filteredItems.length === 0 && {{ $allRegistrations->count() }} > 0">
+                        <tr x-show="filteredItems.length === 0 && {{ $allRegistrations->count() }} > 0" x-cloak>
                             <td colspan="7" class="py-12 text-center text-slate-400">
                                 <div class="flex flex-col items-center justify-center space-y-2">
                                     <i data-lucide="search-x" class="w-8 h-8 text-slate-500"></i>
@@ -640,6 +685,84 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Table Pagination Footer (Tailwind Style) -->
+            <div class="pt-4 border-t border-white/[0.08] flex flex-col md:flex-row items-center justify-between gap-4">
+                <!-- Left: Info & Per Page Selector -->
+                <div class="flex flex-wrap items-center justify-center sm:justify-start gap-3 text-xs text-slate-400">
+                    <div>
+                        Menampilkan <span class="font-bold text-white font-mono" x-text="pesertaPaginationStart"></span>
+                        sampai <span class="font-bold text-white font-mono" x-text="pesertaPaginationEnd"></span>
+                        dari <span class="font-bold text-[#84D0FF] font-mono" x-text="filteredItems.length"></span> peserta
+                        <span x-show="filteredItems.length < items.length" class="text-slate-500 text-[11px]">
+                            (total data: <span x-text="items.length"></span>)
+                        </span>
+                    </div>
+
+                    <span class="text-white/[0.1] hidden sm:inline">•</span>
+
+                    <!-- Rows Per Page Selector -->
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[11px] text-slate-400">Tampilkan:</span>
+                        <select x-model.number="pesertaPerPage" class="px-2.5 py-1 rounded-xl bg-[#161F30] border border-white/[0.12] text-xs font-bold text-slate-200 focus:border-[#7A5AF8] outline-none cursor-pointer">
+                            <option :value="10">10 baris</option>
+                            <option :value="25">25 baris</option>
+                            <option :value="50">50 baris</option>
+                            <option :value="100">100 baris</option>
+                            <option :value="999999">Semua</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Right: Pagination Buttons -->
+                <div class="flex items-center gap-1 sm:gap-1.5" x-show="pesertaTotalPages > 1">
+                    <!-- Prev Button -->
+                    <button 
+                        type="button" 
+                        @click="prevPesertaPage()" 
+                        :disabled="pesertaCurrentPage === 1"
+                        :class="pesertaCurrentPage === 1 ? 'opacity-30 cursor-not-allowed text-slate-500 border-white/[0.04]' : 'hover:bg-white/[0.1] text-slate-200 border-white/[0.1] hover:text-white cursor-pointer'"
+                        class="px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold border transition flex items-center gap-1 bg-white/[0.04]"
+                        title="Halaman Sebelumnya">
+                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+                        <span class="hidden sm:inline">Sebelumnya</span>
+                    </button>
+
+                    <!-- Page Numbers -->
+                    <div class="flex items-center gap-1">
+                        <template x-for="(p, idx) in pesertaPaginationPages" :key="idx">
+                            <div>
+                                <!-- Ellipsis -->
+                                <template x-if="p === '...'">
+                                    <span class="px-2 py-1 text-slate-500 text-xs font-bold select-none">...</span>
+                                </template>
+                                <!-- Number Button -->
+                                <template x-if="p !== '...'">
+                                    <button 
+                                        type="button" 
+                                        @click="goToPesertaPage(p)" 
+                                        :class="pesertaCurrentPage === p ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-black shadow-md shadow-[#7A5AF8]/30 border-transparent' : 'bg-white/[0.04] hover:bg-white/[0.1] text-slate-300 hover:text-white border-white/[0.08]'"
+                                        class="min-w-[32px] sm:min-w-[34px] h-[32px] sm:h-[34px] px-2 rounded-xl text-xs font-bold border transition flex items-center justify-center cursor-pointer"
+                                        x-text="p">
+                                    </button>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Next Button -->
+                    <button 
+                        type="button" 
+                        @click="nextPesertaPage()" 
+                        :disabled="pesertaCurrentPage === pesertaTotalPages"
+                        :class="pesertaCurrentPage === pesertaTotalPages ? 'opacity-30 cursor-not-allowed text-slate-500 border-white/[0.04]' : 'hover:bg-white/[0.1] text-slate-200 border-white/[0.1] hover:text-white cursor-pointer'"
+                        class="px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold border transition flex items-center gap-1 bg-white/[0.04]"
+                        title="Halaman Berikutnya">
+                        <span class="hidden sm:inline">Berikutnya</span>
+                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
