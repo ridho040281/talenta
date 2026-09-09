@@ -319,6 +319,12 @@
                     </div>
                 </div>
 
+                <!-- Footer Preview (Tipis Seperti Bukti Pendaftaran) -->
+                <div class="pt-3 mt-6 border-t border-slate-300 flex items-center justify-between text-[9px] text-slate-500 font-mono">
+                    <span>Panitia {{ $appSettings['event_name'] ?? 'Milad ke-57' }} {{ $appSettings['institution_name'] ?? 'MTsN 1 Blitar' }} • Dokumen Berita Acara • Aplikasi {{ $appSettings['app_name'] ?? 'TALENTA' }}</span>
+                    <span>Dicetak pada: {{ now()->format('d/m/Y H:i:s') }}</span>
+                </div>
+
             </div>
 
         </div>

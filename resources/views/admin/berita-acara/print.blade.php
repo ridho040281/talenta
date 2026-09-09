@@ -117,7 +117,7 @@
     <div class="space-y-8 print:space-y-0">
         @foreach($sectorsData as $secKey => $sector)
             <!-- Printable A4 Page per Sector -->
-            <div class="print-page max-w-[210mm] mx-auto bg-white p-8 sm:p-10 shadow-xl border border-slate-300 print:border-none print:shadow-none print:p-0">
+            <div class="print-page max-w-[210mm] min-h-[297mm] mx-auto bg-white p-8 sm:p-10 shadow-xl border border-slate-300 print:border-none print:shadow-none print:p-0 flex flex-col justify-between">
                 
                 <div>
                     <!-- ==================== KOP SURAT RESMI ==================== -->
@@ -247,45 +247,51 @@
                             Demikian hasil keputusan ini ditetapkan. Keputusan {{ $isSports ? 'Dewan Wasit' : 'Dewan Juri' }} bersifat mutlak dan tidak dapat diganggu gugat.
                         </p>
                     </div>
+
+                    <!-- ==================== TANDA TANGAN DEWAN JURI / WASIT (AGAK KE ATAS) ==================== -->
+                    <div class="avoid-break mt-6 pt-2">
+                        <div class="text-right text-[11pt] mb-3 pr-4">
+                            Blitar, {{ $type === 'blank' ? '........................................' : $dateSpelled['date_formatted'] }}
+                        </div>
+
+                        <div class="grid grid-cols-3 text-center text-[11pt] gap-4">
+                            <!-- Juri / Wasit 1 -->
+                            <div class="flex flex-col justify-between h-20 sm:h-22">
+                                <div class="font-bold">{{ $isSports ? 'Wasit 1' : 'Juri 1' }}</div>
+                                <div>
+                                    <div class="font-bold underline underline-offset-2">
+                                        {{ $type === 'blank' ? '( ........................................ )' : ($judges[0] ?: '( ........................................ )') }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Juri / Wasit 2 -->
+                            <div class="flex flex-col justify-between h-20 sm:h-22">
+                                <div class="font-bold">{{ $isSports ? 'Wasit 2' : 'Juri 2' }}</div>
+                                <div>
+                                    <div class="font-bold underline underline-offset-2">
+                                        {{ $type === 'blank' ? '( ........................................ )' : ($judges[1] ?: '( ........................................ )') }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Juri / Wasit 3 -->
+                            <div class="flex flex-col justify-between h-20 sm:h-22">
+                                <div class="font-bold">{{ $isSports ? 'Wasit 3' : 'Juri 3' }}</div>
+                                <div>
+                                    <div class="font-bold underline underline-offset-2">
+                                        {{ $type === 'blank' ? '( ........................................ )' : ($judges[2] ?: '( ........................................ )') }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- ==================== TANDA TANGAN DEWAN JURI / WASIT ==================== -->
-                <div class="avoid-break pt-1">
-                    <div class="text-right text-[11pt] mb-3 pr-4">
-                        Blitar, {{ $type === 'blank' ? '........................................' : $dateSpelled['date_formatted'] }}
-                    </div>
-
-                    <div class="grid grid-cols-3 text-center text-[11pt] gap-4">
-                        <!-- Juri / Wasit 1 -->
-                        <div class="flex flex-col justify-between h-20 sm:h-22">
-                            <div class="font-bold">{{ $isSports ? 'Wasit 1' : 'Juri 1' }}</div>
-                            <div>
-                                <div class="font-bold underline underline-offset-2">
-                                    {{ $type === 'blank' ? '( ........................................ )' : ($judges[0] ?: '( ........................................ )') }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Juri / Wasit 2 -->
-                        <div class="flex flex-col justify-between h-20 sm:h-22">
-                            <div class="font-bold">{{ $isSports ? 'Wasit 2' : 'Juri 2' }}</div>
-                            <div>
-                                <div class="font-bold underline underline-offset-2">
-                                    {{ $type === 'blank' ? '( ........................................ )' : ($judges[1] ?: '( ........................................ )') }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Juri / Wasit 3 -->
-                        <div class="flex flex-col justify-between h-20 sm:h-22">
-                            <div class="font-bold">{{ $isSports ? 'Wasit 3' : 'Juri 3' }}</div>
-                            <div>
-                                <div class="font-bold underline underline-offset-2">
-                                    {{ $type === 'blank' ? '( ........................................ )' : ($judges[2] ?: '( ........................................ )') }}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <!-- ==================== FOOTER TIPIS (SEPERTI PADA BUKTI PENDAFTARAN) ==================== -->
+                <div class="avoid-break pt-2 mt-auto border-t border-slate-300 flex items-center justify-between text-[9px] text-slate-500 font-mono">
+                    <span>Panitia {{ $appSettings['event_name'] ?? 'Milad ke-57' }} {{ $appSettings['institution_name'] ?? 'MTsN 1 Blitar' }} • Dokumen Berita Acara • Aplikasi {{ $appSettings['app_name'] ?? 'TALENTA' }}</span>
+                    <span>Dicetak pada: {{ now()->format('d/m/Y H:i:s') }}</span>
                 </div>
 
             </div>
