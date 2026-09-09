@@ -474,29 +474,28 @@
                                         <div class="flex flex-col py-1 text-slate-400 text-xs">
                                             <!-- Kuota Tunggal PA -->
                                             <div class="h-[84px] flex flex-col justify-center gap-1.5 font-medium text-[11px]">
-                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['A_tunggal_pa'] ?? 16 }}</div>
-                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['B_tunggal_pa'] ?? 16 }}</div>
-                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['C_tunggal_pa'] ?? 16 }}</div>
+                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">{{ $comp->registrations->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'L' && $r->isKatA())->count() }}</span>&nbsp;/ {{ $comp->tier_quotas['A_tunggal_pa'] ?? 16 }}</div>
+                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">{{ $comp->registrations->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'L' && $r->isKatB())->count() }}</span>&nbsp;/ {{ $comp->tier_quotas['B_tunggal_pa'] ?? 16 }}</div>
+                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">{{ $comp->registrations->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'L' && $r->isKatC())->count() }}</span>&nbsp;/ {{ $comp->tier_quotas['C_tunggal_pa'] ?? 16 }}</div>
                                             </div>
                                             <div class="border-t border-white/[0.08] my-1.5"></div>
                                             <!-- Kuota Tunggal PI -->
                                             <div class="h-[84px] flex flex-col justify-center gap-1.5 font-medium text-[11px]">
-                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['A_tunggal_pi'] ?? 16 }}</div>
-                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['B_tunggal_pi'] ?? 16 }}</div>
-                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['C_tunggal_pi'] ?? 16 }}</div>
+                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">{{ $comp->registrations->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'P' && $r->isKatA())->count() }}</span>&nbsp;/ {{ $comp->tier_quotas['A_tunggal_pi'] ?? 16 }}</div>
+                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">{{ $comp->registrations->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'P' && $r->isKatB())->count() }}</span>&nbsp;/ {{ $comp->tier_quotas['B_tunggal_pi'] ?? 16 }}</div>
+                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">{{ $comp->registrations->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'P' && $r->isKatC())->count() }}</span>&nbsp;/ {{ $comp->tier_quotas['C_tunggal_pi'] ?? 16 }}</div>
                                             </div>
                                             <div class="border-t border-white/[0.08] my-1.5"></div>
                                             <!-- Kuota Ganda PA -->
                                             <div class="h-[36px] flex items-center justify-center font-medium text-xs">
-                                                <div><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['ganda_pa'] ?? 10 }}</div>
+                                                <div><span class="font-bold text-white">{{ $comp->registrations->filter(fn($r) => $r->isGanda() && $r->primary_gender === 'L')->count() }}</span>&nbsp;/ {{ ($comp->tier_quotas['ganda_pa'] ?? 0) <= 0 ? '∞' : $comp->tier_quotas['ganda_pa'] }}</div>
                                             </div>
                                             <div class="border-t border-white/[0.08] my-1.5"></div>
                                             <!-- Kuota Ganda PI -->
                                             <div class="h-[36px] flex items-center justify-center font-medium text-xs">
-                                                <div><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['ganda_pi'] ?? 10 }}</div>
+                                                <div><span class="font-bold text-white">{{ $comp->registrations->filter(fn($r) => $r->isGanda() && $r->primary_gender === 'P')->count() }}</span>&nbsp;/ {{ ($comp->tier_quotas['ganda_pi'] ?? 0) <= 0 ? '∞' : $comp->tier_quotas['ganda_pi'] }}</div>
                                             </div>
                                         </div>
-                                    @elseif(in_array($comp->code, ['MTQ', 'POP']))
                                     @elseif(in_array($comp->code, ['MTQ', 'POP']))
                                         <div class="flex flex-col items-center justify-center text-xs">
                                             @php
@@ -518,14 +517,14 @@
                                         <div class="flex flex-col py-1 text-slate-400 text-xs">
                                             <!-- Kuota Tunggal PA -->
                                             <div class="h-[56px] flex flex-col justify-center gap-1.5 font-medium text-[11px]">
-                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['A_tunggal_pa'] ?? 10 }}</div>
-                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['B_tunggal_pa'] ?? 10 }}</div>
+                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">{{ $comp->registrations->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'L' && $r->isKatA())->count() }}</span>&nbsp;/ {{ $comp->tier_quotas['A_tunggal_pa'] ?? 10 }}</div>
+                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">{{ $comp->registrations->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'L' && $r->isKatB())->count() }}</span>&nbsp;/ {{ $comp->tier_quotas['B_tunggal_pa'] ?? 10 }}</div>
                                             </div>
                                             <div class="border-t border-white/[0.08] my-1.5"></div>
                                             <!-- Kuota Tunggal PI -->
                                             <div class="h-[56px] flex flex-col justify-center gap-1.5 font-medium text-[11px]">
-                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['A_tunggal_pi'] ?? 10 }}</div>
-                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">0</span>&nbsp;/ {{ $comp->tier_quotas['B_tunggal_pi'] ?? 10 }}</div>
+                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">{{ $comp->registrations->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'P' && $r->isKatA())->count() }}</span>&nbsp;/ {{ $comp->tier_quotas['A_tunggal_pi'] ?? 10 }}</div>
+                                                <div class="h-[22px] flex items-center justify-center"><span class="font-bold text-white">{{ $comp->registrations->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'P' && $r->isKatB())->count() }}</span>&nbsp;/ {{ $comp->tier_quotas['B_tunggal_pi'] ?? 10 }}</div>
                                             </div>
                                         </div>
                                     @else
