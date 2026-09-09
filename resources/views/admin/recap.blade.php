@@ -626,10 +626,13 @@
 
             <!-- HEADER / JUDUL INFOGRAFIS SESUAI INSTRUKSI -->
             <div class="text-center relative z-10 space-y-3">
-                @if(!empty($appSettings['app_logo']))
+                @php
+                    $recapHeaderLogo = !empty($appSettings['event_logo']) ? $appSettings['event_logo'] : (!empty($appSettings['app_logo']) ? $appSettings['app_logo'] : null);
+                @endphp
+                @if(!empty($recapHeaderLogo))
                     <div class="flex items-center justify-center mb-3">
-                        <img src="{{ asset('storage/' . $appSettings['app_logo']) }}" 
-                             alt="Logo TALENTA" 
+                        <img src="{{ asset('storage/' . $recapHeaderLogo) }}" 
+                             alt="Logo" 
                              crossorigin="anonymous"
                              class="h-20 w-auto max-w-[220px] object-contain drop-shadow-xl">
                     </div>

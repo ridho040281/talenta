@@ -41,9 +41,13 @@
                 <div class="lg:col-span-5 relative flex items-center justify-center">
                     <div class="relative mx-auto flex flex-col items-center justify-center p-2">
                         
-                        <!-- Logo Milad 57 Image -->
+                        <!-- Logo Kegiatan / Milad Image -->
                         <div class="relative z-10 group flex items-center justify-center">
-                            <img src="{{ asset('images/logo milad 57.png') }}" alt="Logo Milad 57 MTsN 1 Blitar" class="max-h-[160px] sm:max-h-[220px] lg:max-h-[270px] w-auto max-w-[140px] sm:max-w-[200px] lg:max-w-[250px] object-contain drop-shadow-[0_10px_25px_rgba(0,0,0,0.5)] group-hover:scale-105 transition-transform duration-500">
+                            @if(!empty($appSettings['event_logo']))
+                                <img src="{{ asset('storage/' . $appSettings['event_logo']) }}" alt="{{ $appSettings['event_name'] ?? 'Logo Kegiatan' }}" class="max-h-[160px] sm:max-h-[220px] lg:max-h-[270px] w-auto max-w-[140px] sm:max-w-[200px] lg:max-w-[250px] object-contain drop-shadow-[0_10px_25px_rgba(0,0,0,0.5)] group-hover:scale-105 transition-transform duration-500">
+                            @else
+                                <img src="{{ asset('images/logo milad 57.png') }}" alt="{{ $appSettings['event_name'] ?? 'Logo Milad 57 MTsN 1 Blitar' }}" class="max-h-[160px] sm:max-h-[220px] lg:max-h-[270px] w-auto max-w-[140px] sm:max-w-[200px] lg:max-w-[250px] object-contain drop-shadow-[0_10px_25px_rgba(0,0,0,0.5)] group-hover:scale-105 transition-transform duration-500">
+                            @endif
                         </div>
 
                         <!-- Ambient Glow Decoration behind Logo -->

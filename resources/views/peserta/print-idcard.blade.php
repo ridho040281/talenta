@@ -56,8 +56,11 @@
             <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
             
             <div class="flex items-center justify-center gap-3 mb-2">
-                @if(!empty($appSettings['app_logo']))
-                    <img src="{{ asset('storage/' . $appSettings['app_logo']) }}" alt="Logo" class="h-10 w-auto max-w-[120px] object-contain">
+                @php
+                    $cardHeaderLogo = !empty($appSettings['event_logo']) ? $appSettings['event_logo'] : (!empty($appSettings['app_logo']) ? $appSettings['app_logo'] : null);
+                @endphp
+                @if(!empty($cardHeaderLogo))
+                    <img src="{{ asset('storage/' . $cardHeaderLogo) }}" alt="Logo" class="h-10 w-auto max-w-[120px] object-contain">
                 @else
                     <div class="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-amber-300 font-bold border border-white/30">
                         <i data-lucide="trophy" class="w-5 h-5"></i>

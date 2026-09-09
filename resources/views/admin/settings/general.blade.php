@@ -419,17 +419,17 @@
                     </div>
                 </div>
 
-                <!-- SECTION: LOGO APLIKASI & FAVICON -->
+                <!-- SECTION: LOGO APLIKASI, LOGO KEGIATAN & FAVICON -->
                 <div class="pt-4 border-t border-white/[0.08] space-y-4">
-                    <h4 class="text-xs font-black text-white uppercase tracking-wider">Logo Aplikasi & Icon</h4>
+                    <h4 class="text-xs font-black text-white uppercase tracking-wider">Logo Aplikasi, Logo Kegiatan &amp; Icon</h4>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         
                         <!-- Logo Aplikasi -->
                         <div class="p-4 rounded-2xl bg-[#0C111D]/80 border border-white/[0.08] space-y-3">
                             <div>
-                                <span class="text-xs font-bold text-white block">Logo Aplikasi & Navbar</span>
-                                <span class="text-[10px] text-slate-400 block">Digunakan untuk Topbar, Navbar, & Login.</span>
+                                <span class="text-xs font-bold text-white block">Logo Aplikasi &amp; Navbar</span>
+                                <span class="text-[10px] text-slate-400 block">Digunakan untuk Topbar, Navbar, &amp; Login.</span>
                             </div>
 
                             <div class="w-full h-16 rounded-xl bg-[#161F30] border border-white/[0.08] flex items-center justify-center p-2">
@@ -454,7 +454,36 @@
                             </div>
                         </div>
 
-                        <!-- Favicon -->
+                        <!-- Logo Kegiatan / Event -->
+                        <div class="p-4 rounded-2xl bg-[#0C111D]/80 border border-white/[0.08] space-y-3">
+                            <div>
+                                <span class="text-xs font-bold text-white block">Logo Kegiatan / Event</span>
+                                <span class="text-[10px] text-slate-400 block">Digunakan untuk Landing Page, Dokumen, &amp; Berita Acara.</span>
+                            </div>
+
+                            <div class="w-full h-16 rounded-xl bg-[#161F30] border border-white/[0.08] flex items-center justify-center p-2">
+                                @if(!empty($settings['event_logo']))
+                                    <img src="{{ asset('storage/' . $settings['event_logo']) }}" alt="Logo Kegiatan" class="max-h-full max-w-full object-contain">
+                                @else
+                                    <div class="flex items-center gap-2 text-amber-400 font-bold text-xs">
+                                        <i data-lucide="sparkles" class="w-5 h-5"></i>
+                                        <span>{{ $settings['event_name'] ?? 'Milad ke-57 MTsN 1 Blitar' }}</span>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div class="space-y-1.5">
+                                <input type="file" name="event_logo" accept="image/*" class="block w-full text-[11px] text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[11px] file:font-bold file:bg-amber-500/20 file:text-amber-300 hover:file:bg-amber-500/30 cursor-pointer">
+                                @if(!empty($settings['event_logo']))
+                                    <label class="inline-flex items-center gap-2 text-[10px] text-rose-400 font-medium cursor-pointer">
+                                        <input type="checkbox" name="delete_event_logo" value="1" class="rounded border-rose-400/40 text-rose-600 focus:ring-rose-500">
+                                        <span>Hapus Logo Kegiatan</span>
+                                    </label>
+                                @endif
+                            </div>
+                        </div>
+
+                        <!-- Favicon Browser -->
                         <div class="p-4 rounded-2xl bg-[#0C111D]/80 border border-white/[0.08] space-y-3">
                             <div>
                                 <span class="text-xs font-bold text-white block">Favicon Browser</span>
