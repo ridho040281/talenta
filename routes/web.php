@@ -103,7 +103,7 @@ Route::middleware(['auth'])->prefix('dokumen')->name('document.')->group(functio
 | PIC Cabang Lomba Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'role:pic_lomba,superadmin'])->prefix('pic')->name('pic.')->group(function () {
+Route::middleware(['auth', 'role:pic_lomba,superadmin,panitia'])->prefix('pic')->name('pic.')->group(function () {
     Route::get('/dashboard', [PicController::class, 'dashboard'])->name('dashboard');
     Route::get('/lomba/{competition_id}/peserta', [PicController::class, 'participants'])->name('participants');
     Route::get('/peserta/cetak-pdf', [PicController::class, 'printParticipantsPdf'])->name('participants.print.pdf');
@@ -145,7 +145,7 @@ Route::middleware(['auth', 'role:juri,superadmin'])->prefix('juri')->name('juri.
 | Pertandingan Bulu Tangkis & Wasit Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'role:superadmin,pic_lomba,juri'])->prefix('badminton')->name('badminton.')->group(function () {
+Route::middleware(['auth', 'role:superadmin,panitia,pic_lomba,juri'])->prefix('badminton')->name('badminton.')->group(function () {
     Route::get('/matches', [BadmintonMatchController::class, 'index'])->name('index');
     Route::post('/matches', [BadmintonMatchController::class, 'store'])->name('store');
     Route::post('/matches/{id}/update', [BadmintonMatchController::class, 'update'])->name('update');
@@ -154,11 +154,34 @@ Route::middleware(['auth', 'role:superadmin,pic_lomba,juri'])->prefix('badminton
 
 /*
 |--------------------------------------------------------------------------
-| Super Admin Routes
+| Admin & Panitia Shared Operational Routes (Overview, Operasional, Laporan)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'role:superadmin,panitia'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+    Route::get('/recap', [AdminController::class, 'recap'])->name('recap');
+    Route::get('/rekap-nilai', [AdminController::class, 'recap'])->name('scores');
+    Route::get('/berita-acara', [OfficialReportController::class, 'index'])->name('berita-acara.index');
+    Route::get('/berita-acara/cetak', [OfficialReportController::class, 'print'])->name('berita-acara.print');
+
+    // Operational & Competition Routes (Data Peserta, Juri, Wasit & Undian)
+    Route::get('/verifikasi', [PicController::class, 'dashboard'])->name('verifications');
+    Route::get('/peserta', [PicController::class, 'dashboard'])->name('participants.index');
+    Route::get('/juri-wasit', [AdminController::class, 'juriWasitUndian'])->name('juri.wasit');
+    Route::get('/undi-peserta', [PicController::class, 'drawIndex'])->name('undian');
+
+    // Invoice & Payment Verification Routes
+    Route::get('/invoices', [CollectiveRegistrationController::class, 'adminInvoices'])->name('invoices.index');
+    Route::get('/invoices/{id}', [CollectiveRegistrationController::class, 'adminShowInvoice'])->name('invoices.show');
+    Route::post('/invoices/{id}/verify', [CollectiveRegistrationController::class, 'adminVerifyInvoice'])->name('invoices.verify');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Strictly Super Admin Only Routes (Master Data & Pengaturan Sistem)
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/competitions', [AdminController::class, 'competitions'])->name('competitions');
     Route::post('/competitions', [AdminController::class, 'storeCompetition'])->name('competitions.store');
     Route::get('/competitions/{id}/edit', [AdminController::class, 'editCompetitionPage'])->name('competitions.edit');
@@ -176,26 +199,13 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->name('admin.')-
     Route::post('/timeline', [AdminController::class, 'storeTimeline'])->name('timeline.store');
     Route::post('/timeline/{id}/update', [AdminController::class, 'updateTimeline'])->name('timeline.update');
     Route::post('/timeline/{id}/delete', [AdminController::class, 'deleteTimeline'])->name('timeline.delete');
+
+    // Master Data: Kelola Pengguna
     Route::get('/users', [AdminController::class, 'users'])->name('users');
     Route::post('/users', [AdminController::class, 'storeUser'])->name('users.store');
     Route::post('/users/{id}/update', [AdminController::class, 'updateUser'])->name('users.update');
     Route::post('/users/{id}/reset-password', [AdminController::class, 'resetPassword'])->name('users.reset-password');
     Route::post('/users/{id}/delete', [AdminController::class, 'deleteUser'])->name('users.delete');
-    Route::get('/recap', [AdminController::class, 'recap'])->name('recap');
-    Route::get('/rekap-nilai', [AdminController::class, 'recap'])->name('scores');
-    Route::get('/berita-acara', [OfficialReportController::class, 'index'])->name('berita-acara.index');
-    Route::get('/berita-acara/cetak', [OfficialReportController::class, 'print'])->name('berita-acara.print');
-
-    // Operational & Competition Routes (Super Admin Access)
-    Route::get('/verifikasi', [PicController::class, 'dashboard'])->name('verifications');
-    Route::get('/peserta', [PicController::class, 'dashboard'])->name('participants.index');
-    Route::get('/juri-wasit', [AdminController::class, 'juriWasitUndian'])->name('juri.wasit');
-    Route::get('/undi-peserta', [PicController::class, 'drawIndex'])->name('undian');
-
-    // Invoice & Payment Verification Routes
-    Route::get('/invoices', [CollectiveRegistrationController::class, 'adminInvoices'])->name('invoices.index');
-    Route::get('/invoices/{id}', [CollectiveRegistrationController::class, 'adminShowInvoice'])->name('invoices.show');
-    Route::post('/invoices/{id}/verify', [CollectiveRegistrationController::class, 'adminVerifyInvoice'])->name('invoices.verify');
 
     // Settings Routes
     Route::prefix('settings')->name('settings.')->group(function () {

@@ -43,6 +43,11 @@ class User extends Authenticatable
         return $this->role === 'superadmin';
     }
 
+    public function isPanitia(): bool
+    {
+        return $this->role === 'panitia';
+    }
+
     public function isPic(): bool
     {
         return $this->role === 'pic_lomba';

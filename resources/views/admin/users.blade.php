@@ -16,7 +16,7 @@
                     </span>
                     <h2 class="text-xl sm:text-2xl font-black text-white ai-gradient-text">Pengguna Terdaftar Sistem</h2>
                 </div>
-                <p class="text-xs text-slate-400 mt-1">Kelola akun Super Admin, Koordinator Cabang Lomba (PIC), Dewan Juri, dan Pendaftar beserta status aktif/nonaktif akun.</p>
+                <p class="text-xs text-slate-400 mt-1">Kelola akun Super Admin, Panitia Pelaksana, Koordinator Cabang Lomba (PIC), Dewan Juri, dan Pendaftar beserta status aktif/nonaktif akun.</p>
             </div>
 
             <button type="button" @click="userModal = true" class="gradient-btn inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl text-white font-bold text-xs shadow-lg shadow-[#7A5AF8]/25 transition shrink-0 cursor-pointer">
@@ -42,6 +42,7 @@
                     <select name="role" onchange="this.form.submit()" class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8] focus:ring-1 focus:ring-[#7A5AF8]/30 cursor-pointer">
                         <option value="all" {{ !request('role') || request('role') == 'all' ? 'selected' : '' }}>Semua Role / Hak Akses</option>
                         <option value="superadmin" {{ request('role') == 'superadmin' ? 'selected' : '' }}>👑 Super Administrator</option>
+                        <option value="panitia" {{ request('role') == 'panitia' ? 'selected' : '' }}>🎗️ Panitia Pelaksana</option>
                         <option value="pic_lomba" {{ request('role') == 'pic_lomba' ? 'selected' : '' }}>🛡️ PIC Cabang Lomba</option>
                         <option value="juri" {{ request('role') == 'juri' ? 'selected' : '' }}>⚖️ Dewan Juri / Wasit</option>
                         <option value="peserta" {{ request('role') == 'peserta' ? 'selected' : '' }}>🎓 Peserta / Official</option>
@@ -157,12 +158,14 @@
                             <td class="py-2.5 px-2.5 text-center whitespace-nowrap">
                                 <span class="px-2 py-0.5 rounded-full text-[10px] font-bold capitalize {{ match($u->role) {
                                     'superadmin' => 'bg-[#7A5AF8]/15 text-[#A594FD] border border-[#7A5AF8]/30',
+                                    'panitia' => 'bg-amber-500/15 text-amber-300 border border-amber-500/30',
                                     'pic_lomba' => 'bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30',
                                     'juri' => 'bg-[#FF58D5]/15 text-[#FFA0E7] border border-[#FF58D5]/30',
                                     default => 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
                                 } }}">
                                     {{ match($u->role) {
                                         'superadmin' => '👑 Super Admin',
+                                        'panitia' => '🎗️ Panitia Pelaksana',
                                         'pic_lomba' => '🛡️ PIC Lomba',
                                         'juri' => '⚖️ Dewan Juri',
                                         default => '🎓 Peserta'
@@ -374,6 +377,7 @@
                             <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Role / Wewenang <span class="text-rose-400">*</span></label>
                             <select name="role" x-model="selectedUser.role" required class="block w-full px-4 py-2.5 rounded-xl bg-[#0C111D] border border-white/[0.12] text-sm text-white outline-none focus:border-[#7A5AF8] focus:ring-2 focus:ring-[#7A5AF8]/30">
                                 <option value="superadmin">👑 Super Administrator</option>
+                                <option value="panitia">🎗️ Panitia Pelaksana (Operasional & Laporan)</option>
                                 <option value="pic_lomba">🛡️ Koordinator PIC Cabang Lomba</option>
                                 <option value="juri">⚖️ Dewan Juri / Wasit</option>
                                 <option value="peserta">🎓 Pendaftar / Peserta</option>
@@ -460,6 +464,7 @@
                             <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Role / Wewenang <span class="text-rose-400">*</span></label>
                             <select name="role" required class="block w-full px-4 py-2.5 rounded-xl bg-[#0C111D] border border-white/[0.12] text-sm text-white outline-none focus:border-[#7A5AF8] focus:ring-2 focus:ring-[#7A5AF8]/30">
                                 <option value="superadmin">👑 Super Administrator</option>
+                                <option value="panitia">🎗️ Panitia Pelaksana (Operasional & Laporan)</option>
                                 <option value="pic_lomba">🛡️ Koordinator PIC Cabang Lomba</option>
                                 <option value="juri">⚖️ Dewan Juri / Wasit</option>
                                 <option value="peserta">🎓 Pendaftar / Peserta</option>

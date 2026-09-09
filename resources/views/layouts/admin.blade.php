@@ -291,7 +291,7 @@
         
         <!-- Sidebar Brand Header -->
         <div class="h-16 flex items-center justify-between px-4 border-b border-white/[0.08]">
-            <a href="{{ auth()->check() && auth()->user()->role === 'peserta' ? route('peserta.dashboard') : (auth()->check() && auth()->user()->role === 'superadmin' ? route('admin.dashboard') : route('home')) }}" class="flex items-center gap-2.5 overflow-hidden group min-w-0">
+            <a href="{{ auth()->check() && auth()->user()->role === 'peserta' ? route('peserta.dashboard') : (auth()->check() && in_array(auth()->user()->role, ['superadmin', 'panitia']) ? route('admin.dashboard') : route('home')) }}" class="flex items-center gap-2.5 overflow-hidden group min-w-0">
                 @if(!empty($appSettings['app_logo']))
                     <img src="{{ asset('storage/' . $appSettings['app_logo']) }}" alt="{{ $appSettings['app_name'] ?? 'TALENTA' }}" class="h-9 w-9 object-contain rounded-xl shrink-0 group-hover:scale-105 transition-transform duration-300">
                 @else
@@ -312,8 +312,8 @@
         <!-- Sidebar Navigation Menu -->
         <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-4 text-xs font-medium scrollbar-thin scrollbar-thumb-slate-800">
             
-            @if(auth()->user()->role === 'superadmin')
-                <!-- Group: OVERVIEW -->
+            @if(in_array(auth()->user()->role, ['superadmin', 'panitia']))
+                <!-- Group: OVERVIEW (Super Admin & Panitia) -->
                 <div class="space-y-1">
                     <div class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Overview</div>
                     <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('admin.dashboard') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
@@ -322,7 +322,8 @@
                     </a>
                 </div>
 
-                <!-- Group: MASTER DATA -->
+                @if(auth()->user()->role === 'superadmin')
+                <!-- Group: MASTER DATA (Khusus Super Admin) -->
                 <div class="space-y-1">
                     <div class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Master Data</div>
                     <a href="{{ route('admin.competitions') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('admin.competitions*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
@@ -334,8 +335,9 @@
                         <span>Kelola Pengguna</span>
                     </a>
                 </div>
+                @endif
 
-                <!-- Group: OPERASIONAL PERLOMBAAN -->
+                <!-- Group: OPERASIONAL PERLOMBAAN (Super Admin & Panitia) -->
                 <div class="space-y-1">
                     <div class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Operasional Lomba</div>
                     <a href="{{ route('admin.verifications') }}" class="flex items-center justify-between px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('admin.verifications*') || request()->routeIs('admin.participants.index*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
@@ -352,7 +354,7 @@
                     </a>
                 </div>
 
-                <!-- Group: LAPORAN -->
+                <!-- Group: LAPORAN (Super Admin & Panitia) -->
                 <div class="space-y-1">
                     <div class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Laporan</div>
                     <a href="{{ route('admin.recap') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('admin.recap*') || request()->routeIs('admin.scores*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
@@ -365,7 +367,8 @@
                     </a>
                 </div>
 
-                <!-- Group: PENGATURAN & TOOLS -->
+                @if(auth()->user()->role === 'superadmin')
+                <!-- Group: PENGATURAN & TOOLS (Khusus Super Admin) -->
                 <div class="space-y-1">
                     <div class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Pengaturan Sistem</div>
                     <a href="{{ route('admin.settings.general') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('admin.settings.general*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
@@ -389,6 +392,7 @@
                         <span>Info Aplikasi & Server</span>
                     </a>
                 </div>
+                @endif
             @endif
 
             @if(auth()->user()->role === 'pic_lomba')
@@ -491,6 +495,7 @@
                         <p class="text-[10px] font-semibold text-[#A594FD] uppercase tracking-wider truncate">
                             {{ auth()->user()->position ?: match(auth()->user()->role) {
                                 'superadmin' => 'Super Administrator',
+                                'panitia' => 'Panitia Pelaksana',
                                 'pic_lomba' => 'PIC Koordinator',
                                 'juri' => 'Dewan Juri',
                                 default => 'Pendaftar Resmi'

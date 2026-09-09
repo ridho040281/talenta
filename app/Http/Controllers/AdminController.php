@@ -741,7 +741,7 @@ class AdminController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'unique:users,email'],
             'password' => ['required', 'min:6'],
-            'role' => ['required', 'in:superadmin,pic_lomba,juri,peserta'],
+            'role' => ['required', 'in:superadmin,panitia,pic_lomba,juri,peserta'],
             'status' => ['nullable', 'in:active,inactive'],
             'phone' => ['nullable', 'string', 'max:50'],
             'institution_name' => ['nullable', 'string', 'max:255'],
@@ -783,7 +783,7 @@ class AdminController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'unique:users,email,'.$user->id],
-            'role' => ['required', 'in:superadmin,pic_lomba,juri,peserta'],
+            'role' => ['required', 'in:superadmin,panitia,pic_lomba,juri,peserta'],
             'status' => ['required', 'in:active,inactive'],
             'phone' => ['nullable', 'string', 'max:50'],
             'institution_name' => ['nullable', 'string', 'max:255'],

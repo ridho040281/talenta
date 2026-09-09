@@ -13,17 +13,19 @@
                 <span class="p-1 rounded-lg bg-[#7A5AF8]/20 text-[#A594FD] border border-[#7A5AF8]/30">
                     <i data-lucide="sparkles" class="w-4 h-4"></i>
                 </span>
-                <h2 class="text-base sm:text-lg font-black tracking-tight text-white ai-gradient-text">Pusat Kendali & Analitik Super Admin</h2>
+                <h2 class="text-base sm:text-lg font-black tracking-tight text-white ai-gradient-text">Pusat Kendali & Analitik {{ auth()->user()->role === 'superadmin' ? 'Super Admin' : 'Panitia' }}</h2>
             </div>
             <p class="text-xs text-slate-400">Statistik pendaftaran, kuota cabang lomba, dan verifikasi berkas real-time.</p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2.5 shrink-0">
-            <a href="{{ route('admin.competitions') }}" class="gradient-btn inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl font-bold text-xs shadow-lg shadow-[#7A5AF8]/25 transition cursor-pointer">
-                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                <span>Cabang Lomba</span>
-            </a>
-            <a href="{{ route('pic.dashboard') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-200 border border-white/[0.1] font-bold text-xs transition cursor-pointer">
+            @if(auth()->user()->role === 'superadmin')
+                <a href="{{ route('admin.competitions') }}" class="gradient-btn inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl font-bold text-xs shadow-lg shadow-[#7A5AF8]/25 transition cursor-pointer">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                    <span>Cabang Lomba</span>
+                </a>
+            @endif
+            <a href="{{ route('admin.verifications') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-200 border border-white/[0.1] font-bold text-xs transition cursor-pointer">
                 <i data-lucide="users" class="w-3.5 h-3.5 text-[#4E6EFF]"></i>
                 <span>Data Peserta</span>
             </a>
