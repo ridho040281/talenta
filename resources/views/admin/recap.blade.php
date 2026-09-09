@@ -4,6 +4,38 @@
 @section('page_title', 'Rekapitulasi Terpadu & Hasil Lomba')
 
 @section('content')
+<style>
+    /* Styling during PNG export to ensure a pristine, widescreen, unclipped infographic */
+    .exporting-infographic {
+        width: 1200px !important;
+        min-width: 1200px !important;
+        max-width: 1200px !important;
+        margin: 0 !important;
+        padding: 44px 48px !important;
+        background-color: #0C111D !important;
+        border-radius: 28px !important;
+        box-shadow: none !important;
+    }
+    .exporting-infographic * {
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+    }
+    .exporting-infographic *::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
+    .exporting-infographic .rekap-table-container {
+        overflow: visible !important;
+        overflow-x: visible !important;
+        border-radius: 16px !important;
+    }
+    .exporting-infographic table {
+        width: 100% !important;
+        min-width: 100% !important;
+        table-layout: auto !important;
+    }
+</style>
 <div class="space-y-4" x-data="{ 
     activeTab: '{{ request('tab', 'keuangan') }}',
     downloadingPng: false,
@@ -39,19 +71,25 @@
             return;
         }
 
-        setTimeout(() => {
-            if (typeof htmlToImage === 'undefined') {
-                alert('Pustaka htmlToImage belum selesai dimuat. Silakan muat ulang halaman (Ctrl+F5).');
-                this.downloadingPng = false;
-                return;
-            }
+        if (typeof htmlToImage === 'undefined') {
+            alert('Pustaka htmlToImage belum selesai dimuat. Silakan muat ulang halaman (Ctrl+F5).');
+            this.downloadingPng = false;
+            return;
+        }
 
+        // Apply exporting class to expand to fixed 1200px widescreen layout and remove scrollbars
+        target.classList.add('exporting-infographic');
+
+        // Allow browser 250ms to complete layout reflow at 1200px width
+        setTimeout(() => {
             htmlToImage.toPng(target, {
                 pixelRatio: 2,
+                width: 1200,
                 backgroundColor: '#0C111D',
                 cacheBust: true,
                 imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
             }).then(dataUrl => {
+                target.classList.remove('exporting-infographic');
                 const link = document.createElement('a');
                 const now = new Date();
                 const pad = (n) => String(n).padStart(2, '0');
@@ -64,6 +102,7 @@
                     confetti({ particleCount: 60, spread: 70, origin: { y: 0.7 } });
                 }
             }).catch(err => {
+                target.classList.remove('exporting-infographic');
                 console.error('Error saat mengekspor gambar via htmlToImage:', err);
                 alert('Gagal membuat file gambar: ' + (err.message || err));
                 this.downloadingPng = false;
@@ -586,40 +625,40 @@
             <div class="absolute inset-0 bg-gradient-to-b from-[#7A5AF8]/10 via-[#4E6EFF]/5 to-transparent pointer-events-none"></div>
 
             <!-- HEADER / JUDUL INFOGRAFIS SESUAI INSTRUKSI -->
-            <div class="text-center relative z-10 space-y-2">
+            <div class="text-center relative z-10 space-y-3">
                 @if(!empty($appSettings['app_logo']))
                     <div class="flex items-center justify-center mb-3">
                         <img src="{{ asset('storage/' . $appSettings['app_logo']) }}" 
                              alt="Logo TALENTA" 
                              crossorigin="anonymous"
-                             class="h-16 sm:h-20 w-auto max-w-[200px] object-contain drop-shadow-xl">
+                             class="h-20 w-auto max-w-[220px] object-contain drop-shadow-xl">
                     </div>
                 @endif
 
-                <h1 class="text-2xl sm:text-3xl lg:text-4xl font-black tracking-wider text-white uppercase font-display drop-shadow-md">
+                <div class="text-2xl sm:text-3xl lg:text-4xl font-black tracking-wider text-white uppercase font-display drop-shadow-md leading-tight whitespace-nowrap">
                     REKAPITULASI
-                </h1>
-                <h2 class="text-base sm:text-lg lg:text-xl font-extrabold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-blue-200 via-indigo-200 to-purple-200 uppercase">
-                    PENDAFTAR PERLOMBAAN & PERTANDINGAN
-                </h2>
-                <div class="flex items-center justify-center gap-2 pt-0.5">
-                    <span class="text-xl sm:text-2xl lg:text-3xl font-black tracking-wide text-amber-400 uppercase font-display drop-shadow-sm">
-                        TALENTA MILAD KE-57
-                    </span>
                 </div>
-                <p class="text-sm sm:text-base font-extrabold tracking-widest text-slate-300 uppercase">
+                <div class="text-base sm:text-lg lg:text-xl font-extrabold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-blue-200 via-indigo-200 to-purple-200 uppercase leading-snug whitespace-nowrap">
+                    PENDAFTAR PERLOMBAAN &amp; PERTANDINGAN
+                </div>
+                <div class="py-1">
+                    <div class="text-xl sm:text-2xl lg:text-3xl font-black tracking-wide text-amber-400 uppercase font-display drop-shadow-sm leading-normal whitespace-nowrap inline-block">
+                        TALENTA MILAD KE-57
+                    </div>
+                </div>
+                <div class="text-sm sm:text-base font-extrabold tracking-widest text-slate-300 uppercase leading-snug whitespace-nowrap">
                     {{ $appSettings['institution_name'] ?? 'MTSN 1 BLITAR' }}
-                </p>
-                <div>
-                    <span class="inline-block px-4 py-1 rounded-full bg-white/[0.08] border border-white/[0.12] text-xs sm:text-sm font-black text-[#84D0FF] tracking-widest uppercase font-mono">
+                </div>
+                <div class="pt-0.5">
+                    <span class="inline-block px-5 py-1 rounded-full bg-white/[0.08] border border-white/[0.15] text-xs sm:text-sm font-black text-[#84D0FF] tracking-widest uppercase font-mono">
                         2026
                     </span>
                 </div>
 
                 <!-- Update Timestamp Badge -->
-                <div class="pt-3">
-                    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm font-bold shadow-sm font-mono">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <div class="pt-2">
+                    <div class="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm font-bold shadow-sm font-mono whitespace-nowrap">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
                         <span>Update : {{ \Carbon\Carbon::now()->locale('id')->isoFormat('dddd, D MMMM Y, [Pukul] HH:mm') }} WIB</span>
                     </div>
                 </div>
@@ -675,13 +714,13 @@
                 };
             @endphp
 
-            <div class="relative z-10 overflow-x-auto rounded-2xl border border-white/[0.08] bg-[#0A0E1A]/80 shadow-xl">
+            <div class="rekap-table-container relative z-10 overflow-x-auto rounded-2xl border border-white/[0.08] bg-[#0A0E1A]/80 shadow-xl">
                 <table class="w-full text-left text-sm text-slate-300 border-collapse">
                     <thead class="text-xs font-bold uppercase tracking-wider bg-[#0C111D]/95 text-slate-400 border-b border-white/[0.08]">
                         <tr>
-                            <th class="py-3.5 px-6 whitespace-nowrap min-w-[220px]">Nama Lomba</th>
-                            <th class="py-3.5 px-6 whitespace-nowrap min-w-[200px]">Kategori</th>
-                            <th class="py-3.5 px-6 whitespace-nowrap min-w-[240px]">Sisa Kuota</th>
+                            <th class="py-4 px-6 whitespace-nowrap w-[320px] min-w-[320px]">Nama Lomba</th>
+                            <th class="py-4 px-6 whitespace-nowrap w-[340px] min-w-[340px]">Kategori</th>
+                            <th class="py-4 px-6 whitespace-nowrap w-auto min-w-[440px]">Sisa Kuota</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-white/[0.04] font-medium text-xs sm:text-sm">
@@ -758,25 +797,25 @@
                             <tr x-show="recapCategory === 'all' || recapCategory === '{{ $comp->category->slug ?? '' }}'" class="{{ $rowTheme['bg'] }} {{ $rowTheme['border_l'] }} transition-colors duration-150 border-b border-white/[0.05]">
                                 
                                 <!-- Nama Lomba & Lokasi -->
-                                <td class="py-4 px-6 min-w-[200px] align-middle">
-                                    <div class="flex items-center gap-2 flex-wrap">
-                                        <span class="font-extrabold text-white text-sm sm:text-base block">
+                                <td class="py-4 px-6 w-[320px] min-w-[320px] align-middle">
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-extrabold text-white text-base leading-normal whitespace-nowrap block">
                                             {{ $comp->name }}
                                         </span>
                                         @if($comp->code === 'MIPA')
-                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 shadow-sm shadow-amber-500/20">
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 shadow-sm shadow-amber-500/20 shrink-0 whitespace-nowrap">
                                                 🎁 Bonus 10 Get 1
                                             </span>
                                         @endif
                                     </div>
-                                    <span class="text-[11px] text-slate-400 flex items-center gap-1.5 mt-1">
-                                        <svg class="w-3 h-3 text-[#4E6EFF] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+                                    <div class="text-[11px] text-slate-400 flex items-center gap-1.5 mt-2 whitespace-nowrap">
+                                        <svg class="w-3.5 h-3.5 text-[#4E6EFF] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
                                         <span>{{ $comp->venue ?? 'Kampus MTsN 1 Blitar' }}</span>
-                                    </span>
+                                    </div>
                                 </td>
 
                                 <!-- Kategori -->
-                                <td class="py-4 px-6 text-xs whitespace-nowrap align-middle">
+                                <td class="py-4 px-6 text-xs whitespace-nowrap align-middle w-[340px] min-w-[340px]">
                                     @if($isBlt)
                                         <div class="flex flex-col py-1">
                                             <!-- Tunggal PA -->
@@ -820,7 +859,7 @@
                                     @elseif($isMtqPop)
                                         <div class="flex items-center gap-1.5 font-bold text-emerald-400 text-xs py-1">
                                             <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.999-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
-                                            <span>Individu (PA & PI)</span>
+                                            <span>Individu (PA &amp; PI)</span>
                                         </div>
                                     @elseif($isTmj)
                                         <div class="flex flex-col py-1">
@@ -854,9 +893,9 @@
                                 </td>
 
                                 <!-- Sisa Kuota & Progress Bar -->
-                                <td class="py-4 px-6 whitespace-nowrap align-middle">
+                                <td class="py-4 px-6 whitespace-nowrap align-middle w-auto min-w-[440px]">
                                     @if($isBlt)
-                                        <div class="flex flex-col py-1 text-slate-400 text-xs min-w-[210px]">
+                                        <div class="flex flex-col py-1 text-slate-400 text-xs w-full">
                                             <!-- Kuota Tunggal PA -->
                                             <div class="space-y-1.5">
                                                 {!! $renderTierQuota($countBltTunggalPaA, $comp->tier_quotas['A_tunggal_pa'] ?? 16, 'Peserta') !!}
@@ -884,7 +923,7 @@
                                             {!! $renderTierQuota($countBltGandaPi, $comp->tier_quotas['ganda_pi'] ?? 0, 'Pasangan') !!}
                                         </div>
                                     @elseif($isMtqPop)
-                                        <div class="flex flex-col py-1 text-slate-400 text-xs min-w-[210px] space-y-2">
+                                        <div class="flex flex-col py-1 text-slate-400 text-xs w-full space-y-2">
                                             <!-- Main Combined Quota Bar -->
                                             {!! $renderTierQuota($totalMtqPop, $quotaMtqPop, 'Peserta') !!}
                                             
@@ -902,7 +941,7 @@
                                             </div>
                                         </div>
                                     @elseif($isTmj)
-                                        <div class="flex flex-col py-1 text-slate-400 text-xs min-w-[210px]">
+                                        <div class="flex flex-col py-1 text-slate-400 text-xs w-full">
                                             <!-- Kuota Tunggal PA -->
                                             <div class="space-y-1.5">
                                                 {!! $renderTierQuota($countTmjTunggalPaA, $comp->tier_quotas['A_tunggal_pa'] ?? 10, 'Peserta') !!}
@@ -933,7 +972,7 @@
                                                 $hasRegs = $regCount > 0;
                                                 $barWidth = $hasRegs ? min(100, max(25, $regCount * 10)) : 0;
                                             @endphp
-                                            <div class="space-y-1.5 min-w-[210px]">
+                                            <div class="space-y-1.5 w-full">
                                                 <div class="flex items-center justify-between gap-3">
                                                     <span class="text-xs sm:text-sm text-purple-300 font-black flex items-center gap-1">
                                                         <span class="text-sm leading-none font-sans">∞</span>
@@ -957,7 +996,7 @@
                                                 $isFull = $sisa <= 0;
                                                 $isLow = $sisa > 0 && $sisa <= 5;
                                             @endphp
-                                            <div class="space-y-1.5 min-w-[210px]">
+                                            <div class="space-y-1.5 w-full">
                                                 <div class="flex items-center justify-between gap-3">
                                                     <span class="text-xs sm:text-sm {{ $isFull ? 'text-rose-400 font-black' : ($isLow ? 'text-amber-300 font-black' : 'text-emerald-400 font-black') }}">
                                                         {{ $isFull ? 'Kuota Penuh' : 'Sisa: ' . $sisa . ' ' . $unitWord }}
@@ -993,8 +1032,8 @@
             @if(count($sponsorLogos) > 0)
                 <div class="relative z-10 pt-5 border-t border-white/[0.08] space-y-3">
                     <div class="text-center">
-                        <h4 class="text-xs sm:text-sm font-extrabold uppercase tracking-widest text-slate-300 font-display flex items-center justify-center gap-2">
-                            <span>{{ $appSettings['sponsor_title'] ?? 'Supported by :' }}</span>
+                        <h4 class="text-xs sm:text-sm font-extrabold uppercase tracking-widest text-slate-300 font-display flex items-center justify-center gap-2 whitespace-nowrap">
+                            <span>{{ rtrim($appSettings['sponsor_title'] ?? 'Supported by', ' :') }}:</span>
                         </h4>
                     </div>
 
