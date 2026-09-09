@@ -189,7 +189,7 @@ class AdminController extends Controller
             'pic_id' => ['nullable', 'exists:users,id'],
             'pic_ids' => ['nullable', 'array'],
             'pic_ids.*' => ['exists:users,id'],
-            'status' => [$isMultiTier ? 'nullable' : 'required', 'in:buka,tutup,selesai'],
+            'status' => ['required', 'in:buka,tutup,selesai'],
             'venue' => ['nullable', 'string'],
             'schedule_date' => ['nullable', 'date'],
             'schedule_time' => ['nullable', 'string'],

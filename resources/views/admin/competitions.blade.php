@@ -312,7 +312,15 @@
                                     {{ $comp->code }}
                                 </td>
                                 <td class="py-3 px-3.5 font-black text-white text-sm">
-                                    {{ $comp->name }}
+                                    <div>{{ $comp->name }}</div>
+                                    @if($comp->registration_start_at || $comp->registration_end_at)
+                                        <div class="flex items-center gap-1 mt-1">
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-[10px] font-sans font-bold text-amber-300">
+                                                <i data-lucide="clock" class="w-2.5 h-2.5 text-amber-400"></i>
+                                                Jadwal Khusus
+                                            </span>
+                                        </div>
+                                    @endif
                                 </td>
                                 <td class="py-3 px-3 text-xs whitespace-nowrap">
                                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30 font-bold">
@@ -634,6 +642,12 @@
                                     @endif
                                 </td>
                                 <td class="py-3 px-3 text-center whitespace-nowrap align-middle">
+                                    @php
+                                        $regStatus = $comp->registration_status_info;
+                                        $hasCustomDeadline = !empty($comp->registration_end_at);
+                                        $effectiveEnd = $comp->effective_registration_end;
+                                    @endphp
+
                                     @if($comp->code === 'BLT')
                                         <div class="flex flex-col py-1 text-xs">
                                             <!-- Status Tunggal PA (3 Baris Kat A, B, C) -->
@@ -699,26 +713,56 @@
                                                     {{ $sgPi }}
                                                 </span>
                                             </div>
+
+                                            <!-- Status Master & Deadline BLT -->
+                                            <div class="border-t border-white/[0.1] pt-2 mt-1 flex flex-col items-center gap-1">
+                                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize {{ $regStatus['badge_class'] }}">
+                                                    {{ $regStatus['status_label'] }}
+                                                </span>
+                                                @if($hasCustomDeadline)
+                                                    <span class="text-[10px] text-amber-300 font-mono flex items-center gap-1" title="Batas Deadline Khusus: {{ $comp->deadline_display }}">
+                                                        <i data-lucide="clock" class="w-3 h-3 text-amber-400"></i>
+                                                        <span>{{ $comp->registration_end_at->format('d/m/y H:i') }}</span>
+                                                        <span class="text-[9px] px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 font-sans font-semibold">Khusus</span>
+                                                    </span>
+                                                @elseif($effectiveEnd)
+                                                    <span class="text-[10px] text-slate-400 font-mono flex items-center gap-1" title="Batas Deadline Global: {{ $comp->deadline_display }}">
+                                                        <i data-lucide="calendar" class="w-3 h-3 text-slate-500"></i>
+                                                        <span>{{ $effectiveEnd->format('d/m/y H:i') }}</span>
+                                                        <span class="text-[9px] px-1 py-0.2 rounded bg-white/[0.06] text-slate-400 font-sans font-semibold">Global</span>
+                                                    </span>
+                                                @endif
+                                            </div>
                                         </div>
                                     @elseif(in_array($comp->code, ['MTQ', 'POP']))
                                         @php
                                             $stPa = $comp->status_pa ?? $comp->status;
                                             $stPi = $comp->status_pi ?? $comp->status;
                                         @endphp
-                                        @if($stPa === $stPi)
-                                            <span class="px-2.5 py-1 rounded-full text-xs font-bold capitalize {{ $stPa === 'buka' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : ($stPa === 'tutup' ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' : 'bg-white/[0.05] text-slate-400 border border-white/[0.08]') }}">
-                                                {{ $stPa }}
+                                        <div class="flex flex-col items-center gap-1">
+                                            <span class="px-2.5 py-1 rounded-full text-xs font-bold capitalize {{ $regStatus['badge_class'] }}">
+                                                {{ $regStatus['status_label'] }}
                                             </span>
-                                        @else
-                                            <div class="flex flex-col gap-1 items-center">
-                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold capitalize {{ $stPa === 'buka' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/15 text-rose-400 border border-rose-500/30' }}">
-                                                    PA: {{ $stPa }}
+                                            @if($stPa !== $stPi)
+                                                <div class="flex items-center gap-1 text-[10px] font-bold">
+                                                    <span class="px-1.5 py-0.2 rounded {{ $stPa === 'buka' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300' }}">PA: {{ ucfirst($stPa) }}</span>
+                                                    <span class="px-1.5 py-0.2 rounded {{ $stPi === 'buka' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300' }}">PI: {{ ucfirst($stPi) }}</span>
+                                                </div>
+                                            @endif
+                                            @if($hasCustomDeadline)
+                                                <span class="text-[10px] text-amber-300 font-mono flex items-center gap-1" title="Batas Deadline Khusus: {{ $comp->deadline_display }}">
+                                                    <i data-lucide="clock" class="w-3 h-3 text-amber-400"></i>
+                                                    <span>{{ $comp->registration_end_at->format('d/m/y H:i') }}</span>
+                                                    <span class="text-[9px] px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 font-sans font-semibold">Khusus</span>
                                                 </span>
-                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold capitalize {{ $stPi === 'buka' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/15 text-rose-400 border border-rose-500/30' }}">
-                                                    PI: {{ $stPi }}
+                                            @elseif($effectiveEnd)
+                                                <span class="text-[10px] text-slate-400 font-mono flex items-center gap-1" title="Batas Deadline Global: {{ $comp->deadline_display }}">
+                                                    <i data-lucide="calendar" class="w-3 h-3 text-slate-500"></i>
+                                                    <span>{{ $effectiveEnd->format('d/m/y H:i') }}</span>
+                                                    <span class="text-[9px] px-1 py-0.2 rounded bg-white/[0.06] text-slate-400 font-sans font-semibold">Global</span>
                                                 </span>
-                                            </div>
-                                        @endif
+                                            @endif
+                                        </div>
                                     @elseif($comp->code === 'TMJ')
                                         <div class="flex flex-col py-1 text-xs">
                                             <!-- Status Tunggal PA (Kat A & B) -->
@@ -756,19 +800,43 @@
                                                     </span>
                                                 </div>
                                             </div>
+
+                                            <!-- Status Master & Deadline TMJ -->
+                                            <div class="border-t border-white/[0.1] pt-2 mt-1 flex flex-col items-center gap-1">
+                                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize {{ $regStatus['badge_class'] }}">
+                                                    {{ $regStatus['status_label'] }}
+                                                </span>
+                                                @if($hasCustomDeadline)
+                                                    <span class="text-[10px] text-amber-300 font-mono flex items-center gap-1" title="Batas Deadline Khusus: {{ $comp->deadline_display }}">
+                                                        <i data-lucide="clock" class="w-3 h-3 text-amber-400"></i>
+                                                        <span>{{ $comp->registration_end_at->format('d/m/y H:i') }}</span>
+                                                        <span class="text-[9px] px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 font-sans font-semibold">Khusus</span>
+                                                    </span>
+                                                @elseif($effectiveEnd)
+                                                    <span class="text-[10px] text-slate-400 font-mono flex items-center gap-1" title="Batas Deadline Global: {{ $comp->deadline_display }}">
+                                                        <i data-lucide="calendar" class="w-3 h-3 text-slate-500"></i>
+                                                        <span>{{ $effectiveEnd->format('d/m/y H:i') }}</span>
+                                                        <span class="text-[9px] px-1 py-0.2 rounded bg-white/[0.06] text-slate-400 font-sans font-semibold">Global</span>
+                                                    </span>
+                                                @endif
+                                            </div>
                                         </div>
                                     @else
-                                        @php
-                                            $regStatus = $comp->registration_status_info;
-                                        @endphp
                                         <div class="flex flex-col items-center gap-1">
                                             <span class="px-2.5 py-1 rounded-full text-xs font-bold capitalize {{ $regStatus['badge_class'] }}">
                                                 {{ $regStatus['status_label'] }}
                                             </span>
-                                            @if($comp->registration_end_at)
+                                            @if($hasCustomDeadline)
                                                 <span class="text-[10px] text-amber-300 font-mono flex items-center gap-1" title="Batas Deadline Khusus: {{ $comp->deadline_display }}">
                                                     <i data-lucide="clock" class="w-3 h-3 text-amber-400"></i>
-                                                    {{ $comp->registration_end_at->format('d/m/y H:i') }}
+                                                    <span>{{ $comp->registration_end_at->format('d/m/y H:i') }}</span>
+                                                    <span class="text-[9px] px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 font-sans font-semibold">Khusus</span>
+                                                </span>
+                                            @elseif($effectiveEnd)
+                                                <span class="text-[10px] text-slate-400 font-mono flex items-center gap-1" title="Batas Deadline Global: {{ $comp->deadline_display }}">
+                                                    <i data-lucide="calendar" class="w-3 h-3 text-slate-500"></i>
+                                                    <span>{{ $effectiveEnd->format('d/m/y H:i') }}</span>
+                                                    <span class="text-[9px] px-1 py-0.2 rounded bg-white/[0.06] text-slate-400 font-sans font-semibold">Global</span>
                                                 </span>
                                             @endif
                                         </div>

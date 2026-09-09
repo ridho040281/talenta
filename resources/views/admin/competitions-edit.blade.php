@@ -204,22 +204,37 @@
                         </div>
                     </div>
 
-                    <!-- PENGATURAN BATAS WAKTU PENDAFTARAN KHUSUS (DEADLINE) -->
+                    <!-- PENGATURAN STATUS & JADWAL PENDAFTARAN (DEADLINE) -->
                     <div class="p-4 sm:p-5 rounded-2xl space-y-3" style="background: rgba(245,158,11,0.05); border: 1px solid rgba(245,158,11,0.22);">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-white/[0.08]">
                             <div>
                                 <label class="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-2">
                                     <i data-lucide="timer" class="w-4 h-4 text-amber-400"></i>
-                                    <span>Jadwal & Batas Waktu Pendaftaran Khusus (Deadline)</span>
+                                    <span>Jadwal & Status Pendaftaran Cabang (Deadline)</span>
                                 </label>
-                                <p class="text-[11px] text-slate-400 mt-0.5">Atur jadwal pendaftaran khusus cabang ini. Jika dikosongkan, cabang ini otomatis mengikuti jadwal global TALENTA 2026.</p>
+                                <p class="text-[11px] text-slate-400 mt-0.5">Atur status utama dan jadwal pendaftaran cabang ini. Jika tanggal dikosongkan, cabang ini otomatis mengikuti jadwal global TALENTA 2026.</p>
                             </div>
                             <span class="text-[10px] font-bold text-amber-400 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 self-start sm:self-auto font-mono">
-                                Jadwal Mandiri / Cabang
+                                Saklar & Jadwal Cabang
                             </span>
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5 flex items-center gap-1.5">
+                                    <i data-lucide="power" class="w-3.5 h-3.5 text-amber-400"></i>
+                                    <span>Status Pendaftaran (Master)</span>
+                                </label>
+                                <select name="status" required class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-bold {{ $competition->status == 'buka' ? 'text-emerald-400' : ($competition->status == 'tutup' ? 'text-rose-400' : 'text-slate-400') }}">
+                                    <option value="buka" {{ old('status', $competition->status) == 'buka' ? 'selected' : '' }}>🟢 Buka (Aktif)</option>
+                                    <option value="tutup" {{ old('status', $competition->status) == 'tutup' ? 'selected' : '' }}>🔴 Tutup (Manual)</option>
+                                    <option value="selesai" {{ old('status', $competition->status) == 'selesai' ? 'selected' : '' }}>⚪ Selesai (Event Usai)</option>
+                                </select>
+                                <p class="text-[10px] text-slate-500 mt-1">
+                                    Status saklar utama cabang lomba
+                                </p>
+                            </div>
+
                             <div>
                                 <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5 flex items-center gap-1.5">
                                     <i data-lucide="calendar-check" class="w-3.5 h-3.5 text-emerald-400"></i>
@@ -250,32 +265,24 @@
                         <div class="p-2.5 rounded-xl bg-slate-900/60 border border-white/[0.06] text-[11px] text-slate-400 flex items-start gap-2">
                             <i data-lucide="info" class="w-4 h-4 text-amber-400 shrink-0 mt-0.5"></i>
                             <span>
-                                <strong>Catatan Otomatisasi:</strong> Sistem akan otomatis menutup pendaftaran lomba ini jika <strong>Batas Akhir (Deadline)</strong> telah terlampaui ATAU <strong>Kuota Total</strong> telah terpenuhi. Anda tetap bisa membuka/menutup paksa secara manual menggunakan dropdown status di bawah.
+                                <strong>Catatan Otomatisasi:</strong> Sistem akan otomatis menutup pendaftaran lomba ini jika <strong>Batas Akhir (Deadline)</strong> telah terlampaui ATAU <strong>Kuota Total</strong> telah terpenuhi. Anda juga bisa membuka/menutup secara manual melalui pilihan <strong>Status Pendaftaran (Master)</strong> di atas.
                             </span>
                         </div>
                     </div>
 
-                    <!-- Row 3: Biaya, Kuota, Status -->
+                    <!-- Row 3: Biaya & Kuota (Khusus Cabang Non-Multi-Tier) -->
                     @php $isMultiTier = in_array($competition->code, ['BLT', 'MTQ', 'POP', 'TMJ']); @endphp
                     @if(!$isMultiTier)
-                    <div class="grid grid-cols-2 sm:grid-cols-12 gap-3">
-                        <div class="sm:col-span-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
                             <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Biaya Pendaftaran (Rp)</label>
                             <input name="registration_fee" type="number" step="1000" min="0" value="{{ old('registration_fee', $competition->registration_fee) }}" class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-mono font-bold">
                             <p class="text-[10px] text-slate-600 mt-0.5">Isi 0 untuk Gratis</p>
                         </div>
-                        <div class="sm:col-span-4">
+                        <div>
                             <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Kuota Total</label>
                             <input name="quota" type="number" min="0" value="{{ old('quota', $competition->quota) }}" class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-bold">
                             <p class="text-[10px] text-slate-600 mt-0.5">Isi 0 untuk Tak Terbatas (∞)</p>
-                        </div>
-                        <div class="col-span-2 sm:col-span-4">
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Status Pendaftaran</label>
-                            <select name="status" required class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-bold">
-                                <option value="buka" {{ $competition->status == 'buka' ? 'selected' : '' }}>Buka</option>
-                                <option value="tutup" {{ $competition->status == 'tutup' ? 'selected' : '' }}>Tutup</option>
-                                <option value="selesai" {{ $competition->status == 'selesai' ? 'selected' : '' }}>Selesai</option>
-                            </select>
                         </div>
                     </div>
                     @endif
