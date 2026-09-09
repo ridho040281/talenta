@@ -5,7 +5,9 @@
 
 @section('content')
 <div class="space-y-4" x-data="{ 
-    activeTab: 'keuangan',
+    activeTab: '{{ request('tab', 'keuangan') }}',
+    downloadingPng: false,
+    recapCategory: 'all',
     searchQuery: '',
     selectedCategory: 'all',
     selectedStatus: 'all',
@@ -29,6 +31,46 @@
             this.expandAllBranches();
         }
     },
+    downloadPNG() {
+        this.downloadingPng = true;
+        const target = document.getElementById('rekapPendaftarCard');
+        if (!target) {
+            this.downloadingPng = false;
+            return;
+        }
+
+        setTimeout(() => {
+            if (typeof html2canvas === 'undefined') {
+                alert('Pustaka html2canvas belum selesai dimuat. Silakan tunggu beberapa detik atau muat ulang halaman.');
+                this.downloadingPng = false;
+                return;
+            }
+
+            html2canvas(target, {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#0C111D',
+                logging: false,
+                windowWidth: 1200
+            }).then(canvas => {
+                const link = document.createElement('a');
+                const now = new Date();
+                const pad = (n) => String(n).padStart(2, '0');
+                const timeTag = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`;
+                link.download = `REKAP-PENDAFTAR-TALENTA-2026-${timeTag}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                this.downloadingPng = false;
+                if (typeof confetti === 'function') {
+                    confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+                }
+            }).catch(err => {
+                console.error('Error saat mengekspor gambar:', err);
+                alert('Gagal membuat file gambar: ' + (err.message || err));
+                this.downloadingPng = false;
+            });
+        }, 300);
     items: @js($allRegistrations->map(function($r) {
         $firstMember = $r->members->first();
         return [
@@ -133,14 +175,20 @@
             <span class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="activeTab === 'peserta' ? 'bg-white text-slate-900' : 'bg-white/[0.1] text-slate-300'">{{ $allRegistrations->count() }}</span>
         </button>
 
+        <button @click="activeTab = 'pendaftar'" :class="activeTab === 'pendaftar' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white'" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
+            <i data-lucide="layout-grid" class="w-4 h-4 text-cyan-400"></i>
+            <span>3. Rekap Pendaftar</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="activeTab === 'pendaftar' ? 'bg-white text-slate-950' : 'bg-cyan-500/20 text-cyan-300'">Infografis</span>
+        </button>
+
         <button @click="activeTab = 'juara'" :class="activeTab === 'juara' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white'" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
             <i data-lucide="medal" class="w-4 h-4 text-[#FF58D5]"></i>
-            <span>3. Rekap Semua Peraih Juara</span>
+            <span>4. Rekap Semua Peraih Juara</span>
         </button>
 
         <button @click="activeTab = 'juara-umum'" :class="activeTab === 'juara-umum' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white'" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
             <i data-lucide="trophy" class="w-4 h-4 text-amber-400"></i>
-            <span>4. Rekap Juara Umum</span>
+            <span>5. Rekap Juara Umum</span>
         </button>
     </div>
 
@@ -482,7 +530,504 @@
         </div>
     </div>
 
-    <!-- ==================== TAB 3: REKAP SEMUA PERAIH JUARA ==================== -->
+    <!-- ==================== TAB 3: REKAP PENDAFTAR (INFOGRAFIS LIVE & EXPORT PNG) ==================== -->
+    <div x-show="activeTab === 'pendaftar'" x-transition class="space-y-6">
+        
+        <!-- Top Toolbar / Action Bar -->
+        <div class="ai-card rounded-3xl p-4 sm:p-5 border border-white/[0.08] shadow-lg flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0 shadow-inner">
+                    <i data-lucide="layout-grid" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <h3 class="text-sm sm:text-base font-extrabold text-white">Infografis Live Kuota Pendaftar</h3>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-mono">HD Export</span>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-0.5">Tampilan infografis resmi kuota cabang lomba TALENTA 2026. Siap diunduh sebagai gambar PNG untuk publikasi.</p>
+                </div>
+            </div>
+
+            <!-- Controls: Filter & Download PNG Button -->
+            <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
+                <!-- Category Filter Pills -->
+                <div class="flex items-center p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08] text-xs font-bold">
+                    <button type="button" @click="recapCategory = 'all'" :class="recapCategory === 'all' ? 'bg-[#7A5AF8] text-white shadow-xs' : 'text-slate-400 hover:text-white'" class="px-3 py-1.5 rounded-xl transition cursor-pointer">Semua</button>
+                    <button type="button" @click="recapCategory = 'olahraga'" :class="recapCategory === 'olahraga' ? 'bg-[#7A5AF8] text-white shadow-xs' : 'text-slate-400 hover:text-white'" class="px-3 py-1.5 rounded-xl transition cursor-pointer">Olahraga</button>
+                    <button type="button" @click="recapCategory = 'seni'" :class="recapCategory === 'seni' ? 'bg-[#7A5AF8] text-white shadow-xs' : 'text-slate-400 hover:text-white'" class="px-3 py-1.5 rounded-xl transition cursor-pointer">Seni</button>
+                    <button type="button" @click="recapCategory = 'teknologi'" :class="recapCategory === 'teknologi' ? 'bg-[#7A5AF8] text-white shadow-xs' : 'text-slate-400 hover:text-white'" class="px-3 py-1.5 rounded-xl transition cursor-pointer">Teknologi</button>
+                </div>
+
+                <!-- Download PNG Button -->
+                <button type="button" 
+                        @click="downloadPNG()" 
+                        :disabled="downloadingPng"
+                        class="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-[#7A5AF8] via-[#6941C6] to-[#4E6EFF] hover:from-[#6941C6] hover:to-[#3538CD] text-white font-black text-xs sm:text-sm shadow-lg shadow-[#7A5AF8]/30 border border-white/[0.15] flex items-center gap-2.5 transition duration-200 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+                    <template x-if="!downloadingPng">
+                        <span class="flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                            <span>Download PNG</span>
+                        </span>
+                    </template>
+                    <template x-if="downloadingPng">
+                        <span class="flex items-center gap-2">
+                            <svg class="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <span>Memproses Gambar...</span>
+                        </span>
+                    </template>
+                </button>
+            </div>
+        </div>
+
+        <!-- ==================== EXPORTABLE INFOGRAPHIC CARD CONTAINER ==================== -->
+        <div id="rekapPendaftarCard" class="w-full max-w-5xl mx-auto rounded-3xl p-6 sm:p-9 lg:p-11 space-y-8 relative overflow-hidden shadow-2xl border border-white/[0.12]" style="background-color: #0C111D; color: #F8FAFC;">
+            
+            <!-- Ambient Glow for Aesthetic Quality -->
+            <div class="absolute inset-0 bg-gradient-to-b from-[#7A5AF8]/10 via-[#4E6EFF]/5 to-transparent pointer-events-none"></div>
+
+            <!-- HEADER / JUDUL INFOGRAFIS SESUAI INSTRUKSI -->
+            <div class="text-center relative z-10 space-y-2">
+                @if(!empty($appSettings['app_logo']))
+                    <div class="flex items-center justify-center mb-3">
+                        <img src="{{ asset('storage/' . $appSettings['app_logo']) }}" 
+                             alt="Logo TALENTA" 
+                             crossorigin="anonymous"
+                             class="h-16 sm:h-20 w-auto max-w-[200px] object-contain drop-shadow-xl">
+                    </div>
+                @endif
+
+                <h1 class="text-2xl sm:text-3xl lg:text-4xl font-black tracking-wider text-white uppercase font-display drop-shadow-md">
+                    REKAPITULASI
+                </h1>
+                <h2 class="text-base sm:text-lg lg:text-xl font-extrabold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-blue-200 via-indigo-200 to-purple-200 uppercase">
+                    PENDAFTAR PERLOMBAAN & PERTANDINGAN
+                </h2>
+                <div class="flex items-center justify-center gap-2 pt-0.5">
+                    <span class="text-xl sm:text-2xl lg:text-3xl font-black tracking-wide text-amber-400 uppercase font-display drop-shadow-sm">
+                        TALENTA MILAD KE-57
+                    </span>
+                </div>
+                <p class="text-sm sm:text-base font-extrabold tracking-widest text-slate-300 uppercase">
+                    {{ $appSettings['institution_name'] ?? 'MTSN 1 BLITAR' }}
+                </p>
+                <div>
+                    <span class="inline-block px-4 py-1 rounded-full bg-white/[0.08] border border-white/[0.12] text-xs sm:text-sm font-black text-[#84D0FF] tracking-widest uppercase font-mono">
+                        2026
+                    </span>
+                </div>
+
+                <!-- Update Timestamp Badge -->
+                <div class="pt-3">
+                    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm font-bold shadow-sm font-mono">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span>Update : {{ \Carbon\Carbon::now()->locale('id')->isoFormat('dddd, D MMMM Y, [Pukul] HH:mm') }} WIB</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Divider Line -->
+            <div class="relative z-10 w-full h-[2px] bg-gradient-to-r from-transparent via-[#7A5AF8]/60 to-transparent my-6"></div>
+
+            <!-- TABEL KUOTA REKAPITULASI (PERSIS LANDING PAGE) -->
+            @php
+                $renderTierQuota = function($count, $quota, $unit = 'Peserta') {
+                    $quota = (int) $quota;
+                    $isUnlimited = ($quota <= 0);
+                    if ($isUnlimited) {
+                        $hasParticipants = $count > 0;
+                        $barWidth = $hasParticipants ? min(100, max(25, $count * 10)) : 0;
+                        $barHtml = $hasParticipants 
+                            ? '<div class="bg-gradient-to-r from-purple-500 via-indigo-500 to-[#4E6EFF] h-full rounded-full shadow-sm shadow-purple-500/30" style="width: ' . $barWidth . '%"></div>'
+                            : '<div class="bg-slate-700/40 h-full rounded-full" style="width: 0%"></div>';
+                            
+                        return '
+                        <div>
+                            <div class="flex items-center justify-between text-xs font-bold gap-3">
+                                <span class="text-purple-300 font-black flex items-center gap-1">
+                                    <span class="text-sm leading-none font-sans">∞</span>
+                                    <span>Tak Terbatas</span>
+                                </span>
+                                <span class="text-slate-400 font-semibold text-[11px] font-mono">' . $count . ' / ∞</span>
+                            </div>
+                            <div class="w-full bg-white/[0.08] h-2 rounded-full overflow-hidden mt-1 p-0.5 border border-white/[0.05]">
+                                ' . $barHtml . '
+                            </div>
+                        </div>';
+                    } else {
+                        $sisa = max(0, $quota - $count);
+                        $isFull = ($sisa <= 0);
+                        $isLow = ($sisa > 0 && $sisa <= 5);
+                        $textColor = $isFull ? 'text-rose-400 font-black' : ($isLow ? 'text-amber-300 font-black' : 'text-emerald-400 font-extrabold');
+                        $sisaText = $isFull ? 'Penuh' : 'Sisa: ' . $sisa . ' ' . $unit;
+                        $barWidth = min(100, ($count / max(1, $quota)) * 100);
+                        $barGradient = $isFull ? 'from-rose-500 to-red-600' : ($isLow ? 'from-amber-400 to-orange-500' : 'from-[#7A5AF8] to-[#4E6EFF]');
+                        return '
+                        <div>
+                            <div class="flex items-center justify-between text-xs font-bold gap-3">
+                                <span class="' . $textColor . '">' . $sisaText . '</span>
+                                <span class="text-slate-400 font-medium text-[11px] font-mono">' . $count . '/' . $quota . '</span>
+                            </div>
+                            <div class="w-full bg-white/[0.08] h-2 rounded-full overflow-hidden mt-1 p-0.5 border border-white/[0.05]">
+                                <div class="bg-gradient-to-r ' . $barGradient . ' h-full rounded-full transition-all duration-300" style="width: ' . $barWidth . '%"></div>
+                            </div>
+                        </div>';
+                    }
+                };
+            @endphp
+
+            <div class="relative z-10 overflow-x-auto rounded-2xl border border-white/[0.08] bg-[#0A0E1A]/80 shadow-xl">
+                <table class="w-full text-left text-sm text-slate-300 border-collapse">
+                    <thead class="text-xs font-bold uppercase tracking-wider bg-[#0C111D]/95 text-slate-400 border-b border-white/[0.08]">
+                        <tr>
+                            <th class="py-3.5 px-6 whitespace-nowrap min-w-[220px]">Nama Lomba</th>
+                            <th class="py-3.5 px-6 whitespace-nowrap min-w-[200px]">Kategori</th>
+                            <th class="py-3.5 px-6 whitespace-nowrap min-w-[240px]">Sisa Kuota</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/[0.04] font-medium text-xs sm:text-sm">
+                        @foreach($competitions as $comp)
+                            @php
+                                $isBlt = $comp->code === 'BLT';
+                                $isTmj = $comp->code === 'TMJ';
+                                $isMtqPop = in_array($comp->code, ['MTQ', 'POP']);
+
+                                if ($isBlt) {
+                                    $countBltTunggalPaA = $comp->registrations->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'L' && $r->isKatA())->count();
+                                    $countBltTunggalPaB = $comp->registrations->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'L' && $r->isKatB())->count();
+                                    $countBltTunggalPaC = $comp->registrations->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'L' && $r->isKatC())->count();
+                                    
+                                    $countBltTunggalPiA = $comp->registrations->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'P' && $r->isKatA())->count();
+                                    $countBltTunggalPiB = $comp->registrations->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'P' && $r->isKatB())->count();
+                                    $countBltTunggalPiC = $comp->registrations->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'P' && $r->isKatC())->count();
+                                    
+                                    $countBltGandaPa = $comp->registrations->filter(fn($r) => $r->isGanda() && $r->primary_gender === 'L')->count();
+                                    $countBltGandaPi = $comp->registrations->filter(fn($r) => $r->isGanda() && $r->primary_gender === 'P')->count();
+                                } elseif ($isTmj) {
+                                    $countTmjTunggalPaA = $comp->registrations->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'L' && $r->isKatA())->count();
+                                    $countTmjTunggalPaB = $comp->registrations->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'L' && $r->isKatB())->count();
+                                    $countTmjTunggalPiA = $comp->registrations->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'P' && $r->isKatA())->count();
+                                    $countTmjTunggalPiB = $comp->registrations->filter(fn($r) => !$r->isGanda() && $r->primary_gender === 'P' && $r->isKatB())->count();
+                                } elseif ($isMtqPop) {
+                                    $countPa = $comp->registrations->filter(fn($r) => $r->primary_gender === 'L')->count();
+                                    $countPi = $comp->registrations->filter(fn($r) => $r->primary_gender === 'P')->count();
+                                    $totalMtqPop = $countPa + $countPi;
+                                    $quotaMtqPop = (int) ($comp->quota ?? 50);
+                                }
+
+                                $categorySlug = $comp->category->slug ?? '';
+                                $rowTheme = match($categorySlug) {
+                                    'seni' => [
+                                        'bg' => 'bg-pink-500/[0.03]',
+                                        'border_l' => 'border-l-4 border-l-pink-500/80',
+                                        'badge' => 'bg-pink-500/15 text-pink-300 border border-pink-500/30',
+                                        'icon_color' => 'text-pink-400',
+                                    ],
+                                    'olahraga' => [
+                                        'bg' => 'bg-emerald-500/[0.025]',
+                                        'border_l' => 'border-l-4 border-l-emerald-500/80',
+                                        'badge' => 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30',
+                                        'icon_color' => 'text-emerald-400',
+                                    ],
+                                    'teknologi' => [
+                                        'bg' => 'bg-[#4E6EFF]/[0.03]',
+                                        'border_l' => 'border-l-4 border-l-[#4E6EFF]/80',
+                                        'badge' => 'bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30',
+                                        'icon_color' => 'text-[#4E6EFF]',
+                                    ],
+                                    'pramuka' => [
+                                        'bg' => 'bg-amber-500/[0.03]',
+                                        'border_l' => 'border-l-4 border-l-amber-500/80',
+                                        'badge' => 'bg-amber-500/15 text-amber-300 border border-amber-500/30',
+                                        'icon_color' => 'text-amber-400',
+                                    ],
+                                    'tahfidz' => [
+                                        'bg' => 'bg-teal-500/[0.03]',
+                                        'border_l' => 'border-l-4 border-l-teal-500/80',
+                                        'badge' => 'bg-teal-500/15 text-teal-300 border border-teal-500/30',
+                                        'icon_color' => 'text-teal-400',
+                                    ],
+                                    default => [
+                                        'bg' => 'bg-[#7A5AF8]/[0.03]',
+                                        'border_l' => 'border-l-4 border-l-[#7A5AF8]/80',
+                                        'badge' => 'bg-[#7A5AF8]/15 text-[#A594FD] border border-[#7A5AF8]/30',
+                                        'icon_color' => 'text-[#A594FD]',
+                                    ],
+                                };
+                            @endphp
+
+                            <tr x-show="recapCategory === 'all' || recapCategory === '{{ $comp->category->slug ?? '' }}'" class="{{ $rowTheme['bg'] }} {{ $rowTheme['border_l'] }} transition-colors duration-150 border-b border-white/[0.05]">
+                                
+                                <!-- Nama Lomba & Lokasi -->
+                                <td class="py-4 px-6 min-w-[200px] align-middle">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="font-extrabold text-white text-sm sm:text-base block">
+                                            {{ $comp->name }}
+                                        </span>
+                                        @if($comp->code === 'MIPA')
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 shadow-sm shadow-amber-500/20">
+                                                🎁 Bonus 10 Get 1
+                                            </span>
+                                        @endif
+                                    </div>
+                                    <span class="text-[11px] text-slate-400 flex items-center gap-1.5 mt-1">
+                                        <svg class="w-3 h-3 text-[#4E6EFF] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+                                        <span>{{ $comp->venue ?? 'Kampus MTsN 1 Blitar' }}</span>
+                                    </span>
+                                </td>
+
+                                <!-- Kategori -->
+                                <td class="py-4 px-6 text-xs whitespace-nowrap align-middle">
+                                    @if($isBlt)
+                                        <div class="flex flex-col py-1">
+                                            <!-- Tunggal PA -->
+                                            <div class="flex flex-col justify-center">
+                                                <div class="flex items-center gap-1.5 font-bold text-emerald-400 text-xs mb-1">
+                                                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                                                    <span>Tunggal | PA</span>
+                                                </div>
+                                                <div class="space-y-1.5 text-[10px] text-slate-400 pl-5">
+                                                    <div class="py-0.5">Kat A (Kelas 1–2)</div>
+                                                    <div class="py-0.5">Kat B (Kelas 3–4)</div>
+                                                    <div class="py-0.5">Kat C (Kelas 5–6)</div>
+                                                </div>
+                                            </div>
+                                            <div class="border-t border-white/[0.08] my-2"></div>
+                                            <!-- Tunggal PI -->
+                                            <div class="flex flex-col justify-center">
+                                                <div class="flex items-center gap-1.5 font-bold text-pink-400 text-xs mb-1">
+                                                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                                                    <span>Tunggal | PI</span>
+                                                </div>
+                                                <div class="space-y-1.5 text-[10px] text-slate-400 pl-5">
+                                                    <div class="py-0.5">Kat A (Kelas 1–2)</div>
+                                                    <div class="py-0.5">Kat B (Kelas 3–4)</div>
+                                                    <div class="py-0.5">Kat C (Kelas 5–6)</div>
+                                                </div>
+                                            </div>
+                                            <div class="border-t border-white/[0.08] my-2"></div>
+                                            <!-- Ganda PA -->
+                                            <div class="py-0.5 flex items-center gap-1.5 font-bold text-[#A594FD] text-xs">
+                                                <svg class="w-3.5 h-3.5 shrink-0 text-[#7A5AF8]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.999-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
+                                                <span>Ganda | PA</span>
+                                            </div>
+                                            <div class="border-t border-white/[0.08] my-2"></div>
+                                            <!-- Ganda PI -->
+                                            <div class="py-0.5 flex items-center gap-1.5 font-bold text-amber-300 text-xs">
+                                                <svg class="w-3.5 h-3.5 shrink-0 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.999-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
+                                                <span>Ganda | PI</span>
+                                            </div>
+                                        </div>
+                                    @elseif($isMtqPop)
+                                        <div class="flex items-center gap-1.5 font-bold text-emerald-400 text-xs py-1">
+                                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.999-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
+                                            <span>Individu (PA & PI)</span>
+                                        </div>
+                                    @elseif($isTmj)
+                                        <div class="flex flex-col py-1">
+                                            <!-- Tunggal PA -->
+                                            <div class="flex flex-col justify-center">
+                                                <div class="flex items-center gap-1.5 font-bold text-emerald-400 text-xs mb-1">
+                                                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                                                    <span>Tunggal | PA</span>
+                                                </div>
+                                                <div class="space-y-1.5 text-[10px] text-slate-400 pl-5">
+                                                    <div class="py-0.5">Kat A (Kelas 1–3)</div>
+                                                    <div class="py-0.5">Kat B (Kelas 4–6)</div>
+                                                </div>
+                                            </div>
+                                            <div class="border-t border-white/[0.08] my-2"></div>
+                                            <!-- Tunggal PI -->
+                                            <div class="flex flex-col justify-center">
+                                                <div class="flex items-center gap-1.5 font-bold text-pink-400 text-xs mb-1">
+                                                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                                                    <span>Tunggal | PI</span>
+                                                </div>
+                                                <div class="space-y-1.5 text-[10px] text-slate-400 pl-5">
+                                                    <div class="py-0.5">Kat A (Kelas 1–3)</div>
+                                                    <div class="py-0.5">Kat B (Kelas 4–6)</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <span class="capitalize text-slate-200 font-bold text-xs">{{ $comp->type }}</span>
+                                    @endif
+                                </td>
+
+                                <!-- Sisa Kuota & Progress Bar -->
+                                <td class="py-4 px-6 whitespace-nowrap align-middle">
+                                    @if($isBlt)
+                                        <div class="flex flex-col py-1 text-slate-400 text-xs min-w-[210px]">
+                                            <!-- Kuota Tunggal PA -->
+                                            <div class="space-y-1.5">
+                                                {!! $renderTierQuota($countBltTunggalPaA, $comp->tier_quotas['A_tunggal_pa'] ?? 16, 'Peserta') !!}
+                                                {!! $renderTierQuota($countBltTunggalPaB, $comp->tier_quotas['B_tunggal_pa'] ?? 16, 'Peserta') !!}
+                                                {!! $renderTierQuota($countBltTunggalPaC, $comp->tier_quotas['C_tunggal_pa'] ?? 16, 'Peserta') !!}
+                                            </div>
+
+                                            <div class="border-t border-white/[0.08] my-2"></div>
+
+                                            <!-- Kuota Tunggal PI -->
+                                            <div class="space-y-1.5">
+                                                {!! $renderTierQuota($countBltTunggalPiA, $comp->tier_quotas['A_tunggal_pi'] ?? 16, 'Peserta') !!}
+                                                {!! $renderTierQuota($countBltTunggalPiB, $comp->tier_quotas['B_tunggal_pi'] ?? 16, 'Peserta') !!}
+                                                {!! $renderTierQuota($countBltTunggalPiC, $comp->tier_quotas['C_tunggal_pi'] ?? 16, 'Peserta') !!}
+                                            </div>
+
+                                            <div class="border-t border-white/[0.08] my-2"></div>
+
+                                            <!-- Kuota Ganda PA -->
+                                            {!! $renderTierQuota($countBltGandaPa, $comp->tier_quotas['ganda_pa'] ?? 0, 'Pasangan') !!}
+
+                                            <div class="border-t border-white/[0.08] my-2"></div>
+
+                                            <!-- Kuota Ganda PI -->
+                                            {!! $renderTierQuota($countBltGandaPi, $comp->tier_quotas['ganda_pi'] ?? 0, 'Pasangan') !!}
+                                        </div>
+                                    @elseif($isMtqPop)
+                                        <div class="flex flex-col py-1 text-slate-400 text-xs min-w-[210px] space-y-2">
+                                            <!-- Main Combined Quota Bar -->
+                                            {!! $renderTierQuota($totalMtqPop, $quotaMtqPop, 'Peserta') !!}
+                                            
+                                            <!-- Gender Composition Breakdown -->
+                                            <div class="flex items-center justify-between gap-1.5 px-2.5 py-1 rounded-xl bg-white/[0.04] border border-white/[0.08] text-[10px] font-bold">
+                                                <span class="text-cyan-300 flex items-center gap-1">
+                                                    <svg class="w-3 h-3 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                                                    <span>{{ $countPa }} Putra</span>
+                                                </span>
+                                                <span class="text-slate-500">•</span>
+                                                <span class="text-pink-300 flex items-center gap-1">
+                                                    <svg class="w-3 h-3 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                                                    <span>{{ $countPi }} Putri</span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    @elseif($isTmj)
+                                        <div class="flex flex-col py-1 text-slate-400 text-xs min-w-[210px]">
+                                            <!-- Kuota Tunggal PA -->
+                                            <div class="space-y-1.5">
+                                                {!! $renderTierQuota($countTmjTunggalPaA, $comp->tier_quotas['A_tunggal_pa'] ?? 10, 'Peserta') !!}
+                                                {!! $renderTierQuota($countTmjTunggalPaB, $comp->tier_quotas['B_tunggal_pa'] ?? 10, 'Peserta') !!}
+                                            </div>
+
+                                            <div class="border-t border-white/[0.08] my-2"></div>
+
+                                            <!-- Kuota Tunggal PI -->
+                                            <div class="space-y-1.5">
+                                                {!! $renderTierQuota($countTmjTunggalPiA, $comp->tier_quotas['A_tunggal_pi'] ?? 10, 'Peserta') !!}
+                                                {!! $renderTierQuota($countTmjTunggalPiB, $comp->tier_quotas['B_tunggal_pi'] ?? 10, 'Peserta') !!}
+                                            </div>
+                                        </div>
+                                    @else
+                                        @php
+                                            $regQuota = (int) ($comp->quota ?? 0);
+                                            $regCount = $comp->registrations->count();
+                                            $unitWord = match(strtolower($comp->type)) {
+                                                'regu' => 'Regu',
+                                                'tim' => 'Tim',
+                                                'kelompok' => 'Kelompok',
+                                                default => 'Peserta',
+                                            };
+                                        @endphp
+                                        @if($regQuota <= 0)
+                                            @php
+                                                $hasRegs = $regCount > 0;
+                                                $barWidth = $hasRegs ? min(100, max(25, $regCount * 10)) : 0;
+                                            @endphp
+                                            <div class="space-y-1.5 min-w-[210px]">
+                                                <div class="flex items-center justify-between gap-3">
+                                                    <span class="text-xs sm:text-sm text-purple-300 font-black flex items-center gap-1">
+                                                        <span class="text-sm leading-none font-sans">∞</span>
+                                                        <span>Tak Terbatas</span>
+                                                    </span>
+                                                    <span class="text-[11px] sm:text-xs font-semibold text-slate-400 font-mono">
+                                                        {{ $regCount }} / ∞
+                                                    </span>
+                                                </div>
+                                                <div class="w-full bg-white/[0.08] h-2.5 rounded-full overflow-hidden p-0.5 border border-white/[0.05]">
+                                                    @if($hasRegs)
+                                                        <div class="bg-gradient-to-r from-purple-500 via-indigo-500 to-[#4E6EFF] h-full rounded-full shadow-sm shadow-purple-500/30" style="width: {{ $barWidth }}%"></div>
+                                                    @else
+                                                        <div class="bg-slate-700/40 h-full rounded-full" style="width: 0%"></div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        @else
+                                            @php
+                                                $sisa = max(0, $regQuota - $regCount);
+                                                $isFull = $sisa <= 0;
+                                                $isLow = $sisa > 0 && $sisa <= 5;
+                                            @endphp
+                                            <div class="space-y-1.5 min-w-[210px]">
+                                                <div class="flex items-center justify-between gap-3">
+                                                    <span class="text-xs sm:text-sm {{ $isFull ? 'text-rose-400 font-black' : ($isLow ? 'text-amber-300 font-black' : 'text-emerald-400 font-black') }}">
+                                                        {{ $isFull ? 'Kuota Penuh' : 'Sisa: ' . $sisa . ' ' . $unitWord }}
+                                                    </span>
+                                                    <span class="text-[11px] sm:text-xs font-semibold text-slate-400 font-mono">
+                                                        {{ $regCount }}/{{ $regQuota }}
+                                                    </span>
+                                                </div>
+                                                <div class="w-full bg-white/[0.08] h-2.5 rounded-full overflow-hidden p-0.5 border border-white/[0.05]">
+                                                    <div class="bg-gradient-to-r {{ $isFull ? 'from-rose-500 to-red-600' : ($isLow ? 'from-amber-400 to-orange-500' : 'from-[#7A5AF8] to-[#4E6EFF]') }} h-full rounded-full transition-all duration-300 shadow-sm" style="width: {{ min(100, ($regCount / max(1, $regQuota)) * 100) }}%"></div>
+                                                </div>
+                                            </div>
+                                        @endif
+                                    @endif
+                                </td>
+
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ==================== FOOTER: SUPPORTED BY & SPONSORS ==================== -->
+            @php
+                $sponsorLogos = [];
+                if (!empty($appSettings['sponsor_logos'])) {
+                    $decodedLogos = json_decode($appSettings['sponsor_logos'], true);
+                    if (is_array($decodedLogos)) {
+                        $sponsorLogos = $decodedLogos;
+                    }
+                }
+            @endphp
+            @if(count($sponsorLogos) > 0)
+                <div class="relative z-10 pt-5 border-t border-white/[0.08] space-y-3">
+                    <div class="text-center">
+                        <h4 class="text-xs sm:text-sm font-extrabold uppercase tracking-widest text-slate-300 font-display flex items-center justify-center gap-2">
+                            <span>{{ $appSettings['sponsor_title'] ?? 'Supported by :' }}</span>
+                        </h4>
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-center gap-3 sm:gap-5 pt-1 pb-2">
+                        @foreach($sponsorLogos as $logo)
+                            @php
+                                $cleanLogo = ltrim(str_replace(['public/', 'storage/'], '', $logo), '/');
+                                $logoUrl = \Illuminate\Support\Str::startsWith($logo, ['http://', 'https://']) ? $logo : asset('storage/' . $cleanLogo);
+                            @endphp
+                            <div class="sponsor-item p-3 sm:p-4 rounded-2xl bg-[#090D17]/90 border border-white/[0.08] shadow-md flex items-center justify-center">
+                                <img src="{{ $logoUrl }}" 
+                                     alt="Logo Sponsor" 
+                                     crossorigin="anonymous"
+                                     class="h-10 sm:h-12 w-auto max-w-[140px] sm:max-w-[170px] object-contain drop-shadow-md"
+                                     onerror="this.closest('.sponsor-item')?.remove();">
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
+            <!-- Watermark & Footer Info -->
+            <div class="relative z-10 pt-4 border-t border-white/[0.06] text-[11px] text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-2">
+                <span>© {{ date('Y') }} Panitia Milad ke-57 MTsN 1 Blitar</span>
+                <span class="font-medium text-slate-400">Sistem Informasi Pendaftaran & Manajemen Lomba TALENTA 2026</span>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ==================== TAB 4: REKAP SEMUA PERAIH JUARA ==================== -->
     <div x-show="activeTab === 'juara'" x-transition class="space-y-6">
         <div class="ai-card rounded-3xl border border-white/[0.08] shadow-xl p-5 sm:p-7 lg:p-8 space-y-6">
             <div class="flex items-center justify-between border-b border-white/[0.08] pb-4">
@@ -572,7 +1117,7 @@
         </div>
     </div>
 
-    <!-- ==================== TAB 4: REKAP JUARA UMUM ==================== -->
+    <!-- ==================== TAB 5: REKAP JUARA UMUM ==================== -->
     <div x-show="activeTab === 'juara-umum'" x-transition class="space-y-6">
         <div class="ai-card rounded-3xl border border-white/[0.08] shadow-xl overflow-hidden space-y-6 p-5 sm:p-7 lg:p-8">
             <div class="flex items-center justify-between border-b border-white/[0.08] pb-4">
@@ -639,4 +1184,8 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+@endpush
 

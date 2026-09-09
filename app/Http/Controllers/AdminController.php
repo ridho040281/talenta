@@ -840,7 +840,7 @@ class AdminController extends Controller
             'registrations' => function ($q) {
                 $q->with(['members', 'scores.details.criterion', 'user', 'invoice']);
             },
-        ])->get();
+        ])->withCount('registrations')->get();
 
         // 2. Tab 1: Financial & Quota Recap per Competition
         $financeRecap = [];
