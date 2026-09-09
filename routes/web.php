@@ -229,6 +229,7 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->name('admin.')-
         // Pop-up Announcement Modal Routes
         Route::get('/popup-announcement', [AdminSettingsController::class, 'popupAnnouncement'])->name('popup.index');
         Route::post('/popup-announcement', [AdminSettingsController::class, 'updatePopupAnnouncement'])->name('popup.update');
+        Route::post('/popup-announcement/toggle', [AdminSettingsController::class, 'togglePopupAnnouncement'])->name('popup.toggle');
         Route::post('/popup-announcement/reset-version', [AdminSettingsController::class, 'resetPopupVersion'])->name('popup.reset-version');
         Route::post('/popup-announcement/history/{id}/delete', [AdminSettingsController::class, 'deletePopupHistory'])->name('popup.history.delete');
 

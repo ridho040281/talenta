@@ -1843,8 +1843,39 @@ class AdminSettingsController extends Controller
             }
             AppSetting::set('popup_history_list', json_encode($histories));
 
-            return redirect()->route('admin.settings.popup.index')->with('success', 'Koreksi redaksi berhasil disimpan tanpa menambah riwayat baru.');
+            return redirect()->route('admin.settings.popup.index')->with('success', 'Pengaturan pop-up informasi berhasil disimpan.');
         }
+    }
+
+    /**
+     * Toggle Pop-up Announcement Status (AJAX Instant Save)
+     */
+    public function togglePopupAnnouncement(Request $request)
+    {
+        $validated = $request->validate([
+            'popup_enabled' => 'required|in:0,1',
+        ]);
+
+        $enabled = (string) $validated['popup_enabled'];
+        AppSetting::set('popup_enabled', $enabled);
+        \Illuminate\Support\Facades\Cache::forget('global_app_settings');
+
+        // Keep active history item in sync
+        $histories = json_decode(AppSetting::get('popup_history_list', '[]'), true) ?: [];
+        if (!empty($histories)) {
+            $histories[0]['enabled'] = $enabled;
+            AppSetting::set('popup_history_list', json_encode($histories));
+        }
+
+        $message = $enabled === '1' 
+            ? 'Pop-up Berhasil Diaktifkan! Informasi akan muncul otomatis ke pengunjung.'
+            : 'Pop-up Berhasil Dinonaktifkan! Pop-up tidak akan muncul ke pengunjung.';
+
+        return response()->json([
+            'success' => true,
+            'enabled' => $enabled,
+            'message' => $message,
+        ]);
     }
 
     /**

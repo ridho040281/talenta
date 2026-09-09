@@ -4,7 +4,7 @@
 @section('page_title', 'Pusat Informasi')
 
 @section('content')
-<div class="space-y-6" x-data="{
+<div class="space-y-6 relative" x-data="{
     enabled: '{{ $settings['popup_enabled'] ?? '1' }}',
     target: '{{ $settings['popup_target'] ?? 'all' }}',
     title: '{{ addslashes($settings['popup_title'] ?? '📢 PENGUMUMAN RESMI TALENTA 2026') }}',
@@ -16,6 +16,60 @@
     previewModal: false,
     imagePreview: '{{ !empty($settings['popup_image']) ? asset('storage/' . $settings['popup_image']) : '' }}',
     
+    // Instant AJAX toggle states
+    isToggling: false,
+    toastMessage: '',
+    toastType: 'success',
+    showToastAlert: false,
+    toastTimeout: null,
+
+    showToast(msg, type = 'success') {
+        this.toastMessage = msg;
+        this.toastType = type;
+        this.showToastAlert = true;
+        if (this.toastTimeout) clearTimeout(this.toastTimeout);
+        this.toastTimeout = setTimeout(() => {
+            this.showToastAlert = false;
+        }, 4500);
+        this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
+    },
+
+    toggleStatus() {
+        if (this.isToggling) return;
+        const nextState = (this.enabled == '1') ? '0' : '1';
+        this.isToggling = true;
+
+        fetch('{{ route('admin.settings.popup.toggle') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ popup_enabled: nextState })
+        })
+        .then(res => {
+            if (!res.ok) throw new Error('HTTP error ' + res.status);
+            return res.json();
+        })
+        .then(data => {
+            if (data.success) {
+                this.enabled = String(data.enabled);
+                this.showToast(data.message, 'success');
+            } else {
+                this.showToast(data.message || 'Gagal menyimpan status pop-up.', 'error');
+            }
+        })
+        .catch(err => {
+            console.error('Error toggling popup status:', err);
+            this.showToast('Gagal menghubungi server. Status belum tersimpan.', 'error');
+        })
+        .finally(() => {
+            this.isToggling = false;
+            this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
+        });
+    },
+
     // Preview modal states
     previewTitle: '',
     previewSubtitle: '',
@@ -32,8 +86,40 @@
         this.previewSecBtnText = secText || this.secBtnText;
         this.previewImage = (img !== undefined && img !== null) ? img : this.imagePreview;
         this.previewModal = true;
+        this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
     }
 }">
+
+    <!-- Toast Notification (Fixed Floating Alert) -->
+    <div x-show="showToastAlert"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 translate-y-[-20px] scale-95"
+        x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+        x-transition:leave-end="opacity-0 translate-y-[-20px] scale-95"
+        style="position: fixed; top: 1.5rem; right: 1.5rem; z-index: 9999999;"
+        x-cloak>
+        <div class="flex items-center gap-3.5 px-5 py-3.5 rounded-2xl shadow-2xl border backdrop-blur-2xl"
+            :class="toastType === 'success' ? 'bg-[#061e14]/95 border-emerald-500/50 text-white shadow-emerald-950/60' : 'bg-[#27080f]/95 border-rose-500/50 text-white shadow-rose-950/60'">
+            <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+                :class="toastType === 'success' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'">
+                <template x-if="toastType === 'success'">
+                    <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400"></i>
+                </template>
+                <template x-if="toastType !== 'success'">
+                    <i data-lucide="alert-circle" class="w-5 h-5 text-rose-400"></i>
+                </template>
+            </div>
+            <div class="pr-2">
+                <p class="text-[10px] font-black uppercase tracking-wider" :class="toastType === 'success' ? 'text-emerald-300' : 'text-rose-300'" x-text="toastType === 'success' ? 'Tersimpan Otomatis' : 'Perhatian'"></p>
+                <p class="text-xs font-semibold text-slate-100 mt-0.5" x-text="toastMessage"></p>
+            </div>
+            <button type="button" @click="showToastAlert = false" class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </div>
     
     <!-- Top Action Bar & Navigation Breadcrumbs -->
     <div class="ai-card rounded-3xl p-5 sm:p-6 border border-white/[0.08] shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -82,12 +168,47 @@
                             </div>
                         </div>
 
-                        <!-- Switch ON/OFF -->
-                        <label class="relative inline-flex items-center cursor-pointer shrink-0">
-                            <input type="hidden" name="popup_enabled" value="0">
-                            <input type="checkbox" name="popup_enabled" value="1" x-model="enabled" :checked="enabled == '1'" class="sr-only peer">
-                            <div class="w-12 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-                        </label>
+                        <!-- Switch ON/OFF with Instant AJAX Auto-Save -->
+                        <div class="flex items-center gap-3 shrink-0">
+                            <!-- Hidden input for standard form POST -->
+                            <input type="hidden" name="popup_enabled" :value="enabled">
+
+                            <span x-show="isToggling" x-cloak class="text-[11px] text-amber-300 font-bold flex items-center gap-1.5 bg-amber-500/10 px-2.5 py-1 rounded-xl border border-amber-500/25">
+                                <svg class="animate-spin h-3.5 w-3.5 text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span>Menyimpan...</span>
+                            </span>
+
+                            <button type="button" 
+                                @click="toggleStatus()" 
+                                :disabled="isToggling"
+                                :title="enabled == '1' ? 'Klik untuk mematikan pop-up' : 'Klik untuk mengaktifkan pop-up'"
+                                class="relative inline-flex items-center cursor-pointer transition-all duration-300 focus:outline-none select-none rounded-full shadow-lg"
+                                :style="{
+                                    width: '3.6rem',
+                                    height: '2rem',
+                                    backgroundColor: (enabled == '1') ? '#10b981' : '#334155',
+                                    padding: '3px',
+                                    boxShadow: (enabled == '1') ? '0 0 18px rgba(16, 185, 129, 0.45)' : 'none',
+                                    border: '1.5px solid ' + ((enabled == '1') ? '#34d399' : '#475569')
+                                }">
+                                <span class="inline-block transform transition-transform duration-300 ease-in-out bg-white rounded-full shadow-md flex items-center justify-center"
+                                    :style="{
+                                        width: '1.5rem',
+                                        height: '1.5rem',
+                                        transform: (enabled == '1') ? 'translateX(1.6rem)' : 'translateX(0)'
+                                    }">
+                                    <template x-if="enabled == '1'">
+                                        <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600"></i>
+                                    </template>
+                                    <template x-if="enabled != '1'">
+                                        <i data-lucide="x" class="w-3.5 h-3.5 text-slate-400"></i>
+                                    </template>
+                                </span>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -95,9 +216,10 @@
                             <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">
                                 Status Pop-up Saat Ini
                             </label>
-                            <p class="text-[10px] text-slate-500">Saklar utama modal</p>
+                            <p class="text-[10px] text-slate-500">Otomatis tersimpan permanen saat saklar ditekan</p>
                             <div class="flex items-center gap-2 pt-1">
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border" :class="enabled == '1' ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' : 'bg-rose-500/15 text-rose-300 border-rose-500/30'">
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-all duration-300" 
+                                    :class="enabled == '1' ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30 shadow-sm shadow-emerald-500/20' : 'bg-rose-500/15 text-rose-300 border-rose-500/30 shadow-sm shadow-rose-500/20'">
                                     <span class="w-2 h-2 rounded-full" :class="enabled == '1' ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'"></span>
                                     <span x-text="enabled == '1' ? '🟢 AKTIF (Tampil Otomatis)' : '🔴 NONAKTIF (Dimatikan)'"></span>
                                 </span>
@@ -217,13 +339,13 @@
                     </div>
                 </div>
 
-                <!-- Action Buttons: Simpan Koreksi vs Rilis Baru -->
+                <!-- Action Buttons: Simpan Pengaturan vs Rilis Baru -->
                 <div class="pt-2 space-y-2.5">
                     <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                        <!-- Tombol 1: Simpan Koreksi Redaksi (Typo) -->
-                        <button type="submit" name="save_action" value="update" class="px-5 py-3.5 rounded-2xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/[0.15] text-white font-bold text-xs hover:scale-[1.01] active:scale-[0.99] transition flex items-center justify-center gap-2 cursor-pointer shadow-lg">
-                            <i data-lucide="check" class="w-4 h-4 text-emerald-400"></i>
-                            <span>Simpan Koreksi Redaksi (Typo)</span>
+                        <!-- Tombol 1: Simpan Perubahan Pengaturan -->
+                        <button type="submit" name="save_action" value="update" class="px-5 py-3.5 rounded-2xl bg-emerald-600/25 hover:bg-emerald-600/40 border border-emerald-500/40 text-emerald-200 hover:text-white font-bold text-xs hover:scale-[1.01] active:scale-[0.99] transition flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-emerald-950/30">
+                            <i data-lucide="save" class="w-4 h-4 text-emerald-400"></i>
+                            <span>Simpan Perubahan Pengaturan</span>
                         </button>
 
                         <!-- Tombol 2: Rilis Sebagai Informasi Baru -->
@@ -234,7 +356,7 @@
                     </div>
                     <div class="flex items-center gap-1.5 text-[11px] text-slate-400 px-1">
                         <i data-lucide="info" class="w-3.5 h-3.5 text-indigo-400 shrink-0"></i>
-                        <span>Pilih <b>Simpan Koreksi</b> untuk membetulkan salah ketik tanpa menambah riwayat baru.</span>
+                        <span>Saklar ON/OFF di atas otomatis tersimpan langsung saat diklik. Gunakan <b>Simpan Perubahan Pengaturan</b> untuk memperbarui teks/poster/target saat ini.</span>
                     </div>
                 </div>
 
@@ -268,9 +390,13 @@
                                 'dashboard' => ['label' => '👤 Akun Peserta', 'class' => 'bg-purple-500/15 text-purple-300 border-purple-500/30'],
                                 default => ['label' => '🌐 Semua Halaman', 'class' => 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30'],
                             };
-                            $isCurrentActive = ($idx === 0 && ($settings['popup_enabled'] ?? '1') == '1');
                         @endphp
-                        <div class="ai-card rounded-2xl p-4 sm:p-5 border transition-all duration-200 space-y-3 relative group {{ $isCurrentActive ? 'border-amber-500/50 bg-amber-500/[0.03]' : 'border-white/[0.08] hover:border-white/[0.18]' }}">
+                        <div class="ai-card rounded-2xl p-4 sm:p-5 border transition-all duration-200 space-y-3 relative group"
+                            @if($idx === 0)
+                                :class="(enabled == '1') ? 'border-amber-500/50 bg-amber-500/[0.03]' : 'border-white/[0.08] hover:border-white/[0.18]'"
+                            @else
+                                class="border-white/[0.08] hover:border-white/[0.18]"
+                            @endif>
                             
                             <!-- Header: Target & Timestamp -->
                             <div class="flex items-start justify-between gap-2 border-b border-white/[0.06] pb-2.5">
@@ -279,10 +405,14 @@
                                         <span class="px-2 py-0.5 rounded-md text-[10px] font-bold border {{ $targetBadge['class'] }}">
                                             {{ $targetBadge['label'] }}
                                         </span>
-                                        @if($isCurrentActive)
-                                            <span class="px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                                        @if($idx === 0)
+                                            <span x-show="enabled == '1'" class="px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
                                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                                                 <span>Sedang Aktif</span>
+                                            </span>
+                                            <span x-show="enabled != '1'" class="px-2 py-0.5 rounded-md text-[10px] font-black bg-rose-500/15 text-rose-300 border border-rose-500/30 flex items-center gap-1" x-cloak>
+                                                <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                                                <span>Nonaktif</span>
                                             </span>
                                         @endif
                                     </div>
