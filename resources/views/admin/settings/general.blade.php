@@ -4,6 +4,27 @@
 @section('page_title', 'Pengaturan Aplikasi & Sistem')
 
 @section('content')
+<style>
+    .sponsor-sortable-ghost {
+        opacity: 0.35 !important;
+        background: rgba(122, 90, 248, 0.15) !important;
+        border: 2px dashed #7A5AF8 !important;
+        transform: scale(0.97) !important;
+        border-radius: 16px !important;
+    }
+    .sponsor-sortable-chosen {
+        background: #101828 !important;
+        border-color: #7A5AF8 !important;
+        box-shadow: 0 14px 30px -6px rgba(122, 90, 248, 0.45) !important;
+        border-radius: 16px !important;
+    }
+    .sponsor-sortable-drag {
+        opacity: 1 !important;
+        box-shadow: 0 25px 40px -10px rgba(0, 0, 0, 0.85) !important;
+        transform: rotate(2deg) scale(1.04) !important;
+        border-radius: 16px !important;
+    }
+</style>
 <div x-data="{ activeTab: '{{ request('tab', 'pembayaran') }}' }" class="space-y-6">
     
     <!-- Top Header Bar (AIStarterKit Dark Style) -->
@@ -909,7 +930,7 @@
                             </div>
                         </div>
 
-                        <!-- Existing Sponsor Logos List -->
+                        <!-- Existing Sponsor Logos List with Puzzle Drag & Drop -->
                         @if(!empty($settings['sponsor_logos']) && count($settings['sponsor_logos']) > 0)
                             <div id="sponsor-list-section" class="space-y-3 pt-3 border-t border-white/[0.08]">
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -930,16 +951,52 @@
                                     </button>
                                 </div>
 
-                                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
+                                <!-- Drag & Drop Puzzle Hint Bar -->
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-[#7A5AF8]/15 via-[#4E6EFF]/10 to-[#7A5AF8]/5 border border-[#7A5AF8]/30 text-xs">
+                                    <div class="flex items-center gap-2.5 text-slate-200">
+                                        <div class="w-6 h-6 rounded-xl bg-[#7A5AF8]/20 text-[#A594FD] border border-[#7A5AF8]/30 flex items-center justify-center shrink-0 shadow-xs">
+                                            <i data-lucide="move" class="w-3.5 h-3.5 animate-pulse"></i>
+                                        </div>
+                                        <div>
+                                            <span class="font-black text-white">Puzzle Drag &amp; Drop:</span>
+                                            <span class="text-slate-300 ml-1 text-[11px]">Geser &amp; lepas kartu logo untuk memindah urutannya secara instan (tersimpan otomatis).</span>
+                                        </div>
+                                    </div>
+                                    <div id="reorder-saving-indicator" class="hidden items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-mono text-[11px] font-bold shrink-0 self-start sm:self-auto">
+                                        <svg class="animate-spin w-3 h-3 text-emerald-400" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                        <span>Menyimpan urutan...</span>
+                                    </div>
+                                </div>
+
+                                <div id="sponsor-sortable-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5 pt-1">
                                     @foreach($settings['sponsor_logos'] as $index => $logo)
                                         @php
                                             $cleanLogoPath = ltrim(str_replace(['public/', 'storage/'], '', $logo), '/');
                                             $logoUrl = \Illuminate\Support\Str::startsWith($logo, ['http://', 'https://']) ? $logo : asset('storage/' . $cleanLogoPath);
                                         @endphp
-                                        <div id="sponsor-card-{{ md5($logo) }}" class="p-3.5 rounded-2xl bg-[#0C111D] border border-white/[0.08] hover:border-white/[0.15] flex flex-col items-center justify-between gap-3 text-center relative group transition shadow-sm">
+                                        <div id="sponsor-card-{{ md5($logo) }}" 
+                                             data-logo="{{ $logo }}" 
+                                             class="sponsor-draggable-card p-3.5 rounded-2xl bg-[#0C111D] border border-white/[0.08] hover:border-[#7A5AF8]/60 flex flex-col items-center justify-between gap-2.5 text-center relative group transition-all duration-200 shadow-sm cursor-grab active:cursor-grabbing select-none hover:shadow-lg hover:shadow-[#7A5AF8]/15 hover:-translate-y-0.5">
                                             
+                                            <!-- Hidden input to keep form submission in sync -->
+                                            <input type="hidden" name="ordered_sponsor_logos[]" value="{{ $logo }}" class="ordered-sponsor-input">
+
+                                            <!-- Card Header: Number Badge & Drag Handle -->
+                                            <div class="w-full flex items-center justify-between pb-1 border-b border-white/[0.06]">
+                                                <div class="flex items-center gap-1.5">
+                                                    <span class="sponsor-order-badge px-2 py-0.5 rounded-lg bg-white/[0.06] border border-white/[0.1] text-[10px] font-mono font-black text-cyan-300 shadow-xs">
+                                                        #{{ $index + 1 }}
+                                                    </span>
+                                                    <span class="text-[9px] text-slate-500 uppercase tracking-widest font-bold">Posisi</span>
+                                                </div>
+                                                <div class="drag-handle p-1 text-slate-400 group-hover:text-[#A594FD] transition flex items-center gap-0.5 cursor-grab" title="Geser untuk pindah urutan">
+                                                    <span class="text-[9px] text-slate-500 group-hover:text-slate-300 font-medium hidden group-hover:inline">Geser</span>
+                                                    <i data-lucide="grip-vertical" class="w-4 h-4"></i>
+                                                </div>
+                                            </div>
+
                                             <!-- Logo Preview Container (With slight contrast for dark logos) -->
-                                            <div class="w-full h-16 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center p-2.5 overflow-hidden">
+                                            <div class="w-full h-16 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center p-2.5 overflow-hidden pointer-events-none">
                                                 <img src="{{ $logoUrl }}" 
                                                      alt="Sponsor {{ $index + 1 }}" 
                                                      class="max-h-12 max-w-full object-contain filter drop-shadow"
@@ -947,7 +1004,7 @@
                                             </div>
 
                                             <!-- Bottom Action: Checkbox & Single Trash Button (Tanpa Kata Hapus) -->
-                                            <div class="w-full flex items-center justify-between pt-1 border-t border-white/[0.06] gap-1">
+                                            <div class="w-full flex items-center justify-between pt-1.5 border-t border-white/[0.06] gap-1 cursor-default">
                                                 <label class="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-400 hover:text-rose-300 cursor-pointer select-none">
                                                     <input type="checkbox" name="delete_sponsor_logos[]" value="{{ $logo }}" class="rounded border-rose-400/40 text-rose-600 focus:ring-0">
                                                     <span>Tandai Hapus</span>
@@ -1266,7 +1323,12 @@
                         card.style.transition = 'all 0.3s ease';
                         card.style.opacity = '0';
                         card.style.transform = 'scale(0.85)';
-                        setTimeout(() => card.remove(), 300);
+                        setTimeout(() => {
+                            card.remove();
+                            updateSponsorOrderNumbers();
+                            syncSponsorHiddenInputs();
+                            saveSponsorOrderViaAjax();
+                        }, 300);
                     }
                 }
 
@@ -1546,7 +1608,129 @@
             });
         }
     }
+
+    // ==================== SPONSOR PUZZLE DRAG & DROP ====================
+    function updateSponsorOrderNumbers() {
+        const grid = document.getElementById('sponsor-sortable-grid');
+        if (!grid) return;
+        const cards = grid.querySelectorAll('.sponsor-draggable-card');
+        cards.forEach((card, index) => {
+            const badge = card.querySelector('.sponsor-order-badge');
+            if (badge) badge.textContent = '#' + (index + 1);
+        });
+    }
+
+    function syncSponsorHiddenInputs() {
+        const grid = document.getElementById('sponsor-sortable-grid');
+        if (!grid) return;
+        const cards = grid.querySelectorAll('.sponsor-draggable-card');
+        cards.forEach(card => {
+            const logo = card.getAttribute('data-logo');
+            const input = card.querySelector('.ordered-sponsor-input');
+            if (input) input.value = logo;
+        });
+    }
+
+    async function saveSponsorOrderViaAjax() {
+        const grid = document.getElementById('sponsor-sortable-grid');
+        if (!grid) return;
+        const cards = grid.querySelectorAll('.sponsor-draggable-card');
+        const orderedLogos = Array.from(cards).map(c => c.getAttribute('data-logo')).filter(Boolean);
+
+        const indicator = document.getElementById('reorder-saving-indicator');
+        if (indicator) {
+            indicator.classList.remove('hidden');
+            indicator.classList.add('inline-flex');
+            indicator.innerHTML = '<svg class="animate-spin w-3 h-3 text-emerald-400" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Menyimpan urutan...</span>';
+        }
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
+
+        try {
+            const response = await fetch('{{ route('admin.settings.sponsor.reorder') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ ordered_logos: orderedLogos })
+            });
+
+            const result = await response.json();
+            if (indicator) {
+                if (response.ok && result.success) {
+                    indicator.innerHTML = '<span class="text-emerald-400 font-bold flex items-center gap-1"><i data-lucide="check" class="w-3.5 h-3.5"></i> Urutan Tersimpan!</span>';
+                    if (window.lucide) window.lucide.createIcons();
+                    setTimeout(() => {
+                        indicator.classList.add('hidden');
+                        indicator.classList.remove('inline-flex');
+                    }, 2200);
+                } else {
+                    indicator.innerHTML = '<span class="text-rose-400 font-bold">Gagal menyimpan</span>';
+                    setTimeout(() => {
+                        indicator.classList.add('hidden');
+                        indicator.classList.remove('inline-flex');
+                    }, 3000);
+                }
+            }
+        } catch (err) {
+            console.error('Error reordering sponsor logos:', err);
+            if (indicator) {
+                indicator.innerHTML = '<span class="text-rose-400 font-bold">Gagal menyimpan</span>';
+                setTimeout(() => {
+                    indicator.classList.add('hidden');
+                    indicator.classList.remove('inline-flex');
+                }, 3000);
+            }
+        }
+    }
+
+    let sponsorSortableInstance = null;
+    function initSponsorSortable() {
+        const grid = document.getElementById('sponsor-sortable-grid');
+        if (!grid) return;
+
+        if (typeof Sortable === 'undefined') {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js';
+            script.onload = () => initSponsorSortable();
+            document.head.appendChild(script);
+            return;
+        }
+
+        if (sponsorSortableInstance) {
+            try { sponsorSortableInstance.destroy(); } catch (e) {}
+        }
+
+        sponsorSortableInstance = new Sortable(grid, {
+            animation: 200,
+            ghostClass: 'sponsor-sortable-ghost',
+            chosenClass: 'sponsor-sortable-chosen',
+            dragClass: 'sponsor-sortable-drag',
+            filter: 'button, input, label',
+            preventOnFilter: false,
+            onEnd: function (evt) {
+                updateSponsorOrderNumbers();
+                syncSponsorHiddenInputs();
+                saveSponsorOrderViaAjax();
+            }
+        });
+    }
+
+    // Initialize Sortable on DOM load and when page is interactive
+    document.addEventListener('DOMContentLoaded', () => {
+        initSponsorSortable();
+    });
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        setTimeout(initSponsorSortable, 150);
+    }
     </script>
 
 </div>
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+@endpush

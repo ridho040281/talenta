@@ -194,6 +194,8 @@ class AdminSettingsController extends Controller
             'pamphlet_images.*' => 'nullable|image|mimes:jpeg,png,jpg,svg,webp|max:10240',
             'delete_sponsor_logos' => 'nullable|array',
             'delete_sponsor_logos.*' => 'nullable|string',
+            'ordered_sponsor_logos' => 'nullable|array',
+            'ordered_sponsor_logos.*' => 'nullable|string',
 
             // Landing & Event
             'allow_individual_reg' => 'nullable|string|max:5',
@@ -283,6 +285,26 @@ class AdminSettingsController extends Controller
 
         // Handle Sponsor Logos Uploads & Deletions
         $currentSponsorLogos = json_decode(AppSetting::get('sponsor_logos', '[]'), true) ?: [];
+
+        // Apply drag & drop reordered sequence if submitted
+        if ($request->has('ordered_sponsor_logos') && is_array($request->ordered_sponsor_logos)) {
+            $ordered = $request->ordered_sponsor_logos;
+            $cleanCurrent = array_map(fn($item) => ltrim(str_replace(['public/', 'storage/'], '', $item), '/'), $currentSponsorLogos);
+            $reordered = [];
+            foreach ($ordered as $logo) {
+                $cleanLogo = ltrim(str_replace(['public/', 'storage/'], '', $logo), '/');
+                $foundIndex = array_search($cleanLogo, $cleanCurrent);
+                if ($foundIndex !== false) {
+                    $reordered[] = $currentSponsorLogos[$foundIndex];
+                }
+            }
+            foreach ($currentSponsorLogos as $idx => $orig) {
+                if (!in_array($orig, $reordered)) {
+                    $reordered[] = $orig;
+                }
+            }
+            $currentSponsorLogos = $reordered;
+        }
 
         if ($request->has('delete_sponsor_logos') && is_array($request->delete_sponsor_logos)) {
             foreach ($request->delete_sponsor_logos as $toDelete) {
@@ -511,6 +533,50 @@ class AdminSettingsController extends Controller
             ->with('success', 'Logo sponsor berhasil dihapus.')
             ->with('modal_success_title', 'Logo Berhasil Dihapus')
             ->with('modal_success_message', 'Logo sponsor telah berhasil dihapus dari sistem.');
+    }
+
+    /**
+     * Reorder sponsor logos via drag & drop puzzle
+     */
+    public function reorderSponsorLogos(Request $request)
+    {
+        $request->validate([
+            'ordered_logos' => 'required|array',
+            'ordered_logos.*' => 'required|string',
+        ]);
+
+        $ordered = $request->input('ordered_logos');
+        $current = json_decode(AppSetting::get('sponsor_logos', '[]'), true) ?: [];
+
+        $cleanCurrent = array_map(fn($item) => ltrim(str_replace(['public/', 'storage/'], '', $item), '/'), $current);
+
+        $newOrder = [];
+        foreach ($ordered as $logo) {
+            $cleanLogo = ltrim(str_replace(['public/', 'storage/'], '', $logo), '/');
+            $foundIndex = array_search($cleanLogo, $cleanCurrent);
+            if ($foundIndex !== false) {
+                $newOrder[] = $current[$foundIndex];
+            }
+        }
+
+        foreach ($current as $orig) {
+            if (!in_array($orig, $newOrder)) {
+                $newOrder[] = $orig;
+            }
+        }
+
+        AppSetting::set('sponsor_logos', json_encode(array_values($newOrder)));
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Urutan logo sponsor berhasil diperbarui.',
+                'order' => array_values($newOrder),
+            ]);
+        }
+
+        return redirect()->route('admin.settings.general', ['tab' => 'landing'])
+            ->with('success', 'Urutan logo sponsor berhasil diperbarui.');
     }
 
     /**
