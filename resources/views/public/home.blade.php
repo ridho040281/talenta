@@ -391,17 +391,9 @@
                                             </span>
                                         @endif
                                     </div>
-                                    <div class="flex flex-wrap items-center gap-y-1 gap-x-3 mt-1 text-[11px]">
-                                        <span class="text-slate-400 flex items-center gap-1">
-                                            <i data-lucide="map-pin" class="w-3 h-3 text-[#4E6EFF] shrink-0"></i>
-                                            <span>{{ $comp->venue ?? 'Kampus MTsN 1 Blitar' }}</span>
-                                        </span>
-                                        @if(!empty($comp->deadline_display) && $comp->deadline_display !== '-')
-                                            <span class="flex items-center gap-1 font-mono {{ !empty($comp->registration_end_at) ? 'text-amber-300' : 'text-slate-400' }}" title="{{ !empty($comp->registration_end_at) ? 'Batas Khusus Cabang Ini' : 'Batas Global' }}">
-                                                <i data-lucide="calendar-x" class="w-3 h-3 {{ !empty($comp->registration_end_at) ? 'text-amber-400' : 'text-slate-500' }} shrink-0"></i>
-                                                <span>Batas: {{ $comp->deadline_display }}</span>
-                                            </span>
-                                        @endif
+                                    <div class="flex items-center gap-1 mt-1 text-[11px] text-slate-400">
+                                        <i data-lucide="map-pin" class="w-3 h-3 text-[#4E6EFF] shrink-0"></i>
+                                        <span>{{ $comp->venue ?? 'Kampus MTsN 1 Blitar' }}</span>
                                     </div>
                                 </td>
 
