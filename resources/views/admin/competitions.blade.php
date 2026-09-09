@@ -758,9 +758,20 @@
                                             </div>
                                         </div>
                                     @else
-                                        <span class="px-2.5 py-1 rounded-full text-xs font-bold capitalize {{ $comp->status === 'buka' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : ($comp->status === 'tutup' ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' : 'bg-white/[0.05] text-slate-400 border border-white/[0.08]') }}">
-                                            {{ $comp->status }}
-                                        </span>
+                                        @php
+                                            $regStatus = $comp->registration_status_info;
+                                        @endphp
+                                        <div class="flex flex-col items-center gap-1">
+                                            <span class="px-2.5 py-1 rounded-full text-xs font-bold capitalize {{ $regStatus['badge_class'] }}">
+                                                {{ $regStatus['status_label'] }}
+                                            </span>
+                                            @if($comp->registration_end_at)
+                                                <span class="text-[10px] text-amber-300 font-mono flex items-center gap-1" title="Batas Deadline Khusus: {{ $comp->deadline_display }}">
+                                                    <i data-lucide="clock" class="w-3 h-3 text-amber-400"></i>
+                                                    {{ $comp->registration_end_at->format('d/m/y H:i') }}
+                                                </span>
+                                            @endif
+                                        </div>
                                     @endif
                                 </td>
                                 <td class="py-3 px-3 text-center whitespace-nowrap align-middle sticky right-0 z-20 bg-[#161F30] group-hover:bg-[#1C263A] transition shadow-[-6px_0_12px_rgba(0,0,0,0.4)] border-l border-white/[0.08]">

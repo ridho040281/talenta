@@ -31,6 +31,8 @@ class Competition extends Model
         'venue',
         'schedule_date',
         'schedule_time',
+        'registration_start_at',
+        'registration_end_at',
         'status',
         'has_draw',
         'draw_status',
@@ -76,6 +78,8 @@ class Competition extends Model
     {
         return [
             'schedule_date' => 'date',
+            'registration_start_at' => 'datetime',
+            'registration_end_at' => 'datetime',
             'has_draw' => 'boolean',
             'show_rules' => 'boolean',
             'show_guidelines' => 'boolean',
@@ -847,5 +851,199 @@ class Competition extends Model
 
         return AppSetting::get('competition_songs_'.$this->id)
             ?: (AppSetting::get('pop_song_options') ?: $defaultSongs);
+    }
+
+    /**
+     * Effective registration start date: custom if filled, otherwise global app setting
+     */
+    public function getEffectiveRegistrationStartAttribute(): ?\Carbon\Carbon
+    {
+        if ($this->registration_start_at) {
+            return \Carbon\Carbon::parse($this->registration_start_at);
+        }
+
+        $globalStart = AppSetting::get('registration_start_date');
+        if (! empty($globalStart) && strtotime($globalStart)) {
+            return \Carbon\Carbon::parse($globalStart);
+        }
+
+        return null;
+    }
+
+    /**
+     * Effective registration deadline: custom if filled, otherwise global app setting
+     */
+    public function getEffectiveRegistrationEndAttribute(): ?\Carbon\Carbon
+    {
+        if ($this->registration_end_at) {
+            return \Carbon\Carbon::parse($this->registration_end_at);
+        }
+
+        $globalDeadline = AppSetting::get('registration_deadline');
+        if (! empty($globalDeadline) && strtotime($globalDeadline)) {
+            return \Carbon\Carbon::parse($globalDeadline);
+        }
+
+        return null;
+    }
+
+    /**
+     * Formatted string of effective deadline
+     */
+    public function getDeadlineDisplayAttribute(): string
+    {
+        $deadline = $this->effective_registration_end;
+        if (! $deadline) {
+            return '-';
+        }
+
+        return $deadline->translatedFormat('d F Y, H:i').' WIB';
+    }
+
+    /**
+     * Check if total active registrations for this competition has reached quota
+     */
+    public function getIsQuotaFullAttribute(): bool
+    {
+        if ($this->isUnlimitedQuota()) {
+            return false;
+        }
+
+        $activeCount = $this->registrations()
+            ->whereIn('status', ['pending', 'verified'])
+            ->count();
+
+        return $activeCount >= (int) $this->quota;
+    }
+
+    /**
+     * Check if current time has passed the effective deadline
+     */
+    public function getIsRegistrationExpiredAttribute(): bool
+    {
+        $deadline = $this->effective_registration_end;
+        if (! $deadline) {
+            return false;
+        }
+
+        $autoClose = AppSetting::get('registration_auto_close', '1') == '1';
+        if (! $autoClose) {
+            return false;
+        }
+
+        return now()->gt($deadline);
+    }
+
+    /**
+     * Get comprehensive registration status info for UI badges, buttons, and validation
+     */
+    public function getRegistrationStatusInfoAttribute(): array
+    {
+        // 1. Manual status override per competition (Highest Priority)
+        if ($this->status === 'tutup') {
+            return [
+                'is_open' => false,
+                'status_code' => 'closed_manual',
+                'status_label' => 'Ditutup Manual',
+                'status_color' => 'rose',
+                'badge_class' => 'bg-rose-500/15 text-rose-400 border border-rose-500/30',
+                'button_text' => 'Pendaftaran Ditutup',
+                'button_icon' => 'lock',
+                'message' => 'Pendaftaran untuk cabang lomba '.$this->name.' telah ditutup oleh panitia.',
+                'deadline_formatted' => $this->deadline_display,
+            ];
+        }
+
+        if ($this->status === 'selesai') {
+            return [
+                'is_open' => false,
+                'status_code' => 'finished',
+                'status_label' => 'Lomba Selesai',
+                'status_color' => 'slate',
+                'badge_class' => 'bg-white/[0.05] text-slate-400 border border-white/[0.08]',
+                'button_text' => 'Lomba Selesai',
+                'button_icon' => 'check-circle-2',
+                'message' => 'Perlombaan cabang '.$this->name.' telah selesai dilaksanakan.',
+                'deadline_formatted' => $this->deadline_display,
+            ];
+        }
+
+        // 2. Global application switch
+        $globalStatus = AppSetting::get('global_registration_status', 'open');
+        if ($globalStatus === 'closed') {
+            return [
+                'is_open' => false,
+                'status_code' => 'closed_global',
+                'status_label' => 'Ditutup (Event Selesai)',
+                'status_color' => 'rose',
+                'badge_class' => 'bg-rose-500/15 text-rose-400 border border-rose-500/30',
+                'button_text' => 'Pendaftaran Ditutup',
+                'button_icon' => 'lock',
+                'message' => AppSetting::get('registration_closed_message', 'Pendaftaran TALENTA 2026 telah resmi ditutup.'),
+                'deadline_formatted' => $this->deadline_display,
+            ];
+        }
+
+        // 3. Date & Deadline Check
+        $now = now();
+        $autoClose = AppSetting::get('registration_auto_close', '1') == '1';
+        $startDate = $this->effective_registration_start;
+        $deadline = $this->effective_registration_end;
+
+        if ($autoClose && $startDate && $now->lt($startDate)) {
+            return [
+                'is_open' => false,
+                'status_code' => 'not_started',
+                'status_label' => 'Belum Dibuka',
+                'status_color' => 'amber',
+                'badge_class' => 'bg-amber-500/15 text-amber-300 border border-amber-500/30',
+                'button_text' => 'Belum Dibuka',
+                'button_icon' => 'clock',
+                'message' => 'Pendaftaran untuk cabang lomba '.$this->name.' baru dibuka mulai '.$startDate->translatedFormat('d F Y, H:i').' WIB.',
+                'deadline_formatted' => $this->deadline_display,
+            ];
+        }
+
+        if ($autoClose && $deadline && $now->gt($deadline)) {
+            return [
+                'is_open' => false,
+                'status_code' => 'closed_expired',
+                'status_label' => 'Batas Waktu Berakhir',
+                'status_color' => 'rose',
+                'badge_class' => 'bg-rose-500/15 text-rose-400 border border-rose-500/30',
+                'button_text' => 'Pendaftaran Ditutup',
+                'button_icon' => 'lock',
+                'message' => 'Pendaftaran untuk cabang lomba '.$this->name.' telah berakhir pada '.$deadline->translatedFormat('d F Y, H:i').' WIB.',
+                'deadline_formatted' => $this->deadline_display,
+            ];
+        }
+
+        // 4. Quota Check
+        if ($this->is_quota_full) {
+            return [
+                'is_open' => false,
+                'status_code' => 'closed_quota',
+                'status_label' => 'Kuota Penuh',
+                'status_color' => 'purple',
+                'badge_class' => 'bg-purple-500/15 text-purple-400 border border-purple-500/30',
+                'button_text' => 'Kuota Terpenuhi',
+                'button_icon' => 'users',
+                'message' => 'Mohon maaf, kuota pendaftaran untuk cabang lomba '.$this->name.' telah terpenuhi ('.$this->quota.' peserta).',
+                'deadline_formatted' => $this->deadline_display,
+            ];
+        }
+
+        // 5. Open / Aktif
+        return [
+            'is_open' => true,
+            'status_code' => 'open',
+            'status_label' => 'Pendaftaran Dibuka',
+            'status_color' => 'emerald',
+            'badge_class' => 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
+            'button_text' => 'Daftar Cabang Ini',
+            'button_icon' => 'arrow-right',
+            'message' => 'Pendaftaran dibuka.',
+            'deadline_formatted' => $this->deadline_display,
+        ];
     }
 }

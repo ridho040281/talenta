@@ -357,8 +357,9 @@ class CollectiveRegistrationController extends Controller
                 $errors[] = "Cabang lomba '{$rawComp}' tidak dikenali di sistem";
             } else {
                 $comp = $competitions[$code];
-                if ($comp->status !== 'buka') {
-                    $errors[] = "Lomba '{$comp->name}' saat ini berstatus {$comp->status}";
+                $compStatus = $comp->registration_status_info;
+                if (! $compStatus['is_open'] && ! $user->isTester()) {
+                    $errors[] = "Lomba '{$comp->name}': {$compStatus['message']}";
                 } else {
                     // Check quota
                     $currentRegistered = $comp->registrations_count ?? 0;

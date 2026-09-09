@@ -30,7 +30,6 @@ class PesertaController extends Controller
             ->get();
 
         $openCompetitions = Competition::with('category')
-            ->where('status', 'buka')
             ->orderBy('order', 'asc')
             ->get();
 
@@ -60,17 +59,9 @@ class PesertaController extends Controller
         $competition = Competition::where('slug', $slug)->firstOrFail();
         $user = Auth::user();
 
-        $regInfo = AppSetting::getRegistrationStatusInfo();
-        if (!$regInfo['is_open'] && !$user->isTester()) {
-            $msg = $regInfo['status_code'] === 'not_started'
-                ? 'Pendaftaran TALENTA 2026 belum dibuka. Pendaftaran dibuka mulai ' . ($regInfo['start_date_formatted'] ?: '-') . ' WIB.'
-                : ($regInfo['closed_message'] ?: 'Pendaftaran perlombaan saat ini telah resmi ditutup.');
-            return redirect()->route('peserta.dashboard')->with('error', $msg);
-        }
-
-        if ($competition->status === 'tutup') {
-            return redirect()->route('peserta.dashboard')
-                ->with('error', 'Pendaftaran untuk cabang lomba '.$competition->name.' telah ditutup.');
+        $statusInfo = $competition->registration_status_info;
+        if (! $statusInfo['is_open'] && ! $user->isTester()) {
+            return redirect()->route('peserta.dashboard')->with('error', $statusInfo['message']);
         }
 
         // Check if user already registered for this competition
@@ -111,17 +102,9 @@ class PesertaController extends Controller
         $user = Auth::user();
         $isBuluTangkis = ($competition->code === 'BLT');
 
-        $regInfo = AppSetting::getRegistrationStatusInfo();
-        if (! $regInfo['is_open'] && ! $user->isTester()) {
-            $msg = $regInfo['status_code'] === 'not_started'
-                ? 'Pendaftaran TALENTA 2026 belum dibuka. Pendaftaran dibuka mulai '.($regInfo['start_date_formatted'] ?: '-').' WIB.'
-                : ($regInfo['closed_message'] ?: 'Pendaftaran perlombaan saat ini telah resmi ditutup.');
-
-            return back()->with('error', $msg);
-        }
-
-        if ($competition->status === 'tutup') {
-            return back()->with('error', 'Pendaftaran untuk cabang lomba '.$competition->name.' telah ditutup.');
+        $statusInfo = $competition->registration_status_info;
+        if (! $statusInfo['is_open'] && ! $user->isTester()) {
+            return back()->with('error', $statusInfo['message']);
         }
 
         // Prevent duplicate registration in the same competition / sector for this user account

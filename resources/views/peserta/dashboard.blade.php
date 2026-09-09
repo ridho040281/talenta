@@ -250,7 +250,8 @@
                         ];
                     }
 
-                    $canRegister = $regInfo['is_open'] || $isTester;
+                    $compStatus = $c->registration_status_info;
+                    $canRegister = ($compStatus['is_open'] || $isTester);
                     $targetUrl = $isRegistered 
                         ? route('peserta.registration.detail', $registeredReg->id) 
                         : ($canRegister ? route('peserta.register.competition', $c->slug) : route('competition.detail', $c->slug));
@@ -280,7 +281,7 @@
                                 </span>
                             </div>
 
-                            <!-- Card Body: Competition Name & Quota -->
+                            <!-- Card Body: Competition Name, Quota & Deadline -->
                             <div>
                                 <h4 class="font-black text-white text-base leading-snug {{ $theme['title'] }} transition font-display">
                                     {{ $c->name }}
@@ -298,6 +299,10 @@
                                         Kuota: <strong class="text-slate-200">{{ $c->quota }}</strong> • Tipe: <span class="capitalize font-semibold text-slate-300">{{ $c->type }}</span>
                                     @endif
                                 </p>
+                                <div class="flex items-center gap-1.5 text-[11px] text-amber-300/90 font-mono mt-1.5">
+                                    <i data-lucide="timer" class="w-3.5 h-3.5 text-amber-400 shrink-0"></i>
+                                    <span>Batas: <strong class="text-amber-200">{{ $c->deadline_display }}</strong></span>
+                                </div>
                             </div>
 
                             <!-- Fee Box (High-Tech Contrast) -->
@@ -391,10 +396,25 @@
                                     <span class="text-[10px] text-emerald-300 font-bold underline">Lihat Berkas ➔</span>
                                 </div>
                             @elseif(!$canRegister)
-                                @if($regInfo['status_code'] === 'not_started')
+                                @if($compStatus['status_code'] === 'not_started')
                                     <div class="w-full py-2.5 px-3 rounded-2xl bg-amber-500/10 text-amber-300 border border-amber-500/30 font-bold text-xs flex items-center justify-center gap-2 tracking-wide">
                                         <i data-lucide="clock" class="w-4 h-4 text-amber-400"></i>
                                         <span>Belum Dibuka</span>
+                                    </div>
+                                @elseif($compStatus['status_code'] === 'closed_quota')
+                                    <div class="w-full py-2.5 px-3 rounded-2xl bg-purple-500/15 text-purple-300 border border-purple-500/30 font-bold text-xs flex items-center justify-center gap-2 tracking-wide">
+                                        <i data-lucide="users" class="w-4 h-4 text-purple-400"></i>
+                                        <span>Kuota Terpenuhi</span>
+                                    </div>
+                                @elseif($compStatus['status_code'] === 'closed_expired')
+                                    <div class="w-full py-2.5 px-3 rounded-2xl bg-rose-500/15 text-rose-300 border border-rose-500/30 font-bold text-xs flex items-center justify-center gap-2 tracking-wide">
+                                        <i data-lucide="clock" class="w-4 h-4 text-rose-400"></i>
+                                        <span>Batas Waktu Berakhir</span>
+                                    </div>
+                                @elseif($compStatus['status_code'] === 'finished')
+                                    <div class="w-full py-2.5 px-3 rounded-2xl bg-slate-800/80 text-slate-400 border border-slate-700 font-bold text-xs flex items-center justify-center gap-2 tracking-wide">
+                                        <i data-lucide="check-circle" class="w-4 h-4 text-slate-400"></i>
+                                        <span>Lomba Selesai</span>
                                     </div>
                                 @else
                                     <div class="w-full py-2.5 px-3 rounded-2xl bg-slate-800/80 text-slate-400 border border-slate-700 font-bold text-xs flex items-center justify-center gap-2 tracking-wide">

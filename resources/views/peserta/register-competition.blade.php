@@ -14,7 +14,7 @@
             </span>
             <h2 class="text-2xl font-black text-white tracking-tight font-display">{{ $competition->name }}</h2>
             <p class="text-xs text-slate-400">
-                Tipe: <strong class="text-slate-200 capitalize">{{ $competition->type }}</strong> ({{ $competition->min_members }} - {{ $competition->max_members }} Peserta) • Biaya: <strong class="text-emerald-400 font-bold text-sm font-mono" x-text="formattedFee"></strong>
+                Tipe: <strong class="text-slate-200 capitalize">{{ $competition->type }}</strong> ({{ $competition->min_members }} - {{ $competition->max_members }} Peserta) • Biaya: <strong class="text-emerald-400 font-bold text-sm font-mono" x-text="formattedFee"></strong> • Batas: <strong class="text-amber-300 font-mono">{{ $competition->deadline_display }}</strong>
             </p>
         </div>
         <a href="{{ route('peserta.dashboard') }}" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition border border-slate-700">

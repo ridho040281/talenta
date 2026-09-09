@@ -204,6 +204,57 @@
                         </div>
                     </div>
 
+                    <!-- PENGATURAN BATAS WAKTU PENDAFTARAN KHUSUS (DEADLINE) -->
+                    <div class="p-4 sm:p-5 rounded-2xl space-y-3" style="background: rgba(245,158,11,0.05); border: 1px solid rgba(245,158,11,0.22);">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-white/[0.08]">
+                            <div>
+                                <label class="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                                    <i data-lucide="timer" class="w-4 h-4 text-amber-400"></i>
+                                    <span>Jadwal & Batas Waktu Pendaftaran Khusus (Deadline)</span>
+                                </label>
+                                <p class="text-[11px] text-slate-400 mt-0.5">Atur jadwal pendaftaran khusus cabang ini. Jika dikosongkan, cabang ini otomatis mengikuti jadwal global TALENTA 2026.</p>
+                            </div>
+                            <span class="text-[10px] font-bold text-amber-400 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 self-start sm:self-auto font-mono">
+                                Jadwal Mandiri / Cabang
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5 flex items-center gap-1.5">
+                                    <i data-lucide="calendar-check" class="w-3.5 h-3.5 text-emerald-400"></i>
+                                    <span>Tgl & Jam Mulai Dibuka</span>
+                                </label>
+                                <input name="registration_start_at" type="datetime-local" 
+                                    value="{{ old('registration_start_at', $competition->registration_start_at ? $competition->registration_start_at->format('Y-m-d\TH:i') : '') }}" 
+                                    class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-mono font-bold text-emerald-300">
+                                <p class="text-[10px] text-slate-500 mt-1">
+                                    Default global: <span class="text-slate-400 font-medium">{{ $regInfo['start_date_formatted'] ?: '1 Sep 2026' }} WIB</span>
+                                </p>
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5 flex items-center gap-1.5">
+                                    <i data-lucide="clock" class="w-3.5 h-3.5 text-rose-400"></i>
+                                    <span>Batas Akhir / Deadline Penutupan</span>
+                                </label>
+                                <input name="registration_end_at" type="datetime-local" 
+                                    value="{{ old('registration_end_at', $competition->registration_end_at ? $competition->registration_end_at->format('Y-m-d\TH:i') : '') }}" 
+                                    class="input-admin block w-full px-3 py-2.5 rounded-xl text-xs font-mono font-bold text-rose-300">
+                                <p class="text-[10px] text-slate-500 mt-1">
+                                    Default global: <span class="text-slate-400 font-medium">{{ $regInfo['deadline_formatted'] ?: '25 Sep 2026' }} WIB</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="p-2.5 rounded-xl bg-slate-900/60 border border-white/[0.06] text-[11px] text-slate-400 flex items-start gap-2">
+                            <i data-lucide="info" class="w-4 h-4 text-amber-400 shrink-0 mt-0.5"></i>
+                            <span>
+                                <strong>Catatan Otomatisasi:</strong> Sistem akan otomatis menutup pendaftaran lomba ini jika <strong>Batas Akhir (Deadline)</strong> telah terlampaui ATAU <strong>Kuota Total</strong> telah terpenuhi. Anda tetap bisa membuka/menutup paksa secara manual menggunakan dropdown status di bawah.
+                            </span>
+                        </div>
+                    </div>
+
                     <!-- Row 3: Biaya, Kuota, Status -->
                     @php $isMultiTier = in_array($competition->code, ['BLT', 'MTQ', 'POP', 'TMJ']); @endphp
                     @if(!$isMultiTier)

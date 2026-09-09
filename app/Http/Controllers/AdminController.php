@@ -57,8 +57,9 @@ class AdminController extends Controller
         $competition = Competition::with(['category', 'pic', 'pics', 'criteria'])->withCount('registrations')->findOrFail($id);
         $categories = Category::orderBy('order', 'asc')->get();
         $pics = User::where('role', 'pic_lomba')->orWhere('role', 'superadmin')->get();
+        $regInfo = AppSetting::getRegistrationStatusInfo();
 
-        return view('admin.competitions-edit', compact('competition', 'categories', 'pics'));
+        return view('admin.competitions-edit', compact('competition', 'categories', 'pics', 'regInfo'));
     }
 
     public function storeCompetition(Request $request)
@@ -78,6 +79,8 @@ class AdminController extends Controller
             'venue' => ['nullable', 'string'],
             'schedule_date' => ['nullable', 'date'],
             'schedule_time' => ['nullable', 'string'],
+            'registration_start_at' => ['nullable', 'date'],
+            'registration_end_at' => ['nullable', 'date'],
             'rules' => ['nullable', 'string'],
             'guidelines_file' => ['nullable', 'string'],
             'guidelines_pdf' => ['nullable', 'file', 'mimes:pdf', 'max:20480'],
@@ -109,6 +112,8 @@ class AdminController extends Controller
             'venue' => $validated['venue'] ?? null,
             'schedule_date' => $validated['schedule_date'] ?? null,
             'schedule_time' => $validated['schedule_time'] ?? null,
+            'registration_start_at' => $validated['registration_start_at'] ?? null,
+            'registration_end_at' => $validated['registration_end_at'] ?? null,
             'rules' => $validated['rules'] ?? null,
             'show_rules' => $request->has('show_rules') ? $request->boolean('show_rules') : true,
             'guidelines_file' => $guidelinesPath,
@@ -188,6 +193,8 @@ class AdminController extends Controller
             'venue' => ['nullable', 'string'],
             'schedule_date' => ['nullable', 'date'],
             'schedule_time' => ['nullable', 'string'],
+            'registration_start_at' => ['nullable', 'date'],
+            'registration_end_at' => ['nullable', 'date'],
             'rules' => ['nullable', 'string'],
             'guidelines_file' => ['nullable', 'string'],
             'guidelines_pdf' => ['nullable', 'file', 'mimes:pdf', 'max:20480'],
@@ -236,6 +243,8 @@ class AdminController extends Controller
             'venue' => $validated['venue'] ?? null,
             'schedule_date' => $validated['schedule_date'] ?? null,
             'schedule_time' => $validated['schedule_time'] ?? null,
+            'registration_start_at' => $validated['registration_start_at'] ?? null,
+            'registration_end_at' => $validated['registration_end_at'] ?? null,
             'rules' => $validated['rules'] ?? null,
             'show_rules' => $request->has('show_rules') ? $request->boolean('show_rules') : false,
             'guidelines_file' => $guidelinesPath,
