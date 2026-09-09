@@ -1094,7 +1094,11 @@ class Competition extends Model
 
         $globalDeadline = AppSetting::get('registration_deadline');
         if (! empty($globalDeadline) && strtotime($globalDeadline)) {
-            return \Carbon\Carbon::parse($globalDeadline);
+            $parsed = \Carbon\Carbon::parse($globalDeadline);
+            if (strlen(trim($globalDeadline)) === 10 && !str_contains($globalDeadline, ':') && !str_contains($globalDeadline, 'T')) {
+                $parsed = $parsed->endOfDay();
+            }
+            return $parsed;
         }
 
         return null;
@@ -1152,6 +1156,10 @@ class Competition extends Model
      */
     public function getRegistrationStatusInfoAttribute(): array
     {
+        $startDate = $this->effective_registration_start;
+        $deadline = $this->effective_registration_end;
+        $formattedStart = $startDate ? $startDate->translatedFormat('d F Y, H:i').' WIB' : null;
+
         // 1. Manual status override per competition (Highest Priority)
         if ($this->status === 'tutup') {
             return [
@@ -1164,6 +1172,7 @@ class Competition extends Model
                 'button_icon' => 'lock',
                 'message' => 'Pendaftaran untuk cabang lomba '.$this->name.' telah ditutup oleh panitia.',
                 'deadline_formatted' => $this->deadline_display,
+                'start_date_formatted' => $formattedStart,
             ];
         }
 
@@ -1178,6 +1187,7 @@ class Competition extends Model
                 'button_icon' => 'check-circle-2',
                 'message' => 'Perlombaan cabang '.$this->name.' telah selesai dilaksanakan.',
                 'deadline_formatted' => $this->deadline_display,
+                'start_date_formatted' => $formattedStart,
             ];
         }
 
@@ -1194,14 +1204,13 @@ class Competition extends Model
                 'button_icon' => 'lock',
                 'message' => AppSetting::get('registration_closed_message', 'Pendaftaran TALENTA 2026 telah resmi ditutup.'),
                 'deadline_formatted' => $this->deadline_display,
+                'start_date_formatted' => $formattedStart,
             ];
         }
 
         // 3. Date & Deadline Check
         $now = now();
         $autoClose = AppSetting::get('registration_auto_close', '1') == '1';
-        $startDate = $this->effective_registration_start;
-        $deadline = $this->effective_registration_end;
 
         if ($autoClose && $startDate && $now->lt($startDate)) {
             return [
@@ -1214,6 +1223,7 @@ class Competition extends Model
                 'button_icon' => 'clock',
                 'message' => 'Pendaftaran untuk cabang lomba '.$this->name.' baru dibuka mulai '.$startDate->translatedFormat('d F Y, H:i').' WIB.',
                 'deadline_formatted' => $this->deadline_display,
+                'start_date_formatted' => $formattedStart,
             ];
         }
 
@@ -1228,6 +1238,7 @@ class Competition extends Model
                 'button_icon' => 'lock',
                 'message' => 'Pendaftaran untuk cabang lomba '.$this->name.' telah berakhir pada '.$deadline->translatedFormat('d F Y, H:i').' WIB.',
                 'deadline_formatted' => $this->deadline_display,
+                'start_date_formatted' => $formattedStart,
             ];
         }
 
@@ -1243,6 +1254,7 @@ class Competition extends Model
                 'button_icon' => 'users',
                 'message' => 'Mohon maaf, kuota pendaftaran untuk cabang lomba '.$this->name.' telah terpenuhi ('.$this->quota.' peserta).',
                 'deadline_formatted' => $this->deadline_display,
+                'start_date_formatted' => $formattedStart,
             ];
         }
 
@@ -1257,6 +1269,7 @@ class Competition extends Model
             'button_icon' => 'arrow-right',
             'message' => 'Pendaftaran dibuka.',
             'deadline_formatted' => $this->deadline_display,
+            'start_date_formatted' => $formattedStart,
         ];
     }
 }

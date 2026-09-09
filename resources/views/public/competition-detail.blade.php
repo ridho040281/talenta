@@ -133,24 +133,33 @@
             <!-- Action Card -->
             <div class="glass-card bg-gradient-to-br from-[#161F30] to-[#1e293b]/90 rounded-3xl p-6 sm:p-8 text-white border border-white/[0.1] shadow-2xl space-y-6">
                 @php
-                    $regInfo = \App\Models\AppSetting::getRegistrationStatusInfo();
-                    $isCompOpen = ($competition->status === 'buka') && $regInfo['is_open'];
+                    $compStatus = $competition->registration_status_info;
+                    $isCompOpen = $compStatus['is_open'];
                 @endphp
                 <div>
                     <span class="text-xs font-bold text-[#A594FD] uppercase tracking-wider">Status Pendaftaran</span>
                     <div class="flex items-center justify-between mt-1">
-                        <span class="text-xl font-black text-white capitalize font-display">{{ $isCompOpen ? 'Dibuka' : 'Ditutup' }}</span>
-                        <span class="px-3 py-1 text-xs font-black rounded-full {{ $isCompOpen ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border border-rose-500/40' }}">
-                            {{ $isCompOpen ? 'Pendaftaran Dibuka' : 'Ditutup' }}
+                        <span class="text-xl font-black text-white capitalize font-display">
+                            {{ $compStatus['is_open'] ? 'Dibuka' : ($compStatus['status_code'] === 'not_started' ? 'Belum Dibuka' : 'Ditutup') }}
+                        </span>
+                        <span class="px-3 py-1 text-xs font-black rounded-full {{ $compStatus['badge_class'] }}">
+                            {{ $compStatus['status_label'] }}
                         </span>
                     </div>
                 </div>
 
                 <div class="space-y-4 text-xs text-slate-300 border-t border-white/[0.08] pt-4">
-                    @if(!empty($regInfo['deadline_formatted']))
+                    @if(!empty($competition->deadline_display) && $competition->deadline_display !== '-')
                     <div class="flex items-center justify-between">
                         <span class="text-slate-400">Batas Pendaftaran:</span>
-                        <span class="font-bold text-xs text-amber-300">{{ $regInfo['deadline_formatted'] }} WIB</span>
+                        <span class="font-bold text-xs text-amber-300 font-mono">{{ $competition->deadline_display }}</span>
+                    </div>
+                    @endif
+
+                    @if($compStatus['status_code'] === 'not_started' && !empty($compStatus['start_date_formatted']))
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-400">Pendaftaran Dibuka:</span>
+                        <span class="font-bold text-xs text-emerald-400 font-mono">{{ $compStatus['start_date_formatted'] }}</span>
                     </div>
                     @endif
 
@@ -362,15 +371,15 @@
                         <span>Daftar Cabang Lomba Ini</span>
                     </a>
                 @else
-                    @if($regInfo['status_code'] === 'not_started')
+                    @if($compStatus['status_code'] === 'not_started')
                         <div class="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl bg-amber-500/10 text-amber-300 border border-amber-500/30 font-bold text-xs shadow-sm">
                             <i data-lucide="clock" class="w-4 h-4 text-amber-400"></i>
-                            <span>Belum Dibuka (Terjadwal: {{ $regInfo['start_date_formatted'] ?: '-' }} WIB)</span>
+                            <span>Belum Dibuka (Mulai: {{ $compStatus['start_date_formatted'] ?: '-' }})</span>
                         </div>
                     @else
                         <div class="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl bg-slate-800/80 text-slate-400 border border-slate-700 font-bold text-xs">
-                            <i data-lucide="lock" class="w-4 h-4 text-rose-400"></i>
-                            <span>Pendaftaran Ditutup</span>
+                            <i data-lucide="{{ $compStatus['button_icon'] ?? 'lock' }}" class="w-4 h-4 text-rose-400"></i>
+                            <span>{{ $compStatus['button_text'] ?? 'Pendaftaran Ditutup' }}</span>
                         </div>
                     @endif
                 @endif
