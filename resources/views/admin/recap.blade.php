@@ -71,6 +71,7 @@
                 this.downloadingPng = false;
             });
         }, 300);
+    },
     items: @js($allRegistrations->map(function($r) {
         $firstMember = $r->members->first();
         return [
