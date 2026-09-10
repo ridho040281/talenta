@@ -250,6 +250,15 @@
                                         <td class="py-2 px-3 font-bold">
                                             {{ $invReg->competition->name }} - {{ $invReg->institution_name }}
                                             <div class="text-[10px] text-slate-500 font-normal">Peserta: {{ $invReg->display_name }} ({{ $invReg->registration_code }})</div>
+                                            @php
+                                                $regCat = $invReg->sub_category ?: ($invReg->target_class ? $invReg->target_class . ($invReg->match_type ? ' - ' . $invReg->match_type : '') : $invReg->match_type);
+                                            @endphp
+                                            @if($regCat)
+                                                <div class="text-[9.5px] text-slate-500 font-normal">Kelas / Kategori: {{ $regCat }}</div>
+                                            @endif
+                                            @if($invReg->chosen_song)
+                                                <div class="text-[9.5px] text-slate-500 font-normal">Lagu: {{ $invReg->chosen_song }}</div>
+                                            @endif
                                         </td>
                                         <td class="py-2 px-3 text-center font-bold">1</td>
                                         <td class="py-2 px-3 text-right font-mono font-bold">
@@ -271,6 +280,15 @@
                                     <td class="py-2.5 px-3 font-bold">
                                         {{ $registration->competition->name }} - {{ $registration->institution_name }}
                                         <div class="text-[10px] text-slate-500 font-normal">Nama: {{ $registration->display_name }}</div>
+                                        @php
+                                            $regCat = $registration->sub_category ?: ($registration->target_class ? $registration->target_class . ($registration->match_type ? ' - ' . $registration->match_type : '') : $registration->match_type);
+                                        @endphp
+                                        @if($regCat)
+                                            <div class="text-[9.5px] text-slate-500 font-normal">Kelas / Kategori: {{ $regCat }}</div>
+                                        @endif
+                                        @if($registration->chosen_song)
+                                            <div class="text-[9.5px] text-slate-500 font-normal">Lagu: {{ $registration->chosen_song }}</div>
+                                        @endif
                                     </td>
                                     <td class="py-2.5 px-3 text-center font-bold">1</td>
                                     <td class="py-2.5 px-3 text-right font-mono font-bold">

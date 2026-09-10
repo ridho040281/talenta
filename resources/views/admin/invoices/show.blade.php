@@ -197,6 +197,14 @@
                                             <div class="text-[10px] text-slate-400">
                                                 NISN: {{ $reg->members->first()->nisn ?? '-' }} ({{ $reg->members->first()->gender ?? 'L' }})
                                             </div>
+                                            @php
+                                                $regCat = $reg->sub_category ?: ($reg->target_class ? $reg->target_class . ($reg->match_type ? ' - ' . $reg->match_type : '') : $reg->match_type);
+                                            @endphp
+                                            @if($regCat)
+                                                <div class="text-[10px] text-amber-700 font-medium">
+                                                    {{ $regCat }}
+                                                </div>
+                                            @endif
                                         </td>
                                         <td class="py-3 px-3.5">
                                             <span class="font-bold text-slate-800">{{ $reg->competition->name }}</span>
