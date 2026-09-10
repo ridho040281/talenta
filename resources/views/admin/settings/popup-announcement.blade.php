@@ -567,9 +567,6 @@
 
             <!-- Action Buttons -->
             <div class="pt-3 border-t border-white/[0.08] flex flex-col sm:flex-row items-center justify-end gap-3">
-                <button type="button" @click="previewModal = false" class="w-full sm:w-auto px-6 py-2.5 rounded-2xl bg-white/[0.08] hover:bg-white/[0.15] text-slate-200 font-bold text-xs border border-white/[0.1] transition cursor-pointer">
-                    <span x-text="previewSecBtnText || 'Tutup'"></span>
-                </button>
                 <template x-if="previewBtnText">
                     <button type="button" @click="previewModal = false" class="w-full sm:w-auto px-7 py-2.5 rounded-2xl bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-black text-xs shadow-lg shadow-[#7A5AF8]/35 transition uppercase tracking-wider cursor-pointer">
                         <span x-text="previewBtnText"></span>

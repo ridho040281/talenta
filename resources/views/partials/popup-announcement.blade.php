@@ -67,18 +67,20 @@
         x-transition:leave="transition ease-in duration-200"
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
-        style="position: fixed !important; inset: 0 !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background-color: rgba(6, 10, 20, 0.92) !important; backdrop-filter: blur(16px) !important; -webkit-backdrop-filter: blur(16px) !important; z-index: 999999 !important; display: flex !important; align-items: center !important; justify-content: center !important; padding: 1rem !important; overflow-y: auto !important;"
-        @click.self="closeModal()">
+        style="position: fixed !important; inset: 0 !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background-color: rgba(6, 10, 20, 0.92) !important; backdrop-filter: blur(16px) !important; -webkit-backdrop-filter: blur(16px) !important; z-index: 999999 !important; display: flex !important; align-items: center !important; justify-content: center !important; padding: 1rem !important; overflow-y: auto !important; cursor: pointer !important;"
+        @click="if ($event.target === $el && !zoomImage) closeModal()"
+        @touchend="if ($event.target === $el && !zoomImage) closeModal()">
         
         <!-- Modal Card Container (Wide HD Layout for Infographics & Posters) -->
         <div x-show="showModal"
+            @click.away="if (!zoomImage) closeModal()"
             x-transition:enter="transition ease-out duration-300 transform"
             x-transition:enter-start="opacity-0 scale-95 translate-y-6"
             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
             x-transition:leave="transition ease-in duration-200 transform"
             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
             x-transition:leave-end="opacity-0 scale-95 translate-y-6"
-            style="position: relative !important; width: 100% !important; max-width: min(62rem, 95vw) !important; background-color: #0f172a !important; border: 1.5px solid rgba(255, 255, 255, 0.22) !important; border-radius: 1.75rem !important; box-shadow: 0 30px 80px -10px rgba(0, 0, 0, 0.98), 0 0 70px rgba(122, 90, 248, 0.45) !important; overflow: hidden !important; display: flex !important; flex-direction: column !important; color: #f8fafc !important; max-height: 94vh !important; z-index: 1000000 !important; margin: auto !important;">
+            style="position: relative !important; width: 100% !important; max-width: min(62rem, 95vw) !important; background-color: #0f172a !important; border: 1.5px solid rgba(255, 255, 255, 0.22) !important; border-radius: 1.75rem !important; box-shadow: 0 30px 80px -10px rgba(0, 0, 0, 0.98), 0 0 70px rgba(122, 90, 248, 0.45) !important; overflow: hidden !important; display: flex !important; flex-direction: column !important; color: #f8fafc !important; max-height: 94vh !important; z-index: 1000000 !important; margin: auto !important; cursor: default !important;">
 
             <!-- Glowing Ambient Top Aura -->
             <div style="position: absolute; top: -5rem; left: -5rem; width: 18rem; height: 18rem; background: rgba(122, 90, 248, 0.5); border-radius: 9999px; filter: blur(75px); pointer-events: none;"></div>
@@ -139,10 +141,6 @@
                 </div>
 
                 <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
-                    <button type="button" @click="closeModal()" style="padding: 0.75rem 1.4rem; border-radius: 0.875rem; border: 1px solid rgba(255, 255, 255, 0.18); background-color: rgba(255, 255, 255, 0.08); color: #e2e8f0; font-size: 0.875rem; font-weight: 700; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.backgroundColor='rgba(255,255,255,0.18)'; this.style.color='#ffffff';" onmouseout="this.style.backgroundColor='rgba(255,255,255,0.08)'; this.style.color='#e2e8f0';">
-                        {{ $popupSecBtnText }}
-                    </button>
-
                     @if(!empty($popupBtnText) && !empty($popupBtnUrl))
                         <a href="{{ $popupBtnUrl }}" @click="closeModal()" target="{{ str_starts_with($popupBtnUrl, 'http') ? '_blank' : '_self' }}" style="padding: 0.75rem 1.6rem; border-radius: 0.875rem; background: linear-gradient(90deg, #7A5AF8 0%, #4E6EFF 100%); color: #ffffff; font-size: 0.875rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; box-shadow: 0 6px 20px rgba(122, 90, 248, 0.45); cursor: pointer; transition: all 0.2s;" onmouseover="this.style.transform='scale(1.03)';" onmouseout="this.style.transform='scale(1)';">
                             <span>{{ $popupBtnText }}</span>
