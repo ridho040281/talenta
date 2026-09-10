@@ -638,10 +638,13 @@ class CollectiveRegistrationController extends Controller
         $request->validate([
             'payload' => ['required', 'string'],
             'payment_proof' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'document_file' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
         ], [
             'payment_proof.required' => 'Bukti pembayaran / slip transfer wajib diunggah dalam satu kali pengiriman.',
             'payment_proof.mimes' => 'Format file bukti transfer harus berupa JPG, PNG, atau PDF.',
             'payment_proof.max' => 'Ukuran file bukti transfer maksimal 5MB.',
+            'document_file.mimes' => 'Format file surat keterangan / rekomendasi kolektif harus berupa JPG, PNG, atau PDF.',
+            'document_file.max' => 'Ukuran file surat keterangan / rekomendasi kolektif maksimal 5MB.',
         ]);
 
         $data = json_decode($request->payload, true);
@@ -680,6 +683,13 @@ class CollectiveRegistrationController extends Controller
         // Store payment proof file
         $paymentProofPath = $request->file('payment_proof')->store('payments', 'public');
         AdminSettingsController::ensurePublicStorageSync($paymentProofPath);
+
+        // Store collective document file if uploaded
+        $documentFilePath = null;
+        if ($request->hasFile('document_file')) {
+            $documentFilePath = $request->file('document_file')->store('documents', 'public');
+            AdminSettingsController::ensurePublicStorageSync($documentFilePath);
+        }
 
         DB::beginTransaction();
         try {
@@ -728,6 +738,7 @@ class CollectiveRegistrationController extends Controller
                     'official_name' => ! empty($row['official_name']) ? $row['official_name'] : $user->name,
                     'official_phone' => ! empty($row['official_phone']) ? $row['official_phone'] : $user->phone,
                     'payment_proof' => $paymentProofPath,
+                    'document_file' => $documentFilePath,
                     'status' => 'pending',
                     'is_collective' => true,
                 ]);
@@ -847,6 +858,35 @@ class CollectiveRegistrationController extends Controller
         }
 
         return back()->with('success', 'Bukti transfer berhasil diunggah! Panitia akan segera memverifikasi pendaftaran kolektif Anda.');
+    }
+
+    /**
+     * Upload / Update Collective Document (Surat Keterangan / Rekomendasi) for Master Invoice
+     */
+    public function uploadCollectiveDocument(Request $request, $id)
+    {
+        $user = Auth::user();
+        $invoice = Invoice::where('user_id', $user->id)->findOrFail($id);
+
+        $request->validate([
+            'document_file' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
+        ], [
+            'document_file.required' => 'Silakan pilih berkas surat keterangan / rekomendasi kolektif.',
+            'document_file.mimes' => 'Format file surat rekomendasi harus berupa JPG, PNG, atau PDF.',
+            'document_file.max' => 'Ukuran file surat rekomendasi maksimal 5MB.',
+        ]);
+
+        $file = $request->file('document_file');
+        $filename = 'rekomendasi_'.$invoice->invoice_number.'_'.time().'.'.$file->getClientOriginalExtension();
+        $path = $file->storeAs('documents', $filename, 'public');
+        AdminSettingsController::ensurePublicStorageSync($path);
+
+        // Link collective document to all individual registrations under this invoice
+        Registration::where('invoice_id', $invoice->id)->update([
+            'document_file' => $path,
+        ]);
+
+        return back()->with('success', 'Surat keterangan / rekomendasi kolektif berhasil diunggah dan ditautkan ke seluruh peserta dalam rombongan ini!');
     }
 
     /**

@@ -75,6 +75,50 @@
                 </div>
             </div>
 
+            @php
+                $collectiveDoc = $invoice->registrations->firstWhere('document_file', '!=', null)?->document_file;
+            @endphp
+            <!-- Collective Recommendation Document Card -->
+            <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+                        <i data-lucide="file-text" class="w-4 h-4 text-blue-600"></i>
+                        <span>Surat Rekomendasi Kolektif</span>
+                    </h3>
+                    @if($collectiveDoc)
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200">
+                            Terlampir
+                        </span>
+                    @else
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-500">
+                            Tidak Ada
+                        </span>
+                    @endif
+                </div>
+
+                @if($collectiveDoc)
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="flex items-center gap-3 overflow-hidden">
+                            <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                                <i data-lucide="file-check-2" class="w-5 h-5"></i>
+                            </div>
+                            <div class="truncate">
+                                <span class="block text-xs font-bold text-slate-800 truncate">Surat Tugas / Rekomendasi Sekolah</span>
+                                <span class="text-[11px] text-slate-500">Berlaku untuk {{ $invoice->registrations->count() }} peserta</span>
+                            </div>
+                        </div>
+                        <a href="{{ asset('storage/' . $collectiveDoc) }}" target="_blank" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs inline-flex items-center gap-1.5 transition shrink-0">
+                            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                            <span>Lihat Berkas</span>
+                        </a>
+                    </div>
+                @else
+                    <div class="p-4 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                        <p class="text-xs">Pendaftar belum/tidak mengunggah surat tugas/rekomendasi kolektif.</p>
+                    </div>
+                @endif
+            </div>
+
             <!-- Verification Action Box -->
             <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-sm space-y-4">
                 <h4 class="text-sm font-black text-slate-900">Keputusan Verifikasi Pembayaran</h4>

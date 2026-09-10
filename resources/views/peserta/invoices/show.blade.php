@@ -4,7 +4,7 @@
 @section('page_title', 'Rincian Tagihan Kolektif')
 
 @section('content')
-<div class="space-y-8" x-data="{ previewUrl: null }">
+<div class="space-y-8" x-data="{ previewUrl: null, showDocUpload: false }">
 
     <!-- Top Invoice Header (Dark Glass) -->
     <div class="glass-card rounded-3xl p-6 sm:p-8 border border-slate-800 shadow-2xl space-y-6">
@@ -135,6 +135,90 @@
                     </form>
                 @endif
             </div>
+        </div>
+
+        @php
+            $collectiveDoc = $invoice->registrations->firstWhere('document_file', '!=', null)?->document_file;
+        @endphp
+
+        <!-- Surat Keterangan / Rekomendasi Kolektif Section -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 border border-blue-500/30">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-black text-white font-display">Surat Keterangan / Rekomendasi Kolektif</h4>
+                        <p class="text-xs text-slate-400">Surat tugas / rekomendasi resmi kepala sekolah/madrasah untuk seluruh delegasi siswa.</p>
+                    </div>
+                </div>
+
+                @if($collectiveDoc)
+                    <span class="self-start sm:self-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-500/20 text-blue-300 border border-blue-500/40">
+                        ✔ Berkas Terlampir
+                    </span>
+                @else
+                    <span class="self-start sm:self-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                        Belum Diunggah
+                    </span>
+                @endif
+            </div>
+
+            @if($collectiveDoc)
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-slate-950 border border-slate-800">
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0 border border-blue-500/20">
+                            <i data-lucide="file-check-2" class="w-5 h-5"></i>
+                        </div>
+                        <div class="truncate">
+                            <span class="block text-xs font-bold text-white truncate">Surat Rekomendasi Kolektif Terunggah</span>
+                            <span class="text-[11px] text-slate-400">Berlaku otomatis untuk seluruh {{ $invoice->registrations->count() }} peserta</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <a href="{{ asset('storage/' . $collectiveDoc) }}" target="_blank" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs inline-flex items-center gap-1.5 transition">
+                            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                            <span>Buka / Unduh Berkas</span>
+                        </a>
+
+                        @if($invoice->status !== 'verified')
+                            <button type="button" @click="showDocUpload = !showDocUpload" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition border border-slate-700 cursor-pointer">
+                                Ganti Berkas
+                            </button>
+                        @endif
+                    </div>
+                </div>
+
+                @if($invoice->status !== 'verified')
+                    <div x-show="showDocUpload" x-cloak class="p-4 rounded-2xl bg-slate-950 border border-slate-800">
+                        <form action="{{ route('peserta.invoices.upload_document', $invoice->id) }}" method="POST" enctype="multipart/form-data" class="space-y-3">
+                            @csrf
+                            <label class="block text-xs font-bold text-slate-300">Pilih berkas baru surat keterangan / rekomendasi kolektif:</label>
+                            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                                <input type="file" name="document_file" required accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/*" class="block w-full text-xs text-slate-300 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-500 bg-slate-900 p-1.5 rounded-xl border border-slate-800">
+                                <button type="submit" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shrink-0 transition cursor-pointer">
+                                    Simpan Perubahan
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                @endif
+            @else
+                <form action="{{ route('peserta.invoices.upload_document', $invoice->id) }}" method="POST" enctype="multipart/form-data" class="space-y-3">
+                    @csrf
+                    <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                        <div class="flex-1">
+                            <input type="file" name="document_file" required accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/*" class="block w-full text-xs text-slate-300 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-500 bg-slate-900 p-2 rounded-xl border border-slate-800 cursor-pointer">
+                        </div>
+                        <button type="submit" class="px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition flex items-center justify-center gap-2 cursor-pointer shrink-0">
+                            <i data-lucide="upload" class="w-4 h-4"></i>
+                            <span>Unggah Surat Rekomendasi</span>
+                        </button>
+                    </div>
+                </form>
+            @endif
         </div>
     </div>
 
