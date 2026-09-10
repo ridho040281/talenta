@@ -148,7 +148,7 @@
                                         </td>
                                         <td class="py-3 px-3.5">
                                             <div class="font-bold text-slate-900 text-xs">
-                                                {{ $reg->team_name ?: ($reg->members->first()->full_name ?? $reg->institution_name) }}
+                                                {{ $reg->isGanda() ? ($reg->team_name ?: $reg->display_name) : ($reg->members->first()?->full_name ?: ($reg->team_name ?: $reg->institution_name)) }}
                                             </div>
                                             <div class="text-[10px] text-slate-400">
                                                 NISN: {{ $reg->members->first()->nisn ?? '-' }} ({{ $reg->members->first()->gender ?? 'L' }})

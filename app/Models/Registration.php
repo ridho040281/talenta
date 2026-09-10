@@ -114,14 +114,18 @@ class Registration extends Model
     public function getDisplayNameAttribute(): string
     {
         $school = $this->display_school;
+        $firstMember = $this->relationLoaded('members') ? $this->members->first() : $this->members()->first();
 
-        if ($this->team_name) {
+        if ($this->isGanda() && ! empty($this->team_name)) {
             return $this->team_name.' ('.$school.')';
         }
 
-        $firstMember = $this->relationLoaded('members') ? $this->members->first() : $this->members()->first();
-        if ($firstMember) {
+        if ($firstMember && ! empty($firstMember->full_name)) {
             return $firstMember->full_name.' ('.$school.')';
+        }
+
+        if (! empty($this->team_name)) {
+            return $this->team_name.' ('.$school.')';
         }
 
         return 'Peserta #'.$this->id;
@@ -132,13 +136,18 @@ class Registration extends Model
      */
     public function getPureNameAttribute(): string
     {
-        if (! empty($this->team_name)) {
+        $firstMember = $this->relationLoaded('members') ? $this->members->first() : $this->members()->first();
+
+        if ($this->isGanda() && ! empty($this->team_name)) {
             return $this->team_name;
         }
 
-        $firstMember = $this->members->first();
         if ($firstMember && ! empty($firstMember->full_name)) {
             return $firstMember->full_name;
+        }
+
+        if (! empty($this->team_name)) {
+            return $this->team_name;
         }
 
         return $this->user?->name ?? ('Peserta #'.$this->id);

@@ -191,7 +191,7 @@
             'id' => $r->id,
             'comp_id' => (string) $r->competition_id,
             'status' => $r->status,
-            'search' => strtolower(($r->team_name ?: ($firstMember?->full_name ?? '')) . ' ' . ($firstMember?->nisn ?? '') . ' ' . $r->display_school . ' ' . $r->institution_name . ' ' . $r->registration_code . ' ' . ($r->competition->name ?? '') . ' ' . ($r->sub_category ?? ''))
+            'search' => strtolower(($firstMember?->full_name ?? '') . ' ' . ($r->team_name ?? '') . ' ' . $r->members->pluck('full_name')->implode(' ') . ' ' . ($firstMember?->nisn ?? '') . ' ' . $r->display_school . ' ' . $r->institution_name . ' ' . $r->registration_code . ' ' . ($r->competition->name ?? '') . ' ' . ($r->sub_category ?? ''))
         ];
     })),
     pesertaCurrentPage: 1,
@@ -592,7 +592,11 @@
                                 <!-- Nama Peserta / Tim -->
                                 <td class="py-3.5 px-4 min-w-[200px]">
                                     <div class="font-bold text-white text-sm leading-snug">
-                                        {{ $reg->team_name ?: ($reg->members->first()->full_name ?? 'Peserta #' . $reg->id) }}
+                                        @if($reg->isGanda())
+                                            {{ $reg->team_name ?: $reg->display_name }}
+                                        @else
+                                            {{ $reg->members->first()?->full_name ?: ($reg->team_name ?: 'Peserta #' . $reg->id) }}
+                                        @endif
                                     </div>
                                     <div class="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5 whitespace-nowrap">
                                         <span>NISN: <span class="font-mono text-slate-300">{{ $reg->members->first()->nisn ?? '-' }}</span></span>

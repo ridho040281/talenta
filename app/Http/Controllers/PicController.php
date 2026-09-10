@@ -603,6 +603,7 @@ class PicController extends Controller
                 }
             }
         } elseif ($compCode === 'TMJ') {
+            $registration->team_name = null;
             $rawTc = $validated['target_class'] ?? $registration->target_class ?? '';
             if (stripos($rawTc, '4-6') !== false || stripos($rawTc, '4 - 6') !== false || stripos($rawTc, 'Kat B') !== false || stripos($rawTc, 'Kategori B') !== false) {
                 $registration->target_class = 'Kategori B (Kelas 4 - 6)';

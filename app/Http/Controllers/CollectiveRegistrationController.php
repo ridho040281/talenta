@@ -354,6 +354,9 @@ class CollectiveRegistrationController extends Controller
             }
 
             $teamName = trim($row['I'] ?? '');
+            if ($code === 'TMJ' || (empty($isGanda) && (stripos($teamName, 'tunggal') !== false || stripos($teamName, 'kat ') !== false || stripos($teamName, 'kat_') !== false || stripos($teamName, 'kategori') !== false))) {
+                $teamName = null;
+            }
             $officialName = trim($row['J'] ?? '') ?: Auth::user()->name;
             $officialPhone = trim($row['K'] ?? '') ?: Auth::user()->phone;
             $chosenSong = trim($row['L'] ?? '');
@@ -716,7 +719,7 @@ class CollectiveRegistrationController extends Controller
                     'user_id' => $user->id,
                     'invoice_id' => $invoice->id,
                     'registration_code' => $regCode,
-                    'team_name' => ! empty($row['team_name']) ? $row['team_name'] : null,
+                    'team_name' => (! empty($row['team_name']) && $comp->code !== 'TMJ' && stripos($row['team_name'], 'tunggal') === false) ? $row['team_name'] : null,
                     'sub_category' => $subCategory,
                     'target_class' => $row['target_class'] ?? null,
                     'match_type' => $matchType,
