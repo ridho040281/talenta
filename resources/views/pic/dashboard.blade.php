@@ -4,6 +4,18 @@
 @section('page_title', 'Data Peserta')
 
 @section('content')
+@php
+    $popComp = $competitions->first(fn($c) => $c->code === 'POP' || str_contains(strtolower($c->name), 'pop'));
+    if (!$popComp) {
+        $popComp = \App\Models\Competition::where('code', 'POP')->first();
+    }
+    $popSongOptions = $popComp ? $popComp->song_options : [];
+    if (empty($popSongOptions)) {
+        $rawPop = \App\Models\AppSetting::get('pop_song_options') ?: "Deen Assalam\nRahmatun Lil'Alameen\nYa Maulana\nMan Ana\nAisyah Istri Rasulullah\nBidadari Surga\nSholawat Cinta\nKisah Sang Rasul";
+        $popSongOptions = array_values(array_unique(array_filter(array_map('trim', explode("\n", str_replace("\r", "", $rawPop))))));
+    }
+@endphp
+
 <div class="space-y-6" x-data="{ 
     searchQuery: '',
     selectedCompetition: 'all',
@@ -17,6 +29,25 @@
     createModal: false,
     createCompId: '',
     createPaymentMethod: 'tunai',
+    popSongOptions: @js($popSongOptions),
+    get isPopSinger() {
+        if (!this.selectedEditReg) return false;
+        if (this.selectedEditReg.chosen_song) return true;
+        if (this.editCompCode === 'POP') return true;
+        if (this.selectedEditReg.competition) {
+            const code = String(this.selectedEditReg.competition.code || '').toUpperCase();
+            const name = String(this.selectedEditReg.competition.name || '').toLowerCase();
+            if (code === 'POP' || name.includes('pop')) return true;
+        }
+        if (this.selectedEditReg.competition_id) {
+            const c = this.competitionsData.find(x => String(x.id) === String(this.selectedEditReg.competition_id));
+            if (c && (String(c.code).toUpperCase() === 'POP' || String(c.name || '').toLowerCase().includes('pop'))) return true;
+        }
+        if (this.selectedEditReg.registration_code && String(this.selectedEditReg.registration_code).toUpperCase().includes('POP')) {
+            return true;
+        }
+        return false;
+    },
     get createCompCode() {
         const c = this.competitionsData.find(x => x.id === this.createCompId);
         return c ? c.code : '';
@@ -26,12 +57,16 @@
         if (this.selectedEditReg.competition && this.selectedEditReg.competition.code) {
             return String(this.selectedEditReg.competition.code).toUpperCase();
         }
-        if (this.selectedEditReg.registration_code) {
-            return String(this.selectedEditReg.registration_code.split('-')[0]).toUpperCase();
-        }
         if (this.selectedEditReg.competition_id) {
             const c = this.competitionsData.find(x => String(x.id) === String(this.selectedEditReg.competition_id));
-            if (c) return String(c.code).toUpperCase();
+            if (c && c.code) return String(c.code).toUpperCase();
+        }
+        if (this.selectedEditReg.registration_code) {
+            const parts = String(this.selectedEditReg.registration_code).split('-');
+            if (parts.length >= 3 && parts[2]) {
+                return parts[2].toUpperCase();
+            }
+            return String(parts[0]).toUpperCase();
         }
         return '';
     },
@@ -56,7 +91,7 @@
     selectedPrintCompetition: 'all',
     selectedPrintStatus: 'all',
     selectedPrintGender: 'all',
-    competitionsData: @js($competitions->map(fn($c) => ['id' => (string)$c->id, 'code' => $c->code, 'name' => $c->name, 'fee' => (float)$c->registration_fee])),
+    competitionsData: @js($competitions->map(fn($c) => ['id' => (string)$c->id, 'code' => $c->code, 'name' => $c->name, 'fee' => (float)$c->registration_fee, 'song_options' => $c->song_options ?? []])),
     appFeeSettings: {
         blt_fee_ganda_pa: {{ (float) \App\Models\AppSetting::get('blt_fee_ganda_pa', 200000) }},
         blt_fee_ganda_pi: {{ (float) \App\Models\AppSetting::get('blt_fee_ganda_pi', 200000) }},
@@ -1010,6 +1045,19 @@
                             <div class="font-black text-white text-sm" x-text="selectedReg && selectedReg.competition ? selectedReg.competition.name : ''"></div>
                             <div class="text-slate-400" x-text="'Sektor: ' + (selectedReg && selectedReg.sub_category ? selectedReg.sub_category : 'Umum')"></div>
                             <div class="text-emerald-400 font-bold" x-text="'Kelas: ' + (selectedReg && selectedReg.target_class ? selectedReg.target_class : 'Umum SD/MI')"></div>
+
+                            <!-- Khusus Pop Singer / Lagu Pilihan -->
+                            <template x-if="selectedReg && (selectedReg.chosen_song || (selectedReg.competition && (String(selectedReg.competition.code).toUpperCase() === 'POP' || String(selectedReg.competition.name || '').toLowerCase().includes('pop'))) || (selectedReg.registration_code && String(selectedReg.registration_code).toUpperCase().includes('POP')))">
+                                <div class="pt-2 border-t border-purple-500/20 mt-2">
+                                    <div class="flex items-center gap-1.5 text-purple-300 font-bold text-[10px] uppercase tracking-wider mb-1">
+                                        <span>🎵 Lagu Pilihan:</span>
+                                    </div>
+                                    <div class="px-2.5 py-1.5 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-between">
+                                        <span class="text-xs font-black text-purple-200" x-text="selectedReg.chosen_song || 'Belum memilih lagu'" :class="!selectedReg.chosen_song ? 'italic text-slate-400 font-normal' : ''"></span>
+                                        <span class="text-[11px] text-purple-400 shrink-0 ml-2">🎤</span>
+                                    </div>
+                                </div>
+                            </template>
                         </div>
 
                         <div class="p-3.5 rounded-2xl bg-[#0C111D] border border-white/[0.08] space-y-1.5">
@@ -1091,13 +1139,33 @@
                             <textarea name="verification_notes" rows="3" placeholder="Contoh: Berkas sah dan lengkap / Bukti transfer terkonfirmasi..." class="block w-full px-4 py-2.5 rounded-xl bg-[#0C111D] border border-white/[0.1] text-sm text-white placeholder-slate-500 outline-none focus:border-[#7A5AF8]"></textarea>
                         </div>
 
-                        <div class="pt-4 flex items-center justify-end gap-3 border-t border-white/[0.08]">
-                            <button type="button" @click="verifyModal = false" class="px-5 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-slate-300 text-xs font-bold border border-white/[0.08] transition cursor-pointer">
-                                Batal
+                        <div class="pt-4 flex items-center justify-between gap-3 border-t border-white/[0.08]">
+                            <button type="button" @click="
+                                const regData = selectedReg;
+                                verifyModal = false;
+                                selectedEditReg = JSON.parse(JSON.stringify(regData));
+                                if(selectedEditReg && selectedEditReg.members) {
+                                    selectedEditReg.members.forEach(m => {
+                                        if(m.birth_date) m.birth_date = String(m.birth_date).split('T')[0];
+                                    });
+                                    if(selectedEditReg.members.length === 1 && selectedEditReg.members[0].school_name) {
+                                        selectedEditReg.institution_name = selectedEditReg.members[0].school_name;
+                                    }
+                                }
+                                editModal = true;
+                            " class="px-3.5 py-2 rounded-xl bg-[#7A5AF8]/15 hover:bg-[#7A5AF8]/25 text-[#A594FD] border border-[#7A5AF8]/30 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer" title="Edit data pendaftar ini">
+                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                <span>Edit Data</span>
                             </button>
-                            <button type="submit" class="gradient-btn px-6 py-2.5 rounded-xl text-white text-xs font-bold shadow-lg shadow-[#7A5AF8]/25 cursor-pointer">
-                                Simpan Keputusan
-                            </button>
+
+                            <div class="flex items-center gap-3">
+                                <button type="button" @click="verifyModal = false" class="px-5 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-slate-300 text-xs font-bold border border-white/[0.08] transition cursor-pointer">
+                                    Batal
+                                </button>
+                                <button type="submit" class="gradient-btn px-6 py-2.5 rounded-xl text-white text-xs font-bold shadow-lg shadow-[#7A5AF8]/25 cursor-pointer">
+                                    Simpan Keputusan
+                                </button>
+                            </div>
                         </div>
                     </form>
 
@@ -1312,9 +1380,38 @@
                         </div>
 
                         <!-- Khusus Pop Singer: Edit Lagu Pilihan -->
-                        <div x-show="editCompCode === 'POP'" class="pt-2 border-t border-white/[0.06]">
-                            <label class="block text-[10px] font-bold uppercase tracking-wider text-purple-400 mb-1">🎵 Judul Lagu Pilihan (Pop Singer)</label>
-                            <input type="text" name="chosen_song" x-model="selectedEditReg.chosen_song" placeholder="Judul lagu..." class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-white outline-none focus:border-[#7A5AF8]">
+                        <div x-show="isPopSinger" class="pt-3 border-t border-purple-500/20 space-y-2.5">
+                            <div class="flex items-center justify-between">
+                                <label class="block text-[11px] font-black uppercase tracking-wider text-purple-300 flex items-center gap-1.5">
+                                    <span>🎵</span>
+                                    <span>Lagu Pilihan Peserta (Pop Singer)</span>
+                                </label>
+                                <span class="text-[10px] font-bold text-purple-300 px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/30 font-mono">
+                                    Pop Singer
+                                </span>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                <!-- 1. Dropdown Pilihan Lagu Resmi Panitia -->
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">Pilih Opsi Lagu Resmi:</label>
+                                    <select @change="if($event.target.value) { selectedEditReg.chosen_song = $event.target.value; }" class="w-full px-3 py-2.5 rounded-xl bg-[#0C111D] border border-purple-500/40 text-xs font-bold text-white outline-none focus:border-purple-400 cursor-pointer">
+                                        <option value="">-- Pilih Dari Daftar Lagu --</option>
+                                        @foreach($popSongOptions as $song)
+                                            <option value="{{ $song }}" :selected="selectedEditReg.chosen_song === '{{ addslashes($song) }}'">🎵 {{ $song }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <!-- 2. Input Teks Lagu Terpilih / Custom Edit -->
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">Judul Lagu Tersimpan / Ubah Manual:</label>
+                                    <input type="text" name="chosen_song" x-model="selectedEditReg.chosen_song" placeholder="Judul lagu pilihan..." class="w-full px-3 py-2.5 rounded-xl bg-[#0C111D] border border-purple-500/30 text-xs font-bold text-purple-200 outline-none focus:border-purple-400">
+                                </div>
+                            </div>
+                            <p class="text-[10px] text-slate-400 italic">
+                                * Pilih lagu dari menu dropdown di atas atau ketik langsung pada kotak isian jika ada penyesuaian judul.
+                            </p>
                         </div>
                     </div>
 
