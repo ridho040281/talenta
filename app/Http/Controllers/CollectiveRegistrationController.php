@@ -108,6 +108,11 @@ class CollectiveRegistrationController extends Controller
                 $dropdownList[] = 'Bulu Tangkis (Kat C: Kls 5-6 • Tunggal PI)';
                 $dropdownList[] = 'Bulu Tangkis (Ganda PA)';
                 $dropdownList[] = 'Bulu Tangkis (Ganda PI)';
+            } elseif ($c->code === 'TMJ') {
+                $dropdownList[] = 'Tenis Meja (Kat A: Kls 1-3 • Tunggal PA)';
+                $dropdownList[] = 'Tenis Meja (Kat A: Kls 1-3 • Tunggal PI)';
+                $dropdownList[] = 'Tenis Meja (Kat B: Kls 4-6 • Tunggal PA)';
+                $dropdownList[] = 'Tenis Meja (Kat B: Kls 4-6 • Tunggal PI)';
             } else {
                 $dropdownList[] = $c->name;
             }
@@ -271,6 +276,8 @@ class CollectiveRegistrationController extends Controller
             if (! empty($rawComp)) {
                 if (stripos($rawComp, 'Bulu Tangkis') !== false || stripos($rawComp, 'BLT') !== false) {
                     $code = 'BLT';
+                } elseif (stripos($rawComp, 'Tenis Meja') !== false || stripos($rawComp, 'TMJ') !== false) {
+                    $code = 'TMJ';
                 } elseif (preg_match('/^([A-Za-z0-9]+)\s*[-:]/i', $rawComp, $matches) && isset($competitions[strtoupper(trim($matches[1]))])) {
                     $code = strtoupper(trim($matches[1]));
                 } elseif (isset($competitions[strtoupper($rawComp)])) {
@@ -285,7 +292,7 @@ class CollectiveRegistrationController extends Controller
                 }
             }
 
-            // Extract Bulu Tangkis sub-category if applicable
+            // Extract Bulu Tangkis & Tenis Meja sub-category if applicable
             $targetClass = null;
             $matchType = null;
             $subCategory = null;
@@ -321,6 +328,26 @@ class CollectiveRegistrationController extends Controller
 
                     $subCategory = $targetClass.' - '.$matchType;
                 }
+            } elseif (str_starts_with($code, 'TMJ') || str_contains(strtoupper($rawComp), 'TENIS MEJA')) {
+                $code = 'TMJ';
+
+                if (stripos($rawComp, 'Kat B') !== false || stripos($rawComp, '-B-') !== false || stripos($rawComp, 'Kelas 4') !== false || stripos($rawComp, 'Kls 4') !== false || stripos($rawComp, 'Kelas 5') !== false || stripos($rawComp, 'Kelas 6') !== false || stripos($rawComp, '4-6') !== false || stripos($rawComp, '4 - 6') !== false) {
+                    $targetClass = 'Kategori B (Kelas 4 - 6)';
+                } else {
+                    $targetClass = 'Kategori A (Kelas 1 - 3)';
+                }
+
+                if (stripos($rawComp, 'PI') !== false || stripos($rawComp, 'Putri') !== false || stripos($rawComp, 'TPI') !== false) {
+                    $matchType = 'Tunggal Putri (PI)';
+                    $gender = 'P';
+                } elseif (stripos($rawComp, 'PA') !== false || stripos($rawComp, 'Putra') !== false || stripos($rawComp, 'TPA') !== false) {
+                    $matchType = 'Tunggal Putra (PA)';
+                    $gender = 'L';
+                } else {
+                    $matchType = ($gender === 'P') ? 'Tunggal Putri (PI)' : 'Tunggal Putra (PA)';
+                }
+
+                $subCategory = $targetClass.' - '.$matchType;
             } elseif (in_array($code, ['MTQ', 'POP'])) {
                 $matchType = ($gender === 'P') ? 'Putri (PI)' : 'Putra (PA)';
                 $subCategory = $matchType;
@@ -460,10 +487,11 @@ class CollectiveRegistrationController extends Controller
                         }
                     }
                 } elseif ($compObj->code === 'TMJ') {
-                    $isPutri = $gender === 'P';
+                    $isPutri = $gender === 'P' || stripos($matchType ?? '', 'Putri') !== false || stripos($matchType ?? '', 'PI') !== false;
                     $feeA = (float) AppSetting::get($isPutri ? 'tmj_fee_a_tunggal_pi' : 'tmj_fee_a_tunggal_pa', $compObj->registration_fee ?: 35000);
                     $feeB = (float) AppSetting::get($isPutri ? 'tmj_fee_b_tunggal_pi' : 'tmj_fee_b_tunggal_pa', $compObj->registration_fee ?: 35000);
-                    $fee = (stripos($rawComp, 'Kat B') !== false || stripos($rawComp, 'Kelas 4') !== false || stripos($rawComp, 'Kls 4') !== false) ? $feeB : $feeA;
+                    $isKatB = stripos($targetClass ?? '', 'Kategori B') !== false || stripos($rawComp, 'Kat B') !== false || stripos($rawComp, 'Kelas 4') !== false || stripos($rawComp, 'Kls 4') !== false || stripos($rawComp, '4-6') !== false;
+                    $fee = $isKatB ? $feeB : $feeA;
                 } elseif ($compObj->code === 'MTQ') {
                     $isPutri = $gender === 'P';
                     $fee = (float) AppSetting::get($isPutri ? 'mtq_fee_pi' : 'mtq_fee_pa', $compObj->registration_fee);

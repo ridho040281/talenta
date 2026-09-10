@@ -159,7 +159,7 @@
                                             <span class="block text-[10px] text-slate-400 uppercase font-mono">{{ $reg->competition->code }}</span>
                                             @if($reg->sub_category)
                                                 <span class="inline-block mt-0.5 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                                                    🏸 {{ $reg->sub_category }}
+                                                    {{ $reg->competition?->code === 'TMJ' ? '🏓' : ($reg->competition?->code === 'BLT' ? '🏸' : '🏷️') }} {{ $reg->sub_category }}
                                                 </span>
                                             @endif
                                             @if($reg->chosen_song)

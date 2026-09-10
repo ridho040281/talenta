@@ -148,7 +148,7 @@
                                 </div>
                                 @if(!empty($row['sub_category']))
                                     <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                                        🏸 {{ $row['sub_category'] }}
+                                        {{ $row['competition_code'] === 'TMJ' ? '🏓' : ($row['competition_code'] === 'BLT' ? '🏸' : '🏷️') }} {{ $row['sub_category'] }}
                                     </span>
                                 @endif
                                 @if(!empty($row['chosen_song']))

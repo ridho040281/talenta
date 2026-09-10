@@ -204,7 +204,7 @@
                                         <h5 class="font-extrabold text-white text-xs font-display">{{ $reg->competition->name }}</h5>
                                         @if($reg->sub_category)
                                             <span class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-300 bg-amber-500/20 px-1.5 py-0.2 rounded border border-amber-500/30">
-                                                🏸 {{ $reg->sub_category }}
+                                                {{ $reg->competition?->code === 'TMJ' ? '🏓' : ($reg->competition?->code === 'BLT' ? '🏸' : '🏷️') }} {{ $reg->sub_category }}
                                             </span>
                                         @endif
                                     </div>
