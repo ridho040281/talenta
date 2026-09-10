@@ -401,39 +401,67 @@
                                     @if($isBlt)
                                         <div class="flex flex-col py-1">
                                             <!-- 1. Tunggal PA -->
-                                            <div class="flex flex-col justify-center">
-                                                <div class="flex items-center gap-1.5 font-bold text-emerald-400 text-xs mb-1">
-                                                    <i data-lucide="user" class="w-3.5 h-3.5"></i>
-                                                    <span>Tunggal | PA</span>
-                                                </div>
-                                                <div class="space-y-1.5 text-[10px] text-slate-400 pl-5">
-                                                    <div class="py-0.5">Kat A (Kelas 1-2)</div>
-                                                    <div class="py-0.5">Kat B (Kelas 3-4)</div>
-                                                    <div class="py-0.5">Kat C (Kelas 5-6)</div>
-                                                </div>
+                                            <div class="h-7 flex items-center gap-1.5 font-bold text-emerald-400 text-xs">
+                                                <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                                                <span>Tunggal | PA</span>
                                             </div>
+                                            <div class="h-10 flex items-center pl-5 text-xs text-slate-300 font-medium">
+                                                <span class="inline-flex items-center gap-1.5">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400/70"></span>
+                                                    <span>Kat A (Kelas 1–2)</span>
+                                                </span>
+                                            </div>
+                                            <div class="h-10 flex items-center pl-5 text-xs text-slate-300 font-medium">
+                                                <span class="inline-flex items-center gap-1.5">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400/70"></span>
+                                                    <span>Kat B (Kelas 3–4)</span>
+                                                </span>
+                                            </div>
+                                            <div class="h-10 flex items-center pl-5 text-xs text-slate-300 font-medium">
+                                                <span class="inline-flex items-center gap-1.5">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400/70"></span>
+                                                    <span>Kat C (Kelas 5–6)</span>
+                                                </span>
+                                            </div>
+
                                             <div class="border-t border-white/[0.08] my-2"></div>
+
                                             <!-- 2. Tunggal PI -->
-                                            <div class="flex flex-col justify-center">
-                                                <div class="flex items-center gap-1.5 font-bold text-pink-400 text-xs mb-1">
-                                                    <i data-lucide="user" class="w-3.5 h-3.5"></i>
-                                                    <span>Tunggal | PI</span>
-                                                </div>
-                                                <div class="space-y-1.5 text-[10px] text-slate-400 pl-5">
-                                                    <div class="py-0.5">Kat A (Kelas 1-2)</div>
-                                                    <div class="py-0.5">Kat B (Kelas 3-4)</div>
-                                                    <div class="py-0.5">Kat C (Kelas 5-6)</div>
-                                                </div>
+                                            <div class="h-7 flex items-center gap-1.5 font-bold text-pink-400 text-xs">
+                                                <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                                                <span>Tunggal | PI</span>
                                             </div>
+                                            <div class="h-10 flex items-center pl-5 text-xs text-slate-300 font-medium">
+                                                <span class="inline-flex items-center gap-1.5">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-pink-400/70"></span>
+                                                    <span>Kat A (Kelas 1–2)</span>
+                                                </span>
+                                            </div>
+                                            <div class="h-10 flex items-center pl-5 text-xs text-slate-300 font-medium">
+                                                <span class="inline-flex items-center gap-1.5">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-pink-400/70"></span>
+                                                    <span>Kat B (Kelas 3–4)</span>
+                                                </span>
+                                            </div>
+                                            <div class="h-10 flex items-center pl-5 text-xs text-slate-300 font-medium">
+                                                <span class="inline-flex items-center gap-1.5">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-pink-400/70"></span>
+                                                    <span>Kat C (Kelas 5–6)</span>
+                                                </span>
+                                            </div>
+
                                             <div class="border-t border-white/[0.08] my-2"></div>
+
                                             <!-- 3. Ganda PA -->
-                                            <div class="py-0.5 flex items-center gap-1.5 font-bold text-[#A594FD] text-xs">
+                                            <div class="h-10 flex items-center gap-1.5 font-bold text-[#A594FD] text-xs">
                                                 <i data-lucide="users" class="w-3.5 h-3.5 text-[#7A5AF8]"></i>
                                                 <span>Ganda | PA</span>
                                             </div>
+
                                             <div class="border-t border-white/[0.08] my-2"></div>
+
                                             <!-- 4. Ganda PI -->
-                                            <div class="py-0.5 flex items-center gap-1.5 font-bold text-amber-300 text-xs">
+                                            <div class="h-10 flex items-center gap-1.5 font-bold text-amber-300 text-xs">
                                                 <i data-lucide="users" class="w-3.5 h-3.5 text-amber-400"></i>
                                                 <span>Ganda | PI</span>
                                             </div>
@@ -446,27 +474,41 @@
                                     @elseif($isTmj)
                                         <div class="flex flex-col py-1">
                                             <!-- 1. Tunggal PA -->
-                                            <div class="flex flex-col justify-center">
-                                                <div class="flex items-center gap-1.5 font-bold text-emerald-400 text-xs mb-1">
-                                                    <i data-lucide="user" class="w-3.5 h-3.5"></i>
-                                                    <span>Tunggal | PA</span>
-                                                </div>
-                                                <div class="space-y-1.5 text-[10px] text-slate-400 pl-5">
-                                                    <div class="py-0.5">Kat A (Kelas 1-3)</div>
-                                                    <div class="py-0.5">Kat B (Kelas 4-6)</div>
-                                                </div>
+                                            <div class="h-7 flex items-center gap-1.5 font-bold text-emerald-400 text-xs">
+                                                <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                                                <span>Tunggal | PA</span>
                                             </div>
+                                            <div class="h-10 flex items-center pl-5 text-xs text-slate-300 font-medium">
+                                                <span class="inline-flex items-center gap-1.5">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400/70"></span>
+                                                    <span>Kat A (Kelas 1–3)</span>
+                                                </span>
+                                            </div>
+                                            <div class="h-10 flex items-center pl-5 text-xs text-slate-300 font-medium">
+                                                <span class="inline-flex items-center gap-1.5">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400/70"></span>
+                                                    <span>Kat B (Kelas 4–6)</span>
+                                                </span>
+                                            </div>
+
                                             <div class="border-t border-white/[0.08] my-2"></div>
+
                                             <!-- 2. Tunggal PI -->
-                                            <div class="flex flex-col justify-center">
-                                                <div class="flex items-center gap-1.5 font-bold text-pink-400 text-xs mb-1">
-                                                    <i data-lucide="user" class="w-3.5 h-3.5"></i>
-                                                    <span>Tunggal | PI</span>
-                                                </div>
-                                                <div class="space-y-1.5 text-[10px] text-slate-400 pl-5">
-                                                    <div class="py-0.5">Kat A (Kelas 1-3)</div>
-                                                    <div class="py-0.5">Kat B (Kelas 4-6)</div>
-                                                </div>
+                                            <div class="h-7 flex items-center gap-1.5 font-bold text-pink-400 text-xs">
+                                                <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                                                <span>Tunggal | PI</span>
+                                            </div>
+                                            <div class="h-10 flex items-center pl-5 text-xs text-slate-300 font-medium">
+                                                <span class="inline-flex items-center gap-1.5">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-pink-400/70"></span>
+                                                    <span>Kat A (Kelas 1–3)</span>
+                                                </span>
+                                            </div>
+                                            <div class="h-10 flex items-center pl-5 text-xs text-slate-300 font-medium">
+                                                <span class="inline-flex items-center gap-1.5">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-pink-400/70"></span>
+                                                    <span>Kat B (Kelas 4–6)</span>
+                                                </span>
                                             </div>
                                         </div>
                                     @else
@@ -478,36 +520,50 @@
                                     @if($isBlt)
                                         <div class="flex flex-col py-1 text-slate-400 text-xs min-w-[210px]">
                                             <!-- Kuota Tunggal PA -->
-                                            <div class="space-y-1.5">
-                                                <!-- Kat A -->
+                                            <div class="h-7 flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                                <span>Status Kuota</span>
+                                                <span>Terisi / Kuota</span>
+                                            </div>
+                                            <div class="h-10 flex flex-col justify-center">
                                                 {!! $renderTierQuota($countBltTunggalPaA, $comp->tier_quotas['A_tunggal_pa'] ?? 16, 'Peserta') !!}
-                                                <!-- Kat B -->
+                                            </div>
+                                            <div class="h-10 flex flex-col justify-center">
                                                 {!! $renderTierQuota($countBltTunggalPaB, $comp->tier_quotas['B_tunggal_pa'] ?? 16, 'Peserta') !!}
-                                                <!-- Kat C -->
+                                            </div>
+                                            <div class="h-10 flex flex-col justify-center">
                                                 {!! $renderTierQuota($countBltTunggalPaC, $comp->tier_quotas['C_tunggal_pa'] ?? 16, 'Peserta') !!}
                                             </div>
 
                                             <div class="border-t border-white/[0.08] my-2"></div>
 
                                             <!-- Kuota Tunggal PI -->
-                                            <div class="space-y-1.5">
-                                                <!-- Kat A -->
+                                            <div class="h-7 flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                                <span>Status Kuota</span>
+                                                <span>Terisi / Kuota</span>
+                                            </div>
+                                            <div class="h-10 flex flex-col justify-center">
                                                 {!! $renderTierQuota($countBltTunggalPiA, $comp->tier_quotas['A_tunggal_pi'] ?? 16, 'Peserta') !!}
-                                                <!-- Kat B -->
+                                            </div>
+                                            <div class="h-10 flex flex-col justify-center">
                                                 {!! $renderTierQuota($countBltTunggalPiB, $comp->tier_quotas['B_tunggal_pi'] ?? 16, 'Peserta') !!}
-                                                <!-- Kat C -->
+                                            </div>
+                                            <div class="h-10 flex flex-col justify-center">
                                                 {!! $renderTierQuota($countBltTunggalPiC, $comp->tier_quotas['C_tunggal_pi'] ?? 16, 'Peserta') !!}
                                             </div>
 
                                             <div class="border-t border-white/[0.08] my-2"></div>
 
                                             <!-- Kuota Ganda PA -->
-                                            {!! $renderTierQuota($countBltGandaPa, $comp->tier_quotas['ganda_pa'] ?? 0, 'Pasangan') !!}
+                                            <div class="h-10 flex flex-col justify-center">
+                                                {!! $renderTierQuota($countBltGandaPa, $comp->tier_quotas['ganda_pa'] ?? 0, 'Pasangan') !!}
+                                            </div>
 
                                             <div class="border-t border-white/[0.08] my-2"></div>
 
                                             <!-- Kuota Ganda PI -->
-                                            {!! $renderTierQuota($countBltGandaPi, $comp->tier_quotas['ganda_pi'] ?? 0, 'Pasangan') !!}
+                                            <div class="h-10 flex flex-col justify-center">
+                                                {!! $renderTierQuota($countBltGandaPi, $comp->tier_quotas['ganda_pi'] ?? 0, 'Pasangan') !!}
+                                            </div>
                                         </div>
                                     @elseif($isMtqPop)
                                         <div class="flex flex-col py-1 text-slate-400 text-xs min-w-[210px] space-y-2">
@@ -517,12 +573,12 @@
                                             <!-- Real-time Gender Composition Breakdown -->
                                             <div class="flex items-center justify-between gap-1.5 px-2.5 py-1 rounded-xl bg-white/[0.04] border border-white/[0.08] text-[10px] font-bold">
                                                 <span class="text-cyan-300 flex items-center gap-1">
-                                                    <i data-lucide="user" class="w-3 h-3 text-cyan-400"></i>
+                                                    <i data-lucide="user" class="w-3.5 h-3.5 text-cyan-400"></i>
                                                     <span>{{ $countPa }} Putra</span>
                                                 </span>
                                                 <span class="text-slate-500">•</span>
                                                 <span class="text-pink-300 flex items-center gap-1">
-                                                    <i data-lucide="user" class="w-3 h-3 text-pink-400"></i>
+                                                    <i data-lucide="user" class="w-3.5 h-3.5 text-pink-400"></i>
                                                     <span>{{ $countPi }} Putri</span>
                                                 </span>
                                             </div>
@@ -530,20 +586,28 @@
                                     @elseif($isTmj)
                                         <div class="flex flex-col py-1 text-slate-400 text-xs min-w-[210px]">
                                             <!-- Kuota Tunggal PA -->
-                                            <div class="space-y-1.5">
-                                                <!-- Kat A -->
+                                            <div class="h-7 flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                                <span>Status Kuota</span>
+                                                <span>Terisi / Kuota</span>
+                                            </div>
+                                            <div class="h-10 flex flex-col justify-center">
                                                 {!! $renderTierQuota($countTmjTunggalPaA, $comp->tier_quotas['A_tunggal_pa'] ?? 10, 'Peserta') !!}
-                                                <!-- Kat B -->
+                                            </div>
+                                            <div class="h-10 flex flex-col justify-center">
                                                 {!! $renderTierQuota($countTmjTunggalPaB, $comp->tier_quotas['B_tunggal_pa'] ?? 10, 'Peserta') !!}
                                             </div>
 
                                             <div class="border-t border-white/[0.08] my-2"></div>
 
                                             <!-- Kuota Tunggal PI -->
-                                            <div class="space-y-1.5">
-                                                <!-- Kat A -->
+                                            <div class="h-7 flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                                <span>Status Kuota</span>
+                                                <span>Terisi / Kuota</span>
+                                            </div>
+                                            <div class="h-10 flex flex-col justify-center">
                                                 {!! $renderTierQuota($countTmjTunggalPiA, $comp->tier_quotas['A_tunggal_pi'] ?? 10, 'Peserta') !!}
-                                                <!-- Kat B -->
+                                            </div>
+                                            <div class="h-10 flex flex-col justify-center">
                                                 {!! $renderTierQuota($countTmjTunggalPiB, $comp->tier_quotas['B_tunggal_pi'] ?? 10, 'Peserta') !!}
                                             </div>
                                         </div>
