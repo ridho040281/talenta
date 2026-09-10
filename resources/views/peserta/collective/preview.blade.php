@@ -218,60 +218,54 @@
                     <!-- 1. Unggah Surat Keterangan / Rekomendasi Kolektif -->
                     <div class="p-6 rounded-3xl border-2 border-dashed border-blue-500/50 hover:border-blue-400 bg-blue-950/20 transition space-y-4 flex flex-col justify-between">
                         <div class="space-y-3">
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center shadow-sm border border-blue-500/30 shrink-0">
-                                        <i data-lucide="file-text" class="w-5 h-5"></i>
-                                    </div>
-                                    <div>
-                                        <label for="document_file" class="block text-sm font-black text-white">
-                                            Unggah Surat Keterangan / Rekomendasi Kolektif
-                                        </label>
-                                        <p class="text-xs text-slate-400">Surat tugas / rekomendasi resmi kepala sekolah/madrasah (PDF, JPG, PNG maks 5 MB)</p>
-                                    </div>
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center shadow-sm border border-blue-500/30 shrink-0">
+                                    <i data-lucide="file-text" class="w-5 h-5"></i>
                                 </div>
-
-                                <span class="self-start sm:self-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-500/30 text-blue-300 border border-blue-500/40 shadow-sm">
-                                    1 Surat Rombongan
-                                </span>
+                                <div>
+                                    <label for="document_file" class="block text-sm font-black text-white">
+                                        Unggah Surat Keterangan / Rekomendasi Kolektif <span class="text-rose-400">* (Wajib)</span>
+                                    </label>
+                                    <p class="text-xs text-slate-400">Surat tugas / rekomendasi resmi kepala sekolah/madrasah (PDF, JPG, PNG maks 5 MB)</p>
+                                </div>
                             </div>
 
-                            <input type="file" id="document_file" name="document_file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/*" class="block w-full text-xs text-slate-300 file:mr-4 file:py-3 file:px-5 file:rounded-2xl file:border-0 file:text-xs file:font-black file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer bg-slate-900 p-2 rounded-2xl border border-slate-700">
+                            <input type="file" id="document_file" name="document_file" required accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/*" class="block w-full text-xs text-slate-300 file:mr-4 file:py-3 file:px-5 file:rounded-2xl file:border-0 file:text-xs file:font-black file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer bg-slate-900 p-2 rounded-2xl border border-slate-700">
+                            @error('document_file')
+                                <p class="text-xs text-rose-400 font-bold mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <div class="p-3.5 rounded-2xl bg-blue-500/10 border border-blue-500/30 text-xs text-blue-300 flex items-start gap-2.5">
-                            <i data-lucide="check-circle-2" class="w-4 h-4 text-blue-400 shrink-0 mt-0.5"></i>
-                            <span><strong>Otomatis Terlampir:</strong> Cukup unggah 1 surat rekomendasi rombongan. Berkas ini akan otomatis disematkan ke seluruh <strong>{{ $validRowCount }} data peserta</strong> kolektif ini.</span>
+                            <i data-lucide="info" class="w-4 h-4 text-blue-400 shrink-0 mt-0.5"></i>
+                            <span><strong>Wajib Diunggah:</strong> Surat keterangan / rekomendasi kolektif dari sekolah/madrasah wajib dilampirkan sebelum pendaftaran dikirim. Berkas otomatis disematkan ke seluruh <strong>{{ $validRowCount }} peserta</strong>.</span>
                         </div>
                     </div>
 
                     <!-- 2. Unggah Bukti Transfer / Slip Pembayaran Kolektif -->
                     <div class="p-6 rounded-3xl border-2 border-dashed border-emerald-500/50 hover:border-emerald-400 bg-emerald-950/20 transition space-y-4 flex flex-col justify-between">
                         <div class="space-y-3">
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shadow-sm border border-emerald-500/30 shrink-0">
-                                        <i data-lucide="receipt" class="w-5 h-5"></i>
-                                    </div>
-                                    <div>
-                                        <label for="payment_proof" class="block text-sm font-black text-white">
-                                            Unggah Bukti Transfer / Slip Pembayaran Kolektif <span class="text-rose-400">* (Wajib)</span>
-                                        </label>
-                                        <p class="text-xs text-slate-400">Struk ATM, M-Banking, atau kwitansi pembayaran (JPG, PNG, PDF maks 5 MB)</p>
-                                    </div>
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shadow-sm border border-emerald-500/30 shrink-0">
+                                    <i data-lucide="receipt" class="w-5 h-5"></i>
                                 </div>
-
-                                <span class="self-start sm:self-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-500 text-white shadow-sm">
-                                    Wajib Terlampir
-                                </span>
+                                <div>
+                                    <label for="payment_proof" class="block text-sm font-black text-white">
+                                        Unggah Bukti Transfer / Slip Pembayaran Kolektif <span class="text-rose-400">* (Wajib)</span>
+                                    </label>
+                                    <p class="text-xs text-slate-400">Struk ATM, M-Banking, atau kwitansi pembayaran (JPG, PNG, PDF maks 5 MB)</p>
+                                </div>
                             </div>
 
                             <input type="file" id="payment_proof" name="payment_proof" required accept="image/*,application/pdf" class="block w-full text-xs text-slate-300 file:mr-4 file:py-3 file:px-5 file:rounded-2xl file:border-0 file:text-xs file:font-black file:bg-emerald-600 file:text-slate-950 hover:file:bg-emerald-500 cursor-pointer bg-slate-900 p-2 rounded-2xl border border-slate-700">
+                            @error('payment_proof')
+                                <p class="text-xs text-rose-400 font-bold mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <div class="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300 flex items-start gap-2.5">
                             <i data-lucide="alert-circle" class="w-4 h-4 text-amber-400 shrink-0 mt-0.5"></i>
-                            <span><strong>Satu Kali Kirim:</strong> Seluruh {{ $validRowCount }} data siswa dan berkas dikirim bersamaan. Tombol kirim aktif setelah slip transfer dipilih.</span>
+                            <span><strong>Wajib Diunggah:</strong> Bukti transfer dan surat rekomendasi kolektif wajib diunggah bersamaan. Pendaftaran tidak dapat dikirim jika salah satu berkas belum dipilih.</span>
                         </div>
                     </div>
                 </div>

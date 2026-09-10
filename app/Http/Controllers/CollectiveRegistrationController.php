@@ -638,11 +638,12 @@ class CollectiveRegistrationController extends Controller
         $request->validate([
             'payload' => ['required', 'string'],
             'payment_proof' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
-            'document_file' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'document_file' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
         ], [
             'payment_proof.required' => 'Bukti pembayaran / slip transfer wajib diunggah dalam satu kali pengiriman.',
             'payment_proof.mimes' => 'Format file bukti transfer harus berupa JPG, PNG, atau PDF.',
             'payment_proof.max' => 'Ukuran file bukti transfer maksimal 5MB.',
+            'document_file.required' => 'Surat keterangan / rekomendasi kolektif wajib diunggah dalam satu kali pengiriman.',
             'document_file.mimes' => 'Format file surat keterangan / rekomendasi kolektif harus berupa JPG, PNG, atau PDF.',
             'document_file.max' => 'Ukuran file surat keterangan / rekomendasi kolektif maksimal 5MB.',
         ]);
@@ -680,16 +681,13 @@ class CollectiveRegistrationController extends Controller
             $notes .= ' • '.implode(', ', $bonusSummaryList);
         }
 
-        // Store payment proof file
+        // Store payment proof file (required)
         $paymentProofPath = $request->file('payment_proof')->store('payments', 'public');
         AdminSettingsController::ensurePublicStorageSync($paymentProofPath);
 
-        // Store collective document file if uploaded
-        $documentFilePath = null;
-        if ($request->hasFile('document_file')) {
-            $documentFilePath = $request->file('document_file')->store('documents', 'public');
-            AdminSettingsController::ensurePublicStorageSync($documentFilePath);
-        }
+        // Store collective document file (required)
+        $documentFilePath = $request->file('document_file')->store('documents', 'public');
+        AdminSettingsController::ensurePublicStorageSync($documentFilePath);
 
         DB::beginTransaction();
         try {
