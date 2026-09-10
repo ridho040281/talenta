@@ -7,6 +7,7 @@ use App\Models\AppSetting;
 use App\Models\Category;
 use App\Models\Competition;
 use App\Models\DrawAllocation;
+use App\Models\Invoice;
 use App\Models\Registration;
 use App\Models\RegistrationMember;
 use App\Models\User;
