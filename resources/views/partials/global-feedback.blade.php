@@ -312,7 +312,7 @@
     // Auto Form Submit Interceptor: show loading overlay on all normal form submissions
     document.addEventListener('submit', function(e) {
         const form = e.target;
-        if (!form || form.hasAttribute('data-no-loading') || form.getAttribute('target') === '_blank') {
+        if (!form || form.hasAttribute('data-no-loading') || form.getAttribute('target') === '_blank' || e.defaultPrevented) {
             return;
         }
 
@@ -324,7 +324,11 @@
         let loadingMsg = 'Mohon tunggu sebentar, perubahan sedang diproses oleh server.';
         let icon = 'save';
 
-        if (btnText.includes('hapus') || btnText.includes('delete')) {
+        if (btnText.includes('daftar') || btnText.includes('pendaftaran') || (form.action && form.action.includes('daftar'))) {
+            loadingTitle = 'Sedang Mengirim Pendaftaran...';
+            loadingMsg = 'Mohon tunggu sebentar, data dan berkas pendaftaran Anda sedang diproses oleh server.';
+            icon = 'file-text';
+        } else if (btnText.includes('hapus') || btnText.includes('delete')) {
             loadingTitle = 'Sedang Menghapus Data...';
             loadingMsg = 'Mohon tunggu sebentar, data sedang dihapus dari sistem.';
             icon = 'trash-2';
@@ -332,7 +336,7 @@
             loadingTitle = 'Sedang Mengunggah Berkas...';
             loadingMsg = 'Mohon tunggu sebentar, berkas sedang ditransfer ke server.';
             icon = 'upload-cloud';
-        } else if (btnText.includes('kirim') || btnText.includes('blast') || btnText.includes('broadcast')) {
+        } else if (btnText.includes('blast') || btnText.includes('broadcast') || btnText.includes('kirim pesan') || btnText.includes('pesan')) {
             loadingTitle = 'Sedang Mengirim Pesan...';
             loadingMsg = 'Mohon tunggu sebentar, pesan sedang dikirim ke tujuan.';
             icon = 'send';
