@@ -533,41 +533,45 @@
         </form>
     </div>
 
-    <!-- Interactive Simulation Modal Backdrop (Large & Opaque) -->
-    <div x-show="previewModal" x-transition.opacity.duration.300ms class="fixed inset-0 z-[999999] flex items-center justify-center p-4 sm:p-6 bg-slate-950/85 backdrop-blur-md" style="display: none;">
-        <div @click.away="previewModal = false" x-show="previewModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-90" x-transition:enter-end="opacity-100 scale-100" class="relative w-full max-w-3xl rounded-3xl border border-white/[0.2] bg-[#0C111D] p-6 sm:p-8 shadow-[0_0_60px_rgba(122,90,248,0.35)] space-y-6 text-white max-h-[90vh] overflow-y-auto no-scrollbar">
+    <!-- Interactive Simulation Modal Backdrop (Wide HD & Opaque) -->
+    <div x-show="previewModal" x-transition.opacity.duration.300ms class="fixed inset-0 z-[999999] flex items-center justify-center p-3 sm:p-6 bg-slate-950/85 backdrop-blur-md" style="display: none;">
+        <div @click.away="previewModal = false" x-show="previewModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-90" x-transition:enter-end="opacity-100 scale-100" class="relative w-full max-w-5xl rounded-3xl border border-white/[0.22] bg-[#0C111D] p-5 sm:p-7 shadow-[0_0_80px_rgba(122,90,248,0.45)] space-y-5 text-white max-h-[94vh] overflow-y-auto no-scrollbar">
             
             <!-- Close Button -->
-            <button type="button" @click="previewModal = false" class="absolute top-5 right-5 w-10 h-10 rounded-2xl bg-white/[0.08] hover:bg-white/[0.18] text-slate-300 hover:text-white flex items-center justify-center transition cursor-pointer">
+            <button type="button" @click="previewModal = false" class="absolute top-5 right-5 w-10 h-10 rounded-2xl bg-white/[0.08] hover:bg-white/[0.18] text-slate-300 hover:text-white flex items-center justify-center transition cursor-pointer z-20">
                 ✕
             </button>
 
             <!-- Subtitle -->
-            <div class="flex items-center gap-2 pr-8">
+            <div class="flex items-center gap-2 pr-12">
                 <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
-                <span class="text-xs font-black uppercase tracking-widest text-[#A594FD]" x-text="previewSubtitle || 'Informasi Resmi TALENTA 2026'"></span>
+                <span class="text-xs font-black uppercase tracking-widest text-[#A594FD]" x-text="previewSubtitle || 'Informasi Petunjuk Teknis & Pendaftaran Peserta'"></span>
             </div>
+
+            <!-- Title -->
+            <h2 class="text-xl sm:text-2xl font-black text-white leading-snug font-display pr-10" x-text="previewTitle || 'Judul Pengumuman'"></h2>
 
             <!-- Poster Image Preview -->
             <template x-if="previewImage">
-                <div class="rounded-2xl overflow-hidden border border-white/[0.12] max-h-[340px] bg-slate-950 flex items-center justify-center">
-                    <img :src="previewImage" alt="Poster Preview" class="w-full h-full object-contain">
+                <div class="rounded-2xl overflow-hidden border border-white/[0.16] bg-[#060a14] flex items-center justify-center relative group">
+                    <img :src="previewImage" alt="Poster Preview" class="w-full h-auto max-h-[64vh] object-contain block">
+                    <div class="absolute bottom-3 right-3 px-3 py-1.5 rounded-xl bg-black/75 backdrop-blur-md border border-white/20 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg pointer-events-none">
+                        <i data-lucide="image" class="w-3.5 h-3.5 text-amber-300"></i>
+                        <span>Pratinjau Resolusi HD</span>
+                    </div>
                 </div>
             </template>
 
-            <!-- Title -->
-            <h2 class="text-xl sm:text-2xl font-black text-white leading-snug font-display" x-text="previewTitle || 'Judul Pengumuman'"></h2>
-
             <!-- Content -->
-            <div class="text-sm sm:text-base text-slate-200 leading-relaxed whitespace-pre-line font-normal max-h-[300px] overflow-y-auto no-scrollbar bg-slate-900/60 p-5 rounded-2xl border border-white/[0.08]" x-text="previewContent || 'Isi teks pengumuman.'"></div>
+            <div class="text-sm sm:text-base text-slate-200 leading-relaxed whitespace-pre-line font-normal max-h-[250px] overflow-y-auto no-scrollbar bg-slate-900/60 p-4 rounded-2xl border border-white/[0.08]" x-text="previewContent || 'Isi teks pengumuman.'"></div>
 
             <!-- Action Buttons -->
-            <div class="pt-4 border-t border-white/[0.08] flex flex-col sm:flex-row items-center justify-end gap-3">
-                <button type="button" @click="previewModal = false" class="w-full sm:w-auto px-6 py-3 rounded-2xl bg-white/[0.08] hover:bg-white/[0.15] text-slate-200 font-bold text-xs border border-white/[0.1] transition cursor-pointer">
+            <div class="pt-3 border-t border-white/[0.08] flex flex-col sm:flex-row items-center justify-end gap-3">
+                <button type="button" @click="previewModal = false" class="w-full sm:w-auto px-6 py-2.5 rounded-2xl bg-white/[0.08] hover:bg-white/[0.15] text-slate-200 font-bold text-xs border border-white/[0.1] transition cursor-pointer">
                     <span x-text="previewSecBtnText || 'Tutup'"></span>
                 </button>
                 <template x-if="previewBtnText">
-                    <button type="button" @click="previewModal = false" class="w-full sm:w-auto px-7 py-3 rounded-2xl bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-black text-xs shadow-lg shadow-[#7A5AF8]/35 transition uppercase tracking-wider cursor-pointer">
+                    <button type="button" @click="previewModal = false" class="w-full sm:w-auto px-7 py-2.5 rounded-2xl bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-black text-xs shadow-lg shadow-[#7A5AF8]/35 transition uppercase tracking-wider cursor-pointer">
                         <span x-text="previewBtnText"></span>
                     </button>
                 </template>
