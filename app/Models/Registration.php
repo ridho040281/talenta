@@ -54,6 +54,21 @@ class Registration extends Model
         'display_school',
     ];
 
+    protected static function booted(): void
+    {
+        static::saved(function (Registration $registration) {
+            if ($registration->invoice_id && ($registration->wasChanged(['competition_id', 'target_class', 'sub_category', 'match_type']) || $registration->wasRecentlyCreated)) {
+                $registration->invoice?->recalculateTotals();
+            }
+        });
+
+        static::deleted(function (Registration $registration) {
+            if ($registration->invoice_id) {
+                $registration->invoice?->recalculateTotals();
+            }
+        });
+    }
+
     public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class);

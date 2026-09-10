@@ -90,6 +90,24 @@ class PicController extends Controller
             ->whereIn('id', $competitionIds)
             ->get();
 
+        // Auto-synchronize any invoice totals attached to these competitions
+        $relatedInvoiceIds = Registration::whereIn('competition_id', $competitionIds)
+            ->whereNotNull('invoice_id')
+            ->pluck('invoice_id')
+            ->unique();
+
+        if ($relatedInvoiceIds->isNotEmpty()) {
+            $invoices = Invoice::with(['registrations.competition', 'registrations.members'])
+                ->whereIn('id', $relatedInvoiceIds)
+                ->get();
+            foreach ($invoices as $inv) {
+                $currentSubtotal = (float) $inv->registrations->sum(fn ($r) => $r->fee);
+                if (abs((float) $inv->total_amount - $currentSubtotal) > 0.01) {
+                    $inv->recalculateTotals();
+                }
+            }
+        }
+
         $allRegistrations = Registration::with(['competition.category', 'members', 'user', 'invoice'])
             ->whereIn('competition_id', $competitionIds)
             ->latest()
@@ -661,6 +679,10 @@ class PicController extends Controller
                     ]);
                 }
             }
+        }
+
+        if ($registration->invoice_id) {
+            $registration->invoice?->recalculateTotals();
         }
 
         return back()->with('success', 'Data pendaftaran '.$registration->display_name.' ('.$registration->registration_code.') berhasil diperbarui oleh Admin.');

@@ -77,16 +77,19 @@ class Invoice extends Model
 
     public function recalculateTotals(): void
     {
+        $this->load(['registrations.competition', 'registrations.members']);
+
         $subtotal = 0;
         $compCounts = [];
         $compFees = [];
 
         foreach ($this->registrations as $reg) {
-            $subtotal += (float) $reg->fee;
+            $regFee = (float) $reg->fee;
+            $subtotal += $regFee;
             if ($reg->competition) {
                 $code = $reg->competition->code;
                 $compCounts[$code] = ($compCounts[$code] ?? 0) + 1;
-                $compFees[$code] = (float) $reg->competition->registration_fee;
+                $compFees[$code] = $regFee ?: (float) $reg->competition->registration_fee;
             }
         }
 
