@@ -21,6 +21,20 @@
         const c = this.competitionsData.find(x => x.id === this.createCompId);
         return c ? c.code : '';
     },
+    get editCompCode() {
+        if (!this.selectedEditReg) return '';
+        if (this.selectedEditReg.competition && this.selectedEditReg.competition.code) {
+            return String(this.selectedEditReg.competition.code).toUpperCase();
+        }
+        if (this.selectedEditReg.registration_code) {
+            return String(this.selectedEditReg.registration_code.split('-')[0]).toUpperCase();
+        }
+        if (this.selectedEditReg.competition_id) {
+            const c = this.competitionsData.find(x => String(x.id) === String(this.selectedEditReg.competition_id));
+            if (c) return String(c.code).toUpperCase();
+        }
+        return '';
+    },
     createMatchType: '',
     createTargetClass: '',
     createGender: 'L',
@@ -736,12 +750,40 @@
                                     <!-- 2. Icon Edit: Edit Data Peserta -->
                                     <button type="button" @click="
                                         selectedEditReg = JSON.parse(JSON.stringify({{ $reg->toJson() }})); 
-                                        if(selectedEditReg && selectedEditReg.members) { 
-                                            selectedEditReg.members.forEach(m => { 
-                                                if(m.birth_date) m.birth_date = String(m.birth_date).split('T')[0]; 
-                                            }); 
-                                            if(selectedEditReg.members.length === 1 && selectedEditReg.members[0].school_name) {
-                                                selectedEditReg.institution_name = selectedEditReg.members[0].school_name;
+                                        if(selectedEditReg) { 
+                                            if(selectedEditReg.members) { 
+                                                selectedEditReg.members.forEach(m => { 
+                                                    if(m.birth_date) m.birth_date = String(m.birth_date).split('T')[0]; 
+                                                }); 
+                                                if(selectedEditReg.members.length === 1 && selectedEditReg.members[0].school_name) {
+                                                    selectedEditReg.institution_name = selectedEditReg.members[0].school_name;
+                                                }
+                                            }
+                                            const cCode = (selectedEditReg.competition && selectedEditReg.competition.code ? selectedEditReg.competition.code : (selectedEditReg.registration_code ? selectedEditReg.registration_code.split('-')[0] : '')).toUpperCase();
+                                            if (cCode === 'TMJ') {
+                                                if (!selectedEditReg.match_type) {
+                                                    const g = (selectedEditReg.members && selectedEditReg.members[0]) ? selectedEditReg.members[0].gender : 'L';
+                                                    selectedEditReg.match_type = (g === 'P') ? 'Tunggal Putri (PI)' : 'Tunggal Putra (PA)';
+                                                }
+                                                if (selectedEditReg.target_class) {
+                                                    let tc = selectedEditReg.target_class;
+                                                    if (tc.includes('1-3') || tc.includes('1 - 3') || tc.toLowerCase().includes('kat a')) {
+                                                        selectedEditReg.target_class = 'Kategori A (Kelas 1 - 3)';
+                                                    } else if (tc.includes('4-6') || tc.includes('4 - 6') || tc.toLowerCase().includes('kat b')) {
+                                                        selectedEditReg.target_class = 'Kategori B (Kelas 4 - 6)';
+                                                    }
+                                                }
+                                            } else if (cCode === 'BLT') {
+                                                if (selectedEditReg.target_class) {
+                                                    let tc = selectedEditReg.target_class;
+                                                    if (tc.includes('1-2') || tc.includes('1 - 2')) {
+                                                        selectedEditReg.target_class = 'Kategori A (Kelas 1 - 2)';
+                                                    } else if (tc.includes('3-4') || tc.includes('3 - 4')) {
+                                                        selectedEditReg.target_class = 'Kategori B (Kelas 3 - 4)';
+                                                    } else if (tc.includes('5-6') || tc.includes('5 - 6')) {
+                                                        selectedEditReg.target_class = 'Kategori C (Kelas 5 - 6)';
+                                                    }
+                                                }
                                             }
                                         } 
                                         editModal = true;
@@ -1151,25 +1193,94 @@
                             <span>Kategori Kelas & Nomor Administrasi</span>
                         </span>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                            <div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                            <!-- 1. Kategori / Kelompok Kelas -->
+                            <div :class="['BLT', 'TMJ', 'MTQ', 'POP'].includes(editCompCode) ? '' : 'sm:col-span-2'">
                                 <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Kategori / Kelompok Kelas</label>
-                                <select name="target_class" x-model="selectedEditReg ? selectedEditReg.target_class : ''" class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-white outline-none focus:border-[#7A5AF8]">
-                                    <option value="">-- Tanpa Kategori Khusus --</option>
-                                    <option value="Ganda (Semua Kelas)">👥 Ganda (Semua Jenjang SD/MI)</option>
-                                    <option value="Kategori A (Kelas 1-2)">🏷️ Kategori A (Kelas 1-2 SD/MI)</option>
-                                    <option value="Kategori B (Kelas 3-4)">🏷️ Kategori B (Kelas 3-4 SD/MI)</option>
-                                    <option value="Kategori C (Kelas 5-6)">🏷️ Kategori C (Kelas 5-6 SD/MI)</option>
-                                </select>
+                                
+                                <!-- Opsi Khusus Tenis Meja (TMJ) -->
+                                <template x-if="editCompCode === 'TMJ'">
+                                    <select name="target_class" x-model="selectedEditReg ? selectedEditReg.target_class : ''" class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-white outline-none focus:border-[#7A5AF8]">
+                                        <option value="">-- Tanpa Kategori Khusus --</option>
+                                        <option value="Kategori A (Kelas 1 - 3)">🏓 Kategori A (Kelas 1–3 SD/MI)</option>
+                                        <option value="Kategori B (Kelas 4 - 6)">🏓 Kategori B (Kelas 4–6 SD/MI)</option>
+                                    </select>
+                                </template>
+
+                                <!-- Opsi Khusus Bulu Tangkis (BLT) -->
+                                <template x-if="editCompCode === 'BLT'">
+                                    <select name="target_class" x-model="selectedEditReg ? selectedEditReg.target_class : ''" class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-white outline-none focus:border-[#7A5AF8]">
+                                        <option value="">-- Tanpa Kategori Khusus --</option>
+                                        <option value="Ganda (Semua Kelas)">👥 Ganda (Semua Jenjang SD/MI)</option>
+                                        <option value="Kategori A (Kelas 1 - 2)">🏷️ Kategori A (Kelas 1–2 SD/MI)</option>
+                                        <option value="Kategori B (Kelas 3 - 4)">🏷️ Kategori B (Kelas 3–4 SD/MI)</option>
+                                        <option value="Kategori C (Kelas 5 - 6)">🏷️ Kategori C (Kelas 5–6 SD/MI)</option>
+                                    </select>
+                                </template>
+
+                                <!-- Opsi Lomba Lain -->
+                                <template x-if="editCompCode !== 'TMJ' && editCompCode !== 'BLT'">
+                                    <select name="target_class" x-model="selectedEditReg ? selectedEditReg.target_class : ''" class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-white outline-none focus:border-[#7A5AF8]">
+                                        <option value="">-- Tanpa Kategori Khusus --</option>
+                                        <option value="Semua Kelas SD/MI">Umum (Semua Jenjang SD/MI)</option>
+                                    </select>
+                                </template>
                             </div>
+
+                            <!-- 2. Sektor / Nomor Tanding -->
+                            <div x-show="['BLT', 'TMJ', 'MTQ', 'POP'].includes(editCompCode)">
+                                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Nomor / Sektor Tanding</label>
+                                
+                                <!-- Opsi Sektor Tenis Meja (TMJ) -->
+                                <template x-if="editCompCode === 'TMJ'">
+                                    <select name="match_type" x-model="selectedEditReg ? selectedEditReg.match_type : ''" 
+                                        @change="if(selectedEditReg && selectedEditReg.members && selectedEditReg.members[0]) { if($el.value.includes('Putri') || $el.value.includes('(PI)')) selectedEditReg.members[0].gender = 'P'; else if($el.value.includes('Putra') || $el.value.includes('(PA)')) selectedEditReg.members[0].gender = 'L'; }"
+                                        class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-white outline-none focus:border-[#7A5AF8]">
+                                        <option value="Tunggal Putra (PA)">👤 Tunggal Putra (PA)</option>
+                                        <option value="Tunggal Putri (PI)">👤 Tunggal Putri (PI)</option>
+                                    </select>
+                                </template>
+
+                                <!-- Opsi Sektor Bulu Tangkis (BLT) -->
+                                <template x-if="editCompCode === 'BLT'">
+                                    <select name="match_type" x-model="selectedEditReg ? selectedEditReg.match_type : ''" 
+                                        @change="if($el.value.includes('Ganda')) { if(selectedEditReg) selectedEditReg.target_class = 'Ganda (Semua Kelas)'; }"
+                                        class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-white outline-none focus:border-[#7A5AF8]">
+                                        <option value="Tunggal Putra (PA)">👤 Tunggal Putra (PA)</option>
+                                        <option value="Tunggal Putri (PI)">👤 Tunggal Putri (PI)</option>
+                                        <option value="Ganda Putra (PA)">👥 Ganda Putra (PA)</option>
+                                        <option value="Ganda Putri (PI)">👥 Ganda Putri (PI)</option>
+                                    </select>
+                                </template>
+
+                                <!-- Opsi Sektor MTQ / POP -->
+                                <template x-if="['MTQ', 'POP'].includes(editCompCode)">
+                                    <select name="match_type" x-model="selectedEditReg ? selectedEditReg.match_type : ''" 
+                                        @change="if(selectedEditReg && selectedEditReg.members && selectedEditReg.members[0]) { if($el.value.includes('Putri') || $el.value.includes('(PI)')) selectedEditReg.members[0].gender = 'P'; else if($el.value.includes('Putra') || $el.value.includes('(PA)')) selectedEditReg.members[0].gender = 'L'; }"
+                                        class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-white outline-none focus:border-[#7A5AF8]">
+                                        <option value="Putra (PA)">👤 Putra (PA)</option>
+                                        <option value="Putri (PI)">👤 Putri (PI)</option>
+                                    </select>
+                                </template>
+                            </div>
+
+                            <!-- 3. No. Peserta Resmi -->
                             <div>
                                 <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">No. Peserta (Resmi)</label>
-                                <input type="text" name="participant_number" x-model="selectedEditReg ? selectedEditReg.participant_number : ''" placeholder="MTQ-01" class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-mono font-bold text-white outline-none focus:border-[#7A5AF8]">
+                                <input type="text" name="participant_number" x-model="selectedEditReg ? selectedEditReg.participant_number : ''" placeholder="TMJ-01" class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-mono font-bold text-white outline-none focus:border-[#7A5AF8]">
                             </div>
+
+                            <!-- 4. No. Undian Tampil (TM) -->
                             <div>
                                 <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">No. Undian Tampil (TM)</label>
                                 <input type="number" name="draw_number" x-model="selectedEditReg ? selectedEditReg.draw_number : ''" placeholder="1, 2, 3..." class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-mono font-bold text-white outline-none focus:border-[#7A5AF8]">
                             </div>
+                        </div>
+
+                        <!-- Khusus Pop Singer: Edit Lagu Pilihan -->
+                        <div x-show="editCompCode === 'POP'" class="pt-2 border-t border-white/[0.06]">
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-purple-400 mb-1">🎵 Judul Lagu Pilihan (Pop Singer)</label>
+                            <input type="text" name="chosen_song" x-model="selectedEditReg ? selectedEditReg.chosen_song : ''" placeholder="Judul lagu..." class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-white outline-none focus:border-[#7A5AF8]">
                         </div>
                     </div>
 

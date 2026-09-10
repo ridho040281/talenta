@@ -600,6 +600,19 @@ class PicController extends Controller
                     $registration->sub_category = $registration->target_class.' - '.$registration->match_type;
                 }
             }
+        } elseif ($registration->competition && $registration->competition->code === 'TMJ') {
+            if (empty($registration->target_class)) {
+                $registration->target_class = 'Kategori A (Kelas 1 - 3)';
+            }
+            if (! empty($registration->match_type)) {
+                $registration->sub_category = $registration->target_class.' - '.$registration->match_type;
+            } else {
+                $registration->sub_category = $registration->target_class;
+            }
+        } elseif ($registration->competition && in_array($registration->competition->code, ['MTQ', 'POP'])) {
+            if (! empty($registration->match_type)) {
+                $registration->sub_category = $registration->match_type;
+            }
         }
 
         if ($request->hasFile('document_file')) {
@@ -614,16 +627,28 @@ class PicController extends Controller
         $registration->save();
 
         // Update member records
-        foreach ($validated['members'] as $mData) {
+        foreach ($validated['members'] as $idx => $mData) {
             if (! empty($mData['id'])) {
                 $member = RegistrationMember::where('registration_id', $registration->id)->find($mData['id']);
                 if ($member) {
+                    $mGender = $mData['gender'];
+                    // Auto-sync gender if single/individual sector was selected
+                    if ($registration->competition && in_array($registration->competition->code, ['TMJ', 'BLT', 'MTQ', 'POP'])) {
+                        if ($registration->match_type && stripos($registration->match_type, 'ganda') === false) {
+                            if (stripos($registration->match_type, 'Putri') !== false || stripos($registration->match_type, '(PI)') !== false) {
+                                $mGender = 'P';
+                            } elseif (stripos($registration->match_type, 'Putra') !== false || stripos($registration->match_type, '(PA)') !== false) {
+                                $mGender = 'L';
+                            }
+                        }
+                    }
+
                     $mSchool = ! empty($mData['school_name']) ? trim($mData['school_name']) : (count($validated['members']) === 1 ? $finalInstitutionName : null);
                     $member->update([
                         'full_name' => $mData['full_name'],
                         'school_name' => $mSchool,
                         'nisn' => $mData['nisn'] ?? null,
-                        'gender' => $mData['gender'],
+                        'gender' => $mGender,
                         'birth_place' => $mData['birth_place'] ?? null,
                         'birth_date' => $mData['birth_date'] ?? null,
                         'phone' => $mData['phone'] ?? null,
