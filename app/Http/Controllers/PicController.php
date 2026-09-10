@@ -588,7 +588,9 @@ class PicController extends Controller
             $registration->chosen_song = $request->input('chosen_song') ?: null;
         }
 
-        if ($registration->competition && $registration->competition->code === 'BLT') {
+        $compCode = $registration->competition?->code ?? (Competition::find($registration->competition_id)?->code ?? '');
+
+        if ($compCode === 'BLT') {
             if ($registration->match_type && stripos($registration->match_type, 'ganda') !== false) {
                 $registration->target_class = 'Ganda (Semua Kelas)';
                 $registration->sub_category = $registration->match_type;
@@ -600,16 +602,19 @@ class PicController extends Controller
                     $registration->sub_category = $registration->target_class.' - '.$registration->match_type;
                 }
             }
-        } elseif ($registration->competition && $registration->competition->code === 'TMJ') {
-            if (empty($registration->target_class)) {
+        } elseif ($compCode === 'TMJ') {
+            $rawTc = $validated['target_class'] ?? $registration->target_class ?? '';
+            if (stripos($rawTc, '4-6') !== false || stripos($rawTc, '4 - 6') !== false || stripos($rawTc, 'Kat B') !== false || stripos($rawTc, 'Kategori B') !== false) {
+                $registration->target_class = 'Kategori B (Kelas 4 - 6)';
+            } else {
                 $registration->target_class = 'Kategori A (Kelas 1 - 3)';
             }
-            if (! empty($registration->match_type)) {
-                $registration->sub_category = $registration->target_class.' - '.$registration->match_type;
-            } else {
-                $registration->sub_category = $registration->target_class;
+
+            if (! empty($validated['match_type'])) {
+                $registration->match_type = $validated['match_type'];
             }
-        } elseif ($registration->competition && in_array($registration->competition->code, ['MTQ', 'POP'])) {
+            $registration->sub_category = $registration->target_class . ' - ' . ($registration->match_type ?: 'Tunggal Putra (PA)');
+        } elseif (in_array($compCode, ['MTQ', 'POP'])) {
             if (! empty($registration->match_type)) {
                 $registration->sub_category = $registration->match_type;
             }

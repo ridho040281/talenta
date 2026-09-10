@@ -358,24 +358,84 @@ class Registration extends Model
 
     public function isKatA(): bool
     {
-        $targetStr = strtolower(($this->target_class ?? '') . ' ' . ($this->sub_category ?? '') . ' ' . ($this->team_name ?? '') . ' ' . ($this->match_type ?? ''));
-        if ($this->competition?->code === 'TMJ') {
+        $tc = strtolower($this->target_class ?? '');
+        $sc = strtolower($this->sub_category ?? '');
+        $compCode = $this->competition?->code ?? '';
+
+        if ($compCode === 'TMJ') {
+            if (str_contains($tc, 'kategori b') || str_contains($tc, 'kat b') || str_contains($tc, '4 - 6') || str_contains($tc, '4-6')) {
+                return false;
+            }
+            if (str_contains($tc, 'kategori a') || str_contains($tc, 'kat a') || str_contains($tc, '1 - 3') || str_contains($tc, '1-3')) {
+                return true;
+            }
+            if (str_contains($sc, 'kategori b') || str_contains($sc, 'kat b') || str_contains($sc, '4 - 6') || str_contains($sc, '4-6')) {
+                return false;
+            }
+            if (str_contains($sc, 'kategori a') || str_contains($sc, 'kat a') || str_contains($sc, '1 - 3') || str_contains($sc, '1-3')) {
+                return true;
+            }
+            $targetStr = strtolower(($this->target_class ?? '') . ' ' . ($this->sub_category ?? '') . ' ' . ($this->team_name ?? '') . ' ' . ($this->match_type ?? ''));
             return stripos($targetStr, 'kategori a') !== false || stripos($targetStr, 'kat a') !== false || stripos($targetStr, '1 - 3') !== false || stripos($targetStr, '1-3') !== false || stripos($targetStr, 'kelas 1') !== false || stripos($targetStr, 'kelas 2') !== false || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, '-a-') !== false || stripos($targetStr, 'kat_a') !== false;
         }
+
+        if (str_contains($tc, 'kategori b') || str_contains($tc, 'kat b') || str_contains($tc, '3 - 4') || str_contains($tc, '3-4') || str_contains($tc, 'kategori c') || str_contains($tc, 'kat c') || str_contains($tc, '5 - 6') || str_contains($tc, '5-6')) {
+            return false;
+        }
+        if (str_contains($tc, 'kategori a') || str_contains($tc, 'kat a') || str_contains($tc, '1 - 2') || str_contains($tc, '1-2')) {
+            return true;
+        }
+
+        $targetStr = strtolower(($this->target_class ?? '') . ' ' . ($this->sub_category ?? '') . ' ' . ($this->team_name ?? '') . ' ' . ($this->match_type ?? ''));
         return stripos($targetStr, 'kategori a') !== false || stripos($targetStr, 'kat a') !== false || stripos($targetStr, 'kelas 1') !== false || stripos($targetStr, 'kelas 2') !== false || stripos($targetStr, '-a-') !== false || stripos($targetStr, 'kat_a') !== false;
     }
 
     public function isKatB(): bool
     {
-        $targetStr = strtolower(($this->target_class ?? '') . ' ' . ($this->sub_category ?? '') . ' ' . ($this->team_name ?? '') . ' ' . ($this->match_type ?? ''));
-        if ($this->competition?->code === 'TMJ') {
+        $tc = strtolower($this->target_class ?? '');
+        $sc = strtolower($this->sub_category ?? '');
+        $compCode = $this->competition?->code ?? '';
+
+        if ($compCode === 'TMJ') {
+            if (str_contains($tc, 'kategori b') || str_contains($tc, 'kat b') || str_contains($tc, '4 - 6') || str_contains($tc, '4-6')) {
+                return true;
+            }
+            if (str_contains($tc, 'kategori a') || str_contains($tc, 'kat a') || str_contains($tc, '1 - 3') || str_contains($tc, '1-3')) {
+                return false;
+            }
+            if (str_contains($sc, 'kategori b') || str_contains($sc, 'kat b') || str_contains($sc, '4 - 6') || str_contains($sc, '4-6')) {
+                return true;
+            }
+            if (str_contains($sc, 'kategori a') || str_contains($sc, 'kat a') || str_contains($sc, '1 - 3') || str_contains($sc, '1-3')) {
+                return false;
+            }
+            $targetStr = strtolower(($this->target_class ?? '') . ' ' . ($this->sub_category ?? '') . ' ' . ($this->team_name ?? '') . ' ' . ($this->match_type ?? ''));
             return stripos($targetStr, 'kategori b') !== false || stripos($targetStr, 'kat b') !== false || stripos($targetStr, '4 - 6') !== false || stripos($targetStr, '4-6') !== false || stripos($targetStr, 'kelas 4') !== false || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '-b-') !== false || stripos($targetStr, 'kat_b') !== false;
         }
+
+        if (str_contains($tc, 'kategori b') || str_contains($tc, 'kat b') || str_contains($tc, '3 - 4') || str_contains($tc, '3-4')) {
+            return true;
+        }
+        if (str_contains($tc, 'kategori a') || str_contains($tc, 'kat a') || str_contains($tc, 'kategori c') || str_contains($tc, 'kat c')) {
+            return false;
+        }
+
+        $targetStr = strtolower(($this->target_class ?? '') . ' ' . ($this->sub_category ?? '') . ' ' . ($this->team_name ?? '') . ' ' . ($this->match_type ?? ''));
         return stripos($targetStr, 'kategori b') !== false || stripos($targetStr, 'kat b') !== false || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, 'kelas 4') !== false || stripos($targetStr, '-b-') !== false || stripos($targetStr, 'kat_b') !== false;
     }
 
     public function isKatC(): bool
     {
+        $tc = strtolower($this->target_class ?? '');
+        $sc = strtolower($this->sub_category ?? '');
+
+        if (str_contains($tc, 'kategori c') || str_contains($tc, 'kat c') || str_contains($tc, '5 - 6') || str_contains($tc, '5-6')) {
+            return true;
+        }
+        if (str_contains($tc, 'kategori a') || str_contains($tc, 'kat a') || str_contains($tc, 'kategori b') || str_contains($tc, 'kat b')) {
+            return false;
+        }
+
         $targetStr = strtolower(($this->target_class ?? '') . ' ' . ($this->sub_category ?? '') . ' ' . ($this->team_name ?? '') . ' ' . ($this->match_type ?? ''));
         return stripos($targetStr, 'kategori c') !== false || stripos($targetStr, 'kat c') !== false || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '-c-') !== false || stripos($targetStr, 'kat_c') !== false;
     }

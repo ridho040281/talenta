@@ -343,6 +343,40 @@
     }
 }">
 
+    <!-- Flash Notifications (Success & Error Feedback) -->
+    @if(session('success'))
+        <div class="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm font-bold flex items-center justify-between shadow-lg shadow-emerald-950/20">
+            <div class="flex items-center gap-2.5">
+                <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400 shrink-0"></i>
+                <span>{{ session('success') }}</span>
+            </div>
+            <button type="button" @click="$el.parentElement.remove()" class="text-emerald-400 hover:text-white p-1">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+    @endif
+
+    @if(session('error') || $errors->any())
+        <div class="p-4 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs sm:text-sm font-bold space-y-1.5 shadow-lg shadow-rose-950/20">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <i data-lucide="alert-triangle" class="w-5 h-5 text-rose-400 shrink-0"></i>
+                    <span>{{ session('error') ?: 'Terjadi kesalahan saat memproses data pendaftaran:' }}</span>
+                </div>
+                <button type="button" @click="$el.closest('.p-4').remove()" class="text-rose-400 hover:text-white p-1">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            @if($errors->any())
+                <ul class="list-disc list-inside text-xs font-normal pl-7 space-y-0.5 text-rose-200">
+                    @foreach($errors->all() as $err)
+                        <li>{{ $err }}</li>
+                    @endforeach
+                </ul>
+            @endif
+        </div>
+    @endif
+
     <!-- Quick Stats Grid (AIStarterKit Design) -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Card 1: Cabang Dikelola -->
@@ -558,20 +592,12 @@
                     @forelse($allRegistrations as $index => $reg)
                         @php
                             $firstMember = $reg->members->first();
-                            $isGanda = $reg->members->count() > 1 || (stripos($reg->match_type ?? '', 'ganda') !== false && stripos($reg->match_type ?? '', 'tunggal') === false) || (empty($reg->match_type) && stripos($reg->sub_category ?? '', 'ganda') !== false && stripos($reg->sub_category ?? '', 'tunggal') === false);
+                            $isGanda = $reg->isGanda();
                             $gender = $reg->primary_gender;
-                            $targetStr = strtolower(($reg->target_class ?? '') . ' ' . ($reg->sub_category ?? '') . ' ' . ($reg->team_name ?? '') . ' ' . ($reg->match_type ?? ''));
                             $compCode = $reg->competition?->code ?? '';
-
-                            if ($compCode === 'TMJ') {
-                                $isKatA = (stripos($targetStr, 'kategori a') !== false || stripos($targetStr, 'kat a') !== false || stripos($targetStr, '1 - 3') !== false || stripos($targetStr, '1-3') !== false || stripos($targetStr, 'kelas 1') !== false || stripos($targetStr, 'kelas 2') !== false || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, '-a-') !== false || stripos($targetStr, 'kat_a') !== false);
-                                $isKatB = (stripos($targetStr, 'kategori b') !== false || stripos($targetStr, 'kat b') !== false || stripos($targetStr, '4 - 6') !== false || stripos($targetStr, '4-6') !== false || stripos($targetStr, 'kelas 4') !== false || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '-b-') !== false || stripos($targetStr, 'kat_b') !== false);
-                                $isKatC = false;
-                            } else {
-                                $isKatA = (stripos($targetStr, 'kategori a') !== false || stripos($targetStr, 'kat a') !== false || stripos($targetStr, 'kelas 1') !== false || stripos($targetStr, 'kelas 2') !== false || stripos($targetStr, '-a-') !== false || stripos($targetStr, 'kat_a') !== false);
-                                $isKatB = (stripos($targetStr, 'kategori b') !== false || stripos($targetStr, 'kat b') !== false || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, 'kelas 4') !== false || stripos($targetStr, '-b-') !== false || stripos($targetStr, 'kat_b') !== false);
-                                $isKatC = (stripos($targetStr, 'kategori c') !== false || stripos($targetStr, 'kat c') !== false || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '-c-') !== false || stripos($targetStr, 'kat_c') !== false);
-                            }
+                            $isKatA = $reg->isKatA();
+                            $isKatB = $reg->isKatB();
+                            $isKatC = $reg->isKatC();
                         @endphp
                         <tr class="hover:bg-white/[0.025] transition" x-show="isItemVisible({{ $reg->id }})">
                             <!-- Kode & No Reg -->
@@ -765,24 +791,22 @@
                                                     const g = (selectedEditReg.members && selectedEditReg.members[0]) ? selectedEditReg.members[0].gender : 'L';
                                                     selectedEditReg.match_type = (g === 'P') ? 'Tunggal Putri (PI)' : 'Tunggal Putra (PA)';
                                                 }
-                                                if (selectedEditReg.target_class) {
-                                                    let tc = selectedEditReg.target_class;
-                                                    if (tc.includes('1-3') || tc.includes('1 - 3') || tc.toLowerCase().includes('kat a')) {
-                                                        selectedEditReg.target_class = 'Kategori A (Kelas 1 - 3)';
-                                                    } else if (tc.includes('4-6') || tc.includes('4 - 6') || tc.toLowerCase().includes('kat b')) {
-                                                        selectedEditReg.target_class = 'Kategori B (Kelas 4 - 6)';
-                                                    }
+                                                let tc = selectedEditReg.target_class || selectedEditReg.sub_category || '';
+                                                if (tc.includes('4-6') || tc.includes('4 - 6') || tc.toLowerCase().includes('kat b') || tc.toLowerCase().includes('kategori b') || tc.toLowerCase().includes('kelas 4') || tc.toLowerCase().includes('kelas 5') || tc.toLowerCase().includes('kelas 6')) {
+                                                    selectedEditReg.target_class = 'Kategori B (Kelas 4 - 6)';
+                                                } else {
+                                                    selectedEditReg.target_class = 'Kategori A (Kelas 1 - 3)';
                                                 }
                                             } else if (cCode === 'BLT') {
-                                                if (selectedEditReg.target_class) {
-                                                    let tc = selectedEditReg.target_class;
-                                                    if (tc.includes('1-2') || tc.includes('1 - 2')) {
-                                                        selectedEditReg.target_class = 'Kategori A (Kelas 1 - 2)';
-                                                    } else if (tc.includes('3-4') || tc.includes('3 - 4')) {
-                                                        selectedEditReg.target_class = 'Kategori B (Kelas 3 - 4)';
-                                                    } else if (tc.includes('5-6') || tc.includes('5 - 6')) {
-                                                        selectedEditReg.target_class = 'Kategori C (Kelas 5 - 6)';
-                                                    }
+                                                let tc = selectedEditReg.target_class || selectedEditReg.sub_category || '';
+                                                if (tc.toLowerCase().includes('ganda')) {
+                                                    selectedEditReg.target_class = 'Ganda (Semua Kelas)';
+                                                } else if (tc.includes('3-4') || tc.includes('3 - 4') || tc.toLowerCase().includes('kat b') || tc.toLowerCase().includes('kategori b')) {
+                                                    selectedEditReg.target_class = 'Kategori B (Kelas 3 - 4)';
+                                                } else if (tc.includes('5-6') || tc.includes('5 - 6') || tc.toLowerCase().includes('kat c') || tc.toLowerCase().includes('kategori c')) {
+                                                    selectedEditReg.target_class = 'Kategori C (Kelas 5 - 6)';
+                                                } else {
+                                                    selectedEditReg.target_class = 'Kategori A (Kelas 1 - 2)';
                                                 }
                                             }
                                         } 
@@ -1199,32 +1223,30 @@
                                 <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Kategori / Kelompok Kelas</label>
                                 
                                 <!-- Opsi Khusus Tenis Meja (TMJ) -->
-                                <template x-if="editCompCode === 'TMJ'">
-                                    <select name="target_class" x-model="selectedEditReg ? selectedEditReg.target_class : ''" class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-white outline-none focus:border-[#7A5AF8]">
-                                        <option value="">-- Tanpa Kategori Khusus --</option>
+                                <div x-show="editCompCode === 'TMJ'">
+                                    <select name="target_class" :disabled="editCompCode !== 'TMJ'" x-model="selectedEditReg ? selectedEditReg.target_class : ''" class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-white outline-none focus:border-[#7A5AF8]">
                                         <option value="Kategori A (Kelas 1 - 3)">🏓 Kategori A (Kelas 1–3 SD/MI)</option>
                                         <option value="Kategori B (Kelas 4 - 6)">🏓 Kategori B (Kelas 4–6 SD/MI)</option>
                                     </select>
-                                </template>
+                                </div>
 
                                 <!-- Opsi Khusus Bulu Tangkis (BLT) -->
-                                <template x-if="editCompCode === 'BLT'">
-                                    <select name="target_class" x-model="selectedEditReg ? selectedEditReg.target_class : ''" class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-white outline-none focus:border-[#7A5AF8]">
-                                        <option value="">-- Tanpa Kategori Khusus --</option>
+                                <div x-show="editCompCode === 'BLT'">
+                                    <select name="target_class" :disabled="editCompCode !== 'BLT'" x-model="selectedEditReg ? selectedEditReg.target_class : ''" class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-white outline-none focus:border-[#7A5AF8]">
                                         <option value="Ganda (Semua Kelas)">👥 Ganda (Semua Jenjang SD/MI)</option>
                                         <option value="Kategori A (Kelas 1 - 2)">🏷️ Kategori A (Kelas 1–2 SD/MI)</option>
                                         <option value="Kategori B (Kelas 3 - 4)">🏷️ Kategori B (Kelas 3–4 SD/MI)</option>
                                         <option value="Kategori C (Kelas 5 - 6)">🏷️ Kategori C (Kelas 5–6 SD/MI)</option>
                                     </select>
-                                </template>
+                                </div>
 
                                 <!-- Opsi Lomba Lain -->
-                                <template x-if="editCompCode !== 'TMJ' && editCompCode !== 'BLT'">
-                                    <select name="target_class" x-model="selectedEditReg ? selectedEditReg.target_class : ''" class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-white outline-none focus:border-[#7A5AF8]">
+                                <div x-show="editCompCode !== 'TMJ' && editCompCode !== 'BLT'">
+                                    <select name="target_class" :disabled="editCompCode === 'TMJ' || editCompCode === 'BLT'" x-model="selectedEditReg ? selectedEditReg.target_class : ''" class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-white outline-none focus:border-[#7A5AF8]">
                                         <option value="">-- Tanpa Kategori Khusus --</option>
                                         <option value="Semua Kelas SD/MI">Umum (Semua Jenjang SD/MI)</option>
                                     </select>
-                                </template>
+                                </div>
                             </div>
 
                             <!-- 2. Sektor / Nomor Tanding -->
@@ -1232,18 +1254,18 @@
                                 <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Nomor / Sektor Tanding</label>
                                 
                                 <!-- Opsi Sektor Tenis Meja (TMJ) -->
-                                <template x-if="editCompCode === 'TMJ'">
-                                    <select name="match_type" x-model="selectedEditReg ? selectedEditReg.match_type : ''" 
+                                <div x-show="editCompCode === 'TMJ'">
+                                    <select name="match_type" :disabled="editCompCode !== 'TMJ'" x-model="selectedEditReg ? selectedEditReg.match_type : ''" 
                                         @change="if(selectedEditReg && selectedEditReg.members && selectedEditReg.members[0]) { if($el.value.includes('Putri') || $el.value.includes('(PI)')) selectedEditReg.members[0].gender = 'P'; else if($el.value.includes('Putra') || $el.value.includes('(PA)')) selectedEditReg.members[0].gender = 'L'; }"
                                         class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-white outline-none focus:border-[#7A5AF8]">
                                         <option value="Tunggal Putra (PA)">👤 Tunggal Putra (PA)</option>
                                         <option value="Tunggal Putri (PI)">👤 Tunggal Putri (PI)</option>
                                     </select>
-                                </template>
+                                </div>
 
                                 <!-- Opsi Sektor Bulu Tangkis (BLT) -->
-                                <template x-if="editCompCode === 'BLT'">
-                                    <select name="match_type" x-model="selectedEditReg ? selectedEditReg.match_type : ''" 
+                                <div x-show="editCompCode === 'BLT'">
+                                    <select name="match_type" :disabled="editCompCode !== 'BLT'" x-model="selectedEditReg ? selectedEditReg.match_type : ''" 
                                         @change="if($el.value.includes('Ganda')) { if(selectedEditReg) selectedEditReg.target_class = 'Ganda (Semua Kelas)'; }"
                                         class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-white outline-none focus:border-[#7A5AF8]">
                                         <option value="Tunggal Putra (PA)">👤 Tunggal Putra (PA)</option>
@@ -1251,17 +1273,17 @@
                                         <option value="Ganda Putra (PA)">👥 Ganda Putra (PA)</option>
                                         <option value="Ganda Putri (PI)">👥 Ganda Putri (PI)</option>
                                     </select>
-                                </template>
+                                </div>
 
                                 <!-- Opsi Sektor MTQ / POP -->
-                                <template x-if="['MTQ', 'POP'].includes(editCompCode)">
-                                    <select name="match_type" x-model="selectedEditReg ? selectedEditReg.match_type : ''" 
+                                <div x-show="['MTQ', 'POP'].includes(editCompCode)">
+                                    <select name="match_type" :disabled="!['MTQ', 'POP'].includes(editCompCode)" x-model="selectedEditReg ? selectedEditReg.match_type : ''" 
                                         @change="if(selectedEditReg && selectedEditReg.members && selectedEditReg.members[0]) { if($el.value.includes('Putri') || $el.value.includes('(PI)')) selectedEditReg.members[0].gender = 'P'; else if($el.value.includes('Putra') || $el.value.includes('(PA)')) selectedEditReg.members[0].gender = 'L'; }"
                                         class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-white outline-none focus:border-[#7A5AF8]">
                                         <option value="Putra (PA)">👤 Putra (PA)</option>
                                         <option value="Putri (PI)">👤 Putri (PI)</option>
                                     </select>
-                                </template>
+                                </div>
                             </div>
 
                             <!-- 3. No. Peserta Resmi -->
