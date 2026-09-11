@@ -37,6 +37,7 @@ Route::get('/stage/{slug}/state', [StageController::class, 'apiState'])->name('s
 Route::get('/cek-status', [HomeController::class, 'checkStatus'])->name('check.status');
 Route::get('/live-scoreboard/{slug?}', [HomeController::class, 'liveScoreboard'])->name('live.scoreboard');
 Route::get('/skor/{slug?}', [HomeController::class, 'liveScoreboard'])->name('live.scoreboard.short');
+Route::get('/api/leaderboard/{slug}', [HomeController::class, 'apiLeaderboard'])->name('api.leaderboard');
 Route::get('/badminton/scoreboard/{id?}', [BadmintonMatchController::class, 'scoreboard'])->name('badminton.scoreboard');
 Route::get('/badminton/arena', [BadmintonMatchController::class, 'arenaScoreboard'])->name('badminton.arena');
 Route::get('/badminton/umpire/{id}', [BadmintonMatchController::class, 'umpire'])->name('badminton.umpire');

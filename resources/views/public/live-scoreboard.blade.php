@@ -97,7 +97,7 @@
                 <!-- Auto Refresh Badge / Timer -->
                 <div class="hidden lg:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-xs text-slate-300" title="Skor otomatis diperbarui">
                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span class="font-mono text-[11px]" x-text="'Auto (' + timer + 's)'"></span>
+                    <span class="font-mono text-[11px]" id="refresh-timer" x-text="'Auto (' + timer + 's)'"></span>
                 </div>
 
                 <!-- Fullscreen TV Mode Button -->
@@ -253,9 +253,9 @@
                 <div class="p-5 bg-slate-800/60 border-b border-slate-700/80 flex items-center justify-between">
                     <h3 class="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
                         <i data-lucide="list-ordered" class="w-4 h-4 text-amber-400"></i>
-                        <span>Klasemen & Rekap Perolehan Nilai</span>
+                        <span>Klasemen &amp; Rekap Perolehan Nilai</span>
                     </h3>
-                    <span class="text-xs text-slate-400 font-semibold">Update otomatis setiap 15 detik</span>
+                    <span class="text-xs text-slate-400 font-semibold" id="lb-updated-at">Update otomatis setiap 15 detik</span>
                 </div>
 
                 <div class="overflow-x-auto">
@@ -271,7 +271,7 @@
                                 <th class="py-4 px-6 text-center w-32">Status</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-800/80 font-medium">
+                        <tbody id="lb-tbody" class="divide-y divide-slate-800/80 font-medium">
                             @forelse($leaderboard as $index => $item)
                                 <tr class="hover:bg-slate-800/40 transition {{ $index === 0 && $item['has_score'] ? 'bg-amber-500/5' : '' }}">
                                     
@@ -373,11 +373,91 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
-            // Auto reload every 15 seconds for live venue update
-            setTimeout(() => {
-                window.location.reload();
-            }, 15000);
         });
+
+        @if($selectedCompetition)
+        // AJAX leaderboard refresh — no full page reload, no flash
+        (function () {
+            const slug    = @json($selectedCompetition->slug);
+            const apiUrl  = `/api/leaderboard/${slug}`;
+            let timer     = 15;
+            let interval;
+
+            // Update countdown badge in header
+            function updateTimerBadge() {
+                const el = document.getElementById('refresh-timer');
+                if (el) el.textContent = `Auto (${timer}s)`;
+            }
+
+            function fetchLeaderboard() {
+                fetch(apiUrl, { headers: { 'Accept': 'application/json' } })
+                    .then(r => r.ok ? r.json() : null)
+                    .then(data => {
+                        if (!data || !data.leaderboard) return;
+                        renderLeaderboard(data.leaderboard);
+                        const ts = document.getElementById('lb-updated-at');
+                        if (ts) ts.textContent = 'Diperbarui: ' + new Date().toLocaleTimeString('id-ID');
+                    })
+                    .catch(() => {/* silent — try again next cycle */});
+            }
+
+            function renderLeaderboard(items) {
+                const tbody = document.getElementById('lb-tbody');
+                if (!tbody) return;
+
+                if (items.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="py-12 text-center text-slate-500">Belum ada peserta yang terverifikasi pada cabang lomba ini.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = items.map((item, index) => {
+                    const rank = item.has_score ? rankBadge(index) : `<span class="text-slate-600 font-bold">-</span>`;
+                    const drawNum = (item.draw_number && item.draw_number < 999)
+                        ? `<span class="inline-block px-2.5 py-1 rounded-lg bg-slate-800 text-emerald-400 font-mono font-bold text-xs border border-emerald-500/30">#${item.draw_number}</span>`
+                        : `<span class="text-slate-600 text-xs">Belum diundi</span>`;
+                    const score = item.has_score
+                        ? `<span class="text-xl font-black ${index === 0 ? 'text-amber-400' : 'text-white'}">${Number(item.total_score).toFixed(2)}</span>`
+                        : `<span class="text-xs text-slate-600 italic">Menunggu giliran</span>`;
+                    const status = item.has_score
+                        ? `<span class="px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Terkunci</span>`
+                        : `<span class="px-3 py-1 rounded-full text-[11px] font-bold bg-slate-800 text-slate-500 border border-slate-700">Belum Tampil</span>`;
+
+                    return `<tr class="hover:bg-slate-800/40 transition ${index === 0 && item.has_score ? 'bg-amber-500/5' : ''}">
+                        <td class="py-4 px-6 text-center">${rank}</td>
+                        <td class="py-4 px-4 text-center">${drawNum}</td>
+                        <td class="py-4 px-4 font-mono font-bold text-xs text-slate-400">${item.participant_number}</td>
+                        <td class="py-4 px-6 font-bold text-white text-base">${escHtml(item.display_name)}</td>
+                        <td class="py-4 px-6 text-slate-400 text-xs">${escHtml(item.institution_name)}</td>
+                        <td class="py-4 px-6 text-right">${score}</td>
+                        <td class="py-4 px-6 text-center">${status}</td>
+                    </tr>`;
+                }).join('');
+            }
+
+            function rankBadge(index) {
+                if (index === 0) return `<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-400 text-slate-950 font-black text-sm shadow-md shadow-amber-400/30">1</span>`;
+                if (index === 1) return `<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-300 text-slate-950 font-black text-sm">2</span>`;
+                if (index === 2) return `<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-700 text-white font-black text-sm">3</span>`;
+                return `<span class="text-slate-500 font-bold">${index + 1}</span>`;
+            }
+
+            function escHtml(str) {
+                return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+            }
+
+            // Countdown + fetch cycle
+            interval = setInterval(() => {
+                timer--;
+                updateTimerBadge();
+                if (timer <= 0) {
+                    timer = 15;
+                    fetchLeaderboard();
+                }
+            }, 1000);
+
+            updateTimerBadge();
+        })();
+        @endif
     </script>
 </body>
 </html>

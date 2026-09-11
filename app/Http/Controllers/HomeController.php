@@ -123,6 +123,42 @@ class HomeController extends Controller
         return view('public.live-scoreboard', compact('categories', 'competitions', 'selectedCompetition', 'leaderboard'));
     }
 
+    /**
+     * JSON API — leaderboard data saja (untuk AJAX refresh tanpa full reload).
+     * GET /api/leaderboard/{slug}
+     */
+    public function apiLeaderboard($slug)
+    {
+        $competition = Competition::with(['criteria', 'registrations' => function ($q) {
+            $q->where('status', 'verified')->with(['members', 'scores.details']);
+        }])->where('slug', $slug)->first();
+
+        if (! $competition) {
+            return response()->json(['error' => 'Not found'], 404);
+        }
+
+        $leaderboard = $competition->registrations->map(function ($reg) {
+            $lockedScores = $reg->scores->where('is_locked', true);
+            $avgScore     = $lockedScores->isNotEmpty() ? round($lockedScores->avg('total_score'), 2) : 0;
+
+            return [
+                'draw_number'       => $reg->draw_number ?? 999,
+                'participant_number'=> $reg->participant_number ?? '-',
+                'display_name'      => $reg->display_name,
+                'institution_name'  => $reg->institution_name,
+                'total_score'       => $avgScore,
+                'has_score'         => $lockedScores->isNotEmpty(),
+                'score_count'       => $lockedScores->count(),
+            ];
+        })->sortByDesc('total_score')->values();
+
+        return response()->json([
+            'is_live_score' => (bool) $competition->is_live_score,
+            'leaderboard'   => $leaderboard,
+            'updated_at'    => now()->toIso8601String(),
+        ])->header('Cache-Control', 'no-cache, no-store');
+    }
+
     public function spinViewer($slug)
     {
         $competition = Competition::with(['category', 'registrations' => function ($q) {
