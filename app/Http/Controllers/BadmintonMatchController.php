@@ -7,6 +7,7 @@ use App\Models\BadmintonMatch;
 use App\Models\Competition;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class BadmintonMatchController extends Controller
 {
@@ -211,18 +212,21 @@ class BadmintonMatchController extends Controller
 
             $match->scores_history = $history;
             $match->save();
+            $this->touchMatchTimestamp($match->id);
         } elseif ($action === 'undo') {
             if (! empty($history)) {
                 $last = array_pop($history);
                 $match->fill($last);
                 $match->scores_history = $history;
                 $match->save();
+                $this->touchMatchTimestamp($match->id);
             }
         } elseif ($action === 'set_server') {
             $match->server_team = (int) $request->input('team');
             $match->server_player = (int) $request->input('player', 1);
             $match->scores_history = $history;
             $match->save();
+            $this->touchMatchTimestamp($match->id);
         } elseif ($action === 'next_set') {
             if ($match->current_set < 3) {
                 $match->current_set++;
@@ -231,11 +235,13 @@ class BadmintonMatchController extends Controller
                 $match->match_status = 'ongoing';
                 $match->scores_history = $history;
                 $match->save();
+                $this->touchMatchTimestamp($match->id);
             }
         } elseif ($action === 'set_status') {
             $match->match_status = $request->input('status');
             $match->scores_history = $history;
             $match->save();
+            $this->touchMatchTimestamp($match->id);
         } elseif ($action === 'reset') {
             $match->current_set = 1;
             $match->team1_set1 = 0;
@@ -250,12 +256,23 @@ class BadmintonMatchController extends Controller
             $match->winner_team = null;
             $match->scores_history = [];
             $match->save();
+            $this->touchMatchTimestamp($match->id);
         }
 
         return response()->json([
             'success' => true,
-            'match' => $this->formatMatchState($match),
+            'match'   => $this->formatMatchState($match),
         ]);
+    }
+
+    /**
+     * Stamp a lightweight cache key so SSE listeners detect changes instantly.
+     */
+    private function touchMatchTimestamp(int $matchId): void
+    {
+        $ts = microtime(true);
+        Cache::put("blt_match_{$matchId}_ts", $ts, 300);   // single match
+        Cache::put('blt_arena_ts', $ts, 300);              // arena (all courts)
     }
 
     public function apiState($id)
@@ -371,6 +388,11 @@ class BadmintonMatchController extends Controller
             ->header('Expires', '0');
     }
 
+    /**
+     * SSE stream untuk satu pertandingan (scoreboard single-court).
+     * Browser connect sekali, server push saat skor berubah.
+     * GET /badminton/matches/{id}/stream
+     */
     public function streamState($id)
     {
         $match = BadmintonMatch::find($id);
@@ -378,13 +400,134 @@ class BadmintonMatchController extends Controller
             return response()->json(['error' => 'Match not found'], 404);
         }
 
-        return response()->json($this->formatMatchState($match))
-            ->header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
+        $matchId   = $match->id;
+        $cacheKey  = "blt_match_{$matchId}_ts";
+        $lastTs    = 0.0;
+        $deadline  = time() + 300; // max 5 menit per koneksi
+
+        return response()->stream(function () use ($matchId, $cacheKey, &$lastTs, $deadline) {
+            // Kirim state awal segera
+            $m = BadmintonMatch::find($matchId);
+            if ($m) {
+                $payload = json_encode($this->formatMatchState($m));
+                echo "event: score\n";
+                echo "data: {$payload}\n\n";
+                $lastTs = (float) Cache::get($cacheKey, 0);
+            }
+            ob_flush();
+            flush();
+
+            while (time() < $deadline && ! connection_aborted()) {
+                usleep(300_000); // cek tiap 300ms
+
+                $ts = (float) Cache::get($cacheKey, 0);
+                if ($ts > $lastTs) {
+                    $lastTs = $ts;
+                    $m = BadmintonMatch::find($matchId);
+                    if ($m) {
+                        $payload = json_encode($this->formatMatchState($m));
+                        echo "event: score\n";
+                        echo "data: {$payload}\n\n";
+                        ob_flush();
+                        flush();
+                    }
+                }
+
+                // Heartbeat tiap 15 detik agar proxy tidak putus koneksi
+                if ((int) (microtime(true) * 1000) % 15000 < 300) {
+                    echo ": heartbeat\n\n";
+                    ob_flush();
+                    flush();
+                }
+            }
+
+            // Beri tahu client agar reconnect (SSE auto-reconnect dalam 1 detik)
+            echo "event: reconnect\ndata: {}\n\n";
+            ob_flush();
+            flush();
+        }, 200, [
+            'Content-Type'      => 'text/event-stream',
+            'Cache-Control'     => 'no-cache, no-store',
+            'X-Accel-Buffering' => 'no',  // nonaktifkan Nginx buffering
+            'Connection'        => 'keep-alive',
+        ]);
     }
 
+    /**
+     * SSE stream untuk arena multi-lapangan.
+     * GET /badminton/api/arena-stream
+     */
     public function arenaStream()
     {
-        return $this->apiActiveCourts();
+        $cacheKey = 'blt_arena_ts';
+        $lastTs   = 0.0;
+        $deadline = time() + 300;
+
+        return response()->stream(function () use ($cacheKey, &$lastTs, $deadline) {
+            // Kirim state awal segera
+            $payload = json_encode($this->buildArenaState());
+            echo "event: arena\n";
+            echo "data: {$payload}\n\n";
+            $lastTs = (float) Cache::get($cacheKey, 0);
+            ob_flush();
+            flush();
+
+            while (time() < $deadline && ! connection_aborted()) {
+                usleep(300_000);
+
+                $ts = (float) Cache::get($cacheKey, 0);
+                if ($ts > $lastTs) {
+                    $lastTs  = $ts;
+                    $payload = json_encode($this->buildArenaState());
+                    echo "event: arena\n";
+                    echo "data: {$payload}\n\n";
+                    ob_flush();
+                    flush();
+                }
+
+                if ((int) (microtime(true) * 1000) % 15000 < 300) {
+                    echo ": heartbeat\n\n";
+                    ob_flush();
+                    flush();
+                }
+            }
+
+            echo "event: reconnect\ndata: {}\n\n";
+            ob_flush();
+            flush();
+        }, 200, [
+            'Content-Type'      => 'text/event-stream',
+            'Cache-Control'     => 'no-cache, no-store',
+            'X-Accel-Buffering' => 'no',
+            'Connection'        => 'keep-alive',
+        ]);
+    }
+
+    /**
+     * Build arena state (semua lapangan aktif).
+     */
+    private function buildArenaState(): array
+    {
+        $courts = BadmintonMatch::select('court_number')->distinct()->orderBy('court_number')->pluck('court_number');
+        if ($courts->isEmpty()) {
+            $courts = collect(['Lapangan 1', 'Lapangan 2']);
+        }
+        $courtMatches = [];
+        foreach ($courts as $court) {
+            $m = BadmintonMatch::where('court_number', $court)
+                ->whereIn('match_status', ['ongoing', 'interval'])
+                ->latest('updated_at')->first();
+            if (! $m) {
+                $m = BadmintonMatch::where('court_number', $court)->where('match_status', 'upcoming')->first();
+            }
+            if (! $m) {
+                $m = BadmintonMatch::where('court_number', $court)->latest('updated_at')->first();
+            }
+            if ($m) {
+                $courtMatches[$court] = $this->formatMatchState($m);
+            }
+        }
+        return $courtMatches;
     }
 
     private function formatMatchState(BadmintonMatch $match): array
