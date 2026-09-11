@@ -8,6 +8,7 @@ use App\Models\Invoice;
 use App\Models\Registration;
 use App\Models\RegistrationMember;
 use App\Models\User;
+use App\Services\ImageOptimizerService;
 use App\Services\WablasNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -681,9 +682,8 @@ class CollectiveRegistrationController extends Controller
             $notes .= ' • '.implode(', ', $bonusSummaryList);
         }
 
-        // Store payment proof file (required)
-        $paymentProofPath = $request->file('payment_proof')->store('payments', 'public');
-        AdminSettingsController::ensurePublicStorageSync($paymentProofPath);
+        // Store payment proof file (required, compressed to ~100KB for images)
+        $paymentProofPath = ImageOptimizerService::storePaymentProof($request->file('payment_proof'), 'payments', 'kolektif');
 
         // Store collective document file (required)
         $documentFilePath = $request->file('document_file')->store('documents', 'public');
@@ -833,9 +833,7 @@ class CollectiveRegistrationController extends Controller
         ]);
 
         $file = $request->file('payment_proof');
-        $filename = 'proof_'.$invoice->invoice_number.'_'.time().'.'.$file->getClientOriginalExtension();
-        $path = $file->storeAs('payment_proofs', $filename, 'public');
-        AdminSettingsController::ensurePublicStorageSync($path);
+        $path = ImageOptimizerService::storePaymentProof($file, 'payment_proofs', 'proof_'.$invoice->invoice_number);
 
         $invoice->update([
             'payment_proof' => $path,

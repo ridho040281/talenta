@@ -11,6 +11,7 @@ use App\Models\Invoice;
 use App\Models\Registration;
 use App\Models\RegistrationMember;
 use App\Models\User;
+use App\Services\ImageOptimizerService;
 use App\Services\WablasNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -785,8 +786,7 @@ class PicController extends Controller
             AdminSettingsController::ensurePublicStorageSync($registration->document_file);
         }
         if ($request->hasFile('payment_proof')) {
-            $registration->payment_proof = $request->file('payment_proof')->store('payments', 'public');
-            AdminSettingsController::ensurePublicStorageSync($registration->payment_proof);
+            $registration->payment_proof = ImageOptimizerService::storePaymentProof($request->file('payment_proof'), 'payments', 'pic_edit');
         }
 
         $registration->save();
@@ -1076,8 +1076,7 @@ class PicController extends Controller
         // Store payment proof file
         $paymentProofPath = null;
         if ($request->hasFile('payment_proof')) {
-            $paymentProofPath = $request->file('payment_proof')->store('payments', 'public');
-            AdminSettingsController::ensurePublicStorageSync($paymentProofPath);
+            $paymentProofPath = ImageOptimizerService::storePaymentProof($request->file('payment_proof'), 'payments', 'pic_manual');
         }
 
         $regCode = 'REG-'.date('Y').'-'.$competition->code.'-'.strtoupper(Str::random(5));

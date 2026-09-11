@@ -362,8 +362,7 @@ class PesertaController extends Controller
 
         $paymentPath = null;
         if ($request->hasFile('payment_proof')) {
-            $paymentPath = $request->file('payment_proof')->store('payments', 'public');
-            AdminSettingsController::ensurePublicStorageSync($paymentPath);
+            $paymentPath = ImageOptimizerService::storePaymentProof($request->file('payment_proof'), 'payments');
         }
 
         $targetClass = $validated['target_class'] ?? null;
@@ -541,8 +540,7 @@ class PesertaController extends Controller
         }
 
         if ($request->hasFile('payment_proof')) {
-            $paymentPath = $request->file('payment_proof')->store('payments', 'public');
-            AdminSettingsController::ensurePublicStorageSync($paymentPath);
+            $paymentPath = ImageOptimizerService::storePaymentProof($request->file('payment_proof'), 'payments');
             $registration->payment_proof = $paymentPath;
         }
 
