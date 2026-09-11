@@ -142,6 +142,7 @@ class PicController extends Controller
         $competitionId = $request->query('competition_id', 'all');
         $status = $request->query('status', 'all');
         $genderFilter = $request->query('gender', 'all');
+        $categoryClassFilter = $request->query('category_class', 'all');
 
         $managedCompIds = self::getManagedCompetitionIds($user);
         $query = Registration::with(['competition.category', 'competition.pic', 'members', 'user'])
@@ -169,16 +170,21 @@ class PicController extends Controller
             $picName = (Auth::check() && Auth::user()->isPic()) ? Auth::user()->name : ($comp->pic->name ?? Auth::user()->name ?? 'Panitia Pelaksana');
             $picPosition = !empty($comp->pic?->position) ? $comp->pic->position : 'Panitia Pelaksana';
             $isBuluTangkis = ($comp->code === 'BLT' || stripos($comp->name, 'bulu tangkis') !== false || stripos($comp->name, 'badminton') !== false);
+            $isTenisMeja = ($comp->code === 'TMJ' || stripos($comp->name, 'tenis meja') !== false || stripos($comp->name, 'pingpong') !== false);
 
             if ($isBuluTangkis) {
                 // 1. Tunggal Categories (Kat A, Kat B, Kat C)
                 $bltCategories = [
-                    'kat_a' => 'Kategori A (Kelas 1–2)',
-                    'kat_b' => 'Kategori B (Kelas 3–4)',
-                    'kat_c' => 'Kategori C (Kelas 5–6)',
+                    'kat_a' => 'Kategori A (Kelas 1–2 SD/MI)',
+                    'kat_b' => 'Kategori B (Kelas 3–4 SD/MI)',
+                    'kat_c' => 'Kategori C (Kelas 5–6 SD/MI)',
                 ];
 
                 foreach ($bltCategories as $catKey => $catLabel) {
+                    if ($categoryClassFilter !== 'all' && $categoryClassFilter !== $catKey) {
+                        continue;
+                    }
+
                     $catRegs = $compRegs->filter(function ($r) use ($catKey) {
                         if ($r->isGanda()) {
                             return false;
@@ -200,7 +206,7 @@ class PicController extends Controller
                         $paRegs = $catRegs->filter(fn ($r) => $r->primary_gender === 'L')->sortBy(fn ($r) => $r->draw_number ?: 9999)->values();
                         $piRegs = $catRegs->filter(fn ($r) => $r->primary_gender === 'P')->sortBy(fn ($r) => $r->draw_number ?: 9999)->values();
 
-                        if ($paRegs->isNotEmpty()) {
+                        if ($paRegs->isNotEmpty() && ($genderFilter === 'all' || $genderFilter === 'L')) {
                             $pages[] = [
                                 'competition' => $comp,
                                 'competition_name' => $comp->name,
@@ -212,7 +218,7 @@ class PicController extends Controller
                                 'pic_position' => $picPosition,
                             ];
                         }
-                        if ($piRegs->isNotEmpty()) {
+                        if ($piRegs->isNotEmpty() && ($genderFilter === 'all' || $genderFilter === 'P')) {
                             $pages[] = [
                                 'competition' => $comp,
                                 'competition_name' => $comp->name,
@@ -228,39 +234,94 @@ class PicController extends Controller
                 }
 
                 // 2. Ganda Categories (Direct Ganda Putra & Ganda Putri)
-                $gandaAllRegs = $compRegs->filter(function ($r) {
-                    $targetStr = strtolower(($r->target_class ?? '').' '.($r->sub_category ?? '').' '.($r->match_type ?? ''));
+                if ($categoryClassFilter === 'all' || $categoryClassFilter === 'ganda') {
+                    $gandaAllRegs = $compRegs->filter(function ($r) {
+                        $targetStr = strtolower(($r->target_class ?? '').' '.($r->sub_category ?? '').' '.($r->match_type ?? ''));
 
-                    return stripos($targetStr, 'ganda') !== false || $r->members->count() > 1;
-                });
+                        return stripos($targetStr, 'ganda') !== false || $r->members->count() > 1;
+                    });
 
-                if ($gandaAllRegs->isNotEmpty()) {
-                    $gandaPa = $gandaAllRegs->filter(fn ($r) => $r->primary_gender === 'L' || stripos($r->match_type, 'Putra') !== false || stripos($r->match_type, 'PA') !== false)->sortBy(fn ($r) => $r->draw_number ?: 9999)->values();
-                    $gandaPi = $gandaAllRegs->filter(fn ($r) => $r->primary_gender === 'P' || stripos($r->match_type, 'Putri') !== false || stripos($r->match_type, 'PI') !== false)->sortBy(fn ($r) => $r->draw_number ?: 9999)->values();
+                    if ($gandaAllRegs->isNotEmpty()) {
+                        $gandaPa = $gandaAllRegs->filter(fn ($r) => $r->primary_gender === 'L' || stripos($r->match_type, 'Putra') !== false || stripos($r->match_type, 'PA') !== false)->sortBy(fn ($r) => $r->draw_number ?: 9999)->values();
+                        $gandaPi = $gandaAllRegs->filter(fn ($r) => $r->primary_gender === 'P' || stripos($r->match_type, 'Putri') !== false || stripos($r->match_type, 'PI') !== false)->sortBy(fn ($r) => $r->draw_number ?: 9999)->values();
 
-                    if ($gandaPa->isNotEmpty()) {
-                        $pages[] = [
-                            'competition' => $comp,
-                            'competition_name' => $comp->name,
-                            'sub_group_title' => '👥 KELOMPOK GANDA PUTRA (PA)',
-                            'sector_title' => 'GANDA PUTRA (PA) - SEMUA KELAS',
-                            'gender_badge_class' => 'bg-blue-100 text-blue-900',
-                            'registrations' => $gandaPa,
-                            'pic_name' => $picName,
-                            'pic_position' => $picPosition,
-                        ];
+                        if ($gandaPa->isNotEmpty() && ($genderFilter === 'all' || $genderFilter === 'L')) {
+                            $pages[] = [
+                                'competition' => $comp,
+                                'competition_name' => $comp->name,
+                                'sub_group_title' => '👥 KELOMPOK GANDA PUTRA (PA)',
+                                'sector_title' => 'GANDA PUTRA (PA) - SEMUA KELAS',
+                                'gender_badge_class' => 'bg-blue-100 text-blue-900',
+                                'registrations' => $gandaPa,
+                                'pic_name' => $picName,
+                                'pic_position' => $picPosition,
+                            ];
+                        }
+                        if ($gandaPi->isNotEmpty() && ($genderFilter === 'all' || $genderFilter === 'P')) {
+                            $pages[] = [
+                                'competition' => $comp,
+                                'competition_name' => $comp->name,
+                                'sub_group_title' => '👥 KELOMPOK GANDA PUTRI (PI)',
+                                'sector_title' => 'GANDA PUTRI (PI) - SEMUA KELAS',
+                                'gender_badge_class' => 'bg-rose-100 text-rose-900',
+                                'registrations' => $gandaPi,
+                                'pic_name' => $picName,
+                                'pic_position' => $picPosition,
+                            ];
+                        }
                     }
-                    if ($gandaPi->isNotEmpty()) {
-                        $pages[] = [
-                            'competition' => $comp,
-                            'competition_name' => $comp->name,
-                            'sub_group_title' => '👥 KELOMPOK GANDA PUTRI (PI)',
-                            'sector_title' => 'GANDA PUTRI (PI) - SEMUA KELAS',
-                            'gender_badge_class' => 'bg-rose-100 text-rose-900',
-                            'registrations' => $gandaPi,
-                            'pic_name' => $picName,
-                            'pic_position' => $picPosition,
-                        ];
+                }
+            } elseif ($isTenisMeja) {
+                // Tenis Meja: Kategori A (Kelas 1–3 SD/MI) dan Kategori B (Kelas 4–6 SD/MI)
+                $tmjCategories = [
+                    'kat_a' => 'Kategori A (Kelas 1–3 SD/MI)',
+                    'kat_b' => 'Kategori B (Kelas 4–6 SD/MI)',
+                ];
+
+                foreach ($tmjCategories as $catKey => $catLabel) {
+                    if ($categoryClassFilter !== 'all' && $categoryClassFilter !== $catKey) {
+                        continue;
+                    }
+
+                    $catRegs = $compRegs->filter(function ($r) use ($catKey) {
+                        if ($catKey === 'kat_a') {
+                            return $r->isKatA();
+                        }
+                        if ($catKey === 'kat_b') {
+                            return $r->isKatB();
+                        }
+
+                        return false;
+                    });
+
+                    if ($catRegs->isNotEmpty()) {
+                        $paRegs = $catRegs->filter(fn ($r) => $r->primary_gender === 'L')->sortBy(fn ($r) => $r->draw_number ?: 9999)->values();
+                        $piRegs = $catRegs->filter(fn ($r) => $r->primary_gender === 'P')->sortBy(fn ($r) => $r->draw_number ?: 9999)->values();
+
+                        if ($paRegs->isNotEmpty() && ($genderFilter === 'all' || $genderFilter === 'L')) {
+                            $pages[] = [
+                                'competition' => $comp,
+                                'competition_name' => $comp->name,
+                                'sub_group_title' => '👦 KELOMPOK PUTRA (PA)',
+                                'sector_title' => $catLabel.' - TUNGGAL PUTRA',
+                                'gender_badge_class' => 'bg-blue-100 text-blue-900',
+                                'registrations' => $paRegs,
+                                'pic_name' => $picName,
+                                'pic_position' => $picPosition,
+                            ];
+                        }
+                        if ($piRegs->isNotEmpty() && ($genderFilter === 'all' || $genderFilter === 'P')) {
+                            $pages[] = [
+                                'competition' => $comp,
+                                'competition_name' => $comp->name,
+                                'sub_group_title' => '👧 KELOMPOK PUTRI (PI)',
+                                'sector_title' => $catLabel.' - TUNGGAL PUTRI',
+                                'gender_badge_class' => 'bg-rose-100 text-rose-900',
+                                'registrations' => $piRegs,
+                                'pic_name' => $picName,
+                                'pic_position' => $picPosition,
+                            ];
+                        }
                     }
                 }
             } else {
@@ -269,7 +330,7 @@ class PicController extends Controller
                 $piRegs = $compRegs->filter(fn ($r) => $r->primary_gender === 'P')->sortBy(fn ($r) => $r->draw_number ?: 9999)->values();
                 $otherRegs = $compRegs->filter(fn ($r) => ! in_array($r->primary_gender, ['L', 'P']))->sortBy(fn ($r) => $r->draw_number ?: 9999)->values();
 
-                if ($paRegs->isNotEmpty() || ($piRegs->isEmpty() && $otherRegs->isEmpty())) {
+                if (($paRegs->isNotEmpty() || ($piRegs->isEmpty() && $otherRegs->isEmpty())) && ($genderFilter === 'all' || $genderFilter === 'L')) {
                     $pages[] = [
                         'competition' => $comp,
                         'competition_name' => $comp->name,
@@ -281,7 +342,7 @@ class PicController extends Controller
                         'pic_position' => $picPosition,
                     ];
                 }
-                if ($piRegs->isNotEmpty()) {
+                if ($piRegs->isNotEmpty() && ($genderFilter === 'all' || $genderFilter === 'P')) {
                     $pages[] = [
                         'competition' => $comp,
                         'competition_name' => $comp->name,
@@ -293,7 +354,7 @@ class PicController extends Controller
                         'pic_position' => $picPosition,
                     ];
                 }
-                if ($otherRegs->isNotEmpty()) {
+                if ($otherRegs->isNotEmpty() && $genderFilter === 'all') {
                     $pages[] = [
                         'competition' => $comp,
                         'competition_name' => $comp->name,
@@ -317,6 +378,7 @@ class PicController extends Controller
         $competitionId = $request->query('competition_id', 'all');
         $status = $request->query('status', 'all');
         $genderFilter = $request->query('gender', 'all');
+        $categoryClassFilter = $request->query('category_class', 'all');
 
         $managedCompIds = self::getManagedCompetitionIds($user);
         $query = Registration::with(['competition.category', 'members', 'user'])
@@ -335,16 +397,68 @@ class PicController extends Controller
 
         $registrations = $query->get();
 
-        // Sort into 1 single sheet: by Competition -> by Gender (PA then PI) -> by Draw/Participant No
-        $sorted = $registrations->sort(function ($a, $b) {
+        // Apply category filter if specified
+        if ($categoryClassFilter !== 'all') {
+            $registrations = $registrations->filter(function ($r) use ($categoryClassFilter) {
+                $compCode = $r->competition?->code ?? '';
+                if ($compCode === 'TMJ') {
+                    if ($categoryClassFilter === 'kat_a') return $r->isKatA();
+                    if ($categoryClassFilter === 'kat_b') return $r->isKatB();
+                } elseif ($compCode === 'BLT') {
+                    if ($categoryClassFilter === 'kat_a') return !$r->isGanda() && $r->isKatA();
+                    if ($categoryClassFilter === 'kat_b') return !$r->isKatB();
+                    if ($categoryClassFilter === 'kat_c') return !$r->isKatC();
+                    if ($categoryClassFilter === 'ganda') return $r->isGanda();
+                }
+                return true;
+            });
+        }
+
+        // Helper to get category tier weight for sorting
+        $getCategoryWeight = function ($reg) {
+            $compCode = $reg->competition?->code ?? '';
+            if ($compCode === 'TMJ') {
+                if ($reg->isKatA()) return 1;
+                if ($reg->isKatB()) return 2;
+                return 3;
+            } elseif ($compCode === 'BLT') {
+                if (!$reg->isGanda()) {
+                    if ($reg->isKatA()) return 1;
+                    if ($reg->isKatB()) return 2;
+                    if ($reg->isKatC()) return 3;
+                }
+                if ($reg->isGanda()) return 4;
+                return 5;
+            }
+            return 1;
+        };
+
+        // Sort into 1 single sheet: by Competition -> by Category Tier -> by Gender (PA then PI) -> by Draw/Participant No
+        $sorted = $registrations->sort(function ($a, $b) use ($getCategoryWeight) {
             if ($a->competition_id !== $b->competition_id) {
                 return strcmp($a->competition->name ?? '', $b->competition->name ?? '');
             }
+
+            // Sort by Category tier (Kat A -> Kat B -> Kat C -> Ganda)
+            $catWeightA = $getCategoryWeight($a);
+            $catWeightB = $getCategoryWeight($b);
+            if ($catWeightA !== $catWeightB) {
+                return $catWeightA <=> $catWeightB;
+            }
+
+            // Sort by Gender (PA -> PI -> Other)
             $genderOrder = ['L' => 1, 'P' => 2, 'M' => 3];
             $gA = $genderOrder[$a->primary_gender] ?? 4;
             $gB = $genderOrder[$b->primary_gender] ?? 4;
             if ($gA !== $gB) {
                 return $gA <=> $gB;
+            }
+
+            // Sort by draw number if exists, else participant number
+            $drawA = (int) ($a->draw_number ?: 9999);
+            $drawB = (int) ($b->draw_number ?: 9999);
+            if ($drawA !== $drawB) {
+                return $drawA <=> $drawB;
             }
 
             return strcmp($a->participant_number ?? '', $b->participant_number ?? '');
@@ -376,7 +490,7 @@ class PicController extends Controller
                     </tr>
                     <tr>
                         <th colspan="13" style="font-size: 10pt; background-color: #D1FAE5; color: #065F46; text-align: center;">
-                            Diurutkan Berdasarkan Cabang Lomba & Kelompok Gender (Putra / Putri) dalam 1 Sheet
+                            Diurutkan Berdasarkan Cabang Lomba, Kategori/Kelas & Kelompok Gender (Putra / Putri) dalam 1 Sheet
                         </th>
                     </tr>
                     <tr>
@@ -398,10 +512,35 @@ class PicController extends Controller
             $no = 1;
             foreach ($sorted as $reg) {
                 $firstMember = $reg->members->first();
-                $isGanda = $reg->members->count() > 1;
+                $isGanda = $reg->members->count() > 1 || $reg->isGanda();
                 $gender = $reg->primary_gender;
                 $genderClass = ($gender === 'L') ? 'pa' : (($gender === 'P') ? 'pi' : '');
                 $genderLabel = ($gender === 'L') ? 'Putra (PA)' : (($gender === 'P') ? 'Putri (PI)' : 'Ganda / Campuran');
+
+                $compCode = $reg->competition?->code ?? '';
+                $sectorLabel = '';
+                if ($compCode === 'TMJ') {
+                    $catStr = $reg->isKatA() ? 'Kategori A (Kelas 1–3)' : ($reg->isKatB() ? 'Kategori B (Kelas 4–6)' : ($reg->target_class ?: 'Semua Kelas'));
+                    $genStr = $gender === 'L' ? 'Tunggal Putra (PA)' : ($gender === 'P' ? 'Tunggal Putri (PI)' : 'Tunggal');
+                    $sectorLabel = $catStr . ' - ' . $genStr;
+                } elseif ($compCode === 'BLT') {
+                    if ($isGanda) {
+                        $sectorLabel = ($gender === 'L' ? 'Ganda Putra (PA)' : ($gender === 'P' ? 'Ganda Putri (PI)' : 'Ganda')) . ' - Semua Kelas';
+                    } elseif ($reg->isKatA()) {
+                        $sectorLabel = 'Kategori A (Kelas 1–2) - ' . ($gender === 'L' ? 'Tunggal Putra (PA)' : 'Tunggal Putri (PI)');
+                    } elseif ($reg->isKatB()) {
+                        $sectorLabel = 'Kategori B (Kelas 3–4) - ' . ($gender === 'L' ? 'Tunggal Putra (PA)' : 'Tunggal Putri (PI)');
+                    } elseif ($reg->isKatC()) {
+                        $sectorLabel = 'Kategori C (Kelas 5–6) - ' . ($gender === 'L' ? 'Tunggal Putra (PA)' : 'Tunggal Putri (PI)');
+                    } else {
+                        $sectorLabel = ($reg->target_class ?: 'Semua Kelas') . ' - ' . ($gender === 'L' ? 'Putra (PA)' : 'Putri (PI)');
+                    }
+                } else {
+                    $sectorLabel = trim(($reg->target_class ?: '') . ' ' . ($reg->sub_category ?: ''));
+                    if (empty($sectorLabel)) {
+                        $sectorLabel = $reg->competition->category->name ?? 'Tingkat SD/MI';
+                    }
+                }
 
                 echo '<tr class="'.$genderClass.'">
                     <td class="center">'.$no++.'</td>
@@ -412,7 +551,7 @@ class PicController extends Controller
                     <td class="center">'.htmlspecialchars($firstMember?->nisn ?: '-').'</td>
                     <td class="center bold">'.htmlspecialchars($genderLabel).'</td>
                     <td>'.htmlspecialchars($reg->competition->name ?? '-').'</td>
-                    <td>'.htmlspecialchars(($reg->target_class ?: '').' '.($reg->sub_category ?: '')).'</td>
+                    <td>'.htmlspecialchars($sectorLabel).'</td>
                     <td>'.htmlspecialchars($reg->institution_name).'</td>
                     <td>'.htmlspecialchars($reg->official_name ?: '-').'</td>
                     <td class="center">'.htmlspecialchars($reg->official_phone ?: '-').'</td>

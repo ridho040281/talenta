@@ -91,6 +91,12 @@
     selectedPrintCompetition: 'all',
     selectedPrintStatus: 'all',
     selectedPrintGender: 'all',
+    selectedPrintCategory: 'all',
+    get selectedPrintCompCode() {
+        if (!this.selectedPrintCompetition || this.selectedPrintCompetition === 'all') return '';
+        const c = this.competitionsData.find(x => String(x.id) === String(this.selectedPrintCompetition));
+        return c ? String(c.code || '').toUpperCase() : '';
+    },
     competitionsData: @js($competitions->map(fn($c) => ['id' => (string)$c->id, 'code' => $c->code, 'name' => $c->name, 'fee' => (float)$c->registration_fee, 'song_options' => $c->song_options ?? []])),
     appFeeSettings: {
         blt_fee_ganda_pa: {{ (float) \App\Models\AppSetting::get('blt_fee_ganda_pa', 200000) }},
@@ -1472,7 +1478,7 @@
                 <div class="space-y-3.5 bg-[#0C111D] p-4 rounded-2xl border border-white/[0.08] text-xs">
                     <div>
                         <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Pilih Cabang Lomba:</label>
-                        <select x-model="selectedPrintCompetition" class="w-full px-3 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8] cursor-pointer">
+                        <select x-model="selectedPrintCompetition" @change="selectedPrintCategory = 'all'" class="w-full px-3 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8] cursor-pointer">
                             <option value="all">Semua Cabang Lomba ({{ $competitions->count() }})</option>
                             @foreach($competitions as $comp)
                                 <option value="{{ $comp->id }}">{{ $comp->name }} ({{ $comp->registrations->count() }} Pendaftar)</option>
@@ -1498,13 +1504,41 @@
                             </select>
                         </div>
                     </div>
+
+                    <!-- Filter Kategori & Kelas Khusus Tenis Meja (TMJ) -->
+                    <div x-show="selectedPrintCompCode === 'TMJ'" x-cloak class="pt-2 border-t border-white/[0.08]">
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-amber-400 mb-1 flex items-center gap-1.5">
+                            <span>🏓</span>
+                            <span>Kategori & Kelas (Tenis Meja):</span>
+                        </label>
+                        <select x-model="selectedPrintCategory" class="w-full px-3 py-2.5 rounded-xl bg-[#161F30] border border-amber-500/30 text-xs font-bold text-amber-200 outline-none focus:border-amber-400 cursor-pointer">
+                            <option value="all">Semua Kategori (Pisah Halaman Kat A & Kat B)</option>
+                            <option value="kat_a">Kategori A (Kelas 1–3 SD/MI)</option>
+                            <option value="kat_b">Kategori B (Kelas 4–6 SD/MI)</option>
+                        </select>
+                    </div>
+
+                    <!-- Filter Kategori & Sektor Khusus Bulu Tangkis (BLT) -->
+                    <div x-show="selectedPrintCompCode === 'BLT'" x-cloak class="pt-2 border-t border-white/[0.08]">
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-1 flex items-center gap-1.5">
+                            <span>🏸</span>
+                            <span>Kategori & Sektor (Bulu Tangkis):</span>
+                        </label>
+                        <select x-model="selectedPrintCategory" class="w-full px-3 py-2.5 rounded-xl bg-[#161F30] border border-emerald-500/30 text-xs font-bold text-emerald-200 outline-none focus:border-emerald-400 cursor-pointer">
+                            <option value="all">Semua Kategori (Pisah Halaman A, B, C & Ganda)</option>
+                            <option value="kat_a">Kategori A (Kelas 1–2 SD/MI)</option>
+                            <option value="kat_b">Kategori B (Kelas 3–4 SD/MI)</option>
+                            <option value="kat_c">Kategori C (Kelas 5–6 SD/MI)</option>
+                            <option value="ganda">Kategori Ganda (Semua Kelas)</option>
+                        </select>
+                    </div>
                 </div>
 
                 <!-- 2 Action Options -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     
                     <!-- Option 1: PDF Print Out -->
-                    <a :href="'{{ url('pic/peserta/cetak-pdf') }}?competition_id=' + selectedPrintCompetition + '&status=' + selectedPrintStatus + '&gender=' + selectedPrintGender" target="_blank" class="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 hover:border-emerald-500/60 transition group flex flex-col justify-between cursor-pointer space-y-3">
+                    <a :href="'{{ url('pic/peserta/cetak-pdf') }}?competition_id=' + selectedPrintCompetition + '&status=' + selectedPrintStatus + '&gender=' + selectedPrintGender + '&category_class=' + selectedPrintCategory" target="_blank" class="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 hover:border-emerald-500/60 transition group flex flex-col justify-between cursor-pointer space-y-3">
                         <div class="space-y-1.5">
                             <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold">
                                 <i data-lucide="file-text" class="w-4 h-4"></i>
@@ -1521,14 +1555,14 @@
                     </a>
 
                     <!-- Option 2: Excel Export -->
-                    <a :href="'{{ url('pic/peserta/export-excel') }}?competition_id=' + selectedPrintCompetition + '&status=' + selectedPrintStatus + '&gender=' + selectedPrintGender" class="p-4 rounded-2xl border border-[#4E6EFF]/30 bg-[#4E6EFF]/10 hover:bg-[#4E6EFF]/20 hover:border-[#4E6EFF]/60 transition group flex flex-col justify-between cursor-pointer space-y-3">
+                    <a :href="'{{ url('pic/peserta/export-excel') }}?competition_id=' + selectedPrintCompetition + '&status=' + selectedPrintStatus + '&gender=' + selectedPrintGender + '&category_class=' + selectedPrintCategory" class="p-4 rounded-2xl border border-[#4E6EFF]/30 bg-[#4E6EFF]/10 hover:bg-[#4E6EFF]/20 hover:border-[#4E6EFF]/60 transition group flex flex-col justify-between cursor-pointer space-y-3">
                         <div class="space-y-1.5">
                             <div class="w-8 h-8 rounded-xl bg-[#4E6EFF]/20 text-[#84D0FF] border border-[#4E6EFF]/30 flex items-center justify-center font-bold">
                                 <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
                             </div>
                             <h4 class="font-black text-white text-sm group-hover:text-[#84D0FF] transition">Export Excel (.xls)</h4>
                             <p class="text-[11px] text-slate-400 leading-relaxed">
-                                Data rapi dalam <strong>1 Single Sheet</strong> yang diurutkan berurutan berdasarkan PA dan PI.
+                                Data rapi dalam <strong>1 Single Sheet</strong> yang diurutkan berurutan berdasarkan Kategori Kelas dan PA/PI.
                             </p>
                         </div>
                         <span class="inline-flex items-center gap-1.5 text-xs font-bold text-[#84D0FF] pt-2 border-t border-[#4E6EFF]/20">
