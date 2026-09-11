@@ -864,12 +864,18 @@ class AdminController extends Controller
 
     public function recap()
     {
-        // 1. Fetch all competitions with full registration details & scores
+        // 1. Fetch all competitions with lean relations (members & locked scores only, no heavy details/criterion/user/invoice)
         $competitions = Competition::with([
             'category',
             'pic',
             'registrations' => function ($q) {
-                $q->with(['members', 'scores.details.criterion', 'user', 'invoice']);
+                $q->with([
+                    'members:id,registration_id,gender,full_name,school_name,nisn',
+                    'scores' => function ($sq) {
+                        $sq->select('id', 'registration_id', 'total_score', 'is_locked')
+                           ->where('is_locked', true);
+                    },
+                ]);
             },
         ])->withCount('registrations')->get();
 
@@ -986,10 +992,8 @@ class AdminController extends Controller
             $grandTotals['total_potential_income'] += $totalIncome;
         }
 
-        // 3. Tab 2: Master All Registrations
-        $allRegistrations = Registration::with(['competition.category', 'members', 'user', 'invoice'])
-            ->latest()
-            ->get();
+        // 3. Tab 2 Total Count (Lean count, no bulky get() query)
+        $totalRegistrationsCount = Registration::count();
 
         // 4. Tab 3: Winners Recap per Competition
         $winnersByCompetition = [];
@@ -1052,10 +1056,86 @@ class AdminController extends Controller
             'competitions',
             'financeRecap',
             'grandTotals',
-            'allRegistrations',
+            'totalRegistrationsCount',
             'winnersByCompetition',
             'standings'
         ));
+    }
+
+    /**
+     * AJAX server-side paginated API for Master Peserta in Recap.
+     * GET /admin/api/recap-participants
+     */
+    public function apiRecapParticipants(Request $request)
+    {
+        $query = Registration::with([
+            'competition:id,name,code,type,registration_fee',
+            'members:id,registration_id,full_name,nisn,school_name,gender',
+            'invoice:id,registration_id,payment_proof',
+        ])->latest();
+
+        if ($request->filled('competition_id') && $request->competition_id !== 'all') {
+            $query->where('competition_id', $request->competition_id);
+        }
+
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('search')) {
+            $s = trim($request->search);
+            $query->where(function ($q) use ($s) {
+                $q->where('registration_code', 'like', "%{$s}%")
+                  ->orWhere('institution_name', 'like', "%{$s}%")
+                  ->orWhere('team_name', 'like', "%{$s}%")
+                  ->orWhereHas('members', function ($mq) use ($s) {
+                      $mq->where('full_name', 'like', "%{$s}%")
+                         ->orWhere('nisn', 'like', "%{$s}%")
+                         ->orWhere('school_name', 'like', "%{$s}%");
+                  });
+            });
+        }
+
+        $perPage = (int) $request->input('per_page', 10);
+        if ($perPage <= 0 || $perPage > 100) {
+            $perPage = 10;
+        }
+
+        $paginated = $query->paginate($perPage);
+
+        $data = collect($paginated->items())->map(function ($reg) {
+            $firstMember = $reg->members->first();
+            $proofPath = $reg->payment_proof ?: ($reg->invoice?->payment_proof ?? null);
+            $displayName = $reg->isGanda()
+                ? ($reg->team_name ?: $reg->display_name)
+                : ($firstMember?->full_name ?: ($reg->team_name ?: 'Peserta #'.$reg->id));
+
+            return [
+                'id' => $reg->id,
+                'registration_code' => $reg->registration_code,
+                'display_name' => $displayName,
+                'nisn' => $firstMember?->nisn ?? '-',
+                'members_count' => $reg->members->count(),
+                'display_school' => $reg->display_school,
+                'competition_name' => $reg->competition->name ?? '-',
+                'competition_code' => $reg->competition->code ?? '-',
+                'competition_type' => $reg->competition->type ?? '-',
+                'sub_category' => $reg->sub_category,
+                'fee' => number_format($reg->fee, 0, ',', '.'),
+                'proof_url' => $proofPath ? asset('storage/' . $proofPath) : null,
+                'status' => $reg->status,
+            ];
+        });
+
+        return response()->json([
+            'data' => $data,
+            'current_page' => $paginated->currentPage(),
+            'last_page' => $paginated->lastPage(),
+            'per_page' => $paginated->perPage(),
+            'total' => $paginated->total(),
+            'from' => $paginated->firstItem() ?? 0,
+            'to' => $paginated->lastItem() ?? 0,
+        ]);
     }
 
     public function juriWasitUndian(Request $request)

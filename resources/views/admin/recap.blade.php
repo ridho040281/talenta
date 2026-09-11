@@ -185,51 +185,67 @@
             this.downloadingPng = false;
         }
     },
-    items: @js($allRegistrations->map(function($r) {
-        $firstMember = $r->members->first();
-        return [
-            'id' => $r->id,
-            'comp_id' => (string) $r->competition_id,
-            'status' => $r->status,
-            'search' => strtolower(($firstMember?->full_name ?? '') . ' ' . ($r->team_name ?? '') . ' ' . $r->members->pluck('full_name')->implode(' ') . ' ' . ($firstMember?->nisn ?? '') . ' ' . $r->display_school . ' ' . $r->institution_name . ' ' . $r->registration_code . ' ' . ($r->competition->name ?? '') . ' ' . ($r->sub_category ?? ''))
-        ];
-    })),
+    pesertaItems: [],
+    isPesertaLoading: false,
     pesertaCurrentPage: 1,
     pesertaPerPage: 10,
+    pesertaLastPage: 1,
+    pesertaTotal: 0,
+    pesertaFrom: 0,
+    pesertaTo: 0,
+    _searchDebounceTimer: null,
+    pesertaApiUrl: '{{ route("admin.api.recap_participants") }}',
+
     init() {
-        this.$watch('searchQuery', () => { this.pesertaCurrentPage = 1; });
-        this.$watch('selectedCategory', () => { this.pesertaCurrentPage = 1; });
-        this.$watch('selectedStatus', () => { this.pesertaCurrentPage = 1; });
-        this.$watch('pesertaPerPage', () => { this.pesertaCurrentPage = 1; });
-    },
-    get filteredItems() {
-        const query = (this.searchQuery || '').toLowerCase().trim();
-        return this.items.filter(item => {
-            const matchComp = (this.selectedCategory === 'all' || item.comp_id === String(this.selectedCategory));
-            const matchStatus = (this.selectedStatus === 'all' || item.status === this.selectedStatus);
-            const matchSearch = (!query || item.search.includes(query));
-            return matchComp && matchStatus && matchSearch;
+        this.fetchPeserta(true);
+        this.$watch('searchQuery', () => {
+            clearTimeout(this._searchDebounceTimer);
+            this._searchDebounceTimer = setTimeout(() => {
+                this.pesertaCurrentPage = 1;
+                this.fetchPeserta(false);
+            }, 350);
         });
+        this.$watch('selectedCategory', () => { this.pesertaCurrentPage = 1; this.fetchPeserta(true); });
+        this.$watch('selectedStatus', () => { this.pesertaCurrentPage = 1; this.fetchPeserta(true); });
+        this.$watch('pesertaPerPage', () => { this.pesertaCurrentPage = 1; this.fetchPeserta(true); });
     },
-    get pesertaTotalPages() {
-        return Math.max(1, Math.ceil(this.filteredItems.length / this.pesertaPerPage));
+
+    async fetchPeserta(immediate = false) {
+        this.isPesertaLoading = true;
+        const params = new URLSearchParams({
+            page: this.pesertaCurrentPage,
+            per_page: this.pesertaPerPage,
+            competition_id: this.selectedCategory,
+            status: this.selectedStatus,
+            search: this.searchQuery || ''
+        });
+
+        try {
+            const res = await fetch(`${this.pesertaApiUrl}?${params.toString()}`, {
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                this.pesertaItems = data.data || [];
+                this.pesertaCurrentPage = data.current_page || 1;
+                this.pesertaLastPage = data.last_page || 1;
+                this.pesertaTotal = data.total || 0;
+                this.pesertaFrom = data.from || 0;
+                this.pesertaTo = data.to || 0;
+            }
+        } catch (e) {
+            console.error('Failed to fetch peserta:', e);
+        } finally {
+            this.isPesertaLoading = false;
+        }
     },
-    get paginatedPesertaList() {
-        const page = Math.min(Math.max(1, this.pesertaCurrentPage), this.pesertaTotalPages);
-        const start = (page - 1) * this.pesertaPerPage;
-        return this.filteredItems.slice(start, start + this.pesertaPerPage);
-    },
-    get paginatedPesertaIds() {
-        return new Set(this.paginatedPesertaList.map(i => i.id));
-    },
-    isItemVisible(id) {
-        return this.paginatedPesertaIds.has(id);
-    },
+
     goToPesertaPage(p) {
         if (typeof p !== 'number') return;
         if (p < 1) p = 1;
-        if (p > this.pesertaTotalPages) p = this.pesertaTotalPages;
+        if (p > this.pesertaLastPage) p = this.pesertaLastPage;
         this.pesertaCurrentPage = p;
+        this.fetchPeserta(true);
         const el = document.getElementById('recapPesertaTableCard');
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     },
@@ -237,30 +253,22 @@
         if (this.pesertaCurrentPage > 1) this.goToPesertaPage(this.pesertaCurrentPage - 1);
     },
     nextPesertaPage() {
-        if (this.pesertaCurrentPage < this.pesertaTotalPages) this.goToPesertaPage(this.pesertaCurrentPage + 1);
+        if (this.pesertaCurrentPage < this.pesertaLastPage) this.goToPesertaPage(this.pesertaCurrentPage + 1);
     },
     get pesertaPaginationPages() {
-        const total = this.pesertaTotalPages;
+        const total = this.pesertaLastPage;
         const current = Math.min(Math.max(1, this.pesertaCurrentPage), total);
         if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
         if (current <= 4) return [1, 2, 3, 4, 5, '...', total];
         if (current >= total - 3) return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
         return [1, '...', current - 1, current, current + 1, '...', total];
     },
-    get pesertaPaginationStart() {
-        if (this.filteredItems.length === 0) return 0;
-        const page = Math.min(Math.max(1, this.pesertaCurrentPage), this.pesertaTotalPages);
-        return (page - 1) * this.pesertaPerPage + 1;
-    },
-    get pesertaPaginationEnd() {
-        const page = Math.min(Math.max(1, this.pesertaCurrentPage), this.pesertaTotalPages);
-        return Math.min(page * this.pesertaPerPage, this.filteredItems.length);
-    },
     resetFilters() {
         this.searchQuery = '';
         this.selectedCategory = 'all';
         this.selectedStatus = 'all';
         this.pesertaCurrentPage = 1;
+        this.fetchPeserta(true);
     }
 }">
 
@@ -331,7 +339,7 @@
         <button @click="activeTab = 'peserta'" :class="activeTab === 'peserta' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white'" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
             <i data-lucide="users" class="w-4 h-4"></i>
             <span>2. Master Seluruh Peserta</span>
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="activeTab === 'peserta' ? 'bg-white text-slate-900' : 'bg-white/[0.1] text-slate-300'">{{ $allRegistrations->count() }}</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="activeTab === 'peserta' ? 'bg-white text-slate-900' : 'bg-white/[0.1] text-slate-300'">{{ $totalRegistrationsCount }}</span>
         </button>
 
         <button @click="activeTab = 'pendaftar'" :class="activeTab === 'pendaftar' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white'" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
@@ -523,7 +531,7 @@
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#0C111D] text-slate-300 border border-white/[0.08] whitespace-nowrap">
-                            Menampilkan <strong class="text-[#84D0FF]" x-text="filteredItems.length"></strong> dari {{ $allRegistrations->count() }} Peserta
+                            Menampilkan <strong class="text-[#84D0FF]" x-text="pesertaTotal"></strong> dari {{ $totalRegistrationsCount }} Peserta
                         </span>
                     </div>
                 </div>
@@ -580,105 +588,97 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-white/[0.04] font-medium">
-                        @forelse($allRegistrations as $reg)
-                            <tr x-show="isItemVisible({{ $reg->id }})" class="hover:bg-white/[0.025] transition">
+                        <!-- Loading Spinner Row -->
+                        <tr x-show="isPesertaLoading" x-cloak>
+                            <td colspan="7" class="py-12 text-center text-slate-400">
+                                <div class="flex items-center justify-center gap-2">
+                                    <svg class="animate-spin w-5 h-5 text-[#7A5AF8]" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4l-3 3 3 3H4z"/></svg>
+                                    <span>Memuat data peserta...</span>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Rows Template -->
+                        <template x-for="reg in pesertaItems" :key="reg.id">
+                            <tr class="hover:bg-white/[0.025] transition" x-show="!isPesertaLoading">
                                 <!-- No. Registrasi -->
                                 <td class="py-3.5 px-4 whitespace-nowrap">
-                                    <span class="font-mono font-bold text-[#84D0FF] tracking-tight bg-[#4E6EFF]/10 px-2.5 py-1 rounded-lg border border-[#4E6EFF]/20 inline-block">
-                                        {{ $reg->registration_code }}
-                                    </span>
+                                    <span class="font-mono font-bold text-[#84D0FF] tracking-tight bg-[#4E6EFF]/10 px-2.5 py-1 rounded-lg border border-[#4E6EFF]/20 inline-block" x-text="reg.registration_code"></span>
                                 </td>
 
                                 <!-- Nama Peserta / Tim -->
                                 <td class="py-3.5 px-4 min-w-[200px]">
-                                    <div class="font-bold text-white text-sm leading-snug">
-                                        @if($reg->isGanda())
-                                            {{ $reg->team_name ?: $reg->display_name }}
-                                        @else
-                                            {{ $reg->members->first()?->full_name ?: ($reg->team_name ?: 'Peserta #' . $reg->id) }}
-                                        @endif
-                                    </div>
+                                    <div class="font-bold text-white text-sm leading-snug" x-text="reg.display_name"></div>
                                     <div class="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5 whitespace-nowrap">
-                                        <span>NISN: <span class="font-mono text-slate-300">{{ $reg->members->first()->nisn ?? '-' }}</span></span>
+                                        <span>NISN: <span class="font-mono text-slate-300" x-text="reg.nisn || '-'"></span></span>
                                         <span>•</span>
-                                        <span>{{ $reg->members->count() }} Anggota</span>
+                                        <span x-text="reg.members_count + ' Anggota'"></span>
                                     </div>
                                 </td>
 
                                 <!-- Asal Sekolah / Madrasah -->
                                 <td class="py-3.5 px-4 min-w-[180px]">
-                                    <span class="font-bold text-slate-200 block text-xs">
-                                        {{ $reg->display_school }}
-                                    </span>
+                                    <span class="font-bold text-slate-200 block text-xs" x-text="reg.display_school"></span>
                                 </td>
 
                                 <!-- Cabang Lomba & Kategori -->
                                 <td class="py-3.5 px-4 min-w-[220px]">
-                                    <span class="font-bold text-white block text-xs">
-                                        {{ $reg->competition->name }}
-                                    </span>
-                                    @if($reg->sub_category)
-                                        <span class="inline-flex items-center mt-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 whitespace-nowrap">
-                                            {{ $reg->sub_category }}
-                                        </span>
-                                    @else
-                                        <span class="inline-block mt-0.5 text-[10px] text-slate-400 uppercase font-mono">{{ $reg->competition->code }} ({{ $reg->competition->type }})</span>
-                                    @endif
+                                    <span class="font-bold text-white block text-xs" x-text="reg.competition_name"></span>
+                                    <template x-if="reg.sub_category">
+                                        <span class="inline-flex items-center mt-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 whitespace-nowrap" x-text="reg.sub_category"></span>
+                                    </template>
+                                    <template x-if="!reg.sub_category">
+                                        <span class="inline-block mt-0.5 text-[10px] text-slate-400 uppercase font-mono" x-text="reg.competition_code + ' (' + reg.competition_type + ')'"></span>
+                                    </template>
                                 </td>
 
                                 <!-- Biaya Daftar -->
                                 <td class="py-3.5 px-4 text-right whitespace-nowrap">
-                                    <span class="font-black text-emerald-400 font-mono text-sm">
-                                        Rp {{ number_format($reg->fee, 0, ',', '.') }}
-                                    </span>
+                                    <span class="font-black text-emerald-400 font-mono text-sm" x-text="'Rp ' + reg.fee"></span>
                                 </td>
 
                                 <!-- Bukti / Struk -->
                                 <td class="py-3.5 px-4 text-center whitespace-nowrap">
-                                    @php
-                                        $proofPath = $reg->payment_proof ?: ($reg->invoice?->payment_proof ?? null);
-                                    @endphp
-                                    @if($proofPath)
-                                        <a href="{{ asset('storage/' . $proofPath) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#4E6EFF]/15 text-[#84D0FF] font-bold hover:bg-[#4E6EFF]/25 transition text-xs border border-[#4E6EFF]/30 shadow-xs">
-                                            <i data-lucide="image" class="w-3.5 h-3.5"></i>
+                                    <template x-if="reg.proof_url">
+                                        <a :href="reg.proof_url" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#4E6EFF]/15 text-[#84D0FF] font-bold hover:bg-[#4E6EFF]/25 transition text-xs border border-[#4E6EFF]/30 shadow-xs">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                                             <span>Struk</span>
                                         </a>
-                                    @else
+                                    </template>
+                                    <template x-if="!reg.proof_url">
                                         <span class="text-slate-500 italic text-xs">-</span>
-                                    @endif
+                                    </template>
                                 </td>
 
                                 <!-- Status -->
                                 <td class="py-3.5 px-4 text-center whitespace-nowrap">
-                                    @if($reg->status === 'verified')
+                                    <template x-if="reg.status === 'verified'">
                                         <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
-                                            <i data-lucide="check-circle" class="w-3 h-3"></i>
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                             <span>✔ LUNAS / TERVERIFIKASI</span>
                                         </span>
-                                    @elseif($reg->status === 'rejected')
+                                    </template>
+                                    <template x-if="reg.status === 'rejected'">
                                         <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-rose-500/15 text-rose-400 border border-rose-500/30 whitespace-nowrap">
-                                            <i data-lucide="x-circle" class="w-3 h-3"></i>
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                             <span>✕ DITOLAK</span>
                                         </span>
-                                    @else
+                                    </template>
+                                    <template x-if="reg.status !== 'verified' && reg.status !== 'rejected'">
                                         <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-500/15 text-amber-400 border border-amber-500/30 whitespace-nowrap">
-                                            <i data-lucide="clock" class="w-3 h-3"></i>
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                             <span>⏳ PENDING</span>
                                         </span>
-                                    @endif
+                                    </template>
                                 </td>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="py-12 text-center text-slate-500">Belum ada peserta terdaftar.</td>
-                            </tr>
-                        @endforelse
+                        </template>
 
-                        <!-- Empty state when search filters yield no results -->
-                        <tr x-show="filteredItems.length === 0 && {{ $allRegistrations->count() }} > 0" x-cloak>
+                        <!-- Empty state -->
+                        <tr x-show="!isPesertaLoading && pesertaItems.length === 0" x-cloak>
                             <td colspan="7" class="py-12 text-center text-slate-400">
                                 <div class="flex flex-col items-center justify-center space-y-2">
-                                    <i data-lucide="search-x" class="w-8 h-8 text-slate-500"></i>
+                                    <svg class="w-8 h-8 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                                     <p class="font-bold text-sm text-slate-300">Tidak ada peserta yang cocok dengan filter pencarian</p>
                                     <p class="text-xs text-slate-500">Coba gunakan kata kunci lain atau reset filter</p>
                                     <button @click="resetFilters()" class="mt-2 px-3.5 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-xs font-bold text-white transition cursor-pointer">
@@ -696,12 +696,9 @@
                 <!-- Left: Info & Per Page Selector -->
                 <div class="flex flex-wrap items-center justify-center sm:justify-start gap-3 text-xs text-slate-400">
                     <div>
-                        Menampilkan <span class="font-bold text-white font-mono" x-text="pesertaPaginationStart"></span>
-                        sampai <span class="font-bold text-white font-mono" x-text="pesertaPaginationEnd"></span>
-                        dari <span class="font-bold text-[#84D0FF] font-mono" x-text="filteredItems.length"></span> peserta
-                        <span x-show="filteredItems.length < items.length" class="text-slate-500 text-[11px]">
-                            (total data: <span x-text="items.length"></span>)
-                        </span>
+                        Menampilkan <span class="font-bold text-white font-mono" x-text="pesertaFrom"></span>
+                        sampai <span class="font-bold text-white font-mono" x-text="pesertaTo"></span>
+                        dari <span class="font-bold text-[#84D0FF] font-mono" x-text="pesertaTotal"></span> peserta
                     </div>
 
                     <span class="text-white/[0.1] hidden sm:inline">•</span>
@@ -714,13 +711,12 @@
                             <option :value="25">25 baris</option>
                             <option :value="50">50 baris</option>
                             <option :value="100">100 baris</option>
-                            <option :value="999999">Semua</option>
                         </select>
                     </div>
                 </div>
 
                 <!-- Right: Pagination Buttons -->
-                <div class="flex items-center gap-1 sm:gap-1.5" x-show="pesertaTotalPages > 1">
+                <div class="flex items-center gap-1 sm:gap-1.5" x-show="pesertaLastPage > 1">
                     <!-- Prev Button -->
                     <button 
                         type="button" 
@@ -759,8 +755,8 @@
                     <button 
                         type="button" 
                         @click="nextPesertaPage()" 
-                        :disabled="pesertaCurrentPage === pesertaTotalPages"
-                        :class="pesertaCurrentPage === pesertaTotalPages ? 'opacity-30 cursor-not-allowed text-slate-500 border-white/[0.04]' : 'hover:bg-white/[0.1] text-slate-200 border-white/[0.1] hover:text-white cursor-pointer'"
+                        :disabled="pesertaCurrentPage === pesertaLastPage"
+                        :class="pesertaCurrentPage === pesertaLastPage ? 'opacity-30 cursor-not-allowed text-slate-500 border-white/[0.04]' : 'hover:bg-white/[0.1] text-slate-200 border-white/[0.1] hover:text-white cursor-pointer'"
                         class="px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold border transition flex items-center gap-1 bg-white/[0.04]"
                         title="Halaman Berikutnya">
                         <span class="hidden sm:inline">Berikutnya</span>

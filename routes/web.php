@@ -167,6 +167,7 @@ Route::middleware(['auth', 'role:superadmin,panitia'])->prefix('admin')->name('a
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/recap', [AdminController::class, 'recap'])->name('recap');
     Route::get('/rekap-nilai', [AdminController::class, 'recap'])->name('scores');
+    Route::get('/api/recap-participants', [AdminController::class, 'apiRecapParticipants'])->name('api.recap_participants');
     Route::get('/berita-acara', [OfficialReportController::class, 'index'])->name('berita-acara.index');
     Route::get('/berita-acara/cetak', [OfficialReportController::class, 'print'])->name('berita-acara.print');
 
