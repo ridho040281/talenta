@@ -31,29 +31,38 @@
 
         .print-page {
             width: 210mm;
+            height: 297mm;
+            max-height: 297mm;
             min-height: 297mm;
             margin: 0 auto;
             background: white;
             box-sizing: border-box;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
         }
 
         @media screen {
             .print-page {
                 box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.1), 0 2px 6px -1px rgba(0, 0, 0, 0.06);
-                border: 1px solid #e2e8f0;
+                border: 1px solid #cbd5e1;
                 border-radius: 6px;
-                padding: 1.5cm 2cm 1.2cm 2cm;
+                padding: 12mm 18mm 10mm 18mm;
                 margin-bottom: 24px;
             }
         }
 
         @media print {
-            body { 
+            html, body { 
+                width: 210mm !important;
+                height: 297mm !important;
                 background: white !important; 
                 -webkit-print-color-adjust: exact; 
                 print-color-adjust: exact; 
                 margin: 0 !important; 
-                padding: 0 !important;
+                padding: 0 !important; 
             }
             .no-print { 
                 display: none !important; 
@@ -62,17 +71,24 @@
                 box-shadow: none !important; 
                 border: none !important; 
                 border-radius: 0 !important; 
-                margin: 0 auto !important; 
-                padding: 1.5cm 2cm 1.2cm 2cm !important;
-                page-break-after: always;
-                break-after: page;
-                min-height: 297mm;
-                max-width: 210mm;
-                width: 210mm;
+                margin: 0 !important; 
+                padding: 12mm 18mm 10mm 18mm !important;
+                page-break-after: always !important;
+                break-after: page !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                width: 210mm !important;
+                height: 297mm !important;
+                max-height: 297mm !important;
+                min-height: 297mm !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+                overflow: hidden !important;
             }
             .print-page:last-child {
-                page-break-after: auto;
-                break-after: auto;
+                page-break-after: auto !important;
+                break-after: auto !important;
             }
         }
 
@@ -199,14 +215,14 @@
                         <table class="w-full text-left text-xs border-collapse border border-slate-900">
                             <thead>
                                 <tr class="bg-slate-200/90 text-slate-900 font-bold uppercase text-[10px] tracking-wider text-center border-b border-slate-900">
-                                    <th class="py-2 px-1.5 border border-slate-900 w-8">No</th>
-                                    <th class="py-2 px-2 border border-slate-900 {{ $hideDrawNumber ? 'w-28' : 'w-24' }}">No. Peserta</th>
+                                    <th class="py-1.5 px-1.5 border border-slate-900 w-8">No</th>
+                                    <th class="py-1.5 px-2 border border-slate-900 {{ $hideDrawNumber ? 'w-28' : 'w-24' }}">No. Peserta</th>
                                     @if(!$hideDrawNumber)
-                                        <th class="py-2 px-1.5 border border-slate-900 w-20">No. Undian</th>
+                                        <th class="py-1.5 px-1.5 border border-slate-900 w-20">No. Undian</th>
                                     @endif
-                                    <th class="py-2 px-3 border border-slate-900 text-left">Nama Atlet / Peserta</th>
-                                    <th class="py-2 px-3 border border-slate-900 text-left">Asal Sekolah / Madrasah</th>
-                                    <th class="py-2 px-2 border border-slate-900 w-24 text-center">Paraf</th>
+                                    <th class="py-1.5 px-3 border border-slate-900 text-left">Nama Atlet / Peserta</th>
+                                    <th class="py-1.5 px-3 border border-slate-900 text-left">Asal Sekolah / Madrasah</th>
+                                    <th class="py-1.5 px-2 border border-slate-900 w-24 text-center">Paraf</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-800 text-[11px]">
@@ -214,18 +230,19 @@
                                     @php
                                         $firstMember = $reg->members->first();
                                         $isGanda = $reg->members->count() > 1;
+                                        $rowNum = ($page['start_number'] ?? 1) + $idx;
                                     @endphp
                                     <tr class="border-b border-slate-900">
-                                        <td class="py-2 px-1.5 border border-slate-900 text-center font-bold">{{ $idx + 1 }}</td>
-                                        <td class="py-2 px-2 border border-slate-900 font-mono font-bold text-center text-xs">
+                                        <td class="py-1.5 px-1.5 border border-slate-900 text-center font-bold">{{ $rowNum }}</td>
+                                        <td class="py-1.5 px-2 border border-slate-900 font-mono font-bold text-center text-xs">
                                             {{ $reg->participant_number ?: '-' }}
                                         </td>
                                         @if(!$hideDrawNumber)
-                                            <td class="py-2 px-1.5 border border-slate-900 text-center font-black text-sm font-mono text-slate-950">
+                                            <td class="py-1.5 px-1.5 border border-slate-900 text-center font-black text-sm font-mono text-slate-950">
                                                 {{ $reg->draw_number ? '#' . $reg->draw_number : '-' }}
                                             </td>
                                         @endif
-                                        <td class="py-2 px-3 border border-slate-900 font-bold">
+                                        <td class="py-1.5 px-3 border border-slate-900 font-bold">
                                             @if($isGanda)
                                                 <div class="text-slate-950 font-black text-xs">{{ $reg->team_name ?: $reg->display_name }}</div>
                                                 <div class="text-[10px] text-slate-600 font-medium mt-0.5 leading-tight">
@@ -237,7 +254,7 @@
                                                 <div class="text-slate-950 font-bold">{{ $firstMember?->full_name ?: $reg->display_name }}</div>
                                             @endif
                                         </td>
-                                        <td class="py-2 px-3 border border-slate-900 font-medium">
+                                        <td class="py-1.5 px-3 border border-slate-900 font-medium">
                                             @if($isGanda && $reg->members->pluck('school_name')->filter()->unique()->count() > 1)
                                                 <div class="text-[10px] text-slate-800 leading-tight">
                                                     @foreach($reg->members as $m)
@@ -248,8 +265,8 @@
                                                 <span>{{ $reg->institution_name }}</span>
                                             @endif
                                         </td>
-                                        <td class="py-2 px-2 border border-slate-900 text-center text-slate-400 text-[10px]">
-                                            {{ $idx + 1 }}. ........
+                                        <td class="py-1.5 px-2 border border-slate-900 text-center text-slate-400 text-[10px]">
+                                            {{ $rowNum }}. ........
                                         </td>
                                     </tr>
                                 @empty
@@ -263,40 +280,55 @@
                         </table>
                     </div>
 
-                    <!-- ==================== TANDA TANGAN RESMI (DINAMIS MENGIKUTI TABEL AKHIR) ==================== -->
-                    <div class="mt-6 pt-2" style="page-break-inside: avoid; break-inside: avoid;">
-                        <div class="flex justify-between items-start text-xs text-slate-800">
-                            <div class="text-center w-56 flex flex-col justify-between">
-                                <div>
-                                    <div>Mengetahui,</div>
-                                    <div class="font-bold">Ketua Panitia</div>
-                                </div>
-                                <div class="pt-12">
-                                    <div class="font-black text-slate-950 underline underline-offset-2">{{ $appSettings['committee_chairman_name'] ?? 'KHOIRUL ANAM, S.Pd' }}</div>
-                                    <div class="text-[10px] text-slate-500">{{ !empty($appSettings['committee_chairman_nip']) ? 'NIP. ' . $appSettings['committee_chairman_nip'] : 'Ketua Panitia Pelaksana' }}</div>
-                                </div>
-                            </div>
-
-                            <div class="text-center w-60 flex flex-col justify-between">
-                                <div>
-                                    <div>Blitar, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</div>
-                                    <div class="font-bold">Koordinator Cabang {{ $page['competition_name'] }}</div>
-                                </div>
-                                <div class="pt-12">
-                                    <div class="font-black text-slate-950 underline underline-offset-2">
-                                        {{ $page['pic_name'] ?? (Auth::user()->name ?: 'PANITIA PELAKSANA') }}
+                    <!-- ==================== TANDA TANGAN RESMI / BERSAMBUNG ==================== -->
+                    @if($page['has_signatures'] ?? true)
+                        <div class="mt-4 pt-1" style="page-break-inside: avoid; break-inside: avoid;">
+                            <div class="flex justify-between items-start text-xs text-slate-800">
+                                <div class="text-center w-56 flex flex-col justify-between">
+                                    <div>
+                                        <div>Mengetahui,</div>
+                                        <div class="font-bold">Ketua Panitia</div>
                                     </div>
-                                    <div class="text-[10px] text-slate-500">{{ $page['pic_position'] ?? 'Panitia Pelaksana' }}</div>
+                                    <div class="pt-10">
+                                        <div class="font-black text-slate-950 underline underline-offset-2">{{ $appSettings['committee_chairman_name'] ?? 'KHOIRUL ANAM, S.Pd' }}</div>
+                                        <div class="text-[10px] text-slate-500">{{ !empty($appSettings['committee_chairman_nip']) ? 'NIP. ' . $appSettings['committee_chairman_nip'] : 'Ketua Panitia Pelaksana' }}</div>
+                                    </div>
+                                </div>
+
+                                <div class="text-center w-60 flex flex-col justify-between">
+                                    <div>
+                                        <div>Blitar, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</div>
+                                        <div class="font-bold">Koordinator Cabang {{ $page['competition_name'] }}</div>
+                                    </div>
+                                    <div class="pt-10">
+                                        <div class="font-black text-slate-950 underline underline-offset-2">
+                                            {{ $page['pic_name'] ?? (Auth::user()->name ?: 'PANITIA PELAKSANA') }}
+                                        </div>
+                                        <div class="text-[10px] text-slate-500">{{ $page['pic_position'] ?? 'Panitia Pelaksana' }}</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    @else
+                        <div class="mt-3 text-right">
+                            <span class="inline-block text-[10px] font-mono italic text-slate-500 bg-slate-100 px-3 py-1 rounded border border-slate-200">
+                                [ Bersambung ke Halaman Berikutnya... ]
+                            </span>
+                        </div>
+                    @endif
 
                 </div>
 
                 <!-- Footer Page Info (Tetap di bagian paling bawah halaman) -->
-                <div class="mt-auto pt-2 border-t border-slate-200 flex items-center justify-between text-[9px] text-slate-400 font-mono">
-                    <span>Panitia {{ $appSettings['event_name'] ?? 'Milad ke-57' }} {{ $appSettings['institution_name'] ?? 'MTsN 1 Blitar' }} • Aplikasi {{ $appSettings['app_name'] ?? 'TALENTA' }}</span>
+                @php
+                    $eventName = $appSettings['event_name'] ?? 'Milad ke-57';
+                    $instName = $appSettings['institution_name'] ?? 'MTsN 1 Blitar';
+                    $footerTitle = (stripos($eventName, 'mtsn') !== false || stripos($eventName, 'madrasah') !== false) 
+                        ? $eventName 
+                        : ($eventName . ' ' . $instName);
+                @endphp
+                <div class="mt-auto pt-2 border-t border-slate-300 flex items-center justify-between text-[9px] text-slate-500 font-mono">
+                    <span>Panitia {{ $footerTitle }} • {{ $appSettings['app_name'] ?? 'TALENTA' }}</span>
                     <span>Halaman {{ $pageIndex + 1 }} dari {{ count($pages) }}</span>
                 </div>
 

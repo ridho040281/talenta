@@ -161,6 +161,71 @@ class PicController extends Controller
 
         $registrations = $query->get();
 
+        // Helper closure to add paginated sector pages
+        $addPaginatedSector = function (&$pages, $comp, $subGroupTitle, $sectorTitle, $genderBadgeClass, $regs, $picName, $picPosition) {
+            $total = $regs->count();
+
+            // If 16 or fewer, it fits on 1 single page with signatures
+            if ($total <= 16) {
+                $pages[] = [
+                    'competition' => $comp,
+                    'competition_name' => $comp->name,
+                    'sub_group_title' => $subGroupTitle,
+                    'sector_title' => $sectorTitle,
+                    'gender_badge_class' => $genderBadgeClass,
+                    'registrations' => $regs,
+                    'start_number' => 1,
+                    'has_signatures' => true,
+                    'pic_name' => $picName,
+                    'pic_position' => $picPosition,
+                ];
+                return;
+            }
+
+            // If > 16, split into multiple pages:
+            // Intermediate pages have NO signatures (capacity up to 20).
+            // Final page HAS signatures (capacity up to 16).
+            $remaining = $regs;
+            $startNum = 1;
+            $chunks = [];
+
+            while ($remaining->count() > 16) {
+                // If remaining <= 32, split evenly between current and next so both pages are balanced
+                $take = ($remaining->count() <= 32) ? (int) ceil($remaining->count() / 2) : 20;
+                $chunks[] = [
+                    'items' => $remaining->slice(0, $take)->values(),
+                    'has_signatures' => false,
+                    'start_number' => $startNum,
+                ];
+                $startNum += $take;
+                $remaining = $remaining->slice($take)->values();
+            }
+
+            // Final chunk with signatures
+            $chunks[] = [
+                'items' => $remaining,
+                'has_signatures' => true,
+                'start_number' => $startNum,
+            ];
+
+            $totalChunks = count($chunks);
+            foreach ($chunks as $cIdx => $chunk) {
+                $suffix = ($totalChunks > 1) ? ' (Hal. ' . ($cIdx + 1) . '/' . $totalChunks . ')' : '';
+                $pages[] = [
+                    'competition' => $comp,
+                    'competition_name' => $comp->name,
+                    'sub_group_title' => $subGroupTitle,
+                    'sector_title' => $sectorTitle . $suffix,
+                    'gender_badge_class' => $genderBadgeClass,
+                    'registrations' => $chunk['items'],
+                    'start_number' => $chunk['start_number'],
+                    'has_signatures' => $chunk['has_signatures'],
+                    'pic_name' => $picName,
+                    'pic_position' => $picPosition,
+                ];
+            }
+        };
+
         // Group into printable separate pages
         $pages = [];
         $competitions = $registrations->groupBy('competition_id');
@@ -207,28 +272,10 @@ class PicController extends Controller
                         $piRegs = $catRegs->filter(fn ($r) => $r->primary_gender === 'P')->sortBy(fn ($r) => $r->draw_number ?: 9999)->values();
 
                         if ($paRegs->isNotEmpty() && ($genderFilter === 'all' || $genderFilter === 'L')) {
-                            $pages[] = [
-                                'competition' => $comp,
-                                'competition_name' => $comp->name,
-                                'sub_group_title' => '👦 KELOMPOK PUTRA (PA)',
-                                'sector_title' => $catLabel.' - TUNGGAL PUTRA',
-                                'gender_badge_class' => 'bg-blue-100 text-blue-900',
-                                'registrations' => $paRegs,
-                                'pic_name' => $picName,
-                                'pic_position' => $picPosition,
-                            ];
+                            $addPaginatedSector($pages, $comp, '👦 KELOMPOK PUTRA (PA)', $catLabel.' - TUNGGAL PUTRA', 'bg-blue-100 text-blue-900', $paRegs, $picName, $picPosition);
                         }
                         if ($piRegs->isNotEmpty() && ($genderFilter === 'all' || $genderFilter === 'P')) {
-                            $pages[] = [
-                                'competition' => $comp,
-                                'competition_name' => $comp->name,
-                                'sub_group_title' => '👧 KELOMPOK PUTRI (PI)',
-                                'sector_title' => $catLabel.' - TUNGGAL PUTRI',
-                                'gender_badge_class' => 'bg-rose-100 text-rose-900',
-                                'registrations' => $piRegs,
-                                'pic_name' => $picName,
-                                'pic_position' => $picPosition,
-                            ];
+                            $addPaginatedSector($pages, $comp, '👧 KELOMPOK PUTRI (PI)', $catLabel.' - TUNGGAL PUTRI', 'bg-rose-100 text-rose-900', $piRegs, $picName, $picPosition);
                         }
                     }
                 }
@@ -246,28 +293,10 @@ class PicController extends Controller
                         $gandaPi = $gandaAllRegs->filter(fn ($r) => $r->primary_gender === 'P' || stripos($r->match_type, 'Putri') !== false || stripos($r->match_type, 'PI') !== false)->sortBy(fn ($r) => $r->draw_number ?: 9999)->values();
 
                         if ($gandaPa->isNotEmpty() && ($genderFilter === 'all' || $genderFilter === 'L')) {
-                            $pages[] = [
-                                'competition' => $comp,
-                                'competition_name' => $comp->name,
-                                'sub_group_title' => '👥 KELOMPOK GANDA PUTRA (PA)',
-                                'sector_title' => 'GANDA PUTRA (PA) - SEMUA KELAS',
-                                'gender_badge_class' => 'bg-blue-100 text-blue-900',
-                                'registrations' => $gandaPa,
-                                'pic_name' => $picName,
-                                'pic_position' => $picPosition,
-                            ];
+                            $addPaginatedSector($pages, $comp, '👥 KELOMPOK GANDA PUTRA (PA)', 'GANDA PUTRA (PA) - SEMUA KELAS', 'bg-blue-100 text-blue-900', $gandaPa, $picName, $picPosition);
                         }
                         if ($gandaPi->isNotEmpty() && ($genderFilter === 'all' || $genderFilter === 'P')) {
-                            $pages[] = [
-                                'competition' => $comp,
-                                'competition_name' => $comp->name,
-                                'sub_group_title' => '👥 KELOMPOK GANDA PUTRI (PI)',
-                                'sector_title' => 'GANDA PUTRI (PI) - SEMUA KELAS',
-                                'gender_badge_class' => 'bg-rose-100 text-rose-900',
-                                'registrations' => $gandaPi,
-                                'pic_name' => $picName,
-                                'pic_position' => $picPosition,
-                            ];
+                            $addPaginatedSector($pages, $comp, '👥 KELOMPOK GANDA PUTRI (PI)', 'GANDA PUTRI (PI) - SEMUA KELAS', 'bg-rose-100 text-rose-900', $gandaPi, $picName, $picPosition);
                         }
                     }
                 }
@@ -299,28 +328,10 @@ class PicController extends Controller
                         $piRegs = $catRegs->filter(fn ($r) => $r->primary_gender === 'P')->sortBy(fn ($r) => $r->draw_number ?: 9999)->values();
 
                         if ($paRegs->isNotEmpty() && ($genderFilter === 'all' || $genderFilter === 'L')) {
-                            $pages[] = [
-                                'competition' => $comp,
-                                'competition_name' => $comp->name,
-                                'sub_group_title' => '👦 KELOMPOK PUTRA (PA)',
-                                'sector_title' => $catLabel.' - TUNGGAL PUTRA',
-                                'gender_badge_class' => 'bg-blue-100 text-blue-900',
-                                'registrations' => $paRegs,
-                                'pic_name' => $picName,
-                                'pic_position' => $picPosition,
-                            ];
+                            $addPaginatedSector($pages, $comp, '👦 KELOMPOK PUTRA (PA)', $catLabel.' - TUNGGAL PUTRA', 'bg-blue-100 text-blue-900', $paRegs, $picName, $picPosition);
                         }
                         if ($piRegs->isNotEmpty() && ($genderFilter === 'all' || $genderFilter === 'P')) {
-                            $pages[] = [
-                                'competition' => $comp,
-                                'competition_name' => $comp->name,
-                                'sub_group_title' => '👧 KELOMPOK PUTRI (PI)',
-                                'sector_title' => $catLabel.' - TUNGGAL PUTRI',
-                                'gender_badge_class' => 'bg-rose-100 text-rose-900',
-                                'registrations' => $piRegs,
-                                'pic_name' => $picName,
-                                'pic_position' => $picPosition,
-                            ];
+                            $addPaginatedSector($pages, $comp, '👧 KELOMPOK PUTRI (PI)', $catLabel.' - TUNGGAL PUTRI', 'bg-rose-100 text-rose-900', $piRegs, $picName, $picPosition);
                         }
                     }
                 }
@@ -331,40 +342,13 @@ class PicController extends Controller
                 $otherRegs = $compRegs->filter(fn ($r) => ! in_array($r->primary_gender, ['L', 'P']))->sortBy(fn ($r) => $r->draw_number ?: 9999)->values();
 
                 if (($paRegs->isNotEmpty() || ($piRegs->isEmpty() && $otherRegs->isEmpty())) && ($genderFilter === 'all' || $genderFilter === 'L')) {
-                    $pages[] = [
-                        'competition' => $comp,
-                        'competition_name' => $comp->name,
-                        'sub_group_title' => '👦 KELOMPOK PUTRA (PA)',
-                        'sector_title' => $comp->category->name ?? 'Tingkat SD/MI',
-                        'gender_badge_class' => 'bg-blue-100 text-blue-900',
-                        'registrations' => $paRegs,
-                        'pic_name' => $picName,
-                        'pic_position' => $picPosition,
-                    ];
+                    $addPaginatedSector($pages, $comp, '👦 KELOMPOK PUTRA (PA)', $comp->category->name ?? 'Tingkat SD/MI', 'bg-blue-100 text-blue-900', $paRegs, $picName, $picPosition);
                 }
                 if ($piRegs->isNotEmpty() && ($genderFilter === 'all' || $genderFilter === 'P')) {
-                    $pages[] = [
-                        'competition' => $comp,
-                        'competition_name' => $comp->name,
-                        'sub_group_title' => '👧 KELOMPOK PUTRI (PI)',
-                        'sector_title' => $comp->category->name ?? 'Tingkat SD/MI',
-                        'gender_badge_class' => 'bg-rose-100 text-rose-900',
-                        'registrations' => $piRegs,
-                        'pic_name' => $picName,
-                        'pic_position' => $picPosition,
-                    ];
+                    $addPaginatedSector($pages, $comp, '👧 KELOMPOK PUTRI (PI)', $comp->category->name ?? 'Tingkat SD/MI', 'bg-rose-100 text-rose-900', $piRegs, $picName, $picPosition);
                 }
                 if ($otherRegs->isNotEmpty() && $genderFilter === 'all') {
-                    $pages[] = [
-                        'competition' => $comp,
-                        'competition_name' => $comp->name,
-                        'sub_group_title' => '👥 KELOMPOK BEREGU / CAMPURAN',
-                        'sector_title' => $comp->category->name ?? 'Tingkat SD/MI',
-                        'gender_badge_class' => 'bg-purple-100 text-purple-900',
-                        'registrations' => $otherRegs,
-                        'pic_name' => $picName,
-                        'pic_position' => $picPosition,
-                    ];
+                    $addPaginatedSector($pages, $comp, '👥 KELOMPOK BEREGU / CAMPURAN', $comp->category->name ?? 'Tingkat SD/MI', 'bg-purple-100 text-purple-900', $otherRegs, $picName, $picPosition);
                 }
             }
         }
