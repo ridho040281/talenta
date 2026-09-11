@@ -82,17 +82,23 @@
 
         let container = null;
         try {
+            const targetExportWidth = 1100;
+
             // Buat container staging off-screen dengan lebar pasti 1100px
             // Bebas dari kendala lebar layar HP, laptop kecil, zoom browser, sidebar, dan overflow parent
             container = document.createElement('div');
             container.setAttribute('x-ignore', '');
-            container.style.position = 'fixed';
-            container.style.top = '-99999px';
+            container.id = 'rekapPendaftarExportStaging';
+            container.style.position = 'absolute';
+            container.style.top = '0';
             container.style.left = '0';
-            container.style.width = '1100px';
+            container.style.width = targetExportWidth + 'px';
+            container.style.minWidth = targetExportWidth + 'px';
+            container.style.maxWidth = targetExportWidth + 'px';
             container.style.zIndex = '-99999';
-            container.style.opacity = '1';
+            container.style.opacity = '0.01';
             container.style.pointerEvents = 'none';
+            container.style.overflow = 'visible';
 
             // Kloning kartu infografis
             const clone = originalCard.cloneNode(true);
@@ -100,15 +106,19 @@
             clone.id = 'rekapPendaftarCard_exportClone';
             
             // Format styling kloning agar tidak terpotong sama sekali
-            clone.style.width = '1100px';
-            clone.style.minWidth = '1100px';
-            clone.style.maxWidth = '1100px';
-            clone.style.margin = '0';
+            clone.style.width = targetExportWidth + 'px';
+            clone.style.minWidth = targetExportWidth + 'px';
+            clone.style.maxWidth = targetExportWidth + 'px';
+            clone.style.margin = '0 auto';
             clone.style.padding = '40px 44px 48px 44px';
             clone.style.boxSizing = 'border-box';
             clone.style.backgroundColor = '#0C111D';
             clone.style.borderRadius = '24px';
             clone.style.overflow = 'visible';
+
+            // Sembunyikan elemen petunjuk mobile di hasil export
+            const mobileSwipeHints = clone.querySelectorAll('.mobile-swipe-hint');
+            mobileSwipeHints.forEach(el => el.style.display = 'none');
 
             // Bersihkan semua atribut Alpine (x-show, x-data, dll) dari klon agar MutationObserver Alpine tidak menyembunyikan baris
             clone.removeAttribute('x-data');
@@ -135,12 +145,31 @@
                 }
             });
 
-            // Pastikan kontainer tabel di dalam klon tidak memiliki scrollbar atau pemotongan overflow
+            // Pastikan kontainer tabel di dalam klon tidak memiliki scrollbar atau pemotongan overflow & reset scroll
             const tableContainers = clone.querySelectorAll('.rekap-table-container');
             tableContainers.forEach(el => {
+                el.scrollLeft = 0;
                 el.style.overflow = 'visible';
                 el.style.overflowX = 'visible';
                 el.style.width = '100%';
+                el.style.maxWidth = '100%';
+                el.style.minWidth = '1000px';
+            });
+
+            // Pastikan elemen tabel di dalam klon menggunakan lebar penuh 100%
+            const tables = clone.querySelectorAll('table');
+            tables.forEach(t => {
+                t.style.width = '100%';
+                t.style.minWidth = '1000px';
+                t.style.tableLayout = 'auto';
+            });
+
+            // Reset scrollLeft pada seluruh elemen turunan
+            clone.scrollLeft = 0;
+            clone.scrollTop = 0;
+            clone.querySelectorAll('*').forEach(el => {
+                if (el.scrollLeft) el.scrollLeft = 0;
+                if (el.scrollTop) el.scrollTop = 0;
             });
 
             container.appendChild(clone);
@@ -150,14 +179,22 @@
             await new Promise(resolve => setTimeout(resolve, 250));
 
             // Ukur dimensi elemen sesungguhnya secara akurat
-            const exportWidth = clone.offsetWidth || 1100;
-            const exportHeight = (clone.scrollHeight || clone.offsetHeight) + 12;
+            const exportHeight = Math.max(600, (clone.scrollHeight || clone.offsetHeight) + 16);
 
             // Generate gambar beresolusi tinggi dengan htmlToImage
             const dataUrl = await htmlToImage.toPng(clone, {
                 pixelRatio: 2,
-                width: exportWidth,
+                width: targetExportWidth,
                 height: exportHeight,
+                canvasWidth: targetExportWidth * 2,
+                canvasHeight: exportHeight * 2,
+                style: {
+                    width: targetExportWidth + 'px',
+                    minWidth: targetExportWidth + 'px',
+                    maxWidth: targetExportWidth + 'px',
+                    margin: '0',
+                    transform: 'none',
+                },
                 backgroundColor: '#0C111D',
                 cacheBust: true,
                 imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
@@ -818,13 +855,13 @@
         </div>
 
         <!-- ==================== EXPORTABLE INFOGRAPHIC CARD CONTAINER ==================== -->
-        <div id="rekapPendaftarCard" class="w-full max-w-5xl mx-auto rounded-3xl p-6 sm:p-8 lg:p-10 pb-8 sm:pb-10 space-y-7 relative overflow-hidden shadow-2xl border border-white/[0.12]" style="background-color: #0C111D; color: #F8FAFC;">
+        <div id="rekapPendaftarCard" class="w-full max-w-5xl mx-auto rounded-3xl p-3.5 sm:p-8 lg:p-10 pb-6 sm:pb-10 space-y-5 sm:space-y-7 relative overflow-hidden shadow-2xl border border-white/[0.12]" style="background-color: #0C111D; color: #F8FAFC;">
             
             <!-- Ambient Glow for Aesthetic Quality -->
             <div class="absolute inset-0 bg-gradient-to-b from-[#7A5AF8]/10 via-[#4E6EFF]/5 to-transparent pointer-events-none"></div>
 
             <!-- HEADER / JUDUL INFOGRAFIS SESUAI INSTRUKSI -->
-            <div class="text-center relative z-10 space-y-1 sm:space-y-1.5">
+            <div class="text-center relative z-10 space-y-1 sm:space-y-1.5 px-1">
                 @php
                     $recapHeaderLogo = !empty($appSettings['event_logo']) ? $appSettings['event_logo'] : (!empty($appSettings['app_logo']) ? $appSettings['app_logo'] : null);
                 @endphp
@@ -833,39 +870,39 @@
                         <img src="{{ asset('storage/' . $recapHeaderLogo) }}" 
                              alt="Logo" 
                              crossorigin="anonymous"
-                             class="h-28 sm:h-36 md:h-40 w-auto max-w-[340px] sm:max-w-[400px] object-contain drop-shadow-2xl">
+                             class="h-20 sm:h-36 md:h-40 w-auto max-w-[280px] sm:max-w-[400px] object-contain drop-shadow-2xl">
                     </div>
                 @endif
 
-                <div class="text-2xl sm:text-3xl lg:text-4xl font-black tracking-wider text-white uppercase font-display drop-shadow-md leading-tight whitespace-nowrap">
+                <div class="text-xl sm:text-3xl lg:text-4xl font-black tracking-wider text-white uppercase font-display drop-shadow-md leading-tight export-header-title">
                     REKAPITULASI
                 </div>
-                <div class="text-base sm:text-lg lg:text-xl font-extrabold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-blue-200 via-indigo-200 to-purple-200 uppercase leading-tight whitespace-nowrap">
+                <div class="text-xs sm:text-lg lg:text-xl font-extrabold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-blue-200 via-indigo-200 to-purple-200 uppercase leading-tight text-center px-1 break-words sm:whitespace-nowrap export-header-title">
                     PENDAFTAR PERLOMBAAN &amp; PERTANDINGAN
                 </div>
-                <div class="text-xl sm:text-2xl lg:text-3xl font-black tracking-wide text-amber-400 uppercase font-display drop-shadow-sm leading-tight whitespace-nowrap inline-block">
+                <div class="text-base sm:text-2xl lg:text-3xl font-black tracking-wide text-amber-400 uppercase font-display drop-shadow-sm leading-tight text-center break-words sm:whitespace-nowrap inline-block export-header-title">
                     TALENTA MILAD KE-57
                 </div>
-                <div class="text-sm sm:text-base font-extrabold tracking-widest text-slate-300 uppercase leading-tight whitespace-nowrap">
+                <div class="text-xs sm:text-base font-extrabold tracking-widest text-slate-300 uppercase leading-tight export-header-title">
                     {{ $appSettings['institution_name'] ?? 'MTSN 1 BLITAR' }}
                 </div>
                 <div class="pt-0.5">
-                    <span class="inline-block px-5 py-0.5 rounded-full bg-white/[0.08] border border-white/[0.15] text-xs sm:text-sm font-black text-[#84D0FF] tracking-widest uppercase font-mono leading-normal">
+                    <span class="inline-block px-4 sm:px-5 py-0.5 rounded-full bg-white/[0.08] border border-white/[0.15] text-xs sm:text-sm font-black text-[#84D0FF] tracking-widest uppercase font-mono leading-normal">
                         2026
                     </span>
                 </div>
 
                 <!-- Update Timestamp Badge -->
-                <div class="pt-2">
-                    <div class="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm font-bold shadow-sm font-mono whitespace-nowrap">
-                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <div class="pt-1.5 sm:pt-2">
+                    <div class="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[11px] sm:text-sm font-bold shadow-sm font-mono max-w-full text-center flex-wrap">
+                        <span class="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
                         <span>Update : {{ \Carbon\Carbon::now()->locale('id')->isoFormat('dddd, D MMMM Y, [Pukul] HH:mm') }} WIB</span>
                     </div>
                 </div>
             </div>
 
             <!-- Divider Line -->
-            <div class="relative z-10 w-full h-[2px] bg-gradient-to-r from-transparent via-[#7A5AF8]/60 to-transparent my-5"></div>
+            <div class="relative z-10 w-full h-[2px] bg-gradient-to-r from-transparent via-[#7A5AF8]/60 to-transparent my-4 sm:my-5"></div>
 
             <!-- TABEL KUOTA REKAPITULASI (PERSIS LANDING PAGE) -->
             @php
@@ -881,14 +918,14 @@
                             
                         return '
                         <div class="w-full">
-                            <div class="flex items-center justify-between text-sm sm:text-base font-bold gap-3">
-                                <span class="text-purple-300 font-black flex items-center gap-1.5 shrink-0">
-                                    <span class="text-base sm:text-lg leading-none font-sans">∞</span>
+                            <div class="flex items-center justify-between text-xs sm:text-base font-bold gap-2 sm:gap-3">
+                                <span class="text-purple-300 font-black flex items-center gap-1 shrink-0">
+                                    <span class="text-sm sm:text-lg leading-none font-sans">∞</span>
                                     <span>Tak Terbatas</span>
                                 </span>
-                                <span class="text-slate-300 font-bold text-xs sm:text-sm font-mono shrink-0 pr-1.5">' . $count . ' / ∞</span>
+                                <span class="text-slate-300 font-bold text-[11px] sm:text-sm font-mono shrink-0 pr-1">' . $count . ' / ∞</span>
                             </div>
-                            <div class="w-full bg-white/[0.08] h-3 rounded-full overflow-hidden mt-1.5 p-0.5 border border-white/[0.05]">
+                            <div class="w-full bg-white/[0.08] h-2.5 sm:h-3 rounded-full overflow-hidden mt-1 p-0.5 border border-white/[0.05]">
                                 ' . $barHtml . '
                             </div>
                         </div>';
@@ -902,11 +939,11 @@
                         $barGradient = $isFull ? 'from-rose-500 to-red-600' : ($isLow ? 'from-amber-400 to-orange-500' : 'from-[#7A5AF8] to-[#4E6EFF]');
                         return '
                         <div class="w-full">
-                            <div class="flex items-center justify-between text-sm sm:text-base font-bold gap-3">
-                                <span class="' . $textColor . ' shrink-0">' . $sisaText . '</span>
-                                <span class="text-slate-300 font-bold text-xs sm:text-sm font-mono shrink-0 pr-1.5">' . $count . '/' . $quota . '</span>
+                            <div class="flex items-center justify-between text-xs sm:text-base font-bold gap-2 sm:gap-3">
+                                <span class="' . $textColor . ' shrink-0 text-xs sm:text-base">' . $sisaText . '</span>
+                                <span class="text-slate-300 font-bold text-[11px] sm:text-sm font-mono shrink-0 pr-1">' . $count . '/' . $quota . '</span>
                             </div>
-                            <div class="w-full bg-white/[0.08] h-3 rounded-full overflow-hidden mt-1.5 p-0.5 border border-white/[0.05]">
+                            <div class="w-full bg-white/[0.08] h-2.5 sm:h-3 rounded-full overflow-hidden mt-1 p-0.5 border border-white/[0.05]">
                                 <div class="bg-gradient-to-r ' . $barGradient . ' h-full rounded-full transition-all duration-300" style="width: ' . $barWidth . '%"></div>
                             </div>
                         </div>';
@@ -914,13 +951,22 @@
                 };
             @endphp
 
-            <div class="rekap-table-container relative z-10 overflow-x-auto rounded-2xl border border-white/[0.08] bg-[#0A0E1A]/80 shadow-xl">
-                <table class="w-full text-left text-sm sm:text-base text-slate-300 border-collapse">
-                    <thead class="text-xs sm:text-sm font-black uppercase tracking-wider bg-[#0C111D]/95 text-slate-200 border-b border-white/[0.08]">
+            <!-- Petunjuk Geser untuk Layar HP (Mobile Swipe Hint) -->
+            <div class="mobile-swipe-hint sm:hidden flex items-center justify-between px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-[11px] text-slate-300 -mb-2">
+                <span class="flex items-center gap-1.5 text-[#84D0FF] font-bold">
+                    <i data-lucide="chevrons-left-right" class="w-3.5 h-3.5 text-[#4E6EFF]"></i>
+                    <span>Geser tabel ke samping untuk melihat detail kuota</span>
+                </span>
+                <span class="text-slate-400 font-mono text-[10px] bg-white/[0.06] px-1.5 py-0.5 rounded">Geser &rarr;</span>
+            </div>
+
+            <div class="rekap-table-container relative z-10 overflow-x-auto rounded-2xl border border-white/[0.08] bg-[#0A0E1A]/80 shadow-xl max-w-full" style="-webkit-overflow-scrolling: touch;">
+                <table class="w-full text-left text-xs sm:text-base text-slate-300 border-collapse">
+                    <thead class="text-[11px] sm:text-sm font-black uppercase tracking-wider bg-[#0C111D]/95 text-slate-200 border-b border-white/[0.08]">
                         <tr>
-                            <th class="py-3.5 px-5 whitespace-nowrap w-[32%] min-w-[270px]">Nama Lomba</th>
-                            <th class="py-3.5 px-5 whitespace-nowrap w-[26%] min-w-[220px]">Kategori</th>
-                            <th class="py-3.5 px-5 whitespace-nowrap w-[42%] min-w-[340px]">Sisa Kuota</th>
+                            <th class="py-3 sm:py-3.5 px-3.5 sm:px-5 whitespace-nowrap w-[32%] min-w-[210px] sm:min-w-[270px]">Nama Lomba</th>
+                            <th class="py-3 sm:py-3.5 px-3.5 sm:px-5 whitespace-nowrap w-[26%] min-w-[160px] sm:min-w-[220px]">Kategori</th>
+                            <th class="py-3 sm:py-3.5 px-3.5 sm:px-5 whitespace-nowrap w-[42%] min-w-[250px] sm:min-w-[340px]">Sisa Kuota</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-white/[0.05] font-medium text-sm sm:text-base">
@@ -997,25 +1043,25 @@
                             <tr data-category="{{ $comp->category->slug ?? '' }}" x-show="recapCategory === 'all' || recapCategory === '{{ $comp->category->slug ?? '' }}'" class="{{ $rowTheme['bg'] }} {{ $rowTheme['border_l'] }} transition-colors duration-150 border-b border-white/[0.05]">
                                 
                                 <!-- Nama Lomba & Lokasi -->
-                                <td class="py-3.5 px-5 w-[32%] min-w-[270px] align-middle">
+                                <td class="py-3 sm:py-3.5 px-3.5 sm:px-5 w-[32%] min-w-[210px] sm:min-w-[270px] align-middle">
                                     <div class="flex items-center gap-2">
-                                        <span class="font-black text-white text-base sm:text-lg leading-snug whitespace-nowrap block">
+                                        <span class="font-black text-white text-sm sm:text-lg leading-snug whitespace-nowrap block">
                                             {{ $comp->name }}
                                         </span>
                                         @if($comp->code === 'MIPA')
-                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 shadow-sm shadow-amber-500/20 shrink-0 whitespace-nowrap">
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-black bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 shadow-sm shadow-amber-500/20 shrink-0 whitespace-nowrap">
                                                 🎁 Bonus 10 Get 1
                                             </span>
                                         @endif
                                     </div>
-                                    <div class="text-xs sm:text-sm text-slate-300 font-medium flex items-center gap-1.5 mt-2 whitespace-nowrap">
-                                        <svg class="w-4 h-4 text-[#4E6EFF] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+                                    <div class="text-[11px] sm:text-sm text-slate-300 font-medium flex items-center gap-1.5 mt-1.5 whitespace-nowrap">
+                                        <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#4E6EFF] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
                                         <span>{{ $comp->venue ?? 'Kampus MTsN 1 Blitar' }}</span>
                                     </div>
                                 </td>
 
                                 <!-- Kategori -->
-                                <td class="py-3.5 px-5 whitespace-nowrap align-middle w-[26%] min-w-[220px]">
+                                <td class="py-3 sm:py-3.5 px-3.5 sm:px-5 whitespace-nowrap align-middle w-[26%] min-w-[160px] sm:min-w-[220px]">
                                     @if($isBlt)
                                         <div class="flex flex-col py-1">
                                             <!-- Tunggal PA -->
@@ -1135,7 +1181,7 @@
                                 </td>
 
                                 <!-- Sisa Kuota & Progress Bar -->
-                                <td class="py-3.5 px-5 whitespace-nowrap align-middle w-[42%] min-w-[340px]">
+                                <td class="py-3 sm:py-3.5 px-3.5 sm:px-5 whitespace-nowrap align-middle w-[42%] min-w-[250px] sm:min-w-[340px]">
                                     @if($isBlt)
                                         <div class="flex flex-col py-1 text-slate-400 text-xs sm:text-sm w-full">
                                             <!-- Kuota Tunggal PA -->
