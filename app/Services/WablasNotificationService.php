@@ -108,44 +108,51 @@ class WablasNotificationService
                 $msg = str_replace($tag, (string) $val, $msg);
             }
 
-            // 5. Send to Wablas API for all unique phone numbers
+            // 5. Send to Wablas API in background (Non-blocking / Defer)
             $authHeader = $wablasSecretKey ? ($wablasToken.'.'.$wablasSecretKey) : $wablasToken;
-            $anySuccess = false;
+            $senderId = auth()->id() ?? 1;
+            $cabangLomba = $data['cabang_lomba'] ?? 'Sistem Otomatis';
 
-            foreach ($cleanPhones as $cleanPhone) {
-                try {
-                    $res = Http::withoutVerifying()
-                        ->timeout(8)
-                        ->withHeaders([
-                            'Authorization' => $authHeader,
-                        ])
-                        ->post("{$wablasHost}/api/send-message", [
-                            'phone' => $cleanPhone,
-                            'message' => $msg,
-                            'token' => $wablasToken,
-                            'secret' => $wablasSecretKey,
+            $dispatchSend = function () use ($cleanPhones, $authHeader, $wablasHost, $wablasToken, $wablasSecretKey, $msg, $templateCode, $cabangLomba, $senderId) {
+                foreach ($cleanPhones as $cleanPhone) {
+                    try {
+                        $res = Http::withoutVerifying()
+                            ->timeout(8)
+                            ->withHeaders([
+                                'Authorization' => $authHeader,
+                            ])
+                            ->post("{$wablasHost}/api/send-message", [
+                                'phone' => $cleanPhone,
+                                'message' => $msg,
+                                'token' => $wablasToken,
+                                'secret' => $wablasSecretKey,
+                            ]);
+
+                        $isSent = $res->successful() && $res->json('status') !== false;
+
+                        // Record each recipient delivery
+                        BroadcastLog::create([
+                            'sender_id' => $senderId,
+                            'target_audience' => 'auto_'.$templateCode,
+                            'target_competition' => $cabangLomba,
+                            'recipients_count' => 1,
+                            'message' => "Tujuan: {$cleanPhone}\n\n".$msg,
+                            'status' => $isSent ? 'sent' : 'failed',
                         ]);
-
-                    $isSent = $res->successful() && $res->json('status') !== false;
-                    if ($isSent) {
-                        $anySuccess = true;
+                    } catch (\Throwable $e) {
+                        Log::error("Wablas Auto Notification Error ({$templateCode}) to {$cleanPhone}: ".$e->getMessage());
                     }
-
-                    // Record each recipient delivery
-                    BroadcastLog::create([
-                        'sender_id' => auth()->id() ?? 1,
-                        'target_audience' => 'auto_'.$templateCode,
-                        'target_competition' => $data['cabang_lomba'] ?? 'Sistem Otomatis',
-                        'recipients_count' => 1,
-                        'message' => "Tujuan: {$cleanPhone}\n\n".$msg,
-                        'status' => $isSent ? 'sent' : 'failed',
-                    ]);
-                } catch (\Throwable $e) {
-                    Log::error("Wablas Auto Notification Error ({$templateCode}) to {$cleanPhone}: ".$e->getMessage());
                 }
+            };
+
+            // Execute in background after HTTP response has been sent to user/client
+            if (function_exists('Illuminate\Support\defer')) {
+                \Illuminate\Support\defer($dispatchSend);
+            } else {
+                $dispatchSend();
             }
 
-            return $anySuccess;
+            return true;
         } catch (\Throwable $e) {
             Log::error("Wablas Auto Notification Error ({$templateCode}): ".$e->getMessage());
 
