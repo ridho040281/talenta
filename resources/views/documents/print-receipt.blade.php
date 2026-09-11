@@ -65,18 +65,18 @@
 <body class="bg-slate-100 text-slate-900 font-sans antialiased min-h-screen py-4 sm:py-6">
 
     <!-- Top Action Bar (Hidden when printing) -->
-    <div class="no-print max-w-3xl mx-auto mb-4 px-4">
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between gap-4">
+    <div class="no-print max-w-3xl mx-auto mb-4 px-3 sm:px-4">
+        <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                <div class="w-10 h-10 shrink-0 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
                     <i data-lucide="receipt" class="w-5 h-5"></i>
                 </div>
-                <div>
-                    <h1 class="text-sm font-black text-slate-900">Kwitansi / Bukti Pembayaran</h1>
-                    <p class="text-xs text-slate-500 font-mono">KW-{{ $registration->registration_code }} • {{ $registration->display_name }}</p>
+                <div class="min-w-0">
+                    <h1 class="text-sm font-black text-slate-900 truncate">Kwitansi / Bukti Pembayaran</h1>
+                    <p class="text-[11px] sm:text-xs text-slate-500 font-mono truncate">KW-{{ $registration->registration_code }} • {{ $registration->display_name }}</p>
                 </div>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto">
                 @php
                     $defaultBackUrl = route('peserta.dashboard');
                     if (auth()->check()) {
@@ -87,21 +87,21 @@
                         }
                     }
                 @endphp
-                <button type="button" onclick="smartGoBack('{{ $defaultBackUrl }}')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition cursor-pointer flex items-center gap-1.5">
+                <button type="button" onclick="smartGoBack('{{ $defaultBackUrl }}')" class="flex-1 sm:flex-none justify-center px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition cursor-pointer flex items-center gap-1.5">
                     <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
                     <span>Kembali</span>
                 </button>
-                <button onclick="window.print()" class="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md shadow-amber-500/20 transition cursor-pointer">
+                <button onclick="window.print()" class="flex-1 sm:flex-none justify-center inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md shadow-amber-500/20 transition cursor-pointer">
                     <i data-lucide="printer" class="w-4 h-4"></i>
-                    <span>Cetak Kwitansi</span>
+                    <span class="whitespace-nowrap">Cetak Kwitansi</span>
                 </button>
             </div>
         </div>
     </div>
 
     <!-- Printable Container -->
-    <div class="max-w-[210mm] mx-auto">
-        <div class="print-page bg-white pt-[1.5cm] px-[2cm] pb-[2cm] shadow-sm border border-slate-200 rounded-3xl flex flex-col justify-between">
+    <div class="max-w-[210mm] mx-auto px-2 sm:px-4 md:px-0">
+        <div class="print-page bg-white p-4 sm:p-8 md:pt-[1.5cm] md:px-[2cm] md:pb-[2cm] shadow-sm border border-slate-200 rounded-2xl sm:rounded-3xl flex flex-col justify-between">
             
             <div class="space-y-4">
                 <!-- ==================== KOP SURAT RESMI ==================== -->
@@ -155,41 +155,41 @@
                 @endif
 
                 <!-- ==================== JUDUL DOKUMEN ==================== -->
-                <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-3 gap-2">
                     <div>
                         <h2 class="text-base sm:text-lg font-black uppercase tracking-wider text-slate-900">
                             KWITANSI PEMBAYARAN
                         </h2>
-                        <p class="text-xs text-slate-500">Tanda Bukti Pelunasan Biaya Pendaftaran</p>
+                        <p class="text-[11px] sm:text-xs text-slate-500">Tanda Bukti Pelunasan Biaya Pendaftaran</p>
                     </div>
-                    <div class="text-right">
+                    <div class="text-left sm:text-right bg-slate-50 sm:bg-transparent p-2 sm:p-0 rounded-xl">
                         <span class="text-[10px] font-bold uppercase text-slate-400 block">No. Kwitansi</span>
-                        <span class="font-mono font-black text-slate-900 text-sm">
+                        <span class="font-mono font-black text-slate-900 text-xs sm:text-sm break-all">
                             {{ $registration->invoice ? $registration->invoice->invoice_number : 'KW-' . $registration->registration_code }}
                         </span>
                     </div>
                 </div>
 
                 <!-- ==================== FORMULIR KWITANSI ==================== -->
-                <div class="space-y-4 text-xs text-slate-800">
-                    <div class="grid grid-cols-3 gap-2 py-1.5 border-b border-slate-100">
-                        <span class="font-bold text-slate-500">Telah Diterima Dari</span>
-                        <span class="col-span-2 font-black text-slate-900 text-sm">
+                <div class="space-y-3 sm:space-y-4 text-xs text-slate-800">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 sm:gap-2 py-1.5 border-b border-slate-100">
+                        <span class="font-bold text-slate-500 text-[11px] sm:text-xs">Telah Diterima Dari</span>
+                        <span class="sm:col-span-2 font-black text-slate-900 text-xs sm:text-sm break-words">
                             {{ $registration->institution_name }} ({{ $registration->official_name ?: $registration->display_name }})
                         </span>
                     </div>
 
-                    <div class="grid grid-cols-3 gap-2 py-1.5 border-b border-slate-100">
-                        <span class="font-bold text-slate-500">Uang Sejumlah</span>
-                        <div class="col-span-2">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 sm:gap-2 py-1.5 border-b border-slate-100">
+                        <span class="font-bold text-slate-500 text-[11px] sm:text-xs">Uang Sejumlah</span>
+                        <div class="sm:col-span-2">
                             @php
                                 $amount = (float) ($registration->invoice ? $registration->invoice->final_amount : ($registration->fee ?: ($registration->competition->registration_fee ?? 0)));
                                 $terbilangWords = class_exists(\App\Helpers\Terbilang::class) ? \App\Helpers\Terbilang::make($amount) : '';
                             @endphp
-                            <span class="font-black text-emerald-800 text-sm font-mono block">
+                            <span class="font-black text-emerald-800 text-sm sm:text-base font-mono block">
                                 Rp {{ number_format($amount, 0, ',', '.') }}
                             </span>
-                            <span class="italic text-slate-600 text-[11px] block mt-0.5">
+                            <span class="italic text-slate-600 text-[10px] sm:text-[11px] block mt-0.5">
                                 @if($amount == 0)
                                     (Nol Rupiah / Gratis)
                                 @else
@@ -199,32 +199,32 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-3 gap-2 py-1.5 border-b border-slate-100">
-                        <span class="font-bold text-slate-500">Untuk Pembayaran</span>
-                        <div class="col-span-2 space-y-1">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 sm:gap-2 py-1.5 border-b border-slate-100">
+                        <span class="font-bold text-slate-500 text-[11px] sm:text-xs">Untuk Pembayaran</span>
+                        <div class="sm:col-span-2 space-y-1">
                             @if($registration->invoice && $registration->invoice->registrations->count() > 1)
-                                <span class="font-bold text-slate-900">
+                                <span class="font-bold text-slate-900 block leading-snug">
                                     Biaya Registrasi Pendaftaran Kolektif ({{ $registration->invoice->registrations->count() }} Pendaftaran Peserta)
                                 </span>
-                                <div class="text-[11px] text-slate-600">
+                                <div class="text-[10px] sm:text-[11px] text-slate-600">
                                     No. Tagihan: <strong>{{ $registration->invoice->invoice_number }}</strong> • Instansi: {{ $registration->institution_name }}
                                 </div>
                             @else
-                                <span class="font-bold text-slate-900">
+                                <span class="font-bold text-slate-900 block leading-snug">
                                     Biaya Registrasi Pendaftaran Cabang Perlombaan {{ $registration->competition->name }}
                                 </span>
-                                <div class="text-[11px] text-slate-600">
+                                <div class="text-[10px] sm:text-[11px] text-slate-600">
                                     Peserta / Tim: <strong>{{ $registration->display_name }}</strong> (Kode: {{ $registration->registration_code }})
                                 </div>
                             @endif
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-3 gap-2 py-1.5 border-b border-slate-100">
-                        <span class="font-bold text-slate-500">Status Pembayaran</span>
-                        <div class="col-span-2">
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-900 border border-emerald-300">
-                                <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600"></i>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-1.5 sm:gap-2 py-1.5 border-b border-slate-100">
+                        <span class="font-bold text-slate-500 text-[11px] sm:text-xs">Status Pembayaran</span>
+                        <div class="sm:col-span-2">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] sm:text-xs font-black bg-emerald-100 text-emerald-900 border border-emerald-300">
+                                <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600 shrink-0"></i>
                                 <span>LUNAS & TERVERIFIKASI BENDAHARA</span>
                             </span>
                         </div>
@@ -232,73 +232,73 @@
                 </div>
 
                 <!-- ==================== TABEL RINCIAN ==================== -->
-                <div class="border border-slate-300 rounded-2xl overflow-hidden text-xs">
-                    <table class="w-full text-left">
-                        <thead class="bg-slate-100 font-bold uppercase tracking-wider text-slate-700 border-b border-slate-300 text-[10px]">
+                <div class="border border-slate-300 rounded-xl sm:rounded-2xl overflow-x-auto text-xs">
+                    <table class="w-full text-left min-w-[340px] sm:min-w-full">
+                        <thead class="bg-slate-100 font-bold uppercase tracking-wider text-slate-700 border-b border-slate-300 text-[9px] sm:text-[10px]">
                             <tr>
-                                <th class="py-2.5 px-3">No</th>
-                                <th class="py-2.5 px-3">Deskripsi Tagihan</th>
-                                <th class="py-2.5 px-3 text-center">Qty</th>
-                                <th class="py-2.5 px-3 text-right">Nominal</th>
+                                <th class="py-2 sm:py-2.5 px-2 sm:px-3 w-8 sm:w-10 text-center">No</th>
+                                <th class="py-2 sm:py-2.5 px-2 sm:px-3">Deskripsi Tagihan</th>
+                                <th class="py-2 sm:py-2.5 px-2 sm:px-3 text-center w-12 sm:w-16">Qty</th>
+                                <th class="py-2 sm:py-2.5 px-2 sm:px-3 text-right w-24 sm:w-32 whitespace-nowrap">Nominal</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-200">
+                        <tbody class="divide-y divide-slate-200 text-[11px] sm:text-xs">
                             @if($registration->invoice && $registration->invoice->registrations->count() > 1)
                                 @foreach($registration->invoice->registrations as $idx => $invReg)
                                     <tr>
-                                        <td class="py-2 px-3 font-bold">{{ $idx + 1 }}</td>
-                                        <td class="py-2 px-3 font-bold">
-                                            {{ $invReg->competition->name }} - {{ $invReg->institution_name }}
-                                            <div class="text-[10px] text-slate-500 font-normal">Peserta: {{ $invReg->display_name }} ({{ $invReg->registration_code }})</div>
+                                        <td class="py-2 px-2 sm:px-3 font-bold text-center">{{ $idx + 1 }}</td>
+                                        <td class="py-2 px-2 sm:px-3 font-bold">
+                                            <div class="text-slate-950 font-bold leading-snug">{{ $invReg->competition->name }} - {{ $invReg->institution_name }}</div>
+                                            <div class="text-[9.5px] sm:text-[10px] text-slate-500 font-normal">Peserta: {{ $invReg->display_name }} ({{ $invReg->registration_code }})</div>
                                             @php
                                                 $regCat = $invReg->sub_category ?: ($invReg->target_class ? $invReg->target_class . ($invReg->match_type ? ' - ' . $invReg->match_type : '') : $invReg->match_type);
                                             @endphp
                                             @if($regCat)
-                                                <div class="text-[9.5px] text-slate-500 font-normal">Kelas / Kategori: {{ $regCat }}</div>
+                                                <div class="text-[9px] sm:text-[9.5px] text-slate-500 font-normal">Kelas / Kategori: {{ $regCat }}</div>
                                             @endif
                                             @if($invReg->chosen_song)
-                                                <div class="text-[9.5px] text-slate-500 font-normal">Lagu: {{ $invReg->chosen_song }}</div>
+                                                <div class="text-[9px] sm:text-[9.5px] text-slate-500 font-normal">Lagu: {{ $invReg->chosen_song }}</div>
                                             @endif
                                         </td>
-                                        <td class="py-2 px-3 text-center font-bold">1</td>
-                                        <td class="py-2 px-3 text-right font-mono font-bold">
+                                        <td class="py-2 px-2 sm:px-3 text-center font-bold">1</td>
+                                        <td class="py-2 px-2 sm:px-3 text-right font-mono font-bold whitespace-nowrap">
                                             Rp {{ number_format((float) ($invReg->fee ?: ($invReg->competition->registration_fee ?? 0)), 0, ',', '.') }}
                                         </td>
                                     </tr>
                                 @endforeach
                                 @if($registration->invoice->bonus_discount > 0)
                                     <tr class="bg-amber-50/50 text-amber-900 font-bold">
-                                        <td colspan="3" class="py-1.5 px-3 text-right text-[11px]">Potongan Promo / Bonus:</td>
-                                        <td class="py-1.5 px-3 text-right font-mono text-rose-600 text-xs">
+                                        <td colspan="3" class="py-1.5 px-2 sm:px-3 text-right text-[10px] sm:text-[11px]">Potongan Promo / Bonus:</td>
+                                        <td class="py-1.5 px-2 sm:px-3 text-right font-mono text-rose-600 text-[11px] sm:text-xs whitespace-nowrap">
                                             - Rp {{ number_format($registration->invoice->bonus_discount, 0, ',', '.') }}
                                         </td>
                                     </tr>
                                 @endif
                             @else
                                 <tr>
-                                    <td class="py-2.5 px-3 font-bold">1</td>
-                                    <td class="py-2.5 px-3 font-bold">
-                                        {{ $registration->competition->name }} - {{ $registration->institution_name }}
-                                        <div class="text-[10px] text-slate-500 font-normal">Nama: {{ $registration->display_name }}</div>
+                                    <td class="py-2 sm:py-2.5 px-2 sm:px-3 font-bold text-center">1</td>
+                                    <td class="py-2 sm:py-2.5 px-2 sm:px-3 font-bold">
+                                        <div class="text-slate-950 font-bold leading-snug">{{ $registration->competition->name }} - {{ $registration->institution_name }}</div>
+                                        <div class="text-[9.5px] sm:text-[10px] text-slate-500 font-normal">Nama: {{ $registration->display_name }}</div>
                                         @php
                                             $regCat = $registration->sub_category ?: ($registration->target_class ? $registration->target_class . ($registration->match_type ? ' - ' . $registration->match_type : '') : $registration->match_type);
                                         @endphp
                                         @if($regCat)
-                                            <div class="text-[9.5px] text-slate-500 font-normal">Kelas / Kategori: {{ $regCat }}</div>
+                                            <div class="text-[9px] sm:text-[9.5px] text-slate-500 font-normal">Kelas / Kategori: {{ $regCat }}</div>
                                         @endif
                                         @if($registration->chosen_song)
-                                            <div class="text-[9.5px] text-slate-500 font-normal">Lagu: {{ $registration->chosen_song }}</div>
+                                            <div class="text-[9px] sm:text-[9.5px] text-slate-500 font-normal">Lagu: {{ $registration->chosen_song }}</div>
                                         @endif
                                     </td>
-                                    <td class="py-2.5 px-3 text-center font-bold">1</td>
-                                    <td class="py-2.5 px-3 text-right font-mono font-bold">
+                                    <td class="py-2 sm:py-2.5 px-2 sm:px-3 text-center font-bold">1</td>
+                                    <td class="py-2 sm:py-2.5 px-2 sm:px-3 text-right font-mono font-bold whitespace-nowrap">
                                         Rp {{ number_format((float) ($registration->fee ?: ($registration->competition->registration_fee ?? 0)), 0, ',', '.') }}
                                     </td>
                                 </tr>
                             @endif
                             <tr class="bg-slate-50 font-black text-slate-900 border-t border-slate-300">
-                                <td colspan="3" class="py-2.5 px-3 text-right uppercase">Total Pembayaran:</td>
-                                <td class="py-2.5 px-3 text-right font-mono text-emerald-800 text-sm">
+                                <td colspan="3" class="py-2 sm:py-2.5 px-2 sm:px-3 text-right uppercase text-[10px] sm:text-xs">Total Pembayaran:</td>
+                                <td class="py-2 sm:py-2.5 px-2 sm:px-3 text-right font-mono text-emerald-800 text-xs sm:text-sm whitespace-nowrap">
                                     Rp {{ number_format($amount, 0, ',', '.') }}
                                 </td>
                             </tr>
@@ -307,40 +307,40 @@
                 </div>
 
                 <!-- ==================== TANDA TANGAN (DINAMIS MENGIKUTI TABEL RINCIAN) ==================== -->
-                <div class="pt-4 flex justify-between items-stretch text-xs text-slate-800">
-                    <div class="text-center w-56 flex flex-col justify-between">
+                <div class="pt-4 flex flex-row justify-between items-stretch text-xs text-slate-800 gap-2 sm:gap-4">
+                    <div class="text-center flex-1 sm:w-56 sm:flex-none flex flex-col justify-between">
                         <div>
-                            <div class="invisible select-none leading-tight">Tanggal</div>
-                            <div class="invisible select-none font-bold">Instansi</div>
-                            <div class="font-bold">Penyetor / Official,</div>
+                            <div class="invisible select-none leading-tight hidden sm:block">Tanggal</div>
+                            <div class="invisible select-none font-bold hidden sm:block">Instansi</div>
+                            <div class="font-bold text-[11px] sm:text-xs">Penyetor / Official,</div>
                         </div>
-                        <div class="pt-10">
-                            <div class="font-black text-slate-950 underline underline-offset-2">
+                        <div class="pt-8 sm:pt-10">
+                            <div class="font-black text-slate-950 underline underline-offset-2 text-[11px] sm:text-xs break-words">
                                 {{ $registration->official_name ?: $registration->display_name }}
                             </div>
-                            <div class="invisible select-none text-[10px]">Identitas</div>
+                            <div class="invisible select-none text-[10px] hidden sm:block">Identitas</div>
                         </div>
                     </div>
 
-                    <div class="text-center w-56 flex flex-col justify-between">
+                    <div class="text-center flex-1 sm:w-56 sm:flex-none flex flex-col justify-between">
                         <div>
-                            <div class="leading-tight">Blitar, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</div>
-                            <div class="font-bold">Bendahara Panitia</div>
+                            <div class="leading-tight text-[10px] sm:text-xs">Blitar, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</div>
+                            <div class="font-bold text-[11px] sm:text-xs">Bendahara Panitia</div>
                         </div>
                         <div class="py-1 flex flex-col items-center justify-center">
                             @php
                                 $receiptUrl = \App\Services\QrSignatureService::receiptUrl($registration);
                             @endphp
                             <div class="p-1 bg-white border border-slate-200 rounded-lg shadow-xs inline-block">
-                                {!! \App\Services\QrSignatureService::generateSvg($receiptUrl, 52) !!}
+                                {!! \App\Services\QrSignatureService::generateSvg($receiptUrl, 48) !!}
                             </div>
                         </div>
                         <div>
-                            <div class="font-black text-slate-950 underline underline-offset-2">
+                            <div class="font-black text-slate-950 underline underline-offset-2 text-[11px] sm:text-xs break-words">
                                 {{ !empty($appSettings['treasurer_name']) ? $appSettings['treasurer_name'] : ($appSettings['bank_account_holder'] ?? 'WIJIATIN, S.Pd') }}
                             </div>
                             @if(!empty($appSettings['treasurer_nip']))
-                                <div class="text-[10px] text-slate-600 font-mono">NIP. {{ $appSettings['treasurer_nip'] }}</div>
+                                <div class="text-[9px] sm:text-[10px] text-slate-600 font-mono">NIP. {{ $appSettings['treasurer_nip'] }}</div>
                             @endif
                         </div>
                     </div>
@@ -348,8 +348,15 @@
             </div>
 
             <!-- Footer Meta (Tetap di bagian paling bawah halaman) -->
-            <div class="pt-2 border-t border-slate-200 flex items-center justify-between text-[9px] text-slate-400 font-mono">
-                <span>Panitia {{ $appSettings['event_name'] ?? 'Milad ke-57' }} {{ $appSettings['institution_name'] ?? 'MTsN 1 Blitar' }} • Aplikasi {{ $appSettings['app_name'] ?? 'TALENTA' }}</span>
+            @php
+                $eventName = $appSettings['event_name'] ?? 'Milad ke-57';
+                $instName = $appSettings['institution_name'] ?? 'MTsN 1 Blitar';
+                $footerTitle = (stripos($eventName, 'mtsn') !== false || stripos($eventName, 'madrasah') !== false) 
+                    ? $eventName 
+                    : ($eventName . ' ' . $instName);
+            @endphp
+            <div class="pt-2 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-[9px] text-slate-400 font-mono gap-1 text-center sm:text-left">
+                <span>Panitia {{ $footerTitle }} • Aplikasi {{ $appSettings['app_name'] ?? 'TALENTA' }}</span>
                 <span>Dicetak pada: {{ now()->format('d/m/Y H:i:s') }}</span>
             </div>
         </div>
