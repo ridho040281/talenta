@@ -41,22 +41,48 @@ class AdminController extends Controller
 
     public function competitions()
     {
-        $competitions = Competition::with(['category', 'pic', 'pics', 'criteria'])->withCount('registrations')->get();
-        $categories = Category::with(['competitions.pic', 'competitions.pics', 'competitions' => function ($q) {
-            $q->withCount('registrations');
-        }])->withCount('competitions')->orderBy('order', 'asc')->get();
-        $pics = User::where('role', 'pic_lomba')->orWhere('role', 'superadmin')->get();
+        $pics = User::select('id', 'name', 'role', 'phone')
+            ->where('role', 'pic_lomba')
+            ->orWhere('role', 'superadmin')
+            ->get();
+
+        Competition::primeUserCache($pics);
+
+        $competitions = Competition::with([
+            'category:id,name,icon',
+            'pic:id,name,role',
+            'pics:id,name,role',
+            'criteria:id,competition_id,name,weight_percentage,min_score,max_score,description',
+            'registrations' => function ($q) {
+                $q->select('id', 'competition_id', 'status', 'target_class', 'sub_category', 'match_type', 'team_name')
+                  ->with('members:id,registration_id,full_name,gender');
+            },
+        ])->withCount('registrations')->get();
+
+        foreach ($competitions as $c) {
+            if ($c->relationLoaded('registrations')) {
+                foreach ($c->registrations as $r) {
+                    $r->setRelation('competition', $c);
+                }
+            }
+        }
+
+        $categories = Category::withCount('competitions')
+            ->orderBy('order', 'asc')
+            ->get(['id', 'name', 'icon', 'order', 'description', 'category_group']);
+
         $timelines = Timeline::orderBy('order', 'asc')->get();
         $appSettings = AppSetting::allKeyValues();
+        $regInfo = AppSetting::getRegistrationStatusInfo();
 
-        return view('admin.competitions', compact('competitions', 'categories', 'pics', 'timelines', 'appSettings'));
+        return view('admin.competitions', compact('competitions', 'categories', 'pics', 'timelines', 'appSettings', 'regInfo'));
     }
 
     public function editCompetitionPage($id)
     {
         $competition = Competition::with(['category', 'pic', 'pics', 'criteria'])->withCount('registrations')->findOrFail($id);
-        $categories = Category::orderBy('order', 'asc')->get();
-        $pics = User::where('role', 'pic_lomba')->orWhere('role', 'superadmin')->get();
+        $categories = Category::select('id', 'name', 'order')->orderBy('order', 'asc')->get();
+        $pics = User::select('id', 'name', 'role', 'phone')->where('role', 'pic_lomba')->orWhere('role', 'superadmin')->get();
         $regInfo = AppSetting::getRegistrationStatusInfo();
 
         return view('admin.competitions-edit', compact('competition', 'categories', 'pics', 'regInfo'));

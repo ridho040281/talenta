@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title', 'Master Cabang Lomba & Timeline Jadwal')
 @section('page_title', 'Master Lomba & Jadwal Rangkaian Acara')
@@ -192,7 +192,7 @@
     <div x-show="activeTab === 'lomba'" x-transition class="space-y-6">
         
         @php
-            $regInfo = \App\Models\AppSetting::getRegistrationStatusInfo();
+            $regInfo = $regInfo ?? \App\Models\AppSetting::getRegistrationStatusInfo();
         @endphp
         <!-- Global Registration Quick Control Bar (Pilihan A) -->
         <div class="ai-card rounded-2xl p-4 sm:p-5 border border-indigo-500/30 bg-gradient-to-r from-[#101828]/95 via-[#161F30]/95 to-[#1E293B]/95 shadow-xl relative overflow-hidden">
@@ -260,7 +260,7 @@
             @foreach($categories as $cat)
                 <button type="button" @click="competitionFilter = '{{ $cat->id }}'" :class="competitionFilter === '{{ $cat->id }}' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md font-black' : 'bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 border border-white/[0.08] font-bold'" class="px-3.5 py-2 rounded-xl text-xs transition flex items-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer">
                     <i data-lucide="{{ $cat->icon ?: 'folder' }}" class="w-3.5 h-3.5"></i>
-                    <span>{{ $cat->name }} ({{ $cat->competitions->count() }})</span>
+                    <span>{{ $cat->name }} ({{ $cat->competitions_count }})</span>
                 </button>
             @endforeach
         </div>
@@ -479,12 +479,12 @@
                                             <div class="border-t border-white/[0.08] my-1.5"></div>
                                             <!-- Kuota Ganda PA -->
                                             <div class="h-[36px] flex items-center justify-center font-medium text-xs">
-                                                <div><span class="font-bold text-white">{{ $comp->registrations->filter(fn($r) => $r->isGanda() && $r->primary_gender === 'L')->count() }}</span>&nbsp;/ {{ ($comp->tier_quotas['ganda_pa'] ?? 0) <= 0 ? '∞' : $comp->tier_quotas['ganda_pa'] }}</div>
+                                                <div><span class="font-bold text-white">{{ $comp->registrations->filter(fn($r) => $r->isGanda() && $r->primary_gender === 'L')->count() }}</span>&nbsp;/ {{ ($comp->tier_quotas['ganda_pa'] ?? 0) <= 0 ? 'âˆž' : $comp->tier_quotas['ganda_pa'] }}</div>
                                             </div>
                                             <div class="border-t border-white/[0.08] my-1.5"></div>
                                             <!-- Kuota Ganda PI -->
                                             <div class="h-[36px] flex items-center justify-center font-medium text-xs">
-                                                <div><span class="font-bold text-white">{{ $comp->registrations->filter(fn($r) => $r->isGanda() && $r->primary_gender === 'P')->count() }}</span>&nbsp;/ {{ ($comp->tier_quotas['ganda_pi'] ?? 0) <= 0 ? '∞' : $comp->tier_quotas['ganda_pi'] }}</div>
+                                                <div><span class="font-bold text-white">{{ $comp->registrations->filter(fn($r) => $r->isGanda() && $r->primary_gender === 'P')->count() }}</span>&nbsp;/ {{ ($comp->tier_quotas['ganda_pi'] ?? 0) <= 0 ? 'âˆž' : $comp->tier_quotas['ganda_pi'] }}</div>
                                             </div>
                                         </div>
                                     @elseif(in_array($comp->code, ['MTQ', 'POP']))
@@ -500,7 +500,7 @@
                                             </div>
                                             <div class="text-[10px] font-semibold mt-0.5 text-slate-400">
                                                 <span class="text-cyan-400">{{ $countPa }} PA</span>
-                                                <span class="text-slate-600">•</span>
+                                                <span class="text-slate-600">â€¢</span>
                                                 <span class="text-pink-400">{{ $countPi }} PI</span>
                                             </div>
                                         </div>
@@ -521,9 +521,9 @@
                                     @else
                                         @if($comp->isUnlimitedQuota())
                                             <div class="inline-flex flex-col items-center">
-                                                <div><span class="font-bold text-white">{{ $comp->registrations_count }}</span> <span class="text-slate-400 font-mono">/ ∞</span></div>
+                                                <div><span class="font-bold text-white">{{ $comp->registrations_count }}</span> <span class="text-slate-400 font-mono">/ âˆž</span></div>
                                                 <span class="mt-0.5 px-2 py-0.5 rounded-full text-[9px] font-black bg-purple-500/20 text-purple-300 border border-purple-500/30 whitespace-nowrap">
-                                                    ∞ Tak Terbatas
+                                                    âˆž Tak Terbatas
                                                 </span>
                                             </div>
                                         @else
@@ -1051,7 +1051,7 @@
                         <div>
                             <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Kuota Peserta</label>
                             <input name="quota" type="number" value="50" min="0" required class="block w-full px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500">
-                            <span class="text-[10px] text-slate-400">Isi 0 untuk kuota tak terbatas (∞)</span>
+                            <span class="text-[10px] text-slate-400">Isi 0 untuk kuota tak terbatas (âˆž)</span>
                         </div>
                         <div>
                             <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Koordinator PIC Utama</label>
@@ -1080,8 +1080,8 @@
                             <div>
                                 <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Notifikasi WA Pendaftar</label>
                                 <select name="notify_pic" class="block w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-900 outline-none focus:border-emerald-500">
-                                    <option value="1" selected>🟢 AKTIF (Kirim WA)</option>
-                                    <option value="0">⚪ NONAKTIF (Cek Web Saja)</option>
+                                    <option value="1" selected>ðŸŸ¢ AKTIF (Kirim WA)</option>
+                                    <option value="0">âšª NONAKTIF (Cek Web Saja)</option>
                                 </select>
                             </div>
                             <div>
@@ -1102,7 +1102,7 @@
                                     :class="newCompetition.show_rules ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20' : 'bg-slate-200 hover:bg-slate-300 text-slate-700'"
                                     :title="newCompetition.show_rules ? 'Klik untuk menyembunyikan aturan dari peserta' : 'Klik untuk menampilkan aturan ke peserta'">
                                 <span class="w-1.5 h-1.5 rounded-full" :class="newCompetition.show_rules ? 'bg-emerald-200 animate-pulse' : 'bg-slate-400'"></span>
-                                <span x-text="newCompetition.show_rules ? '✓ Aktif (Tampil di Peserta)' : '✗ Nonaktif (Sembunyi)'"></span>
+                                <span x-text="newCompetition.show_rules ? 'âœ“ Aktif (Tampil di Peserta)' : 'âœ— Nonaktif (Sembunyi)'"></span>
                             </button>
                         </div>
                         <textarea name="rules" rows="3" x-model="newCompetition.rules" placeholder="Tuliskan petunjuk teknis pelaksanaan..." class="block w-full px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-medium text-slate-900 outline-none focus:border-emerald-500"></textarea>
@@ -1122,7 +1122,7 @@
                                         :class="newCompetition.show_guidelines ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20' : 'bg-slate-200 hover:bg-slate-300 text-slate-700'"
                                         :title="newCompetition.show_guidelines ? 'Klik untuk menyembunyikan embed juknis/Canva dari peserta' : 'Klik untuk menampilkan embed juknis/Canva ke peserta'">
                                     <span class="w-1.5 h-1.5 rounded-full" :class="newCompetition.show_guidelines ? 'bg-emerald-200 animate-pulse' : 'bg-slate-400'"></span>
-                                    <span x-text="newCompetition.show_guidelines ? '✓ Aktif (Tampil)' : '✗ Nonaktif (Sembunyi)'"></span>
+                                    <span x-text="newCompetition.show_guidelines ? 'âœ“ Aktif (Tampil)' : 'âœ— Nonaktif (Sembunyi)'"></span>
                                 </button>
                             </div>
                         </div>
@@ -1138,7 +1138,7 @@
                                 <label class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold border border-slate-200 cursor-pointer flex items-center gap-1.5 shrink-0 transition" title="Upload file PDF langsung">
                                     <i data-lucide="upload" class="w-3.5 h-3.5 text-slate-500"></i>
                                     <span>Upload PDF</span>
-                                    <input type="file" name="guidelines_pdf" accept=".pdf" class="hidden" @change="if($event.target.files.length > 0) { $refs.createPdfName.innerText = '📁 File terpilih: ' + $event.target.files[0].name; }">
+                                    <input type="file" name="guidelines_pdf" accept=".pdf" class="hidden" @change="if($event.target.files.length > 0) { $refs.createPdfName.innerText = 'ðŸ“ File terpilih: ' + $event.target.files[0].name; }">
                                 </label>
                             </div>
                             <p class="text-[11px] text-slate-500 flex items-center gap-1">
@@ -1184,7 +1184,7 @@
                                         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
                                         :title="newCompetition.show_criteria ? 'Klik untuk menonaktifkan kriteria di halaman pendaftar' : 'Klik untuk mengaktifkan kriteria di halaman pendaftar'">
                                     <span class="w-2 h-2 rounded-full" :class="newCompetition.show_criteria ? 'bg-emerald-200 animate-pulse' : 'bg-slate-400'"></span>
-                                    <span x-text="newCompetition.show_criteria ? '✓ Aktif (Tampil)' : '✗ Nonaktif (Sembunyi)'"></span>
+                                    <span x-text="newCompetition.show_criteria ? 'âœ“ Aktif (Tampil)' : 'âœ— Nonaktif (Sembunyi)'"></span>
                                 </button>
 
                                 <!-- Button Tambah Kriteria -->
@@ -1289,7 +1289,7 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Tanggal / Rentang Waktu</label>
-                            <input name="date_label" type="text" required placeholder="Contoh: 01 – 15 September 2026" class="block w-full px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-sm outline-none font-bold text-emerald-700 focus:border-amber-500">
+                            <input name="date_label" type="text" required placeholder="Contoh: 01 â€“ 15 September 2026" class="block w-full px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-sm outline-none font-bold text-emerald-700 focus:border-amber-500">
                         </div>
                         <div>
                             <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Urutan Tampil (No.)</label>
@@ -1300,7 +1300,7 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Jam / Waktu (Opsional)</label>
-                            <input name="time_label" type="text" placeholder="Contoh: 08.00 WIB – Selesai" class="block w-full px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-medium text-slate-900 outline-none focus:border-amber-500">
+                            <input name="time_label" type="text" placeholder="Contoh: 08.00 WIB â€“ Selesai" class="block w-full px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-medium text-slate-900 outline-none focus:border-amber-500">
                         </div>
                         <div>
                             <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Lokasi (Opsional)</label>
@@ -1406,917 +1406,6 @@
         </div>
     </div>
 
-    @if(false)
-    <!-- Edit Competition Fullpage Workspace (1 Halaman Penuh, Menutup Seluruh Layar & Sidebar) -->
-    <div x-show="editCompetitionModal" x-cloak aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none; position: fixed; inset: 0; z-index: 999999; background: #070A13; overflow-y: auto; min-height: 100vh; width: 100vw; flex-direction: column;" :style="editCompetitionModal ? 'display: flex;' : 'display: none;'">
-        
-        <!-- Sticky Workspace Header Bar -->
-        <div style="position: sticky; top: 0; z-index: 50; background: rgba(11,16,29,0.97); border-bottom: 1px solid rgba(255,255,255,0.1); padding: 14px 32px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 32px rgba(0,0,0,0.6);">
-            <div class="flex items-center gap-3.5 min-w-0">
-                <button type="button" @click="closeEditCompetitionModal()" class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-slate-200 hover:text-white text-xs font-bold transition cursor-pointer border border-white/[0.1] shrink-0">
-                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
-                    <span>Tutup & Kembali</span>
-                </button>
-                <div class="min-w-0">
-                    <h3 class="text-sm sm:text-base font-black text-white truncate" x-text="
-                        selectedCompetition.code === 'BLT' ? (
-                            bltEditMode === 'tunggal_pa_a' ? 'Edit Bulu Tangkis — Tunggal Putra (Kat A)' :
-                            bltEditMode === 'tunggal_pa_b' ? 'Edit Bulu Tangkis — Tunggal Putra (Kat B)' :
-                            bltEditMode === 'tunggal_pa_c' ? 'Edit Bulu Tangkis — Tunggal Putra (Kat C)' :
-                            bltEditMode === 'tunggal_pi_a' ? 'Edit Bulu Tangkis — Tunggal Putri (Kat A)' :
-                            bltEditMode === 'tunggal_pi_b' ? 'Edit Bulu Tangkis — Tunggal Putri (Kat B)' :
-                            bltEditMode === 'tunggal_pi_c' ? 'Edit Bulu Tangkis — Tunggal Putri (Kat C)' :
-                            bltEditMode === 'ganda_pa' ? 'Edit Bulu Tangkis — Ganda Putra (PA)' :
-                            bltEditMode === 'ganda_pi' ? 'Edit Bulu Tangkis — Ganda Putri (PI)' :
-                            'Edit ' + selectedCompetition.name
-                        ) : (
-                        selectedCompetition.code === 'TMJ' ? (
-                            bltEditMode === 'tmj_pa_a' ? 'Edit Tenis Meja — Tunggal Putra (Kat A)' :
-                            bltEditMode === 'tmj_pa_b' ? 'Edit Tenis Meja — Tunggal Putra (Kat B)' :
-                            bltEditMode === 'tmj_pi_a' ? 'Edit Tenis Meja — Tunggal Putri (Kat A)' :
-                            bltEditMode === 'tmj_pi_b' ? 'Edit Tenis Meja — Tunggal Putri (Kat B)' :
-                            'Edit ' + selectedCompetition.name
-                        ) : (
-                        ['MTQ', 'POP'].includes(selectedCompetition.code) ? (
-                            'Edit ' + selectedCompetition.name + ' (' + (bltEditMode === 'pa' ? 'Putra / PA' : (bltEditMode === 'pi' ? 'Putri / PI' : 'Semua Sektor')) + ')'
-                        ) : 'Edit Cabang Perlombaan'))"></h3>
-                    <p class="text-xs text-slate-400 hidden sm:block truncate" x-text="
-                        selectedCompetition.code === 'BLT' ? (
-                            bltEditMode === 'tunggal_pa_a' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putra Kat A (Kelas 1–2 SD/MI)' :
-                            bltEditMode === 'tunggal_pa_b' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putra Kat B (Kelas 3–4 SD/MI)' :
-                            bltEditMode === 'tunggal_pa_c' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putra Kat C (Kelas 5–6 SD/MI)' :
-                            bltEditMode === 'tunggal_pi_a' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putri Kat A (Kelas 1–2 SD/MI)' :
-                            bltEditMode === 'tunggal_pi_b' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putri Kat B (Kelas 3–4 SD/MI)' :
-                            bltEditMode === 'tunggal_pi_c' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putri Kat C (Kelas 5–6 SD/MI)' :
-                            bltEditMode === 'ganda_pa' ? 'Perbarui biaya, kuota, PIC, dan status Ganda Putra (PA)' :
-                            bltEditMode === 'ganda_pi' ? 'Perbarui biaya, kuota, PIC, dan status Ganda Putri (PI)' :
-                            'Perbarui informasi cabang lomba'
-                        ) : (
-                        selectedCompetition.code === 'TMJ' ? (
-                            bltEditMode === 'tmj_pa_a' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putra Kat A (Kelas 1–3 SD/MI)' :
-                            bltEditMode === 'tmj_pa_b' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putra Kat B (Kelas 4–6 SD/MI)' :
-                            bltEditMode === 'tmj_pi_a' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putri Kat A (Kelas 1–3 SD/MI)' :
-                            bltEditMode === 'tmj_pi_b' ? 'Perbarui biaya, kuota, PIC, dan status Tunggal Putri Kat B (Kelas 4–6 SD/MI)' :
-                            'Perbarui informasi cabang lomba'
-                        ) : (
-                        ['MTQ', 'POP'].includes(selectedCompetition.code) ? 'Perbarui biaya, kuota, PIC, dan status per sektor Putra (PA) & Putri (PI)' : 'Perbarui informasi cabang lomba, kuota, PIC, dan status pendaftaran'))"></p>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-3 shrink-0">
-                <button type="button" @click="closeEditCompetitionModal()" class="px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-slate-300 text-xs font-bold transition cursor-pointer">
-                    Batal
-                </button>
-                <button type="button" @click="$refs.editCompetitionForm.submit()" class="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-xs shadow-lg shadow-emerald-500/20 transition cursor-pointer flex items-center gap-1.5">
-                    <i data-lucide="save" class="w-4 h-4"></i>
-                    <span>Simpan Perubahan</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Fullpage Form Body Container -->
-        <div class="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
-            <form x-ref="editCompetitionForm" :action="'{{ url('admin/competitions') }}/' + (selectedCompetition ? selectedCompetition.id : '') + '/update'" method="POST" enctype="multipart/form-data" class="space-y-6">
-                @csrf
-
-                <!-- Form Card -->
-                <div class="bg-white rounded-3xl p-5 sm:p-7 shadow-2xl space-y-5 text-slate-900 border border-slate-200">
-                    <div class="space-y-3.5 pr-1 sm:pr-2">
-
-                        <!-- Row 1: Jenis Lomba, Nama Lomba, Kode Singkat -->
-                        <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
-                            <div class="md:col-span-3">
-                                <div class="flex items-center justify-between mb-1">
-                                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600">Jenis Lomba</label>
-                                    <button type="button" @click="closeEditCompetitionModal(); createCategoryModal = true" class="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">
-                                        <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
-                                        <span>+ Baru</span>
-                                    </button>
-                                </div>
-                                <select name="category_id" required x-model="selectedCompetition.category_id" class="block w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none focus:border-emerald-500">
-                                    @foreach($categories as $cat)
-                                        <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="md:col-span-4">
-                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Nama Lomba</label>
-                                <input name="name" type="text" required x-model="selectedCompetition.name" class="block w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none focus:border-emerald-500">
-                            </div>
-
-                            <div class="md:col-span-2">
-                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Kode Singkat</label>
-                                <input name="code" type="text" required x-model="selectedCompetition.code" class="block w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-mono font-bold text-slate-900 outline-none uppercase focus:border-emerald-500">
-                            </div>
-
-                            <div class="md:col-span-3">
-                                <label class="block text-xs font-bold uppercase tracking-wider text-amber-700 mb-1 flex items-center gap-1">
-                                    <i data-lucide="list-ordered" class="w-3.5 h-3.5 text-amber-500"></i>
-                                    <span>Urutan Tampilan</span>
-                                </label>
-                                <input name="order" type="number" min="1" x-model="selectedCompetition.order" class="block w-full px-3 py-2 rounded-xl bg-amber-50/60 border border-amber-300/80 text-xs font-mono font-black text-amber-900 outline-none focus:border-amber-500">
-                            </div>
-                        </div>
-
-                        <!-- Row 2: Kategori Lomba, Min/Maks Anggota, Lokasi, Waktu -->
-                        <div class="grid grid-cols-2 sm:grid-cols-12 gap-3">
-                            <div class="sm:col-span-3">
-                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Kategori Lomba</label>
-                                <select name="type" required x-model="selectedCompetition.type" class="block w-full px-2.5 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-900 outline-none focus:border-emerald-500">
-                                    <option value="individu">Individu</option>
-                                    <option value="tim">Tim</option>
-                                    <option value="kelompok">Kelompok</option>
-                                    <option value="regu">Regu</option>
-                                </select>
-                            </div>
-                            <div class="sm:col-span-2">
-                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Min Anggota</label>
-                                <input name="min_members" type="number" min="1" required x-model="selectedCompetition.min_members" class="block w-full px-2.5 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-900 outline-none focus:border-emerald-500">
-                            </div>
-                            <div class="sm:col-span-2">
-                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Maks Anggota</label>
-                                <input name="max_members" type="number" min="1" required x-model="selectedCompetition.max_members" class="block w-full px-2.5 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-900 outline-none focus:border-emerald-500">
-                            </div>
-                            <div class="col-span-2 sm:col-span-3">
-                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Lokasi / Venue</label>
-                                <input name="venue" type="text" x-model="selectedCompetition.venue" placeholder="Contoh: GOR MTsN 1 Blitar" class="block w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-medium text-slate-900 outline-none">
-                            </div>
-                            <div class="col-span-2 sm:col-span-2">
-                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Waktu / Jadwal</label>
-                                <input name="schedule_time" type="text" x-model="selectedCompetition.schedule_time" placeholder="Contoh: 08.00 WIB" class="block w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-medium text-slate-900 outline-none">
-                            </div>
-                        </div>
-
-                        <!-- Khusus Bulu Tangkis: Kartu Pengaturan Sesuai Kategori yang Diklik -->
-                        <div x-show="selectedCompetition.code === 'BLT'" class="space-y-4">
-                            
-                            <!-- TUNGGAL PA - KATEGORI A -->
-                            <div x-show="bltEditMode === 'tunggal_pa_a' || bltEditMode === 'all'" class="p-4 sm:p-5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 space-y-3.5">
-                                <div class="flex items-center justify-between border-b border-emerald-200/60 pb-2">
-                                    <span class="text-xs font-black text-emerald-950 flex items-center gap-2 tracking-wide">
-                                        <i data-lucide="user" class="w-4 h-4 text-emerald-700"></i>
-                                        <span>PENGATURAN TUNGGAL PUTRA (PA) — KAT A (KELAS 1–2 SD/MI)</span>
-                                    </span>
-                                    <span class="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded font-mono">Tunggal PA • Kat A</span>
-                                </div>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                    <div class="bg-white p-3 rounded-xl border border-emerald-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] font-extrabold text-slate-800">Biaya Kat A (Rp)</label>
-                                        <input name="blt_fee_a_tunggal_pa" type="number" step="1000" min="0" x-model="selectedCompetition.blt_fee_a_tunggal_pa" class="block w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-mono font-bold text-emerald-800 outline-none">
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-emerald-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] font-extrabold text-slate-800">Kuota Kat A (Peserta)</label>
-                                        <input name="blt_quota_a_tunggal_pa" type="number" min="0" x-model="selectedCompetition.blt_quota_a_tunggal_pa" class="block w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-800 outline-none">
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-emerald-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] text-slate-500 font-bold">Petugas PIC Tunggal PA</label>
-                                        <select name="blt_pic_tunggal_pa" x-model="selectedCompetition.blt_pic_tunggal_pa" class="block w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none">
-                                            <option value="">-- Sama PIC Utama --</option>
-                                            @foreach($pics as $p)
-                                                <option value="{{ $p->id }}">{{ $p->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-emerald-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] text-slate-500 font-bold">Status Pendaftaran</label>
-                                        <select name="blt_status_a_tunggal_pa" x-model="selectedCompetition.blt_status_a_tunggal_pa" class="block w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none">
-                                            <option value="buka">Buka</option>
-                                            <option value="tutup">Tutup</option>
-                                            <option value="selesai">Selesai</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- TUNGGAL PA - KATEGORI B -->
-                            <div x-show="bltEditMode === 'tunggal_pa_b' || bltEditMode === 'all'" class="p-4 sm:p-5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 space-y-3.5">
-                                <div class="flex items-center justify-between border-b border-emerald-200/60 pb-2">
-                                    <span class="text-xs font-black text-emerald-950 flex items-center gap-2 tracking-wide">
-                                        <i data-lucide="user" class="w-4 h-4 text-emerald-700"></i>
-                                        <span>PENGATURAN TUNGGAL PUTRA (PA) — KAT B (KELAS 3–4 SD/MI)</span>
-                                    </span>
-                                    <span class="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded font-mono">Tunggal PA • Kat B</span>
-                                </div>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                    <div class="bg-white p-3 rounded-xl border border-emerald-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] font-extrabold text-slate-800">Biaya Kat B (Rp)</label>
-                                        <input name="blt_fee_b_tunggal_pa" type="number" step="1000" min="0" x-model="selectedCompetition.blt_fee_b_tunggal_pa" class="block w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-mono font-bold text-emerald-800 outline-none">
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-emerald-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] font-extrabold text-slate-800">Kuota Kat B (Peserta)</label>
-                                        <input name="blt_quota_b_tunggal_pa" type="number" min="0" x-model="selectedCompetition.blt_quota_b_tunggal_pa" class="block w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-800 outline-none">
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-emerald-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] text-slate-500 font-bold">Petugas PIC Tunggal PA</label>
-                                        <select name="blt_pic_tunggal_pa" x-model="selectedCompetition.blt_pic_tunggal_pa" class="block w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none">
-                                            <option value="">-- Sama PIC Utama --</option>
-                                            @foreach($pics as $p)
-                                                <option value="{{ $p->id }}">{{ $p->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-emerald-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] text-slate-500 font-bold">Status Pendaftaran</label>
-                                        <select name="blt_status_b_tunggal_pa" x-model="selectedCompetition.blt_status_b_tunggal_pa" class="block w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none">
-                                            <option value="buka">Buka</option>
-                                            <option value="tutup">Tutup</option>
-                                            <option value="selesai">Selesai</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- TUNGGAL PA - KATEGORI C -->
-                            <div x-show="bltEditMode === 'tunggal_pa_c' || bltEditMode === 'all'" class="p-4 sm:p-5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 space-y-3.5">
-                                <div class="flex items-center justify-between border-b border-emerald-200/60 pb-2">
-                                    <span class="text-xs font-black text-emerald-950 flex items-center gap-2 tracking-wide">
-                                        <i data-lucide="user" class="w-4 h-4 text-emerald-700"></i>
-                                        <span>PENGATURAN TUNGGAL PUTRA (PA) — KAT C (KELAS 5–6 SD/MI)</span>
-                                    </span>
-                                    <span class="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded font-mono">Tunggal PA • Kat C</span>
-                                </div>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                    <div class="bg-white p-3 rounded-xl border border-emerald-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] font-extrabold text-slate-800">Biaya Kat C (Rp)</label>
-                                        <input name="blt_fee_c_tunggal_pa" type="number" step="1000" min="0" x-model="selectedCompetition.blt_fee_c_tunggal_pa" class="block w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-mono font-bold text-emerald-800 outline-none">
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-emerald-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] font-extrabold text-slate-800">Kuota Kat C (Peserta)</label>
-                                        <input name="blt_quota_c_tunggal_pa" type="number" min="0" x-model="selectedCompetition.blt_quota_c_tunggal_pa" class="block w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-800 outline-none">
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-emerald-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] text-slate-500 font-bold">Petugas PIC Tunggal PA</label>
-                                        <select name="blt_pic_tunggal_pa" x-model="selectedCompetition.blt_pic_tunggal_pa" class="block w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none">
-                                            <option value="">-- Sama PIC Utama --</option>
-                                            @foreach($pics as $p)
-                                                <option value="{{ $p->id }}">{{ $p->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-emerald-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] text-slate-500 font-bold">Status Pendaftaran</label>
-                                        <select name="blt_status_c_tunggal_pa" x-model="selectedCompetition.blt_status_c_tunggal_pa" class="block w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none">
-                                            <option value="buka">Buka</option>
-                                            <option value="tutup">Tutup</option>
-                                            <option value="selesai">Selesai</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- TUNGGAL PI - KATEGORI A -->
-                            <div x-show="bltEditMode === 'tunggal_pi_a' || bltEditMode === 'all'" class="p-4 sm:p-5 rounded-2xl bg-pink-50/70 border border-pink-200/80 space-y-3.5">
-                                <div class="flex items-center justify-between border-b border-pink-200/60 pb-2">
-                                    <span class="text-xs font-black text-pink-950 flex items-center gap-2 tracking-wide">
-                                        <i data-lucide="user" class="w-4 h-4 text-pink-700"></i>
-                                        <span>PENGATURAN TUNGGAL PUTRI (PI) — KAT A (KELAS 1–2 SD/MI)</span>
-                                    </span>
-                                    <span class="text-[10px] font-bold text-pink-800 bg-pink-100 px-2 py-0.5 rounded font-mono">Tunggal PI • Kat A</span>
-                                </div>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                    <div class="bg-white p-3 rounded-xl border border-pink-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] font-extrabold text-slate-800">Biaya Kat A (Rp)</label>
-                                        <input name="blt_fee_a_tunggal_pi" type="number" step="1000" min="0" x-model="selectedCompetition.blt_fee_a_tunggal_pi" class="block w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-mono font-bold text-pink-800 outline-none">
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-pink-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] font-extrabold text-slate-800">Kuota Kat A (Peserta)</label>
-                                        <input name="blt_quota_a_tunggal_pi" type="number" min="0" x-model="selectedCompetition.blt_quota_a_tunggal_pi" class="block w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-800 outline-none">
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-pink-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] text-slate-500 font-bold">Petugas PIC Tunggal PI</label>
-                                        <select name="blt_pic_tunggal_pi" x-model="selectedCompetition.blt_pic_tunggal_pi" class="block w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none">
-                                            <option value="">-- Sama PIC Utama --</option>
-                                            @foreach($pics as $p)
-                                                <option value="{{ $p->id }}">{{ $p->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-pink-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] text-slate-500 font-bold">Status Pendaftaran</label>
-                                        <select name="blt_status_a_tunggal_pi" x-model="selectedCompetition.blt_status_a_tunggal_pi" class="block w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none">
-                                            <option value="buka">Buka</option>
-                                            <option value="tutup">Tutup</option>
-                                            <option value="selesai">Selesai</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- TUNGGAL PI - KATEGORI B -->
-                            <div x-show="bltEditMode === 'tunggal_pi_b' || bltEditMode === 'all'" class="p-4 sm:p-5 rounded-2xl bg-pink-50/70 border border-pink-200/80 space-y-3.5">
-                                <div class="flex items-center justify-between border-b border-pink-200/60 pb-2">
-                                    <span class="text-xs font-black text-pink-950 flex items-center gap-2 tracking-wide">
-                                        <i data-lucide="user" class="w-4 h-4 text-pink-700"></i>
-                                        <span>PENGATURAN TUNGGAL PUTRI (PI) — KAT B (KELAS 3–4 SD/MI)</span>
-                                    </span>
-                                    <span class="text-[10px] font-bold text-pink-800 bg-pink-100 px-2 py-0.5 rounded font-mono">Tunggal PI • Kat B</span>
-                                </div>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                    <div class="bg-white p-3 rounded-xl border border-pink-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] font-extrabold text-slate-800">Biaya Kat B (Rp)</label>
-                                        <input name="blt_fee_b_tunggal_pi" type="number" step="1000" min="0" x-model="selectedCompetition.blt_fee_b_tunggal_pi" class="block w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-mono font-bold text-pink-800 outline-none">
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-pink-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] font-extrabold text-slate-800">Kuota Kat B (Peserta)</label>
-                                        <input name="blt_quota_b_tunggal_pi" type="number" min="0" x-model="selectedCompetition.blt_quota_b_tunggal_pi" class="block w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-800 outline-none">
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-pink-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] text-slate-500 font-bold">Petugas PIC Tunggal PI</label>
-                                        <select name="blt_pic_tunggal_pi" x-model="selectedCompetition.blt_pic_tunggal_pi" class="block w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none">
-                                            <option value="">-- Sama PIC Utama --</option>
-                                            @foreach($pics as $p)
-                                                <option value="{{ $p->id }}">{{ $p->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-pink-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] text-slate-500 font-bold">Status Pendaftaran</label>
-                                        <select name="blt_status_b_tunggal_pi" x-model="selectedCompetition.blt_status_b_tunggal_pi" class="block w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none">
-                                            <option value="buka">Buka</option>
-                                            <option value="tutup">Tutup</option>
-                                            <option value="selesai">Selesai</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- TUNGGAL PI - KATEGORI C -->
-                            <div x-show="bltEditMode === 'tunggal_pi_c' || bltEditMode === 'all'" class="p-4 sm:p-5 rounded-2xl bg-pink-50/70 border border-pink-200/80 space-y-3.5">
-                                <div class="flex items-center justify-between border-b border-pink-200/60 pb-2">
-                                    <span class="text-xs font-black text-pink-950 flex items-center gap-2 tracking-wide">
-                                        <i data-lucide="user" class="w-4 h-4 text-pink-700"></i>
-                                        <span>PENGATURAN TUNGGAL PUTRI (PI) — KAT C (KELAS 5–6 SD/MI)</span>
-                                    </span>
-                                    <span class="text-[10px] font-bold text-pink-800 bg-pink-100 px-2 py-0.5 rounded font-mono">Tunggal PI • Kat C</span>
-                                </div>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                    <div class="bg-white p-3 rounded-xl border border-pink-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] font-extrabold text-slate-800">Biaya Kat C (Rp)</label>
-                                        <input name="blt_fee_c_tunggal_pi" type="number" step="1000" min="0" x-model="selectedCompetition.blt_fee_c_tunggal_pi" class="block w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-mono font-bold text-pink-800 outline-none">
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-pink-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] font-extrabold text-slate-800">Kuota Kat C (Peserta)</label>
-                                        <input name="blt_quota_c_tunggal_pi" type="number" min="0" x-model="selectedCompetition.blt_quota_c_tunggal_pi" class="block w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-800 outline-none">
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-pink-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] text-slate-500 font-bold">Petugas PIC Tunggal PI</label>
-                                        <select name="blt_pic_tunggal_pi" x-model="selectedCompetition.blt_pic_tunggal_pi" class="block w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none">
-                                            <option value="">-- Sama PIC Utama --</option>
-                                            @foreach($pics as $p)
-                                                <option value="{{ $p->id }}">{{ $p->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-pink-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] text-slate-500 font-bold">Status Pendaftaran</label>
-                                        <select name="blt_status_c_tunggal_pi" x-model="selectedCompetition.blt_status_c_tunggal_pi" class="block w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none">
-                                            <option value="buka">Buka</option>
-                                            <option value="tutup">Tutup</option>
-                                            <option value="selesai">Selesai</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 3. KARTU NOMOR GANDA PUTRA (PA) -->
-                            <div x-show="bltEditMode === 'ganda_pa' || bltEditMode === 'all'" class="p-4 sm:p-5 rounded-2xl bg-blue-50/70 border border-blue-200/80 space-y-3.5">
-                                <div class="flex items-center justify-between border-b border-blue-200/60 pb-2">
-                                    <span class="text-xs font-black text-blue-950 flex items-center gap-2 tracking-wide">
-                                        <i data-lucide="users" class="w-4 h-4 text-blue-700"></i>
-                                        <span>PENGATURAN GANDA PUTRA (PA)</span>
-                                    </span>
-                                    <span class="text-[10px] font-bold text-blue-800 bg-blue-100 px-2 py-0.5 rounded font-mono">Ganda Putra (PA)</span>
-                                </div>
-
-                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                    <div class="bg-white p-3 rounded-xl border border-blue-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] font-extrabold text-slate-800">Biaya Ganda Putra (Rp)</label>
-                                        <input name="blt_fee_ganda_pa" type="number" step="1000" min="0" x-model="selectedCompetition.blt_fee_ganda_pa" class="block w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-mono font-bold text-blue-800 outline-none">
-                                    </div>
-
-                                    <div class="bg-white p-3 rounded-xl border border-blue-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] font-extrabold text-slate-800">Kuota Ganda PA (Pasang)</label>
-                                        <input name="blt_quota_ganda_pa" type="number" min="0" x-model="selectedCompetition.blt_quota_ganda_pa" class="block w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-800 outline-none">
-                                    </div>
-
-                                    <div class="bg-white p-3 rounded-xl border border-blue-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] text-slate-500 font-bold">Petugas PIC Ganda PA</label>
-                                        <select name="blt_pic_ganda_pa" x-model="selectedCompetition.blt_pic_ganda_pa" class="block w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none">
-                                            <option value="">-- Sama PIC Utama --</option>
-                                            @foreach($pics as $p)
-                                                <option value="{{ $p->id }}">{{ $p->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-
-                                    <div class="bg-white p-3 rounded-xl border border-blue-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] text-slate-500 font-bold">Status Pendaftaran</label>
-                                        <select name="blt_status_ganda_pa" x-model="selectedCompetition.blt_status_ganda_pa" class="block w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none">
-                                            <option value="buka">Buka</option>
-                                            <option value="tutup">Tutup</option>
-                                            <option value="selesai">Selesai</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 4. KARTU NOMOR GANDA PUTRI (PI) -->
-                            <div x-show="bltEditMode === 'ganda_pi' || bltEditMode === 'all'" class="p-4 sm:p-5 rounded-2xl bg-amber-50/70 border border-amber-200/80 space-y-3.5">
-                                <div class="flex items-center justify-between border-b border-amber-200/60 pb-2">
-                                    <span class="text-xs font-black text-amber-950 flex items-center gap-2 tracking-wide">
-                                        <i data-lucide="users" class="w-4 h-4 text-amber-700"></i>
-                                        <span>PENGATURAN GANDA PUTRI (PI)</span>
-                                    </span>
-                                    <span class="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded font-mono">Ganda Putri (PI)</span>
-                                </div>
-
-                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                    <div class="bg-white p-3 rounded-xl border border-amber-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] font-extrabold text-slate-800">Biaya Ganda Putri (Rp)</label>
-                                        <input name="blt_fee_ganda_pi" type="number" step="1000" min="0" x-model="selectedCompetition.blt_fee_ganda_pi" class="block w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-mono font-bold text-amber-800 outline-none">
-                                    </div>
-
-                                    <div class="bg-white p-3 rounded-xl border border-amber-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] font-extrabold text-slate-800">Kuota Ganda PI (Pasang)</label>
-                                        <input name="blt_quota_ganda_pi" type="number" min="0" x-model="selectedCompetition.blt_quota_ganda_pi" class="block w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-800 outline-none">
-                                    </div>
-
-                                    <div class="bg-white p-3 rounded-xl border border-amber-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] text-slate-500 font-bold">Petugas PIC Ganda PI</label>
-                                        <select name="blt_pic_ganda_pi" x-model="selectedCompetition.blt_pic_ganda_pi" class="block w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none">
-                                            <option value="">-- Sama PIC Utama --</option>
-                                            @foreach($pics as $p)
-                                                <option value="{{ $p->id }}">{{ $p->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-
-                                    <div class="bg-white p-3 rounded-xl border border-amber-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] text-slate-500 font-bold">Status Pendaftaran</label>
-                                        <select name="blt_status_ganda_pi" x-model="selectedCompetition.blt_status_ganda_pi" class="block w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none">
-                                            <option value="buka">Buka</option>
-                                            <option value="tutup">Tutup</option>
-                                            <option value="selesai">Selesai</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-
-                        <!-- Khusus Cabang MTQ & Pop Singer (MTQ / POP) -->
-                        <div x-show="['MTQ', 'POP'].includes(selectedCompetition.code)" class="space-y-3.5">
-                            <!-- 1. KARTU INDIVIDU PUTRA (PA) -->
-                            <div x-show="bltEditMode === 'pa' || bltEditMode === 'all'" class="p-4 sm:p-5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 space-y-3.5">
-                                <div class="flex items-center justify-between border-b border-emerald-200/60 pb-2">
-                                    <span class="text-xs font-black text-emerald-950 flex items-center gap-2 tracking-wide">
-                                        <i data-lucide="user" class="w-4 h-4 text-emerald-700"></i>
-                                        <span x-text="'PENGATURAN ' + (selectedCompetition.name || '').toUpperCase() + ' — INDIVIDU PUTRA (PA)'"></span>
-                                    </span>
-                                    <span class="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded font-mono">Individu • PA</span>
-                                </div>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                    <div class="bg-white p-3 rounded-xl border border-emerald-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] font-extrabold text-slate-800">Biaya Putra (Rp)</label>
-                                        <input :name="selectedCompetition.code ? selectedCompetition.code.toLowerCase() + '_fee_pa' : 'fee_pa'" type="number" step="1000" min="0" x-model="selectedCompetition.fee_pa" class="block w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-mono font-bold text-emerald-800 outline-none">
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-emerald-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] font-extrabold text-slate-800">Kuota Putra (Peserta)</label>
-                                        <input :name="selectedCompetition.code ? selectedCompetition.code.toLowerCase() + '_quota_pa' : 'quota_pa'" type="number" min="0" x-model="selectedCompetition.quota_pa" class="block w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-800 outline-none">
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-emerald-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] text-slate-500 font-bold">Petugas PIC Putra</label>
-                                        <select :name="selectedCompetition.code ? selectedCompetition.code.toLowerCase() + '_pic_pa' : 'pic_pa'" x-model="selectedCompetition.pic_pa" class="block w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none">
-                                            <option value="">-- Sama PIC Utama --</option>
-                                            @foreach($pics as $p)
-                                                <option value="{{ $p->id }}">{{ $p->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-emerald-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] text-slate-500 font-bold">Status Pendaftaran</label>
-                                        <select :name="selectedCompetition.code ? selectedCompetition.code.toLowerCase() + '_status_pa' : 'status_pa'" x-model="selectedCompetition.status_pa" class="block w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none">
-                                            <option value="buka">Buka</option>
-                                            <option value="tutup">Tutup</option>
-                                            <option value="selesai">Selesai</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 2. KARTU INDIVIDU PUTRI (PI) -->
-                            <div x-show="bltEditMode === 'pi' || bltEditMode === 'all'" class="p-4 sm:p-5 rounded-2xl bg-pink-50/70 border border-pink-200/80 space-y-3.5">
-                                <div class="flex items-center justify-between border-b border-pink-200/60 pb-2">
-                                    <span class="text-xs font-black text-pink-950 flex items-center gap-2 tracking-wide">
-                                        <i data-lucide="user" class="w-4 h-4 text-pink-700"></i>
-                                        <span x-text="'PENGATURAN ' + (selectedCompetition.name || '').toUpperCase() + ' — INDIVIDU PUTRI (PI)'"></span>
-                                    </span>
-                                    <span class="text-[10px] font-bold text-pink-800 bg-pink-100 px-2 py-0.5 rounded font-mono">Individu • PI</span>
-                                </div>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                    <div class="bg-white p-3 rounded-xl border border-pink-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] font-extrabold text-slate-800">Biaya Putri (Rp)</label>
-                                        <input :name="selectedCompetition.code ? selectedCompetition.code.toLowerCase() + '_fee_pi' : 'fee_pi'" type="number" step="1000" min="0" x-model="selectedCompetition.fee_pi" class="block w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-mono font-bold text-pink-800 outline-none">
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-pink-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] font-extrabold text-slate-800">Kuota Putri (Peserta)</label>
-                                        <input :name="selectedCompetition.code ? selectedCompetition.code.toLowerCase() + '_quota_pi' : 'quota_pi'" type="number" min="0" x-model="selectedCompetition.quota_pi" class="block w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-800 outline-none">
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-pink-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] text-slate-500 font-bold">Petugas PIC Putri</label>
-                                        <select :name="selectedCompetition.code ? selectedCompetition.code.toLowerCase() + '_pic_pi' : 'pic_pi'" x-model="selectedCompetition.pic_pi" class="block w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none">
-                                            <option value="">-- Sama PIC Utama --</option>
-                                            @foreach($pics as $p)
-                                                <option value="{{ $p->id }}">{{ $p->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-pink-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] text-slate-500 font-bold">Status Pendaftaran</label>
-                                        <select :name="selectedCompetition.code ? selectedCompetition.code.toLowerCase() + '_status_pi' : 'status_pi'" x-model="selectedCompetition.status_pi" class="block w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none">
-                                            <option value="buka">Buka</option>
-                                            <option value="tutup">Tutup</option>
-                                            <option value="selesai">Selesai</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Khusus Cabang Tenis Meja (TMJ - Kat A & Kat B) -->
-                        <div x-show="selectedCompetition.code === 'TMJ'" class="space-y-4">
-                            
-                            <!-- 1. TUNGGAL PA - KATEGORI A -->
-                            <div x-show="bltEditMode === 'tmj_pa_a' || bltEditMode === 'all'" class="p-4 sm:p-5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 space-y-3.5">
-                                <div class="flex items-center justify-between border-b border-emerald-200/60 pb-2">
-                                    <span class="text-xs font-black text-emerald-950 flex items-center gap-2 tracking-wide">
-                                        <i data-lucide="user" class="w-4 h-4 text-emerald-700"></i>
-                                        <span>PENGATURAN TENIS MEJA — TUNGGAL PUTRA (PA) — KAT A (KELAS 1–3 SD/MI)</span>
-                                    </span>
-                                    <span class="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded font-mono">Tunggal PA • Kat A</span>
-                                </div>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                    <div class="bg-white p-3 rounded-xl border border-emerald-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] font-extrabold text-slate-800">Biaya Kat A (Rp)</label>
-                                        <input name="tmj_fee_a_tunggal_pa" type="number" step="1000" min="0" x-model="selectedCompetition.tmj_fee_a_tunggal_pa" class="block w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-mono font-bold text-emerald-800 outline-none">
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-emerald-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] font-extrabold text-slate-800">Kuota Kat A (Peserta)</label>
-                                        <input name="tmj_quota_a_tunggal_pa" type="number" min="0" x-model="selectedCompetition.tmj_quota_a_tunggal_pa" class="block w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-800 outline-none">
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-emerald-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] text-slate-500 font-bold">Petugas PIC Tunggal PA</label>
-                                        <select name="tmj_pic_tunggal_pa" x-model="selectedCompetition.tmj_pic_tunggal_pa" class="block w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none">
-                                            <option value="">-- Sama PIC Utama --</option>
-                                            @foreach($pics as $p)
-                                                <option value="{{ $p->id }}">{{ $p->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-emerald-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] text-slate-500 font-bold">Status Pendaftaran</label>
-                                        <select name="tmj_status_a_tunggal_pa" x-model="selectedCompetition.tmj_status_a_tunggal_pa" class="block w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none">
-                                            <option value="buka">Buka</option>
-                                            <option value="tutup">Tutup</option>
-                                            <option value="selesai">Selesai</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 2. TUNGGAL PA - KATEGORI B -->
-                            <div x-show="bltEditMode === 'tmj_pa_b' || bltEditMode === 'all'" class="p-4 sm:p-5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 space-y-3.5">
-                                <div class="flex items-center justify-between border-b border-emerald-200/60 pb-2">
-                                    <span class="text-xs font-black text-emerald-950 flex items-center gap-2 tracking-wide">
-                                        <i data-lucide="user" class="w-4 h-4 text-emerald-700"></i>
-                                        <span>PENGATURAN TENIS MEJA — TUNGGAL PUTRA (PA) — KAT B (KELAS 4–6 SD/MI)</span>
-                                    </span>
-                                    <span class="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded font-mono">Tunggal PA • Kat B</span>
-                                </div>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                    <div class="bg-white p-3 rounded-xl border border-emerald-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] font-extrabold text-slate-800">Biaya Kat B (Rp)</label>
-                                        <input name="tmj_fee_b_tunggal_pa" type="number" step="1000" min="0" x-model="selectedCompetition.tmj_fee_b_tunggal_pa" class="block w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-mono font-bold text-emerald-800 outline-none">
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-emerald-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] font-extrabold text-slate-800">Kuota Kat B (Peserta)</label>
-                                        <input name="tmj_quota_b_tunggal_pa" type="number" min="0" x-model="selectedCompetition.tmj_quota_b_tunggal_pa" class="block w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-800 outline-none">
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-emerald-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] text-slate-500 font-bold">Petugas PIC Tunggal PA</label>
-                                        <select name="tmj_pic_tunggal_pa" x-model="selectedCompetition.tmj_pic_tunggal_pa" class="block w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none">
-                                            <option value="">-- Sama PIC Utama --</option>
-                                            @foreach($pics as $p)
-                                                <option value="{{ $p->id }}">{{ $p->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-emerald-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] text-slate-500 font-bold">Status Pendaftaran</label>
-                                        <select name="tmj_status_b_tunggal_pa" x-model="selectedCompetition.tmj_status_b_tunggal_pa" class="block w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none">
-                                            <option value="buka">Buka</option>
-                                            <option value="tutup">Tutup</option>
-                                            <option value="selesai">Selesai</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 3. TUNGGAL PI - KATEGORI A -->
-                            <div x-show="bltEditMode === 'tmj_pi_a' || bltEditMode === 'all'" class="p-4 sm:p-5 rounded-2xl bg-pink-50/70 border border-pink-200/80 space-y-3.5">
-                                <div class="flex items-center justify-between border-b border-pink-200/60 pb-2">
-                                    <span class="text-xs font-black text-pink-950 flex items-center gap-2 tracking-wide">
-                                        <i data-lucide="user" class="w-4 h-4 text-pink-700"></i>
-                                        <span>PENGATURAN TENIS MEJA — TUNGGAL PUTRI (PI) — KAT A (KELAS 1–3 SD/MI)</span>
-                                    </span>
-                                    <span class="text-[10px] font-bold text-pink-800 bg-pink-100 px-2 py-0.5 rounded font-mono">Tunggal PI • Kat A</span>
-                                </div>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                    <div class="bg-white p-3 rounded-xl border border-pink-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] font-extrabold text-slate-800">Biaya Kat A (Rp)</label>
-                                        <input name="tmj_fee_a_tunggal_pi" type="number" step="1000" min="0" x-model="selectedCompetition.tmj_fee_a_tunggal_pi" class="block w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-mono font-bold text-pink-800 outline-none">
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-pink-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] font-extrabold text-slate-800">Kuota Kat A (Peserta)</label>
-                                        <input name="tmj_quota_a_tunggal_pi" type="number" min="0" x-model="selectedCompetition.tmj_quota_a_tunggal_pi" class="block w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-800 outline-none">
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-pink-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] text-slate-500 font-bold">Petugas PIC Tunggal PI</label>
-                                        <select name="tmj_pic_tunggal_pi" x-model="selectedCompetition.tmj_pic_tunggal_pi" class="block w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none">
-                                            <option value="">-- Sama PIC Utama --</option>
-                                            @foreach($pics as $p)
-                                                <option value="{{ $p->id }}">{{ $p->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-pink-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] text-slate-500 font-bold">Status Pendaftaran</label>
-                                        <select name="tmj_status_a_tunggal_pi" x-model="selectedCompetition.tmj_status_a_tunggal_pi" class="block w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none">
-                                            <option value="buka">Buka</option>
-                                            <option value="tutup">Tutup</option>
-                                            <option value="selesai">Selesai</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 4. TUNGGAL PI - KATEGORI B -->
-                            <div x-show="bltEditMode === 'tmj_pi_b' || bltEditMode === 'all'" class="p-4 sm:p-5 rounded-2xl bg-pink-50/70 border border-pink-200/80 space-y-3.5">
-                                <div class="flex items-center justify-between border-b border-pink-200/60 pb-2">
-                                    <span class="text-xs font-black text-pink-950 flex items-center gap-2 tracking-wide">
-                                        <i data-lucide="user" class="w-4 h-4 text-pink-700"></i>
-                                        <span>PENGATURAN TENIS MEJA — TUNGGAL PUTRI (PI) — KAT B (KELAS 4–6 SD/MI)</span>
-                                    </span>
-                                    <span class="text-[10px] font-bold text-pink-800 bg-pink-100 px-2 py-0.5 rounded font-mono">Tunggal PI • Kat B</span>
-                                </div>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                    <div class="bg-white p-3 rounded-xl border border-pink-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] font-extrabold text-slate-800">Biaya Kat B (Rp)</label>
-                                        <input name="tmj_fee_b_tunggal_pi" type="number" step="1000" min="0" x-model="selectedCompetition.tmj_fee_b_tunggal_pi" class="block w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-mono font-bold text-pink-800 outline-none">
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-pink-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] font-extrabold text-slate-800">Kuota Kat B (Peserta)</label>
-                                        <input name="tmj_quota_b_tunggal_pi" type="number" min="0" x-model="selectedCompetition.tmj_quota_b_tunggal_pi" class="block w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-800 outline-none">
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-pink-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] text-slate-500 font-bold">Petugas PIC Tunggal PI</label>
-                                        <select name="tmj_pic_tunggal_pi" x-model="selectedCompetition.tmj_pic_tunggal_pi" class="block w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none">
-                                            <option value="">-- Sama PIC Utama --</option>
-                                            @foreach($pics as $p)
-                                                <option value="{{ $p->id }}">{{ $p->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="bg-white p-3 rounded-xl border border-pink-100 shadow-sm space-y-1.5">
-                                        <label class="block text-[10px] text-slate-500 font-bold">Status Pendaftaran</label>
-                                        <select name="tmj_status_b_tunggal_pi" x-model="selectedCompetition.tmj_status_b_tunggal_pi" class="block w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none">
-                                            <option value="buka">Buka</option>
-                                            <option value="tutup">Tutup</option>
-                                            <option value="selesai">Selesai</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Pengaturan Umum untuk Lomba Lainnya (Non-BLT & Non-MTQ & Non-POP & Non-TMJ) -->
-                        <div x-show="!['BLT', 'MTQ', 'POP', 'TMJ'].includes(selectedCompetition.code)" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                            <div>
-                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Biaya (Rp)</label>
-                                <input name="registration_fee" type="number" min="0" step="1000" x-model="selectedCompetition.registration_fee" class="block w-full px-3 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-mono font-bold text-emerald-800 outline-none">
-                            </div>
-                            <div>
-                                <div class="flex items-center justify-between mb-1.5">
-                                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600">Kuota Total</label>
-                                    <span x-show="selectedCompetition.quota == 0" class="text-[9px] font-black text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded border border-purple-200">∞ Unlimited</span>
-                                </div>
-                                <input name="quota" type="number" min="0" required x-model="selectedCompetition.quota" class="block w-full px-3 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-900 outline-none">
-                                <span class="text-[10px] text-slate-400">Isi 0 untuk Tak Terbatas (∞)</span>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Koordinator PIC</label>
-                                <select name="pic_id" x-model="selectedCompetition.pic_id" class="block w-full px-2 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-900 outline-none">
-                                    <option value="">-- Pilih --</option>
-                                    @foreach($pics as $p)
-                                        <option value="{{ $p->id }}">{{ $p->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Status</label>
-                                <select name="status" required x-model="selectedCompetition.status" class="block w-full px-2 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-900 outline-none">
-                                    <option value="buka">Buka</option>
-                                    <option value="tutup">Tutup</option>
-                                    <option value="selesai">Selesai</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div>
-                            <div class="flex items-center justify-between mb-1.5">
-                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600">Aturan & Petunjuk Teknis Singkat</label>
-                                <input type="hidden" name="show_rules" :value="selectedCompetition.show_rules ? '1' : '0'">
-                                <button type="button" 
-                                        @click="selectedCompetition.show_rules = !selectedCompetition.show_rules"
-                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer"
-                                        :class="selectedCompetition.show_rules ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20' : 'bg-slate-200 hover:bg-slate-300 text-slate-700'"
-                                        :title="selectedCompetition.show_rules ? 'Klik untuk menyembunyikan aturan dari peserta' : 'Klik untuk menampilkan aturan ke peserta'">
-                                    <span class="w-1.5 h-1.5 rounded-full" :class="selectedCompetition.show_rules ? 'bg-emerald-200 animate-pulse' : 'bg-slate-400'"></span>
-                                    <span x-text="selectedCompetition.show_rules ? '✓ Aktif (Tampil di Peserta)' : '✗ Nonaktif (Sembunyi)'"></span>
-                                </button>
-                            </div>
-                            <textarea name="rules" rows="3" x-model="selectedCompetition.rules" placeholder="Tuliskan petunjuk teknis pelaksanaan..." class="block w-full px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-medium text-slate-900 outline-none"></textarea>
-                        </div>
-
-                        <div>
-                            <div class="flex items-center justify-between mb-1.5">
-                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                                    <i data-lucide="file-text" class="w-4 h-4 text-brand-600"></i>
-                                    <span>Embed Link Juknis PDF / Dokumen Resmi</span>
-                                </label>
-                                <span class="text-[10px] text-slate-400 font-semibold">Google Drive / URL PDF / Upload</span>
-                            </div>
-                            
-                            <div class="space-y-2">
-                                <div class="flex items-center gap-2">
-                                    <div class="relative flex-1">
-                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                                            <i data-lucide="link" class="w-3.5 h-3.5"></i>
-                                        </div>
-                                        <input name="guidelines_file" type="text" x-model="selectedCompetition.guidelines_file" placeholder="Paste link Google Drive, URL PDF, atau kode embed (misal: https://drive.google.com/file/d/.../view)" class="block w-full pl-9 pr-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-medium text-slate-900 outline-none focus:border-brand-500 shadow-sm">
-                                    </div>
-                                    <label class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold border border-slate-200 cursor-pointer flex items-center gap-1.5 shrink-0 transition" title="Upload file PDF baru">
-                                        <i data-lucide="upload" class="w-3.5 h-3.5 text-slate-500"></i>
-                                        <span>Upload PDF</span>
-                                        <input type="file" name="guidelines_pdf" accept=".pdf" class="hidden" @change="if($event.target.files.length > 0) { $refs.editPdfName.innerText = '📁 File terpilih: ' + $event.target.files[0].name; }">
-                                    </label>
-                                </div>
-                                <div class="flex flex-wrap items-center justify-between gap-1 text-[11px] text-slate-500">
-                                    <span class="flex items-center gap-1">
-                                        <i data-lucide="info" class="w-3.5 h-3.5 text-blue-500 shrink-0"></i>
-                                        <span>Bisa link Google Drive (akses publik), URL direct PDF, atau upload PDF langsung.</span>
-                                    </span>
-                                    <template x-if="selectedCompetition.guidelines_file">
-                                        <a :href="selectedCompetition.guidelines_file.startsWith('http') ? selectedCompetition.guidelines_file : ('{{ asset('storage') }}/' + selectedCompetition.guidelines_file)" target="_blank" class="text-brand-600 hover:text-brand-700 font-bold flex items-center gap-1">
-                                            <i data-lucide="external-link" class="w-3 h-3"></i>
-                                            <span>Lihat Juknis Saat Ini</span>
-                                        </a>
-                                    </template>
-                                </div>
-                                <div x-ref="editPdfName" class="text-xs font-bold text-emerald-600"></div>
-                            </div>
-                        </div>
-
-                        <!-- LINK GRUP WHATSAPP CABANG LOMBA -->
-                        <div class="space-y-2 p-3.5 rounded-2xl bg-emerald-50/50 border border-emerald-200/80">
-                            <label class="block text-xs font-black uppercase tracking-wider text-emerald-800 flex items-center gap-2">
-                                <i data-lucide="message-circle" class="w-4 h-4 text-emerald-600"></i>
-                                <span>Tautan Undangan Grup WhatsApp Cabang (Opsional)</span>
-                            </label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-emerald-500">
-                                    <i data-lucide="link-2" class="w-3.5 h-3.5"></i>
-                                </div>
-                                <input name="whatsapp_group_url" type="url" x-model="selectedCompetition.whatsapp_group_url" placeholder="https://chat.whatsapp.com/Gzxxxxxxxxxx" class="block w-full pl-9 pr-3 py-2 rounded-xl bg-white border border-emerald-200 text-xs font-medium text-slate-900 outline-none focus:border-emerald-500 shadow-sm font-mono">
-                            </div>
-                            <p class="text-[11px] text-slate-500">Jika diisi, icon WhatsApp akan otomatis tampil di samping tombol Juknis di halaman depan.</p>
-                        </div>
-
-                        <!-- KRITERIA PENILAIAN DEWAN JURI -->
-                        <div class="space-y-3 pt-3 border-t border-slate-100">
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-slate-50 p-3 rounded-2xl border border-slate-200/80">
-                                <div>
-                                    <label class="block text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-                                        <i data-lucide="scale" class="w-4 h-4 text-amber-500"></i>
-                                        <span>Kriteria Penilaian Dewan Juri</span>
-                                    </label>
-                                    <p class="text-[11px] text-slate-500">Atur kriteria penilaian dan visibilitasnya pada pendaftar</p>
-                                </div>
-                                
-                                <div class="flex items-center gap-2 shrink-0">
-                                    <!-- Toggle Aktif / Nonaktif -->
-                                    <input type="hidden" name="show_criteria" :value="selectedCompetition.show_criteria ? '1' : '0'">
-                                    <button type="button" 
-                                            @click="selectedCompetition.show_criteria = !selectedCompetition.show_criteria"
-                                            :class="selectedCompetition.show_criteria ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20' : 'bg-slate-200 hover:bg-slate-300 text-slate-700'"
-                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
-                                            :title="selectedCompetition.show_criteria ? 'Klik untuk menonaktifkan kriteria di halaman pendaftar' : 'Klik untuk mengaktifkan kriteria di halaman pendaftar'">
-                                        <span class="w-2 h-2 rounded-full" :class="selectedCompetition.show_criteria ? 'bg-emerald-200 animate-pulse' : 'bg-slate-400'"></span>
-                                        <span x-text="selectedCompetition.show_criteria ? '✓ Aktif (Tampil)' : '✗ Nonaktif (Sembunyi)'"></span>
-                                    </button>
-
-                                    <!-- Button Tambah Kriteria -->
-                                    <button type="button" @click="addCriterion(selectedCompetition)" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold transition cursor-pointer shadow-xs">
-                                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                                        <span>+ Kriteria</span>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Notification banner when non-aktif -->
-                            <div x-show="!selectedCompetition.show_criteria" class="p-3 rounded-2xl bg-amber-50 border border-amber-200/80 text-xs text-amber-900 flex items-start gap-2.5">
-                                <i data-lucide="eye-off" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
-                                <div>
-                                    <span class="font-bold block text-[11px] uppercase tracking-wider text-amber-800">Status: Nonaktif di Halaman Pendaftar</span>
-                                    <p class="text-[11px] text-amber-700 mt-0.5 leading-relaxed">
-                                        Kriteria penilaian ini <strong>disembunyikan</strong> dan tidak akan muncul di halaman detail lomba maupun formulir pendaftar (cocok untuk cabang olahraga/turnamen sistem gugur).
-                                    </p>
-                                </div>
-                            </div>
-
-                            <!-- Criteria List -->
-                            <div class="space-y-2.5 max-h-48 overflow-y-auto pr-1">
-                                <template x-for="(crit, cIdx) in selectedCompetition.criteria" :key="cIdx">
-                                    <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-                                        <div class="flex items-center gap-2">
-                                            <div class="flex-1">
-                                                <input :name="'criteria[' + cIdx + '][name]'" type="text" required x-model="crit.name" placeholder="Nama Kriteria" class="block w-full px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-800 outline-none focus:border-emerald-500">
-                                            </div>
-                                            <div class="w-24 shrink-0 flex items-center gap-1">
-                                                <input :name="'criteria[' + cIdx + '][weight_percentage]'" type="number" min="1" max="100" required x-model.number="crit.weight_percentage" placeholder="Bobot" class="block w-full px-2 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-mono font-black text-center text-emerald-700 outline-none focus:border-emerald-500">
-                                                <span class="text-xs font-bold text-slate-500">%</span>
-                                            </div>
-                                            <button type="button" @click="removeCriterion(selectedCompetition, cIdx)" class="p-1.5 rounded-lg hover:bg-rose-100 text-rose-500 transition cursor-pointer" title="Hapus Kriteria">
-                                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                            </button>
-                                        </div>
-                                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                            <div class="sm:col-span-2">
-                                                <input :name="'criteria[' + cIdx + '][description]'" type="text" x-model="crit.description" placeholder="Penjelasan kriteria (opsional)" class="block w-full px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[11px] text-slate-600 outline-none">
-                                            </div>
-                                            <div class="flex items-center gap-1 text-[10px] text-slate-400 font-bold justify-end">
-                                                <span>Skor:</span>
-                                                <input :name="'criteria[' + cIdx + '][min_score]'" type="number" x-model="crit.min_score" class="w-12 px-1.5 py-0.5 rounded bg-white border border-slate-200 text-center font-mono text-[11px] text-slate-700">
-                                                <span>-</span>
-                                                <input :name="'criteria[' + cIdx + '][max_score]'" type="number" x-model="crit.max_score" class="w-12 px-1.5 py-0.5 rounded bg-white border border-slate-200 text-center font-mono text-[11px] text-slate-700">
-                                            </div>
-                                        </div>
-                                    </div>
-                                </template>
-
-                                <div x-show="!selectedCompetition.criteria || selectedCompetition.criteria.length === 0" class="p-3 text-center rounded-xl border border-dashed border-slate-200 text-slate-400 text-xs">
-                                    Belum ada kriteria khusus. Klik tombol <strong>+ Tambah Kriteria</strong> di atas.
-                                </div>
-                            </div>
-
-                            <!-- Total Weight Badge -->
-                            <div x-show="selectedCompetition.criteria && selectedCompetition.criteria.length > 0" class="flex items-center justify-between text-xs px-2 pt-1 font-bold">
-                                <span class="text-slate-500">Total Akumulasi Bobot:</span>
-                                <span :class="calculateTotalWeight(selectedCompetition.criteria) === 100 ? 'text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full font-black' : 'text-amber-700 bg-amber-100 px-2.5 py-0.5 rounded-full font-black'" x-text="calculateTotalWeight(selectedCompetition.criteria) + '% ' + (calculateTotalWeight(selectedCompetition.criteria) === 100 ? '(Pas 100%)' : '(Disarankan total 100%)')"></span>
-                            </div>
-                        </div>
-
-                    </div>
-
-                    <!-- Modal Footer -->
-                    <div class="pt-5 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-100">
-                        <button type="button" @click="if(confirm('Apakah Anda yakin ingin menghapus cabang lomba ' + selectedCompetition.name + ' beserta seluruh data pendaftarannya?')) { $refs.deleteModalForm.submit(); }" class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            <span>Hapus Cabang Lomba</span>
-                        </button>
-
-                        <div class="w-full sm:w-auto flex items-center justify-end gap-3">
-                            <button type="button" @click="closeEditCompetitionModal()" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer">
-                                Batal
-                            </button>
-                            <button type="submit" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-xs shadow-lg shadow-emerald-500/20 transition cursor-pointer flex items-center gap-1.5">
-                                <i data-lucide="save" class="w-4 h-4"></i>
-                                <span>Simpan Perubahan</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </form>
-
-            <!-- Hidden Delete Form triggered by modal -->
-            <form x-ref="deleteModalForm" :action="'{{ url('/admin/competitions') }}/' + selectedCompetition.id + '/delete'" method="POST" class="hidden">
-                @csrf
-            </form>
-
-        </div>
-    </div>
-    @endif
 
     <!-- Create Category Modal -->
     <div x-show="createCategoryModal" x-cloak class="fixed inset-0 z-[100] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">

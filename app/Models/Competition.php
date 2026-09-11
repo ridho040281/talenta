@@ -54,6 +54,28 @@ class Competition extends Model
         });
     }
 
+    protected static array $userStaticCache = [];
+
+    public static function primeUserCache($users): void
+    {
+        foreach ($users as $user) {
+            static::$userStaticCache[$user->id] = $user;
+        }
+    }
+
+    public static function findCachedUser(?int $id): ?User
+    {
+        if (! $id) {
+            return null;
+        }
+
+        if (! array_key_exists($id, static::$userStaticCache)) {
+            static::$userStaticCache[$id] = User::select('id', 'name', 'role', 'phone')->find($id);
+        }
+
+        return static::$userStaticCache[$id];
+    }
+
     protected $appends = [
         'fee_display',
         'tier_fees',
@@ -256,17 +278,17 @@ class Competition extends Model
         if ($this->code === 'MTQ') {
             $id = AppSetting::get('mtq_pic_pa', $this->pic_id);
 
-            return $id ? User::find($id) : $this->pic;
+            return $id ? static::findCachedUser($id) : $this->pic;
         }
         if ($this->code === 'POP') {
             $id = AppSetting::get('pop_pic_pa', $this->pic_id);
 
-            return $id ? User::find($id) : $this->pic;
+            return $id ? static::findCachedUser($id) : $this->pic;
         }
         if ($this->code === 'TMJ') {
             $id = AppSetting::get('tmj_pic_tunggal_pa', $this->pic_id);
 
-            return $id ? User::find($id) : $this->pic;
+            return $id ? static::findCachedUser($id) : $this->pic;
         }
         if ($this->code === 'BLT') {
             return $this->pic_tunggal_pa;
@@ -280,17 +302,17 @@ class Competition extends Model
         if ($this->code === 'MTQ') {
             $id = AppSetting::get('mtq_pic_pi', $this->pic_id);
 
-            return $id ? User::find($id) : $this->pic;
+            return $id ? static::findCachedUser($id) : $this->pic;
         }
         if ($this->code === 'POP') {
             $id = AppSetting::get('pop_pic_pi', $this->pic_id);
 
-            return $id ? User::find($id) : $this->pic;
+            return $id ? static::findCachedUser($id) : $this->pic;
         }
         if ($this->code === 'TMJ') {
             $id = AppSetting::get('tmj_pic_tunggal_pi', $this->pic_id);
 
-            return $id ? User::find($id) : $this->pic;
+            return $id ? static::findCachedUser($id) : $this->pic;
         }
         if ($this->code === 'BLT') {
             return $this->pic_tunggal_pi;
@@ -340,7 +362,7 @@ class Competition extends Model
         $prefix = strtolower($this->code);
         $id = AppSetting::get($prefix.'_pic_tunggal_pa', $this->pic_id);
 
-        return $id ? User::find($id) : $this->pic;
+        return $id ? static::findCachedUser($id) : $this->pic;
     }
 
     public function getPicTunggalPiAttribute()
@@ -348,21 +370,21 @@ class Competition extends Model
         $prefix = strtolower($this->code);
         $id = AppSetting::get($prefix.'_pic_tunggal_pi', $this->pic_id);
 
-        return $id ? User::find($id) : $this->pic;
+        return $id ? static::findCachedUser($id) : $this->pic;
     }
 
     public function getPicGandaPaAttribute()
     {
         $id = AppSetting::get('blt_pic_ganda_pa', $this->pic_id);
 
-        return $id ? User::find($id) : $this->pic;
+        return $id ? static::findCachedUser($id) : $this->pic;
     }
 
     public function getPicGandaPiAttribute()
     {
         $id = AppSetting::get('blt_pic_ganda_pi', $this->pic_id);
 
-        return $id ? User::find($id) : $this->pic;
+        return $id ? static::findCachedUser($id) : $this->pic;
     }
 
     public function getStatusATunggalPaAttribute(): string
@@ -857,7 +879,7 @@ class Competition extends Model
         }
         if (! empty($this->tier_pics)) {
             foreach ($this->tier_pics as $sectorPicId) {
-                if ($sectorPicId && $secUser = User::find($sectorPicId)) {
+                if ($sectorPicId && $secUser = static::findCachedUser($sectorPicId)) {
                     $users->push($secUser);
                 }
             }
@@ -1126,9 +1148,9 @@ class Competition extends Model
             return false;
         }
 
-        $activeCount = $this->registrations()
-            ->whereIn('status', ['pending', 'verified'])
-            ->count();
+        $activeCount = $this->relationLoaded('registrations')
+            ? $this->registrations->whereIn('status', ['pending', 'verified'])->count()
+            : $this->registrations()->whereIn('status', ['pending', 'verified'])->count();
 
         return $activeCount >= (int) $this->quota;
     }
