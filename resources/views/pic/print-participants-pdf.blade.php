@@ -95,6 +95,12 @@
         .kop-double-line {
             border-bottom: 3px double #0f172a;
         }
+
+        .signature-space {
+            height: 65px !important;
+            min-height: 65px !important;
+            display: block !important;
+        }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-900 font-sans antialiased min-h-screen py-4 sm:py-6">
@@ -282,25 +288,23 @@
 
                     <!-- ==================== TANDA TANGAN RESMI / BERSAMBUNG ==================== -->
                     @if($page['has_signatures'] ?? true)
-                        <div class="mt-4 pt-1" style="page-break-inside: avoid; break-inside: avoid;">
+                        <div class="mt-6 pt-1" style="page-break-inside: avoid; break-inside: avoid;">
                             <div class="flex justify-between items-start text-xs text-slate-800">
-                                <div class="text-center w-56 flex flex-col justify-between">
+                                <div class="text-center w-56">
+                                    <div>Mengetahui,</div>
+                                    <div class="font-bold">Ketua Panitia</div>
+                                    <div class="signature-space" style="height: 65px;"></div>
                                     <div>
-                                        <div>Mengetahui,</div>
-                                        <div class="font-bold">Ketua Panitia</div>
-                                    </div>
-                                    <div class="pt-10">
                                         <div class="font-black text-slate-950 underline underline-offset-2">{{ $appSettings['committee_chairman_name'] ?? 'KHOIRUL ANAM, S.Pd' }}</div>
                                         <div class="text-[10px] text-slate-500">{{ !empty($appSettings['committee_chairman_nip']) ? 'NIP. ' . $appSettings['committee_chairman_nip'] : 'Ketua Panitia Pelaksana' }}</div>
                                     </div>
                                 </div>
 
-                                <div class="text-center w-60 flex flex-col justify-between">
+                                <div class="text-center w-60">
+                                    <div>Blitar, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</div>
+                                    <div class="font-bold">Koordinator Cabang {{ $page['competition_name'] }}</div>
+                                    <div class="signature-space" style="height: 65px;"></div>
                                     <div>
-                                        <div>Blitar, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</div>
-                                        <div class="font-bold">Koordinator Cabang {{ $page['competition_name'] }}</div>
-                                    </div>
-                                    <div class="pt-10">
                                         <div class="font-black text-slate-950 underline underline-offset-2">
                                             {{ $page['pic_name'] ?? (Auth::user()->name ?: 'PANITIA PELAKSANA') }}
                                         </div>
