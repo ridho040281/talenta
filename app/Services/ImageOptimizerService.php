@@ -30,6 +30,17 @@ class ImageOptimizerService
         $targetPath = $storageDir.'/'.$fileName;
         $relativeReturnPath = $cleanFolder.'/'.$fileName;
 
+        $tempSource = null;
+        if (is_string($file) && file_exists($file)) {
+            $realSrc = @realpath($file);
+            $realTarget = @realpath($targetPath);
+            if ($realSrc && $realTarget && $realSrc === $realTarget) {
+                $tempSource = tempnam(sys_get_temp_dir(), 'opt_');
+                @copy($file, $tempSource);
+                $sourcePath = $tempSource;
+            }
+        }
+
         if (! file_exists($sourcePath)) {
             if ($file instanceof UploadedFile) {
                 $stored = $file->storeAs($cleanFolder, $fileName, 'public');
@@ -245,6 +256,10 @@ class ImageOptimizerService
             }
 
             return $relativeReturnPath;
+        } finally {
+            if ($tempSource && file_exists($tempSource)) {
+                @unlink($tempSource);
+            }
         }
     }
 
