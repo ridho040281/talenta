@@ -92,47 +92,248 @@ class PicController extends Controller
             ->whereIn('id', $competitionIds)
             ->get();
 
-        $allRegistrations = Registration::with([
+        $statusCounts = Registration::whereIn('competition_id', $competitionIds)
+            ->selectRaw('status, count(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
+        $totalRegistrations = Registration::whereIn('competition_id', $competitionIds)->count();
+
+        $drawnCount = Registration::whereIn('competition_id', $competitionIds)
+            ->whereNotNull('draw_number')
+            ->count();
+
+        $genderCounts = RegistrationMember::whereHas('registration', function ($q) use ($competitionIds) {
+            $q->whereIn('competition_id', $competitionIds);
+        })
+            ->selectRaw('gender, count(*) as count')
+            ->groupBy('gender')
+            ->pluck('count', 'gender');
+
+        $stats = [
+            'total_competitions'     => $competitions->count(),
+            'total_registrations'    => $totalRegistrations,
+            'pending_verifications'  => (int) ($statusCounts->get('pending', 0)),
+            'pending_registrations'  => (int) ($statusCounts->get('pending', 0)),
+            'verified_registrations' => (int) ($statusCounts->get('verified', 0)),
+            'revision_registrations' => (int) ($statusCounts->get('revision', 0)),
+            'rejected_registrations' => (int) ($statusCounts->get('rejected', 0)),
+            'drawn_participants'     => $drawnCount,
+            'total_pa'               => (int) ($genderCounts->get('L', 0)),
+            'total_pi'               => (int) ($genderCounts->get('P', 0)),
+        ];
+
+        $categories = Category::all();
+
+        // Pass competitionIds to view (for AJAX context)
+        return view('pic.dashboard', compact('user', 'competitions', 'stats', 'categories', 'competitionIds'));
+    }
+
+    /**
+     * API: Paginated participants list for AJAX DataTable
+     * GET /pic/api/participants?competition_id=&status=&gender=&sector=&search=&page=&per_page=
+     */
+    public function apiParticipants(Request $request)
+    {
+        $user = Auth::user();
+        $competitionIds = self::getManagedCompetitionIds($user);
+
+        $query = Registration::with([
+            'competition:id,name,code',
+            'members:id,registration_id,full_name,gender,nisn,school_name,birth_place,birth_date',
+            'invoice:id,registration_id,invoice_number,status,payment_proof,final_amount',
+        ])
+            ->whereIn('competition_id', $competitionIds)
+            ->latest();
+
+        // Filter competition
+        if ($request->filled('competition_id') && $request->competition_id !== 'all') {
+            $query->where('competition_id', $request->competition_id);
+        }
+
+        // Filter status
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        // Filter gender (via first member)
+        if ($request->filled('gender') && $request->gender !== 'all') {
+            $g = $request->gender;
+            $query->whereHas('members', function ($q) use ($g) {
+                $q->where('gender', $g);
+            });
+        }
+
+        // Filter sector (target_class / match_type combos)
+        if ($request->filled('sector') && $request->sector !== 'all') {
+            $sector = $request->sector;
+            switch ($sector) {
+                case 'ganda':
+                case 'ganda_all':
+                    $query->where('match_type', 'LIKE', '%Ganda%');
+                    break;
+                case 'ganda_pa':
+                    $query->where('match_type', 'LIKE', '%Ganda%')
+                          ->whereHas('members', fn ($q) => $q->where('gender', 'L'));
+                    break;
+                case 'ganda_pi':
+                    $query->where('match_type', 'LIKE', '%Ganda%')
+                          ->whereHas('members', fn ($q) => $q->where('gender', 'P'));
+                    break;
+                case 'tunggal_pa':
+                case 'individu_pa':
+                    $query->where(function ($q) {
+                        $q->where('match_type', 'NOT LIKE', '%Ganda%')->orWhereNull('match_type');
+                    })->whereHas('members', fn ($q) => $q->where('gender', 'L'));
+                    break;
+                case 'tunggal_pi':
+                case 'individu_pi':
+                    $query->where(function ($q) {
+                        $q->where('match_type', 'NOT LIKE', '%Ganda%')->orWhereNull('match_type');
+                    })->whereHas('members', fn ($q) => $q->where('gender', 'P'));
+                    break;
+                case 'tunggal_pa_a':
+                    $query->where('target_class', 'LIKE', '%1 - 2%')
+                          ->whereHas('members', fn ($q) => $q->where('gender', 'L'));
+                    break;
+                case 'tunggal_pa_b':
+                    $query->where('target_class', 'LIKE', '%3 - 4%')
+                          ->whereHas('members', fn ($q) => $q->where('gender', 'L'));
+                    break;
+                case 'tunggal_pa_c':
+                    $query->where('target_class', 'LIKE', '%5 - 6%')
+                          ->whereHas('members', fn ($q) => $q->where('gender', 'L'));
+                    break;
+                case 'tunggal_pi_a':
+                    $query->where('target_class', 'LIKE', '%1 - 2%')
+                          ->whereHas('members', fn ($q) => $q->where('gender', 'P'));
+                    break;
+                case 'tunggal_pi_b':
+                    $query->where('target_class', 'LIKE', '%3 - 4%')
+                          ->whereHas('members', fn ($q) => $q->where('gender', 'P'));
+                    break;
+                case 'tunggal_pi_c':
+                    $query->where('target_class', 'LIKE', '%5 - 6%')
+                          ->whereHas('members', fn ($q) => $q->where('gender', 'P'));
+                    break;
+                case 'tmj_pa_a':
+                case 'kat_a':
+                    $query->where('target_class', 'LIKE', '%1 - 3%')
+                          ->whereHas('members', fn ($q) => $q->where('gender', 'L'));
+                    break;
+                case 'tmj_pi_a':
+                    $query->where('target_class', 'LIKE', '%1 - 3%')
+                          ->whereHas('members', fn ($q) => $q->where('gender', 'P'));
+                    break;
+                case 'tmj_a_all':
+                    $query->where('target_class', 'LIKE', '%1 - 3%');
+                    break;
+                case 'tmj_pa_b':
+                case 'kat_b':
+                    $query->where('target_class', 'LIKE', '%4 - 6%')
+                          ->whereHas('members', fn ($q) => $q->where('gender', 'L'));
+                    break;
+                case 'tmj_pi_b':
+                    $query->where('target_class', 'LIKE', '%4 - 6%')
+                          ->whereHas('members', fn ($q) => $q->where('gender', 'P'));
+                    break;
+                case 'tmj_b_all':
+                    $query->where('target_class', 'LIKE', '%4 - 6%');
+                    break;
+            }
+        }
+
+        // Full-text search
+        if ($request->filled('search')) {
+            $s = $request->search;
+            $query->where(function ($q) use ($s) {
+                $q->where('registration_code', 'LIKE', "%{$s}%")
+                  ->orWhere('institution_name', 'LIKE', "%{$s}%")
+                  ->orWhere('official_name', 'LIKE', "%{$s}%")
+                  ->orWhere('team_name', 'LIKE', "%{$s}%")
+                  ->orWhere('participant_number', 'LIKE', "%{$s}%")
+                  ->orWhereHas('members', function ($q2) use ($s) {
+                      $q2->where('full_name', 'LIKE', "%{$s}%")
+                         ->orWhere('nisn', 'LIKE', "%{$s}%")
+                         ->orWhere('school_name', 'LIKE', "%{$s}%");
+                  });
+            });
+        }
+
+        $perPage = min((int) $request->get('per_page', 25), 100);
+        $paginated = $query->paginate($perPage);
+
+        $items = $paginated->getCollection()->map(function ($r) {
+            $firstMember = $r->members->first();
+
+            return [
+                'id'                => $r->id,
+                'comp_id'           => (string) $r->competition_id,
+                'comp_name'         => $r->competition?->name ?? '',
+                'comp_code'         => $r->competition?->code ?? '',
+                'participant_number'=> $r->participant_number ?: '-',
+                'registration_code' => $r->registration_code,
+                'display_name'      => $r->display_name,
+                'team_name'         => $r->team_name,
+                'display_school'    => $r->display_school,
+                'official_name'     => $r->official_name,
+                'document_file'     => $r->document_file,
+                'has_payment_proof' => (bool) ($r->payment_proof || ($r->invoice && $r->invoice->payment_proof)),
+                'draw_number'       => $r->draw_number,
+                'sub_category'      => $r->sub_category,
+                'target_class'      => $r->target_class,
+                'chosen_song'       => $r->chosen_song,
+                'gender'            => $r->primary_gender,
+                'status'            => $r->status,
+                'is_ganda'          => $r->isGanda(),
+                'is_kat_a'          => $r->isKatA(),
+                'is_kat_b'          => $r->isKatB(),
+                'is_kat_c'          => $r->isKatC(),
+                'first_member_nisn' => $firstMember?->nisn ?: '-',
+                'members'           => $r->members->map(fn ($m) => [
+                    'full_name' => $m->full_name,
+                    'gender'    => $m->gender,
+                    'nisn'      => $m->nisn,
+                ])->values(),
+                'search'            => strtolower(
+                    $r->display_name . ' ' . $r->registration_code . ' ' .
+                    ($r->participant_number ?? '') . ' ' . $r->display_school . ' ' .
+                    $r->institution_name . ' ' . ($firstMember?->nisn ?? '') . ' ' .
+                    $r->members->pluck('school_name')->filter()->implode(' ')
+                ),
+            ];
+        });
+
+        return response()->json([
+            'data'         => $items,
+            'current_page' => $paginated->currentPage(),
+            'last_page'    => $paginated->lastPage(),
+            'per_page'     => $paginated->perPage(),
+            'total'        => $paginated->total(),
+            'from'         => $paginated->firstItem(),
+            'to'           => $paginated->lastItem(),
+        ]);
+    }
+
+    /**
+     * API: Full detail satu pendaftaran untuk modal verifikasi / edit / cetak
+     * GET /pic/api/participants/{id}
+     */
+    public function apiParticipantDetail($id)
+    {
+        $user = Auth::user();
+        $competitionIds = self::getManagedCompetitionIds($user);
+
+        $reg = Registration::with([
             'competition.category',
             'members',
             'user:id,name,phone,institution_name',
             'invoice:id,invoice_number,status,payment_proof,final_amount',
         ])
             ->whereIn('competition_id', $competitionIds)
-            ->latest()
-            ->get();
+            ->findOrFail($id);
 
-        $statusCounts = $allRegistrations->countBy('status');
-        $drawnCount = $allRegistrations->whereNotNull('draw_number')->count();
-
-        $totalPa = 0;
-        $totalPi = 0;
-        foreach ($allRegistrations as $reg) {
-            foreach ($reg->members as $m) {
-                if ($m->gender === 'L') {
-                    $totalPa++;
-                } elseif ($m->gender === 'P') {
-                    $totalPi++;
-                }
-            }
-        }
-
-        $stats = [
-            'total_competitions' => $competitions->count(),
-            'total_registrations' => $allRegistrations->count(),
-            'pending_verifications' => $statusCounts->get('pending', 0),
-            'pending_registrations' => $statusCounts->get('pending', 0),
-            'verified_registrations' => $statusCounts->get('verified', 0),
-            'revision_registrations' => $statusCounts->get('revision', 0),
-            'rejected_registrations' => $statusCounts->get('rejected', 0),
-            'drawn_participants' => $drawnCount,
-            'total_pa' => $totalPa,
-            'total_pi' => $totalPi,
-        ];
-
-        $categories = Category::all();
-
-        return view('pic.dashboard', compact('user', 'competitions', 'stats', 'allRegistrations', 'categories'));
+        return response()->json($reg);
     }
 
     public function printParticipantsPdf(Request $request)

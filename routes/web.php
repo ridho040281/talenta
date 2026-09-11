@@ -120,6 +120,10 @@ Route::middleware(['auth', 'role:pic_lomba,superadmin,panitia'])->prefix('pic')-
     Route::post('/lomba/{competition_id}/spin-wheel/save', [PicController::class, 'storeDrawResult'])->name('spin.wheel.save');
     Route::post('/lomba/{competition_id}/spin-wheel/reset', [PicController::class, 'resetDraws'])->name('spin.wheel.reset');
 
+    // API endpoints untuk AJAX DataTable (server-side pagination)
+    Route::get('/api/participants', [PicController::class, 'apiParticipants'])->name('api.participants');
+    Route::get('/api/participants/{id}', [PicController::class, 'apiParticipantDetail'])->name('api.participant.detail');
+
     // Stage Timer & Layar Panggung Operator Control
     Route::get('/lomba/{competition_id}/stage-control', [StageController::class, 'operatorPanel'])->name('stage.control');
     Route::post('/lomba/{competition_id}/stage-control/action', [StageController::class, 'handleAction'])->name('stage.control.action');

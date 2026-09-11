@@ -13,10 +13,10 @@ class HomeController extends Controller
     public function index()
     {
         $categories = Category::with(['competitions' => function ($q) {
-            $q->with(['registrations.members'])->withCount('registrations');
+            $q->withCount('registrations');
         }])->orderBy('order')->get();
 
-        $competitions = Competition::with(['category', 'registrations.members'])->withCount('registrations')->get();
+        $competitions = Competition::with('category')->withCount('registrations')->get();
 
         $stats = [
             'total_competitions' => Competition::count(),

@@ -52,6 +52,9 @@ class Registration extends Model
 
     protected $appends = [
         'display_school',
+        'display_name',
+        'primary_gender',
+        'pure_name',
     ];
 
     protected static function booted(): void

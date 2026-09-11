@@ -273,198 +273,171 @@
         }
         return place || formattedDate || '-';
     },
-    registrationsMap: @js($allRegistrations->keyBy('id')),
+    // ── Server-Side Pagination State ─────────────────────────────────────────
+    items: [],
+    isLoading: false,
+    currentPage: 1,
+    lastPage: 1,
+    perPage: 25,
+    totalItems: 0,
+    fromItem: 0,
+    toItem: 0,
+    // apiBaseUrl injected from Blade below
+    apiUrl: '',
+
+    // ── Modal Data (loaded lazily via AJAX) ──────────────────────────────────
+    selectedReg: null,
+    selectedEditReg: {
+        id: null,
+        registration_code: '',
+        institution_name: '',
+        official_name: '',
+        official_phone: '',
+        team_name: '',
+        target_class: '',
+        match_type: '',
+        participant_number: '',
+        draw_number: '',
+        chosen_song: '',
+        members: []
+    },
+    selectedSingleReg: null,
+    modalLoading: false,
+
     openVerifyModal(id) {
-        this.selectedReg = this.registrationsMap[id] || null;
         this.verifyModal = true;
+        this.selectedReg = null;
+        this.modalLoading = true;
+        fetch(this.apiUrl + '/' + id)
+            .then(r => r.json())
+            .then(data => { this.selectedReg = data; })
+            .catch(() => { this.verifyModal = false; alert('Gagal memuat data. Coba lagi.'); })
+            .finally(() => { this.modalLoading = false; });
     },
     openEditModal(id) {
-        const raw = this.registrationsMap[id];
-        if (!raw) return;
-        this.selectedEditReg = JSON.parse(JSON.stringify(raw));
-        if (this.selectedEditReg) {
-            if (this.selectedEditReg.members) {
-                this.selectedEditReg.members.forEach(m => {
-                    if (m.birth_date) m.birth_date = String(m.birth_date).split('T')[0];
-                });
-                if (this.selectedEditReg.members.length === 1 && this.selectedEditReg.members[0].school_name) {
-                    this.selectedEditReg.institution_name = this.selectedEditReg.members[0].school_name;
-                }
-            }
-            const cCode = (this.selectedEditReg.competition && this.selectedEditReg.competition.code ? this.selectedEditReg.competition.code : (this.selectedEditReg.registration_code ? this.selectedEditReg.registration_code.split('-')[0] : '')).toUpperCase();
-            if (cCode === 'TMJ') {
-                if (!this.selectedEditReg.match_type) {
-                    const g = (this.selectedEditReg.members && this.selectedEditReg.members[0]) ? this.selectedEditReg.members[0].gender : 'L';
-                    this.selectedEditReg.match_type = (g === 'P') ? 'Tunggal Putri (PI)' : 'Tunggal Putra (PA)';
-                }
-                let tc = this.selectedEditReg.target_class || this.selectedEditReg.sub_category || '';
-                if (tc.includes('4-6') || tc.includes('4 - 6') || tc.toLowerCase().includes('kat b') || tc.toLowerCase().includes('kategori b') || tc.toLowerCase().includes('kelas 4') || tc.toLowerCase().includes('kelas 5') || tc.toLowerCase().includes('kelas 6')) {
-                    this.selectedEditReg.target_class = 'Kategori B (Kelas 4 - 6)';
-                } else {
-                    this.selectedEditReg.target_class = 'Kategori A (Kelas 1 - 3)';
-                }
-            } else if (cCode === 'BLT') {
-                let tc = this.selectedEditReg.target_class || this.selectedEditReg.sub_category || '';
-                if (tc.toLowerCase().includes('ganda')) {
-                    this.selectedEditReg.target_class = 'Ganda (Semua Kelas)';
-                } else if (tc.includes('3-4') || tc.includes('3 - 4') || tc.toLowerCase().includes('kat b') || tc.toLowerCase().includes('kategori b')) {
-                    this.selectedEditReg.target_class = 'Kategori B (Kelas 3 - 4)';
-                } else if (tc.includes('5-6') || tc.includes('5 - 6') || tc.toLowerCase().includes('kat c') || tc.toLowerCase().includes('kategori c')) {
-                    this.selectedEditReg.target_class = 'Kategori C (Kelas 5 - 6)';
-                } else {
-                    this.selectedEditReg.target_class = 'Kategori A (Kelas 1 - 2)';
-                }
-            }
-        }
         this.editModal = true;
+        this.selectedEditReg = { id: null, registration_code: '', institution_name: '', official_name: '', official_phone: '', team_name: '', target_class: '', match_type: '', participant_number: '', draw_number: '', chosen_song: '', members: [] };
+        this.modalLoading = true;
+        fetch(this.apiUrl + '/' + id)
+            .then(r => r.json())
+            .then(raw => {
+                this.selectedEditReg = JSON.parse(JSON.stringify(raw));
+                if (this.selectedEditReg.members) {
+                    this.selectedEditReg.members.forEach(m => {
+                        if (m.birth_date) m.birth_date = String(m.birth_date).split('T')[0];
+                    });
+                    if (this.selectedEditReg.members.length === 1 && this.selectedEditReg.members[0].school_name) {
+                        this.selectedEditReg.institution_name = this.selectedEditReg.members[0].school_name;
+                    }
+                }
+                const cCode = (this.selectedEditReg.competition && this.selectedEditReg.competition.code ? this.selectedEditReg.competition.code : (this.selectedEditReg.registration_code ? this.selectedEditReg.registration_code.split('-')[0] : '')).toUpperCase();
+                if (cCode === 'TMJ') {
+                    if (!this.selectedEditReg.match_type) {
+                        const g = (this.selectedEditReg.members && this.selectedEditReg.members[0]) ? this.selectedEditReg.members[0].gender : 'L';
+                        this.selectedEditReg.match_type = (g === 'P') ? 'Tunggal Putri (PI)' : 'Tunggal Putra (PA)';
+                    }
+                    let tc = this.selectedEditReg.target_class || this.selectedEditReg.sub_category || '';
+                    if (tc.includes('4-6') || tc.includes('4 - 6') || tc.toLowerCase().includes('kat b') || tc.toLowerCase().includes('kategori b') || tc.toLowerCase().includes('kelas 4') || tc.toLowerCase().includes('kelas 5') || tc.toLowerCase().includes('kelas 6')) {
+                        this.selectedEditReg.target_class = 'Kategori B (Kelas 4 - 6)';
+                    } else {
+                        this.selectedEditReg.target_class = 'Kategori A (Kelas 1 - 3)';
+                    }
+                } else if (cCode === 'BLT') {
+                    let tc = this.selectedEditReg.target_class || this.selectedEditReg.sub_category || '';
+                    if (tc.toLowerCase().includes('ganda')) {
+                        this.selectedEditReg.target_class = 'Ganda (Semua Kelas)';
+                    } else if (tc.includes('3-4') || tc.includes('3 - 4') || tc.toLowerCase().includes('kat b') || tc.toLowerCase().includes('kategori b')) {
+                        this.selectedEditReg.target_class = 'Kategori B (Kelas 3 - 4)';
+                    } else if (tc.includes('5-6') || tc.includes('5 - 6') || tc.toLowerCase().includes('kat c') || tc.toLowerCase().includes('kategori c')) {
+                        this.selectedEditReg.target_class = 'Kategori C (Kelas 5 - 6)';
+                    } else {
+                        this.selectedEditReg.target_class = 'Kategori A (Kelas 1 - 2)';
+                    }
+                }
+            })
+            .catch(() => { this.editModal = false; alert('Gagal memuat data. Coba lagi.'); })
+            .finally(() => { this.modalLoading = false; });
     },
     openSinglePrintModal(id) {
-        this.selectedSingleReg = this.registrationsMap[id] || null;
         this.singlePrintModal = true;
+        this.selectedSingleReg = null;
+        this.modalLoading = true;
+        fetch(this.apiUrl + '/' + id)
+            .then(r => r.json())
+            .then(data => { this.selectedSingleReg = data; })
+            .catch(() => { this.singlePrintModal = false; alert('Gagal memuat data. Coba lagi.'); })
+            .finally(() => { this.modalLoading = false; });
     },
-    items: @js($allRegistrations->map(function($r) {
-        $firstMember = $r->members->first();
 
-        return [
-            'id' => $r->id,
-            'comp_id' => (string) $r->competition_id,
-            'gender' => $r->primary_gender,
-            'status' => $r->status,
-            'is_ganda' => $r->isGanda(),
-            'is_kat_a' => $r->isKatA(),
-            'is_kat_b' => $r->isKatB(),
-            'is_kat_c' => $r->isKatC(),
-            'search' => strtolower($r->display_name . ' ' . $r->registration_code . ' ' . ($r->participant_number ?? '') . ' ' . $r->display_school . ' ' . $r->institution_name . ' ' . ($firstMember?->nisn ?? '') . ' ' . $r->members->pluck('school_name')->filter()->implode(' '))
-        ];
-    })),
-    currentPage: 1,
-    perPage: 10,
-    init() {
-        this.$watch('searchQuery', () => { this.currentPage = 1; });
-        this.$watch('selectedCompetition', () => { this.currentPage = 1; });
-        this.$watch('selectedGender', () => { this.currentPage = 1; });
-        this.$watch('selectedSector', () => { this.currentPage = 1; });
-        this.$watch('selectedStatus', () => { this.currentPage = 1; });
-        this.$watch('perPage', () => { this.currentPage = 1; });
+    // ── AJAX Fetch & Debounce ─────────────────────────────────────────────────
+    _fetchTimer: null,
+    fetchParticipants(immediate = false) {
+        clearTimeout(this._fetchTimer);
+        const doFetch = () => {
+            this.isLoading = true;
+            const params = new URLSearchParams({
+                page:           this.currentPage,
+                per_page:       this.perPage,
+                competition_id: this.selectedCompetition,
+                status:         this.selectedStatus,
+                gender:         this.selectedGender,
+                sector:         this.selectedSector,
+                search:         this.searchQuery,
+            });
+            fetch(this.apiUrl + '?' + params.toString())
+                .then(r => r.json())
+                .then(json => {
+                    this.items       = json.data;
+                    this.currentPage = json.current_page;
+                    this.lastPage    = json.last_page;
+                    this.totalItems  = json.total;
+                    this.fromItem    = json.from ?? 0;
+                    this.toItem      = json.to   ?? 0;
+                })
+                .catch(err => console.error('Fetch participants error:', err))
+                .finally(() => { this.isLoading = false; });
+        };
+        if (immediate) { doFetch(); }
+        else { this._fetchTimer = setTimeout(doFetch, 400); }
     },
-    get activeList() {
-        return this.items.filter(item => {
-            const matchComp = (this.selectedCompetition === 'all' || item.comp_id === this.selectedCompetition);
-            const matchStatus = (this.selectedStatus === 'all' || item.status === this.selectedStatus);
-            const matchGender = (this.selectedGender === 'all' || item.gender === this.selectedGender);
-            
-            const isGanda = item.is_ganda;
-            const isPa = item.gender === 'L';
-            const isPi = item.gender === 'P';
-            
-            let matchSector = true;
-            if (this.selectedSector === 'tunggal_pa') matchSector = (!isGanda && isPa);
-            else if (this.selectedSector === 'tunggal_pa_a' || this.selectedSector === 'tmj_pa_a') matchSector = (!isGanda && isPa && item.is_kat_a);
-            else if (this.selectedSector === 'tunggal_pa_b' || this.selectedSector === 'tmj_pa_b') matchSector = (!isGanda && isPa && item.is_kat_b);
-            else if (this.selectedSector === 'tunggal_pa_c') matchSector = (!isGanda && isPa && item.is_kat_c);
-            else if (this.selectedSector === 'tunggal_pi') matchSector = (!isGanda && isPi);
-            else if (this.selectedSector === 'tunggal_pi_a' || this.selectedSector === 'tmj_pi_a') matchSector = (!isGanda && isPi && item.is_kat_a);
-            else if (this.selectedSector === 'tunggal_pi_b' || this.selectedSector === 'tmj_pi_b') matchSector = (!isGanda && isPi && item.is_kat_b);
-            else if (this.selectedSector === 'tunggal_pi_c') matchSector = (!isGanda && isPi && item.is_kat_c);
-            else if (this.selectedSector === 'tmj_a_all' || this.selectedSector === 'kat_a') matchSector = item.is_kat_a;
-            else if (this.selectedSector === 'tmj_b_all' || this.selectedSector === 'kat_b') matchSector = item.is_kat_b;
-            else if (this.selectedSector === 'ganda_all' || this.selectedSector === 'ganda') matchSector = isGanda;
-            else if (this.selectedSector === 'ganda_pa') matchSector = (isGanda && isPa);
-            else if (this.selectedSector === 'ganda_pi') matchSector = (isGanda && isPi);
-            else if (this.selectedSector === 'individu_pa') matchSector = isPa;
-            else if (this.selectedSector === 'individu_pi') matchSector = isPi;
 
-            const matchSearch = (!this.searchQuery || item.search.includes(this.searchQuery.toLowerCase()));
-            return matchComp && matchStatus && matchGender && matchSector && matchSearch;
-        });
-    },
-    get counts() {
-        let pa = 0;
-        let pi = 0;
-        const list = this.activeList;
-        for (let i = 0; i < list.length; i++) {
-            if (list[i].gender === 'L') pa++;
-            else if (list[i].gender === 'P') pi++;
-        }
-        return { all: list.length, pa, pi };
-    },
-    get countAll() {
-        return this.counts.all;
-    },
-    get countPa() {
-        return this.counts.pa;
-    },
-    get countPi() {
-        return this.counts.pi;
-    },
-    get totalPages() {
-        return Math.max(1, Math.ceil(this.activeList.length / this.perPage));
-    },
-    get paginatedList() {
-        const page = Math.min(Math.max(1, this.currentPage), this.totalPages);
-        const start = (page - 1) * this.perPage;
-        return this.activeList.slice(start, start + this.perPage);
-    },
-    _cachedPaginatedIds: null,
-    _lastFilterKey: '',
-    get paginatedIds() {
-        const key = `${this.currentPage}_${this.perPage}_${this.activeList.length}_${this.searchQuery}_${this.selectedCompetition}_${this.selectedStatus}_${this.selectedGender}_${this.selectedSector}`;
-        if (this._lastFilterKey === key && this._cachedPaginatedIds) {
-            return this._cachedPaginatedIds;
-        }
-        this._lastFilterKey = key;
-        const page = Math.min(Math.max(1, this.currentPage), this.totalPages);
-        const start = (page - 1) * this.perPage;
-        const slice = this.activeList.slice(start, start + this.perPage);
-        this._cachedPaginatedIds = new Set(slice.map(i => i.id));
-        return this._cachedPaginatedIds;
-    },
-    isItemVisible(id) {
-        return this.paginatedIds.has(id);
-    },
-    goToPage(p) {
-        if (typeof p !== 'number') return;
-        if (p < 1) p = 1;
-        if (p > this.totalPages) p = this.totalPages;
-        this.currentPage = p;
-        const card = document.getElementById('participantsTableCard');
-        if (card) {
-            card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    },
-    prevPage() {
-        if (this.currentPage > 1) {
-            this.goToPage(this.currentPage - 1);
-        }
-    },
-    nextPage() {
-        if (this.currentPage < this.totalPages) {
-            this.goToPage(this.currentPage + 1);
-        }
-    },
+    // ── Pagination Helpers ────────────────────────────────────────────────────
+    get totalPages() { return Math.max(1, this.lastPage); },
+    get countAll()   { return this.totalItems; },
+    get countPa()    { return this.items.filter(i => i.gender === 'L').length; },
+    get countPi()    { return this.items.filter(i => i.gender === 'P').length; },
+    get paginationStart() { return this.fromItem; },
+    get paginationEnd()   { return this.toItem; },
+    get paginatedList()   { return this.items; },
+
     get paginationPages() {
         const total = this.totalPages;
         const current = Math.min(Math.max(1, this.currentPage), total);
-        if (total <= 7) {
-            return Array.from({ length: total }, (_, i) => i + 1);
-        }
-        if (current <= 4) {
-            return [1, 2, 3, 4, 5, '...', total];
-        }
-        if (current >= total - 3) {
-            return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
-        }
+        if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+        if (current <= 4) return [1, 2, 3, 4, 5, '...', total];
+        if (current >= total - 3) return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
         return [1, '...', current - 1, current, current + 1, '...', total];
     },
-    get paginationStart() {
-        if (this.activeList.length === 0) return 0;
-        const page = Math.min(Math.max(1, this.currentPage), this.totalPages);
-        return (page - 1) * this.perPage + 1;
+    goToPage(p) {
+        if (typeof p !== 'number' || p < 1 || p > this.totalPages) return;
+        this.currentPage = p;
+        this.fetchParticipants(true);
+        const card = document.getElementById('participantsTableCard');
+        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
     },
-    get paginationEnd() {
-        const page = Math.min(Math.max(1, this.currentPage), this.totalPages);
-        return Math.min(page * this.perPage, this.activeList.length);
-    }
+    prevPage() { if (this.currentPage > 1) this.goToPage(this.currentPage - 1); },
+    nextPage() { if (this.currentPage < this.totalPages) this.goToPage(this.currentPage + 1); },
+
+    init() {
+        this.apiUrl = '{{ route("pic.api.participants") }}';
+        this.fetchParticipants(true);
+        this.$watch('searchQuery',         () => { this.currentPage = 1; this.fetchParticipants(); });
+        this.$watch('selectedCompetition', () => { this.currentPage = 1; this.fetchParticipants(true); });
+        this.$watch('selectedGender',      () => { this.currentPage = 1; this.fetchParticipants(true); });
+        this.$watch('selectedSector',      () => { this.currentPage = 1; this.fetchParticipants(true); });
+        this.$watch('selectedStatus',      () => { this.currentPage = 1; this.fetchParticipants(true); });
+        this.$watch('perPage',             () => { this.currentPage = 1; this.fetchParticipants(true); });
+    },
 }">
 
     <!-- Flash Notifications (Success & Error Feedback) -->
@@ -713,220 +686,243 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-white/[0.04] font-medium">
-                    @forelse($allRegistrations as $index => $reg)
-                        @php
-                            $firstMember = $reg->members->first();
-                            $isGanda = $reg->isGanda();
-                            $gender = $reg->primary_gender;
-                            $compCode = $reg->competition?->code ?? '';
-                            $isKatA = $reg->isKatA();
-                            $isKatB = $reg->isKatB();
-                            $isKatC = $reg->isKatC();
-                        @endphp
-                        <tr class="hover:bg-white/[0.025] transition" x-show="isItemVisible({{ $reg->id }})">
+                    <!-- High-Performance Dynamic Template Rows (Only active page rows rendered in DOM) -->
+                    <template x-for="item in paginatedList" :key="item.id">
+                        <tr class="hover:bg-white/[0.025] transition">
                             <!-- Kode & No Reg -->
                             <td class="py-3 px-3.5 sm:px-4">
-                                <span class="font-mono font-bold text-[#84D0FF] block text-xs">{{ $reg->participant_number ?: '-' }}</span>
-                                <span class="text-[10px] font-mono text-slate-400">{{ $reg->registration_code }}</span>
+                                <span class="font-mono font-bold text-[#84D0FF] block text-xs" x-text="item.participant_number || '-'"></span>
+                                <span class="text-[10px] font-mono text-slate-400" x-text="item.registration_code"></span>
                             </td>
 
                             <!-- Nama Peserta / Tim -->
                             <td class="py-3 px-3.5 sm:px-4">
-                                @if($isGanda)
-                                    <div class="font-bold text-white text-xs sm:text-sm">{{ $reg->team_name ?: $reg->display_name }}</div>
-                                    <div class="text-[11px] text-slate-400 space-y-0.5 pt-0.5">
-                                        @foreach($reg->members as $m)
-                                            <div class="flex items-center gap-1.5">
-                                                <span class="text-[10px] px-1.5 py-0.2 rounded {{ $m->gender === 'L' ? 'bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30' : 'bg-[#FF58D5]/15 text-[#FFA0E7] border border-[#FF58D5]/30' }} font-bold">
-                                                    {{ $m->gender === 'L' ? 'PA' : 'PI' }}
+                                <template x-if="item.is_ganda">
+                                    <div>
+                                        <div class="font-bold text-white text-xs sm:text-sm" x-text="item.team_name || item.display_name"></div>
+                                        <div class="text-[11px] text-slate-400 space-y-0.5 pt-0.5">
+                                            <template x-for="(m, mIdx) in (item.members || [])" :key="mIdx">
+                                                <div class="flex items-center gap-1.5">
+                                                    <span class="text-[10px] px-1.5 py-0.2 rounded font-bold"
+                                                        :class="m.gender === 'L' ? 'bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30' : 'bg-[#FF58D5]/15 text-[#FFA0E7] border border-[#FF58D5]/30'"
+                                                        x-text="m.gender === 'L' ? 'PA' : 'PI'">
+                                                    </span>
+                                                    <span x-text="m.full_name"></span>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                                <template x-if="!item.is_ganda">
+                                    <div>
+                                        <div class="font-bold text-white text-xs sm:text-sm flex items-center gap-1.5">
+                                            <span x-text="item.members && item.members[0] ? item.members[0].full_name : item.display_name"></span>
+                                            <template x-if="item.members && item.members[0]">
+                                                <span class="text-[10px] px-1.5 py-0.2 rounded font-bold"
+                                                    :class="item.members[0].gender === 'L' ? 'bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30' : 'bg-[#FF58D5]/15 text-[#FFA0E7] border border-[#FF58D5]/30'"
+                                                    x-text="item.members[0].gender === 'L' ? '👦 PA' : '👧 PI'">
                                                 </span>
-                                                <span>{{ $m->full_name }}</span>
-                                            </div>
-                                        @endforeach
+                                            </template>
+                                        </div>
+                                        <div class="text-[11px] text-slate-400 pt-0.5">
+                                            <span x-text="'NISN: ' + (item.first_member_nisn || '-')"></span>
+                                        </div>
                                     </div>
-                                @else
-                                    <div class="font-bold text-white text-xs sm:text-sm flex items-center gap-1.5">
-                                        <span>{{ $firstMember?->full_name ?: $reg->display_name }}</span>
-                                        @if($firstMember)
-                                            <span class="text-[10px] px-1.5 py-0.2 rounded {{ $firstMember->gender === 'L' ? 'bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30' : 'bg-[#FF58D5]/15 text-[#FFA0E7] border border-[#FF58D5]/30' }} font-bold">
-                                                {{ $firstMember->gender === 'L' ? '👦 PA' : '👧 PI' }}
-                                            </span>
-                                        @endif
-                                    </div>
-                                    <div class="text-[11px] text-slate-400 pt-0.5">
-                                        <span>NISN: {{ $firstMember?->nisn ?: '-' }}</span>
-                                    </div>
-                                @endif
+                                </template>
                             </td>
 
                             <!-- Cabang & Sektor / Kelas -->
                             <td class="py-3 px-3.5 sm:px-4">
-                                <span class="font-bold text-white text-xs sm:text-sm block">{{ $reg->competition->name }}</span>
+                                <span class="font-bold text-white text-xs sm:text-sm block" x-text="item.comp_name"></span>
                                 <div class="flex items-center gap-1 pt-0.5 flex-wrap">
-                                    @if($reg->competition->code === 'BLT')
-                                        @if(!$isGanda)
-                                            <span class="text-[10px] font-bold px-1.5 py-0.2 rounded {{ $gender === 'L' ? 'bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30' : 'bg-[#FF58D5]/15 text-[#FFA0E7] border border-[#FF58D5]/30' }}">
-                                                {{ $gender === 'L' ? '👦 Tunggal PA' : '👧 Tunggal PI' }}
-                                            </span>
-                                            @if($isKatA)
+                                    <!-- Bulu Tangkis (BLT) -->
+                                    <template x-if="item.comp_code === 'BLT'">
+                                        <div class="flex items-center gap-1 flex-wrap">
+                                            <template x-if="!item.is_ganda">
+                                                <span class="text-[10px] font-bold px-1.5 py-0.2 rounded"
+                                                    :class="item.gender === 'L' ? 'bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30' : 'bg-[#FF58D5]/15 text-[#FFA0E7] border border-[#FF58D5]/30'"
+                                                    x-text="item.gender === 'L' ? '👦 Tunggal PA' : '👧 Tunggal PI'">
+                                                </span>
+                                            </template>
+                                            <template x-if="item.is_ganda">
+                                                <span class="text-[10px] font-bold px-1.5 py-0.2 rounded"
+                                                    :class="item.gender === 'L' ? 'bg-blue-500/15 text-blue-400 border border-blue-500/30' : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'"
+                                                    x-text="item.gender === 'L' ? '👥 Ganda PA (Putra)' : '👥 Ganda PI (Putri)'">
+                                                </span>
+                                            </template>
+                                            <template x-if="item.is_kat_a">
                                                 <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/15 px-1.5 py-0.2 rounded border border-emerald-500/30">Kat A (Kelas 1–2)</span>
-                                            @elseif($isKatB)
+                                            </template>
+                                            <template x-if="item.is_kat_b">
                                                 <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/15 px-1.5 py-0.2 rounded border border-emerald-500/30">Kat B (Kelas 3–4)</span>
-                                            @elseif($isKatC)
+                                            </template>
+                                            <template x-if="item.is_kat_c">
                                                 <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/15 px-1.5 py-0.2 rounded border border-emerald-500/30">Kat C (Kelas 5–6)</span>
-                                            @elseif($reg->target_class)
-                                                <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/15 px-1.5 py-0.2 rounded border border-emerald-500/30">{{ $reg->target_class }}</span>
-                                            @endif
-                                        @else
-                                            <span class="text-[10px] font-bold px-1.5 py-0.2 rounded {{ $gender === 'L' ? 'bg-blue-500/15 text-blue-400 border border-blue-500/30' : 'bg-amber-500/15 text-amber-400 border border-amber-500/30' }}">
-                                                {{ $gender === 'L' ? '👥 Ganda PA (Putra)' : '👥 Ganda PI (Putri)' }}
+                                            </template>
+                                            <template x-if="item.is_ganda">
+                                                <span class="text-[10px] text-slate-300 font-bold bg-white/[0.05] border border-white/[0.08] px-1.5 py-0.2 rounded">Semua Kelas</span>
+                                            </template>
+                                        </div>
+                                    </template>
+
+                                    <!-- Tenis Meja (TMJ) -->
+                                    <template x-if="item.comp_code === 'TMJ'">
+                                        <div class="flex items-center gap-1 flex-wrap">
+                                            <span class="text-[10px] font-bold px-1.5 py-0.2 rounded"
+                                                :class="item.gender === 'L' ? 'bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30' : 'bg-[#FF58D5]/15 text-[#FFA0E7] border border-[#FF58D5]/30'"
+                                                x-text="item.gender === 'L' ? '👦 Tunggal PA' : '👧 Tunggal PI'">
                                             </span>
-                                            <span class="text-[10px] text-slate-300 font-bold bg-white/[0.05] border border-white/[0.08] px-1.5 py-0.2 rounded">Semua Kelas</span>
-                                        @endif
-                                    @elseif($reg->competition->code === 'TMJ')
-                                        <span class="text-[10px] font-bold px-1.5 py-0.2 rounded {{ $gender === 'L' ? 'bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30' : 'bg-[#FF58D5]/15 text-[#FFA0E7] border border-[#FF58D5]/30' }}">
-                                            {{ $gender === 'L' ? '👦 Tunggal PA' : '👧 Tunggal PI' }}
+                                            <template x-if="item.is_kat_a">
+                                                <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/15 px-1.5 py-0.2 rounded border border-emerald-500/30">Kat A (Kelas 1–3)</span>
+                                            </template>
+                                            <template x-if="item.is_kat_b">
+                                                <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/15 px-1.5 py-0.2 rounded border border-emerald-500/30">Kat B (Kelas 4–6)</span>
+                                            </template>
+                                        </div>
+                                    </template>
+
+                                    <!-- MTQ & POP -->
+                                    <template x-if="item.comp_code === 'MTQ' || item.comp_code === 'POP'">
+                                        <span class="text-[10px] font-bold px-1.5 py-0.2 rounded"
+                                            :class="item.gender === 'L' ? 'bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30' : 'bg-[#FF58D5]/15 text-[#FFA0E7] border border-[#FF58D5]/30'"
+                                            x-text="item.gender === 'L' ? '👦 Individu PA' : '👧 Individu PI'">
                                         </span>
-                                        @if($isKatA)
-                                            <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/15 px-1.5 py-0.2 rounded border border-emerald-500/30">Kat A (Kelas 1–3)</span>
-                                        @elseif($isKatB)
-                                            <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/15 px-1.5 py-0.2 rounded border border-emerald-500/30">Kat B (Kelas 4–6)</span>
-                                        @elseif($reg->target_class)
-                                            <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/15 px-1.5 py-0.2 rounded border border-emerald-500/30">{{ $reg->target_class }}</span>
-                                        @endif
-                                    @elseif(in_array($reg->competition->code, ['MTQ', 'POP']))
-                                        <span class="text-[10px] font-bold px-1.5 py-0.2 rounded {{ $gender === 'L' ? 'bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30' : 'bg-[#FF58D5]/15 text-[#FFA0E7] border border-[#FF58D5]/30' }}">
-                                            {{ $gender === 'L' ? '👦 Individu PA' : '👧 Individu PI' }}
-                                        </span>
-                                        @if($reg->sub_category)
-                                            <span class="text-[10px] text-slate-300 font-bold bg-white/[0.05] border border-white/[0.08] px-1.5 py-0.2 rounded">{{ $reg->sub_category }}</span>
-                                        @endif
-                                        @if($reg->target_class)
-                                            <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/15 px-1.5 py-0.2 rounded border border-emerald-500/30">{{ $reg->target_class }}</span>
-                                        @endif
-                                    @else
-                                        @if($isGanda)
-                                            <span class="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30">
-                                                Tim / Regu
-                                            </span>
-                                        @endif
-                                        @if($reg->sub_category)
-                                            <span class="text-[10px] text-slate-300 font-bold bg-white/[0.05] border border-white/[0.08] px-1.5 py-0.2 rounded">{{ $reg->sub_category }}</span>
-                                        @endif
-                                        @if($reg->chosen_song)
-                                            <span class="text-[10px] text-purple-300 font-bold bg-purple-500/15 border border-purple-500/30 px-1.5 py-0.2 rounded">🎵 {{ $reg->chosen_song }}</span>
-                                        @endif
-                                        @if($reg->target_class)
-                                            <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/15 px-1.5 py-0.2 rounded border border-emerald-500/30">{{ $reg->target_class }}</span>
-                                        @endif
-                                    @endif
+                                    </template>
+
+                                    <!-- Other tags -->
+                                    <template x-if="item.sub_category">
+                                        <span class="text-[10px] text-slate-300 font-bold bg-white/[0.05] border border-white/[0.08] px-1.5 py-0.2 rounded" x-text="item.sub_category"></span>
+                                    </template>
+                                    <template x-if="item.chosen_song">
+                                        <span class="text-[10px] text-purple-300 font-bold bg-purple-500/15 border border-purple-500/30 px-1.5 py-0.2 rounded" x-text="'🎵 ' + item.chosen_song"></span>
+                                    </template>
+                                    <template x-if="item.target_class && !item.is_kat_a && !item.is_kat_b && !item.is_kat_c">
+                                        <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/15 px-1.5 py-0.2 rounded border border-emerald-500/30" x-text="item.target_class"></span>
+                                    </template>
                                 </div>
                             </td>
 
                             <!-- Asal Sekolah -->
                             <td class="py-3 px-3.5 sm:px-4">
-                                <span class="text-xs font-bold text-slate-200 block">{{ $reg->display_school }}</span>
-                                <span class="text-[10px] text-slate-400">{{ $reg->official_name ? 'Official: ' . $reg->official_name : '' }}</span>
+                                <span class="text-xs font-bold text-slate-200 block" x-text="item.display_school"></span>
+                                <span class="text-[10px] text-slate-400" x-text="item.official_name ? 'Official: ' + item.official_name : ''"></span>
                             </td>
 
                             <!-- Berkas & Slip -->
                             <td class="py-3 px-3.5 sm:px-4 text-center">
                                 <div class="inline-flex items-center gap-1">
-                                    @if($reg->document_file)
+                                    <!-- Dokumen Surat -->
+                                    <template x-if="item.document_file">
                                         <span class="p-1 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" title="Surat Tugas Terlampir">
-                                            <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                         </span>
-                                    @else
+                                    </template>
+                                    <template x-if="!item.document_file">
                                         <span class="p-1 rounded bg-white/[0.05] text-slate-500 border border-white/[0.08]" title="Tidak ada surat">
-                                            <i data-lucide="file" class="w-3.5 h-3.5"></i>
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                                         </span>
-                                    @endif
+                                    </template>
 
-                                    @if($reg->payment_proof || ($reg->invoice && $reg->invoice->payment_proof))
+                                    <!-- Slip Pembayaran -->
+                                    <template x-if="item.has_payment_proof">
                                         <span class="p-1 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30" title="Slip Pembayaran Terlampir">
-                                            <i data-lucide="credit-card" class="w-3.5 h-3.5"></i>
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
                                         </span>
-                                    @else
+                                    </template>
+                                    <template x-if="!item.has_payment_proof">
                                         <span class="p-1 rounded bg-white/[0.05] text-slate-500 border border-white/[0.08]" title="Tanpa slip / Gratis">
-                                            <i data-lucide="minus" class="w-3.5 h-3.5"></i>
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
                                         </span>
-                                    @endif
+                                    </template>
                                 </div>
                             </td>
 
                             <!-- No Undian -->
                             <td class="py-3 px-3.5 sm:px-4 text-center">
-                                @if($reg->draw_number)
-                                    <span class="w-7 h-7 rounded-xl bg-amber-400 text-slate-950 font-black inline-flex items-center justify-center text-xs shadow-md">
-                                        #{{ $reg->draw_number }}
-                                    </span>
-                                @else
+                                <template x-if="item.draw_number">
+                                    <span class="w-7 h-7 rounded-xl bg-amber-400 text-slate-950 font-black inline-flex items-center justify-center text-xs shadow-md" x-text="'#' + item.draw_number"></span>
+                                </template>
+                                <template x-if="!item.draw_number">
                                     <span class="text-slate-500 text-xs font-mono">-</span>
-                                @endif
+                                </template>
                             </td>
 
                             <!-- Status -->
                             <td class="py-3 px-3.5 sm:px-4 text-center whitespace-nowrap">
-                                @if($reg->status === 'verified')
+                                <template x-if="item.status === 'verified'">
                                     <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 inline-flex items-center gap-1">
-                                        <i data-lucide="check" class="w-3 h-3"></i>
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                                         <span>Terverifikasi</span>
                                     </span>
-                                @elseif($reg->status === 'pending')
+                                </template>
+                                <template x-if="item.status === 'pending'">
                                     <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 inline-flex items-center gap-1">
-                                        <i data-lucide="clock" class="w-3 h-3"></i>
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                         <span>Menunggu</span>
                                     </span>
-                                @elseif($reg->status === 'revision')
+                                </template>
+                                <template x-if="item.status === 'revision'">
                                     <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 inline-flex items-center gap-1">
-                                        <i data-lucide="alert-triangle" class="w-3 h-3"></i>
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                                         <span>Revisi</span>
                                     </span>
-                                @else
+                                </template>
+                                <template x-if="item.status === 'rejected'">
                                     <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
                                         Ditolak
                                     </span>
-                                @endif
+                                </template>
                             </td>
 
                             <!-- 4 Compact Action Icons -->
                             <td class="py-3 px-3.5 sm:px-4 text-center">
                                 <div class="flex items-center justify-center gap-1.5">
                                     <!-- 1. Icon Mata: Tinjau & Verifikasi Lengkap -->
-                                    <button type="button" @click="openVerifyModal({{ $reg->id }})" class="w-8 h-8 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 flex items-center justify-center transition cursor-pointer" title="Tinjau Seluruh Data & Verifikasi">
-                                        <i data-lucide="eye" class="w-4 h-4"></i>
+                                    <button type="button" @click="openVerifyModal(item.id)" class="w-8 h-8 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 flex items-center justify-center transition cursor-pointer" title="Tinjau Seluruh Data & Verifikasi">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                     </button>
 
                                     <!-- 2. Icon Edit: Edit Data Peserta -->
-                                    <button type="button" @click="openEditModal({{ $reg->id }})" class="w-8 h-8 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] flex items-center justify-center transition cursor-pointer" title="Edit Data Peserta">
-                                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                    <button type="button" @click="openEditModal(item.id)" class="w-8 h-8 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] flex items-center justify-center transition cursor-pointer" title="Edit Data Peserta">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                     </button>
 
                                     <!-- 3. Icon Cetak: Cetak ID Card / Bukti Satuan -->
-                                    <button type="button" @click="openSinglePrintModal({{ $reg->id }})" class="w-8 h-8 rounded-xl bg-[#4E6EFF]/15 hover:bg-[#4E6EFF]/25 text-[#84D0FF] border border-[#4E6EFF]/30 flex items-center justify-center transition cursor-pointer" title="Cetak Kartu Peserta / Formulir">
-                                        <i data-lucide="printer" class="w-4 h-4"></i>
+                                    <button type="button" @click="openSinglePrintModal(item.id)" class="w-8 h-8 rounded-xl bg-[#4E6EFF]/15 hover:bg-[#4E6EFF]/25 text-[#84D0FF] border border-[#4E6EFF]/30 flex items-center justify-center transition cursor-pointer" title="Cetak Kartu Peserta / Formulir">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                                     </button>
 
                                     <!-- 4. Icon Sampah: Hapus Peserta -->
-                                    <form action="{{ route('pic.delete.participant', $reg->id) }}" method="POST" onsubmit="return confirm('Hapus permanen pendaftaran peserta {{ addslashes($reg->display_name) }}? Seluruh berkas dan data anggota akan terhapus.');" class="inline">
-                                        @csrf
+                                    <form :action="'{{ url('pic/peserta') }}/' + item.id + '/hapus'" method="POST" :onsubmit="'return confirm(\'Hapus permanen pendaftaran peserta ' + (item.team_name || (item.members && item.members[0] ? item.members[0].full_name : '') || 'ini').replace(/'/g, '\\\'') + '? Seluruh berkas dan data anggota akan terhapus.\');'" class="inline">
+                                        <input type="hidden" name="_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="w-8 h-8 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 flex items-center justify-center transition cursor-pointer" title="Hapus Data Peserta">
-                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                         </button>
                                     </form>
                                 </div>
                             </td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="8" class="text-center py-12 text-slate-500 text-xs">
-                                Belum ada data pendaftar yang masuk.
-                            </td>
-                        </tr>
-                    @endforelse
+                    </template>
+
+                    <!-- Loading Spinner Row -->
+                    <tr x-show="isLoading" x-cloak>
+                        <td colspan="8" class="text-center py-10 text-slate-400 text-xs">
+                            <div class="flex items-center justify-center gap-2">
+                                <svg class="animate-spin w-4 h-4 text-[#7A5AF8]" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4l-3 3 3 3H4z"/></svg>
+                                <span>Memuat data peserta...</span>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Empty: No participants at all -->
+                    <tr x-show="!isLoading && totalItems === 0 && !searchQuery && selectedCompetition === 'all' && selectedStatus === 'all' && selectedGender === 'all' && selectedSector === 'all'" x-cloak>
+                        <td colspan="8" class="text-center py-12 text-slate-500 text-xs">
+                            Belum ada data pendaftar yang masuk.
+                        </td>
+                    </tr>
 
                     <!-- Empty Filter State -->
-                    <tr x-show="items.length > 0 && activeList.length === 0" x-cloak>
+                    <tr x-show="!isLoading && items.length === 0 && totalItems === 0 && (searchQuery || selectedCompetition !== 'all' || selectedStatus !== 'all' || selectedGender !== 'all' || selectedSector !== 'all')" x-cloak>
                         <td colspan="8" class="text-center py-12 text-slate-400 text-xs">
                             <div class="flex flex-col items-center justify-center gap-2">
                                 <div class="w-10 h-10 rounded-2xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-slate-400">
@@ -953,9 +949,6 @@
                     Menampilkan <span class="font-bold text-white font-mono" x-text="paginationStart"></span>
                     sampai <span class="font-bold text-white font-mono" x-text="paginationEnd"></span>
                     dari <span class="font-bold text-[#84D0FF] font-mono" x-text="countAll"></span> peserta
-                    <span x-show="countAll < items.length" class="text-slate-500 text-[11px]">
-                        (total data: <span x-text="items.length"></span>)
-                    </span>
                 </div>
 
                 <span class="text-white/[0.1] hidden sm:inline">•</span>
@@ -1045,8 +1038,14 @@
                     </button>
                 </div>
 
+                <!-- Modal Loading Skeleton -->
+                <div x-show="modalLoading" class="flex items-center justify-center py-12 gap-3 text-slate-400 text-sm">
+                    <svg class="animate-spin w-5 h-5 text-[#7A5AF8]" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4l-3 3 3 3H4z"/></svg>
+                    <span>Memuat data...</span>
+                </div>
+
                 <!-- Complete Participant Info Card -->
-                <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+                <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-1" x-show="!modalLoading">
                     
                     <!-- Section 1: Identitas Atlet / Anggota -->
                     <div class="p-4 rounded-2xl bg-[#0C111D] border border-white/[0.08] space-y-3">
