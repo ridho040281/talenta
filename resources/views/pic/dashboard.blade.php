@@ -273,6 +273,55 @@
         }
         return place || formattedDate || '-';
     },
+    registrationsMap: @js($allRegistrations->keyBy('id')),
+    openVerifyModal(id) {
+        this.selectedReg = this.registrationsMap[id] || null;
+        this.verifyModal = true;
+    },
+    openEditModal(id) {
+        const raw = this.registrationsMap[id];
+        if (!raw) return;
+        this.selectedEditReg = JSON.parse(JSON.stringify(raw));
+        if (this.selectedEditReg) {
+            if (this.selectedEditReg.members) {
+                this.selectedEditReg.members.forEach(m => {
+                    if (m.birth_date) m.birth_date = String(m.birth_date).split('T')[0];
+                });
+                if (this.selectedEditReg.members.length === 1 && this.selectedEditReg.members[0].school_name) {
+                    this.selectedEditReg.institution_name = this.selectedEditReg.members[0].school_name;
+                }
+            }
+            const cCode = (this.selectedEditReg.competition && this.selectedEditReg.competition.code ? this.selectedEditReg.competition.code : (this.selectedEditReg.registration_code ? this.selectedEditReg.registration_code.split('-')[0] : '')).toUpperCase();
+            if (cCode === 'TMJ') {
+                if (!this.selectedEditReg.match_type) {
+                    const g = (this.selectedEditReg.members && this.selectedEditReg.members[0]) ? this.selectedEditReg.members[0].gender : 'L';
+                    this.selectedEditReg.match_type = (g === 'P') ? 'Tunggal Putri (PI)' : 'Tunggal Putra (PA)';
+                }
+                let tc = this.selectedEditReg.target_class || this.selectedEditReg.sub_category || '';
+                if (tc.includes('4-6') || tc.includes('4 - 6') || tc.toLowerCase().includes('kat b') || tc.toLowerCase().includes('kategori b') || tc.toLowerCase().includes('kelas 4') || tc.toLowerCase().includes('kelas 5') || tc.toLowerCase().includes('kelas 6')) {
+                    this.selectedEditReg.target_class = 'Kategori B (Kelas 4 - 6)';
+                } else {
+                    this.selectedEditReg.target_class = 'Kategori A (Kelas 1 - 3)';
+                }
+            } else if (cCode === 'BLT') {
+                let tc = this.selectedEditReg.target_class || this.selectedEditReg.sub_category || '';
+                if (tc.toLowerCase().includes('ganda')) {
+                    this.selectedEditReg.target_class = 'Ganda (Semua Kelas)';
+                } else if (tc.includes('3-4') || tc.includes('3 - 4') || tc.toLowerCase().includes('kat b') || tc.toLowerCase().includes('kategori b')) {
+                    this.selectedEditReg.target_class = 'Kategori B (Kelas 3 - 4)';
+                } else if (tc.includes('5-6') || tc.includes('5 - 6') || tc.toLowerCase().includes('kat c') || tc.toLowerCase().includes('kategori c')) {
+                    this.selectedEditReg.target_class = 'Kategori C (Kelas 5 - 6)';
+                } else {
+                    this.selectedEditReg.target_class = 'Kategori A (Kelas 1 - 2)';
+                }
+            }
+        }
+        this.editModal = true;
+    },
+    openSinglePrintModal(id) {
+        this.selectedSingleReg = this.registrationsMap[id] || null;
+        this.singlePrintModal = true;
+    },
     items: @js($allRegistrations->map(function($r) {
         $firstMember = $r->members->first();
 
@@ -329,14 +378,24 @@
             return matchComp && matchStatus && matchGender && matchSector && matchSearch;
         });
     },
+    get counts() {
+        let pa = 0;
+        let pi = 0;
+        const list = this.activeList;
+        for (let i = 0; i < list.length; i++) {
+            if (list[i].gender === 'L') pa++;
+            else if (list[i].gender === 'P') pi++;
+        }
+        return { all: list.length, pa, pi };
+    },
     get countAll() {
-        return this.activeList.length;
+        return this.counts.all;
     },
     get countPa() {
-        return this.activeList.filter(i => i.gender === 'L').length;
+        return this.counts.pa;
     },
     get countPi() {
-        return this.activeList.filter(i => i.gender === 'P').length;
+        return this.counts.pi;
     },
     get totalPages() {
         return Math.max(1, Math.ceil(this.activeList.length / this.perPage));
@@ -346,8 +405,19 @@
         const start = (page - 1) * this.perPage;
         return this.activeList.slice(start, start + this.perPage);
     },
+    _cachedPaginatedIds: null,
+    _lastFilterKey: '',
     get paginatedIds() {
-        return new Set(this.paginatedList.map(i => i.id));
+        const key = `${this.currentPage}_${this.perPage}_${this.activeList.length}_${this.searchQuery}_${this.selectedCompetition}_${this.selectedStatus}_${this.selectedGender}_${this.selectedSector}`;
+        if (this._lastFilterKey === key && this._cachedPaginatedIds) {
+            return this._cachedPaginatedIds;
+        }
+        this._lastFilterKey = key;
+        const page = Math.min(Math.max(1, this.currentPage), this.totalPages);
+        const start = (page - 1) * this.perPage;
+        const slice = this.activeList.slice(start, start + this.perPage);
+        this._cachedPaginatedIds = new Set(slice.map(i => i.id));
+        return this._cachedPaginatedIds;
     },
     isItemVisible(id) {
         return this.paginatedIds.has(id);
@@ -823,54 +893,17 @@
                             <td class="py-3 px-3.5 sm:px-4 text-center">
                                 <div class="flex items-center justify-center gap-1.5">
                                     <!-- 1. Icon Mata: Tinjau & Verifikasi Lengkap -->
-                                    <button type="button" @click="selectedReg = {{ $reg->toJson() }}; verifyModal = true" class="w-8 h-8 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 flex items-center justify-center transition cursor-pointer" title="Tinjau Seluruh Data & Verifikasi">
+                                    <button type="button" @click="openVerifyModal({{ $reg->id }})" class="w-8 h-8 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 flex items-center justify-center transition cursor-pointer" title="Tinjau Seluruh Data & Verifikasi">
                                         <i data-lucide="eye" class="w-4 h-4"></i>
                                     </button>
 
                                     <!-- 2. Icon Edit: Edit Data Peserta -->
-                                    <button type="button" @click="
-                                        selectedEditReg = JSON.parse(JSON.stringify({{ $reg->toJson() }})); 
-                                        if(selectedEditReg) { 
-                                            if(selectedEditReg.members) { 
-                                                selectedEditReg.members.forEach(m => { 
-                                                    if(m.birth_date) m.birth_date = String(m.birth_date).split('T')[0]; 
-                                                }); 
-                                                if(selectedEditReg.members.length === 1 && selectedEditReg.members[0].school_name) {
-                                                    selectedEditReg.institution_name = selectedEditReg.members[0].school_name;
-                                                }
-                                            }
-                                            const cCode = (selectedEditReg.competition && selectedEditReg.competition.code ? selectedEditReg.competition.code : (selectedEditReg.registration_code ? selectedEditReg.registration_code.split('-')[0] : '')).toUpperCase();
-                                            if (cCode === 'TMJ') {
-                                                if (!selectedEditReg.match_type) {
-                                                    const g = (selectedEditReg.members && selectedEditReg.members[0]) ? selectedEditReg.members[0].gender : 'L';
-                                                    selectedEditReg.match_type = (g === 'P') ? 'Tunggal Putri (PI)' : 'Tunggal Putra (PA)';
-                                                }
-                                                let tc = selectedEditReg.target_class || selectedEditReg.sub_category || '';
-                                                if (tc.includes('4-6') || tc.includes('4 - 6') || tc.toLowerCase().includes('kat b') || tc.toLowerCase().includes('kategori b') || tc.toLowerCase().includes('kelas 4') || tc.toLowerCase().includes('kelas 5') || tc.toLowerCase().includes('kelas 6')) {
-                                                    selectedEditReg.target_class = 'Kategori B (Kelas 4 - 6)';
-                                                } else {
-                                                    selectedEditReg.target_class = 'Kategori A (Kelas 1 - 3)';
-                                                }
-                                            } else if (cCode === 'BLT') {
-                                                let tc = selectedEditReg.target_class || selectedEditReg.sub_category || '';
-                                                if (tc.toLowerCase().includes('ganda')) {
-                                                    selectedEditReg.target_class = 'Ganda (Semua Kelas)';
-                                                } else if (tc.includes('3-4') || tc.includes('3 - 4') || tc.toLowerCase().includes('kat b') || tc.toLowerCase().includes('kategori b')) {
-                                                    selectedEditReg.target_class = 'Kategori B (Kelas 3 - 4)';
-                                                } else if (tc.includes('5-6') || tc.includes('5 - 6') || tc.toLowerCase().includes('kat c') || tc.toLowerCase().includes('kategori c')) {
-                                                    selectedEditReg.target_class = 'Kategori C (Kelas 5 - 6)';
-                                                } else {
-                                                    selectedEditReg.target_class = 'Kategori A (Kelas 1 - 2)';
-                                                }
-                                            }
-                                        } 
-                                        editModal = true;
-                                    " class="w-8 h-8 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] flex items-center justify-center transition cursor-pointer" title="Edit Data Peserta">
+                                    <button type="button" @click="openEditModal({{ $reg->id }})" class="w-8 h-8 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] flex items-center justify-center transition cursor-pointer" title="Edit Data Peserta">
                                         <i data-lucide="edit-3" class="w-4 h-4"></i>
                                     </button>
 
                                     <!-- 3. Icon Cetak: Cetak ID Card / Bukti Satuan -->
-                                    <button type="button" @click="selectedSingleReg = {{ $reg->toJson() }}; singlePrintModal = true" class="w-8 h-8 rounded-xl bg-[#4E6EFF]/15 hover:bg-[#4E6EFF]/25 text-[#84D0FF] border border-[#4E6EFF]/30 flex items-center justify-center transition cursor-pointer" title="Cetak Kartu Peserta / Formulir">
+                                    <button type="button" @click="openSinglePrintModal({{ $reg->id }})" class="w-8 h-8 rounded-xl bg-[#4E6EFF]/15 hover:bg-[#4E6EFF]/25 text-[#84D0FF] border border-[#4E6EFF]/30 flex items-center justify-center transition cursor-pointer" title="Cetak Kartu Peserta / Formulir">
                                         <i data-lucide="printer" class="w-4 h-4"></i>
                                     </button>
 
@@ -1148,18 +1181,9 @@
 
                         <div class="pt-4 flex items-center justify-between gap-3 border-t border-white/[0.08]">
                             <button type="button" @click="
-                                const regData = selectedReg;
+                                const regId = selectedReg ? selectedReg.id : null;
                                 verifyModal = false;
-                                selectedEditReg = JSON.parse(JSON.stringify(regData));
-                                if(selectedEditReg && selectedEditReg.members) {
-                                    selectedEditReg.members.forEach(m => {
-                                        if(m.birth_date) m.birth_date = String(m.birth_date).split('T')[0];
-                                    });
-                                    if(selectedEditReg.members.length === 1 && selectedEditReg.members[0].school_name) {
-                                        selectedEditReg.institution_name = selectedEditReg.members[0].school_name;
-                                    }
-                                }
-                                editModal = true;
+                                if (regId) openEditModal(regId);
                             " class="px-3.5 py-2 rounded-xl bg-[#7A5AF8]/15 hover:bg-[#7A5AF8]/25 text-[#A594FD] border border-[#7A5AF8]/30 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer" title="Edit data pendaftar ini">
                                 <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                                 <span>Edit Data</span>

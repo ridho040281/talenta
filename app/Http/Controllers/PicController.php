@@ -88,46 +88,44 @@ class PicController extends Controller
         $competitionIds = self::getManagedCompetitionIds($user);
 
         // Get competitions managed by this PIC (or all if superadmin)
-        $competitions = Competition::with(['category', 'registrations.members'])
+        $competitions = Competition::with('category')
             ->whereIn('id', $competitionIds)
             ->get();
 
-        // Auto-synchronize any invoice totals attached to these competitions
-        $relatedInvoiceIds = Registration::whereIn('competition_id', $competitionIds)
-            ->whereNotNull('invoice_id')
-            ->pluck('invoice_id')
-            ->unique();
-
-        if ($relatedInvoiceIds->isNotEmpty()) {
-            $invoices = Invoice::with(['registrations.competition', 'registrations.members'])
-                ->whereIn('id', $relatedInvoiceIds)
-                ->get();
-            foreach ($invoices as $inv) {
-                $currentSubtotal = (float) $inv->registrations->sum(fn ($r) => $r->fee);
-                if (abs((float) $inv->total_amount - $currentSubtotal) > 0.01) {
-                    $inv->recalculateTotals();
-                }
-            }
-        }
-
-        $allRegistrations = Registration::with(['competition.category', 'members', 'user', 'invoice'])
+        $allRegistrations = Registration::with([
+            'competition.category',
+            'members',
+            'user:id,name,phone,institution_name',
+            'invoice:id,invoice_number,status,payment_proof,final_amount',
+        ])
             ->whereIn('competition_id', $competitionIds)
             ->latest()
             ->get();
 
-        $totalMembers = $allRegistrations->flatMap->members;
-        $totalPa = $totalMembers->where('gender', 'L')->count();
-        $totalPi = $totalMembers->where('gender', 'P')->count();
+        $statusCounts = $allRegistrations->countBy('status');
+        $drawnCount = $allRegistrations->whereNotNull('draw_number')->count();
+
+        $totalPa = 0;
+        $totalPi = 0;
+        foreach ($allRegistrations as $reg) {
+            foreach ($reg->members as $m) {
+                if ($m->gender === 'L') {
+                    $totalPa++;
+                } elseif ($m->gender === 'P') {
+                    $totalPi++;
+                }
+            }
+        }
 
         $stats = [
             'total_competitions' => $competitions->count(),
             'total_registrations' => $allRegistrations->count(),
-            'pending_verifications' => $allRegistrations->where('status', 'pending')->count(),
-            'pending_registrations' => $allRegistrations->where('status', 'pending')->count(),
-            'verified_registrations' => $allRegistrations->where('status', 'verified')->count(),
-            'revision_registrations' => $allRegistrations->where('status', 'revision')->count(),
-            'rejected_registrations' => $allRegistrations->where('status', 'rejected')->count(),
-            'drawn_participants' => $allRegistrations->whereNotNull('draw_number')->count(),
+            'pending_verifications' => $statusCounts->get('pending', 0),
+            'pending_registrations' => $statusCounts->get('pending', 0),
+            'verified_registrations' => $statusCounts->get('verified', 0),
+            'revision_registrations' => $statusCounts->get('revision', 0),
+            'rejected_registrations' => $statusCounts->get('rejected', 0),
+            'drawn_participants' => $drawnCount,
             'total_pa' => $totalPa,
             'total_pi' => $totalPi,
         ];
