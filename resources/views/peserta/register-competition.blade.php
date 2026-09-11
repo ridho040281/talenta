@@ -581,10 +581,15 @@
                         <i data-lucide="file-text" class="w-6 h-6"></i>
                     </div>
                     <div>
-                        <label class="block text-sm font-bold text-white">Surat Keterangan / Surat Rekomendasi</label>
+                        <label class="block text-sm font-bold text-white">
+                            Surat Keterangan / Surat Rekomendasi <span class="text-rose-400">*</span>
+                        </label>
                         <p class="text-[11px] text-slate-400 mt-0.5">Surat tugas / keterangan / rekomendasi kepala sekolah / madrasah (PDF, JPG, PNG, maks 5 MB)</p>
                     </div>
-                    <input type="file" name="document_file" class="block w-full text-xs text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer">
+                    <input type="file" name="document_file" required accept=".pdf,.jpg,.jpeg,.png,.zip,application/pdf,image/*" class="block w-full text-xs text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer">
+                    @error('document_file')
+                        <p class="text-xs text-rose-400 font-bold mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <!-- 2. Upload Bukti Transfer / Struk / Slip Transfer -->
@@ -686,7 +691,7 @@
                     </div>
                     <div class="flex-1 text-xs">
                         <span class="font-bold text-amber-300 block">Surat Keterangan / Surat Rekomendasi</span>
-                        <p class="text-slate-300 text-[11px] mt-0.5">File surat keterangan atau surat tugas/rekomendasi kepala sekolah belum dipilih.</p>
+                        <p class="text-slate-300 text-[11px] mt-0.5">File surat keterangan atau surat tugas/rekomendasi kepala sekolah wajib diunggah sebelum formulir dapat dikirimkan.</p>
                     </div>
                 </div>
             </div>
@@ -697,15 +702,6 @@
                         @click="showWarningModal = false" 
                         class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition border border-slate-700">
                     Batal
-                </button>
-                
-                <button type="button" 
-                        x-show="!isPaymentProofMissing && isDocumentFileMissing"
-                        :disabled="isSubmitting"
-                        @click="submitDirectly()" 
-                        class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition border border-slate-700 disabled:opacity-60 disabled:cursor-not-allowed">
-                    <span x-show="!isSubmitting">Lanjutkan Kirim (Tanpa Surat)</span>
-                    <span x-show="isSubmitting">Sedang Mengirim...</span>
                 </button>
 
                 <button type="button" 
@@ -874,12 +870,6 @@
                         }
                     }
                 }, 200);
-            },
-            submitDirectly() {
-                if (window.hideAppLoading) window.hideAppLoading();
-                this.showWarningModal = false;
-                this.isSubmitting = true;
-                document.getElementById('registration-main-form').submit();
             }
         }
     }

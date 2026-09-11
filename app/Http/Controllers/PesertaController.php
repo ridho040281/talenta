@@ -284,9 +284,12 @@ class PesertaController extends Controller
             'members.*.role_in_team' => ['nullable', 'string', 'max:100'],
             'members.*.photo' => [$isPramuka ? 'required' : 'nullable', 'file', 'image', 'mimes:jpg,jpeg,png,webp,bmp', 'max:25600'],
             'chosen_song' => [$isPopSinger ? 'required' : 'nullable', 'string', 'max:255'],
-            'document_file' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,zip', 'max:5120'],
+            'document_file' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,zip', 'max:5120'],
             'payment_proof' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
         ], [
+            'document_file.required' => 'Surat keterangan / surat rekomendasi kepala sekolah/madrasah wajib diunggah dalam satu kali pengiriman.',
+            'document_file.mimes' => 'Format file surat keterangan / rekomendasi harus berupa PDF, JPG, JPEG, PNG, atau ZIP.',
+            'document_file.max' => 'Ukuran file surat keterangan / rekomendasi maksimal 5 MB.',
             'official_gender.required' => 'Jenis kelamin pembina / pendamping wajib dipilih.',
             'official_photo.required' => 'Foto pembina / pendamping wajib diunggah untuk cabang lomba Pramuka.',
             'official_photo.max' => 'Ukuran berkas foto pembina / pendamping maksimal 25 MB.',
