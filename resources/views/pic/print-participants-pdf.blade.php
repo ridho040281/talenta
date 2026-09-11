@@ -42,7 +42,7 @@
                 box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.1), 0 2px 6px -1px rgba(0, 0, 0, 0.06);
                 border: 1px solid #e2e8f0;
                 border-radius: 6px;
-                padding: 1.5cm 2cm 2cm 2cm;
+                padding: 1.5cm 2cm 1.2cm 2cm;
                 margin-bottom: 24px;
             }
         }
@@ -63,7 +63,7 @@
                 border: none !important; 
                 border-radius: 0 !important; 
                 margin: 0 auto !important; 
-                padding: 1.5cm 2cm 2cm 2cm !important;
+                padding: 1.5cm 2cm 1.2cm 2cm !important;
                 page-break-after: always;
                 break-after: page;
                 min-height: 297mm;
@@ -286,8 +286,8 @@
                 </div>
 
                 <!-- Footer Page Info (Tetap di bagian paling bawah halaman) -->
-                <div class="mt-auto pt-3 border-t border-slate-200 flex items-center justify-between text-[9px] text-slate-400 font-mono">
-                    <span>Dokumen Resmi Panitia {{ $appSettings['event_name'] ?? 'Milad ke-57' }} {{ $appSettings['institution_name'] ?? 'MTsN 1 Blitar' }} • Aplikasi {{ $appSettings['app_name'] ?? 'TALENTA' }}</span>
+                <div class="mt-auto pt-2 border-t border-slate-200 flex items-center justify-between text-[9px] text-slate-400 font-mono">
+                    <span>Panitia {{ $appSettings['event_name'] ?? 'Milad ke-57' }} {{ $appSettings['institution_name'] ?? 'MTsN 1 Blitar' }} • Aplikasi {{ $appSettings['app_name'] ?? 'TALENTA' }}</span>
                     <span>Halaman {{ $pageIndex + 1 }} dari {{ count($pages) }}</span>
                 </div>
 
