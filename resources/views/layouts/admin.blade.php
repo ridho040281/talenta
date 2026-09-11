@@ -284,10 +284,20 @@
 <body class="text-slate-100 font-sans antialiased min-h-screen flex selection:bg-[#7A5AF8] selection:text-white relative overflow-x-hidden" x-data="{ sidebarOpen: false, passwordModal: false }">
 
     <!-- Mobile Sidebar Backdrop -->
-    <div x-show="sidebarOpen" @click="sidebarOpen = false" x-cloak class="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm lg:hidden transition-opacity"></div>
+    <div x-show="sidebarOpen" 
+         @click="sidebarOpen = false" 
+         x-cloak 
+         x-transition:enter="transition-opacity ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition-opacity ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm lg:hidden"></div>
 
     <!-- Sidebar Navigation (AIStarterKit Dark Glass Structure) -->
-    <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'" class="fixed inset-y-0 left-0 z-20 w-64 bg-[#090D17]/98 backdrop-blur-2xl text-slate-300 flex flex-col transition-transform duration-300 ease-in-out border-r border-white/[0.12] shadow-[4px_0_25px_rgba(0,0,0,0.6)]">
+    <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'" 
+           class="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] sm:w-64 bg-[#090D17]/98 backdrop-blur-2xl text-slate-300 flex flex-col transition-transform duration-300 ease-in-out border-r border-white/[0.12] shadow-[4px_0_25px_rgba(0,0,0,0.6)]">
         
         <!-- Sidebar Brand Header -->
         <div class="h-16 flex items-center justify-between px-4 border-b border-white/[0.08]">
@@ -304,7 +314,7 @@
                     <span class="text-[10px] font-bold tracking-widest text-[#7A5AF8] uppercase block truncate mt-1">{{ $appSettings['institution_name'] ?? 'MTsN 1 BLITAR' }}</span>
                 </div>
             </a>
-            <button @click="sidebarOpen = false" class="lg:hidden text-slate-400 hover:text-white p-1 rounded-lg">
+            <button @click="sidebarOpen = false" class="lg:hidden p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/[0.08] transition cursor-pointer" aria-label="Tutup Menu">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
@@ -565,7 +575,7 @@
     </div>
 
     <!-- MODAL GANTI KATA SANDI (AIStarterKit Style) -->
-    <div x-show="passwordModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div x-show="passwordModal" x-cloak class="fixed inset-0 z-[60] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
         <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div x-show="passwordModal" @click="passwordModal = false" class="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
