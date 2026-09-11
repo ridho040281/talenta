@@ -72,6 +72,7 @@
     },
     createMatchType: '',
     createTargetClass: '',
+    createGender: 'L',
     selectedReg: null,
     selectedEditReg: {
         id: null,
