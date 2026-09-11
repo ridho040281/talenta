@@ -189,14 +189,21 @@
                         </div>
                     </div>
 
+                    @php
+                        $compCode = strtoupper($page['competition']->code ?? '');
+                        $hideDrawNumber = in_array($compCode, ['BLT', 'TMJ']) || stripos($page['competition_name'] ?? '', 'tenis') !== false || stripos($page['competition_name'] ?? '', 'tangkis') !== false || stripos($page['competition_name'] ?? '', 'badminton') !== false;
+                    @endphp
+
                     <!-- ==================== TABEL PESERTA (A4 PORTRAIT) ==================== -->
                     <div class="mt-3 overflow-x-auto">
                         <table class="w-full text-left text-xs border-collapse border border-slate-900">
                             <thead>
                                 <tr class="bg-slate-200/90 text-slate-900 font-bold uppercase text-[10px] tracking-wider text-center border-b border-slate-900">
                                     <th class="py-2 px-1.5 border border-slate-900 w-8">No</th>
-                                    <th class="py-2 px-2 border border-slate-900 w-24">No. Peserta</th>
-                                    <th class="py-2 px-1.5 border border-slate-900 w-20">No. Undian</th>
+                                    <th class="py-2 px-2 border border-slate-900 {{ $hideDrawNumber ? 'w-28' : 'w-24' }}">No. Peserta</th>
+                                    @if(!$hideDrawNumber)
+                                        <th class="py-2 px-1.5 border border-slate-900 w-20">No. Undian</th>
+                                    @endif
                                     <th class="py-2 px-3 border border-slate-900 text-left">Nama Atlet / Peserta</th>
                                     <th class="py-2 px-3 border border-slate-900 text-left">Asal Sekolah / Madrasah</th>
                                     <th class="py-2 px-2 border border-slate-900 w-24 text-center">Paraf</th>
@@ -213,9 +220,11 @@
                                         <td class="py-2 px-2 border border-slate-900 font-mono font-bold text-center text-xs">
                                             {{ $reg->participant_number ?: '-' }}
                                         </td>
-                                        <td class="py-2 px-1.5 border border-slate-900 text-center font-black text-sm font-mono text-slate-950">
-                                            {{ $reg->draw_number ? '#' . $reg->draw_number : '-' }}
-                                        </td>
+                                        @if(!$hideDrawNumber)
+                                            <td class="py-2 px-1.5 border border-slate-900 text-center font-black text-sm font-mono text-slate-950">
+                                                {{ $reg->draw_number ? '#' . $reg->draw_number : '-' }}
+                                            </td>
+                                        @endif
                                         <td class="py-2 px-3 border border-slate-900 font-bold">
                                             @if($isGanda)
                                                 <div class="text-slate-950 font-black text-xs">{{ $reg->team_name ?: $reg->display_name }}</div>
@@ -245,7 +254,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="py-8 text-center text-slate-400 italic border border-slate-900">
+                                        <td colspan="{{ $hideDrawNumber ? 5 : 6 }}" class="py-8 text-center text-slate-400 italic border border-slate-900">
                                             Tidak ada peserta pada kelompok ini.
                                         </td>
                                     </tr>

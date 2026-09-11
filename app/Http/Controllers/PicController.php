@@ -464,9 +464,26 @@ class PicController extends Controller
             return strcmp($a->participant_number ?? '', $b->participant_number ?? '');
         });
 
+        // Determine whether to show "No. Undian" column in Excel:
+        // Hide if selected competition is BLT or TMJ, or if all exported registrations belong to BLT/TMJ
+        $hideDrawCol = false;
+        if ($competitionId !== 'all') {
+            $firstComp = $sorted->first()?->competition;
+            if ($firstComp && (in_array($firstComp->code, ['BLT', 'TMJ']) || stripos($firstComp->name, 'tenis') !== false || stripos($firstComp->name, 'tangkis') !== false || stripos($firstComp->name, 'badminton') !== false)) {
+                $hideDrawCol = true;
+            }
+        } elseif ($sorted->isNotEmpty() && $sorted->every(function ($r) {
+            $code = $r->competition?->code ?? '';
+            $name = $r->competition?->name ?? '';
+            return in_array($code, ['BLT', 'TMJ']) || stripos($name, 'tenis') !== false || stripos($name, 'tangkis') !== false || stripos($name, 'badminton') !== false;
+        })) {
+            $hideDrawCol = true;
+        }
+
+        $colspan = $hideDrawCol ? 12 : 13;
         $filename = 'DATA_PESERTA_TALENTA_2026_'.date('Ymd_His').'.xls';
 
-        return response()->streamDownload(function () use ($sorted) {
+        return response()->streamDownload(function () use ($sorted, $hideDrawCol, $colspan) {
             echo '<!DOCTYPE html>
             <html>
             <head>
@@ -484,12 +501,12 @@ class PicController extends Controller
             <body>
                 <table border="1">
                     <tr>
-                        <th colspan="13" style="font-size: 16pt; background-color: #047857; text-align: center; height: 35px;">
+                        <th colspan="'.$colspan.'" style="font-size: 16pt; background-color: #047857; text-align: center; height: 35px;">
                             DATA NOMINATIF PESERTA RESMI TALENTA 2026 - MTsN 1 BLITAR
                         </th>
                     </tr>
                     <tr>
-                        <th colspan="13" style="font-size: 10pt; background-color: #D1FAE5; color: #065F46; text-align: center;">
+                        <th colspan="'.$colspan.'" style="font-size: 10pt; background-color: #D1FAE5; color: #065F46; text-align: center;">
                             Diurutkan Berdasarkan Cabang Lomba, Kategori/Kelas & Kelompok Gender (Putra / Putri) dalam 1 Sheet
                         </th>
                     </tr>
@@ -497,7 +514,7 @@ class PicController extends Controller
                         <th>No</th>
                         <th>Kode Registrasi</th>
                         <th>No. Peserta</th>
-                        <th>No. Undian</th>
+                        '.(!$hideDrawCol ? '<th>No. Undian</th>' : '').'
                         <th>Nama Peserta / Atlet</th>
                         <th>NISN</th>
                         <th>Gender (PA/PI)</th>
@@ -546,7 +563,7 @@ class PicController extends Controller
                     <td class="center">'.$no++.'</td>
                     <td class="center">'.htmlspecialchars($reg->registration_code).'</td>
                     <td class="center bold">'.htmlspecialchars($reg->participant_number ?: '-').'</td>
-                    <td class="center bold">'.htmlspecialchars($reg->draw_number ? '#'.$reg->draw_number : '-').'</td>
+                    '.(!$hideDrawCol ? '<td class="center bold">'.htmlspecialchars($reg->draw_number ? '#'.$reg->draw_number : '-').'</td>' : '').'
                     <td class="bold">'.htmlspecialchars($reg->display_name).'</td>
                     <td class="center">'.htmlspecialchars($firstMember?->nisn ?: '-').'</td>
                     <td class="center bold">'.htmlspecialchars($genderLabel).'</td>
