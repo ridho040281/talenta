@@ -21,8 +21,8 @@
                 <span>{{ $competition->name }}</span>
             </h2>
             <p class="text-xs text-slate-400 font-mono">
-                <span class="text-emerald-400" x-text="undrawnParticipants.length"></span> Belum Diundi • 
-                <span class="text-cyan-400" x-text="drawnList.length"></span> Selesai Terkunci
+                <span class="text-emerald-400 font-bold" x-text="allUndrawnParticipants.length"></span> Belum Diundi • 
+                <span class="text-cyan-400 font-bold" x-text="allDrawnParticipants.length"></span> Selesai Terkunci
             </p>
         </div>
 
@@ -53,11 +53,65 @@
         </div>
     </div>
 
+    <!-- Category & Sector Navigation Tabs (Bulu Tangkis & Tenis Meja Pools) -->
+    @if(count($pools) > 1)
+    <div class="bg-slate-900 rounded-3xl p-4 sm:p-5 border border-slate-800 shadow-xl space-y-3">
+        <div class="flex items-center justify-between gap-3 px-1">
+            <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="text-xs font-mono font-black uppercase tracking-wider text-emerald-400">Pilih Kategori Kelas & Sektor (PA / PI):</span>
+            </div>
+            <span class="text-[11px] font-mono text-slate-400">
+                <span class="text-white font-bold" x-text="pools.length"></span> Kategori / Kelompok Terdaftar
+            </span>
+        </div>
+        
+        <div class="flex items-center gap-2.5 overflow-x-auto pb-1.5 scrollbar-thin scrollbar-thumb-slate-700">
+            <template x-for="p in pools" :key="p.key">
+                <button type="button" 
+                        @click="switchPool(p.key)"
+                        class="px-4 py-2.5 rounded-2xl font-bold text-xs transition-all duration-200 flex items-center gap-2.5 whitespace-nowrap cursor-pointer shrink-0 border font-mono"
+                        :class="activePoolKey === p.key 
+                            ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 border-emerald-300 shadow-lg shadow-emerald-500/25 scale-[1.02] font-black' 
+                            : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'">
+                    <span x-text="p.short_title"></span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-black transition"
+                          :class="activePoolKey === p.key 
+                              ? 'bg-slate-950 text-emerald-400' 
+                              : (getPoolStats(p.key).undrawn === 0 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400')">
+                        <span x-text="getPoolStats(p.key).drawn + '/' + p.participants.length"></span>
+                    </span>
+                </button>
+            </template>
+        </div>
+    </div>
+    @endif
+
     <!-- Main Workspace: Terminal Display on Left, Queue & Logs on Right -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         <!-- Left 7 Cols: Matrix Cyber Terminal Screen -->
         <div class="lg:col-span-7 space-y-4">
+            
+            <!-- Active Pool Status Banner -->
+            <div class="bg-slate-900 rounded-2xl p-3 border border-emerald-500/30 flex items-center justify-between gap-3 text-left font-mono">
+                <div class="overflow-hidden">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Kategori Aktif:</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold" x-text="activeDrawnParticipants.length + '/' + activeParticipants.length + ' Selesai'"></span>
+                    </div>
+                    <h4 class="text-sm font-black text-white truncate mt-0.5" x-text="activePool?.title || '{{ $competition->name }}'"></h4>
+                </div>
+                <div class="shrink-0">
+                    <button type="button" 
+                            @click="resetActivePool()" 
+                            :disabled="activeDrawnParticipants.length === 0 || isDecoding"
+                            class="px-2.5 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[10px] font-bold disabled:opacity-25 disabled:cursor-not-allowed transition cursor-pointer"
+                            title="Reset hanya nomor undian kategori ini">
+                        Reset Kategori Ini
+                    </button>
+                </div>
+            </div>
             
             <div class="relative bg-slate-950 rounded-3xl p-6 sm:p-8 border-2 border-emerald-500/30 shadow-2xl shadow-emerald-950/40 text-emerald-400 font-mono overflow-hidden">
                 
@@ -164,9 +218,9 @@
 
                     <!-- Big Hacker Trigger Button -->
                     <div class="pt-1">
-                        <button type="button" @click="startHackerDraw()" :disabled="isDecoding || undrawnParticipants.length === 0" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500 hover:from-emerald-400 hover:to-teal-300 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-black text-sm sm:text-base tracking-wider uppercase shadow-xl shadow-emerald-500/25 hover:scale-[1.01] active:scale-[0.99] transition duration-200 flex items-center justify-center gap-3 cursor-pointer">
+                        <button type="button" @click="startHackerDraw()" :disabled="isDecoding || activeUndrawnParticipants.length === 0" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500 hover:from-emerald-400 hover:to-teal-300 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-black text-sm sm:text-base tracking-wider uppercase shadow-xl shadow-emerald-500/25 hover:scale-[1.01] active:scale-[0.99] transition duration-200 flex items-center justify-center gap-3 cursor-pointer">
                             <i data-lucide="terminal" class="w-5 h-5" :class="{ 'animate-spin': isDecoding }"></i>
-                            <span x-text="isDecoding ? 'SEDANG MENGACAK SELURUH KANDIDAT PESERTA...' : (undrawnParticipants.length === 0 ? 'SEMUA PESERTA TELAH SELESAI DIUNDI' : (drawMode === 'draw_slot' ? 'ACAK PESERTA UNTUK NO ' + displayNumber : 'ACAK NOMOR UNDIAN PESERTA'))"></span>
+                            <span x-text="isDecoding ? 'SEDANG MENGACAK SELURUH KANDIDAT PESERTA...' : (activeUndrawnParticipants.length === 0 ? 'KATEGORI INI TELAH SELESAI DIUNDI' : (drawMode === 'draw_slot' ? 'ACAK PESERTA UNTUK NO ' + displayNumber : 'ACAK NOMOR UNDIAN PESERTA'))"></span>
                         </button>
                     </div>
 
@@ -176,36 +230,46 @@
 
         </div>
 
-        <!-- Right 5 Cols: Lists (Drawn & Undrawn) -->
         <!-- Right 5 Cols: Lists (Drawn & Undrawn in Dark Theme) -->
         <div class="lg:col-span-5 space-y-6">
             
             <!-- Confirmed / Drawn Winners Queue -->
             <div class="bg-slate-900 rounded-3xl p-6 border border-slate-800 shadow-xl space-y-4">
                 <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                    <h3 class="text-sm font-black text-white flex items-center gap-2">
+                    <div class="flex items-center gap-2">
                         <i data-lucide="list-ordered" class="w-4 h-4 text-emerald-400"></i>
-                        <span>Urutan Tampil Selesai Diundi</span>
-                    </h3>
-                    <span class="text-xs font-mono font-bold text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full" x-text="drawnList.length + ' Peserta'"></span>
+                        <h3 class="text-sm font-black text-white font-mono">Urutan Tampil Selesai Diundi</h3>
+                    </div>
+                    <!-- Filter Toggle: Kategori Ini vs Semua -->
+                    <div class="inline-flex items-center p-0.5 bg-slate-950 rounded-xl border border-slate-800 text-[10px] font-mono">
+                        <button type="button" @click="drawnTab = 'pool'" :class="drawnTab === 'pool' ? 'bg-emerald-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white'" class="px-2.5 py-0.5 rounded-lg transition font-bold cursor-pointer">
+                            Kategori Ini (<span x-text="activeDrawnParticipants.length"></span>)
+                        </button>
+                        <button type="button" @click="drawnTab = 'all'" :class="drawnTab === 'all' ? 'bg-emerald-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white'" class="px-2.5 py-0.5 rounded-lg transition font-bold cursor-pointer">
+                            Semua (<span x-text="allDrawnParticipants.length"></span>)
+                        </button>
+                    </div>
                 </div>
 
                 <div class="space-y-2.5 max-h-[320px] overflow-y-auto pr-1">
-                    <template x-for="item in drawnList" :key="item.id">
-                        <div class="p-3 rounded-2xl bg-slate-950/70 border border-slate-800 hover:border-slate-700 flex items-center justify-between gap-3 transition">
+                    <template x-for="item in (drawnTab === 'pool' ? activeDrawnParticipants : allDrawnParticipants)" :key="item.id">
+                        <div class="p-3 rounded-2xl bg-slate-950/70 border border-slate-800 hover:border-slate-700 flex items-center justify-between gap-3 transition font-mono">
                             <div class="flex items-center gap-3 overflow-hidden">
                                 <div class="w-10 h-10 rounded-xl bg-slate-900 text-emerald-400 font-mono font-black flex items-center justify-center text-sm shrink-0 border border-emerald-500/30 shadow-sm shadow-emerald-500/20" x-text="'#' + item.draw_number"></div>
                                 <div class="overflow-hidden">
-                                    <h5 class="text-xs font-bold text-slate-100 truncate" x-text="item.name"></h5>
-                                    <p class="text-[11px] text-slate-400 truncate" x-text="item.institution"></p>
+                                    <h5 class="text-xs font-bold text-slate-100 truncate font-sans" x-text="item.name"></h5>
+                                    <div class="flex items-center gap-1.5 text-[11px] text-slate-400 truncate">
+                                        <span x-text="item.institution"></span>
+                                        <span x-show="drawnTab === 'all' && item.target_class" class="text-emerald-400 font-mono text-[10px]" x-text="'• ' + (item.target_class || '')"></span>
+                                    </div>
                                 </div>
                             </div>
                             <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/20 border border-emerald-500/30 px-2.5 py-1 rounded-lg uppercase tracking-wider shrink-0">Terkunci</span>
                         </div>
                     </template>
 
-                    <div x-show="drawnList.length === 0" class="py-8 text-center text-xs text-slate-500">
-                        Belum ada peserta yang diundi.
+                    <div x-show="(drawnTab === 'pool' ? activeDrawnParticipants : allDrawnParticipants).length === 0" class="py-8 text-center text-xs text-slate-500 font-mono">
+                        Belum ada peserta yang diundi pada filter ini.
                     </div>
                 </div>
             </div>
@@ -213,15 +277,15 @@
             <!-- Undrawn Participants Queue -->
             <div class="bg-slate-900 rounded-3xl p-6 border border-slate-800 shadow-xl space-y-4">
                 <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                    <h3 class="text-sm font-black text-white flex items-center gap-2">
+                    <h3 class="text-sm font-black text-white flex items-center gap-2 font-mono">
                         <i data-lucide="users" class="w-4 h-4 text-amber-400"></i>
                         <span>Antrean Belum Diundi</span>
                     </h3>
-                    <span class="text-xs font-mono font-bold text-amber-300 bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded-full" x-text="undrawnParticipants.length + ' Peserta'"></span>
+                    <span class="text-xs font-mono font-bold text-amber-300 bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded-full" x-text="activeUndrawnParticipants.length + ' Peserta'"></span>
                 </div>
 
                 <div class="space-y-2.5 max-h-[260px] overflow-y-auto p-1 pr-2">
-                    <template x-for="item in undrawnParticipants" :key="item.id">
+                    <template x-for="item in activeUndrawnParticipants" :key="item.id">
                         <div class="p-3 rounded-2xl transition-all flex items-center justify-between gap-3 text-xs" 
                              :class="(item.id == selectedParticipantId && drawMode === 'draw_participant') ? 'border-2 border-emerald-400 bg-emerald-500/15 shadow-[0_0_15px_rgba(52,211,153,0.25)]' : 'border border-slate-800 bg-slate-950/60 hover:border-slate-700'">
                             <div class="flex items-center gap-3 overflow-hidden">
@@ -230,20 +294,20 @@
                                     <span class="text-xs font-mono font-black" x-text="(item.id == selectedParticipantId && drawMode === 'draw_participant') ? '✓' : '•'"></span>
                                 </div>
                                 <div class="overflow-hidden">
-                                    <span class="font-bold truncate block" :class="(item.id == selectedParticipantId && drawMode === 'draw_participant') ? 'text-emerald-300 font-extrabold' : 'text-slate-200'" x-text="item.name"></span>
-                                    <span class="text-[10px] text-slate-400 truncate block mt-0.5" x-text="item.institution"></span>
+                                    <span class="font-bold truncate block font-sans" :class="(item.id == selectedParticipantId && drawMode === 'draw_participant') ? 'text-emerald-300 font-extrabold' : 'text-slate-200'" x-text="item.name"></span>
+                                    <span class="text-[10px] text-slate-400 truncate block mt-0.5 font-mono" x-text="item.institution"></span>
                                 </div>
                             </div>
                             <button type="button" x-show="drawMode === 'draw_participant'" @click="selectedParticipantId = item.id" 
-                                    class="text-[10px] font-bold px-3 py-1.5 rounded-lg shrink-0 transition cursor-pointer"
+                                    class="text-[10px] font-bold px-3 py-1.5 rounded-lg shrink-0 transition cursor-pointer font-mono"
                                     :class="item.id == selectedParticipantId ? 'bg-emerald-400 text-slate-950 font-black shadow-sm' : 'bg-slate-800 text-slate-300 hover:bg-emerald-400 hover:text-slate-950 border border-slate-700'">
                                 <span x-text="item.id == selectedParticipantId ? 'Terpilih' : 'Pilih'"></span>
                             </button>
                         </div>
                     </template>
 
-                    <div x-show="undrawnParticipants.length === 0" class="py-6 text-center text-xs text-emerald-400 font-bold">
-                        🎉 Seluruh peserta telah selesai diundi!
+                    <div x-show="activeUndrawnParticipants.length === 0" class="py-6 text-center text-xs text-emerald-400 font-bold font-mono">
+                        🎉 Seluruh peserta dalam kategori ini telah selesai diundi!
                     </div>
                 </div>
             </div>
@@ -259,8 +323,9 @@
     function hackerDrawApp() {
         return {
             competitionId: {{ $competition->id }},
-            undrawnParticipants: @json($undrawnList),
-            drawnList: @json($drawnList),
+            pools: @json($pools),
+            activePoolKey: '{{ $pools[0]['key'] ?? 'all' }}',
+            drawnTab: 'pool',
             
             // Mode & Configuration
             drawMode: 'draw_slot',
@@ -277,9 +342,46 @@
             soundEnabled: true,
             audioCtx: null,
 
+            get activePool() {
+                return this.pools.find(p => p.key === this.activePoolKey) || this.pools[0];
+            },
+
+            get activeParticipants() {
+                return this.activePool ? this.activePool.participants : [];
+            },
+
+            get activeUndrawnParticipants() {
+                return this.activeParticipants.filter(p => !p.is_drawn);
+            },
+
+            get activeDrawnParticipants() {
+                return this.activeParticipants.filter(p => p.is_drawn).sort((a, b) => parseInt(a.draw_number) - parseInt(b.draw_number));
+            },
+
+            get allDrawnParticipants() {
+                return this.pools.flatMap(p => p.participants).filter(p => p.is_drawn).sort((a, b) => parseInt(a.draw_number) - parseInt(b.draw_number));
+            },
+
+            get allUndrawnParticipants() {
+                return this.pools.flatMap(p => p.participants).filter(p => !p.is_drawn);
+            },
+
+            getPoolStats(key) {
+                const p = this.pools.find(item => item.key === key);
+                if (!p) return { total: 0, drawn: 0, undrawn: 0 };
+                const drawn = p.participants.filter(item => item.is_drawn).length;
+                const total = p.participants.length;
+                return {
+                    total: total,
+                    drawn: drawn,
+                    undrawn: total - drawn
+                };
+            },
+
             get nextAvailableSlot() {
-                const assigned = this.drawnList.map(d => parseInt(d.draw_number));
-                const total = this.undrawnParticipants.length + this.drawnList.length;
+                if (!this.activePool) return 1;
+                const assigned = this.activeDrawnParticipants.map(d => parseInt(d.draw_number));
+                const total = this.activePool.participants.length;
                 for (let i = 1; i <= Math.max(total, 1); i++) {
                     if (!assigned.includes(i)) return i;
                 }
@@ -287,8 +389,9 @@
             },
 
             get availableSlots() {
-                const assigned = this.drawnList.map(d => parseInt(d.draw_number));
-                const total = this.undrawnParticipants.length + this.drawnList.length;
+                if (!this.activePool) return [];
+                const assigned = this.activeDrawnParticipants.map(d => parseInt(d.draw_number));
+                const total = this.activePool.participants.length;
                 let slots = [];
                 for (let i = 1; i <= Math.max(total, 1); i++) {
                     if (!assigned.includes(i)) slots.push(i);
@@ -298,9 +401,50 @@
 
             init() {
                 this.updateDisplayNumber();
-                if (this.undrawnParticipants.length > 0) {
-                    this.selectedParticipantId = this.undrawnParticipants[0].id;
+                if (this.activeUndrawnParticipants.length > 0) {
+                    this.selectedParticipantId = this.activeUndrawnParticipants[0].id;
                 }
+            },
+
+            switchPool(key) {
+                if (this.isDecoding) return;
+                this.activePoolKey = key;
+                this.lockedWinner = null;
+                this.displayName = 'SIAP UNTUK DIUNDI';
+                this.displaySchool = 'Tekan tombol MULAI PENGACAKAN untuk mengundi nama';
+                if (this.activeUndrawnParticipants.length > 0) {
+                    this.selectedParticipantId = this.activeUndrawnParticipants[0].id;
+                } else {
+                    this.selectedParticipantId = null;
+                }
+                this.updateDisplayNumber();
+            },
+
+            resetActivePool() {
+                if (!this.activePool || this.activeDrawnParticipants.length === 0) return;
+                if (!confirm('Apakah Anda yakin ingin me-reset nomor undian KHUSUS untuk kategori ' + this.activePool.title + '?')) {
+                    return;
+                }
+
+                const regIds = this.activePool.participants.map(p => p.id);
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '{{ route("pic.spin.wheel.reset", $competition->id) }}';
+                
+                const csrf = document.createElement('input');
+                csrf.type = 'hidden';
+                csrf.name = '_token';
+                csrf.value = '{{ csrf_token() }}';
+                form.appendChild(csrf);
+
+                const idsInput = document.createElement('input');
+                idsInput.type = 'hidden';
+                idsInput.name = 'registration_ids';
+                idsInput.value = regIds.join(',');
+                form.appendChild(idsInput);
+
+                document.body.appendChild(form);
+                form.submit();
             },
 
             updateDisplayNumber() {
@@ -374,12 +518,12 @@
             },
 
             startHackerDraw() {
-                if (this.isDecoding || this.undrawnParticipants.length === 0) return;
+                if (this.isDecoding || this.activeUndrawnParticipants.length === 0) return;
                 this.isDecoding = true;
                 this.lockedWinner = null;
 
                 // High entropy shuffle of the candidate pool
-                const shuffledCandidates = this.cryptoShuffle(this.undrawnParticipants);
+                const shuffledCandidates = this.cryptoShuffle(this.activeUndrawnParticipants);
 
                 let winnerParticipant;
                 let winnerDrawNumber;
@@ -391,13 +535,13 @@
                     winnerDrawNumber = this.nextAvailableSlot;
                 } else {
                     // MODE 2: Pick number from crypto-shuffled available slots
-                    winnerParticipant = this.undrawnParticipants.find(p => p.id == this.selectedParticipantId) || shuffledCandidates[0];
+                    winnerParticipant = this.activeUndrawnParticipants.find(p => p.id == this.selectedParticipantId) || shuffledCandidates[0];
                     const shuffledSlots = this.cryptoShuffle(this.availableSlots);
                     if (shuffledSlots.length > 0) {
                         const randSlotIdx = this.getCryptoRandomInt(shuffledSlots.length);
                         winnerDrawNumber = shuffledSlots[randSlotIdx];
                     } else {
-                        winnerDrawNumber = this.drawnList.length + 1;
+                        winnerDrawNumber = this.activeDrawnParticipants.length + 1;
                     }
                 }
 
@@ -505,17 +649,13 @@
                         }
 
                         // IMMEDIATELY UPDATE CLIENT STATE (Instant Snappy UI)
-                        const pIdx = this.undrawnParticipants.findIndex(p => p.id == winnerParticipant.id);
-                        if (pIdx > -1) {
-                            const p = this.undrawnParticipants.splice(pIdx, 1)[0];
-                            p.draw_number = winnerDrawNumber;
-                            this.drawnList.push(p);
-                            // Sort by draw number ascending
-                            this.drawnList.sort((a, b) => parseInt(a.draw_number) - parseInt(b.draw_number));
-                        }
+                        winnerParticipant.is_drawn = true;
+                        winnerParticipant.draw_number = winnerDrawNumber;
 
-                        if (this.undrawnParticipants.length > 0) {
-                            this.selectedParticipantId = this.undrawnParticipants[0].id;
+                        if (this.activeUndrawnParticipants.length > 0) {
+                            this.selectedParticipantId = this.activeUndrawnParticipants[0].id;
+                        } else {
+                            this.selectedParticipantId = null;
                         }
                         this.updateDisplayNumber();
 

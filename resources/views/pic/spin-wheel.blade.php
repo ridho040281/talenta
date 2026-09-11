@@ -21,8 +21,8 @@
                 <span>{{ $competition->name }}</span>
             </h2>
             <p class="text-xs text-slate-400 font-mono">
-                <span class="text-amber-400 font-bold" x-text="undrawnParticipants.length"></span> Belum Diundi • 
-                <span class="text-emerald-400 font-bold" x-text="drawnList.length"></span> Selesai Terkunci
+                <span class="text-amber-400 font-bold" x-text="allUndrawnParticipants.length"></span> Belum Diundi • 
+                <span class="text-emerald-400 font-bold" x-text="allDrawnParticipants.length"></span> Selesai Terkunci
             </p>
         </div>
 
@@ -63,6 +63,40 @@
             </a>
         </div>
     </div>
+
+    <!-- Category & Sector Navigation Tabs (Bulu Tangkis & Tenis Meja Pools) -->
+    @if(count($pools) > 1)
+    <div class="bg-slate-900 rounded-3xl p-4 sm:p-5 border border-slate-800 shadow-xl space-y-3">
+        <div class="flex items-center justify-between gap-3 px-1">
+            <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+                <span class="text-xs font-mono font-black uppercase tracking-wider text-amber-400">Pilih Kategori Kelas & Sektor (PA / PI):</span>
+            </div>
+            <span class="text-[11px] font-mono text-slate-400">
+                <span class="text-white font-bold" x-text="pools.length"></span> Kategori / Kelompok Terdaftar
+            </span>
+        </div>
+        
+        <div class="flex items-center gap-2.5 overflow-x-auto pb-1.5 scrollbar-thin scrollbar-thumb-slate-700">
+            <template x-for="p in pools" :key="p.key">
+                <button type="button" 
+                        @click="switchPool(p.key)"
+                        class="px-4 py-2.5 rounded-2xl font-bold text-xs transition-all duration-200 flex items-center gap-2.5 whitespace-nowrap cursor-pointer shrink-0 border"
+                        :class="activePoolKey === p.key 
+                            ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 border-amber-300 shadow-lg shadow-amber-500/25 scale-[1.02]' 
+                            : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'">
+                    <span x-text="p.short_title"></span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-black transition"
+                          :class="activePoolKey === p.key 
+                              ? 'bg-slate-950 text-amber-400' 
+                              : (getPoolStats(p.key).undrawn === 0 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400')">
+                        <span x-text="getPoolStats(p.key).drawn + '/' + p.participants.length"></span>
+                    </span>
+                </button>
+            </template>
+        </div>
+    </div>
+    @endif
 
     <!-- Main Workspace Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -144,6 +178,26 @@
                 </svg>
             </div>
 
+            <!-- Active Pool Status Banner -->
+            <div class="w-full max-w-md mb-3 bg-slate-900/90 rounded-2xl p-3 border border-amber-500/30 flex items-center justify-between gap-3 text-left">
+                <div class="overflow-hidden">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400">Kategori Aktif:</span>
+                        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold" x-text="activeDrawnParticipants.length + '/' + activeParticipants.length + ' Selesai'"></span>
+                    </div>
+                    <h4 class="text-sm font-black text-white truncate mt-0.5" x-text="activePool?.title || '{{ $competition->name }}'"></h4>
+                </div>
+                <div class="shrink-0">
+                    <button type="button" 
+                            @click="resetActivePool()" 
+                            :disabled="activeDrawnParticipants.length === 0 || isSpinning"
+                            class="px-2.5 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[10px] font-bold disabled:opacity-25 disabled:cursor-not-allowed transition cursor-pointer"
+                            title="Reset hanya nomor undian kategori ini">
+                        Reset Kategori Ini
+                    </button>
+                </div>
+            </div>
+
             <div class="relative z-10 w-full flex flex-col items-center">
                 <!-- Wheel Pointer Arrow -->
                 <div class="relative mb-3">
@@ -203,18 +257,21 @@
                 <!-- Target Participant Selector & Spin Button -->
                 <div class="w-full max-w-md space-y-4 pt-1">
                     <div class="text-left">
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-amber-400 mb-1">Peserta yang Sedang Diundi:</label>
-                        <select x-model="selectedParticipantId" :disabled="isSpinning || undrawnParticipants.length === 0" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-amber-500/30 text-white text-xs font-bold outline-none focus:border-amber-400">
-                            <template x-for="p in undrawnParticipants" :key="p.id">
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-amber-400 mb-1">
+                            Peserta yang Sedang Diundi:
+                            <span class="text-slate-400 font-normal font-mono" x-text="'(' + activeUndrawnParticipants.length + ' tersisa)'"></span>
+                        </label>
+                        <select x-model="selectedParticipantId" :disabled="isSpinning || activeUndrawnParticipants.length === 0" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-amber-500/30 text-white text-xs font-bold outline-none focus:border-amber-400">
+                            <template x-for="p in activeUndrawnParticipants" :key="p.id">
                                 <option :value="p.id" x-text="p.name + ' (' + p.institution + ')'"></option>
                             </template>
                         </select>
                     </div>
 
                     <!-- Spin Trigger Button -->
-                    <button type="button" @click="spin()" :disabled="isSpinning || undrawnParticipants.length === 0" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-black text-sm sm:text-base tracking-wider uppercase shadow-xl shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.99] transition duration-200 flex items-center justify-center gap-3 cursor-pointer">
+                    <button type="button" @click="spin()" :disabled="isSpinning || activeUndrawnParticipants.length === 0" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-black text-sm sm:text-base tracking-wider uppercase shadow-xl shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.99] transition duration-200 flex items-center justify-center gap-3 cursor-pointer">
                         <i data-lucide="disc" class="w-5 h-5" :class="{ 'animate-spin': isSpinning }"></i>
-                        <span x-text="isSpinning ? 'RODA SEDANG BERPUTAR...' : (undrawnParticipants.length === 0 ? 'SEMUA PESERTA TELAH SELESAI DIUNDI' : 'PUTAR RODA UNDIAN SEKARANG')"></span>
+                        <span x-text="isSpinning ? 'RODA SEDANG BERPUTAR...' : (activeUndrawnParticipants.length === 0 ? 'KATEGORI INI SELESAI DIUNDI' : 'PUTAR RODA UNDIAN SEKARANG')"></span>
                     </button>
                 </div>
 
@@ -239,29 +296,40 @@
             <!-- List Sudah Mendapatkan Nomor Undian -->
             <div class="bg-slate-900 rounded-3xl p-6 border border-slate-800 shadow-xl space-y-4">
                 <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                    <h3 class="text-sm font-black text-white flex items-center gap-2">
+                    <div class="flex items-center gap-2">
                         <i data-lucide="list-ordered" class="w-4 h-4 text-emerald-400"></i>
-                        <span>Urutan Tampil Selesai Diundi</span>
-                    </h3>
-                    <span class="text-xs font-mono font-bold text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full" x-text="drawnList.length + ' Peserta'"></span>
+                        <h3 class="text-sm font-black text-white">Urutan Tampil Selesai Diundi</h3>
+                    </div>
+                    <!-- Filter Toggle: Kategori Ini vs Semua -->
+                    <div class="inline-flex items-center p-0.5 bg-slate-950 rounded-xl border border-slate-800 text-[10px]">
+                        <button type="button" @click="drawnTab = 'pool'" :class="drawnTab === 'pool' ? 'bg-amber-400 text-slate-950 font-black' : 'text-slate-400 hover:text-white'" class="px-2 py-0.5 rounded-lg transition font-bold cursor-pointer">
+                            Kategori Ini (<span x-text="activeDrawnParticipants.length"></span>)
+                        </button>
+                        <button type="button" @click="drawnTab = 'all'" :class="drawnTab === 'all' ? 'bg-amber-400 text-slate-950 font-black' : 'text-slate-400 hover:text-white'" class="px-2 py-0.5 rounded-lg transition font-bold cursor-pointer">
+                            Semua (<span x-text="allDrawnParticipants.length"></span>)
+                        </button>
+                    </div>
                 </div>
 
                 <div class="space-y-2.5 max-h-[320px] overflow-y-auto pr-1">
-                    <template x-for="item in drawnList" :key="item.id">
+                    <template x-for="item in (drawnTab === 'pool' ? activeDrawnParticipants : allDrawnParticipants)" :key="item.id">
                         <div class="p-3 rounded-2xl bg-slate-950/70 border border-slate-800 hover:border-slate-700 flex items-center justify-between gap-3 transition">
                             <div class="flex items-center gap-3 overflow-hidden">
                                 <div class="w-10 h-10 rounded-xl bg-amber-400 text-slate-950 font-mono font-black flex items-center justify-center text-sm shrink-0 shadow-sm shadow-amber-400/20" x-text="'#' + item.draw_number"></div>
                                 <div class="overflow-hidden">
                                     <h5 class="text-xs font-bold text-slate-100 truncate" x-text="item.name"></h5>
-                                    <p class="text-[11px] text-slate-400 truncate" x-text="item.institution"></p>
+                                    <div class="flex items-center gap-1.5 text-[11px] text-slate-400 truncate">
+                                        <span x-text="item.institution"></span>
+                                        <span x-show="drawnTab === 'all' && item.target_class" class="text-amber-400 font-mono text-[10px]" x-text="'• ' + (item.target_class || '')"></span>
+                                    </div>
                                 </div>
                             </div>
                             <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/20 border border-emerald-500/30 px-2.5 py-1 rounded-lg uppercase tracking-wider shrink-0">Terkunci</span>
                         </div>
                     </template>
 
-                    <div x-show="drawnList.length === 0" class="py-8 text-center text-xs text-slate-500">
-                        Belum ada peserta yang diundi.
+                    <div x-show="(drawnTab === 'pool' ? activeDrawnParticipants : allDrawnParticipants).length === 0" class="py-8 text-center text-xs text-slate-500">
+                        Belum ada peserta yang diundi pada filter ini.
                     </div>
                 </div>
             </div>
@@ -273,11 +341,11 @@
                         <i data-lucide="users" class="w-4 h-4 text-amber-400"></i>
                         <span>Antrean Belum Diundi</span>
                     </h3>
-                    <span class="text-xs font-mono font-bold text-amber-300 bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded-full" x-text="undrawnParticipants.length + ' Peserta'"></span>
+                    <span class="text-xs font-mono font-bold text-amber-300 bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded-full" x-text="activeUndrawnParticipants.length + ' Peserta'"></span>
                 </div>
 
                 <div class="space-y-2.5 max-h-[260px] overflow-y-auto p-1 pr-2">
-                    <template x-for="item in undrawnParticipants" :key="item.id">
+                    <template x-for="item in activeUndrawnParticipants" :key="item.id">
                         <div class="p-3 rounded-2xl transition-all flex items-center justify-between gap-3 text-xs" 
                              :class="item.id == selectedParticipantId ? 'border-2 border-amber-400 bg-amber-500/15 shadow-[0_0_15px_rgba(251,191,36,0.25)]' : 'border border-slate-800 bg-slate-950/60 hover:border-slate-700'">
                             <div class="flex items-center gap-3 overflow-hidden">
@@ -298,8 +366,8 @@
                         </div>
                     </template>
 
-                    <div x-show="undrawnParticipants.length === 0" class="py-6 text-center text-xs text-emerald-400 font-bold">
-                        🎉 Semua peserta telah selesai diundi!
+                    <div x-show="activeUndrawnParticipants.length === 0" class="py-6 text-center text-xs text-emerald-400 font-bold">
+                        🎉 Semua peserta dalam kategori ini telah selesai diundi!
                     </div>
                 </div>
             </div>
@@ -315,8 +383,9 @@
     function spinWheelApp() {
         return {
             competitionId: {{ $competition->id }},
-            undrawnParticipants: @json($undrawnList),
-            drawnList: @json($drawnList),
+            pools: @json($pools),
+            activePoolKey: '{{ $pools[0]['key'] ?? 'all' }}',
+            drawnTab: 'pool',
             selectedParticipantId: null,
             isSpinning: false,
             wonDrawNumber: null,
@@ -335,9 +404,45 @@
             spinTimeTotal: 0,
             spinAngleStart: 0,
 
+            get activePool() {
+                return this.pools.find(p => p.key === this.activePoolKey) || this.pools[0];
+            },
+
+            get activeParticipants() {
+                return this.activePool ? this.activePool.participants : [];
+            },
+
+            get activeUndrawnParticipants() {
+                return this.activeParticipants.filter(p => !p.is_drawn);
+            },
+
+            get activeDrawnParticipants() {
+                return this.activeParticipants.filter(p => p.is_drawn).sort((a, b) => parseInt(a.draw_number) - parseInt(b.draw_number));
+            },
+
+            get allDrawnParticipants() {
+                return this.pools.flatMap(p => p.participants).filter(p => p.is_drawn).sort((a, b) => parseInt(a.draw_number) - parseInt(b.draw_number));
+            },
+
+            get allUndrawnParticipants() {
+                return this.pools.flatMap(p => p.participants).filter(p => !p.is_drawn);
+            },
+
+            getPoolStats(key) {
+                const p = this.pools.find(item => item.key === key);
+                if (!p) return { total: 0, drawn: 0, undrawn: 0 };
+                const drawn = p.participants.filter(item => item.is_drawn).length;
+                const total = p.participants.length;
+                return {
+                    total: total,
+                    drawn: drawn,
+                    undrawn: total - drawn
+                };
+            },
+
             init() {
-                if (this.undrawnParticipants.length > 0) {
-                    this.selectedParticipantId = this.undrawnParticipants[0].id;
+                if (this.activeUndrawnParticipants.length > 0) {
+                    this.selectedParticipantId = this.activeUndrawnParticipants[0].id;
                 }
 
                 this.canvas = document.getElementById("wheelCanvas");
@@ -348,17 +453,31 @@
                 }
             },
 
+            switchPool(key) {
+                if (this.isSpinning) return;
+                this.activePoolKey = key;
+                this.wonDrawNumber = null;
+                if (this.activeUndrawnParticipants.length > 0) {
+                    this.selectedParticipantId = this.activeUndrawnParticipants[0].id;
+                } else {
+                    this.selectedParticipantId = null;
+                }
+                this.calculateAvailableSlots();
+                this.drawWheel();
+            },
+
             setTheme(t) {
                 this.theme = t;
                 this.drawWheel();
             },
 
             calculateAvailableSlots() {
-                const totalParticipants = {{ $competition->verifiedRegistrations()->count() }};
-                const assignedNumbers = this.drawnList.map(d => parseInt(d.draw_number));
+                if (!this.activePool) return;
+                const poolTotal = this.activePool.participants.length;
+                const assignedNumbers = this.activeDrawnParticipants.map(d => parseInt(d.draw_number));
                 
                 let slots = [];
-                for(let i = 1; i <= Math.max(totalParticipants, 1); i++) {
+                for(let i = 1; i <= Math.max(poolTotal, 1); i++) {
                     if (!assignedNumbers.includes(i)) {
                         slots.push(i);
                     }
@@ -370,6 +489,33 @@
                 } else {
                     this.arc = 0;
                 }
+            },
+
+            resetActivePool() {
+                if (!this.activePool || this.activeDrawnParticipants.length === 0) return;
+                if (!confirm('Apakah Anda yakin ingin me-reset nomor undian KHUSUS untuk kategori ' + this.activePool.title + '?')) {
+                    return;
+                }
+
+                const regIds = this.activePool.participants.map(p => p.id);
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '{{ route("pic.spin.wheel.reset", $competition->id) }}';
+                
+                const csrf = document.createElement('input');
+                csrf.type = 'hidden';
+                csrf.name = '_token';
+                csrf.value = '{{ csrf_token() }}';
+                form.appendChild(csrf);
+
+                const idsInput = document.createElement('input');
+                idsInput.type = 'hidden';
+                idsInput.name = 'registration_ids';
+                idsInput.value = regIds.join(',');
+                form.appendChild(idsInput);
+
+                document.body.appendChild(form);
+                form.submit();
             },
 
             drawShuttlecock(ctx, x, y, scale = 1, angle = 0) {
@@ -636,7 +782,7 @@
             },
 
             spin() {
-                if (this.isSpinning || this.undrawnParticipants.length === 0 || this.wheelSlots.length === 0) return;
+                if (this.isSpinning || this.activeUndrawnParticipants.length === 0 || this.wheelSlots.length === 0) return;
                 this.isSpinning = true;
                 this.wonDrawNumber = null;
 
@@ -675,7 +821,8 @@
                 this.wonDrawNumber = wonNumber;
 
                 // Find participant
-                const participant = this.undrawnParticipants.find(p => p.id == this.selectedParticipantId) || this.undrawnParticipants[0];
+                const undrawn = this.activeUndrawnParticipants;
+                const participant = undrawn.find(p => p.id == this.selectedParticipantId) || undrawn[0];
                 if (!participant) return;
 
                 this.wonParticipantName = participant.name;
@@ -694,18 +841,14 @@
                     this.playSmashSound();
                 }
 
-                // IMMEDIATELY UPDATE RIGHT SIDE LISTS & WHEEL STATE
-                const pIdx = this.undrawnParticipants.findIndex(p => p.id == participant.id);
-                if (pIdx > -1) {
-                    const p = this.undrawnParticipants.splice(pIdx, 1)[0];
-                    p.draw_number = wonNumber;
-                    this.drawnList.push(p);
-                    // Sort ascending by draw number
-                    this.drawnList.sort((a, b) => parseInt(a.draw_number) - parseInt(b.draw_number));
-                }
+                // IMMEDIATELY UPDATE PARTICIPANT STATE DIRECTLY
+                participant.is_drawn = true;
+                participant.draw_number = wonNumber;
 
-                if (this.undrawnParticipants.length > 0) {
-                    this.selectedParticipantId = this.undrawnParticipants[0].id;
+                if (this.activeUndrawnParticipants.length > 0) {
+                    this.selectedParticipantId = this.activeUndrawnParticipants[0].id;
+                } else {
+                    this.selectedParticipantId = null;
                 }
 
                 this.calculateAvailableSlots();
