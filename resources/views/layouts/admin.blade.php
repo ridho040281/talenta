@@ -33,6 +33,9 @@
     <!-- Canvas Confetti -->
     <script defer src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 
+    <!-- PDF.js Local Script -->
+    <script src="{{ asset('vendor/pdfjs/pdf.min.js') }}"></script>
+
     <style>
         [x-cloak] { display: none !important; }
 
