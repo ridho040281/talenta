@@ -8,6 +8,7 @@
     verifyModal: false, 
     selectedReg: null,
     activeDocTab: 'surat',
+    pdfFitMode: 'Fit',
     get hasDocFile() {
         return !!(this.selectedReg && this.selectedReg.document_file);
     },
@@ -35,12 +36,22 @@
     get isCurrentDocPdf() {
         const url = this.currentDocUrl;
         if (!url) return false;
-        const clean = url.split('?')[0].toLowerCase();
+        const clean = url.split('?')[0].split('#')[0].toLowerCase();
         return clean.endsWith('.pdf') || clean.includes('.pdf');
+    },
+    get pdfViewerUrl() {
+        if (!this.currentDocUrl) return '';
+        if (!this.isCurrentDocPdf) return this.currentDocUrl;
+        const base = this.currentDocUrl.split('#')[0];
+        if (this.pdfFitMode === 'FitH') {
+            return base + '#view=FitH&toolbar=0&navpanes=0';
+        }
+        return base + '#view=Fit&toolbar=0&navpanes=0';
     },
     openVerify(reg) {
         this.selectedReg = reg;
         this.verifyModal = true;
+        this.pdfFitMode = 'Fit';
         if (this.selectedReg && this.selectedReg.document_file) {
             this.activeDocTab = 'surat';
         } else if (this.selectedReg && (this.selectedReg.payment_proof || (this.selectedReg.invoice && this.selectedReg.invoice.payment_proof))) {
@@ -197,6 +208,62 @@
         @endif
     </div>
 
+    <style>
+        .verify-grid-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.25rem;
+            align-items: stretch;
+        }
+        @media (min-width: 1024px) {
+            .verify-grid-layout {
+                grid-template-columns: repeat(12, minmax(0, 1fr));
+            }
+        }
+        .verify-left-panel {
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        @media (min-width: 1024px) {
+            .verify-left-panel {
+                grid-column: span 5 / span 5;
+                height: 750px;
+                max-height: 82vh;
+            }
+        }
+        .verify-right-panel {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+            min-height: 520px;
+        }
+        @media (min-width: 1024px) {
+            .verify-right-panel {
+                grid-column: span 7 / span 7;
+                height: 750px;
+                min-height: 650px;
+                max-height: 82vh;
+            }
+        }
+        .verify-preview-frame {
+            flex: 1 1 0%;
+            min-height: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .verify-preview-iframe {
+            width: 100%;
+            height: 100%;
+            flex: 1 1 0%;
+            min-height: 0;
+            border: none;
+            background-color: #ffffff;
+        }
+    </style>
+
     <!-- Verification Modal (Alpine.js) -->
     <div x-show="verifyModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
@@ -218,10 +285,10 @@
                 </div>
 
                 <!-- 2-Column Split View -->
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                <div class="verify-grid-layout">
                     
                     <!-- SISI KIRI (DATA & FORMULIR VERIFIKASI) -->
-                    <div class="lg:col-span-5 space-y-4 max-h-[72vh] overflow-y-auto pr-1 sm:pr-2">
+                    <div class="verify-left-panel space-y-4 pr-1 sm:pr-2">
                         
                         <!-- Collective Invoice Info (if applicable) -->
                         <template x-if="selectedReg && selectedReg.invoice">
@@ -279,7 +346,7 @@
                     </div>
 
                     <!-- SISI KANAN (LIVE DOCUMENT VIEWER / PREVIEWER) -->
-                    <div class="lg:col-span-7 flex flex-col h-[520px] lg:h-[72vh] bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden p-3 sm:p-4 space-y-3">
+                    <div class="verify-right-panel bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden p-3 sm:p-4 space-y-3">
                         
                         <!-- Tab Dokumen & Aksi -->
                         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3 shrink-0">
@@ -307,31 +374,55 @@
                                 </button>
                             </div>
 
-                            <template x-if="currentDocUrl">
-                                <a :href="currentDocUrl" target="_blank" class="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white border border-white/10 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer" title="Buka berkas di tab baru">
-                                    <svg class="w-3.5 h-3.5 text-brand-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                                    <span class="hidden sm:inline">Buka Tab Baru</span>
-                                </a>
-                            </template>
+                            <!-- Opsi View PDF & Tombol Eksternal Buka Tab Baru -->
+                            <div class="flex items-center gap-2">
+                                <!-- Mode Zoom / Fit PDF (Hanya muncul jika PDF) -->
+                                <template x-if="currentDocUrl && isCurrentDocPdf">
+                                    <div class="flex items-center gap-1 bg-white/10 p-1 rounded-xl border border-white/10">
+                                        <button type="button" 
+                                                @click="pdfFitMode = 'Fit'" 
+                                                :class="pdfFitMode === 'Fit' ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'" 
+                                                class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer flex items-center gap-1"
+                                                title="Tampilkan satu halaman penuh tanpa scroll">
+                                            <span>📄 Pas Halaman</span>
+                                        </button>
+                                        <button type="button" 
+                                                @click="pdfFitMode = 'FitH'" 
+                                                :class="pdfFitMode === 'FitH' ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'" 
+                                                class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer flex items-center gap-1"
+                                                title="Perbesar pas lebar kertas">
+                                            <span>↔ Pas Lebar</span>
+                                        </button>
+                                    </div>
+                                </template>
+
+                                <!-- Tombol Eksternal Buka Tab Baru -->
+                                <template x-if="currentDocUrl">
+                                    <a :href="currentDocUrl" target="_blank" class="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white border border-white/10 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer" title="Buka berkas di tab baru">
+                                        <svg class="w-3.5 h-3.5 text-brand-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                        <span class="hidden sm:inline">Buka Tab Baru</span>
+                                    </a>
+                                </template>
+                            </div>
                         </div>
 
                         <!-- Preview Viewport Frame -->
-                        <div class="flex-1 w-full bg-slate-950 rounded-xl border border-slate-800 overflow-hidden relative flex items-center justify-center">
-                            <template x-if="currentDocUrl">
-                                <div class="w-full h-full flex items-center justify-center">
-                                    <template x-if="isCurrentDocPdf">
-                                        <iframe :src="currentDocUrl + '#toolbar=1&navpanes=0'" class="w-full h-full border-0 bg-white" title="Pratinjau Dokumen"></iframe>
-                                    </template>
-                                    <template x-if="!isCurrentDocPdf">
-                                        <div class="w-full h-full overflow-auto flex items-center justify-center p-3">
-                                            <img :src="currentDocUrl" alt="Lampiran Berkas" class="max-h-full max-w-full object-contain rounded-lg shadow-2xl transition hover:opacity-95 cursor-zoom-in" @click="window.open(currentDocUrl, '_blank')" title="Klik untuk membuka ukuran penuh">
-                                        </div>
-                                    </template>
+                        <div class="verify-preview-frame bg-slate-950 rounded-xl border border-slate-800 overflow-hidden">
+                            <!-- Kondisi 1: Dokumen PDF (Full Page / Direct Fit) -->
+                            <template x-if="currentDocUrl && isCurrentDocPdf">
+                                <iframe :key="currentDocUrl + '_' + pdfFitMode" :src="pdfViewerUrl" class="verify-preview-iframe" title="Pratinjau Dokumen"></iframe>
+                            </template>
+
+                            <!-- Kondisi 2: Gambar (JPG/PNG/WebP) -->
+                            <template x-if="currentDocUrl && !isCurrentDocPdf">
+                                <div class="w-full h-full flex items-center justify-center p-3 overflow-auto" style="flex: 1 1 0%; min-height: 0;">
+                                    <img :src="currentDocUrl" alt="Lampiran Berkas" class="max-h-full max-w-full object-contain rounded-lg shadow-2xl transition hover:opacity-95 cursor-zoom-in" @click="window.open(currentDocUrl, '_blank')" title="Klik untuk membuka ukuran penuh">
                                 </div>
                             </template>
 
+                            <!-- Kondisi 3: Tidak Ada Dokumen Pada Tab Yang Dipilih -->
                             <template x-if="!currentDocUrl">
-                                <div class="text-center p-6 space-y-2.5 text-slate-500">
+                                <div class="m-auto text-center p-6 space-y-2.5 text-slate-500">
                                     <div class="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-slate-500">
                                         <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2zM3 10h18"/></svg>
                                     </div>
@@ -351,7 +442,7 @@
                                 <span class="w-1.5 h-1.5 rounded-full" :class="currentDocUrl ? 'bg-emerald-400' : 'bg-slate-500'"></span>
                                 <span x-text="activeDocTab === 'surat' ? 'Menampilkan: Surat Keterangan / Rekomendasi Siswa' : 'Menampilkan: Bukti Transfer / Slip Pembayaran'"></span>
                             </span>
-                            <span class="font-mono text-xs text-slate-300" x-text="isCurrentDocPdf ? 'Tipe: Dokumen PDF' : (currentDocUrl ? 'Tipe: Gambar (JPG/PNG)' : 'Status: Kosong')"></span>
+                            <span class="font-mono text-xs text-slate-300" x-text="isCurrentDocPdf ? ('Tipe: Dokumen PDF (' + (pdfFitMode === 'Fit' ? 'Pas Halaman' : 'Pas Lebar') + ')') : (currentDocUrl ? 'Tipe: Gambar (JPG/PNG)' : 'Status: Kosong')"></span>
                         </div>
 
                     </div>
