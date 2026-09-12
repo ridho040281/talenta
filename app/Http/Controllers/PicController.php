@@ -141,7 +141,7 @@ class PicController extends Controller
         $query = Registration::with([
             'competition:id,name,code',
             'members:id,registration_id,full_name,gender,nisn,school_name,birth_place,birth_date',
-            'invoice:id,registration_id,invoice_number,status,payment_proof,final_amount',
+            'invoice:id,invoice_number,status,payment_proof,final_amount',
         ])
             ->whereIn('competition_id', $competitionIds)
             ->latest();

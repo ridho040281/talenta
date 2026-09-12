@@ -1116,7 +1116,7 @@ class AdminController extends Controller
         $query = Registration::with([
             'competition:id,name,code,type,registration_fee',
             'members:id,registration_id,full_name,nisn,school_name,gender',
-            'invoice:id,registration_id,payment_proof',
+            'invoice:id,payment_proof',
         ])->latest();
 
         if ($request->filled('competition_id') && $request->competition_id !== 'all') {
