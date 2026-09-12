@@ -304,6 +304,37 @@
     },
     selectedSingleReg: null,
     modalLoading: false,
+    activeDocTab: 'surat',
+    get hasDocFile() {
+        return !!(this.selectedReg && this.selectedReg.document_file);
+    },
+    get hasPaymentFile() {
+        if (!this.selectedReg) return false;
+        return !!(this.selectedReg.payment_proof || (this.selectedReg.invoice && this.selectedReg.invoice.payment_proof));
+    },
+    get currentDocUrl() {
+        if (!this.selectedReg) return '';
+        if (this.activeDocTab === 'surat') {
+            if (this.selectedReg.document_file) {
+                return '{{ url("storage") }}/' + String(this.selectedReg.document_file).replace(/^(public\/|storage\/)+/, '');
+            }
+            return '';
+        }
+        if (this.activeDocTab === 'payment') {
+            const p = this.selectedReg.payment_proof || (this.selectedReg.invoice && this.selectedReg.invoice.payment_proof);
+            if (p) {
+                return '{{ url("storage") }}/' + String(p).replace(/^(public\/|storage\/)+/, '');
+            }
+            return '';
+        }
+        return '';
+    },
+    get isCurrentDocPdf() {
+        const url = this.currentDocUrl;
+        if (!url) return false;
+        const clean = url.split('?')[0].toLowerCase();
+        return clean.endsWith('.pdf') || clean.includes('.pdf');
+    },
 
     openVerifyModal(id) {
         this.verifyModal = true;
@@ -319,7 +350,17 @@
                 if (!r.ok) throw new Error('HTTP ' + r.status);
                 return r.json();
             })
-            .then(data => { this.selectedReg = data; })
+            .then(data => { 
+                this.selectedReg = data; 
+                if (this.selectedReg && this.selectedReg.document_file) {
+                    this.activeDocTab = 'surat';
+                } else if (this.selectedReg && (this.selectedReg.payment_proof || (this.selectedReg.invoice && this.selectedReg.invoice.payment_proof))) {
+                    this.activeDocTab = 'payment';
+                } else {
+                    this.activeDocTab = 'surat';
+                }
+                this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            })
             .catch(err => {
                 console.error('Verify modal fetch error:', err);
                 this.verifyModal = false;
@@ -1102,182 +1143,236 @@
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div x-show="verifyModal" @click="verifyModal = false" class="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity"></div>
 
-            <div x-show="verifyModal" class="relative z-10 inline-block align-bottom bg-[#161F30] border border-white/[0.12] rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full p-6 sm:p-8 space-y-6">
+            <div x-show="verifyModal" class="relative z-10 inline-block align-bottom bg-[#161F30] border border-white/[0.12] rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all my-4 sm:my-6 align-middle w-[96vw] max-w-6xl xl:max-w-7xl 2xl:max-w-[1540px] p-4 sm:p-6 lg:p-7 space-y-4">
                 
                 <!-- Modal Header -->
-                <div class="flex items-center justify-between border-b border-white/[0.08] pb-4">
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-mono font-bold text-[#84D0FF] px-2.5 py-1 bg-[#4E6EFF]/15 border border-[#4E6EFF]/30 rounded-lg" x-text="selectedReg ? selectedReg.registration_code : ''"></span>
-                            <span class="text-xs font-mono font-bold text-slate-300 px-2.5 py-1 bg-white/[0.05] border border-white/[0.08] rounded-lg" x-text="selectedReg && selectedReg.participant_number ? 'No. Peserta: ' + selectedReg.participant_number : 'Belum Ada No. Peserta'"></span>
-                        </div>
-                        <h3 class="text-lg font-black text-white mt-2" x-text="selectedReg ? selectedReg.institution_name : ''"></h3>
+                <div class="flex items-center justify-between border-b border-white/[0.08] pb-3.5">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <span class="text-xs sm:text-sm font-mono font-black text-[#84D0FF] px-3 py-1 bg-[#4E6EFF]/15 border border-[#4E6EFF]/30 rounded-xl" x-text="selectedReg ? selectedReg.registration_code : ''"></span>
+                        <span class="text-xs sm:text-sm font-mono font-black text-slate-200 px-3 py-1 bg-white/[0.05] border border-white/[0.08] rounded-xl" x-text="selectedReg && selectedReg.participant_number ? 'No. Peserta: ' + selectedReg.participant_number : 'Belum Ada No. Peserta'"></span>
+                        <div class="h-4 w-px bg-white/10 hidden sm:block"></div>
+                        <h3 class="text-base sm:text-lg font-black text-white" x-text="selectedReg ? (selectedReg.display_school || selectedReg.institution_name) : ''"></h3>
                     </div>
-                    <button @click="verifyModal = false" class="text-slate-400 hover:text-white transition cursor-pointer">
-                        <i data-lucide="x" class="w-5 h-5"></i>
+                    <button @click="verifyModal = false" class="w-8 h-8 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-400 hover:text-white flex items-center justify-center transition cursor-pointer">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
 
                 <!-- Modal Loading Skeleton -->
-                <div x-show="modalLoading" class="flex items-center justify-center py-12 gap-3 text-slate-400 text-sm">
-                    <svg class="animate-spin w-5 h-5 text-[#7A5AF8]" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4l-3 3 3 3H4z"/></svg>
-                    <span>Memuat data...</span>
+                <div x-show="modalLoading" class="flex items-center justify-center py-20 gap-3 text-slate-400 text-sm">
+                    <svg class="animate-spin w-6 h-6 text-[#7A5AF8]" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4l-3 3 3 3H4z"/></svg>
+                    <span>Memuat berkas dan data verifikasi peserta...</span>
                 </div>
 
-                <!-- Complete Participant Info Card -->
-                <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-1" x-show="!modalLoading">
+                <!-- Complete Participant Info Card & Document Split -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start" x-show="!modalLoading">
                     
-                    <!-- Section 1: Identitas Atlet / Anggota -->
-                    <div class="p-4 rounded-2xl bg-[#0C111D] border border-white/[0.08] space-y-3">
-                        <div class="flex items-center justify-between border-b border-white/[0.06] pb-2">
-                            <span class="text-[11px] font-black uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                                <i data-lucide="user" class="w-3.5 h-3.5 text-[#A594FD]"></i>
-                                <span>Data Atlet / Siswa Pendaftar</span>
-                            </span>
-                        </div>
-
-                        <template x-if="selectedReg && selectedReg.members && selectedReg.members.length > 0">
-                            <div class="space-y-2.5">
-                                <template x-for="(m, idx) in selectedReg.members" :key="m.id || idx">
-                                    <div class="bg-[#161F30] p-3 rounded-xl border border-white/[0.08] text-xs space-y-1">
-                                        <div class="flex items-center justify-between font-bold">
-                                            <span class="text-white text-sm" x-text="m.full_name"></span>
-                                            <span class="text-[10px] px-2 py-0.5 rounded font-black" :class="m.gender === 'L' ? 'bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30' : 'bg-[#FF58D5]/15 text-[#FFA0E7] border border-[#FF58D5]/30'" x-text="m.gender === 'L' ? '👦 Putra (PA)' : '👧 Putri (PI)'"></span>
-                                        </div>
-                                        <div class="grid grid-cols-2 gap-2 text-slate-400 pt-1">
-                                            <div class="col-span-2"><span class="text-slate-500">Asal Sekolah:</span> <span class="font-bold text-slate-200" x-text="m.school_name || (selectedReg ? (selectedReg.display_school || selectedReg.institution_name) : '-')"></span></div>
-                                            <div><span class="text-slate-500">NISN:</span> <span class="font-mono font-bold text-slate-300" x-text="m.nisn || '-'"></span></div>
-                                            <div><span class="text-slate-500">TTL:</span> <span class="font-medium text-slate-300" x-text="formatTTL(m.birth_place, m.formatted_birth_date || m.birth_date)"></span></div>
-                                            <div><span class="text-slate-500">No HP/WA:</span> <span class="font-medium text-slate-300" x-text="m.phone || '-'"></span></div>
-                                            <div><span class="text-slate-500">Peran:</span> <span class="font-medium text-slate-300" x-text="m.role_in_team || 'Peserta Utama'"></span></div>
-                                        </div>
-                                    </div>
-                                </template>
+                    <!-- ================= SISI KIRI (DATA & FORMULIR VERIFIKASI) ================= -->
+                    <div class="lg:col-span-5 space-y-4 max-h-[72vh] overflow-y-auto pr-1 sm:pr-2">
+                        
+                        <!-- Section 1: Identitas Atlet / Anggota -->
+                        <div class="p-4 rounded-2xl bg-[#0C111D] border border-white/[0.08] space-y-3">
+                            <div class="flex items-center justify-between border-b border-white/[0.06] pb-2">
+                                <span class="text-[11px] font-black uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5 text-[#A594FD]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                    <span>Data Atlet / Siswa Pendaftar</span>
+                                </span>
                             </div>
-                        </template>
-                    </div>
 
-                    <!-- Section 2: Info Cabang Lomba & Official -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                        <div class="p-3.5 rounded-2xl bg-[#0C111D] border border-white/[0.08] space-y-1.5">
-                            <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Cabang Perlombaan</span>
-                            <div class="font-black text-white text-sm" x-text="selectedReg && selectedReg.competition ? selectedReg.competition.name : ''"></div>
-                            <div class="text-slate-400" x-text="'Sektor: ' + (selectedReg && selectedReg.sub_category ? selectedReg.sub_category : 'Umum')"></div>
-                            <div class="text-emerald-400 font-bold" x-text="'Kelas: ' + (selectedReg && selectedReg.target_class ? selectedReg.target_class : 'Umum SD/MI')"></div>
-
-                            <!-- Khusus Pop Singer / Lagu Pilihan -->
-                            <template x-if="selectedReg && (selectedReg.chosen_song || (selectedReg.competition && (String(selectedReg.competition.code).toUpperCase() === 'POP' || String(selectedReg.competition.name || '').toLowerCase().includes('pop'))) || (selectedReg.registration_code && String(selectedReg.registration_code).toUpperCase().includes('POP')))">
-                                <div class="pt-2 border-t border-purple-500/20 mt-2">
-                                    <div class="flex items-center gap-1.5 text-purple-300 font-bold text-[10px] uppercase tracking-wider mb-1">
-                                        <span>🎵 Lagu Pilihan:</span>
-                                    </div>
-                                    <div class="px-2.5 py-1.5 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-between">
-                                        <span class="text-xs font-black text-purple-200" x-text="selectedReg.chosen_song || 'Belum memilih lagu'" :class="!selectedReg.chosen_song ? 'italic text-slate-400 font-normal' : ''"></span>
-                                        <span class="text-[11px] text-purple-400 shrink-0 ml-2">🎤</span>
-                                    </div>
+                            <template x-if="selectedReg && selectedReg.members && selectedReg.members.length > 0">
+                                <div class="space-y-2.5">
+                                    <template x-for="(m, idx) in selectedReg.members" :key="m.id || idx">
+                                        <div class="bg-[#161F30] p-3 rounded-xl border border-white/[0.08] text-xs space-y-1">
+                                            <div class="flex items-center justify-between font-bold">
+                                                <span class="text-white text-sm" x-text="m.full_name"></span>
+                                                <span class="text-[10px] px-2 py-0.5 rounded font-black" :class="m.gender === 'L' ? 'bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30' : 'bg-[#FF58D5]/15 text-[#FFA0E7] border border-[#FF58D5]/30'" x-text="m.gender === 'L' ? '👦 Putra (PA)' : '👧 Putri (PI)'"></span>
+                                            </div>
+                                            <div class="grid grid-cols-2 gap-2 text-slate-400 pt-1">
+                                                <div class="col-span-2"><span class="text-slate-500">Asal Sekolah:</span> <span class="font-bold text-slate-200" x-text="m.school_name || (selectedReg ? (selectedReg.display_school || selectedReg.institution_name) : '-')"></span></div>
+                                                <div><span class="text-slate-500">NISN:</span> <span class="font-mono font-bold text-slate-300" x-text="m.nisn || '-'"></span></div>
+                                                <div><span class="text-slate-500">TTL:</span> <span class="font-medium text-slate-300" x-text="formatTTL(m.birth_place, m.formatted_birth_date || m.birth_date)"></span></div>
+                                                <div><span class="text-slate-500">No HP/WA:</span> <span class="font-medium text-slate-300" x-text="m.phone || '-'"></span></div>
+                                                <div><span class="text-slate-500">Peran:</span> <span class="font-medium text-slate-300" x-text="m.role_in_team || 'Peserta Utama'"></span></div>
+                                            </div>
+                                        </div>
+                                    </template>
                                 </div>
                             </template>
                         </div>
 
-                        <div class="p-3.5 rounded-2xl bg-[#0C111D] border border-white/[0.08] space-y-1.5">
-                            <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Official / Pembina Pendamping</span>
-                            <div class="font-black text-white text-sm" x-text="selectedReg && selectedReg.official_name ? selectedReg.official_name : '-'"></div>
-                            <div class="text-slate-400" x-text="'No. Kontak: ' + (selectedReg && selectedReg.official_phone ? selectedReg.official_phone : '-')"></div>
-                            <div class="text-slate-400" x-text="'Sekolah: ' + (selectedReg ? selectedReg.institution_name : '')"></div>
+                        <!-- Section 2: Info Cabang Lomba & Official -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                            <div class="p-3.5 rounded-2xl bg-[#0C111D] border border-white/[0.08] space-y-1.5">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Cabang Perlombaan</span>
+                                <div class="font-black text-white text-sm" x-text="selectedReg && selectedReg.competition ? selectedReg.competition.name : ''"></div>
+                                <div class="text-slate-400" x-text="'Sektor: ' + (selectedReg && selectedReg.sub_category ? selectedReg.sub_category : 'Umum')"></div>
+                                <div class="text-emerald-400 font-bold" x-text="'Kelas: ' + (selectedReg && selectedReg.target_class ? selectedReg.target_class : 'Umum SD/MI')"></div>
+
+                                <!-- Khusus Pop Singer / Lagu Pilihan -->
+                                <template x-if="selectedReg && (selectedReg.chosen_song || (selectedReg.competition && (String(selectedReg.competition.code).toUpperCase() === 'POP' || String(selectedReg.competition.name || '').toLowerCase().includes('pop'))) || (selectedReg.registration_code && String(selectedReg.registration_code).toUpperCase().includes('POP')))">
+                                    <div class="pt-2 border-t border-purple-500/20 mt-2">
+                                        <div class="flex items-center gap-1.5 text-purple-300 font-bold text-[10px] uppercase tracking-wider mb-1">
+                                            <span>🎵 Lagu Pilihan:</span>
+                                        </div>
+                                        <div class="px-2.5 py-1.5 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-between">
+                                            <span class="text-xs font-black text-purple-200" x-text="selectedReg.chosen_song || 'Belum memilih lagu'" :class="!selectedReg.chosen_song ? 'italic text-slate-400 font-normal' : ''"></span>
+                                            <span class="text-[11px] text-purple-400 shrink-0 ml-2">🎤</span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <div class="p-3.5 rounded-2xl bg-[#0C111D] border border-white/[0.08] space-y-1.5">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Official / Pembina Pendamping</span>
+                                <div class="font-black text-white text-sm" x-text="selectedReg && selectedReg.official_name ? selectedReg.official_name : '-'"></div>
+                                <div class="text-slate-400" x-text="'No. Kontak: ' + (selectedReg && selectedReg.official_phone ? selectedReg.official_phone : '-')"></div>
+                                <div class="text-slate-400" x-text="'Sekolah: ' + (selectedReg ? (selectedReg.display_school || selectedReg.institution_name) : '')"></div>
+                            </div>
                         </div>
+
+                        <!-- Collective Invoice Info -->
+                        <template x-if="selectedReg && selectedReg.invoice">
+                            <div class="p-3.5 rounded-2xl bg-[#4E6EFF]/10 border border-[#4E6EFF]/30 text-xs text-slate-200 space-y-1">
+                                <div class="flex items-center justify-between font-bold">
+                                    <span class="inline-flex items-center gap-1.5 text-[#84D0FF]">
+                                        <svg class="w-4 h-4 text-[#84D0FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                        <span>Pendaftaran Kolektif (Rombongan)</span>
+                                    </span>
+                                    <span class="font-mono text-xs px-2 py-0.5 bg-[#4E6EFF]/20 rounded text-[#84D0FF]" x-text="selectedReg.invoice.invoice_number"></span>
+                                </div>
+                                <div class="flex items-center justify-between text-[11px] text-slate-400 pt-0.5">
+                                    <span>Total Tagihan Rombongan:</span>
+                                    <span class="font-black text-emerald-400 font-mono" x-text="'Rp ' + Number(selectedReg.invoice.final_amount).toLocaleString('id-ID')"></span>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Section 3: Formulir Keputusan Verifikasi -->
+                        <form :action="'{{ url('pic/peserta') }}/' + (selectedReg ? selectedReg.id : '') + '/verifikasi'" method="POST" class="p-4 rounded-2xl bg-[#0C111D] border border-white/[0.08] space-y-3.5">
+                            @csrf
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Pilih Keputusan Status Verifikasi</label>
+                                <select name="status" required class="block w-full px-4 py-3 rounded-xl bg-[#161F30] border border-white/[0.1] text-sm font-bold text-white outline-none focus:border-[#7A5AF8]">
+                                    <option value="verified">✅ Terverifikasi (Terbitkan No. Peserta)</option>
+                                    <option value="revision">⚠️ Minta Revisi / Perbaikan Berkas</option>
+                                    <option value="rejected">❌ Tolak Pendaftaran</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Catatan Panitia / Alasan</label>
+                                <textarea name="verification_notes" rows="2" placeholder="Contoh: Berkas sah dan lengkap / Bukti transfer terkonfirmasi..." class="block w-full px-4 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-sm text-white placeholder-slate-500 outline-none focus:border-[#7A5AF8]"></textarea>
+                            </div>
+
+                            <div class="pt-3 flex items-center justify-between gap-2 border-t border-white/[0.08]">
+                                <button type="button" @click="
+                                    const regId = selectedReg ? selectedReg.id : null;
+                                    verifyModal = false;
+                                    if (regId) openEditModal(regId);
+                                " class="px-3.5 py-2.5 rounded-xl bg-[#7A5AF8]/15 hover:bg-[#7A5AF8]/25 text-[#A594FD] border border-[#7A5AF8]/30 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer" title="Edit data pendaftar ini">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                    <span>Edit Data</span>
+                                </button>
+
+                                <div class="flex items-center gap-2">
+                                    <button type="button" @click="verifyModal = false" class="px-4 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-slate-300 text-xs font-bold border border-white/[0.08] transition cursor-pointer">
+                                        Batal
+                                    </button>
+                                    <button type="submit" class="gradient-btn px-5 py-2.5 rounded-xl text-white text-xs font-bold shadow-lg shadow-[#7A5AF8]/25 cursor-pointer flex items-center gap-1.5">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                        <span>Simpan Keputusan</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
                     </div>
 
-                    <!-- Collective Invoice Info -->
-                    <template x-if="selectedReg && selectedReg.invoice">
-                        <div class="p-3.5 rounded-2xl bg-[#4E6EFF]/10 border border-[#4E6EFF]/30 text-xs text-slate-200 space-y-1">
-                            <div class="flex items-center justify-between font-bold">
-                                <span class="inline-flex items-center gap-1.5 text-[#84D0FF]">
-                                    <i data-lucide="file-spreadsheet" class="w-4 h-4 text-[#84D0FF]"></i>
-                                    <span>Pendaftaran Kolektif (Rombongan)</span>
-                                </span>
-                                <span class="font-mono text-xs px-2 py-0.5 bg-[#4E6EFF]/20 rounded text-[#84D0FF]" x-text="selectedReg.invoice.invoice_number"></span>
+                    <!-- ================= SISI KANAN (LIVE DOCUMENT VIEWER / PREVIEWER) ================= -->
+                    <div class="lg:col-span-7 flex flex-col h-[520px] lg:h-[72vh] bg-[#0C111D] rounded-2xl border border-white/[0.08] overflow-hidden p-3 sm:p-4 space-y-3">
+                        
+                        <!-- Header Tab Dokumen & Aksi -->
+                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.08] pb-3 shrink-0">
+                            <div class="flex items-center gap-2">
+                                <!-- Tab 1: Surat Keterangan / Rekomendasi -->
+                                <button type="button" 
+                                        @click="activeDocTab = 'surat'" 
+                                        :class="activeDocTab === 'surat' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-black' : 'bg-white/[0.04] text-slate-400 hover:text-white border-white/[0.08] font-bold'" 
+                                        class="px-3.5 py-1.5 rounded-xl border text-xs flex items-center gap-1.5 transition cursor-pointer">
+                                    <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                    <span>Surat Rekomendasi</span>
+                                    <template x-if="hasDocFile">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block shadow-sm shadow-emerald-400/50"></span>
+                                    </template>
+                                </button>
+
+                                <!-- Tab 2: Bukti Transfer / Slip -->
+                                <button type="button" 
+                                        @click="activeDocTab = 'payment'" 
+                                        :class="activeDocTab === 'payment' ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-black' : 'bg-white/[0.04] text-slate-400 hover:text-white border-white/[0.08] font-bold'" 
+                                        class="px-3.5 py-1.5 rounded-xl border text-xs flex items-center gap-1.5 transition cursor-pointer">
+                                    <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                                    <span>Bukti Pembayaran</span>
+                                    <template x-if="hasPaymentFile">
+                                        <span class="w-2 h-2 rounded-full bg-amber-400 inline-block shadow-sm shadow-amber-400/50"></span>
+                                    </template>
+                                </button>
                             </div>
-                            <div class="flex items-center justify-between text-[11px] text-slate-400 pt-0.5">
-                                <span>Total Tagihan Rombongan:</span>
-                                <span class="font-black text-emerald-400 font-mono" x-text="'Rp ' + Number(selectedReg.invoice.final_amount).toLocaleString('id-ID')"></span>
-                            </div>
+
+                            <!-- Tombol Eksternal Buka Tab Baru -->
+                            <template x-if="currentDocUrl">
+                                <a :href="currentDocUrl" target="_blank" class="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 hover:text-white border border-white/[0.1] text-xs font-bold transition flex items-center gap-1.5 cursor-pointer" title="Buka berkas ini di tab browser terpisah">
+                                    <svg class="w-3.5 h-3.5 text-[#84D0FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                    <span class="hidden sm:inline">Buka Tab Baru</span>
+                                </a>
+                            </template>
                         </div>
-                    </template>
 
-                    <!-- Section 3: Lampiran Berkas & Pembayaran -->
-                    <div class="p-4 rounded-2xl bg-[#0C111D] border border-white/[0.08] space-y-3">
-                        <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Lampiran Berkas & Bukti Pembayaran:</span>
-                        <div class="grid grid-cols-2 gap-3 text-xs">
-                            
-                            <!-- Surat Tugas / Dokumen -->
-                            <div class="p-3 rounded-xl bg-[#161F30] border border-white/[0.08] space-y-2">
-                                <span class="font-bold text-slate-300 block text-[11px]">📄 Surat Keterangan / Rekomendasi</span>
-                                <template x-if="selectedReg && selectedReg.document_file">
-                                    <a :href="'{{ url('storage') }}/' + selectedReg.document_file.replace(/^(public\/|storage\/)+/, '')" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-xs font-bold hover:bg-emerald-500/25 transition">
-                                        <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-                                        <span>Buka Surat</span>
-                                    </a>
-                                </template>
-                                <template x-if="!selectedReg || !selectedReg.document_file">
-                                    <span class="text-slate-500 text-xs italic">Tidak ada berkas</span>
-                                </template>
-                            </div>
+                        <!-- Preview Frame Viewport -->
+                        <div class="flex-1 w-full bg-[#161F30] rounded-xl border border-white/[0.08] overflow-hidden relative flex items-center justify-center">
+                            <!-- Kondisi 1: Ada Dokumen Aktif -->
+                            <template x-if="currentDocUrl">
+                                <div class="w-full h-full flex items-center justify-center">
+                                    <!-- Jika PDF -->
+                                    <template x-if="isCurrentDocPdf">
+                                        <iframe :src="currentDocUrl + '#toolbar=1&navpanes=0'" class="w-full h-full border-0 bg-white" title="Pratinjau Dokumen"></iframe>
+                                    </template>
+                                    <!-- Jika Gambar (JPG/PNG/WebP) -->
+                                    <template x-if="!isCurrentDocPdf">
+                                        <div class="w-full h-full overflow-auto flex items-center justify-center p-3">
+                                            <img :src="currentDocUrl" alt="Lampiran Berkas" class="max-h-full max-w-full object-contain rounded-lg shadow-2xl transition hover:opacity-95 cursor-zoom-in" @click="window.open(currentDocUrl, '_blank')" title="Klik untuk membuka ukuran penuh">
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
 
-                            <!-- Bukti Transfer / Pembayaran -->
-                            <div class="p-3 rounded-xl bg-[#161F30] border border-white/[0.08] space-y-2">
-                                <span class="font-bold text-slate-300 block text-[11px]">💳 Bukti Transfer / Struk / Slip</span>
-                                <template x-if="selectedReg && (selectedReg.payment_proof || (selectedReg.invoice && selectedReg.invoice.payment_proof))">
-                                    <a :href="'{{ url('storage') }}/' + (selectedReg.payment_proof || selectedReg.invoice.payment_proof).replace(/^(public\/|storage\/)+/, '')" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/15 text-amber-400 border border-amber-500/30 text-xs font-bold hover:bg-amber-500/25 transition">
-                                        <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-                                        <span>Buka Slip Transfer</span>
-                                    </a>
-                                </template>
-                                <template x-if="!selectedReg || (!selectedReg.payment_proof && (!selectedReg.invoice || !selectedReg.invoice.payment_proof))">
-                                    <span class="text-slate-500 text-xs italic">Tidak ada slip (Gratis)</span>
-                                </template>
-                            </div>
-
+                            <!-- Kondisi 2: Tidak Ada Dokumen Pada Tab Yang Dipilih -->
+                            <template x-if="!currentDocUrl">
+                                <div class="text-center p-6 space-y-2.5 text-slate-500">
+                                    <div class="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mx-auto text-slate-500">
+                                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2zM3 10h18"/></svg>
+                                    </div>
+                                    <div class="text-sm font-bold text-slate-300">
+                                        <span x-text="activeDocTab === 'surat' ? 'Surat Keterangan / Rekomendasi Belum Diunggah' : 'Bukti Pembayaran Tidak Tersedia (Gratis / Bayar Tunai)'"></span>
+                                    </div>
+                                    <p class="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+                                        Pendaftar ini tidak melampirkan berkas pada kategori ini saat proses registrasi.
+                                    </p>
+                                </div>
+                            </template>
                         </div>
+
+                        <!-- Footer Keterangan Berkas -->
+                        <div class="flex items-center justify-between text-[11px] text-slate-400 px-1 pt-1 shrink-0">
+                            <span class="flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full" :class="currentDocUrl ? 'bg-emerald-400' : 'bg-slate-500'"></span>
+                                <span x-text="activeDocTab === 'surat' ? 'Menampilkan: Surat Keterangan / Rekomendasi Siswa' : 'Menampilkan: Bukti Transfer / Slip Pembayaran'"></span>
+                            </span>
+                            <span class="font-mono text-xs text-slate-300" x-text="isCurrentDocPdf ? 'Tipe: Dokumen PDF' : (currentDocUrl ? 'Tipe: Gambar (JPG/PNG)' : 'Status: Kosong')"></span>
+                        </div>
+
                     </div>
-
-                    <!-- Section 4: Formulir Keputusan Verifikasi -->
-                    <form :action="'{{ url('pic/peserta') }}/' + (selectedReg ? selectedReg.id : '') + '/verifikasi'" method="POST" class="space-y-4 pt-2">
-                        @csrf
-
-                        <div>
-                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Pilih Keputusan Status Verifikasi</label>
-                            <select name="status" required class="block w-full px-4 py-3 rounded-xl bg-[#0C111D] border border-white/[0.1] text-sm font-bold text-white outline-none focus:border-[#7A5AF8]">
-                                <option value="verified">✅ Terverifikasi (Terbitkan No. Peserta)</option>
-                                <option value="revision">⚠️ Minta Revisi / Perbaikan Berkas</option>
-                                <option value="rejected">❌ Tolak Pendaftaran</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Catatan Panitia / Alasan</label>
-                            <textarea name="verification_notes" rows="3" placeholder="Contoh: Berkas sah dan lengkap / Bukti transfer terkonfirmasi..." class="block w-full px-4 py-2.5 rounded-xl bg-[#0C111D] border border-white/[0.1] text-sm text-white placeholder-slate-500 outline-none focus:border-[#7A5AF8]"></textarea>
-                        </div>
-
-                        <div class="pt-4 flex items-center justify-between gap-3 border-t border-white/[0.08]">
-                            <button type="button" @click="
-                                const regId = selectedReg ? selectedReg.id : null;
-                                verifyModal = false;
-                                if (regId) openEditModal(regId);
-                            " class="px-3.5 py-2 rounded-xl bg-[#7A5AF8]/15 hover:bg-[#7A5AF8]/25 text-[#A594FD] border border-[#7A5AF8]/30 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer" title="Edit data pendaftar ini">
-                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                                <span>Edit Data</span>
-                            </button>
-
-                            <div class="flex items-center gap-3">
-                                <button type="button" @click="verifyModal = false" class="px-5 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-slate-300 text-xs font-bold border border-white/[0.08] transition cursor-pointer">
-                                    Batal
-                                </button>
-                                <button type="submit" class="gradient-btn px-6 py-2.5 rounded-xl text-white text-xs font-bold shadow-lg shadow-[#7A5AF8]/25 cursor-pointer">
-                                    Simpan Keputusan
-                                </button>
-                            </div>
-                        </div>
-                    </form>
 
                 </div>
 
