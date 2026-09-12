@@ -340,101 +340,11 @@
     renderPdfDocument() {
         this.$nextTick(() => {
             const container = this.$refs.pdfContainer;
-            if (!container || !this.currentDocUrl || !this.isCurrentDocPdf) return;
-            
+            if (!container) return;
             this._currentPdfRenderId = (this._currentPdfRenderId || 0) + 1;
-            const renderId = this._currentPdfRenderId;
-
-            container.innerHTML = `
-                <div class="flex flex-col items-center justify-center p-8 gap-3 text-slate-400">
-                    <svg class="animate-spin w-7 h-7 text-[#7A5AF8]" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4l-3 3 3 3H4z"></path>
-                    </svg>
-                    <span class="text-xs font-bold text-slate-300">Memuat pratinjau dokumen PDF...</span>
-                </div>
-            `;
-
-            if (typeof pdfjsLib === 'undefined') {
-                container.innerHTML = `
-                    <div class="p-6 text-center space-y-3 text-slate-300 text-xs">
-                        <p>Penampil PDF sedang disiapkan...</p>
-                        <a href="${this.currentDocUrl}" target="_blank" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#7A5AF8] text-white font-bold">Buka Berkas Langsung</a>
-                    </div>
-                `;
-                return;
+            if (window.renderPdfToContainer) {
+                window.renderPdfToContainer(container, this.currentDocUrl, this.isCurrentDocPdf, this._currentPdfRenderId, () => this._currentPdfRenderId);
             }
-
-            pdfjsLib.GlobalWorkerOptions.workerSrc = '{{ asset("vendor/pdfjs/pdf.worker.min.js") }}';
-
-            const loadingTask = pdfjsLib.getDocument({
-                url: this.currentDocUrl,
-                cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
-                cMapPacked: true,
-            });
-
-            loadingTask.promise.then((pdf) => {
-                if (this._currentPdfRenderId !== renderId) return;
-                container.innerHTML = '';
-                const numPages = pdf.numPages;
-                const pagesToRender = Math.min(numPages, 5);
-
-                for (let pageNum = 1; pageNum <= pagesToRender; pageNum++) {
-                    const pageWrapper = document.createElement('div');
-                    pageWrapper.className = 'w-full flex flex-col items-center mb-4';
-
-                    if (numPages > 1) {
-                        const badge = document.createElement('div');
-                        badge.className = 'text-[11px] font-mono text-slate-400 mb-1.5 px-2.5 py-0.5 rounded bg-white/5 border border-white/10 self-start';
-                        badge.textContent = `Halaman ${pageNum} dari ${numPages}`;
-                        pageWrapper.appendChild(badge);
-                    }
-
-                    const canvas = document.createElement('canvas');
-                    canvas.className = 'rounded-xl shadow-2xl bg-white max-w-full';
-                    canvas.style.width = '100%';
-                    canvas.style.maxWidth = '100%';
-                    canvas.style.height = 'auto';
-                    canvas.style.display = 'block';
-                    pageWrapper.appendChild(canvas);
-                    container.appendChild(pageWrapper);
-
-                    pdf.getPage(pageNum).then((page) => {
-                        if (this._currentPdfRenderId !== renderId) return;
-                        const unscaledViewport = page.getViewport({ scale: 1.0 });
-                        const targetWidth = 1400;
-                        const scale = Math.max(targetWidth / unscaledViewport.width, 1.5);
-                        const viewport = page.getViewport({ scale: scale });
-
-                        const ctx = canvas.getContext('2d');
-                        canvas.height = viewport.height;
-                        canvas.width = viewport.width;
-
-                        page.render({
-                            canvasContext: ctx,
-                            viewport: viewport
-                        });
-                    });
-                }
-
-                if (numPages > 5) {
-                    const footerNote = document.createElement('div');
-                    footerNote.className = 'text-center py-2 text-xs text-slate-400';
-                    footerNote.innerHTML = `Menampilkan 5 dari ${numPages} halaman. <a href="${this.currentDocUrl}" target="_blank" class="text-[#84D0FF] underline font-bold ml-1">Buka berkas lengkap</a>`;
-                    container.appendChild(footerNote);
-                }
-            }).catch((err) => {
-                if (this._currentPdfRenderId !== renderId) return;
-                console.error('PDF.js render error:', err);
-                container.innerHTML = `
-                    <div class="p-6 text-center space-y-3">
-                        <div class="text-amber-400 text-xs font-bold">Pratinjau PDF tidak dapat ditampilkan langsung di perangkat ini.</div>
-                        <a href="${this.currentDocUrl}" target="_blank" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition">
-                            <span>Buka / Unduh Berkas PDF</span>
-                        </a>
-                    </div>
-                `;
-            });
         });
     },
 
