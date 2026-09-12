@@ -318,57 +318,68 @@
 
     <!-- Compact Global Overview Stat Cards (Ultra Slim ~50px) -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <!-- Card 1: Total Pendaftar -->
+        <!-- Card 1: Total Pendaftar & Potensi Kuota -->
         <div class="ai-card rounded-2xl p-3 border border-white/[0.08] shadow-md flex items-center justify-between hover:border-[#4E6EFF]/50 transition">
             <div class="space-y-0.5">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Pendaftar</span>
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Pendaftar & Kuota</span>
                 <div class="flex items-baseline gap-1.5">
-                    <span class="text-base sm:text-lg font-black text-white font-mono">{{ $grandTotals['total_registrations'] }}</span>
+                    <span class="text-sm sm:text-base font-black text-white font-mono">{{ $grandTotals['total_registrations'] }}</span>
                     <span class="text-[10px] text-slate-400 font-medium">/ {{ $grandTotals['total_quota'] }} Kuota</span>
                 </div>
+                <div class="text-[10px] text-slate-400 font-medium pt-0.5">
+                    Potensi Kuota: <span class="font-bold text-slate-300 font-mono">Rp {{ number_format($grandTotals['total_max_quota_income'] ?? 0, 0, ',', '.') }}</span>
+                </div>
             </div>
-            <div class="w-7 h-7 rounded-lg bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30 flex items-center justify-center shrink-0">
-                <i data-lucide="users" class="w-3.5 h-3.5"></i>
+            <div class="w-8 h-8 rounded-xl bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30 flex items-center justify-center shrink-0">
+                <i data-lucide="users" class="w-4 h-4"></i>
             </div>
         </div>
 
         <!-- Card 2: Terverifikasi (Lunas) -->
         <div class="ai-card rounded-2xl p-3 border border-white/[0.08] shadow-md flex items-center justify-between hover:border-emerald-500/50 transition">
             <div class="space-y-0.5">
-                <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">Terverifikasi (Lunas)</span>
-                <div class="flex items-baseline gap-1.5">
-                    <span class="text-base sm:text-lg font-black text-emerald-400 font-mono">{{ $grandTotals['verified_registrations'] }}</span>
-                    <span class="text-[10px] text-emerald-300/80 font-medium">Siswa Valid</span>
-                </div>
-            </div>
-            <div class="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
-            </div>
-        </div>
-
-        <!-- Card 3: Uang Pendaftaran Masuk (Lunas) -->
-        <div class="ai-card rounded-2xl p-3 border border-white/[0.08] shadow-md flex items-center justify-between hover:border-emerald-500/50 transition">
-            <div class="space-y-0.5">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Dana Masuk (Lunas)</span>
+                <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">Dana Terverifikasi (Lunas)</span>
                 <div>
                     <span class="text-sm sm:text-base font-black text-emerald-400 font-mono">Rp {{ number_format($grandTotals['verified_income'], 0, ',', '.') }}</span>
                 </div>
+                <div class="text-[10px] text-emerald-300/80 font-medium pt-0.5">
+                    <span class="font-bold font-mono">{{ $grandTotals['verified_registrations'] }}</span> Siswa Valid (Lolos)
+                </div>
             </div>
-            <div class="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                <i data-lucide="wallet" class="w-3.5 h-3.5"></i>
+            <div class="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                <i data-lucide="check-circle" class="w-4 h-4"></i>
             </div>
         </div>
 
-        <!-- Card 4: Potensi Total Dana -->
+        <!-- Card 3: Belum Terverifikasi (Pending) -->
+        <div class="ai-card rounded-2xl p-3 border border-white/[0.08] shadow-md flex items-center justify-between hover:border-amber-500/50 transition">
+            <div class="space-y-0.5">
+                <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">Dana Pending (Belum Verif)</span>
+                <div>
+                    <span class="text-sm sm:text-base font-black text-amber-400 font-mono">Rp {{ number_format($grandTotals['pending_income'], 0, ',', '.') }}</span>
+                </div>
+                <div class="text-[10px] text-amber-300/80 font-medium pt-0.5">
+                    <span class="font-bold font-mono">{{ $grandTotals['pending_registrations'] }}</span> Siswa Menunggu PIC
+                </div>
+            </div>
+            <div class="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0">
+                <i data-lucide="clock" class="w-4 h-4"></i>
+            </div>
+        </div>
+
+        <!-- Card 4: Total Estimasi Saat Ini (Lunas + Pending) -->
         <div class="ai-card rounded-2xl p-3 border border-white/[0.08] shadow-md flex items-center justify-between bg-gradient-to-tr from-[#7A5AF8]/20 to-[#4E6EFF]/20 hover:border-[#7A5AF8]/50 transition">
             <div class="space-y-0.5">
-                <span class="text-[10px] font-bold text-[#A594FD] uppercase tracking-wider block">Total Potensi Dana</span>
+                <span class="text-[10px] font-bold text-[#A594FD] uppercase tracking-wider block">Total Estimasi Saat Ini</span>
                 <div>
                     <span class="text-sm sm:text-base font-black text-white font-mono">Rp {{ number_format($grandTotals['total_potential_income'], 0, ',', '.') }}</span>
                 </div>
+                <div class="text-[10px] text-purple-300/80 font-medium pt-0.5">
+                    Akumulasi <span class="font-bold font-mono">{{ $grandTotals['total_registrations'] }}</span> Pendaftar
+                </div>
             </div>
-            <div class="w-7 h-7 rounded-lg bg-[#7A5AF8]/20 text-white border border-[#7A5AF8]/30 flex items-center justify-center shrink-0">
-                <i data-lucide="coins" class="w-3.5 h-3.5"></i>
+            <div class="w-8 h-8 rounded-xl bg-[#7A5AF8]/20 text-white border border-[#7A5AF8]/30 flex items-center justify-center shrink-0">
+                <i data-lucide="coins" class="w-4 h-4"></i>
             </div>
         </div>
     </div>

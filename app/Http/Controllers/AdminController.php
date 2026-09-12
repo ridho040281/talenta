@@ -935,6 +935,7 @@ class AdminController extends Controller
             'verified_income' => 0,
             'pending_income' => 0,
             'total_potential_income' => 0,
+            'total_max_quota_income' => 0,
         ];
 
         foreach ($competitions as $comp) {
@@ -1027,6 +1028,37 @@ class AdminController extends Controller
                 'breakdown' => $breakdown,
             ];
 
+            $maxQuotaIncome = 0;
+            if ($comp->code === 'BLT') {
+                $tQuotas = $comp->tier_quotas;
+                $tFees = $comp->tier_fees;
+                $maxQuotaIncome = 
+                    (($tQuotas['A_tunggal_pa'] ?? 16) * ($tFees['A_tunggal_pa'] ?? 130000)) +
+                    (($tQuotas['A_tunggal_pi'] ?? 16) * ($tFees['A_tunggal_pi'] ?? 130000)) +
+                    (($tQuotas['B_tunggal_pa'] ?? 16) * ($tFees['B_tunggal_pa'] ?? 150000)) +
+                    (($tQuotas['B_tunggal_pi'] ?? 16) * ($tFees['B_tunggal_pi'] ?? 150000)) +
+                    (($tQuotas['C_tunggal_pa'] ?? 16) * ($tFees['C_tunggal_pa'] ?? 150000)) +
+                    (($tQuotas['C_tunggal_pi'] ?? 16) * ($tFees['C_tunggal_pi'] ?? 150000)) +
+                    (($tQuotas['ganda_pa'] ?? 10) * ($tFees['ganda_pa'] ?? 200000)) +
+                    (($tQuotas['ganda_pi'] ?? 10) * ($tFees['ganda_pi'] ?? 200000));
+            } elseif ($comp->code === 'TMJ') {
+                $tQuotas = $comp->tier_quotas;
+                $tFees = $comp->tier_fees;
+                $maxQuotaIncome = 
+                    (($tQuotas['A_tunggal_pa'] ?? 16) * ($tFees['A_tunggal_pa'] ?? 35000)) +
+                    (($tQuotas['A_tunggal_pi'] ?? 16) * ($tFees['A_tunggal_pi'] ?? 35000)) +
+                    (($tQuotas['B_tunggal_pa'] ?? 16) * ($tFees['B_tunggal_pa'] ?? 35000)) +
+                    (($tQuotas['B_tunggal_pi'] ?? 16) * ($tFees['B_tunggal_pi'] ?? 35000));
+            } elseif (in_array($comp->code, ['MTQ', 'POP'])) {
+                $tQuotas = $comp->tier_quotas;
+                $tFees = $comp->tier_fees;
+                $maxQuotaIncome = 
+                    (($tQuotas['pa'] ?? ceil($comp->quota / 2)) * ($tFees['pa'] ?? $comp->registration_fee)) +
+                    (($tQuotas['pi'] ?? floor($comp->quota / 2)) * ($tFees['pi'] ?? $comp->registration_fee));
+            } else {
+                $maxQuotaIncome = $comp->quota > 0 ? ($comp->quota * (float)$comp->registration_fee) : 0;
+            }
+
             $grandTotals['total_quota'] += $comp->quota;
             $grandTotals['total_registrations'] += $totalRegs;
             $grandTotals['verified_registrations'] += $verifiedRegs->count();
@@ -1035,6 +1067,7 @@ class AdminController extends Controller
             $grandTotals['verified_income'] += $verifiedIncome;
             $grandTotals['pending_income'] += $pendingIncome;
             $grandTotals['total_potential_income'] += $totalIncome;
+            $grandTotals['total_max_quota_income'] += $maxQuotaIncome;
         }
 
         // 3. Tab 2 Total Count (Lean count, no bulky get() query)
