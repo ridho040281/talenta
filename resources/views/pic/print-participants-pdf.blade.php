@@ -250,25 +250,25 @@
                                         @endif
                                         <td class="py-1.5 px-3 border border-slate-900 font-bold">
                                             @if($isGanda)
-                                                <div class="text-slate-950 font-black text-xs">{{ $reg->team_name ?: $reg->display_name }}</div>
+                                                <div class="text-slate-950 font-black text-xs">{{ $reg->team_name ?: $reg->pure_name }}</div>
                                                 <div class="text-[10px] text-slate-600 font-medium mt-0.5 leading-tight">
                                                     @foreach($reg->members as $m)
                                                         <span>• {{ $m->full_name }} ({{ $m->gender === 'L' ? 'PA' : 'PI' }})</span><br>
                                                     @endforeach
                                                 </div>
                                             @else
-                                                <div class="text-slate-950 font-bold">{{ $firstMember?->full_name ?: $reg->display_name }}</div>
+                                                <div class="text-slate-950 font-bold">{{ $firstMember?->full_name ?: $reg->pure_name }}</div>
                                             @endif
                                         </td>
                                         <td class="py-1.5 px-3 border border-slate-900 font-medium">
                                             @if($isGanda && $reg->members->pluck('school_name')->filter()->unique()->count() > 1)
                                                 <div class="text-[10px] text-slate-800 leading-tight">
                                                     @foreach($reg->members as $m)
-                                                        <span>• {{ $m->school_name ?: $reg->institution_name }}</span><br>
+                                                        <span>• {{ $m->school_name ?: ($reg->display_school ?: $reg->institution_name) }}</span><br>
                                                     @endforeach
                                                 </div>
                                             @else
-                                                <span>{{ $reg->institution_name }}</span>
+                                                <span>{{ $reg->display_school ?: $reg->institution_name }}</span>
                                             @endif
                                         </td>
                                         <td class="py-1.5 px-2 border border-slate-900 text-center text-slate-400 text-[10px]">

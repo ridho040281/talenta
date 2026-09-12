@@ -1184,9 +1184,7 @@ class AdminController extends Controller
         $data = collect($paginated->items())->map(function ($reg) {
             $firstMember = $reg->members->first();
             $proofPath = $reg->payment_proof ?: ($reg->invoice?->payment_proof ?? null);
-            $displayName = $reg->isGanda()
-                ? ($reg->team_name ?: $reg->display_name)
-                : ($firstMember?->full_name ?: ($reg->team_name ?: 'Peserta #'.$reg->id));
+            $displayName = $reg->pure_name;
 
             return [
                 'id' => $reg->id,

@@ -132,21 +132,13 @@ class Registration extends Model
     public function getDisplayNameAttribute(): string
     {
         $school = $this->display_school;
-        $firstMember = $this->relationLoaded('members') ? $this->members->first() : $this->members()->first();
+        $name = $this->pure_name;
 
-        if ($this->isGanda() && ! empty($this->team_name)) {
-            return $this->team_name.' ('.$school.')';
+        if ($school && $school !== '-') {
+            return $name.' ('.$school.')';
         }
 
-        if ($firstMember && ! empty($firstMember->full_name)) {
-            return $firstMember->full_name.' ('.$school.')';
-        }
-
-        if (! empty($this->team_name)) {
-            return $this->team_name.' ('.$school.')';
-        }
-
-        return 'Peserta #'.$this->id;
+        return $name;
     }
 
     /**
@@ -154,9 +146,22 @@ class Registration extends Model
      */
     public function getPureNameAttribute(): string
     {
-        $firstMember = $this->relationLoaded('members') ? $this->members->first() : $this->members()->first();
+        $members = $this->relationLoaded('members') ? $this->members : $this->members()->get();
+        $firstMember = $members->first();
 
-        if ($this->isGanda() && ! empty($this->team_name)) {
+        if ($this->isGanda()) {
+            if (! empty($this->team_name)) {
+                return $this->team_name;
+            }
+            if ($members->count() > 1) {
+                $names = $members->pluck('full_name')->filter()->implode(' / ');
+                if (! empty($names)) {
+                    return $names;
+                }
+            }
+        }
+
+        if ($this->competition?->isCollective() && ! empty($this->team_name)) {
             return $this->team_name;
         }
 

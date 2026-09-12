@@ -69,7 +69,7 @@
                                 {{ $reg->participant_number ?? '-' }}
                             </td>
                             <td class="py-4 px-6 font-bold text-slate-900">
-                                <div>{{ $reg->display_name }}</div>
+                                <div>{{ $reg->pure_name }}</div>
                                 @if($reg->sub_category)
                                     <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
                                         {{ $reg->sub_category }}

@@ -743,17 +743,20 @@ class PicController extends Controller
                     }
                 }
 
+                $participantPureName = $reg->pure_name;
+                $schoolName = $reg->display_school ?: ($reg->institution_name ?: '-');
+
                 echo '<tr class="'.$genderClass.'">
                     <td class="center">'.$no++.'</td>
                     <td class="center">'.htmlspecialchars($reg->registration_code).'</td>
                     <td class="center bold">'.htmlspecialchars($reg->participant_number ?: '-').'</td>
                     '.(!$hideDrawCol ? '<td class="center bold">'.htmlspecialchars($reg->draw_number ? '#'.$reg->draw_number : '-').'</td>' : '').'
-                    <td class="bold">'.htmlspecialchars($reg->display_name).'</td>
+                    <td class="bold">'.htmlspecialchars($participantPureName).'</td>
                     <td class="center">'.htmlspecialchars($firstMember?->nisn ?: '-').'</td>
                     <td class="center bold">'.htmlspecialchars($genderLabel).'</td>
                     <td>'.htmlspecialchars($reg->competition->name ?? '-').'</td>
                     <td>'.htmlspecialchars($sectorLabel).'</td>
-                    <td>'.htmlspecialchars($reg->institution_name).'</td>
+                    <td>'.htmlspecialchars($schoolName).'</td>
                     <td>'.htmlspecialchars($reg->official_name ?: '-').'</td>
                     <td class="center">'.htmlspecialchars($reg->official_phone ?: '-').'</td>
                     <td class="center bold">'.ucfirst($reg->status).'</td>
