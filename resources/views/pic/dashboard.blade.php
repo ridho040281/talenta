@@ -22,6 +22,9 @@
     selectedGender: 'all',
     selectedSector: 'all',
     selectedStatus: 'all',
+    totalItems: {{ $stats['total_registrations'] ?? 0 }},
+    totalPa: {{ $stats['total_pa'] ?? 0 }},
+    totalPi: {{ $stats['total_pi'] ?? 0 }},
     verifyModal: false,
     editModal: false,
     exportModal: false,
@@ -497,6 +500,8 @@
                     this.currentPage = json.current_page || 1;
                     this.lastPage    = json.last_page || 1;
                     this.totalItems  = json.total || 0;
+                    this.totalPa     = json.total_pa ?? 0;
+                    this.totalPi     = json.total_pi ?? 0;
                     this.fromItem    = json.from ?? 0;
                     this.toItem      = json.to   ?? 0;
                     this.fetchError  = null;
@@ -517,8 +522,8 @@
     // ── Pagination Helpers ────────────────────────────────────────────────────
     get totalPages() { return Math.max(1, this.lastPage); },
     get countAll()   { return this.totalItems; },
-    get countPa()    { return this.items.filter(i => i.gender === 'L').length; },
-    get countPi()    { return this.items.filter(i => i.gender === 'P').length; },
+    get countPa()    { return this.totalPa; },
+    get countPi()    { return this.totalPi; },
     get paginationStart() { return this.fromItem; },
     get paginationEnd()   { return this.toItem; },
     get paginatedList()   { return this.items; },
@@ -740,8 +745,9 @@
             <div>
                 <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Filter Gender:</label>
                 <div class="flex items-center gap-1 bg-[#0C111D] border border-white/[0.1] p-1 rounded-xl h-[42px]">
-                    <button type="button" @click="selectedGender = 'all'" :class="selectedGender === 'all' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-black shadow-md' : 'text-slate-400 hover:text-white font-bold'" class="flex-1 h-full rounded-lg text-xs transition cursor-pointer flex items-center justify-center">
+                    <button type="button" @click="selectedGender = 'all'" :class="selectedGender === 'all' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-black shadow-md' : 'text-slate-400 hover:text-white font-bold'" class="flex-1 h-full rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1">
                         <span>Semua</span>
+                        <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 font-bold" x-text="countAll"></span>
                     </button>
                     <button type="button" @click="selectedGender = 'L'" :class="selectedGender === 'L' ? 'bg-blue-600 text-white font-black shadow-md' : 'text-[#84D0FF] hover:text-white font-bold'" class="flex-1 h-full rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1">
                         <span>PA</span>

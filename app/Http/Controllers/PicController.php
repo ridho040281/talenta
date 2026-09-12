@@ -103,12 +103,13 @@ class PicController extends Controller
             ->whereNotNull('draw_number')
             ->count();
 
-        $genderCounts = RegistrationMember::whereHas('registration', function ($q) use ($competitionIds) {
-            $q->whereIn('competition_id', $competitionIds);
-        })
-            ->selectRaw('gender, count(*) as count')
-            ->groupBy('gender')
-            ->pluck('count', 'gender');
+        $totalPa = Registration::whereIn('competition_id', $competitionIds)
+            ->whereHas('members', fn ($q) => $q->where('gender', 'L'))
+            ->count();
+
+        $totalPi = Registration::whereIn('competition_id', $competitionIds)
+            ->whereHas('members', fn ($q) => $q->where('gender', 'P'))
+            ->count();
 
         $stats = [
             'total_competitions'     => $competitions->count(),
@@ -119,8 +120,8 @@ class PicController extends Controller
             'revision_registrations' => (int) ($statusCounts->get('revision', 0)),
             'rejected_registrations' => (int) ($statusCounts->get('rejected', 0)),
             'drawn_participants'     => $drawnCount,
-            'total_pa'               => (int) ($genderCounts->get('L', 0)),
-            'total_pi'               => (int) ($genderCounts->get('P', 0)),
+            'total_pa'               => $totalPa,
+            'total_pi'               => $totalPi,
         ];
 
         $categories = Category::all();
@@ -154,14 +155,6 @@ class PicController extends Controller
         // Filter status
         if ($request->filled('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
-        }
-
-        // Filter gender (via first member)
-        if ($request->filled('gender') && $request->gender !== 'all') {
-            $g = $request->gender;
-            $query->whereHas('members', function ($q) use ($g) {
-                $q->where('gender', $g);
-            });
         }
 
         // Filter sector (target_class / match_type combos)
@@ -260,6 +253,20 @@ class PicController extends Controller
             });
         }
 
+        // Hitung total PA dan PI secara akurat sesuai filter aktif (cabang lomba, status, sektor, pencarian)
+        // Dihitung sebelum filter gender diterapkan agar badge tab filter PA dan PI tetap konsisten
+        $baseGenderQuery = clone $query;
+        $totalPa = (clone $baseGenderQuery)->whereHas('members', fn ($q) => $q->where('gender', 'L'))->count();
+        $totalPi = (clone $baseGenderQuery)->whereHas('members', fn ($q) => $q->where('gender', 'P'))->count();
+
+        // Filter gender (via first member)
+        if ($request->filled('gender') && $request->gender !== 'all') {
+            $g = $request->gender;
+            $query->whereHas('members', function ($q) use ($g) {
+                $q->where('gender', $g);
+            });
+        }
+
         $perPage = min((int) $request->get('per_page', 25), 100);
         $paginated = $query->paginate($perPage);
 
@@ -310,6 +317,8 @@ class PicController extends Controller
             'last_page'    => $paginated->lastPage(),
             'per_page'     => $paginated->perPage(),
             'total'        => $paginated->total(),
+            'total_pa'     => $totalPa,
+            'total_pi'     => $totalPi,
             'from'         => $paginated->firstItem(),
             'to'           => $paginated->lastItem(),
         ]);
