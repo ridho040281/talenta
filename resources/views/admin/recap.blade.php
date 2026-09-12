@@ -223,7 +223,7 @@
         }
     },
     pesertaItems: [],
-    isPesertaLoading: false,
+    isPesertaLoading: true,
     pesertaCurrentPage: 1,
     pesertaPerPage: 10,
     pesertaLastPage: 1,
@@ -231,7 +231,14 @@
     pesertaFrom: 0,
     pesertaTo: 0,
     _searchDebounceTimer: null,
-    pesertaApiUrl: '{{ route("admin.api.recap_participants") }}',
+    pesertaApiUrl: (function() {
+        try {
+            const u = new URL('{{ route("admin.api.recap_participants") }}', window.location.origin);
+            return u.pathname;
+        } catch(e) {
+            return '/admin/api/recap-participants';
+        }
+    })(),
 
     init() {
         this.fetchPeserta(true);

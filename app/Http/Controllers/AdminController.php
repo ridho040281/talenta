@@ -241,8 +241,25 @@ class AdminController extends Controller
         }
 
         $primaryPicId = $request->filled('pic_id') ? $request->input('pic_id') : ($validated['pic_id'] ?? null);
-        if ($primaryPicId) {
-            $competition->pics()->sync([$primaryPicId]);
+        $allAssignedPicIds = array_values(array_filter(array_unique(array_merge(
+            $primaryPicId ? [(int) $primaryPicId] : [],
+            $request->filled('pic_ids') && is_array($request->input('pic_ids')) ? array_map('intval', $request->input('pic_ids')) : [],
+            array_map('intval', array_filter([
+                $request->input('blt_pic_tunggal_pa'),
+                $request->input('blt_pic_tunggal_pi'),
+                $request->input('blt_pic_ganda_pa'),
+                $request->input('blt_pic_ganda_pi'),
+                $request->input('tmj_pic_tunggal_pa'),
+                $request->input('tmj_pic_tunggal_pi'),
+                $request->input('mtq_pic_pa'),
+                $request->input('mtq_pic_pi'),
+                $request->input('pop_pic_pa'),
+                $request->input('pop_pic_pi'),
+            ]))
+        ))));
+
+        if (! empty($allAssignedPicIds)) {
+            $competition->pics()->sync($allAssignedPicIds);
         } else {
             $competition->pics()->detach();
         }
@@ -254,9 +271,11 @@ class AdminController extends Controller
         $assistantPhones = trim($request->input('assistant_phones', ''));
         AppSetting::set('competition_assistant_phones_'.$competition->id, $assistantPhones, 'general');
 
+        $resolvedPicId = $primaryPicId ?: (! empty($allAssignedPicIds) ? $allAssignedPicIds[0] : null);
+
         $competition->update([
             'category_id' => $validated['category_id'],
-            'pic_id' => $primaryPicId,
+            'pic_id' => $resolvedPicId,
             'name' => $validated['name'],
             'slug' => Str::slug($validated['name']),
             'code' => strtoupper($validated['code']),

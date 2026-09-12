@@ -275,14 +275,15 @@
     },
     // ── Server-Side Pagination State ─────────────────────────────────────────
     items: [],
-    isLoading: false,
+    isLoading: true,
+    fetchError: null,
     currentPage: 1,
     lastPage: 1,
     perPage: 25,
     totalItems: 0,
     fromItem: 0,
     toItem: 0,
-    // apiBaseUrl injected from Blade below
+    // apiBaseUrl resolved safely below
     apiUrl: '',
 
     // ── Modal Data (loaded lazily via AJAX) ──────────────────────────────────
@@ -308,18 +309,38 @@
         this.verifyModal = true;
         this.selectedReg = null;
         this.modalLoading = true;
-        fetch(this.apiUrl + '/' + id)
-            .then(r => r.json())
+        fetch(this.apiUrl + '/' + id, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(r => {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            })
             .then(data => { this.selectedReg = data; })
-            .catch(() => { this.verifyModal = false; alert('Gagal memuat data. Coba lagi.'); })
+            .catch(err => {
+                console.error('Verify modal fetch error:', err);
+                this.verifyModal = false;
+                alert('Gagal memuat data verifikasi. Silakan coba lagi.');
+            })
             .finally(() => { this.modalLoading = false; });
     },
     openEditModal(id) {
         this.editModal = true;
         this.selectedEditReg = { id: null, registration_code: '', institution_name: '', official_name: '', official_phone: '', team_name: '', target_class: '', match_type: '', participant_number: '', draw_number: '', chosen_song: '', members: [] };
         this.modalLoading = true;
-        fetch(this.apiUrl + '/' + id)
-            .then(r => r.json())
+        fetch(this.apiUrl + '/' + id, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(r => {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            })
             .then(raw => {
                 this.selectedEditReg = JSON.parse(JSON.stringify(raw));
                 if (this.selectedEditReg.members) {
@@ -355,17 +376,33 @@
                     }
                 }
             })
-            .catch(() => { this.editModal = false; alert('Gagal memuat data. Coba lagi.'); })
+            .catch(err => {
+                console.error('Edit modal fetch error:', err);
+                this.editModal = false;
+                alert('Gagal memuat data edit peserta. Silakan coba lagi.');
+            })
             .finally(() => { this.modalLoading = false; });
     },
     openSinglePrintModal(id) {
         this.singlePrintModal = true;
         this.selectedSingleReg = null;
         this.modalLoading = true;
-        fetch(this.apiUrl + '/' + id)
-            .then(r => r.json())
+        fetch(this.apiUrl + '/' + id, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(r => {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            })
             .then(data => { this.selectedSingleReg = data; })
-            .catch(() => { this.singlePrintModal = false; alert('Gagal memuat data. Coba lagi.'); })
+            .catch(err => {
+                console.error('Print modal fetch error:', err);
+                this.singlePrintModal = false;
+                alert('Gagal memuat berkas cetak. Silakan coba lagi.');
+            })
             .finally(() => { this.modalLoading = false; });
     },
 
@@ -375,6 +412,7 @@
         clearTimeout(this._fetchTimer);
         const doFetch = () => {
             this.isLoading = true;
+            this.fetchError = null;
             const params = new URLSearchParams({
                 page:           this.currentPage,
                 per_page:       this.perPage,
@@ -384,18 +422,36 @@
                 sector:         this.selectedSector,
                 search:         this.searchQuery,
             });
-            fetch(this.apiUrl + '?' + params.toString())
-                .then(r => r.json())
+            fetch(this.apiUrl + '?' + params.toString(), {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+                .then(async r => {
+                    if (!r.ok) {
+                        const errText = await r.text().catch(() => '');
+                        throw new Error('HTTP ' + r.status + (errText ? ': ' + errText.substring(0, 100) : ''));
+                    }
+                    return r.json();
+                })
                 .then(json => {
-                    this.items       = json.data;
-                    this.currentPage = json.current_page;
-                    this.lastPage    = json.last_page;
-                    this.totalItems  = json.total;
+                    this.items       = json.data || [];
+                    this.currentPage = json.current_page || 1;
+                    this.lastPage    = json.last_page || 1;
+                    this.totalItems  = json.total || 0;
                     this.fromItem    = json.from ?? 0;
                     this.toItem      = json.to   ?? 0;
+                    this.fetchError  = null;
                 })
-                .catch(err => console.error('Fetch participants error:', err))
-                .finally(() => { this.isLoading = false; });
+                .catch(err => {
+                    console.error('Fetch participants error:', err);
+                    this.fetchError = err.message || 'Gagal memuat data pendaftar';
+                })
+                .finally(() => {
+                    this.isLoading = false;
+                    this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+                });
         };
         if (immediate) { doFetch(); }
         else { this._fetchTimer = setTimeout(doFetch, 400); }
@@ -429,7 +485,14 @@
     nextPage() { if (this.currentPage < this.totalPages) this.goToPage(this.currentPage + 1); },
 
     init() {
-        this.apiUrl = '{{ route("pic.api.participants") }}';
+        this.apiUrl = (function() {
+            try {
+                const u = new URL('{{ route("pic.api.participants") }}', window.location.origin);
+                return u.pathname;
+            } catch(e) {
+                return '/pic/api/participants';
+            }
+        })();
         this.fetchParticipants(true);
         this.$watch('searchQuery',         () => { this.currentPage = 1; this.fetchParticipants(); });
         this.$watch('selectedCompetition', () => { this.currentPage = 1; this.fetchParticipants(true); });
@@ -914,15 +977,32 @@
                         </td>
                     </tr>
 
+                    <!-- Fetch Error State -->
+                    <tr x-show="!isLoading && fetchError" x-cloak>
+                        <td colspan="8" class="text-center py-10 text-rose-400 text-xs">
+                            <div class="flex flex-col items-center justify-center gap-2">
+                                <div class="w-10 h-10 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                </div>
+                                <div class="font-bold text-rose-300 text-sm" x-text="'Gagal memuat data peserta: ' + fetchError"></div>
+                                <p class="text-xs text-slate-400">Periksa koneksi jaringan atau coba muat ulang data peserta.</p>
+                                <button type="button" @click="fetchParticipants(true)" class="mt-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs font-bold transition cursor-pointer">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                    <span>Coba Muat Ulang</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+
                     <!-- Empty: No participants at all -->
-                    <tr x-show="!isLoading && totalItems === 0 && !searchQuery && selectedCompetition === 'all' && selectedStatus === 'all' && selectedGender === 'all' && selectedSector === 'all'" x-cloak>
+                    <tr x-show="!isLoading && !fetchError && totalItems === 0 && !searchQuery && selectedCompetition === 'all' && selectedStatus === 'all' && selectedGender === 'all' && selectedSector === 'all'" x-cloak>
                         <td colspan="8" class="text-center py-12 text-slate-500 text-xs">
                             Belum ada data pendaftar yang masuk.
                         </td>
                     </tr>
 
                     <!-- Empty Filter State -->
-                    <tr x-show="!isLoading && items.length === 0 && totalItems === 0 && (searchQuery || selectedCompetition !== 'all' || selectedStatus !== 'all' || selectedGender !== 'all' || selectedSector !== 'all')" x-cloak>
+                    <tr x-show="!isLoading && !fetchError && items.length === 0 && totalItems === 0 && (searchQuery || selectedCompetition !== 'all' || selectedStatus !== 'all' || selectedGender !== 'all' || selectedSector !== 'all')" x-cloak>
                         <td colspan="8" class="text-center py-12 text-slate-400 text-xs">
                             <div class="flex flex-col items-center justify-center gap-2">
                                 <div class="w-10 h-10 rounded-2xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-slate-400">

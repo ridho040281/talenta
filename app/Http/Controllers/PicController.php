@@ -25,7 +25,7 @@ class PicController extends Controller
      */
     public static function getManagedCompetitionIds($user): array
     {
-        if ($user->role === 'superadmin') {
+        if (in_array($user->role, ['superadmin', 'panitia'])) {
             return Competition::pluck('id')->toArray();
         }
 
