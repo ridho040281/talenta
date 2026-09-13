@@ -172,6 +172,47 @@
                 if (el.scrollTop) el.scrollTop = 0;
             });
 
+            // Pastikan seluruh baris judul header tidak pernah wrapping pada hasil ekspor PNG dan memiliki ukuran font proporsional 1100px
+            const headerTitles = clone.querySelectorAll('.export-header-title');
+            headerTitles.forEach(el => {
+                el.style.whiteSpace = 'nowrap';
+                el.style.wordBreak = 'keep-all';
+                el.style.overflowWrap = 'normal';
+                el.style.display = 'block';
+                el.style.width = '100%';
+                el.style.textAlign = 'center';
+            });
+
+            const titleMain = clone.querySelector('.export-title-main');
+            if (titleMain) {
+                titleMain.style.fontSize = '34px';
+                titleMain.style.lineHeight = '1.2';
+            }
+            const titleSub = clone.querySelector('.export-title-sub');
+            if (titleSub) {
+                titleSub.style.fontSize = '20px';
+                titleSub.style.lineHeight = '1.2';
+            }
+            const titleEvent = clone.querySelector('.export-title-event');
+            if (titleEvent) {
+                titleEvent.style.fontSize = '28px';
+                titleEvent.style.lineHeight = '1.2';
+                titleEvent.style.whiteSpace = 'nowrap';
+            }
+            const titleSchool = clone.querySelector('.export-title-school');
+            if (titleSchool) {
+                titleSchool.style.fontSize = '16px';
+                titleSchool.style.lineHeight = '1.2';
+            }
+
+            // Pastikan badge update timestamp tidak wrapping
+            const timestampBadge = clone.querySelector('.export-timestamp-badge');
+            if (timestampBadge) {
+                timestampBadge.style.whiteSpace = 'nowrap';
+                timestampBadge.style.flexWrap = 'nowrap';
+                timestampBadge.style.display = 'inline-flex';
+            }
+
             container.appendChild(clone);
             document.body.appendChild(container);
 
@@ -892,29 +933,29 @@
                     </div>
                 @endif
 
-                <div class="text-xl sm:text-3xl lg:text-4xl font-black tracking-wider text-white uppercase font-display drop-shadow-md leading-tight export-header-title">
+                <div class="text-xl sm:text-3xl lg:text-4xl font-black tracking-wider text-white uppercase font-display drop-shadow-md leading-tight export-header-title export-title-main">
                     REKAPITULASI
                 </div>
-                <div class="text-xs sm:text-lg lg:text-xl font-extrabold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-blue-200 via-indigo-200 to-purple-200 uppercase leading-tight text-center px-1 break-words sm:whitespace-nowrap export-header-title">
+                <div class="text-xs sm:text-lg lg:text-xl font-extrabold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-blue-200 via-indigo-200 to-purple-200 uppercase leading-tight text-center px-1 whitespace-nowrap export-header-title export-title-sub">
                     PENDAFTAR PERLOMBAAN &amp; PERTANDINGAN
                 </div>
-                <div class="text-base sm:text-2xl lg:text-3xl font-black tracking-wide text-amber-400 uppercase font-display drop-shadow-sm leading-tight text-center break-words sm:whitespace-nowrap inline-block export-header-title">
-                    TALENTA MILAD KE-57
+                <div class="text-base sm:text-2xl lg:text-3xl font-black tracking-wide text-amber-400 uppercase font-display drop-shadow-sm leading-tight text-center whitespace-nowrap export-header-title export-title-event">
+                    TALENTA MILAD KE&#8209;57
                 </div>
-                <div class="text-xs sm:text-base font-extrabold tracking-widest text-slate-300 uppercase leading-tight export-header-title">
+                <div class="text-xs sm:text-base font-extrabold tracking-widest text-slate-300 uppercase leading-tight whitespace-nowrap export-header-title export-title-school">
                     {{ $appSettings['institution_name'] ?? 'MTSN 1 BLITAR' }}
                 </div>
                 <div class="pt-0.5">
-                    <span class="inline-block px-4 sm:px-5 py-0.5 rounded-full bg-white/[0.08] border border-white/[0.15] text-xs sm:text-sm font-black text-[#84D0FF] tracking-widest uppercase font-mono leading-normal">
+                    <span class="inline-block px-4 sm:px-5 py-0.5 rounded-full bg-white/[0.08] border border-white/[0.15] text-xs sm:text-sm font-black text-[#84D0FF] tracking-widest uppercase font-mono leading-normal whitespace-nowrap export-title-year">
                         2026
                     </span>
                 </div>
 
                 <!-- Update Timestamp Badge -->
-                <div class="pt-1.5 sm:pt-2">
-                    <div class="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[11px] sm:text-sm font-bold shadow-sm font-mono max-w-full text-center flex-wrap">
+                <div class="pt-1.5 sm:pt-2 flex justify-center">
+                    <div class="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[11px] sm:text-sm font-bold shadow-sm font-mono max-w-full text-center whitespace-nowrap export-timestamp-badge">
                         <span class="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
-                        <span>Update : {{ \Carbon\Carbon::now()->locale('id')->isoFormat('dddd, D MMMM Y, [Pukul] HH:mm') }} WIB</span>
+                        <span class="whitespace-nowrap">Update : {{ \Carbon\Carbon::now()->locale('id')->isoFormat('dddd, D MMMM Y, [Pukul] HH:mm') }} WIB</span>
                     </div>
                 </div>
             </div>
