@@ -1521,13 +1521,6 @@
                             </template>
                         </div>
 
-                        <!-- Mobile Quick Switch Button to Form -->
-                        <div class="lg:hidden pt-2 border-t border-white/[0.08] shrink-0">
-                            <button type="button" @click="mobileViewTab = 'data'" class="w-full py-2.5 rounded-xl bg-[#7A5AF8] hover:bg-[#6941C6] text-white text-xs font-black shadow-lg flex items-center justify-center gap-2 transition cursor-pointer">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-                                <span>Lanjut Isi Keputusan Verifikasi &rarr;</span>
-                            </button>
-                        </div>
 
                         <!-- Footer Keterangan Berkas -->
                         <div class="flex items-center justify-between text-[11px] text-slate-400 px-1 pt-1 shrink-0">
