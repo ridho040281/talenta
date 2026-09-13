@@ -819,7 +819,7 @@
                 </div>
 
                 <!-- Form Kredensial -->
-                <form action="{{ route('admin.settings.whatsapp.blast.save-credentials') }}" method="POST" class="space-y-4">
+                <form action="{{ route('admin.settings.whatsapp.blast.save-credentials') }}" method="POST" class="space-y-4" autocomplete="off">
                     @csrf
 
                     <!-- 1. API Host Box -->
@@ -834,7 +834,7 @@
                                 <span x-show="copiedField === 'host'" class="text-emerald-400 font-mono text-[10px]">Tersalin!</span>
                             </button>
                         </div>
-                        <input type="text" name="api_host" x-model="apiHost" required placeholder="https://jogja.wablas.com" class="block w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/[0.1] text-xs sm:text-sm font-mono text-white placeholder-slate-500 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400/30">
+                        <input type="text" name="api_host" x-model="apiHost" required autocomplete="off" placeholder="https://jogja.wablas.com" class="block w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/[0.1] text-xs sm:text-sm font-mono text-white placeholder-slate-500 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400/30">
                         <p class="text-[10px] text-slate-400">Contoh: <code>https://jogja.wablas.com</code>, <code>https://solo.wablas.com</code>, atau server yang tertera di address bar browser saat login Wablas.</p>
                     </div>
 
@@ -855,7 +855,7 @@
                                 </button>
                             </div>
                         </div>
-                        <input :type="showToken ? 'text' : 'password'" name="token" x-model="apiToken" required placeholder="Masukkan API Token device Wablas..." class="block w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/[0.1] text-xs sm:text-sm font-mono text-white placeholder-slate-500 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400/30 tracking-wider">
+                        <input :type="showToken ? 'text' : 'password'" name="token" x-model="apiToken" required autocomplete="new-password" placeholder="Masukkan API Token device Wablas..." class="block w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/[0.1] text-xs sm:text-sm font-mono text-white placeholder-slate-500 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400/30 tracking-wider">
                     </div>
 
                     <!-- 3. Secret Key Box -->
@@ -875,7 +875,10 @@
                                 </button>
                             </div>
                         </div>
-                        <input :type="showSecret ? 'text' : 'password'" name="secret_key" x-model="secretKey" placeholder="Masukkan Secret Key jika akun Wablas Anda mengaktifkannya..." class="block w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/[0.1] text-xs sm:text-sm font-mono text-white placeholder-slate-500 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400/30 tracking-wider">
+                        <input :type="showSecret ? 'text' : 'password'" name="secret_key" x-model="secretKey" autocomplete="new-password" placeholder="Kosongkan jika di Wablas tidak dibuat Secret Key..." class="block w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/[0.1] text-xs sm:text-sm font-mono text-white placeholder-slate-500 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400/30 tracking-wider">
+                        <p class="text-[11px] text-amber-400/90 leading-tight">
+                            ⚠️ <strong>PENTING:</strong> Kolom ini <strong>BUKAN PASSWORD LOGIN</strong> akun Anda. Jika device di akun Wablas Anda tidak mengaktifkan fitur Secret Key, kolom ini <strong>WAJIB DIKOSONGKAN</strong> agar pengiriman pesan tidak ditolak Wablas.
+                        </p>
                     </div>
 
                     <!-- Button: Save Credentials -->
@@ -916,8 +919,63 @@
                 <div class="pt-2 border-t border-white/[0.06]">
                     <button type="button" @click="checkStatus()" :disabled="isChecking" class="w-full py-3 rounded-2xl bg-white/[0.05] hover:bg-white/[0.1] text-[#84D0FF] border border-[#4E6EFF]/30 font-bold text-xs sm:text-sm transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50" title="Cek status sinyal & koneksi token ke server Wablas">
                         <i data-lucide="refresh-cw" class="w-4 h-4 text-[#84D0FF]" :class="isChecking ? 'animate-spin' : ''"></i>
-                        <span x-text="isChecking ? 'Memeriksa Sinyal Gateway...' : 'Uji Coba Koneksi Device Wablas'"></span>
+                        <span x-text="isChecking ? 'Memeriksa Sinyal Gateway...' : 'Uji Sinyal Koneksi Device Wablas'"></span>
                     </button>
+                </div>
+
+                <!-- Live Test Send Message Box -->
+                <div class="pt-6 border-t border-white/[0.08] space-y-4">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                            <i data-lucide="send" class="w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-black text-white uppercase tracking-wider font-display">Uji Coba Kirim Pesan Langsung</h4>
+                            <p class="text-[10px] text-slate-400">Kirim pesan WhatsApp nyata ke nomor Anda untuk memastikan pesan benar-benar sampai</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-300 mb-1">Nomor WhatsApp Tujuan Pengujian</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none text-xs">📱</span>
+                                <input type="text" x-model="testPhone" placeholder="Contoh: 08123456789 atau 628123456789" class="block w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-900 border border-white/[0.1] text-xs font-mono text-white placeholder-slate-500 outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/30">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-300 mb-1">Pesan Uji Coba</label>
+                            <textarea x-model="testMessage" rows="2" placeholder="Tulis pesan pengujian..." class="block w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/[0.1] text-xs font-mono text-white placeholder-slate-500 outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/30 resize-none"></textarea>
+                        </div>
+
+                        <!-- Test Send Action Button -->
+                        <button type="button" @click="sendTestMessage()" :disabled="isSendingTest || !testPhone" class="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50">
+                            <i data-lucide="send" class="w-3.5 h-3.5" :class="isSendingTest ? 'animate-bounce' : ''"></i>
+                            <span x-text="isSendingTest ? 'Sedang Mengirim Pesan Uji Coba...' : 'Kirim Pesan Uji Coba Sekarang'"></span>
+                        </button>
+
+                        <!-- Success Alert -->
+                        <div x-show="testResult && testResult.success" x-transition class="p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-xs text-emerald-300 flex items-start gap-2.5">
+                            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5"></i>
+                            <div>
+                                <span class="font-bold text-white block">Berhasil Terkirim!</span>
+                                <span x-text="testResult ? testResult.message : ''"></span>
+                            </div>
+                        </div>
+
+                        <!-- Error Alert -->
+                        <div x-show="testResult && !testResult.success" x-transition class="p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/40 text-xs text-rose-300 flex items-start gap-2.5">
+                            <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-400 shrink-0 mt-0.5"></i>
+                            <div class="space-y-1">
+                                <span class="font-bold text-white block">Gagal Mengirim Pesan</span>
+                                <span x-text="testResult ? testResult.message : ''" class="break-words"></span>
+                                <p class="text-[10px] text-amber-300/90 pt-1 border-t border-rose-500/20">
+                                    💡 <strong>Tips:</strong> Jika pesan error menyebut <em>"token invalid"</em>, pastikan kolom <strong>Secret Key</strong> di atas dikosongkan jika Anda tidak membuatnya di akun Wablas, lalu klik <strong>Simpan Kredensial</strong>.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
             </div>
@@ -1181,6 +1239,12 @@
             remainingQuota: '',
             isChecking: false,
 
+            // Live Test Send States
+            testPhone: '{{ auth()->user()->phone ?? '' }}',
+            testMessage: 'Halo! Ini adalah pesan tes pengujian sistem TALENTA 2026. Gateway Wablas berhasil terhubung dan siap beroperasi! 🚀',
+            isSendingTest: false,
+            testResult: null,
+
             init() {
                 this.checkStatus();
             },
@@ -1265,6 +1329,51 @@
                     this.statusMessage = 'Gagal Cek: ' + (e.message || '');
                 } finally {
                     this.isChecking = false;
+                    this.$nextTick(() => {
+                        if (window.lucide) lucide.createIcons();
+                    });
+                }
+            },
+
+            async sendTestMessage() {
+                if (!this.testPhone || !this.testPhone.trim()) {
+                    alert('Silakan masukkan nomor WhatsApp tujuan pengujian terlebih dahulu.');
+                    return;
+                }
+                this.isSendingTest = true;
+                this.testResult = null;
+                try {
+                    const res = await fetch('{{ route('admin.settings.whatsapp.blast.test-send') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            phone: this.testPhone,
+                            message: this.testMessage
+                        })
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        this.testResult = {
+                            success: true,
+                            message: data.message || 'Pesan uji coba berhasil dikirim via Wablas!'
+                        };
+                    } else {
+                        this.testResult = {
+                            success: false,
+                            message: data.message || 'Gagal mengirim pesan uji coba.'
+                        };
+                    }
+                } catch (e) {
+                    this.testResult = {
+                        success: false,
+                        message: 'Terjadi kesalahan sistem: ' + (e.message || '')
+                    };
+                } finally {
+                    this.isSendingTest = false;
                     this.$nextTick(() => {
                         if (window.lucide) lucide.createIcons();
                     });

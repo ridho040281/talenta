@@ -242,6 +242,7 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->name('admin.')-
         Route::post('/whatsapp-blast/templates/{id}/toggle', [AdminSettingsController::class, 'toggleWhatsappTemplate'])->name('whatsapp.blast.templates.toggle');
         Route::post('/whatsapp-blast/save-credentials', [AdminSettingsController::class, 'saveWablasCredentials'])->name('whatsapp.blast.save-credentials');
         Route::post('/whatsapp-blast/test-connection', [AdminSettingsController::class, 'testWablasConnection'])->name('whatsapp.blast.test-connection');
+        Route::post('/whatsapp-blast/test-send', [AdminSettingsController::class, 'testSendWhatsappMessage'])->name('whatsapp.blast.test-send');
         
         // Pop-up Announcement Modal Routes
         Route::get('/popup-announcement', [AdminSettingsController::class, 'popupAnnouncement'])->name('popup.index');

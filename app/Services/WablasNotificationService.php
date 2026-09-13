@@ -109,26 +109,13 @@ class WablasNotificationService
             }
 
             // 5. Send to Wablas API in background (Non-blocking / Defer)
-            $authHeader = $wablasSecretKey ? ($wablasToken.'.'.$wablasSecretKey) : $wablasToken;
             $senderId = auth()->id() ?? 1;
             $cabangLomba = $data['cabang_lomba'] ?? 'Sistem Otomatis';
 
-            $dispatchSend = function () use ($cleanPhones, $authHeader, $wablasHost, $wablasToken, $wablasSecretKey, $msg, $templateCode, $cabangLomba, $senderId) {
+            $dispatchSend = function () use ($cleanPhones, $msg, $templateCode, $cabangLomba, $senderId) {
                 foreach ($cleanPhones as $cleanPhone) {
                     try {
-                        $res = Http::withoutVerifying()
-                            ->timeout(8)
-                            ->withHeaders([
-                                'Authorization' => $authHeader,
-                            ])
-                            ->post("{$wablasHost}/api/send-message", [
-                                'phone' => $cleanPhone,
-                                'message' => $msg,
-                                'token' => $wablasToken,
-                                'secret' => $wablasSecretKey,
-                            ]);
-
-                        $isSent = $res->successful() && $res->json('status') !== false;
+                        $result = static::sendDirectMessage($cleanPhone, $msg);
 
                         // Record each recipient delivery
                         BroadcastLog::create([
@@ -136,11 +123,11 @@ class WablasNotificationService
                             'target_audience' => 'auto_'.$templateCode,
                             'target_competition' => $cabangLomba,
                             'recipients_count' => 1,
-                            'message' => "Tujuan: {$cleanPhone}\n\n".$msg,
-                            'status' => $isSent ? 'sent' : 'failed',
+                            'message' => "Tujuan: {$cleanPhone}\n\n".$msg.($result['success'] ? '' : "\n\n[Status: Gagal - ".($result['message'] ?? 'Error')."]"),
+                            'status' => $result['success'] ? 'sent' : 'failed',
                         ]);
                     } catch (\Throwable $e) {
-                        Log::error("Wablas Auto Notification Error ({$templateCode}) to {$cleanPhone}: ".$e->getMessage());
+                        Log::error("Wablas Auto Notification Exception ({$templateCode}) to {$cleanPhone}: ".$e->getMessage());
                     }
                 }
             };
@@ -157,6 +144,125 @@ class WablasNotificationService
             Log::error("Wablas Auto Notification Error ({$templateCode}): ".$e->getMessage());
 
             return false;
+        }
+    }
+
+    /**
+     * Send a single WhatsApp message via Wablas API with automatic retry and auto-recovery.
+     *
+     * @param string $phone Target phone number (e.g. 08123456789 or 628123456789)
+     * @param string $message Text message content
+     * @return array ['success' => bool, 'message' => string, 'data' => mixed]
+     */
+    public static function sendDirectMessage(string $phone, string $message): array
+    {
+        $host = rtrim(AppSetting::get('wablas_api_host', 'https://jogja.wablas.com'), '/');
+        $token = trim((string) AppSetting::get('wablas_api_token', ''));
+        $secretKey = trim((string) AppSetting::get('wablas_secret_key', ''));
+
+        if (empty($token)) {
+            return [
+                'success' => false,
+                'message' => 'Token API Wablas belum dikonfigurasi di menu Pengaturan Gateway.',
+            ];
+        }
+
+        // Clean & normalize phone number to international format (62...) without '+'
+        $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
+        if (empty($cleanPhone)) {
+            return [
+                'success' => false,
+                'message' => 'Nomor telepon tujuan tidak valid.',
+            ];
+        }
+
+        if (str_starts_with($cleanPhone, '0')) {
+            $cleanPhone = '62' . substr($cleanPhone, 1);
+        } elseif (str_starts_with($cleanPhone, '8')) {
+            $cleanPhone = '628' . substr($cleanPhone, 1);
+        }
+
+        $payload = [
+            'phone' => $cleanPhone,
+            'message' => $message,
+            'flag' => 'instant',
+        ];
+
+        // 1. First attempt: Use secret_key if present ($token.$secretKey), else $token
+        $authHeader = (! empty($secretKey)) ? ($token . '.' . $secretKey) : $token;
+
+        try {
+            $res = Http::withoutVerifying()
+                ->timeout(12)
+                ->asForm()
+                ->withHeaders([
+                    'Authorization' => $authHeader,
+                ])
+                ->post("{$host}/api/send-message", $payload);
+
+            $json = $res->json() ?? [];
+            $isSuccess = $res->successful() && ($json['status'] ?? false) !== false;
+
+            // 2. Second attempt (Auto-Recovery): If failed and secretKey was used,
+            // retry with clean $token ONLY. (Wablas throws 'token invalid' if secret_key is incorrect or autofilled)
+            if (! $isSuccess && ! empty($secretKey)) {
+                $errMsg = $json['message'] ?? '';
+                Log::warning("Wablas send with secret_key failed ({$errMsg}), retrying with clean token...");
+
+                $res = Http::withoutVerifying()
+                    ->timeout(12)
+                    ->asForm()
+                    ->withHeaders([
+                        'Authorization' => $token,
+                    ])
+                    ->post("{$host}/api/send-message", $payload);
+
+                $json = $res->json() ?? [];
+                $isSuccess = $res->successful() && ($json['status'] ?? false) !== false;
+
+                // If clean token works, auto-heal database by removing invalid secret_key
+                if ($isSuccess) {
+                    AppSetting::set('wablas_secret_key', '');
+                    Log::info("Wablas: Auto-healed invalid secret_key setting because clean token succeeded.");
+                }
+            }
+
+            // 3. Third attempt: Fallback to JSON payload format if asForm was rejected
+            if (! $isSuccess) {
+                $res = Http::withoutVerifying()
+                    ->timeout(12)
+                    ->withHeaders([
+                        'Authorization' => $token,
+                    ])
+                    ->post("{$host}/api/send-message", $payload);
+
+                $json = $res->json() ?? [];
+                $isSuccess = $res->successful() && ($json['status'] ?? false) !== false;
+            }
+
+            if ($isSuccess) {
+                return [
+                    'success' => true,
+                    'message' => $json['message'] ?? 'Pesan berhasil dikirim via Wablas.',
+                    'data' => $json['data'] ?? [],
+                ];
+            } else {
+                $err = $json['message'] ?? ('HTTP Error ' . $res->status() . ' dari server Wablas');
+                Log::error("Wablas Send Failed to {$cleanPhone}: {$err} | HTTP {$res->status()} | Body: " . $res->body());
+
+                return [
+                    'success' => false,
+                    'message' => $err,
+                    'body' => $res->body(),
+                ];
+            }
+        } catch (\Throwable $e) {
+            Log::error("Wablas Connection Exception to {$cleanPhone}: " . $e->getMessage());
+
+            return [
+                'success' => false,
+                'message' => 'Gagal koneksi ke server Wablas: ' . $e->getMessage(),
+            ];
         }
     }
 

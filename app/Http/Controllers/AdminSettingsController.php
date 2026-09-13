@@ -20,6 +20,7 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use App\Services\WablasNotificationService;
 
 class AdminSettingsController extends Controller
 {
@@ -1281,13 +1282,10 @@ class AdminSettingsController extends Controller
             return redirect()->back()->with('error', 'Tidak ada nomor penerima yang valid untuk dikirim.');
         }
 
-        $wablasHost = rtrim(AppSetting::get('wablas_api_host', 'https://jogja.wablas.com/'), '/');
         $wablasToken = AppSetting::get('wablas_api_token', '');
-        $wablasSecretKey = AppSetting::get('wablas_secret_key', '');
-        $authHeader = $wablasSecretKey ? ($wablasToken.'.'.$wablasSecretKey) : $wablasToken;
-
         $sentSuccessCount = 0;
         $failedCount = 0;
+        $lastErrorMessage = null;
 
         if (! empty($wablasToken)) {
             foreach ($recipientsList as $recipient) {
@@ -1300,26 +1298,12 @@ class AdminSettingsController extends Controller
                 $msg = str_replace('{no_peserta}', $recipient['no_peserta'], $msg);
                 $msg = str_replace('{link_scoreboard}', $recipient['link_scoreboard'], $msg);
 
-                try {
-                    $res = Http::withoutVerifying()
-                        ->timeout(10)
-                        ->withHeaders([
-                            'Authorization' => $authHeader,
-                        ])
-                        ->post("{$wablasHost}/api/send-message", [
-                            'phone' => $phone,
-                            'message' => $msg,
-                            'token' => $wablasToken,
-                            'secret' => $wablasSecretKey,
-                        ]);
-
-                    if ($res->successful() && $res->json('status') !== false) {
-                        $sentSuccessCount++;
-                    } else {
-                        $failedCount++;
-                    }
-                } catch (\Throwable $e) {
+                $sendResult = WablasNotificationService::sendDirectMessage($phone, $msg);
+                if ($sendResult['success']) {
+                    $sentSuccessCount++;
+                } else {
                     $failedCount++;
+                    $lastErrorMessage = $sendResult['message'] ?? 'Gagal kirim via gateway';
                 }
             }
         }
@@ -1331,17 +1315,51 @@ class AdminSettingsController extends Controller
             'target_competition' => $compName ?: $targetLabel,
             'recipients_count' => $recipientsList->count(),
             'message' => $request->message,
-            'status' => (! empty($wablasToken) && $sentSuccessCount > 0) ? 'sent' : 'logged',
+            'status' => (! empty($wablasToken) && $sentSuccessCount > 0) ? 'sent' : ($failedCount > 0 ? 'failed' : 'logged'),
         ]);
 
         $feedbackMsg = 'Pesan WhatsApp Blast berhasil diproses untuk '.$recipientsList->count().' kontak penerima.';
         if (! empty($wablasToken)) {
-            $feedbackMsg .= " ({$sentSuccessCount} pesan terkirim via Wablas".($failedCount > 0 ? ", {$failedCount} gagal/tidak aktif" : '').').';
+            $feedbackMsg .= " ({$sentSuccessCount} pesan terkirim via Wablas".($failedCount > 0 ? ", {$failedCount} gagal: {$lastErrorMessage}" : '').').';
         } else {
             $feedbackMsg .= ' (Mode Simulasi Log: Token Wablas belum dihubungkan).';
         }
 
         return redirect()->back()->with('success', $feedbackMsg);
+    }
+
+    /**
+     * Send a test WhatsApp message to verify actual message delivery
+     */
+    public function testSendWhatsappMessage(Request $request)
+    {
+        $request->validate([
+            'phone' => 'required|string|min:8',
+            'message' => 'nullable|string|max:1000',
+        ]);
+
+        $phone = trim($request->phone);
+        $message = trim($request->message ?? '');
+        if (empty($message)) {
+            $appName = AppSetting::get('app_name', 'TALENTA');
+            $message = "Halo! Ini adalah pesan tes pengujian WhatsApp Gateway dari sistem *{$appName}*.\n\nGateway Wablas berhasil terhubung dan siap beroperasi mengirim notifikasi ke peserta & panitia! 🚀\nWaktu Pengujian: " . now()->translatedFormat('d F Y H:i:s') . ' WIB';
+        }
+
+        $result = WablasNotificationService::sendDirectMessage($phone, $message);
+
+        if ($result['success']) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Pesan uji coba berhasil dikirim ke nomor ' . $phone . ' via Wablas!',
+                'data' => $result['data'] ?? [],
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Gagal mengirim pesan: ' . ($result['message'] ?? 'Error tidak diketahui dari server Wablas'),
+            'debug' => $result['body'] ?? null,
+        ], 422);
     }
 
     /**
