@@ -997,14 +997,14 @@
                                         </span>
                                     </template>
 
-                                    <!-- Other tags -->
-                                    <template x-if="item.sub_category">
+                                    <!-- Other tags (Hanya untuk cabang non-BLT/TMJ/MTQ/POP agar tidak bertumpuk/dobel) -->
+                                    <template x-if="item.sub_category && !['BLT', 'TMJ', 'MTQ', 'POP'].includes(item.comp_code)">
                                         <span class="text-[10px] text-slate-300 font-bold bg-white/[0.05] border border-white/[0.08] px-1.5 py-0.2 rounded" x-text="item.sub_category"></span>
                                     </template>
                                     <template x-if="item.chosen_song">
                                         <span class="text-[10px] text-purple-300 font-bold bg-purple-500/15 border border-purple-500/30 px-1.5 py-0.2 rounded" x-text="'🎵 ' + item.chosen_song"></span>
                                     </template>
-                                    <template x-if="item.target_class && !item.is_kat_a && !item.is_kat_b && !item.is_kat_c">
+                                    <template x-if="item.target_class && !item.is_kat_a && !item.is_kat_b && !item.is_kat_c && !['BLT', 'TMJ', 'MTQ', 'POP'].includes(item.comp_code)">
                                         <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/15 px-1.5 py-0.2 rounded border border-emerald-500/30" x-text="item.target_class"></span>
                                     </template>
                                 </div>
