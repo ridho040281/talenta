@@ -931,15 +931,7 @@
                                 </template>
                                 <template x-if="!item.is_ganda">
                                     <div>
-                                        <div class="font-bold text-white text-xs sm:text-sm flex items-center gap-1.5">
-                                            <span x-text="item.members && item.members[0] ? item.members[0].full_name : item.display_name"></span>
-                                            <template x-if="item.members && item.members[0]">
-                                                <span class="text-[10px] px-1.5 py-0.2 rounded font-bold"
-                                                    :class="item.members[0].gender === 'L' ? 'bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30' : 'bg-[#FF58D5]/15 text-[#FFA0E7] border border-[#FF58D5]/30'"
-                                                    x-text="item.members[0].gender === 'L' ? '👦 PA' : '👧 PI'">
-                                                </span>
-                                            </template>
-                                        </div>
+                                        <div class="font-bold text-white text-xs sm:text-sm" x-text="item.members && item.members[0] ? item.members[0].full_name : item.display_name"></div>
                                         <div class="text-[11px] text-slate-400 pt-0.5">
                                             <span x-text="'NISN: ' + (item.first_member_nisn || '-')"></span>
                                         </div>
