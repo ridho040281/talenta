@@ -1312,12 +1312,9 @@
                                 <div class="space-y-3">
                                     <template x-for="(m, idx) in selectedReg.members" :key="m.id || idx">
                                         <div class="bg-[#161F30] p-3.5 rounded-xl border border-white/[0.08] text-xs space-y-2">
-                                            <!-- NAMA & Badge Gender -->
-                                            <div class="flex items-center justify-between gap-2 pb-1.5 border-b border-white/[0.06]">
-                                                <div class="min-w-0 flex-1">
-                                                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">NAMA :</span>
-                                                    <div class="text-white text-sm font-black truncate" x-text="m.full_name"></div>
-                                                </div>
+                                            <!-- Nama & Badge Gender (Besar di atas tanpa label 'NAMA :') -->
+                                            <div class="flex items-start justify-between gap-2 pb-1.5 border-b border-white/[0.06]">
+                                                <div class="text-white text-sm sm:text-base font-black leading-snug min-w-0" x-text="m.full_name"></div>
                                                 <span class="text-[10px] px-2.5 py-0.5 rounded-full font-black shrink-0" 
                                                       :class="m.gender === 'L' ? 'bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30' : 'bg-[#FF58D5]/15 text-[#FFA0E7] border border-[#FF58D5]/30'" 
                                                       x-text="m.gender === 'L' ? '👦 Putra (PA)' : '👧 Putri (PI)'">
