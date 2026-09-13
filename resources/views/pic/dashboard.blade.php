@@ -1309,19 +1309,43 @@
                             </div>
 
                             <template x-if="selectedReg && selectedReg.members && selectedReg.members.length > 0">
-                                <div class="space-y-2.5">
+                                <div class="space-y-3">
                                     <template x-for="(m, idx) in selectedReg.members" :key="m.id || idx">
-                                        <div class="bg-[#161F30] p-3 rounded-xl border border-white/[0.08] text-xs space-y-1">
-                                            <div class="flex items-center justify-between font-bold">
-                                                <span class="text-white text-sm" x-text="m.full_name"></span>
-                                                <span class="text-[10px] px-2 py-0.5 rounded font-black" :class="m.gender === 'L' ? 'bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30' : 'bg-[#FF58D5]/15 text-[#FFA0E7] border border-[#FF58D5]/30'" x-text="m.gender === 'L' ? '👦 Putra (PA)' : '👧 Putri (PI)'"></span>
+                                        <div class="bg-[#161F30] p-3.5 rounded-xl border border-white/[0.08] text-xs space-y-2">
+                                            <!-- NAMA & Badge Gender -->
+                                            <div class="flex items-center justify-between gap-2 pb-1.5 border-b border-white/[0.06]">
+                                                <div class="min-w-0 flex-1">
+                                                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">NAMA :</span>
+                                                    <div class="text-white text-sm font-black truncate" x-text="m.full_name"></div>
+                                                </div>
+                                                <span class="text-[10px] px-2.5 py-0.5 rounded-full font-black shrink-0" 
+                                                      :class="m.gender === 'L' ? 'bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30' : 'bg-[#FF58D5]/15 text-[#FFA0E7] border border-[#FF58D5]/30'" 
+                                                      x-text="m.gender === 'L' ? '👦 Putra (PA)' : '👧 Putri (PI)'">
+                                                </span>
                                             </div>
-                                            <div class="grid grid-cols-2 gap-2 text-slate-400 pt-1">
-                                                <div class="col-span-2"><span class="text-slate-500">Asal Sekolah:</span> <span class="font-bold text-slate-200" x-text="m.school_name || (selectedReg ? (selectedReg.display_school || selectedReg.institution_name) : '-')"></span></div>
-                                                <div><span class="text-slate-500">NISN:</span> <span class="font-mono font-bold text-slate-300" x-text="m.nisn || '-'"></span></div>
-                                                <div><span class="text-slate-500">TTL:</span> <span class="font-medium text-slate-300" x-text="formatTTL(m.birth_place, m.formatted_birth_date || m.birth_date)"></span></div>
-                                                <div><span class="text-slate-500">No HP/WA:</span> <span class="font-medium text-slate-300" x-text="m.phone || '-'"></span></div>
-                                                <div><span class="text-slate-500">Peran:</span> <span class="font-medium text-slate-300" x-text="m.role_in_team || 'Peserta Utama'"></span></div>
+
+                                            <!-- Asal Sekolah -->
+                                            <div>
+                                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Asal Sekolah :</span>
+                                                <div class="font-bold text-slate-200" x-text="m.school_name || (selectedReg ? (selectedReg.display_school || selectedReg.institution_name) : '-')"></div>
+                                            </div>
+
+                                            <!-- NISN -->
+                                            <div class="flex items-center justify-between py-1 border-t border-white/[0.04]">
+                                                <span class="text-[11px] font-bold text-slate-400">NISN :</span>
+                                                <span class="font-mono font-bold text-[#84D0FF]" x-text="m.nisn || '-'"></span>
+                                            </div>
+
+                                            <!-- TTL -->
+                                            <div class="flex items-start justify-between py-1 border-t border-white/[0.04] gap-2">
+                                                <span class="text-[11px] font-bold text-slate-400 shrink-0">TTL :</span>
+                                                <span class="font-medium text-slate-200 text-right" x-text="formatTTL(m.birth_place, m.formatted_birth_date || m.birth_date)"></span>
+                                            </div>
+
+                                            <!-- NO HP -->
+                                            <div class="flex items-center justify-between pt-1 border-t border-white/[0.04]">
+                                                <span class="text-[11px] font-bold text-slate-400">NO HP :</span>
+                                                <span class="font-medium text-slate-300" x-text="m.phone || '-'"></span>
                                             </div>
                                         </div>
                                     </template>
@@ -1334,7 +1358,17 @@
                             <div class="p-3.5 rounded-2xl bg-[#0C111D] border border-white/[0.08] space-y-1.5">
                                 <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Cabang Perlombaan</span>
                                 <div class="font-black text-white text-sm" x-text="selectedReg && selectedReg.competition ? selectedReg.competition.name : ''"></div>
-                                <div class="text-slate-400" x-text="'Sektor: ' + (selectedReg && selectedReg.sub_category ? selectedReg.sub_category : 'Umum')"></div>
+
+                                <!-- Cabang selain TMJ dan BLT: tampilkan Sektor jika ada dan bukan 'Umum' -->
+                                <template x-if="selectedReg && selectedReg.competition && !['TMJ', 'BLT'].includes(selectedReg.competition.code) && selectedReg.sub_category && selectedReg.sub_category !== 'Umum'">
+                                    <div class="text-slate-400" x-text="'Sektor: ' + selectedReg.sub_category"></div>
+                                </template>
+
+                                <!-- Khusus Bulu Tangkis: tampilkan tipe tanding ringkas (Ganda / Tunggal) tanpa duplikasi kelas -->
+                                <template x-if="selectedReg && selectedReg.competition && selectedReg.competition.code === 'BLT'">
+                                    <div class="text-slate-300 font-semibold" x-text="(selectedReg.match_type && selectedReg.match_type.includes('Ganda')) ? '👥 Ganda' : '🏸 Tunggal'"></div>
+                                </template>
+
                                 <div class="text-emerald-400 font-bold" x-text="'Kelas: ' + (selectedReg && selectedReg.target_class ? selectedReg.target_class : 'Umum SD/MI')"></div>
 
                                 <!-- Khusus Pop Singer / Lagu Pilihan -->
