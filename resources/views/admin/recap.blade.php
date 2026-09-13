@@ -38,8 +38,7 @@
     }
 </style>
 <div class="space-y-4" x-data="{ 
-    activeTab: '{{ request('tab', 'keuangan') }}',
-    subTabKeuangan: '{{ request('subtab', 'lomba') }}',
+    activeTab: '{{ in_array(request('tab'), ['lomba', 'buku_kas', 'peserta', 'pendaftar', 'juara', 'juara-umum']) ? request('tab') : 'lomba' }}',
     cashflowFilterType: 'all',
     cashflowFilterStatus: 'all',
     cashflowSearch: '',
@@ -511,69 +510,46 @@
 
     <!-- Navigation Tabs Bar (AIStarterKit Pill Nav) -->
     <div class="ai-card rounded-3xl p-2 border border-white/[0.08] shadow-lg flex flex-wrap items-center gap-2">
-        <button @click="activeTab = 'keuangan'" :class="activeTab === 'keuangan' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white'" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
-            <i data-lucide="landmark" class="w-4 h-4"></i>
-            <span>1. Rekap Keuangan & Lomba</span>
+        <button @click="activeTab = 'lomba'" :class="(activeTab === 'lomba' || activeTab === 'keuangan') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white'" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
+            <i data-lucide="trophy" class="w-4 h-4 text-amber-300"></i>
+            <span>1. Rekap Cabang Lomba</span>
+        </button>
+
+        <button @click="activeTab = 'buku_kas'" :class="activeTab === 'buku_kas' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/30 font-black' : 'text-slate-400 hover:text-white'" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
+            <i data-lucide="book-open" class="w-4 h-4 text-emerald-300"></i>
+            <span>2. Buku Kas & Mutasi</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold" :class="activeTab === 'buku_kas' ? 'bg-white text-slate-900' : 'bg-white/[0.1] text-slate-300'">{{ $cashflowItems->count() }}</span>
+            @if($cashflowSummary['total_refunds'] > 0)
+                <span class="px-2 py-0.5 rounded-full text-[10px] bg-rose-500 text-white font-bold">{{ $cashflowSummary['count_adjustments'] }} Refund</span>
+            @endif
         </button>
 
         <button @click="activeTab = 'peserta'" :class="activeTab === 'peserta' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white'" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
             <i data-lucide="users" class="w-4 h-4"></i>
-            <span>2. Master Seluruh Peserta</span>
+            <span>3. Master Seluruh Peserta</span>
             <span class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="activeTab === 'peserta' ? 'bg-white text-slate-900' : 'bg-white/[0.1] text-slate-300'">{{ $totalRegistrationsCount }}</span>
         </button>
 
         <button @click="activeTab = 'pendaftar'" :class="activeTab === 'pendaftar' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white'" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
             <i data-lucide="layout-grid" class="w-4 h-4 text-cyan-400"></i>
-            <span>3. Rekap Pendaftar</span>
+            <span>4. Rekap Pendaftar</span>
             <span class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="activeTab === 'pendaftar' ? 'bg-white text-slate-950' : 'bg-cyan-500/20 text-cyan-300'">Infografis</span>
         </button>
 
         <button @click="activeTab = 'juara'" :class="activeTab === 'juara' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white'" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
             <i data-lucide="medal" class="w-4 h-4 text-[#FF58D5]"></i>
-            <span>4. Rekap Semua Peraih Juara</span>
+            <span>5. Rekap Semua Peraih Juara</span>
         </button>
 
         <button @click="activeTab = 'juara-umum'" :class="activeTab === 'juara-umum' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white'" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
             <i data-lucide="trophy" class="w-4 h-4 text-amber-400"></i>
-            <span>5. Rekap Juara Umum</span>
+            <span>6. Rekap Juara Umum</span>
         </button>
     </div>
 
-    <!-- ==================== TAB 1: REKAP KEUANGAN & LOMBA ==================== -->
-    <div x-show="activeTab === 'keuangan'" x-transition class="space-y-4">
-        <!-- Sub-Navigation Toggle for Tab 1 (Rekap Cabang vs Buku Kas Terpadu) -->
-        <div class="ai-card rounded-2xl p-2 border border-white/[0.08] shadow-md flex flex-wrap items-center justify-between gap-3 bg-[#0C111D]/80">
-            <div class="flex items-center gap-2">
-                <button type="button" @click="subTabKeuangan = 'lomba'" 
-                    :class="subTabKeuangan === 'lomba' ? 'bg-[#7A5AF8] text-white shadow font-bold' : 'text-slate-400 hover:text-white bg-white/[0.03]'" 
-                    class="px-4 py-2 rounded-xl text-xs sm:text-sm transition flex items-center gap-2 cursor-pointer">
-                    <i data-lucide="trophy" class="w-4 h-4 text-amber-300"></i>
-                    <span>Rekap Cabang Lomba & Kuota</span>
-                </button>
-
-                <button type="button" @click="subTabKeuangan = 'buku_kas'" 
-                    :class="subTabKeuangan === 'buku_kas' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md font-bold' : 'text-slate-400 hover:text-white bg-white/[0.03]'" 
-                    class="px-4 py-2 rounded-xl text-xs sm:text-sm transition flex items-center gap-2 cursor-pointer">
-                    <i data-lucide="book-open" class="w-4 h-4 text-emerald-300"></i>
-                    <span>Buku Kas & Mutasi Pembayaran</span>
-                    <span class="px-2 py-0.5 rounded-full text-[10px] bg-white/20 text-white font-mono">{{ $cashflowItems->count() }}</span>
-                    @if($cashflowSummary['total_refunds'] > 0)
-                        <span class="px-2 py-0.5 rounded-full text-[10px] bg-rose-500 text-white font-bold">{{ $cashflowSummary['count_adjustments'] }} Refund</span>
-                    @endif
-                </button>
-            </div>
-
-            <div class="flex items-center gap-3 px-3 py-1">
-                <div class="text-right">
-                    <span class="text-[10px] text-slate-400 block uppercase font-bold">Kas Riil Terverifikasi (Net)</span>
-                    <span class="text-sm sm:text-base font-black text-emerald-400 font-mono">Rp {{ number_format($cashflowSummary['net_real_cash'], 0, ',', '.') }}</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- SUB-TAB 1: REKAP CABANG LOMBA & KUOTA -->
-        <div x-show="subTabKeuangan === 'lomba'" x-transition class="space-y-4">
-            <div class="ai-card rounded-3xl border border-white/[0.08] shadow-xl p-5 sm:p-7 lg:p-8 space-y-6">
+    <!-- ==================== TAB 1: REKAP CABANG LOMBA & KUOTA ==================== -->
+    <div x-show="activeTab === 'lomba' || activeTab === 'keuangan'" x-transition class="space-y-6">
+        <div class="ai-card rounded-3xl border border-white/[0.08] shadow-xl p-5 sm:p-7 lg:p-8 space-y-6">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.08] pb-4">
                 <div>
                     <h3 class="text-lg font-black text-white">Rekapitulasi Keuangan & Kuota Pendaftaran Cabang Lomba</h3>
@@ -728,11 +704,11 @@
                 </table>
             </div>
         </div>
-        </div>
-        <!-- END SUB-TAB 1: REKAP CABANG LOMBA & KUOTA -->
+    </div>
+    <!-- ==================== END TAB 1: REKAP CABANG LOMBA & KUOTA ==================== -->
 
-        <!-- SUB-TAB 2: BUKU KAS & MUTASI PEMBAYARAN TERPADU -->
-        <div x-show="subTabKeuangan === 'buku_kas'" x-transition class="space-y-6">
+    <!-- ==================== TAB 2: BUKU KAS & MUTASI PEMBAYARAN TERPADU ==================== -->
+    <div x-show="activeTab === 'buku_kas'" x-transition class="space-y-6">
             <!-- 4 Financial Summary Stat Cards for Cashflow -->
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 <div class="ai-card rounded-2xl p-3 border border-white/[0.08] shadow-md flex items-center justify-between hover:border-emerald-500/50 transition bg-[#0C111D]/90">
@@ -1044,12 +1020,10 @@
                     </table>
                 </div>
             </div>
-        </div>
-        <!-- END SUB-TAB 2 -->
     </div>
-    <!-- ==================== END TAB 1 ==================== -->
+    <!-- ==================== END TAB 2: BUKU KAS & MUTASI PEMBAYARAN TERPADU ==================== -->
 
-    <!-- ==================== TAB 2: MASTER SEMUA PESERTA ==================== -->
+    <!-- ==================== TAB 3: MASTER SEMUA PESERTA ==================== -->
     <div x-show="activeTab === 'peserta'" x-transition class="space-y-6">
         <div id="recapPesertaTableCard" class="ai-card rounded-3xl border border-white/[0.08] shadow-xl p-5 sm:p-7 lg:p-8 space-y-6 scroll-mt-6">
             
