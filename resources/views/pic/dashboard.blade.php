@@ -168,88 +168,44 @@
     get sectorOptions() {
         if (this.currentCompCode === 'BLT') {
             return [
-                { value: 'all', label: '🏸 Semua Sektor Bulu Tangkis' },
-                { value: 'blt_a_all', label: '🏷️ Semua Kategori A (Kelas 1–2 SD/MI)' },
-                { value: 'tunggal_pa_a', label: '👦 Tunggal PA - Kat A (Kelas 1–2 SD/MI)' },
-                { value: 'tunggal_pi_a', label: '👧 Tunggal PI - Kat A (Kelas 1–2 SD/MI)' },
-                { value: 'blt_b_all', label: '🏷️ Semua Kategori B (Kelas 3–4 SD/MI)' },
-                { value: 'tunggal_pa_b', label: '👦 Tunggal PA - Kat B (Kelas 3–4 SD/MI)' },
-                { value: 'tunggal_pi_b', label: '👧 Tunggal PI - Kat B (Kelas 3–4 SD/MI)' },
-                { value: 'blt_c_all', label: '🏷️ Semua Kategori C (Kelas 5–6 SD/MI)' },
-                { value: 'tunggal_pa_c', label: '👦 Tunggal PA - Kat C (Kelas 5–6 SD/MI)' },
-                { value: 'tunggal_pi_c', label: '👧 Tunggal PI - Kat C (Kelas 5–6 SD/MI)' },
-                { value: 'tunggal_all', label: '🏸 Semua Tunggal (PA & PI - Semua Kelas)' },
-                { value: 'tunggal_pa', label: '👦 Semua Tunggal Putra (PA)' },
-                { value: 'tunggal_pi', label: '👧 Semua Tunggal Putri (PI)' },
-                { value: 'ganda_all', label: '👥 Semua Ganda (PA & PI)' },
-                { value: 'ganda_pa', label: '👥 Ganda Putra (PA) - Semua Kelas' },
-                { value: 'ganda_pi', label: '👥 Ganda Putri (PI) - Semua Kelas' },
+                { value: 'all', label: '🏸 Semua Sektor (Tunggal & Ganda)' },
+                { value: 'tunggal_all', label: '🏸 Semua Tunggal (Kelas 1–6)' },
+                { value: 'blt_a_all', label: '🏷️ Kategori A (Kelas 1–2 SD/MI)' },
+                { value: 'blt_b_all', label: '🏷️ Kategori B (Kelas 3–4 SD/MI)' },
+                { value: 'blt_c_all', label: '🏷️ Kategori C (Kelas 5–6 SD/MI)' },
+                { value: 'ganda_all', label: '👥 Ganda (Semua Kelas)' },
             ];
         } else if (this.currentCompCode === 'TMJ') {
             return [
                 { value: 'all', label: '🏓 Semua Kategori Tenis Meja' },
-                { value: 'tmj_a_all', label: '🏷️ Semua Kategori A (Kelas 1–3 SD/MI)' },
-                { value: 'tmj_pa_a', label: '👦 Putra (PA) - Kat A (Kelas 1–3 SD/MI)' },
-                { value: 'tmj_pi_a', label: '👧 Putri (PI) - Kat A (Kelas 1–3 SD/MI)' },
-                { value: 'tmj_b_all', label: '🏷️ Semua Kategori B (Kelas 4–6 SD/MI)' },
-                { value: 'tmj_pa_b', label: '👦 Putra (PA) - Kat B (Kelas 4–6 SD/MI)' },
-                { value: 'tmj_pi_b', label: '👧 Putri (PI) - Kat B (Kelas 4–6 SD/MI)' },
+                { value: 'tmj_a_all', label: '🏷️ Kategori A (Kelas 1–3 SD/MI)' },
+                { value: 'tmj_b_all', label: '🏷️ Kategori B (Kelas 4–6 SD/MI)' },
             ];
         } else if (this.currentCompCode === 'MTQ') {
             return [
-                { value: 'all', label: '📖 Semua Kategori MTQ' },
-                { value: 'individu_pa', label: '👦 MTQ Putra (PA)' },
-                { value: 'individu_pi', label: '👧 MTQ Putri (PI)' },
+                { value: 'all', label: '📖 Semua Peserta MTQ' },
             ];
         } else if (this.currentCompCode === 'POP') {
             return [
-                { value: 'all', label: '🎤 Semua Kategori Pop Singer' },
-                { value: 'individu_pa', label: '👦 Pop Singer Putra (PA)' },
-                { value: 'individu_pi', label: '👧 Pop Singer Putri (PI)' },
+                { value: 'all', label: '🎤 Semua Peserta Pop Singer' },
             ];
         } else if (this.currentCompCode === 'ALL') {
-            const list = [{ value: 'all', label: 'Semua Sektor / Kategori Lomba' }];
+            const list = [{ value: 'all', label: 'Semua Kategori & Sektor Lomba' }];
             const codes = this.competitionsData.map(c => c.code);
 
             if (codes.includes('BLT')) {
                 list.push(
-                    { value: 'blt_a_all', label: '🏷️ Bulu Tangkis: Semua Kategori A (Kelas 1–2)' },
-                    { value: 'tunggal_pa_a', label: '👦 Bulu Tangkis: Tunggal PA - Kat A (Kelas 1–2)' },
-                    { value: 'tunggal_pi_a', label: '👧 Bulu Tangkis: Tunggal PI - Kat A (Kelas 1–2)' },
-                    { value: 'blt_b_all', label: '🏷️ Bulu Tangkis: Semua Kategori B (Kelas 3–4)' },
-                    { value: 'tunggal_pa_b', label: '👦 Bulu Tangkis: Tunggal PA - Kat B (Kelas 3–4)' },
-                    { value: 'tunggal_pi_b', label: '👧 Bulu Tangkis: Tunggal PI - Kat B (Kelas 3–4)' },
-                    { value: 'blt_c_all', label: '🏷️ Bulu Tangkis: Semua Kategori C (Kelas 5–6)' },
-                    { value: 'tunggal_pa_c', label: '👦 Bulu Tangkis: Tunggal PA - Kat C (Kelas 5–6)' },
-                    { value: 'tunggal_pi_c', label: '👧 Bulu Tangkis: Tunggal PI - Kat C (Kelas 5–6)' },
-                    { value: 'tunggal_all', label: '🏸 Bulu Tangkis: Semua Tunggal (PA & PI)' },
-                    { value: 'tunggal_pa', label: '👦 Bulu Tangkis: Semua Tunggal Putra (PA)' },
-                    { value: 'tunggal_pi', label: '👧 Bulu Tangkis: Semua Tunggal Putri (PI)' },
-                    { value: 'ganda_all', label: '👥 Bulu Tangkis: Semua Ganda (PA & PI)' },
-                    { value: 'ganda_pa', label: '👥 Bulu Tangkis: Ganda Putra (PA)' },
-                    { value: 'ganda_pi', label: '👥 Bulu Tangkis: Ganda Putri (PI)' }
+                    { value: 'tunggal_all', label: '🏸 Bulu Tangkis: Semua Tunggal (Kelas 1–6)' },
+                    { value: 'blt_a_all', label: '🏷️ Bulu Tangkis: Kategori A (Kelas 1–2)' },
+                    { value: 'blt_b_all', label: '🏷️ Bulu Tangkis: Kategori B (Kelas 3–4)' },
+                    { value: 'blt_c_all', label: '🏷️ Bulu Tangkis: Kategori C (Kelas 5–6)' },
+                    { value: 'ganda_all', label: '👥 Bulu Tangkis: Ganda (Semua Kelas)' }
                 );
             }
             if (codes.includes('TMJ')) {
                 list.push(
-                    { value: 'tmj_a_all', label: '🏓 Tenis Meja: Semua Kategori A (Kelas 1–3)' },
-                    { value: 'tmj_pa_a', label: '🏷️ Tenis Meja: Tunggal PA - Kat A (Kelas 1–3)' },
-                    { value: 'tmj_pi_a', label: '🏷️ Tenis Meja: Tunggal PI - Kat A (Kelas 1–3)' },
-                    { value: 'tmj_b_all', label: '🏓 Tenis Meja: Semua Kategori B (Kelas 4–6)' },
-                    { value: 'tmj_pa_b', label: '🏷️ Tenis Meja: Tunggal PA - Kat B (Kelas 4–6)' },
-                    { value: 'tmj_pi_b', label: '🏷️ Tenis Meja: Tunggal PI - Kat B (Kelas 4–6)' }
-                );
-            }
-            if (codes.includes('MTQ')) {
-                list.push(
-                    { value: 'individu_pa', label: '📖 MTQ: Sektor Putra (PA)' },
-                    { value: 'individu_pi', label: '📖 MTQ: Sektor Putri (PI)' }
-                );
-            }
-            if (codes.includes('POP')) {
-                list.push(
-                    { value: 'individu_pa', label: '🎤 Pop Singer: Sektor Putra (PA)' },
-                    { value: 'individu_pi', label: '🎤 Pop Singer: Sektor Putri (PI)' }
+                    { value: 'tmj_a_all', label: '🏓 Tenis Meja: Kategori A (Kelas 1–3)' },
+                    { value: 'tmj_b_all', label: '🏓 Tenis Meja: Kategori B (Kelas 4–6)' }
                 );
             }
             return list;
@@ -560,62 +516,6 @@
     setGender(gender) {
         if (this.selectedGender === gender) return;
         this.selectedGender = gender;
-
-        // Sinkronisasi otomatis sektor jika saat ini berada di sektor gender yang berlawanan
-        if (gender === 'L') {
-            const piToPa = {
-                'tunggal_pi_a': 'tunggal_pa_a',
-                'tunggal_pi_b': 'tunggal_pa_b',
-                'tunggal_pi_c': 'tunggal_pa_c',
-                'tunggal_pi':   'tunggal_pa',
-                'ganda_pi':     'ganda_pa',
-                'tmj_pi_a':     'tmj_pa_a',
-                'tmj_pi_b':     'tmj_pa_b',
-                'individu_pi':  'individu_pa'
-            };
-            if (piToPa[this.selectedSector]) {
-                this.selectedSector = piToPa[this.selectedSector];
-                return;
-            }
-        } else if (gender === 'P') {
-            const paToPi = {
-                'tunggal_pa_a': 'tunggal_pi_a',
-                'tunggal_pa_b': 'tunggal_pi_b',
-                'tunggal_pa_c': 'tunggal_pi_c',
-                'tunggal_pa':   'tunggal_pi',
-                'ganda_pa':     'ganda_pi',
-                'tmj_pa_a':     'tmj_pi_a',
-                'tmj_pa_b':     'tmj_pi_b',
-                'individu_pa':  'individu_pi'
-            };
-            if (paToPi[this.selectedSector]) {
-                this.selectedSector = paToPi[this.selectedSector];
-                return;
-            }
-        } else if (gender === 'all') {
-            const toAll = {
-                'tunggal_pa_a': 'blt_a_all',
-                'tunggal_pi_a': 'blt_a_all',
-                'tunggal_pa_b': 'blt_b_all',
-                'tunggal_pi_b': 'blt_b_all',
-                'tunggal_pa_c': 'blt_c_all',
-                'tunggal_pi_c': 'blt_c_all',
-                'tunggal_pa':   'tunggal_all',
-                'tunggal_pi':   'tunggal_all',
-                'ganda_pa':     'ganda_all',
-                'ganda_pi':     'ganda_all',
-                'tmj_pa_a':     'tmj_a_all',
-                'tmj_pi_a':     'tmj_a_all',
-                'tmj_pa_b':     'tmj_b_all',
-                'tmj_pi_b':     'tmj_b_all',
-                'individu_pa':  'all',
-                'individu_pi':  'all'
-            };
-            if (toAll[this.selectedSector]) {
-                this.selectedSector = toAll[this.selectedSector];
-                return;
-            }
-        }
         this.currentPage = 1;
         this.fetchParticipants(true);
     },
@@ -639,17 +539,7 @@
         this.$watch('searchQuery',         () => { this.currentPage = 1; this.fetchParticipants(); });
         this.$watch('selectedCompetition', () => { this.currentPage = 1; this.fetchParticipants(true); });
         this.$watch('selectedGender',      () => { this.currentPage = 1; this.fetchParticipants(true); });
-        this.$watch('selectedSector',      (val) => {
-            if (val) {
-                if (val.endsWith('_pi') && this.selectedGender === 'L') {
-                    this.selectedGender = 'P';
-                } else if (val.endsWith('_pa') && this.selectedGender === 'P') {
-                    this.selectedGender = 'L';
-                }
-            }
-            this.currentPage = 1;
-            this.fetchParticipants(true);
-        });
+        this.$watch('selectedSector',      () => { this.currentPage = 1; this.fetchParticipants(true); });
         this.$watch('selectedStatus',      () => { this.currentPage = 1; this.fetchParticipants(true); });
         this.$watch('perPage',             () => { this.currentPage = 1; this.fetchParticipants(true); });
     },
@@ -863,7 +753,7 @@
 
             <!-- Filter 3: Sektor / Kategori Tanding -->
             <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 truncate" x-text="currentCompCode === 'BLT' ? 'Sektor / Kelas Bulu Tangkis:' : (currentCompCode === 'TMJ' ? 'Kategori Tenis Meja:' : (['MTQ', 'POP'].includes(currentCompCode) ? 'Kategori Sektor (PA/PI):' : 'Kategori Lomba:'))"></label>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 truncate" x-text="currentCompCode === 'BLT' ? 'Kategori / Kelas Bulu Tangkis:' : (currentCompCode === 'TMJ' ? 'Kategori Kelas Tenis Meja:' : 'Kategori / Kelas Lomba:')"></label>
                 <select x-model="selectedSector" :disabled="sectorOptions.length <= 1" :class="sectorOptions.length <= 1 ? 'opacity-70 bg-[#0C111D]/60' : 'cursor-pointer'" class="w-full px-3 py-2.5 h-[42px] rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8]">
                     <template x-for="opt in sectorOptions" :key="opt.value">
                         <option :value="opt.value" x-text="opt.label"></option>
