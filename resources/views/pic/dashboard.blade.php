@@ -27,6 +27,9 @@
     totalPa: {{ $stats['total_pa'] ?? 0 }},
     totalPi: {{ $stats['total_pi'] ?? 0 }},
     totalVerified: {{ $stats['verified_registrations'] ?? 0 }},
+    totalPending: {{ $stats['pending_registrations'] ?? $stats['pending_verifications'] ?? 0 }},
+    totalRevision: {{ $stats['revision_registrations'] ?? 0 }},
+    totalRejected: {{ $stats['rejected_registrations'] ?? 0 }},
     totalDrawn: {{ $stats['drawn_participants'] ?? 0 }},
     statusCounts: {
         verified: {{ $stats['verified_registrations'] ?? 0 }},
@@ -476,14 +479,17 @@
                     this.totalAll      = json.total_all ?? (json.total || 0);
                     this.totalPa       = json.total_pa ?? 0;
                     this.totalPi       = json.total_pi ?? 0;
-                    if (json.total_verified !== undefined) {
-                        this.totalVerified = json.total_verified;
-                    }
-                    if (json.total_drawn !== undefined) {
-                        this.totalDrawn = json.total_drawn;
-                    }
+                    if (json.total_verified !== undefined) this.totalVerified = json.total_verified;
+                    if (json.total_pending  !== undefined) this.totalPending  = json.total_pending;
+                    if (json.total_revision !== undefined) this.totalRevision = json.total_revision;
+                    if (json.total_rejected !== undefined) this.totalRejected = json.total_rejected;
+                    if (json.total_drawn    !== undefined) this.totalDrawn    = json.total_drawn;
                     if (json.status_summary) {
                         this.statusCounts = json.status_summary;
+                        this.totalVerified = json.status_summary.verified ?? this.totalVerified;
+                        this.totalPending  = json.status_summary.pending  ?? this.totalPending;
+                        this.totalRevision = json.status_summary.revision ?? this.totalRevision;
+                        this.totalRejected = json.status_summary.rejected ?? this.totalRejected;
                     }
                     this.fromItem      = json.from ?? 0;
                     this.toItem        = json.to   ?? 0;
@@ -596,53 +602,89 @@
         </div>
     @endif
 
-    <!-- Quick Stats Grid (AIStarterKit Design) -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Quick Stats Grid (Compact 7-Column Layout: Cabang, Peserta, Terverifikasi, Menunggu, Revisi, Ditolak, Diundi) -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2.5 sm:gap-3">
         <!-- Card 1: Cabang Dikelola -->
-        <div class="ai-card p-4 sm:p-5 rounded-3xl border border-white/[0.08] shadow-lg flex items-center gap-3.5 hover:border-[#7A5AF8]/50 transition">
-            <div class="w-10 h-10 rounded-2xl bg-[#7A5AF8]/15 text-[#A594FD] border border-[#7A5AF8]/30 flex items-center justify-center font-black shrink-0">
-                <i data-lucide="medal" class="w-5 h-5"></i>
+        <div class="ai-card p-3 sm:p-3.5 rounded-2xl border border-white/[0.08] shadow-md flex items-center gap-2.5 sm:gap-3 hover:border-[#7A5AF8]/50 transition min-w-0">
+            <div class="w-8 h-8 rounded-xl bg-[#7A5AF8]/15 text-[#A594FD] border border-[#7A5AF8]/30 flex items-center justify-center font-black shrink-0">
+                <i data-lucide="medal" class="w-4 h-4"></i>
             </div>
-            <div>
-                <div class="text-2xl font-black text-white">{{ $stats['total_competitions'] }}</div>
-                <div class="text-xs font-semibold text-slate-400">Cabang Dikelola</div>
+            <div class="min-w-0 flex-1">
+                <div class="text-lg sm:text-xl font-black text-white leading-tight truncate">{{ $stats['total_competitions'] }}</div>
+                <div class="text-[10px] sm:text-[11px] font-semibold text-slate-400 truncate">Cabang Dikelola</div>
             </div>
         </div>
 
         <!-- Card 2: Total Peserta & Komposisi PA/PI -->
-        <div class="ai-card p-4 sm:p-5 rounded-3xl border border-white/[0.08] shadow-lg flex items-center gap-3.5 hover:border-[#4E6EFF]/50 transition">
-            <div class="w-10 h-10 rounded-2xl bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30 flex items-center justify-center font-black shrink-0">
-                <i data-lucide="users" class="w-5 h-5"></i>
+        <div class="ai-card p-3 sm:p-3.5 rounded-2xl border border-white/[0.08] shadow-md flex items-center gap-2.5 sm:gap-3 hover:border-[#4E6EFF]/50 transition min-w-0">
+            <div class="w-8 h-8 rounded-xl bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30 flex items-center justify-center font-black shrink-0">
+                <i data-lucide="users" class="w-4 h-4"></i>
             </div>
-            <div>
-                <div class="text-2xl font-black text-white" x-text="selectedGender === 'all' ? countTotal : countAll"></div>
-                <div class="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 mt-0.5">
-                    <span class="text-[#84D0FF] bg-[#4E6EFF]/15 border border-[#4E6EFF]/30 px-2 py-0.5 rounded-full font-bold"><span x-text="countPa"></span> PA</span>
-                    <span>•</span>
-                    <span class="text-[#FFA0E7] bg-[#FF58D5]/15 border border-[#FF58D5]/30 px-2 py-0.5 rounded-full font-bold"><span x-text="countPi"></span> PI</span>
+            <div class="min-w-0 flex-1">
+                <div class="flex items-baseline gap-1.5 flex-wrap">
+                    <span class="text-lg sm:text-xl font-black text-white leading-tight" x-text="selectedGender === 'all' ? countTotal : countAll"></span>
+                    <span class="text-[9px] font-bold text-slate-400 flex items-center gap-1">
+                        <span class="text-[#84D0FF]"><span x-text="countPa"></span> PA</span>
+                        <span class="text-white/20">•</span>
+                        <span class="text-[#FFA0E7]"><span x-text="countPi"></span> PI</span>
+                    </span>
                 </div>
+                <div class="text-[10px] sm:text-[11px] font-semibold text-slate-400 truncate">Total Peserta</div>
             </div>
         </div>
 
         <!-- Card 3: Terverifikasi -->
-        <div class="ai-card p-4 sm:p-5 rounded-3xl border border-white/[0.08] shadow-lg flex items-center gap-3.5 hover:border-emerald-500/50 transition">
-            <div class="w-10 h-10 rounded-2xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-black shrink-0">
-                <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+        <div class="ai-card p-3 sm:p-3.5 rounded-2xl border border-white/[0.08] shadow-md flex items-center gap-2.5 sm:gap-3 hover:border-emerald-500/50 transition min-w-0">
+            <div class="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-black shrink-0">
+                <i data-lucide="check-circle-2" class="w-4 h-4"></i>
             </div>
-            <div>
-                <div class="text-2xl font-black text-emerald-400" x-text="totalVerified">{{ $stats['verified_registrations'] }}</div>
-                <div class="text-xs font-semibold text-slate-400">Terverifikasi</div>
+            <div class="min-w-0 flex-1">
+                <div class="text-lg sm:text-xl font-black text-emerald-400 leading-tight truncate" x-text="totalVerified">{{ $stats['verified_registrations'] }}</div>
+                <div class="text-[10px] sm:text-[11px] font-semibold text-slate-400 truncate">Terverifikasi</div>
             </div>
         </div>
 
-        <!-- Card 4: Sudah Dapat No Undian -->
-        <div class="ai-card p-4 sm:p-5 rounded-3xl border border-white/[0.08] shadow-lg flex items-center gap-3.5 hover:border-[#FF58D5]/50 transition">
-            <div class="w-10 h-10 rounded-2xl bg-[#FF58D5]/15 text-[#FFA0E7] border border-[#FF58D5]/30 flex items-center justify-center font-black shrink-0">
-                <i data-lucide="disc" class="w-5 h-5"></i>
+        <!-- Card 4: Menunggu -->
+        <div class="ai-card p-3 sm:p-3.5 rounded-2xl border border-white/[0.08] shadow-md flex items-center gap-2.5 sm:gap-3 hover:border-amber-500/50 transition min-w-0">
+            <div class="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center font-black shrink-0">
+                <i data-lucide="clock" class="w-4 h-4"></i>
             </div>
-            <div>
-                <div class="text-2xl font-black text-[#FFA0E7]" x-text="totalDrawn">{{ $stats['drawn_participants'] }}</div>
-                <div class="text-xs font-semibold text-slate-400">Sudah Diundi (TM)</div>
+            <div class="min-w-0 flex-1">
+                <div class="text-lg sm:text-xl font-black text-amber-400 leading-tight truncate" x-text="totalPending">{{ $stats['pending_registrations'] ?? $stats['pending_verifications'] ?? 0 }}</div>
+                <div class="text-[10px] sm:text-[11px] font-semibold text-slate-400 truncate">Menunggu</div>
+            </div>
+        </div>
+
+        <!-- Card 5: Butuh Revisi -->
+        <div class="ai-card p-3 sm:p-3.5 rounded-2xl border border-white/[0.08] shadow-md flex items-center gap-2.5 sm:gap-3 hover:border-orange-500/50 transition min-w-0">
+            <div class="w-8 h-8 rounded-xl bg-orange-500/15 text-orange-400 border border-orange-500/30 flex items-center justify-center font-black shrink-0">
+                <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+                <div class="text-lg sm:text-xl font-black text-orange-400 leading-tight truncate" x-text="totalRevision">{{ $stats['revision_registrations'] ?? 0 }}</div>
+                <div class="text-[10px] sm:text-[11px] font-semibold text-slate-400 truncate">Revisi</div>
+            </div>
+        </div>
+
+        <!-- Card 6: Ditolak -->
+        <div class="ai-card p-3 sm:p-3.5 rounded-2xl border border-white/[0.08] shadow-md flex items-center gap-2.5 sm:gap-3 hover:border-rose-500/50 transition min-w-0">
+            <div class="w-8 h-8 rounded-xl bg-rose-500/15 text-rose-400 border border-rose-500/30 flex items-center justify-center font-black shrink-0">
+                <i data-lucide="x-circle" class="w-4 h-4"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+                <div class="text-lg sm:text-xl font-black text-rose-400 leading-tight truncate" x-text="totalRejected">{{ $stats['rejected_registrations'] ?? 0 }}</div>
+                <div class="text-[10px] sm:text-[11px] font-semibold text-slate-400 truncate">Ditolak</div>
+            </div>
+        </div>
+
+        <!-- Card 7: Sudah Diundi (TM) -->
+        <div class="ai-card p-3 sm:p-3.5 rounded-2xl border border-white/[0.08] shadow-md flex items-center gap-2.5 sm:gap-3 hover:border-[#FF58D5]/50 transition min-w-0 col-span-2 sm:col-span-1">
+            <div class="w-8 h-8 rounded-xl bg-[#FF58D5]/15 text-[#FFA0E7] border border-[#FF58D5]/30 flex items-center justify-center font-black shrink-0">
+                <i data-lucide="disc" class="w-4 h-4"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+                <div class="text-lg sm:text-xl font-black text-[#FFA0E7] leading-tight truncate" x-text="totalDrawn">{{ $stats['drawn_participants'] }}</div>
+                <div class="text-[10px] sm:text-[11px] font-semibold text-slate-400 truncate">Sudah Diundi (TM)</div>
             </div>
         </div>
     </div>
