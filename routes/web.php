@@ -181,6 +181,10 @@ Route::middleware(['auth', 'role:superadmin,panitia'])->prefix('admin')->name('a
     Route::get('/invoices', [CollectiveRegistrationController::class, 'adminInvoices'])->name('invoices.index');
     Route::get('/invoices/{id}', [CollectiveRegistrationController::class, 'adminShowInvoice'])->name('invoices.show');
     Route::post('/invoices/{id}/verify', [CollectiveRegistrationController::class, 'adminVerifyInvoice'])->name('invoices.verify');
+
+    // Finance Adjustments & Refund Routes
+    Route::post('/finance/adjustments', [AdminController::class, 'storePaymentAdjustment'])->name('finance.adjustments.store');
+    Route::post('/finance/adjustments/{id}/delete', [AdminController::class, 'deletePaymentAdjustment'])->name('finance.adjustments.delete');
 });
 
 /*
@@ -260,7 +264,7 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->name('admin.')-
 Route::get('/storage/{folder}/{filename}', function ($folder, $filename) {
     $allowedFolders = [
         'documents', 'payments', 'payment_proofs', 'sponsors', 'pamphlets', 'popups',
-        'settings', 'guidelines', 'certificates', 'avatars', 'qrcodes', 'invoices'
+        'settings', 'guidelines', 'certificates', 'avatars', 'qrcodes', 'invoices', 'adjustments'
     ];
     if (!in_array($folder, $allowedFolders)) {
         abort(404);

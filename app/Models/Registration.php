@@ -87,6 +87,11 @@ class Registration extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function adjustments(): HasMany
+    {
+        return $this->hasMany(PaymentAdjustment::class, 'reference_id')->where('reference_type', 'registration');
+    }
+
     public function verifier(): BelongsTo
     {
         return $this->belongsTo(User::class, 'verified_by');

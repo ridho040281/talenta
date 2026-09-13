@@ -51,6 +51,11 @@ class Invoice extends Model
         return $this->hasMany(Registration::class);
     }
 
+    public function adjustments(): HasMany
+    {
+        return $this->hasMany(PaymentAdjustment::class, 'reference_id')->where('reference_type', 'invoice');
+    }
+
     public function getFormattedTotalAttribute(): string
     {
         return 'Rp '.number_format($this->total_amount, 0, ',', '.');

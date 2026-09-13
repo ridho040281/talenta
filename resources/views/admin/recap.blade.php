@@ -39,6 +39,61 @@
 </style>
 <div class="space-y-4" x-data="{ 
     activeTab: '{{ request('tab', 'keuangan') }}',
+    subTabKeuangan: '{{ request('subtab', 'lomba') }}',
+    cashflowFilterType: 'all',
+    cashflowFilterStatus: 'all',
+    cashflowSearch: '',
+    selectedAdjustmentItem: null,
+    showAdjustmentModal: false,
+    adjustmentForm: {
+        reference_type: 'registration',
+        reference_id: '',
+        ref_no: '',
+        title: '',
+        contact_name: '',
+        institution: '',
+        gross_amount: 0,
+        adjustment_type: 'refund_overpayment',
+        amount: '',
+        bank_account: '',
+        reason: ''
+    },
+    openAdjustmentModal(item) {
+        this.selectedAdjustmentItem = item;
+        this.adjustmentForm.reference_type = item.reference_type;
+        this.adjustmentForm.reference_id = item.id;
+        this.adjustmentForm.ref_no = item.ref_no;
+        this.adjustmentForm.title = item.title;
+        this.adjustmentForm.contact_name = item.contact_name;
+        this.adjustmentForm.institution = item.institution;
+        this.adjustmentForm.gross_amount = item.gross_amount;
+        this.adjustmentForm.adjustment_type = 'refund_overpayment';
+        this.adjustmentForm.amount = '';
+        this.adjustmentForm.bank_account = '';
+        this.adjustmentForm.reason = '';
+        this.showAdjustmentModal = true;
+    },
+    setFullRefund() {
+        if (this.selectedAdjustmentItem) {
+            this.adjustmentForm.amount = this.selectedAdjustmentItem.gross_amount;
+        }
+    },
+    showProofModal: false,
+    proofModalUrl: '',
+    proofModalTitle: '',
+    openProofModal(url, title) {
+        this.proofModalUrl = url;
+        this.proofModalTitle = title;
+        this.showProofModal = true;
+    },
+    showAdjustmentsListModal: false,
+    activeAdjustmentsList: [],
+    activeAdjustmentsTitle: '',
+    openAdjustmentsListModal(item) {
+        this.activeAdjustmentsList = item.adjustments || [];
+        this.activeAdjustmentsTitle = item.ref_no + ' - ' + item.title;
+        this.showAdjustmentsListModal = true;
+    },
     downloadingPng: false,
     recapCategory: 'all',
     searchQuery: '',
@@ -357,6 +412,31 @@
     }
 }">
 
+    <!-- Flash Notification Alerts -->
+    @if(session('success'))
+        <div class="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 flex items-center justify-between gap-3 text-xs sm:text-sm font-bold shadow-lg">
+            <div class="flex items-center gap-2.5">
+                <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400 shrink-0"></i>
+                <span>{{ session('success') }}</span>
+            </div>
+            <button type="button" @click="$el.parentElement.remove()" class="text-emerald-400/60 hover:text-emerald-300 cursor-pointer">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="p-4 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-300 flex items-center justify-between gap-3 text-xs sm:text-sm font-bold shadow-lg">
+            <div class="flex items-center gap-2.5">
+                <i data-lucide="alert-triangle" class="w-5 h-5 text-rose-400 shrink-0"></i>
+                <span>{{ session('error') }}</span>
+            </div>
+            <button type="button" @click="$el.parentElement.remove()" class="text-rose-400/60 hover:text-rose-300 cursor-pointer">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+    @endif
+
     <!-- Compact Global Overview Stat Cards (Ultra Slim ~50px) -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <!-- Card 1: Total Pendaftar & Potensi Kuota -->
@@ -376,15 +456,19 @@
             </div>
         </div>
 
-        <!-- Card 2: Terverifikasi (Lunas) -->
+        <!-- Card 2: Terverifikasi (Net Kas Riil) -->
         <div class="ai-card rounded-2xl p-3 border border-white/[0.08] shadow-md flex items-center justify-between hover:border-emerald-500/50 transition">
             <div class="space-y-0.5">
-                <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">Dana Terverifikasi (Lunas)</span>
+                <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">Dana Masuk Riil (Net Kas)</span>
                 <div>
-                    <span class="text-sm sm:text-base font-black text-emerald-400 font-mono">Rp {{ number_format($grandTotals['verified_income'], 0, ',', '.') }}</span>
+                    <span class="text-sm sm:text-base font-black text-emerald-400 font-mono">Rp {{ number_format($grandTotals['net_verified_income'], 0, ',', '.') }}</span>
                 </div>
                 <div class="text-[10px] text-emerald-300/80 font-medium pt-0.5">
-                    <span class="font-bold font-mono">{{ $grandTotals['verified_registrations'] }}</span> Siswa Valid (Lolos)
+                    @if($grandTotals['total_adjustments'] > 0)
+                        <span class="text-slate-400 font-mono">Bruto: Rp {{ number_format($grandTotals['verified_income'], 0, ',', '.') }}</span> • <span class="text-rose-400 font-bold font-mono">Refund: -Rp {{ number_format($grandTotals['total_adjustments'], 0, ',', '.') }}</span>
+                    @else
+                        <span class="font-bold font-mono">{{ $grandTotals['verified_registrations'] }}</span> Siswa Valid (Lolos)
+                    @endif
                 </div>
             </div>
             <div class="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0">
@@ -456,8 +540,40 @@
     </div>
 
     <!-- ==================== TAB 1: REKAP KEUANGAN & LOMBA ==================== -->
-    <div x-show="activeTab === 'keuangan'" x-transition class="space-y-6">
-        <div class="ai-card rounded-3xl border border-white/[0.08] shadow-xl p-5 sm:p-7 lg:p-8 space-y-6">
+    <div x-show="activeTab === 'keuangan'" x-transition class="space-y-4">
+        <!-- Sub-Navigation Toggle for Tab 1 (Rekap Cabang vs Buku Kas Terpadu) -->
+        <div class="ai-card rounded-2xl p-2 border border-white/[0.08] shadow-md flex flex-wrap items-center justify-between gap-3 bg-[#0C111D]/80">
+            <div class="flex items-center gap-2">
+                <button type="button" @click="subTabKeuangan = 'lomba'" 
+                    :class="subTabKeuangan === 'lomba' ? 'bg-[#7A5AF8] text-white shadow font-bold' : 'text-slate-400 hover:text-white bg-white/[0.03]'" 
+                    class="px-4 py-2 rounded-xl text-xs sm:text-sm transition flex items-center gap-2 cursor-pointer">
+                    <i data-lucide="trophy" class="w-4 h-4 text-amber-300"></i>
+                    <span>Rekap Cabang Lomba & Kuota</span>
+                </button>
+
+                <button type="button" @click="subTabKeuangan = 'buku_kas'" 
+                    :class="subTabKeuangan === 'buku_kas' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md font-bold' : 'text-slate-400 hover:text-white bg-white/[0.03]'" 
+                    class="px-4 py-2 rounded-xl text-xs sm:text-sm transition flex items-center gap-2 cursor-pointer">
+                    <i data-lucide="book-open" class="w-4 h-4 text-emerald-300"></i>
+                    <span>Buku Kas & Mutasi Pembayaran</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] bg-white/20 text-white font-mono">{{ $cashflowItems->count() }}</span>
+                    @if($cashflowSummary['total_refunds'] > 0)
+                        <span class="px-2 py-0.5 rounded-full text-[10px] bg-rose-500 text-white font-bold">{{ $cashflowSummary['count_adjustments'] }} Refund</span>
+                    @endif
+                </button>
+            </div>
+
+            <div class="flex items-center gap-3 px-3 py-1">
+                <div class="text-right">
+                    <span class="text-[10px] text-slate-400 block uppercase font-bold">Kas Riil Terverifikasi (Net)</span>
+                    <span class="text-sm sm:text-base font-black text-emerald-400 font-mono">Rp {{ number_format($cashflowSummary['net_real_cash'], 0, ',', '.') }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SUB-TAB 1: REKAP CABANG LOMBA & KUOTA -->
+        <div x-show="subTabKeuangan === 'lomba'" x-transition class="space-y-4">
+            <div class="ai-card rounded-3xl border border-white/[0.08] shadow-xl p-5 sm:p-7 lg:p-8 space-y-6">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.08] pb-4">
                 <div>
                     <h3 class="text-lg font-black text-white">Rekapitulasi Keuangan & Kuota Pendaftaran Cabang Lomba</h3>
@@ -612,7 +728,326 @@
                 </table>
             </div>
         </div>
+        </div>
+        <!-- END SUB-TAB 1: REKAP CABANG LOMBA & KUOTA -->
+
+        <!-- SUB-TAB 2: BUKU KAS & MUTASI PEMBAYARAN TERPADU -->
+        <div x-show="subTabKeuangan === 'buku_kas'" x-transition class="space-y-6">
+            <!-- 4 Financial Summary Stat Cards for Cashflow -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <div class="ai-card rounded-2xl p-3 border border-white/[0.08] shadow-md flex items-center justify-between hover:border-emerald-500/50 transition bg-[#0C111D]/90">
+                    <div class="space-y-0.5">
+                        <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">Penerimaan Bruto (Lunas)</span>
+                        <div class="text-sm sm:text-base font-black text-emerald-400 font-mono">
+                            Rp {{ number_format($cashflowSummary['gross_verified'], 0, ',', '.') }}
+                        </div>
+                        <div class="text-[10px] text-slate-400 font-medium pt-0.5">
+                            {{ $cashflowSummary['count_collective'] }} Kolektif • {{ $cashflowSummary['count_individual'] }} Mandiri
+                        </div>
+                    </div>
+                    <div class="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                        <i data-lucide="arrow-down-left" class="w-4 h-4"></i>
+                    </div>
+                </div>
+
+                <div class="ai-card rounded-2xl p-3 border border-white/[0.08] shadow-md flex items-center justify-between hover:border-rose-500/50 transition bg-[#0C111D]/90">
+                    <div class="space-y-0.5">
+                        <span class="text-[10px] font-bold text-rose-400 uppercase tracking-wider block">Refund / Penyesuaian</span>
+                        <div class="text-sm sm:text-base font-black text-rose-400 font-mono">
+                            -Rp {{ number_format($cashflowSummary['total_refunds'], 0, ',', '.') }}
+                        </div>
+                        <div class="text-[10px] text-rose-300/80 font-medium pt-0.5">
+                            {{ $cashflowSummary['count_adjustments'] }} Transaksi Penyesuaian
+                        </div>
+                    </div>
+                    <div class="w-8 h-8 rounded-xl bg-rose-500/15 text-rose-400 border border-rose-500/30 flex items-center justify-center shrink-0">
+                        <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                    </div>
+                </div>
+
+                <div class="ai-card rounded-2xl p-3 border border-white/[0.08] shadow-md flex items-center justify-between hover:border-teal-500/50 transition bg-gradient-to-tr from-emerald-950/40 to-teal-950/40">
+                    <div class="space-y-0.5">
+                        <span class="text-[10px] font-bold text-teal-300 uppercase tracking-wider block">Kas Bersih Riil di Bank</span>
+                        <div class="text-sm sm:text-base font-black text-white font-mono">
+                            Rp {{ number_format($cashflowSummary['net_real_cash'], 0, ',', '.') }}
+                        </div>
+                        <div class="text-[10px] text-teal-300/80 font-medium pt-0.5">
+                            Saldo Riil Mutasi BSI
+                        </div>
+                    </div>
+                    <div class="w-8 h-8 rounded-xl bg-teal-500/20 text-teal-300 border border-teal-500/40 flex items-center justify-center shrink-0">
+                        <i data-lucide="wallet" class="w-4 h-4"></i>
+                    </div>
+                </div>
+
+                <div class="ai-card rounded-2xl p-3 border border-white/[0.08] shadow-md flex items-center justify-between hover:border-amber-500/50 transition bg-[#0C111D]/90">
+                    <div class="space-y-0.5">
+                        <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">Pending Verifikasi</span>
+                        <div class="text-sm sm:text-base font-black text-amber-400 font-mono">
+                            Rp {{ number_format($cashflowSummary['gross_pending'], 0, ',', '.') }}
+                        </div>
+                        <div class="text-[10px] text-amber-300/80 font-medium pt-0.5">
+                            Menunggu Konfirmasi Slip
+                        </div>
+                    </div>
+                    <div class="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0">
+                        <i data-lucide="clock" class="w-4 h-4"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Cashflow Ledger Card -->
+            <div class="ai-card rounded-3xl border border-white/[0.08] shadow-xl p-5 sm:p-7 lg:p-8 space-y-6">
+                <!-- Header & Info -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/[0.08] pb-5">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                Buku Kas Terpadu
+                            </span>
+                            <h3 class="text-lg font-black text-white">Mutasi Pembayaran Masuk & Penyesuaian Kas</h3>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-1">
+                            Penyatuan seluruh transaksi pendaftaran <span class="text-cyan-300 font-semibold">Mandiri</span> & tagihan <span class="text-[#A594FD] font-semibold">Kolektif</span>. Dilengkapi fitur audit trail pencatatan pengembalian kelebihan transfer dan pembatalan pendaftaran.
+                        </p>
+                    </div>
+
+                    <div class="flex items-center gap-2 self-start md:self-auto">
+                        <span class="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#0C111D] text-slate-300 border border-white/[0.08] whitespace-nowrap">
+                            Total <strong class="text-emerald-400">{{ $cashflowItems->count() }}</strong> Transaksi
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Filter Controls Toolbar -->
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                    <!-- Search Input -->
+                    <div class="sm:col-span-6 lg:col-span-5 relative">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                        <input type="text" x-model="cashflowSearch" placeholder="Cari No. Tagihan, No. Reg, Nama, Lembaga, No. WA..." class="w-full pl-9 pr-8 py-2.5 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none">
+                        <button x-show="cashflowSearch" @click="cashflowSearch = ''" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs p-1 cursor-pointer" title="Hapus pencarian">
+                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+
+                    <!-- Type Filter -->
+                    <div class="sm:col-span-3 lg:col-span-4">
+                        <select x-model="cashflowFilterType" class="w-full px-3 py-2.5 rounded-xl border border-white/[0.1] text-xs font-bold text-slate-200 bg-[#0C111D] focus:border-emerald-500 outline-none cursor-pointer">
+                            <option value="all">Semua Jenis (Mandiri & Kolektif)</option>
+                            <option value="mandiri">Khusus Mandiri (Satuan)</option>
+                            <option value="kolektif">Khusus Kolektif (Invoice Excel)</option>
+                            <option value="adjustment">Hanya yang Ada Refund / Penyesuaian</option>
+                        </select>
+                    </div>
+
+                    <!-- Status Filter & Reset -->
+                    <div class="sm:col-span-3 lg:col-span-3 flex items-center gap-2">
+                        <select x-model="cashflowFilterStatus" class="w-full px-3 py-2.5 rounded-xl border border-white/[0.1] text-xs font-bold text-slate-200 bg-[#0C111D] focus:border-emerald-500 outline-none cursor-pointer">
+                            <option value="all">Semua Status</option>
+                            <option value="verified">Lunas / Terverifikasi</option>
+                            <option value="pending">Pending</option>
+                            <option value="cancelled">Dibatalkan (Cancelled)</option>
+                        </select>
+                        <button type="button" @click="cashflowSearch = ''; cashflowFilterType = 'all'; cashflowFilterStatus = 'all';" class="p-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-400 hover:text-white border border-white/[0.08] transition shrink-0 cursor-pointer" title="Reset filter">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Unified Ledger Table -->
+                <div class="overflow-x-auto rounded-2xl border border-white/[0.08] bg-[#0A0E1A]/40 shadow-inner">
+                    <table class="w-full min-w-[1100px] text-left text-xs text-slate-300 border-collapse">
+                        <thead class="text-[10px] font-bold uppercase tracking-wider bg-[#0C111D]/90 text-slate-400 border-b border-white/[0.08]">
+                            <tr>
+                                <th class="py-3.5 px-4 whitespace-nowrap w-[120px]">TGL & WAKTU</th>
+                                <th class="py-3.5 px-4 whitespace-nowrap w-[160px]">TIPE & NO. REF</th>
+                                <th class="py-3.5 px-4 min-w-[200px]">PENDAFTAR / SEKOLAH</th>
+                                <th class="py-3.5 px-4 min-w-[220px]">RINCIAN ITEM / LOMBA</th>
+                                <th class="py-3.5 px-4 text-right whitespace-nowrap w-[140px]">BRUTO (MASUK)</th>
+                                <th class="py-3.5 px-4 text-right whitespace-nowrap w-[160px]">REFUND / KELUAR</th>
+                                <th class="py-3.5 px-4 text-right whitespace-nowrap w-[140px]">NET KAS RIIL</th>
+                                <th class="py-3.5 px-4 text-center whitespace-nowrap w-[140px]">STATUS & BUKTI</th>
+                                <th class="py-3.5 px-4 text-center whitespace-nowrap w-[130px]">AKSI BENDAHARA</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/[0.04] font-medium">
+                            @forelse($cashflowItems as $item)
+                                @php
+                                    $itemJson = [
+                                        'id' => $item['id'],
+                                        'reference_type' => $item['reference_type'],
+                                        'ref_no' => $item['ref_no'],
+                                        'title' => $item['title'],
+                                        'contact_name' => $item['contact_name'],
+                                        'institution' => $item['institution'],
+                                        'gross_amount' => $item['gross_amount'],
+                                        'refund_amount' => $item['refund_amount'],
+                                        'net_amount' => $item['net_amount'],
+                                        'adjustments' => $item['adjustments']->map(fn($a) => [
+                                            'id' => $a->id,
+                                            'type_label' => $a->type_label,
+                                            'amount' => (float)$a->amount,
+                                            'bank_account' => $a->bank_account,
+                                            'reason' => $a->reason,
+                                            'proof_url' => $a->proof_file ? asset('storage/'.$a->proof_file) : null,
+                                            'creator_name' => $a->creator->name ?? 'Admin',
+                                            'created_at' => $a->created_at ? $a->created_at->translatedFormat('d M Y H:i') : '-',
+                                        ]),
+                                    ];
+                                    $searchTerms = strtolower($item['ref_no'].' '.$item['contact_name'].' '.$item['contact_phone'].' '.$item['institution'].' '.$item['title'].' '.$item['description']);
+                                    $normStatus = in_array($item['status'], ['paid', 'verified']) ? 'verified' : ($item['status'] === 'cancelled' ? 'cancelled' : ($item['status'] === 'rejected' ? 'rejected' : 'pending'));
+                                @endphp
+                                <tr x-show="(cashflowFilterType === 'all' || (cashflowFilterType === 'adjustment' ? {{ $item['refund_amount'] > 0 ? 'true' : 'false' }} : cashflowFilterType === '{{ $item['type'] }}')) && (cashflowFilterStatus === 'all' || cashflowFilterStatus === '{{ $normStatus }}') && (!cashflowSearch || {{ json_encode($searchTerms) }}.includes(cashflowSearch.toLowerCase()))"
+                                    class="hover:bg-white/[0.025] transition border-b border-white/[0.04]">
+                                    
+                                    <!-- Tgl & Waktu -->
+                                    <td class="py-3.5 px-4 whitespace-nowrap text-slate-400 font-mono text-[11px]">
+                                        {{ $item['date_formatted'] }}
+                                    </td>
+
+                                    <!-- Tipe & No Ref -->
+                                    <td class="py-3.5 px-4 whitespace-nowrap">
+                                        @if($item['type'] === 'kolektif')
+                                            <div class="space-y-1">
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#7A5AF8]/15 text-[#A594FD] border border-[#7A5AF8]/30">
+                                                    <i data-lucide="file-spreadsheet" class="w-3 h-3"></i> Kolektif
+                                                </span>
+                                                <a href="{{ route('admin.invoices.show', $item['id']) }}" class="block font-mono font-bold text-white hover:text-[#84D0FF] hover:underline" title="Klik untuk membuka rincian invoice">
+                                                    {{ $item['ref_no'] }}
+                                                </a>
+                                            </div>
+                                        @else
+                                            <div class="space-y-1">
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                                                    <i data-lucide="user" class="w-3 h-3"></i> Mandiri
+                                                </span>
+                                                <span class="block font-mono font-bold text-white">
+                                                    {{ $item['ref_no'] }}
+                                                </span>
+                                            </div>
+                                        @endif
+                                    </td>
+
+                                    <!-- Pendaftar / Lembaga -->
+                                    <td class="py-3.5 px-4 min-w-[200px]">
+                                        <div class="space-y-0.5">
+                                            <div class="font-bold text-white text-xs flex items-center gap-1.5">
+                                                <span>{{ $item['contact_name'] }}</span>
+                                                @if(!empty($item['contact_phone']) && $item['contact_phone'] !== '-')
+                                                    @php
+                                                        $cleanPhone = preg_replace('/[^0-9]/', '', $item['contact_phone']);
+                                                        if (str_starts_with($cleanPhone, '0')) $cleanPhone = '62' . substr($cleanPhone, 1);
+                                                    @endphp
+                                                    <a href="https://wa.me/{{ $cleanPhone }}" target="_blank" class="text-emerald-400 hover:text-emerald-300 inline-flex items-center" title="Hubungi via WhatsApp">
+                                                        <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+                                                    </a>
+                                                @endif
+                                            </div>
+                                            <div class="text-[11px] text-slate-400">{{ $item['institution'] }}</div>
+                                        </div>
+                                    </td>
+
+                                    <!-- Rincian Lomba / Item -->
+                                    <td class="py-3.5 px-4 min-w-[220px]">
+                                        <div class="space-y-0.5">
+                                            <span class="text-xs font-semibold text-slate-200 block">{{ $item['title'] }}</span>
+                                            <span class="text-[11px] text-slate-400 block">{{ $item['description'] }}</span>
+                                        </div>
+                                    </td>
+
+                                    <!-- Nominal Masuk (Bruto) -->
+                                    <td class="py-3.5 px-4 text-right font-mono font-bold text-slate-200 whitespace-nowrap">
+                                        Rp {{ number_format($item['gross_amount'], 0, ',', '.') }}
+                                    </td>
+
+                                    <!-- Refund / Penyesuaian -->
+                                    <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                                        @if($item['refund_amount'] > 0)
+                                            <button type="button" @click="openAdjustmentsListModal({{ json_encode($itemJson) }})" class="group inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-rose-500/15 text-rose-400 border border-rose-500/30 hover:bg-rose-500/25 transition cursor-pointer font-mono font-bold text-xs" title="Lihat riwayat pengembalian dana & bukti transfer">
+                                                <i data-lucide="corner-down-left" class="w-3 h-3 text-rose-400 group-hover:-translate-x-0.5 transition"></i>
+                                                <span>-Rp {{ number_format($item['refund_amount'], 0, ',', '.') }}</span>
+                                            </button>
+                                        @else
+                                            <span class="text-slate-500 font-mono text-xs">-</span>
+                                        @endif
+                                    </td>
+
+                                    <!-- Kas Bersih (Netto) -->
+                                    <td class="py-3.5 px-4 text-right font-mono font-black text-emerald-400 text-sm whitespace-nowrap">
+                                        Rp {{ number_format($item['net_amount'], 0, ',', '.') }}
+                                    </td>
+
+                                    <!-- Status & Bukti -->
+                                    <td class="py-3.5 px-4 whitespace-nowrap text-center">
+                                        <div class="flex items-center justify-center gap-1.5">
+                                            @if(in_array($item['status'], ['paid', 'verified']))
+                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                                    Lunas
+                                                </span>
+                                            @elseif($item['status'] === 'cancelled')
+                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                                                    Batal
+                                                </span>
+                                            @elseif($item['status'] === 'rejected')
+                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-red-500/15 text-red-400 border border-red-500/30">
+                                                    Ditolak
+                                                </span>
+                                            @else
+                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                                                    Pending
+                                                </span>
+                                            @endif
+
+                                            @if($item['payment_proof'])
+                                                <a href="{{ $item['proof_url'] }}" target="_blank" class="p-1 rounded-lg bg-white/[0.08] hover:bg-white/[0.15] text-[#84D0FF] border border-white/[0.1] transition cursor-pointer" title="Buka Bukti Bayar Masuk">
+                                                    <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                                                </a>
+                                            @endif
+                                        </div>
+                                    </td>
+
+                                    <!-- Aksi Bendahara -->
+                                    <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                                        <button type="button" @click="openAdjustmentModal({{ json_encode($itemJson) }})" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30 hover:bg-[#4E6EFF]/25 text-xs font-bold transition cursor-pointer">
+                                            <i data-lucide="receipt" class="w-3.5 h-3.5"></i>
+                                            <span>Catat Refund</span>
+                                        </button>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="9" class="py-12 text-center text-slate-500">
+                                        Belum ada data transaksi pendaftaran mandiri maupun kolektif.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                        <tfoot class="bg-[#0C111D] text-white font-bold border-t-2 border-white/[0.1]">
+                            <tr>
+                                <td colspan="4" class="py-4 px-4 font-black uppercase text-xs whitespace-nowrap">
+                                    TOTAL KAS TERVERIFIKASI / LUNAS:
+                                </td>
+                                <td class="py-4 px-4 text-right font-black text-slate-300 font-mono text-sm whitespace-nowrap">
+                                    Rp {{ number_format($cashflowSummary['gross_verified'], 0, ',', '.') }}
+                                </td>
+                                <td class="py-4 px-4 text-right font-black text-rose-400 font-mono text-sm whitespace-nowrap">
+                                    -Rp {{ number_format($cashflowSummary['total_refunds'], 0, ',', '.') }}
+                                </td>
+                                <td class="py-4 px-4 text-right font-black text-emerald-400 font-mono text-base whitespace-nowrap">
+                                    Rp {{ number_format($cashflowSummary['net_real_cash'], 0, ',', '.') }}
+                                </td>
+                                <td colspan="2" class="py-4 px-4 text-center text-xs text-slate-400">
+                                    (Kas Riil BSI)
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- END SUB-TAB 2 -->
     </div>
+    <!-- ==================== END TAB 1 ==================== -->
 
     <!-- ==================== TAB 2: MASTER SEMUA PESERTA ==================== -->
     <div x-show="activeTab === 'peserta'" x-transition class="space-y-6">
@@ -1596,6 +2031,205 @@
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL CATAT REFUND & PENYESUAIAN KAS ==================== -->
+    <div x-show="showAdjustmentModal" x-cloak class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0">
+        
+        <div class="ai-card rounded-3xl border border-white/[0.1] shadow-2xl p-6 sm:p-8 w-full max-w-xl max-h-[90vh] overflow-y-auto space-y-6 bg-[#0E1320]"
+            @click.outside="showAdjustmentModal = false">
+            
+            <!-- Modal Header -->
+            <div class="flex items-start justify-between gap-3 border-b border-white/[0.08] pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-rose-500/15 text-rose-400 border border-rose-500/30 flex items-center justify-center shrink-0">
+                        <i data-lucide="receipt" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base sm:text-lg font-black text-white">Catat Refund / Penyesuaian Kas</h3>
+                        <p class="text-xs text-slate-400">Pencatatan pengembalian dana atau koreksi kas buku bendahara</p>
+                    </div>
+                </div>
+                <button type="button" @click="showAdjustmentModal = false" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/[0.08] transition cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Transaction Summary Pill -->
+            <div class="p-3.5 rounded-2xl bg-[#080D18] border border-white/[0.08] space-y-2">
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-slate-400">Referensi:</span>
+                    <span class="font-mono font-bold text-[#84D0FF]" x-text="adjustmentForm.ref_no"></span>
+                </div>
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-slate-400">Pendaftar / Lembaga:</span>
+                    <span class="font-bold text-white text-right" x-text="adjustmentForm.contact_name + ' (' + adjustmentForm.institution + ')'"></span>
+                </div>
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-slate-400">Nominal Masuk (Bruto):</span>
+                    <span class="font-mono font-black text-emerald-400" x-text="'Rp ' + Number(adjustmentForm.gross_amount).toLocaleString('id-ID')"></span>
+                </div>
+            </div>
+
+            <!-- Form -->
+            <form method="POST" action="{{ route('admin.finance.adjustments.store') }}" enctype="multipart/form-data" class="space-y-4">
+                @csrf
+                <input type="hidden" name="reference_type" :value="adjustmentForm.reference_type">
+                <input type="hidden" name="reference_id" :value="adjustmentForm.reference_id">
+
+                <!-- Jenis Penyesuaian -->
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-slate-300">Jenis Penyesuaian / Refund <span class="text-rose-400">*</span></label>
+                    <select name="adjustment_type" x-model="adjustmentForm.adjustment_type" required class="w-full px-3.5 py-2.5 rounded-xl border border-white/[0.1] text-xs font-bold text-slate-200 bg-[#080D18] focus:border-[#7A5AF8] outline-none cursor-pointer">
+                        <option value="refund_overpayment">Kelebihan Transfer (Refund Selisih) — Status Tetap Lunas</option>
+                        <option value="refund_cancellation">Batal Ikut (Refund Penuh/Sebagian) — Otomatis Dibatalkan & Kuota +1</option>
+                        <option value="discount">Diskon / Keringanan Resmi Panitia</option>
+                        <option value="correction">Koreksi Pembukuan Kas (Salah Transfer/Dll)</option>
+                    </select>
+                    <div x-show="adjustmentForm.adjustment_type === 'refund_cancellation'" class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-300 text-[11px] flex items-center gap-2">
+                        <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0 text-amber-400"></i>
+                        <span><strong>Catatan:</strong> Memilih jenis ini akan otomatis mengubah status pendaftaran menjadi <em>Dibatalkan (Cancelled)</em> sehingga kuota cabang lomba otomatis bertambah (+1) untuk peserta lain.</span>
+                    </div>
+                </div>
+
+                <!-- Nominal Refund -->
+                <div class="space-y-1.5">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-bold text-slate-300">Nominal Penyesuaian / Pengembalian (Rp) <span class="text-rose-400">*</span></label>
+                        <button type="button" @click="setFullRefund()" class="text-[11px] font-bold text-[#84D0FF] hover:underline cursor-pointer">
+                            [Isi Penuh: Rp <span x-text="Number(adjustmentForm.gross_amount).toLocaleString('id-ID')"></span>]
+                        </button>
+                    </div>
+                    <div class="relative">
+                        <span class="absolute left-3.5 top-1/2 -translate-y-1/2 font-mono font-bold text-slate-400 text-xs">Rp</span>
+                        <input type="number" name="amount" x-model="adjustmentForm.amount" required min="1" :max="adjustmentForm.gross_amount" placeholder="Contoh: 10000" class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#080D18] border border-white/[0.1] text-xs font-mono font-bold text-white placeholder-slate-500 focus:border-[#7A5AF8] outline-none">
+                    </div>
+                </div>
+
+                <!-- Rekening Tujuan -->
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-slate-300">Rekening Tujuan Transfer Balik <span class="text-rose-400">*</span></label>
+                    <input type="text" name="bank_account" x-model="adjustmentForm.bank_account" required placeholder="Contoh: BSI 7123456789 a.n. Ahmad Dahlan" class="w-full px-3.5 py-2.5 rounded-xl bg-[#080D18] border border-white/[0.1] text-xs text-white placeholder-slate-500 focus:border-[#7A5AF8] outline-none">
+                </div>
+
+                <!-- Alasan / Keterangan -->
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-slate-300">Alasan / Catatan Administrasi <span class="text-rose-400">*</span></label>
+                    <textarea name="reason" x-model="adjustmentForm.reason" rows="2" required placeholder="Contoh: Pendaftar kelebihan transfer Rp 10.000, telah dikembalikan ke rekening wali murid..." class="w-full px-3.5 py-2.5 rounded-xl bg-[#080D18] border border-white/[0.1] text-xs text-white placeholder-slate-500 focus:border-[#7A5AF8] outline-none"></textarea>
+                </div>
+
+                <!-- Bukti Transfer Balik Panitia -->
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-slate-300">Bukti Transfer Keluar (Struk/Screenshot BSI) <span class="text-slate-500 font-normal">(Opsional)</span></label>
+                    <input type="file" name="proof_file" accept=".pdf,.jpg,.jpeg,.png,.webp" class="block w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3.5 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#4E6EFF]/15 file:text-[#84D0FF] hover:file:bg-[#4E6EFF]/25 cursor-pointer bg-[#080D18] p-1.5 rounded-xl border border-white/[0.1]">
+                    <span class="text-[10px] text-slate-500 block">Format: JPG, PNG, WEBP, atau PDF (Maks. 5 MB)</span>
+                </div>
+
+                <!-- Modal Actions -->
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-white/[0.08]">
+                    <button type="button" @click="showAdjustmentModal = false" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-white/[0.08] transition cursor-pointer">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-lg shadow-rose-600/30 hover:opacity-95 transition flex items-center gap-2 cursor-pointer">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        <span>Simpan Penyesuaian</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL RIWAYAT PENGEMBALIAN DANA (ADJUSTMENTS) ==================== -->
+    <div x-show="showAdjustmentsListModal" x-cloak class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0">
+        
+        <div class="ai-card rounded-3xl border border-white/[0.1] shadow-2xl p-6 sm:p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto space-y-6 bg-[#0E1320]"
+            @click.outside="showAdjustmentsListModal = false">
+            
+            <!-- Modal Header -->
+            <div class="flex items-start justify-between gap-3 border-b border-white/[0.08] pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-rose-500/15 text-rose-400 border border-rose-500/30 flex items-center justify-center shrink-0">
+                        <i data-lucide="history" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base sm:text-lg font-black text-white">Riwayat Refund & Penyesuaian Kas</h3>
+                        <p class="text-xs text-slate-400" x-text="activeAdjustmentsTitle"></p>
+                    </div>
+                </div>
+                <button type="button" @click="showAdjustmentsListModal = false" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/[0.08] transition cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- List of Adjustments -->
+            <div class="space-y-3">
+                <template x-for="adj in activeAdjustmentsList" :key="adj.id">
+                    <div class="p-4 rounded-2xl bg-[#080D18] border border-white/[0.08] space-y-3">
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30" x-text="adj.type_label"></span>
+                                <div class="text-base font-black font-mono text-rose-400 mt-1" x-text="'-Rp ' + Number(adj.amount).toLocaleString('id-ID')"></div>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[10px] text-slate-400 block" x-text="adj.created_at"></span>
+                                <span class="text-[10px] text-slate-500 font-medium" x-text="'Oleh: ' + adj.creator_name"></span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1 text-xs">
+                            <div class="text-slate-400">
+                                <strong>Rekening Tujuan:</strong> <span class="text-white font-mono" x-text="adj.bank_account"></span>
+                            </div>
+                            <div class="text-slate-400">
+                                <strong>Keterangan:</strong> <span class="text-slate-200" x-text="adj.reason"></span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-2 border-t border-white/[0.04]">
+                            <div>
+                                <template x-if="adj.proof_url">
+                                    <a :href="adj.proof_url" target="_blank" class="inline-flex items-center gap-1 text-[11px] font-bold text-[#84D0FF] hover:underline">
+                                        <i data-lucide="file-check" class="w-3.5 h-3.5"></i>
+                                        <span>Lihat Bukti Transfer Keluar</span>
+                                    </a>
+                                </template>
+                                <template x-if="!adj.proof_url">
+                                    <span class="text-[11px] text-slate-500">Tanpa lampiran bukti transfer</span>
+                                </template>
+                            </div>
+
+                            <!-- Form Delete Adjustment -->
+                            <form method="POST" :action="'{{ url('/admin/finance/adjustments') }}/' + adj.id + '/delete'" onsubmit="return confirm('Apakah Anda yakin ingin menghapus catatan penyesuaian kas ini? Data saldo kas akan dipulihkan.');">
+                                @csrf
+                                <button type="submit" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-rose-400 hover:bg-rose-500/15 transition cursor-pointer">
+                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                    <span>Hapus</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Close Button -->
+            <div class="flex justify-end pt-2">
+                <button type="button" @click="showAdjustmentsListModal = false" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-white/[0.08] hover:bg-white/[0.15] text-white transition cursor-pointer">
+                    Tutup
+                </button>
             </div>
         </div>
     </div>

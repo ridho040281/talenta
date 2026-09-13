@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\AppSetting;
 use App\Models\BadmintonMatch;
 use App\Models\Category;
 use App\Models\Competition;
 use App\Models\CompetitionCriterion;
+use App\Models\Invoice;
+use App\Models\PaymentAdjustment;
 use App\Models\Registration;
 use App\Models\Score;
 use App\Models\Timeline;
@@ -14,6 +17,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class AdminController extends Controller
@@ -1073,7 +1077,99 @@ class AdminController extends Controller
         // 3. Tab 2 Total Count (Lean count, no bulky get() query)
         $totalRegistrationsCount = Registration::count();
 
-        // 4. Tab 3: Winners Recap per Competition
+        // 4. Payment Adjustments & Cashflow Ledger
+        $allAdjustments = PaymentAdjustment::with('creator')->latest()->get();
+        $totalAdjustments = $allAdjustments->sum('amount');
+        $grandTotals['total_adjustments'] = $totalAdjustments;
+        $grandTotals['net_verified_income'] = max(0, $grandTotals['verified_income'] - $totalAdjustments);
+
+        // Unified Cashflow Ledger (Buku Kas & Mutasi Pembayaran)
+        $invoices = Invoice::with(['user', 'registrations.competition', 'adjustments.creator'])->latest()->get();
+        $invoiceItems = $invoices->map(function ($inv) {
+            $adjustments = $inv->adjustments;
+            $refundAmount = $adjustments->sum('amount');
+            $gross = (float) $inv->final_amount;
+            $net = max(0, $gross - $refundAmount);
+
+            return [
+                'id' => $inv->id,
+                'type' => 'kolektif',
+                'type_label' => 'Kolektif (Invoice)',
+                'ref_no' => $inv->invoice_number,
+                'created_at' => $inv->created_at,
+                'date_formatted' => $inv->created_at ? $inv->created_at->translatedFormat('d M Y H:i') : '-',
+                'contact_name' => $inv->user ? $inv->user->name : '-',
+                'contact_phone' => $inv->user ? $inv->user->phone : '-',
+                'institution' => $inv->user ? ($inv->user->institution_name ?? $inv->user->school_name ?? '-') : '-',
+                'title' => 'Tagihan Kolektif #'.$inv->invoice_number,
+                'description' => $inv->registrations->count().' Pendaftar ('.$inv->registrations->pluck('competition.name')->filter()->unique()->implode(', ').')',
+                'items_count' => $inv->registrations->count(),
+                'gross_amount' => $gross,
+                'refund_amount' => $refundAmount,
+                'net_amount' => $net,
+                'status' => $inv->status, // pending, paid, rejected
+                'payment_proof' => $inv->payment_proof,
+                'proof_url' => $inv->payment_proof ? asset('storage/'.$inv->payment_proof) : null,
+                'adjustments' => $adjustments,
+                'reference_type' => 'invoice',
+                'model' => $inv,
+            ];
+        });
+
+        $individualRegs = Registration::whereNull('invoice_id')
+            ->where(function ($q) {
+                $q->whereNotNull('payment_proof')
+                  ->orWhereIn('status', ['verified', 'pending', 'cancelled']);
+            })
+            ->with(['user', 'competition', 'members', 'adjustments.creator'])
+            ->latest()
+            ->get();
+
+        $individualItems = $individualRegs->map(function ($reg) {
+            $adjustments = $reg->adjustments;
+            $refundAmount = $adjustments->sum('amount');
+            $gross = (float) $reg->fee;
+            $net = max(0, $gross - $refundAmount);
+
+            return [
+                'id' => $reg->id,
+                'type' => 'mandiri',
+                'type_label' => 'Mandiri (Satuan)',
+                'ref_no' => $reg->registration_code,
+                'created_at' => $reg->created_at,
+                'date_formatted' => $reg->created_at ? $reg->created_at->translatedFormat('d M Y H:i') : '-',
+                'contact_name' => $reg->user ? $reg->user->name : ($reg->pure_name ?? '-'),
+                'contact_phone' => $reg->user ? $reg->user->phone : ($reg->official_phone ?? '-'),
+                'institution' => $reg->display_school,
+                'title' => $reg->display_name,
+                'description' => ($reg->competition ? $reg->competition->name : 'Lomba').' ('.$reg->registration_code.')',
+                'items_count' => 1,
+                'gross_amount' => $gross,
+                'refund_amount' => $refundAmount,
+                'net_amount' => $net,
+                'status' => $reg->status, // verified, pending, rejected, cancelled
+                'payment_proof' => $reg->payment_proof,
+                'proof_url' => $reg->payment_proof ? asset('storage/'.$reg->payment_proof) : null,
+                'adjustments' => $adjustments,
+                'reference_type' => 'registration',
+                'model' => $reg,
+            ];
+        });
+
+        $cashflowItems = $invoiceItems->concat($individualItems)->sortByDesc('created_at')->values();
+
+        // Calculate Cashflow Summary Metrics
+        $cashflowSummary = [
+            'gross_verified' => $cashflowItems->whereIn('status', ['verified', 'paid'])->sum('gross_amount'),
+            'gross_pending' => $cashflowItems->where('status', 'pending')->sum('gross_amount'),
+            'total_refunds' => $totalAdjustments,
+            'net_real_cash' => max(0, $cashflowItems->whereIn('status', ['verified', 'paid'])->sum('gross_amount') - $totalAdjustments),
+            'count_collective' => $invoiceItems->count(),
+            'count_individual' => $individualItems->count(),
+            'count_adjustments' => $allAdjustments->count(),
+        ];
+
+        // 5. Tab 3: Winners Recap per Competition
         $winnersByCompetition = [];
         $institutionScores = [];
 
@@ -1118,7 +1214,7 @@ class AdminController extends Controller
             }
         }
 
-        // 5. Tab 4: Standings Juara Umum
+        // 6. Tab 4: Standings Juara Umum
         $standings = collect($institutionScores)->map(function ($val, $key) {
             return [
                 'institution' => $key,
@@ -1136,8 +1232,104 @@ class AdminController extends Controller
             'grandTotals',
             'totalRegistrationsCount',
             'winnersByCompetition',
-            'standings'
+            'standings',
+            'allAdjustments',
+            'cashflowItems',
+            'cashflowSummary'
         ));
+    }
+
+    /**
+     * Catat penyesuaian kas / refund (pengembalian kelebihan transfer atau pembatalan ikut).
+     * POST /admin/finance/adjustments
+     */
+    public function storePaymentAdjustment(Request $request)
+    {
+        $validated = $request->validate([
+            'reference_type' => 'required|in:registration,invoice',
+            'reference_id' => 'required|integer',
+            'adjustment_type' => 'required|in:refund_overpayment,refund_cancellation,discount,correction',
+            'amount' => 'required|numeric|min:1',
+            'bank_account' => 'required|string|max:255',
+            'reason' => 'required|string|max:1000',
+            'proof_file' => 'nullable|file|mimes:jpeg,png,jpg,pdf,webp|max:5120',
+        ]);
+
+        $proofPath = null;
+        if ($request->hasFile('proof_file')) {
+            $file = $request->file('proof_file');
+            $fileName = 'refund_' . time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
+            $proofPath = $file->storeAs('adjustments', $fileName, 'public');
+        }
+
+        $adjustment = PaymentAdjustment::create([
+            'reference_type' => $validated['reference_type'],
+            'reference_id' => $validated['reference_id'],
+            'adjustment_type' => $validated['adjustment_type'],
+            'amount' => $validated['amount'],
+            'bank_account' => $validated['bank_account'],
+            'proof_file' => $proofPath,
+            'reason' => $validated['reason'],
+            'created_by' => Auth::id(),
+        ]);
+
+        // Audit Trail
+        ActivityLog::record(
+            'FINANCE_ADJUSTMENT',
+            "Mencatat penyesuaian/refund kas sebesar Rp " . number_format($adjustment->amount, 0, ',', '.') . " untuk {$adjustment->reference_type} #{$adjustment->reference_id} ({$adjustment->type_label})",
+            Auth::user(),
+            'warning'
+        );
+
+        // Jika tipe pembatalan ikut (refund_cancellation)
+        if ($validated['adjustment_type'] === 'refund_cancellation') {
+            if ($validated['reference_type'] === 'registration') {
+                $reg = Registration::find($validated['reference_id']);
+                if ($reg) {
+                    $reg->status = 'cancelled';
+                    $reg->verification_notes = trim(($reg->verification_notes ?? '') . " | Dibatalkan & Refund: " . $validated['reason']);
+                    $reg->save();
+                }
+            } elseif ($validated['reference_type'] === 'invoice') {
+                $inv = Invoice::with('registrations')->find($validated['reference_id']);
+                if ($inv) {
+                    $inv->status = 'rejected';
+                    $inv->rejection_reason = trim(($inv->rejection_reason ?? '') . " | Dibatalkan & Refund: " . $validated['reason']);
+                    $inv->save();
+                    foreach ($inv->registrations as $reg) {
+                        $reg->status = 'cancelled';
+                        $reg->verification_notes = trim(($reg->verification_notes ?? '') . " | Dibatalkan Kolektif (Invoice #{$inv->invoice_number})");
+                        $reg->save();
+                    }
+                }
+            }
+        }
+
+        return redirect()->back()->with('success', 'Penyesuaian kas / refund sebesar Rp ' . number_format($validated['amount'], 0, ',', '.') . ' berhasil dicatat.');
+    }
+
+    /**
+     * Hapus catatan penyesuaian kas / refund jika ada kesalahan input.
+     * POST /admin/finance/adjustments/{id}/delete
+     */
+    public function deletePaymentAdjustment($id)
+    {
+        $adjustment = PaymentAdjustment::findOrFail($id);
+
+        ActivityLog::record(
+            'FINANCE_ADJUSTMENT_DELETED',
+            "Menghapus catatan penyesuaian/refund kas ID #{$adjustment->id} sebesar Rp " . number_format($adjustment->amount, 0, ',', '.'),
+            Auth::user(),
+            'warning'
+        );
+
+        if ($adjustment->proof_file && Storage::disk('public')->exists($adjustment->proof_file)) {
+            Storage::disk('public')->delete($adjustment->proof_file);
+        }
+
+        $adjustment->delete();
+
+        return redirect()->back()->with('success', 'Catatan penyesuaian kas berhasil dihapus.');
     }
 
     /**

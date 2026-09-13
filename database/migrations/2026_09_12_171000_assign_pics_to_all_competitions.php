@@ -10,7 +10,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        \ = [
+        $picMap = [
             'MIPA' => 'pic.mipa@talenta.test',
             'MTQ'  => 'pic.mtq@talenta.test',
             'TFID' => 'pic.mtq@talenta.test',
@@ -23,36 +23,36 @@ return new class extends Migration
             'PRM'  => 'pic.teknologi@talenta.test',
         ];
 
-        foreach (\ as \ => \) {
-            \ = User::where('email', \)->first();
-            if (! \) {
+        foreach ($picMap as $code => $email) {
+            $user = User::where('email', $email)->first();
+            if (! $user) {
                 continue;
             }
 
-            \ = Competition::withoutGlobalScope('order')->where('code', \)->get();
-            foreach (\ as \) {
-                if (empty(\->pic_id)) {
-                    \->pic_id = \->id;
-                    \->saveQuietly();
+            $comps = Competition::withoutGlobalScope('order')->where('code', $code)->get();
+            foreach ($comps as $comp) {
+                if (empty($comp->pic_id)) {
+                    $comp->pic_id = $user->id;
+                    $comp->saveQuietly();
                 }
 
                 DB::table('competition_pics')->updateOrInsert(
-                    ['competition_id' => \->id, 'user_id' => \->id],
+                    ['competition_id' => $comp->id, 'user_id' => $user->id],
                     ['role_title' => 'Koordinator PIC', 'updated_at' => now()]
                 );
 
-                if (\ === 'BLT') {
-                    foreach (['blt_pic_tunggal_pa', 'blt_pic_tunggal_pi', 'blt_pic_ganda_pa', 'blt_pic_ganda_pi'] as \) {
-                        if (empty(AppSetting::get(\))) {
-                            AppSetting::set(\, (string) \->id, 'general');
+                if ($code === 'BLT') {
+                    foreach (['blt_pic_tunggal_pa', 'blt_pic_tunggal_pi', 'blt_pic_ganda_pa', 'blt_pic_ganda_pi'] as $key) {
+                        if (empty(AppSetting::get($key))) {
+                            AppSetting::set($key, (string) $user->id, 'general');
                         }
                     }
                 }
 
-                if (\ === 'TMJ') {
-                    foreach (['tmj_pic_tunggal_pa', 'tmj_pic_tunggal_pi'] as \) {
-                        if (empty(AppSetting::get(\))) {
-                            AppSetting::set(\, (string) \->id, 'general');
+                if ($code === 'TMJ') {
+                    foreach (['tmj_pic_tunggal_pa', 'tmj_pic_tunggal_pi'] as $key) {
+                        if (empty(AppSetting::get($key))) {
+                            AppSetting::set($key, (string) $user->id, 'general');
                         }
                     }
                 }
