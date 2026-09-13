@@ -26,6 +26,14 @@
     totalAll: {{ $stats['total_registrations'] ?? 0 }},
     totalPa: {{ $stats['total_pa'] ?? 0 }},
     totalPi: {{ $stats['total_pi'] ?? 0 }},
+    totalVerified: {{ $stats['verified_registrations'] ?? 0 }},
+    totalDrawn: {{ $stats['drawn_participants'] ?? 0 }},
+    statusCounts: {
+        verified: {{ $stats['verified_registrations'] ?? 0 }},
+        pending: {{ $stats['pending_registrations'] ?? $stats['pending_verifications'] ?? 0 }},
+        revision: {{ $stats['revision_registrations'] ?? 0 }},
+        rejected: {{ $stats['rejected_registrations'] ?? 0 }}
+    },
     verifyModal: false,
     editModal: false,
     exportModal: false,
@@ -461,16 +469,25 @@
                     return r.json();
                 })
                 .then(json => {
-                    this.items       = json.data || [];
-                    this.currentPage = json.current_page || 1;
-                    this.lastPage    = json.last_page || 1;
-                    this.totalItems  = json.total || 0;
-                    this.totalAll    = json.total_all ?? (json.total || 0);
-                    this.totalPa     = json.total_pa ?? 0;
-                    this.totalPi     = json.total_pi ?? 0;
-                    this.fromItem    = json.from ?? 0;
-                    this.toItem      = json.to   ?? 0;
-                    this.fetchError  = null;
+                    this.items         = json.data || [];
+                    this.currentPage   = json.current_page || 1;
+                    this.lastPage      = json.last_page || 1;
+                    this.totalItems    = json.total || 0;
+                    this.totalAll      = json.total_all ?? (json.total || 0);
+                    this.totalPa       = json.total_pa ?? 0;
+                    this.totalPi       = json.total_pi ?? 0;
+                    if (json.total_verified !== undefined) {
+                        this.totalVerified = json.total_verified;
+                    }
+                    if (json.total_drawn !== undefined) {
+                        this.totalDrawn = json.total_drawn;
+                    }
+                    if (json.status_summary) {
+                        this.statusCounts = json.status_summary;
+                    }
+                    this.fromItem      = json.from ?? 0;
+                    this.toItem        = json.to   ?? 0;
+                    this.fetchError    = null;
                 })
                 .catch(err => {
                     console.error('Fetch participants error:', err);
@@ -613,7 +630,7 @@
                 <i data-lucide="check-circle-2" class="w-5 h-5"></i>
             </div>
             <div>
-                <div class="text-2xl font-black text-emerald-400">{{ $stats['verified_registrations'] }}</div>
+                <div class="text-2xl font-black text-emerald-400" x-text="totalVerified">{{ $stats['verified_registrations'] }}</div>
                 <div class="text-xs font-semibold text-slate-400">Terverifikasi</div>
             </div>
         </div>
@@ -624,7 +641,7 @@
                 <i data-lucide="disc" class="w-5 h-5"></i>
             </div>
             <div>
-                <div class="text-2xl font-black text-[#FFA0E7]">{{ $stats['drawn_participants'] }}</div>
+                <div class="text-2xl font-black text-[#FFA0E7]" x-text="totalDrawn">{{ $stats['drawn_participants'] }}</div>
                 <div class="text-xs font-semibold text-slate-400">Sudah Diundi (TM)</div>
             </div>
         </div>
@@ -766,10 +783,10 @@
                 <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Status Keabsahan:</label>
                 <select x-model="selectedStatus" class="w-full px-3 py-2.5 h-[42px] rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8] cursor-pointer">
                     <option value="all">Semua Status</option>
-                    <option value="verified">✅ Terverifikasi ({{ $stats['verified_registrations'] ?? 0 }})</option>
-                    <option value="pending">⏳ Menunggu ({{ $stats['pending_registrations'] ?? $stats['pending_verifications'] ?? 0 }})</option>
-                    <option value="revision">⚠️ Butuh Revisi ({{ $stats['revision_registrations'] ?? 0 }})</option>
-                    <option value="rejected">❌ Ditolak ({{ $stats['rejected_registrations'] ?? 0 }})</option>
+                    <option value="verified" x-text="'✅ Terverifikasi (' + (statusCounts.verified ?? 0) + ')'">✅ Terverifikasi ({{ $stats['verified_registrations'] ?? 0 }})</option>
+                    <option value="pending" x-text="'⏳ Menunggu (' + (statusCounts.pending ?? 0) + ')'">⏳ Menunggu ({{ $stats['pending_registrations'] ?? $stats['pending_verifications'] ?? 0 }})</option>
+                    <option value="revision" x-text="'⚠️ Butuh Revisi (' + (statusCounts.revision ?? 0) + ')'">⚠️ Butuh Revisi ({{ $stats['revision_registrations'] ?? 0 }})</option>
+                    <option value="rejected" x-text="'❌ Ditolak (' + (statusCounts.rejected ?? 0) + ')'">❌ Ditolak ({{ $stats['rejected_registrations'] ?? 0 }})</option>
                 </select>
             </div>
         </div>

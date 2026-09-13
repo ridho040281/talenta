@@ -448,6 +448,30 @@ class PicController extends Controller
         $totalPa = (clone $baseGenderQuery)->whereHas('members', fn ($q) => $q->where('gender', 'L'))->count();
         $totalPi = (clone $baseGenderQuery)->whereHas('members', fn ($q) => $q->where('gender', 'P'))->count();
 
+        // Hitung statistik terverifikasi, sudah diundi, dan status counts khusus untuk cabang lomba (dan gender) aktif
+        $statsCompQuery = Registration::whereIn('competition_id', $competitionIds);
+        if ($request->filled('competition_id') && $request->competition_id !== 'all') {
+            $statsCompQuery->where('competition_id', $request->competition_id);
+        }
+        if ($request->filled('gender') && $request->gender !== 'all') {
+            $statsCompQuery->whereHas('members', fn ($q) => $q->where('gender', $request->gender));
+        }
+
+        $totalVerified = (clone $statsCompQuery)->where('status', 'verified')->count();
+        $totalDrawn = (clone $statsCompQuery)->whereNotNull('draw_number')->count();
+
+        $statusGroupCounts = (clone $statsCompQuery)
+            ->selectRaw('status, count(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
+        $statusSummary = [
+            'verified' => (int) ($statusGroupCounts->get('verified', 0)),
+            'pending'  => (int) ($statusGroupCounts->get('pending', 0)),
+            'revision' => (int) ($statusGroupCounts->get('revision', 0)),
+            'rejected' => (int) ($statusGroupCounts->get('rejected', 0)),
+        ];
+
         // Filter gender (via first member)
         if ($request->filled('gender') && $request->gender !== 'all') {
             $g = $request->gender;
@@ -507,16 +531,19 @@ class PicController extends Controller
         });
 
         return response()->json([
-            'data'         => $items,
-            'current_page' => $paginated->currentPage(),
-            'last_page'    => $paginated->lastPage(),
-            'per_page'     => $paginated->perPage(),
-            'total'        => $paginated->total(),
-            'total_all'    => $totalAll,
-            'total_pa'     => $totalPa,
-            'total_pi'     => $totalPi,
-            'from'         => $paginated->firstItem(),
-            'to'           => $paginated->lastItem(),
+            'data'           => $items,
+            'current_page'   => $paginated->currentPage(),
+            'last_page'      => $paginated->lastPage(),
+            'per_page'       => $paginated->perPage(),
+            'total'          => $paginated->total(),
+            'total_all'      => $totalAll,
+            'total_pa'       => $totalPa,
+            'total_pi'       => $totalPi,
+            'total_verified' => $totalVerified,
+            'total_drawn'    => $totalDrawn,
+            'status_summary' => $statusSummary,
+            'from'           => $paginated->firstItem(),
+            'to'             => $paginated->lastItem(),
         ]);
     }
 
