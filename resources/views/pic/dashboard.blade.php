@@ -23,6 +23,7 @@
     selectedSector: 'all',
     selectedStatus: 'all',
     totalItems: {{ $stats['total_registrations'] ?? 0 }},
+    totalAll: {{ $stats['total_registrations'] ?? 0 }},
     totalPa: {{ $stats['total_pa'] ?? 0 }},
     totalPi: {{ $stats['total_pi'] ?? 0 }},
     verifyModal: false,
@@ -168,14 +169,18 @@
         if (this.currentCompCode === 'BLT') {
             return [
                 { value: 'all', label: '🏸 Semua Sektor Bulu Tangkis' },
+                { value: 'blt_a_all', label: '🏷️ Semua Kategori A (Kelas 1–2 SD/MI)' },
+                { value: 'tunggal_pa_a', label: '👦 Tunggal PA - Kat A (Kelas 1–2 SD/MI)' },
+                { value: 'tunggal_pi_a', label: '👧 Tunggal PI - Kat A (Kelas 1–2 SD/MI)' },
+                { value: 'blt_b_all', label: '🏷️ Semua Kategori B (Kelas 3–4 SD/MI)' },
+                { value: 'tunggal_pa_b', label: '👦 Tunggal PA - Kat B (Kelas 3–4 SD/MI)' },
+                { value: 'tunggal_pi_b', label: '👧 Tunggal PI - Kat B (Kelas 3–4 SD/MI)' },
+                { value: 'blt_c_all', label: '🏷️ Semua Kategori C (Kelas 5–6 SD/MI)' },
+                { value: 'tunggal_pa_c', label: '👦 Tunggal PA - Kat C (Kelas 5–6 SD/MI)' },
+                { value: 'tunggal_pi_c', label: '👧 Tunggal PI - Kat C (Kelas 5–6 SD/MI)' },
+                { value: 'tunggal_all', label: '🏸 Semua Tunggal (PA & PI - Semua Kelas)' },
                 { value: 'tunggal_pa', label: '👦 Semua Tunggal Putra (PA)' },
-                { value: 'tunggal_pa_a', label: '🏷️ Tunggal PA - Kat A (Kelas 1–2 SD/MI)' },
-                { value: 'tunggal_pa_b', label: '🏷️ Tunggal PA - Kat B (Kelas 3–4 SD/MI)' },
-                { value: 'tunggal_pa_c', label: '🏷️ Tunggal PA - Kat C (Kelas 5–6 SD/MI)' },
                 { value: 'tunggal_pi', label: '👧 Semua Tunggal Putri (PI)' },
-                { value: 'tunggal_pi_a', label: '🏷️ Tunggal PI - Kat A (Kelas 1–2 SD/MI)' },
-                { value: 'tunggal_pi_b', label: '🏷️ Tunggal PI - Kat B (Kelas 3–4 SD/MI)' },
-                { value: 'tunggal_pi_c', label: '🏷️ Tunggal PI - Kat C (Kelas 5–6 SD/MI)' },
                 { value: 'ganda_all', label: '👥 Semua Ganda (PA & PI)' },
                 { value: 'ganda_pa', label: '👥 Ganda Putra (PA) - Semua Kelas' },
                 { value: 'ganda_pi', label: '👥 Ganda Putri (PI) - Semua Kelas' },
@@ -208,14 +213,18 @@
 
             if (codes.includes('BLT')) {
                 list.push(
-                    { value: 'tunggal_pa', label: '🏸 Bulu Tangkis: Semua Tunggal Putra (PA)' },
-                    { value: 'tunggal_pa_a', label: '🏷️ Bulu Tangkis: Tunggal PA - Kat A (Kelas 1–2)' },
-                    { value: 'tunggal_pa_b', label: '🏷️ Bulu Tangkis: Tunggal PA - Kat B (Kelas 3–4)' },
-                    { value: 'tunggal_pa_c', label: '🏷️ Bulu Tangkis: Tunggal PA - Kat C (Kelas 5–6)' },
-                    { value: 'tunggal_pi', label: '🏸 Bulu Tangkis: Semua Tunggal Putri (PI)' },
-                    { value: 'tunggal_pi_a', label: '🏷️ Bulu Tangkis: Tunggal PI - Kat A (Kelas 1–2)' },
-                    { value: 'tunggal_pi_b', label: '🏷️ Bulu Tangkis: Tunggal PI - Kat B (Kelas 3–4)' },
-                    { value: 'tunggal_pi_c', label: '🏷️ Bulu Tangkis: Tunggal PI - Kat C (Kelas 5–6)' },
+                    { value: 'blt_a_all', label: '🏷️ Bulu Tangkis: Semua Kategori A (Kelas 1–2)' },
+                    { value: 'tunggal_pa_a', label: '👦 Bulu Tangkis: Tunggal PA - Kat A (Kelas 1–2)' },
+                    { value: 'tunggal_pi_a', label: '👧 Bulu Tangkis: Tunggal PI - Kat A (Kelas 1–2)' },
+                    { value: 'blt_b_all', label: '🏷️ Bulu Tangkis: Semua Kategori B (Kelas 3–4)' },
+                    { value: 'tunggal_pa_b', label: '👦 Bulu Tangkis: Tunggal PA - Kat B (Kelas 3–4)' },
+                    { value: 'tunggal_pi_b', label: '👧 Bulu Tangkis: Tunggal PI - Kat B (Kelas 3–4)' },
+                    { value: 'blt_c_all', label: '🏷️ Bulu Tangkis: Semua Kategori C (Kelas 5–6)' },
+                    { value: 'tunggal_pa_c', label: '👦 Bulu Tangkis: Tunggal PA - Kat C (Kelas 5–6)' },
+                    { value: 'tunggal_pi_c', label: '👧 Bulu Tangkis: Tunggal PI - Kat C (Kelas 5–6)' },
+                    { value: 'tunggal_all', label: '🏸 Bulu Tangkis: Semua Tunggal (PA & PI)' },
+                    { value: 'tunggal_pa', label: '👦 Bulu Tangkis: Semua Tunggal Putra (PA)' },
+                    { value: 'tunggal_pi', label: '👧 Bulu Tangkis: Semua Tunggal Putri (PI)' },
                     { value: 'ganda_all', label: '👥 Bulu Tangkis: Semua Ganda (PA & PI)' },
                     { value: 'ganda_pa', label: '👥 Bulu Tangkis: Ganda Putra (PA)' },
                     { value: 'ganda_pi', label: '👥 Bulu Tangkis: Ganda Putri (PI)' }
@@ -500,6 +509,7 @@
                     this.currentPage = json.current_page || 1;
                     this.lastPage    = json.last_page || 1;
                     this.totalItems  = json.total || 0;
+                    this.totalAll    = json.total_all ?? (json.total || 0);
                     this.totalPa     = json.total_pa ?? 0;
                     this.totalPi     = json.total_pi ?? 0;
                     this.fromItem    = json.from ?? 0;
@@ -519,8 +529,9 @@
         else { this._fetchTimer = setTimeout(doFetch, 400); }
     },
 
-    // ── Pagination Helpers ────────────────────────────────────────────────────
+    // ── Pagination & Count Helpers ────────────────────────────────────────────
     get totalPages() { return Math.max(1, this.lastPage); },
+    get countTotal() { return this.totalAll ?? this.totalItems; },
     get countAll()   { return this.totalItems; },
     get countPa()    { return this.totalPa; },
     get countPi()    { return this.totalPi; },
@@ -546,6 +557,75 @@
     prevPage() { if (this.currentPage > 1) this.goToPage(this.currentPage - 1); },
     nextPage() { if (this.currentPage < this.totalPages) this.goToPage(this.currentPage + 1); },
 
+    setGender(gender) {
+        if (this.selectedGender === gender) return;
+        this.selectedGender = gender;
+
+        // Sinkronisasi otomatis sektor jika saat ini berada di sektor gender yang berlawanan
+        if (gender === 'L') {
+            const piToPa = {
+                'tunggal_pi_a': 'tunggal_pa_a',
+                'tunggal_pi_b': 'tunggal_pa_b',
+                'tunggal_pi_c': 'tunggal_pa_c',
+                'tunggal_pi':   'tunggal_pa',
+                'ganda_pi':     'ganda_pa',
+                'tmj_pi_a':     'tmj_pa_a',
+                'tmj_pi_b':     'tmj_pa_b',
+                'individu_pi':  'individu_pa'
+            };
+            if (piToPa[this.selectedSector]) {
+                this.selectedSector = piToPa[this.selectedSector];
+                return;
+            }
+        } else if (gender === 'P') {
+            const paToPi = {
+                'tunggal_pa_a': 'tunggal_pi_a',
+                'tunggal_pa_b': 'tunggal_pi_b',
+                'tunggal_pa_c': 'tunggal_pi_c',
+                'tunggal_pa':   'tunggal_pi',
+                'ganda_pa':     'ganda_pi',
+                'tmj_pa_a':     'tmj_pi_a',
+                'tmj_pa_b':     'tmj_pi_b',
+                'individu_pa':  'individu_pi'
+            };
+            if (paToPi[this.selectedSector]) {
+                this.selectedSector = paToPi[this.selectedSector];
+                return;
+            }
+        } else if (gender === 'all') {
+            const toAll = {
+                'tunggal_pa_a': 'blt_a_all',
+                'tunggal_pi_a': 'blt_a_all',
+                'tunggal_pa_b': 'blt_b_all',
+                'tunggal_pi_b': 'blt_b_all',
+                'tunggal_pa_c': 'blt_c_all',
+                'tunggal_pi_c': 'blt_c_all',
+                'tunggal_pa':   'tunggal_all',
+                'tunggal_pi':   'tunggal_all',
+                'ganda_pa':     'ganda_all',
+                'ganda_pi':     'ganda_all',
+                'tmj_pa_a':     'tmj_a_all',
+                'tmj_pi_a':     'tmj_a_all',
+                'tmj_pa_b':     'tmj_b_all',
+                'tmj_pi_b':     'tmj_b_all',
+                'individu_pa':  'all',
+                'individu_pi':  'all'
+            };
+            if (toAll[this.selectedSector]) {
+                this.selectedSector = toAll[this.selectedSector];
+                return;
+            }
+        }
+        this.currentPage = 1;
+        this.fetchParticipants(true);
+    },
+    onCompetitionChange() {
+        this.selectedSector = 'all';
+        this.selectedGender = 'all';
+        this.currentPage = 1;
+        this.fetchParticipants(true);
+    },
+
     init() {
         this.apiUrl = (function() {
             try {
@@ -559,7 +639,17 @@
         this.$watch('searchQuery',         () => { this.currentPage = 1; this.fetchParticipants(); });
         this.$watch('selectedCompetition', () => { this.currentPage = 1; this.fetchParticipants(true); });
         this.$watch('selectedGender',      () => { this.currentPage = 1; this.fetchParticipants(true); });
-        this.$watch('selectedSector',      () => { this.currentPage = 1; this.fetchParticipants(true); });
+        this.$watch('selectedSector',      (val) => {
+            if (val) {
+                if (val.endsWith('_pi') && this.selectedGender === 'L') {
+                    this.selectedGender = 'P';
+                } else if (val.endsWith('_pa') && this.selectedGender === 'P') {
+                    this.selectedGender = 'L';
+                }
+            }
+            this.currentPage = 1;
+            this.fetchParticipants(true);
+        });
         this.$watch('selectedStatus',      () => { this.currentPage = 1; this.fetchParticipants(true); });
         this.$watch('perPage',             () => { this.currentPage = 1; this.fetchParticipants(true); });
     },
@@ -618,7 +708,7 @@
                 <i data-lucide="users" class="w-5 h-5"></i>
             </div>
             <div>
-                <div class="text-2xl font-black text-white" x-text="countAll"></div>
+                <div class="text-2xl font-black text-white" x-text="selectedGender === 'all' ? countTotal : countAll"></div>
                 <div class="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 mt-0.5">
                     <span class="text-[#84D0FF] bg-[#4E6EFF]/15 border border-[#4E6EFF]/30 px-2 py-0.5 rounded-full font-bold"><span x-text="countPa"></span> PA</span>
                     <span>•</span>
@@ -745,15 +835,15 @@
             <div>
                 <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Filter Gender:</label>
                 <div class="flex items-center gap-1 bg-[#0C111D] border border-white/[0.1] p-1 rounded-xl h-[42px]">
-                    <button type="button" @click="selectedGender = 'all'" :class="selectedGender === 'all' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-black shadow-md' : 'text-slate-400 hover:text-white font-bold'" class="flex-1 h-full rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1">
+                    <button type="button" @click="setGender('all')" :class="selectedGender === 'all' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-black shadow-md' : 'text-slate-400 hover:text-white font-bold'" class="flex-1 h-full rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1">
                         <span>Semua</span>
-                        <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 font-bold" x-text="countAll"></span>
+                        <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 font-bold" x-text="countTotal"></span>
                     </button>
-                    <button type="button" @click="selectedGender = 'L'" :class="selectedGender === 'L' ? 'bg-blue-600 text-white font-black shadow-md' : 'text-[#84D0FF] hover:text-white font-bold'" class="flex-1 h-full rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1">
+                    <button type="button" @click="setGender('L')" :class="selectedGender === 'L' ? 'bg-blue-600 text-white font-black shadow-md' : 'text-[#84D0FF] hover:text-white font-bold'" class="flex-1 h-full rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1">
                         <span>PA</span>
                         <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-blue-500/20 font-bold" x-text="countPa"></span>
                     </button>
-                    <button type="button" @click="selectedGender = 'P'" :class="selectedGender === 'P' ? 'bg-rose-600 text-white font-black shadow-md' : 'text-[#FFA0E7] hover:text-white font-bold'" class="flex-1 h-full rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1">
+                    <button type="button" @click="setGender('P')" :class="selectedGender === 'P' ? 'bg-rose-600 text-white font-black shadow-md' : 'text-[#FFA0E7] hover:text-white font-bold'" class="flex-1 h-full rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1">
                         <span>PI</span>
                         <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-rose-500/20 font-bold" x-text="countPi"></span>
                     </button>
@@ -763,7 +853,7 @@
             <!-- Filter 2: Cabang Lomba -->
             <div>
                 <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Cabang Lomba:</label>
-                <select x-model="selectedCompetition" @change="selectedSector = 'all'" class="w-full px-3 py-2.5 h-[42px] rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8] cursor-pointer">
+                <select x-model="selectedCompetition" @change="onCompetitionChange()" class="w-full px-3 py-2.5 h-[42px] rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8] cursor-pointer">
                     <option value="all">Semua Cabang Lomba ({{ $competitions->count() }})</option>
                     @foreach($competitions as $comp)
                         <option value="{{ $comp->id }}">{{ $comp->name }} ({{ $comp->registrations->count() }} Pendaftar)</option>
