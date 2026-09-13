@@ -247,7 +247,7 @@
     fetchError: null,
     currentPage: 1,
     lastPage: 1,
-    perPage: 25,
+    perPage: 15,
     totalItems: 0,
     fromItem: 0,
     toItem: 0,
@@ -1073,6 +1073,7 @@
                     <span class="text-[11px] text-slate-400">Tampilkan:</span>
                     <select x-model.number="perPage" class="px-2.5 py-1 rounded-xl bg-[#161F30] border border-white/[0.12] text-xs font-bold text-slate-200 focus:border-[#7A5AF8] outline-none cursor-pointer">
                         <option :value="10">10 baris</option>
+                        <option :value="15">15 baris</option>
                         <option :value="25">25 baris</option>
                         <option :value="50">50 baris</option>
                         <option :value="100">100 baris</option>

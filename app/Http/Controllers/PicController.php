@@ -462,7 +462,7 @@ class PicController extends Controller
             }
         }
 
-        $perPage = min((int) $request->get('per_page', 25), 100);
+        $perPage = min((int) $request->get('per_page', 15), 100);
         $paginated = $query->paginate($perPage);
 
         $items = $paginated->getCollection()->map(function ($r) {
