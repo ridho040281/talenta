@@ -55,6 +55,7 @@ class Registration extends Model
         'display_name',
         'primary_gender',
         'pure_name',
+        'recipient_phones',
     ];
 
     protected static function booted(): void
@@ -256,6 +257,7 @@ class Registration extends Model
             default => 'Umum',
         };
     }
+
 
     public function generateParticipantNumber(): string
     {
