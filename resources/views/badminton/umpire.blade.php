@@ -17,9 +17,9 @@
     <!-- Vite Local Tailwind CSS & JS Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
-    <!-- Lucide Icons & Alpine.js -->
-    <script src="https://cdn.jsdelivr.net/npm/lucide@0.344.0/dist/umd/lucide.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Lucide Icons & Alpine.js (Self-hosted Local) -->
+    <script defer src="{{ asset('vendor/lucide/lucide.min.js') }}"></script>
+    <script defer src="{{ asset('vendor/alpine/alpine.min.js') }}"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700;800&family=Orbitron:wght@700;900&family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap');

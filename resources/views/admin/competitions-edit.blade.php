@@ -15,7 +15,7 @@
     @endif
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script defer src="{{ asset('vendor/lucide/lucide.min.js') }}"></script>
     <style>
         [x-cloak] { display: none !important; }
 

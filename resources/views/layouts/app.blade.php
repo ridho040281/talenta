@@ -18,20 +18,19 @@
     <!-- Preconnect CDNs for faster loading -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@500;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
     
     <!-- Vite Local Tailwind CSS & JS Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
-    <!-- Lucide Icons -->
-    <script defer src="https://cdn.jsdelivr.net/npm/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+    <!-- Lucide Icons (Self-hosted Local, non-blocking) -->
+    <script defer src="{{ asset('vendor/lucide/lucide.min.js') }}"></script>
     
-    <!-- Alpine.js -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Alpine.js (Self-hosted Local) -->
+    <script defer src="{{ asset('vendor/alpine/alpine.min.js') }}"></script>
 
-    <!-- Canvas Confetti -->
-    <script defer src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <!-- Canvas Confetti (Self-hosted Local) -->
+    <script defer src="{{ asset('vendor/confetti/confetti.browser.min.js') }}"></script>
 
     <style>
         [x-cloak] { display: none !important; }

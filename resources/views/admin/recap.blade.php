@@ -2199,6 +2199,6 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
+<script src="{{ asset('vendor/html-to-image/html-to-image.min.js') }}"></script>
 @endpush
 

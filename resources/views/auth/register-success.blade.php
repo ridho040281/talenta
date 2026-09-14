@@ -20,8 +20,8 @@
     <!-- Vite Local Tailwind CSS & JS Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
-    <!-- Lucide Icons -->
-    <script src="https://cdn.jsdelivr.net/npm/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+    <!-- Lucide Icons (Self-hosted Local) -->
+    <script src="{{ asset('vendor/lucide/lucide.min.js') }}"></script>
 
     <style>
         @media screen {
