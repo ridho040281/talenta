@@ -475,7 +475,7 @@
             </div>
         </div>
 
-        <!-- Card 3: Belum Terverifikasi (Pending) -->
+        <!-- Card 3: Belum Terverifikasi (Pending & Revisi) -->
         <div class="ai-card rounded-2xl p-3 border border-white/[0.08] shadow-md flex items-center justify-between hover:border-amber-500/50 transition">
             <div class="space-y-0.5">
                 <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">Dana Pending (Belum Verif)</span>
@@ -483,7 +483,7 @@
                     <span class="text-sm sm:text-base font-black text-amber-400 font-mono">Rp {{ number_format($grandTotals['pending_income'], 0, ',', '.') }}</span>
                 </div>
                 <div class="text-[10px] text-amber-300/80 font-medium pt-0.5">
-                    <span class="font-bold font-mono">{{ $cashflowSummary['count_pending'] }}</span> Transaksi ({{ $grandTotals['pending_registrations'] }} Siswa Menunggu Verif)
+                    <span class="font-bold font-mono">{{ $cashflowSummary['count_pending'] }}</span> Transaksi (<span class="font-bold font-mono">{{ $grandTotals['pending_registrations'] + ($grandTotals['revision_registrations'] ?? 0) }}</span> Siswa: {{ $grandTotals['pending_registrations'] }} Menunggu{{ ($grandTotals['revision_registrations'] ?? 0) > 0 ? ', ' . $grandTotals['revision_registrations'] . ' Revisi' : '' }})
                 </div>
             </div>
             <div class="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0">
@@ -576,7 +576,7 @@
                             <th class="py-3.5 px-4 text-center whitespace-nowrap w-[100px]">KUOTA</th>
                             <th class="py-3.5 px-4 text-center whitespace-nowrap w-[110px]">PENDAFTAR</th>
                             <th class="py-3.5 px-4 text-center text-emerald-400 whitespace-nowrap w-[130px]">VERIFIKASI (LUNAS)</th>
-                            <th class="py-3.5 px-4 text-center text-amber-400 whitespace-nowrap w-[100px]">PENDING</th>
+                            <th class="py-3.5 px-4 text-center text-amber-400 whitespace-nowrap w-[130px]">PENDING / REVISI</th>
                             <th class="py-3.5 px-4 text-right whitespace-nowrap w-[140px]">DANA LUNAS MASUK</th>
                             <th class="py-3.5 px-4 text-right whitespace-nowrap w-[140px]">POTENSI TOTAL</th>
                         </tr>
@@ -636,9 +636,16 @@
                                     </span>
                                 </td>
                                 <td class="py-3.5 px-4 text-center whitespace-nowrap">
-                                    <span class="px-2.5 py-1 rounded-full text-[10px] font-black {{ $item['pending_count'] > 0 ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30' : 'bg-white/[0.05] text-slate-500 border border-white/[0.08]' }} whitespace-nowrap">
-                                        {{ $item['pending_count'] }}
-                                    </span>
+                                    <div class="inline-flex items-center gap-1">
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-black {{ $item['pending_count'] > 0 ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30' : 'bg-white/[0.05] text-slate-500 border border-white/[0.08]' }} whitespace-nowrap" title="{{ $item['pending_count'] }} Menunggu Verifikasi">
+                                            {{ $item['pending_count'] }}
+                                        </span>
+                                        @if(($item['revision_count'] ?? 0) > 0)
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-orange-500/15 text-orange-400 border border-orange-500/30 whitespace-nowrap" title="{{ $item['revision_count'] }} Perlu Revisi">
+                                                {{ $item['revision_count'] }} rev
+                                            </span>
+                                        @endif
+                                    </div>
                                 </td>
                                 <td class="py-3.5 px-4 text-right font-black text-emerald-400 font-mono text-sm whitespace-nowrap">
                                     Rp {{ number_format($item['verified_income'], 0, ',', '.') }}
@@ -692,7 +699,12 @@
                             <td class="py-4 px-4 text-center font-black whitespace-nowrap">{{ $grandTotals['total_quota'] }}</td>
                             <td class="py-4 px-4 text-center font-black whitespace-nowrap">{{ $grandTotals['total_registrations'] }}</td>
                             <td class="py-4 px-4 text-center font-black text-emerald-300 whitespace-nowrap">{{ $grandTotals['verified_registrations'] }}</td>
-                            <td class="py-4 px-4 text-center font-black text-amber-300 whitespace-nowrap">{{ $grandTotals['pending_registrations'] }}</td>
+                            <td class="py-4 px-4 text-center whitespace-nowrap">
+                                <span class="font-black text-amber-300">{{ $grandTotals['pending_registrations'] }}</span>
+                                @if(($grandTotals['revision_registrations'] ?? 0) > 0)
+                                    <span class="text-orange-400 text-[10px] font-bold block">+ {{ $grandTotals['revision_registrations'] }} Revisi</span>
+                                @endif
+                            </td>
                             <td class="py-4 px-4 text-right font-black text-emerald-400 font-mono text-base whitespace-nowrap">
                                 Rp {{ number_format($grandTotals['verified_income'], 0, ',', '.') }}
                             </td>

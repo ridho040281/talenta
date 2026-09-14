@@ -1059,6 +1059,7 @@ class AdminController extends Controller
             'total_registrations' => 0,
             'verified_registrations' => 0,
             'pending_registrations' => 0,
+            'revision_registrations' => 0,
             'rejected_registrations' => 0,
             'verified_income' => 0,
             'pending_income' => 0,
@@ -1073,6 +1074,7 @@ class AdminController extends Controller
             $totalRegs = $regs->count();
             $verifiedRegs = $regs->where('status', 'verified');
             $pendingRegs = $regs->where('status', 'pending');
+            $revisionRegs = $regs->where('status', 'revision');
             $rejectedRegs = $regs->where('status', 'rejected');
 
             $verifiedIncome = max(0, $verifiedRegs->sum(fn ($r) => $r->fee) - ($compBonusVerified[$comp->id] ?? 0));
@@ -1151,6 +1153,7 @@ class AdminController extends Controller
                 'total_regs' => $totalRegs,
                 'verified_count' => $verifiedRegs->count(),
                 'pending_count' => $pendingRegs->count(),
+                'revision_count' => $revisionRegs->count(),
                 'rejected_count' => $rejectedRegs->count(),
                 'verified_income' => $verifiedIncome,
                 'pending_income' => $pendingIncome,
@@ -1193,6 +1196,7 @@ class AdminController extends Controller
             $grandTotals['total_registrations'] += $totalRegs;
             $grandTotals['verified_registrations'] += $verifiedRegs->count();
             $grandTotals['pending_registrations'] += $pendingRegs->count();
+            $grandTotals['revision_registrations'] += $revisionRegs->count();
             $grandTotals['rejected_registrations'] += $rejectedRegs->count();
             $grandTotals['total_max_quota_income'] += $maxQuotaIncome;
         }
