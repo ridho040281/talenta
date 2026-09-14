@@ -937,23 +937,33 @@ class AdminController extends Controller
         $verifiedInvoiceGross = (float) Invoice::whereIn('status', ['verified', 'paid'])->sum('final_amount');
         $pendingInvoiceGross  = (float) Invoice::where('status', 'pending')->sum('final_amount');
 
-        // Pemasukan verifikasi dari registrasi mandiri (non-invoice)
-        $verifiedMandiriGross = (float) Registration::whereNull('invoice_id')
-            ->whereIn('status', ['verified', 'paid'])
-            ->sum('fee');
-        $pendingMandiriGross  = (float) Registration::whereNull('invoice_id')
-            ->where('status', 'pending')
-            ->sum('fee');
+        // Pemasukan dari registrasi mandiri (non-invoice) dihitung in-memory dari $competitions yang sudah dimuat di atas
+        $verifiedMandiriGross = 0.0;
+        $pendingMandiriGross  = 0.0;
+        $countIndividual      = 0;
+        $countPendingMandiri  = 0;
+        $countVerifiedMandiri = 0;
 
-        $countIndividual  = (int) Registration::whereNull('invoice_id')
-            ->where(function ($q) {
-                $q->whereNotNull('payment_proof')
-                  ->orWhereIn('status', ['verified', 'pending', 'cancelled']);
-            })->count();
-        $countPending     = (int) Invoice::where('status', 'pending')->count()
-                          + (int) Registration::whereNull('invoice_id')->where('status', 'pending')->count();
-        $countVerified    = (int) Invoice::whereIn('status', ['verified', 'paid'])->count()
-                          + (int) Registration::whereNull('invoice_id')->whereIn('status', ['verified', 'paid'])->count();
+        foreach ($competitions as $comp) {
+            foreach ($comp->registrations as $reg) {
+                $reg->setRelation('competition', $comp);
+                if (is_null($reg->invoice_id)) {
+                    if ($reg->payment_proof || in_array($reg->status, ['verified', 'pending', 'cancelled'])) {
+                        $countIndividual++;
+                    }
+                    if (in_array($reg->status, ['verified', 'paid'])) {
+                        $verifiedMandiriGross += (float) $reg->fee;
+                        $countVerifiedMandiri++;
+                    } elseif ($reg->status === 'pending') {
+                        $pendingMandiriGross += (float) $reg->fee;
+                        $countPendingMandiri++;
+                    }
+                }
+            }
+        }
+
+        $countPending  = (int) Invoice::where('status', 'pending')->count() + $countPendingMandiri;
+        $countVerified = (int) Invoice::whereIn('status', ['verified', 'paid'])->count() + $countVerifiedMandiri;
 
         $grossVerified = $verifiedInvoiceGross + $verifiedMandiriGross;
         $grossPending  = $pendingInvoiceGross  + $pendingMandiriGross;
@@ -977,10 +987,10 @@ class AdminController extends Controller
         // Hanya load invoice yang punya bonus_discount > 0 (subset kecil)
         $compBonusVerified = [];
         $compBonusPending  = [];
-        // bonus_discount adalah accessor (bukan kolom DB), hitung via PHP setelah load
-        $bonusInvoices = Invoice::with(['registrations.competition'])->get();
+        $bonusInvoices = Invoice::whereColumn('total_amount', '>', 'final_amount')
+            ->with(['registrations.competition'])
+            ->get();
         foreach ($bonusInvoices as $inv) {
-            if ($inv->bonus_discount <= 0) continue;
             foreach ($inv->registrations->groupBy('competition_id') as $cId => $cRegs) {
                 $cObj = $cRegs->first()->competition ?? null;
                 if ($cObj) {
