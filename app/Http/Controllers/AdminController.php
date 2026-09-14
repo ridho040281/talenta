@@ -977,10 +977,10 @@ class AdminController extends Controller
         // Hanya load invoice yang punya bonus_discount > 0 (subset kecil)
         $compBonusVerified = [];
         $compBonusPending  = [];
-        $bonusInvoices = Invoice::where('bonus_discount', '>', 0)
-            ->with(['registrations.competition'])
-            ->get();
+        // bonus_discount adalah accessor (bukan kolom DB), hitung via PHP setelah load
+        $bonusInvoices = Invoice::with(['registrations.competition'])->get();
         foreach ($bonusInvoices as $inv) {
+            if ($inv->bonus_discount <= 0) continue;
             foreach ($inv->registrations->groupBy('competition_id') as $cId => $cRegs) {
                 $cObj = $cRegs->first()->competition ?? null;
                 if ($cObj) {
