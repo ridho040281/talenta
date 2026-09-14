@@ -386,7 +386,20 @@
         }
     </style>
 </head>
-<body class="text-slate-100 font-sans antialiased min-h-screen flex selection:bg-[#7A5AF8] selection:text-white relative overflow-x-hidden" x-data="{ sidebarOpen: false, passwordModal: false }">
+<body class="text-slate-100 font-sans antialiased min-h-screen flex selection:bg-[#7A5AF8] selection:text-white relative overflow-x-hidden" 
+      x-data="{ 
+          sidebarOpen: window.innerWidth >= 1024 
+              ? (localStorage.getItem('talenta_sidebar_open') !== null ? localStorage.getItem('talenta_sidebar_open') === 'true' : true) 
+              : false, 
+          passwordModal: false,
+          toggleSidebar() {
+              this.sidebarOpen = !this.sidebarOpen;
+              if (window.innerWidth >= 1024) {
+                  localStorage.setItem('talenta_sidebar_open', this.sidebarOpen);
+              }
+              this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+          }
+      }">
 
     <!-- Mobile Sidebar Backdrop -->
     <div x-show="sidebarOpen" 
@@ -401,8 +414,8 @@
          class="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm lg:hidden"></div>
 
     <!-- Sidebar Navigation (AIStarterKit Dark Glass Structure) -->
-    <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'" 
-           class="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] sm:w-64 bg-[#090D17]/98 backdrop-blur-2xl text-slate-300 flex flex-col transition-transform duration-300 ease-in-out border-r border-white/[0.12] shadow-[4px_0_25px_rgba(0,0,0,0.6)]">
+    <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" 
+           class="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] sm:w-64 bg-[#090D17]/98 backdrop-blur-2xl text-slate-300 flex flex-col transition-all duration-300 ease-in-out border-r border-white/[0.12] shadow-[4px_0_25px_rgba(0,0,0,0.6)]">
         
         <!-- Sidebar Brand Header -->
         <div class="h-16 flex items-center justify-between px-4 border-b border-white/[0.08]">
@@ -419,8 +432,9 @@
                     <span class="text-[10px] font-bold tracking-widest text-[#7A5AF8] uppercase block truncate mt-1">{{ $appSettings['institution_name'] ?? 'MTsN 1 BLITAR' }}</span>
                 </div>
             </a>
-            <button @click="sidebarOpen = false" class="lg:hidden p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/[0.08] transition cursor-pointer" aria-label="Tutup Menu">
-                <i data-lucide="x" class="w-5 h-5"></i>
+            <button @click="toggleSidebar()" class="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/[0.08] transition cursor-pointer flex items-center justify-center" aria-label="Tutup Menu" title="Sembunyikan Sidebar">
+                <i data-lucide="chevron-left" class="w-5 h-5 hidden lg:block"></i>
+                <i data-lucide="x" class="w-5 h-5 lg:hidden"></i>
             </button>
         </div>
 
@@ -630,7 +644,8 @@
     </aside>
 
     <!-- Main Content Area with AIStarterKit Ambient Glow Effects -->
-    <div class="flex-1 flex flex-col lg:pl-64 min-w-0 relative w-full max-w-full">
+    <div :class="sidebarOpen ? 'lg:pl-64' : 'lg:pl-0'" 
+         class="flex-1 flex flex-col min-w-0 relative w-full max-w-full transition-all duration-300 ease-in-out">
         
         <!-- Ambient AI Glow Orbs in Dashboard -->
         <div class="fixed inset-0 overflow-hidden pointer-events-none z-0 w-full h-full max-w-[100vw]">
@@ -642,7 +657,7 @@
         <!-- Dashboard Top Navbar (AI Glass Nav) -->
         <header class="sticky top-0 z-30 ai-nav h-14 sm:h-16 flex items-center justify-between px-3.5 sm:px-8">
             <div class="flex items-center gap-2.5 sm:gap-4 overflow-hidden">
-                <button @click="sidebarOpen = true" class="lg:hidden p-2 rounded-xl text-slate-400 hover:bg-white/[0.06] flex items-center justify-center shrink-0" aria-label="Buka Menu">
+                <button @click="toggleSidebar()" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/[0.06] flex items-center justify-center shrink-0 transition cursor-pointer" aria-label="Toggle Menu" :title="sidebarOpen ? 'Sembunyikan Sidebar' : 'Tampilkan Sidebar'">
                     <i data-lucide="menu" class="w-5 h-5"></i>
                 </button>
                 <div class="overflow-hidden">
