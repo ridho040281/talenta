@@ -646,7 +646,7 @@ class Competition extends Model
             return [
                 'is_open' => false,
                 'status_code' => 'closed_quota',
-                'status_label' => 'Penuh',
+                'status_label' => 'Kuota Penuh',
                 'status_color' => 'purple',
                 'badge_class' => 'bg-purple-500/15 text-purple-400 border border-purple-500/30',
                 'deadline' => $effectiveEnd,

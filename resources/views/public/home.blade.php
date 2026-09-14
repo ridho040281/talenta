@@ -321,7 +321,7 @@
                                         $isFull = ($sisa <= 0);
                                         $isLow = ($sisa > 0 && $sisa <= 5);
                                         $textColor = $isFull ? 'text-rose-400 font-black' : ($isLow ? 'text-amber-300 font-black' : 'text-emerald-400 font-extrabold');
-                                        $sisaText = $isFull ? 'Penuh' : 'Sisa: ' . $sisa . ' ' . $unit;
+                                        $sisaText = $isFull ? 'Kuota Penuh' : 'Sisa: ' . $sisa . ' ' . $unit;
                                         $barWidth = min(100, ($count / max(1, $quota)) * 100);
                                         $barGradient = $isFull ? 'from-rose-500 to-red-600' : ($isLow ? 'from-amber-400 to-orange-500' : 'from-[#7A5AF8] to-[#4E6EFF]');
                                         return '
