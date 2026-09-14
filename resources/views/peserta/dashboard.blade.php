@@ -15,7 +15,7 @@
                 </span>
                 <span class="text-xs text-slate-400 font-mono">NISN/ID: {{ $user->nisn ?: $user->email }}</span>
             </div>
-            <h2 class="text-xl sm:text-2xl font-black text-white mt-1 font-display">Halo, {{ $user->name }}</h2>
+            <h2 class="text-xl sm:text-2xl font-black text-white mt-1 font-display">Assalamu'alaikum, {{ $user->name }}</h2>
             <p class="text-xs text-slate-300 mt-0.5">Pilih cabang lomba di bawah untuk mendaftarkan peserta delegasi sekolah, unduh bukti pendaftaran, dan kelola berkas.</p>
         </div>
         <div class="shrink-0 flex items-center gap-2.5 relative z-10 flex-wrap">
