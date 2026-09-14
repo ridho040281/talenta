@@ -1267,6 +1267,8 @@ class AdminController extends Controller
             ];
         })->sortByDesc('total_poin')->values();
 
+        $categories = Category::orderBy('order', 'asc')->get();
+
         return view('admin.recap', compact(
             'competitions',
             'financeRecap',
@@ -1276,7 +1278,8 @@ class AdminController extends Controller
             'standings',
             'allAdjustments',
             'cashflowItems',
-            'cashflowSummary'
+            'cashflowSummary',
+            'categories'
         ));
     }
 

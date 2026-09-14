@@ -299,8 +299,8 @@
             const link = document.createElement('a');
             const now = new Date();
             const pad = (n) => String(n).padStart(2, '0');
-            const timeTag = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`;
-            link.download = `REKAP-PENDAFTAR-TALENTA-2026-${timeTag}.png`;
+            const catTag = (activeCat && activeCat !== 'all') ? `-${activeCat.toUpperCase()}` : '';
+            link.download = `REKAP-PENDAFTAR-TALENTA-2026${catTag}-${timeTag}.png`;
             link.href = dataUrl;
             link.click();
 
@@ -1253,11 +1253,16 @@
             <!-- Controls: Filter & Download PNG Button -->
             <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
                 <!-- Category Filter Pills -->
-                <div class="flex items-center p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08] text-xs font-bold">
+                @php
+                    $infographicCategories = $categories ?? \App\Models\Category::orderBy('order', 'asc')->get();
+                @endphp
+                <div class="flex flex-wrap items-center p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08] text-xs font-bold gap-1">
                     <button type="button" @click="recapCategory = 'all'" :class="recapCategory === 'all' ? 'bg-[#7A5AF8] text-white shadow-xs' : 'text-slate-400 hover:text-white'" class="px-3 py-1.5 rounded-xl transition cursor-pointer">Semua</button>
-                    <button type="button" @click="recapCategory = 'olahraga'" :class="recapCategory === 'olahraga' ? 'bg-[#7A5AF8] text-white shadow-xs' : 'text-slate-400 hover:text-white'" class="px-3 py-1.5 rounded-xl transition cursor-pointer">Olahraga</button>
-                    <button type="button" @click="recapCategory = 'seni'" :class="recapCategory === 'seni' ? 'bg-[#7A5AF8] text-white shadow-xs' : 'text-slate-400 hover:text-white'" class="px-3 py-1.5 rounded-xl transition cursor-pointer">Seni</button>
-                    <button type="button" @click="recapCategory = 'teknologi'" :class="recapCategory === 'teknologi' ? 'bg-[#7A5AF8] text-white shadow-xs' : 'text-slate-400 hover:text-white'" class="px-3 py-1.5 rounded-xl transition cursor-pointer">Teknologi</button>
+                    @foreach($infographicCategories as $cat)
+                        <button type="button" @click="recapCategory = '{{ $cat->slug }}'" :class="recapCategory === '{{ $cat->slug }}' ? 'bg-[#7A5AF8] text-white shadow-xs' : 'text-slate-400 hover:text-white'" class="px-3 py-1.5 rounded-xl transition cursor-pointer">
+                            {{ $cat->name }}
+                        </button>
+                    @endforeach
                 </div>
 
                 <!-- Download PNG Button -->
