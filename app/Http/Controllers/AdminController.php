@@ -1267,10 +1267,12 @@ class AdminController extends Controller
             ];
         })->sortByDesc('total_poin')->values();
 
+        // 7. Categories for Dynamic Filtering
         $categories = Category::orderBy('order', 'asc')->get();
 
         return view('admin.recap', compact(
             'competitions',
+            'categories',
             'financeRecap',
             'grandTotals',
             'totalRegistrationsCount',
@@ -1278,8 +1280,7 @@ class AdminController extends Controller
             'standings',
             'allAdjustments',
             'cashflowItems',
-            'cashflowSummary',
-            'categories'
+            'cashflowSummary'
         ));
     }
 

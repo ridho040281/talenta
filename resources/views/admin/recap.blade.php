@@ -299,8 +299,8 @@
             const link = document.createElement('a');
             const now = new Date();
             const pad = (n) => String(n).padStart(2, '0');
-            const catTag = (activeCat && activeCat !== 'all') ? `-${activeCat.toUpperCase()}` : '';
-            link.download = `REKAP-PENDAFTAR-TALENTA-2026${catTag}-${timeTag}.png`;
+            const timeTag = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`;
+            link.download = `REKAP-PENDAFTAR-TALENTA-2026-${timeTag}.png`;
             link.href = dataUrl;
             link.click();
 
@@ -1252,16 +1252,16 @@
 
             <!-- Controls: Filter & Download PNG Button -->
             <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
-                <!-- Category Filter Pills -->
                 @php
-                    $infographicCategories = $categories ?? \App\Models\Category::orderBy('order', 'asc')->get();
+                    $infographicCategories = (isset($categories) && $categories->isNotEmpty()) 
+                        ? $categories 
+                        : $competitions->map(fn($c) => $c->category)->filter()->unique('id')->sortBy('order')->values();
                 @endphp
+                <!-- Category Filter Pills (Semua, Tahfidz, Pramuka, Olahraga, Seni, Teknologi, dll) -->
                 <div class="flex flex-wrap items-center p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08] text-xs font-bold gap-1">
-                    <button type="button" @click="recapCategory = 'all'" :class="recapCategory === 'all' ? 'bg-[#7A5AF8] text-white shadow-xs' : 'text-slate-400 hover:text-white'" class="px-3 py-1.5 rounded-xl transition cursor-pointer">Semua</button>
+                    <button type="button" @click="recapCategory = 'all'" :class="recapCategory === 'all' ? 'bg-[#7A5AF8] text-white shadow-xs' : 'text-slate-400 hover:text-white'" class="px-3 py-1.5 rounded-xl transition cursor-pointer whitespace-nowrap">Semua</button>
                     @foreach($infographicCategories as $cat)
-                        <button type="button" @click="recapCategory = '{{ $cat->slug }}'" :class="recapCategory === '{{ $cat->slug }}' ? 'bg-[#7A5AF8] text-white shadow-xs' : 'text-slate-400 hover:text-white'" class="px-3 py-1.5 rounded-xl transition cursor-pointer">
-                            {{ $cat->name }}
-                        </button>
+                        <button type="button" @click="recapCategory = '{{ $cat->slug }}'" :class="recapCategory === '{{ $cat->slug }}' ? 'bg-[#7A5AF8] text-white shadow-xs' : 'text-slate-400 hover:text-white'" class="px-3 py-1.5 rounded-xl transition cursor-pointer whitespace-nowrap">{{ $cat->name }}</button>
                     @endforeach
                 </div>
 
@@ -1431,37 +1431,43 @@
                                     $quotaMtqPop = (int) ($comp->quota ?? 50);
                                 }
 
-                                $categorySlug = $comp->category->slug ?? '';
-                                $rowTheme = match($categorySlug) {
-                                    'seni' => [
+                                $catSlug = strtolower($comp->category->slug ?? '');
+                                $rowTheme = match(true) {
+                                    str_contains($catSlug, 'seni') => [
                                         'bg' => 'bg-pink-500/[0.03]',
                                         'border_l' => 'border-l-4 border-l-pink-500/80',
                                         'badge' => 'bg-pink-500/15 text-pink-300 border border-pink-500/30',
                                         'icon_color' => 'text-pink-400',
                                     ],
-                                    'olahraga' => [
+                                    str_contains($catSlug, 'olahraga') => [
                                         'bg' => 'bg-emerald-500/[0.025]',
                                         'border_l' => 'border-l-4 border-l-emerald-500/80',
                                         'badge' => 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30',
                                         'icon_color' => 'text-emerald-400',
                                     ],
-                                    'teknologi' => [
+                                    str_contains($catSlug, 'tekno') => [
                                         'bg' => 'bg-[#4E6EFF]/[0.03]',
                                         'border_l' => 'border-l-4 border-l-[#4E6EFF]/80',
                                         'badge' => 'bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30',
                                         'icon_color' => 'text-[#4E6EFF]',
                                     ],
-                                    'pramuka' => [
+                                    str_contains($catSlug, 'pramuka') => [
                                         'bg' => 'bg-amber-500/[0.03]',
                                         'border_l' => 'border-l-4 border-l-amber-500/80',
                                         'badge' => 'bg-amber-500/15 text-amber-300 border border-amber-500/30',
                                         'icon_color' => 'text-amber-400',
                                     ],
-                                    'tahfidz' => [
+                                    str_contains($catSlug, 'tahfid') || str_contains($catSlug, 'agama') => [
                                         'bg' => 'bg-teal-500/[0.03]',
                                         'border_l' => 'border-l-4 border-l-teal-500/80',
                                         'badge' => 'bg-teal-500/15 text-teal-300 border border-teal-500/30',
                                         'icon_color' => 'text-teal-400',
+                                    ],
+                                    str_contains($catSlug, 'olimpiade') || str_contains($catSlug, 'sains') || str_contains($catSlug, 'akademik') => [
+                                        'bg' => 'bg-indigo-500/[0.03]',
+                                        'border_l' => 'border-l-4 border-l-indigo-500/80',
+                                        'badge' => 'bg-indigo-500/15 text-indigo-300 border border-indigo-500/30',
+                                        'icon_color' => 'text-indigo-400',
                                     ],
                                     default => [
                                         'bg' => 'bg-[#7A5AF8]/[0.03]',
