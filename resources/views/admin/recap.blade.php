@@ -483,7 +483,7 @@
                     <span class="text-sm sm:text-base font-black text-amber-400 font-mono">Rp {{ number_format($grandTotals['pending_income'], 0, ',', '.') }}</span>
                 </div>
                 <div class="text-[10px] text-amber-300/80 font-medium pt-0.5">
-                    <span class="font-bold font-mono">{{ $grandTotals['pending_registrations'] }}</span> Siswa Menunggu PIC
+                    <span class="font-bold font-mono">{{ $cashflowSummary['count_pending'] }}</span> Transaksi ({{ $grandTotals['pending_registrations'] }} Siswa Menunggu Verif)
                 </div>
             </div>
             <div class="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0">
@@ -763,7 +763,7 @@
                             Rp {{ number_format($cashflowSummary['gross_pending'], 0, ',', '.') }}
                         </div>
                         <div class="text-[10px] text-amber-300/80 font-medium pt-0.5">
-                            Menunggu Konfirmasi Slip
+                            <span class="font-bold font-mono">{{ $cashflowSummary['count_pending'] }}</span> Transaksi ({{ $grandTotals['pending_registrations'] }} Siswa Menunggu Verif)
                         </div>
                     </div>
                     <div class="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0">

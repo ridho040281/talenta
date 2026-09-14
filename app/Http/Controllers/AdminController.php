@@ -928,7 +928,131 @@ class AdminController extends Controller
             },
         ])->withCount('registrations')->get();
 
-        // 2. Tab 1: Financial & Quota Recap per Competition
+        // 2. Payment Adjustments & Cashflow Ledger (Buku Kas & Mutasi Pembayaran Terpadu)
+        $allAdjustments = PaymentAdjustment::with('creator')->latest()->get();
+        $totalAdjustments = (float) $allAdjustments->sum('amount');
+
+        $invoices = Invoice::with(['user', 'registrations.competition', 'adjustments.creator'])->latest()->get();
+        $invoiceItems = $invoices->map(function ($inv) {
+            $adjustments = $inv->adjustments;
+            $refundAmount = (float) $adjustments->sum('amount');
+            $gross = (float) $inv->final_amount;
+            $net = max(0, $gross - $refundAmount);
+
+            return [
+                'id' => $inv->id,
+                'type' => 'kolektif',
+                'type_label' => 'Kolektif (Invoice)',
+                'ref_no' => $inv->invoice_number,
+                'created_at' => $inv->created_at,
+                'date_formatted' => $inv->created_at ? $inv->created_at->translatedFormat('d M Y H:i') : '-',
+                'contact_name' => $inv->user ? $inv->user->name : '-',
+                'contact_phone' => $inv->user ? $inv->user->phone : '-',
+                'institution' => $inv->user ? ($inv->user->institution_name ?? $inv->user->school_name ?? '-') : '-',
+                'title' => 'Tagihan Kolektif #'.$inv->invoice_number,
+                'description' => $inv->registrations->count().' Pendaftar ('.$inv->registrations->pluck('competition.name')->filter()->unique()->implode(', ').')',
+                'items_count' => $inv->registrations->count(),
+                'gross_amount' => $gross,
+                'refund_amount' => $refundAmount,
+                'net_amount' => $net,
+                'status' => $inv->status, // pending, paid, verified, rejected
+                'payment_proof' => $inv->payment_proof,
+                'proof_url' => $inv->payment_proof ? asset('storage/'.$inv->payment_proof) : null,
+                'adjustments' => $adjustments,
+                'reference_type' => 'invoice',
+                'model' => $inv,
+            ];
+        });
+
+        $individualRegs = Registration::whereNull('invoice_id')
+            ->where(function ($q) {
+                $q->whereNotNull('payment_proof')
+                  ->orWhereIn('status', ['verified', 'pending', 'cancelled']);
+            })
+            ->with(['user', 'competition', 'members', 'adjustments.creator'])
+            ->latest()
+            ->get();
+
+        $individualItems = $individualRegs->map(function ($reg) {
+            $adjustments = $reg->adjustments;
+            $refundAmount = (float) $adjustments->sum('amount');
+            $gross = (float) $reg->fee;
+            $net = max(0, $gross - $refundAmount);
+
+            return [
+                'id' => $reg->id,
+                'type' => 'mandiri',
+                'type_label' => 'Mandiri (Satuan)',
+                'ref_no' => $reg->registration_code,
+                'created_at' => $reg->created_at,
+                'date_formatted' => $reg->created_at ? $reg->created_at->translatedFormat('d M Y H:i') : '-',
+                'contact_name' => $reg->user ? $reg->user->name : ($reg->pure_name ?? '-'),
+                'contact_phone' => $reg->user ? $reg->user->phone : ($reg->official_phone ?? '-'),
+                'institution' => $reg->display_school,
+                'title' => $reg->display_name,
+                'description' => ($reg->competition ? $reg->competition->name : 'Lomba').' ('.$reg->registration_code.')',
+                'items_count' => 1,
+                'gross_amount' => $gross,
+                'refund_amount' => $refundAmount,
+                'net_amount' => $net,
+                'status' => $reg->status, // verified, pending, rejected, cancelled
+                'payment_proof' => $reg->payment_proof,
+                'proof_url' => $reg->payment_proof ? asset('storage/'.$reg->payment_proof) : null,
+                'adjustments' => $adjustments,
+                'reference_type' => 'registration',
+                'model' => $reg,
+            ];
+        });
+
+        $cashflowItems = $invoiceItems->concat($individualItems)->sortByDesc('created_at')->values();
+
+        $pendingCashflowItems = $cashflowItems->where('status', 'pending');
+        $verifiedCashflowItems = $cashflowItems->whereIn('status', ['verified', 'paid']);
+
+        // Calculate Cashflow Summary Metrics (Buku Kas Terpadu)
+        $cashflowSummary = [
+            'gross_verified' => (float) $verifiedCashflowItems->sum('gross_amount'),
+            'gross_pending' => (float) $pendingCashflowItems->sum('gross_amount'),
+            'total_refunds' => $totalAdjustments,
+            'net_real_cash' => max(0, (float) $verifiedCashflowItems->sum('gross_amount') - $totalAdjustments),
+            'count_collective' => $invoiceItems->count(),
+            'count_individual' => $individualItems->count(),
+            'count_adjustments' => $allAdjustments->count(),
+            'count_pending' => $pendingCashflowItems->count(),
+            'pending_students_count' => (int) $pendingCashflowItems->sum('items_count'),
+            'count_verified' => $verifiedCashflowItems->count(),
+            'verified_students_count' => (int) $verifiedCashflowItems->sum('items_count'),
+        ];
+
+        // Map bonus discounts per competition from invoices to keep per-branch recap in 100% sync
+        $compBonusVerified = [];
+        $compBonusPending = [];
+        foreach ($invoices as $inv) {
+            if ($inv->bonus_discount > 0) {
+                foreach ($inv->registrations->groupBy('competition_id') as $cId => $cRegs) {
+                    $cObj = $cRegs->first()->competition ?? null;
+                    if ($cObj) {
+                        $code = $cObj->code;
+                        $isBonusActive = ($code === 'MIPA') || (AppSetting::get('bonus_active_'.strtolower($code), '0') === '1');
+                        $minQuota = (int) AppSetting::get('bonus_min_'.strtolower($code), 10);
+                        $freeCountPerBatch = (int) AppSetting::get('bonus_free_'.strtolower($code), 1);
+                        $count = $cRegs->count();
+                        if ($isBonusActive && $minQuota > 0 && $count >= $minQuota) {
+                            $freeCount = (int) (floor($count / $minQuota) * $freeCountPerBatch);
+                            $unitFee = (float) $cObj->registration_fee;
+                            $discount = $freeCount * $unitFee;
+                            if (in_array($inv->status, ['verified', 'paid'])) {
+                                $compBonusVerified[$cId] = ($compBonusVerified[$cId] ?? 0) + $discount;
+                            } elseif ($inv->status === 'pending') {
+                                $compBonusPending[$cId] = ($compBonusPending[$cId] ?? 0) + $discount;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3. Tab 1: Financial & Quota Recap per Competition
         $financeRecap = [];
         $grandTotals = [
             'total_quota' => 0,
@@ -940,6 +1064,8 @@ class AdminController extends Controller
             'pending_income' => 0,
             'total_potential_income' => 0,
             'total_max_quota_income' => 0,
+            'total_adjustments' => $totalAdjustments,
+            'net_verified_income' => 0,
         ];
 
         foreach ($competitions as $comp) {
@@ -949,8 +1075,8 @@ class AdminController extends Controller
             $pendingRegs = $regs->where('status', 'pending');
             $rejectedRegs = $regs->where('status', 'rejected');
 
-            $verifiedIncome = $verifiedRegs->sum(fn ($r) => $r->fee);
-            $pendingIncome = $pendingRegs->sum(fn ($r) => $r->fee);
+            $verifiedIncome = max(0, $verifiedRegs->sum(fn ($r) => $r->fee) - ($compBonusVerified[$comp->id] ?? 0));
+            $pendingIncome = max(0, $pendingRegs->sum(fn ($r) => $r->fee) - ($compBonusPending[$comp->id] ?? 0));
             $totalIncome = $verifiedIncome + $pendingIncome;
 
             $breakdown = [];
@@ -1068,106 +1194,17 @@ class AdminController extends Controller
             $grandTotals['verified_registrations'] += $verifiedRegs->count();
             $grandTotals['pending_registrations'] += $pendingRegs->count();
             $grandTotals['rejected_registrations'] += $rejectedRegs->count();
-            $grandTotals['verified_income'] += $verifiedIncome;
-            $grandTotals['pending_income'] += $pendingIncome;
-            $grandTotals['total_potential_income'] += $totalIncome;
             $grandTotals['total_max_quota_income'] += $maxQuotaIncome;
         }
 
-        // 3. Tab 2 Total Count (Lean count, no bulky get() query)
+        // 100% SINKRONISASI KEUANGAN: Grand Totals persis mengikuti Buku Kas Riil
+        $grandTotals['verified_income'] = $cashflowSummary['gross_verified'];
+        $grandTotals['net_verified_income'] = $cashflowSummary['net_real_cash'];
+        $grandTotals['pending_income'] = $cashflowSummary['gross_pending'];
+        $grandTotals['total_potential_income'] = $cashflowSummary['gross_verified'] + $cashflowSummary['gross_pending'];
+
+        // 4. Tab Master Peserta Total Count (Lean count)
         $totalRegistrationsCount = Registration::count();
-
-        // 4. Payment Adjustments & Cashflow Ledger
-        $allAdjustments = PaymentAdjustment::with('creator')->latest()->get();
-        $totalAdjustments = $allAdjustments->sum('amount');
-        $grandTotals['total_adjustments'] = $totalAdjustments;
-        $grandTotals['net_verified_income'] = max(0, $grandTotals['verified_income'] - $totalAdjustments);
-
-        // Unified Cashflow Ledger (Buku Kas & Mutasi Pembayaran)
-        $invoices = Invoice::with(['user', 'registrations.competition', 'adjustments.creator'])->latest()->get();
-        $invoiceItems = $invoices->map(function ($inv) {
-            $adjustments = $inv->adjustments;
-            $refundAmount = $adjustments->sum('amount');
-            $gross = (float) $inv->final_amount;
-            $net = max(0, $gross - $refundAmount);
-
-            return [
-                'id' => $inv->id,
-                'type' => 'kolektif',
-                'type_label' => 'Kolektif (Invoice)',
-                'ref_no' => $inv->invoice_number,
-                'created_at' => $inv->created_at,
-                'date_formatted' => $inv->created_at ? $inv->created_at->translatedFormat('d M Y H:i') : '-',
-                'contact_name' => $inv->user ? $inv->user->name : '-',
-                'contact_phone' => $inv->user ? $inv->user->phone : '-',
-                'institution' => $inv->user ? ($inv->user->institution_name ?? $inv->user->school_name ?? '-') : '-',
-                'title' => 'Tagihan Kolektif #'.$inv->invoice_number,
-                'description' => $inv->registrations->count().' Pendaftar ('.$inv->registrations->pluck('competition.name')->filter()->unique()->implode(', ').')',
-                'items_count' => $inv->registrations->count(),
-                'gross_amount' => $gross,
-                'refund_amount' => $refundAmount,
-                'net_amount' => $net,
-                'status' => $inv->status, // pending, paid, rejected
-                'payment_proof' => $inv->payment_proof,
-                'proof_url' => $inv->payment_proof ? asset('storage/'.$inv->payment_proof) : null,
-                'adjustments' => $adjustments,
-                'reference_type' => 'invoice',
-                'model' => $inv,
-            ];
-        });
-
-        $individualRegs = Registration::whereNull('invoice_id')
-            ->where(function ($q) {
-                $q->whereNotNull('payment_proof')
-                  ->orWhereIn('status', ['verified', 'pending', 'cancelled']);
-            })
-            ->with(['user', 'competition', 'members', 'adjustments.creator'])
-            ->latest()
-            ->get();
-
-        $individualItems = $individualRegs->map(function ($reg) {
-            $adjustments = $reg->adjustments;
-            $refundAmount = $adjustments->sum('amount');
-            $gross = (float) $reg->fee;
-            $net = max(0, $gross - $refundAmount);
-
-            return [
-                'id' => $reg->id,
-                'type' => 'mandiri',
-                'type_label' => 'Mandiri (Satuan)',
-                'ref_no' => $reg->registration_code,
-                'created_at' => $reg->created_at,
-                'date_formatted' => $reg->created_at ? $reg->created_at->translatedFormat('d M Y H:i') : '-',
-                'contact_name' => $reg->user ? $reg->user->name : ($reg->pure_name ?? '-'),
-                'contact_phone' => $reg->user ? $reg->user->phone : ($reg->official_phone ?? '-'),
-                'institution' => $reg->display_school,
-                'title' => $reg->display_name,
-                'description' => ($reg->competition ? $reg->competition->name : 'Lomba').' ('.$reg->registration_code.')',
-                'items_count' => 1,
-                'gross_amount' => $gross,
-                'refund_amount' => $refundAmount,
-                'net_amount' => $net,
-                'status' => $reg->status, // verified, pending, rejected, cancelled
-                'payment_proof' => $reg->payment_proof,
-                'proof_url' => $reg->payment_proof ? asset('storage/'.$reg->payment_proof) : null,
-                'adjustments' => $adjustments,
-                'reference_type' => 'registration',
-                'model' => $reg,
-            ];
-        });
-
-        $cashflowItems = $invoiceItems->concat($individualItems)->sortByDesc('created_at')->values();
-
-        // Calculate Cashflow Summary Metrics
-        $cashflowSummary = [
-            'gross_verified' => $cashflowItems->whereIn('status', ['verified', 'paid'])->sum('gross_amount'),
-            'gross_pending' => $cashflowItems->where('status', 'pending')->sum('gross_amount'),
-            'total_refunds' => $totalAdjustments,
-            'net_real_cash' => max(0, $cashflowItems->whereIn('status', ['verified', 'paid'])->sum('gross_amount') - $totalAdjustments),
-            'count_collective' => $invoiceItems->count(),
-            'count_individual' => $individualItems->count(),
-            'count_adjustments' => $allAdjustments->count(),
-        ];
 
         // 5. Tab 3: Winners Recap per Competition
         $winnersByCompetition = [];
