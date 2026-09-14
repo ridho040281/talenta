@@ -24,8 +24,8 @@
     <!-- Vite Local Tailwind CSS & JS Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
-    <!-- Lucide Icons CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+    <!-- Lucide Icons CDN (defer to avoid blocking render) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/lucide@0.344.0/dist/umd/lucide.min.js"></script>
     
     <!-- Alpine.js CDN -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -33,8 +33,7 @@
     <!-- Canvas Confetti -->
     <script defer src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 
-    <!-- PDF.js Local Script & Viewer Helper -->
-    <script src="{{ asset('vendor/pdfjs/pdf.min.js') }}"></script>
+    <!-- PDF.js Helper (Loaded on-demand only when viewing PDF) -->
     <script>
         window.renderPdfToContainer = function(container, docUrl, isPdf, renderToken, getToken) {
             if (!container) return;
@@ -53,19 +52,10 @@
                 </div>
             `;
 
-            if (typeof pdfjsLib === 'undefined') {
-                container.innerHTML = `
-                    <div class="p-6 text-center space-y-3 text-slate-300 text-xs">
-                        <p>Penampil PDF sedang disiapkan...</p>
-                        <a href="${docUrl}" target="_blank" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#7A5AF8] text-white font-bold">Buka Berkas Langsung</a>
-                    </div>
-                `;
-                return;
-            }
-
-            try {
-                pdfjsLib.GlobalWorkerOptions.workerSrc = '{{ asset("vendor/pdfjs/pdf.worker.min.js") }}';
-            } catch(e) {}
+            function doRender() {
+                try {
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = '{{ asset("vendor/pdfjs/pdf.worker.min.js") }}';
+                } catch(e) {}
 
             const loadingTask = pdfjsLib.getDocument({
                 url: docUrl,
@@ -135,6 +125,24 @@
                     </div>
                 `;
             });
+            }
+
+            if (typeof pdfjsLib === 'undefined') {
+                const s = document.createElement('script');
+                s.src = '{{ asset("vendor/pdfjs/pdf.min.js") }}';
+                s.onload = doRender;
+                s.onerror = function() {
+                    container.innerHTML = `
+                        <div class="p-6 text-center space-y-3 text-slate-300 text-xs">
+                            <p>Penampil PDF tidak tersedia.</p>
+                            <a href="${docUrl}" target="_blank" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#7A5AF8] text-white font-bold">Buka Berkas Langsung</a>
+                        </div>
+                    `;
+                };
+                document.head.appendChild(s);
+            } else {
+                doRender();
+            }
         };
     </script>
 
