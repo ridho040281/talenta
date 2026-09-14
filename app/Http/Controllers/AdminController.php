@@ -928,124 +928,74 @@ class AdminController extends Controller
             },
         ])->withCount('registrations')->get();
 
-        // 2. Payment Adjustments & Cashflow Ledger (Buku Kas & Mutasi Pembayaran Terpadu)
-        $allAdjustments = PaymentAdjustment::with('creator')->latest()->get();
-        $totalAdjustments = (float) $allAdjustments->sum('amount');
+        // 2. Cashflow Summary — hanya agregat ringan, data tabel di-load AJAX via apiRecapCashflow()
+        $totalAdjustments = (float) PaymentAdjustment::sum('amount');
+        $countAdjustments = (int)   PaymentAdjustment::count();
+        $countCollective  = (int)   Invoice::count();
 
-        $invoices = Invoice::with(['user', 'registrations.competition', 'adjustments.creator'])->latest()->get();
-        $invoiceItems = $invoices->map(function ($inv) {
-            $adjustments = $inv->adjustments;
-            $refundAmount = (float) $adjustments->sum('amount');
-            $gross = (float) $inv->final_amount;
-            $net = max(0, $gross - $refundAmount);
+        // Pemasukan verifikasi dari invoice kolektif
+        $verifiedInvoiceGross = (float) Invoice::whereIn('status', ['verified', 'paid'])->sum('final_amount');
+        $pendingInvoiceGross  = (float) Invoice::where('status', 'pending')->sum('final_amount');
 
-            return [
-                'id' => $inv->id,
-                'type' => 'kolektif',
-                'type_label' => 'Kolektif (Invoice)',
-                'ref_no' => $inv->invoice_number,
-                'created_at' => $inv->created_at,
-                'date_formatted' => $inv->created_at ? $inv->created_at->translatedFormat('d M Y H:i') : '-',
-                'contact_name' => $inv->user ? $inv->user->name : '-',
-                'contact_phone' => $inv->user ? $inv->user->phone : '-',
-                'institution' => $inv->user ? ($inv->user->institution_name ?? $inv->user->school_name ?? '-') : '-',
-                'title' => 'Tagihan Kolektif #'.$inv->invoice_number,
-                'description' => $inv->registrations->count().' Pendaftar ('.$inv->registrations->pluck('competition.name')->filter()->unique()->implode(', ').')',
-                'items_count' => $inv->registrations->count(),
-                'gross_amount' => $gross,
-                'refund_amount' => $refundAmount,
-                'net_amount' => $net,
-                'status' => $inv->status, // pending, paid, verified, rejected
-                'payment_proof' => $inv->payment_proof,
-                'proof_url' => $inv->payment_proof ? asset('storage/'.$inv->payment_proof) : null,
-                'adjustments' => $adjustments,
-                'reference_type' => 'invoice',
-                'model' => $inv,
-            ];
-        });
+        // Pemasukan verifikasi dari registrasi mandiri (non-invoice)
+        $verifiedMandiriGross = (float) Registration::whereNull('invoice_id')
+            ->whereIn('status', ['verified', 'paid'])
+            ->sum('fee');
+        $pendingMandiriGross  = (float) Registration::whereNull('invoice_id')
+            ->where('status', 'pending')
+            ->sum('fee');
 
-        $individualRegs = Registration::whereNull('invoice_id')
+        $countIndividual  = (int) Registration::whereNull('invoice_id')
             ->where(function ($q) {
                 $q->whereNotNull('payment_proof')
                   ->orWhereIn('status', ['verified', 'pending', 'cancelled']);
-            })
-            ->with(['user', 'competition', 'members', 'adjustments.creator'])
-            ->latest()
-            ->get();
+            })->count();
+        $countPending     = (int) Invoice::where('status', 'pending')->count()
+                          + (int) Registration::whereNull('invoice_id')->where('status', 'pending')->count();
+        $countVerified    = (int) Invoice::whereIn('status', ['verified', 'paid'])->count()
+                          + (int) Registration::whereNull('invoice_id')->whereIn('status', ['verified', 'paid'])->count();
 
-        $individualItems = $individualRegs->map(function ($reg) {
-            $adjustments = $reg->adjustments;
-            $refundAmount = (float) $adjustments->sum('amount');
-            $gross = (float) $reg->fee;
-            $net = max(0, $gross - $refundAmount);
+        $grossVerified = $verifiedInvoiceGross + $verifiedMandiriGross;
+        $grossPending  = $pendingInvoiceGross  + $pendingMandiriGross;
 
-            return [
-                'id' => $reg->id,
-                'type' => 'mandiri',
-                'type_label' => 'Mandiri (Satuan)',
-                'ref_no' => $reg->registration_code,
-                'created_at' => $reg->created_at,
-                'date_formatted' => $reg->created_at ? $reg->created_at->translatedFormat('d M Y H:i') : '-',
-                'contact_name' => $reg->user ? $reg->user->name : ($reg->pure_name ?? '-'),
-                'contact_phone' => $reg->user ? $reg->user->phone : ($reg->official_phone ?? '-'),
-                'institution' => $reg->display_school,
-                'title' => $reg->display_name,
-                'description' => ($reg->competition ? $reg->competition->name : 'Lomba').' ('.$reg->registration_code.')',
-                'items_count' => 1,
-                'gross_amount' => $gross,
-                'refund_amount' => $refundAmount,
-                'net_amount' => $net,
-                'status' => $reg->status, // verified, pending, rejected, cancelled
-                'payment_proof' => $reg->payment_proof,
-                'proof_url' => $reg->payment_proof ? asset('storage/'.$reg->payment_proof) : null,
-                'adjustments' => $adjustments,
-                'reference_type' => 'registration',
-                'model' => $reg,
-            ];
-        });
-
-        $cashflowItems = $invoiceItems->concat($individualItems)->sortByDesc('created_at')->values();
-
-        $pendingCashflowItems = $cashflowItems->where('status', 'pending');
-        $verifiedCashflowItems = $cashflowItems->whereIn('status', ['verified', 'paid']);
-
-        // Calculate Cashflow Summary Metrics (Buku Kas Terpadu)
         $cashflowSummary = [
-            'gross_verified' => (float) $verifiedCashflowItems->sum('gross_amount'),
-            'gross_pending' => (float) $pendingCashflowItems->sum('gross_amount'),
-            'total_refunds' => $totalAdjustments,
-            'net_real_cash' => max(0, (float) $verifiedCashflowItems->sum('gross_amount') - $totalAdjustments),
-            'count_collective' => $invoiceItems->count(),
-            'count_individual' => $individualItems->count(),
-            'count_adjustments' => $allAdjustments->count(),
-            'count_pending' => $pendingCashflowItems->count(),
-            'pending_students_count' => (int) $pendingCashflowItems->sum('items_count'),
-            'count_verified' => $verifiedCashflowItems->count(),
-            'verified_students_count' => (int) $verifiedCashflowItems->sum('items_count'),
+            'gross_verified'         => $grossVerified,
+            'gross_pending'          => $grossPending,
+            'total_refunds'          => $totalAdjustments,
+            'net_real_cash'          => max(0, $grossVerified - $totalAdjustments),
+            'count_collective'       => $countCollective,
+            'count_individual'       => $countIndividual,
+            'count_adjustments'      => $countAdjustments,
+            'count_pending'          => $countPending,
+            'pending_students_count' => 0, // tidak diperlukan lagi di kartu atas
+            'count_verified'         => $countVerified,
+            'verified_students_count'=> 0, // tidak diperlukan lagi di kartu atas
+            'total_count'            => $countCollective + $countIndividual,
         ];
 
-        // Map bonus discounts per competition from invoices to keep per-branch recap in 100% sync
+        // Bonus diskon per-kompetisi untuk sinkronisasi Tab Rekap Keuangan
+        // Hanya load invoice yang punya bonus_discount > 0 (subset kecil)
         $compBonusVerified = [];
-        $compBonusPending = [];
-        foreach ($invoices as $inv) {
-            if ($inv->bonus_discount > 0) {
-                foreach ($inv->registrations->groupBy('competition_id') as $cId => $cRegs) {
-                    $cObj = $cRegs->first()->competition ?? null;
-                    if ($cObj) {
-                        $code = $cObj->code;
-                        $isBonusActive = ($code === 'MIPA') || (AppSetting::get('bonus_active_'.strtolower($code), '0') === '1');
-                        $minQuota = (int) AppSetting::get('bonus_min_'.strtolower($code), 10);
-                        $freeCountPerBatch = (int) AppSetting::get('bonus_free_'.strtolower($code), 1);
-                        $count = $cRegs->count();
-                        if ($isBonusActive && $minQuota > 0 && $count >= $minQuota) {
-                            $freeCount = (int) (floor($count / $minQuota) * $freeCountPerBatch);
-                            $unitFee = (float) $cObj->registration_fee;
-                            $discount = $freeCount * $unitFee;
-                            if (in_array($inv->status, ['verified', 'paid'])) {
-                                $compBonusVerified[$cId] = ($compBonusVerified[$cId] ?? 0) + $discount;
-                            } elseif ($inv->status === 'pending') {
-                                $compBonusPending[$cId] = ($compBonusPending[$cId] ?? 0) + $discount;
-                            }
+        $compBonusPending  = [];
+        $bonusInvoices = Invoice::where('bonus_discount', '>', 0)
+            ->with(['registrations.competition'])
+            ->get();
+        foreach ($bonusInvoices as $inv) {
+            foreach ($inv->registrations->groupBy('competition_id') as $cId => $cRegs) {
+                $cObj = $cRegs->first()->competition ?? null;
+                if ($cObj) {
+                    $code              = $cObj->code;
+                    $isBonusActive     = ($code === 'MIPA') || (AppSetting::get('bonus_active_'.strtolower($code), '0') === '1');
+                    $minQuota          = (int) AppSetting::get('bonus_min_'.strtolower($code), 10);
+                    $freeCountPerBatch = (int) AppSetting::get('bonus_free_'.strtolower($code), 1);
+                    $count             = $cRegs->count();
+                    if ($isBonusActive && $minQuota > 0 && $count >= $minQuota) {
+                        $freeCount = (int) (floor($count / $minQuota) * $freeCountPerBatch);
+                        $discount  = $freeCount * (float) $cObj->registration_fee;
+                        if (in_array($inv->status, ['verified', 'paid'])) {
+                            $compBonusVerified[$cId] = ($compBonusVerified[$cId] ?? 0) + $discount;
+                        } elseif ($inv->status === 'pending') {
+                            $compBonusPending[$cId]  = ($compBonusPending[$cId] ?? 0) + $discount;
                         }
                     }
                 }
@@ -1270,6 +1220,8 @@ class AdminController extends Controller
         // 7. Categories for Dynamic Filtering
         $categories = Category::orderBy('order', 'asc')->get();
 
+        $cashflowApiUrl = route('admin.api.recap_cashflow');
+
         return view('admin.recap', compact(
             'competitions',
             'categories',
@@ -1278,9 +1230,8 @@ class AdminController extends Controller
             'totalRegistrationsCount',
             'winnersByCompetition',
             'standings',
-            'allAdjustments',
-            'cashflowItems',
-            'cashflowSummary'
+            'cashflowSummary',
+            'cashflowApiUrl'
         ));
     }
 
@@ -1448,6 +1399,181 @@ class AdminController extends Controller
             'total' => $paginated->total(),
             'from' => $paginated->firstItem() ?? 0,
             'to' => $paginated->lastItem() ?? 0,
+        ]);
+    }
+
+    /**
+     * AJAX endpoint untuk Tab Buku Kas — server-side pagination & filter.
+     * GET /admin/api/recap-cashflow
+     */
+    public function apiRecapCashflow(Request $request)
+    {
+        $type   = $request->input('type', 'all');   // all|mandiri|kolektif|adjustment
+        $status = $request->input('status', 'all'); // all|verified|pending|cancelled
+        $search = trim((string) $request->input('search', ''));
+        $perPage = min(max((int) $request->input('per_page', 25), 5), 100);
+
+        // ── Kolektif (Invoice) ───────────────────────────────────────
+        $invoiceItems = collect();
+        if (in_array($type, ['all', 'kolektif', 'adjustment'])) {
+            $invQuery = Invoice::with(['user', 'registrations.competition', 'adjustments.creator'])->latest();
+
+            if ($search) {
+                $invQuery->where(function ($q) use ($search) {
+                    $q->where('invoice_number', 'like', "%{$search}%")
+                      ->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$search}%")
+                          ->orWhere('phone', 'like', "%{$search}%")
+                          ->orWhere('institution_name', 'like', "%{$search}%")
+                          ->orWhere('school_name', 'like', "%{$search}%"));
+                });
+            }
+
+            $invs = $invQuery->get();
+
+            foreach ($invs as $inv) {
+                $adjList     = $inv->adjustments;
+                $refundAmt   = (float) $adjList->sum('amount');
+                $gross       = (float) $inv->final_amount;
+                $net         = max(0, $gross - $refundAmt);
+                $normStatus  = in_array($inv->status, ['paid', 'verified']) ? 'verified'
+                             : ($inv->status === 'cancelled' ? 'cancelled'
+                             : ($inv->status === 'rejected'  ? 'rejected' : 'pending'));
+
+                if ($status !== 'all' && $normStatus !== $status) continue;
+                if ($type === 'adjustment' && $refundAmt <= 0) continue;
+
+                $invoiceItems->push([
+                    'id'             => $inv->id,
+                    'type'           => 'kolektif',
+                    'type_label'     => 'Kolektif (Invoice)',
+                    'ref_no'         => $inv->invoice_number,
+                    'created_at'     => $inv->created_at,
+                    'date_formatted' => $inv->created_at ? $inv->created_at->translatedFormat('d M Y H:i') : '-',
+                    'contact_name'   => $inv->user ? $inv->user->name : '-',
+                    'contact_phone'  => $inv->user ? $inv->user->phone : '-',
+                    'institution'    => $inv->user ? ($inv->user->institution_name ?? $inv->user->school_name ?? '-') : '-',
+                    'title'          => 'Tagihan Kolektif #' . $inv->invoice_number,
+                    'description'    => $inv->registrations->count() . ' Pendaftar (' . $inv->registrations->pluck('competition.name')->filter()->unique()->implode(', ') . ')',
+                    'items_count'    => $inv->registrations->count(),
+                    'gross_amount'   => $gross,
+                    'refund_amount'  => $refundAmt,
+                    'net_amount'     => $net,
+                    'status'         => $inv->status,
+                    'norm_status'    => $normStatus,
+                    'payment_proof'  => $inv->payment_proof,
+                    'proof_url'      => $inv->payment_proof ? asset('storage/' . $inv->payment_proof) : null,
+                    'invoice_url'    => route('admin.invoices.show', $inv->id),
+                    'reference_type' => 'invoice',
+                    'adjustments'    => $adjList->map(fn($a) => [
+                        'id'           => $a->id,
+                        'type_label'   => $a->type_label ?? $a->adjustment_type,
+                        'amount'       => (float) $a->amount,
+                        'bank_account' => $a->bank_account,
+                        'reason'       => $a->reason,
+                        'proof_url'    => $a->proof_file ? asset('storage/' . $a->proof_file) : null,
+                        'creator_name' => $a->creator->name ?? 'Admin',
+                        'created_at'   => $a->created_at ? $a->created_at->translatedFormat('d M Y H:i') : '-',
+                    ])->values()->all(),
+                ]);
+            }
+        }
+
+        // ── Mandiri (Registrasi satuan tanpa invoice) ────────────────
+        $mandiriItems = collect();
+        if (in_array($type, ['all', 'mandiri', 'adjustment'])) {
+            $regQuery = Registration::whereNull('invoice_id')
+                ->where(function ($q) {
+                    $q->whereNotNull('payment_proof')
+                      ->orWhereIn('status', ['verified', 'pending', 'cancelled']);
+                })
+                ->with(['user', 'competition', 'members', 'adjustments.creator'])
+                ->latest();
+
+            if ($status !== 'all') {
+                if ($status === 'verified') {
+                    $regQuery->whereIn('status', ['verified', 'paid']);
+                } else {
+                    $regQuery->where('status', $status);
+                }
+            }
+
+            if ($search) {
+                $regQuery->where(function ($q) use ($search) {
+                    $q->where('registration_code', 'like', "%{$search}%")
+                      ->orWhere('institution_name', 'like', "%{$search}%")
+                      ->orWhere('team_name', 'like', "%{$search}%")
+                      ->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$search}%")
+                          ->orWhere('phone', 'like', "%{$search}%"))
+                      ->orWhereHas('members', fn($m) => $m->where('full_name', 'like', "%{$search}%"));
+                });
+            }
+
+            foreach ($regQuery->get() as $reg) {
+                $adjList    = $reg->adjustments;
+                $refundAmt  = (float) $adjList->sum('amount');
+                $gross      = (float) $reg->fee;
+                $net        = max(0, $gross - $refundAmt);
+                $normStatus = in_array($reg->status, ['paid', 'verified']) ? 'verified'
+                            : ($reg->status === 'cancelled' ? 'cancelled'
+                            : ($reg->status === 'rejected'  ? 'rejected' : 'pending'));
+
+                if ($type === 'adjustment' && $refundAmt <= 0) continue;
+
+                $mandiriItems->push([
+                    'id'             => $reg->id,
+                    'type'           => 'mandiri',
+                    'type_label'     => 'Mandiri (Satuan)',
+                    'ref_no'         => $reg->registration_code,
+                    'created_at'     => $reg->created_at,
+                    'date_formatted' => $reg->created_at ? $reg->created_at->translatedFormat('d M Y H:i') : '-',
+                    'contact_name'   => $reg->user ? $reg->user->name : ($reg->pure_name ?? '-'),
+                    'contact_phone'  => $reg->user ? $reg->user->phone : ($reg->official_phone ?? '-'),
+                    'institution'    => $reg->display_school,
+                    'title'          => $reg->display_name,
+                    'description'    => ($reg->competition ? $reg->competition->name : 'Lomba') . ' (' . $reg->registration_code . ')',
+                    'items_count'    => 1,
+                    'gross_amount'   => $gross,
+                    'refund_amount'  => $refundAmt,
+                    'net_amount'     => $net,
+                    'status'         => $reg->status,
+                    'norm_status'    => $normStatus,
+                    'payment_proof'  => $reg->payment_proof,
+                    'proof_url'      => $reg->payment_proof ? asset('storage/' . $reg->payment_proof) : null,
+                    'invoice_url'    => null,
+                    'reference_type' => 'registration',
+                    'adjustments'    => $adjList->map(fn($a) => [
+                        'id'           => $a->id,
+                        'type_label'   => $a->type_label ?? $a->adjustment_type,
+                        'amount'       => (float) $a->amount,
+                        'bank_account' => $a->bank_account,
+                        'reason'       => $a->reason,
+                        'proof_url'    => $a->proof_file ? asset('storage/' . $a->proof_file) : null,
+                        'creator_name' => $a->creator->name ?? 'Admin',
+                        'created_at'   => $a->created_at ? $a->created_at->translatedFormat('d M Y H:i') : '-',
+                    ])->values()->all(),
+                ]);
+            }
+        }
+
+        // ── Gabung & sort by created_at desc, lalu paginate manual ───
+        $merged = $invoiceItems->concat($mandiriItems)
+            ->sortByDesc('created_at')
+            ->values();
+
+        $total       = $merged->count();
+        $currentPage = max(1, (int) $request->input('page', 1));
+        $offset      = ($currentPage - 1) * $perPage;
+        $items       = $merged->slice($offset, $perPage)->values();
+        $lastPage    = max(1, (int) ceil($total / $perPage));
+
+        return response()->json([
+            'data'         => $items,
+            'total'        => $total,
+            'current_page' => $currentPage,
+            'last_page'    => $lastPage,
+            'per_page'     => $perPage,
+            'from'         => $total > 0 ? $offset + 1 : 0,
+            'to'           => min($offset + $perPage, $total),
         ]);
     }
 

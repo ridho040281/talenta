@@ -42,6 +42,15 @@
     cashflowFilterType: 'all',
     cashflowFilterStatus: 'all',
     cashflowSearch: '',
+    // ── Buku Kas AJAX state ──
+    kasItems: [],
+    kasTotal: {{ $cashflowSummary['total_count'] ?? ($cashflowSummary['count_collective'] + $cashflowSummary['count_individual']) }},
+    kasPage: 1,
+    kasLastPage: 1,
+    kasLoading: false,
+    kasLoaded: false,
+    kasPerPage: 25,
+    kasDebounceTimer: null,
     selectedAdjustmentItem: null,
     showAdjustmentModal: false,
     adjustmentForm: {
@@ -92,6 +101,37 @@
         this.activeAdjustmentsList = item.adjustments || [];
         this.activeAdjustmentsTitle = item.ref_no + ' - ' + item.title;
         this.showAdjustmentsListModal = true;
+    },
+    async fetchKas(page = 1) {
+        if (this.kasLoading) return;
+        this.kasLoading = true;
+        this.kasPage = page;
+        const params = new URLSearchParams({
+            page: page,
+            per_page: this.kasPerPage,
+            type: this.cashflowFilterType,
+            status: this.cashflowFilterStatus,
+            search: this.cashflowSearch,
+        });
+        try {
+            const res = await fetch(`{{ $cashflowApiUrl }}?` + params.toString(), {
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+            });
+            const json = await res.json();
+            this.kasItems    = json.data;
+            this.kasTotal    = json.total;
+            this.kasPage     = json.current_page;
+            this.kasLastPage = json.last_page;
+            this.kasLoaded   = true;
+        } catch (e) {
+            console.error('Gagal memuat Buku Kas:', e);
+        } finally {
+            this.kasLoading = false;
+        }
+    },
+    onKasFilterChange() {
+        clearTimeout(this.kasDebounceTimer);
+        this.kasDebounceTimer = setTimeout(() => this.fetchKas(1), 400);
     },
     downloadingPng: false,
     recapCategory: 'all',
@@ -515,10 +555,10 @@
             <span>1. Rekap Cabang Lomba</span>
         </button>
 
-        <button @click="activeTab = 'buku_kas'" :class="activeTab === 'buku_kas' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/30 font-black' : 'text-slate-400 hover:text-white'" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
+        <button @click="activeTab = 'buku_kas'; if (!kasLoaded) fetchKas(1);" :class="activeTab === 'buku_kas' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/30 font-black' : 'text-slate-400 hover:text-white'" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
             <i data-lucide="book-open" class="w-4 h-4 text-emerald-300"></i>
             <span>2. Buku Kas & Mutasi</span>
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold" :class="activeTab === 'buku_kas' ? 'bg-white text-slate-900' : 'bg-white/[0.1] text-slate-300'">{{ $cashflowItems->count() }}</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold" :class="activeTab === 'buku_kas' ? 'bg-white text-slate-900' : 'bg-white/[0.1] text-slate-300'" x-text="kasTotal"></span>
             @if($cashflowSummary['total_refunds'] > 0)
                 <span class="px-2 py-0.5 rounded-full text-[10px] bg-rose-500 text-white font-bold">{{ $cashflowSummary['count_adjustments'] }} Refund</span>
             @endif
@@ -741,7 +781,7 @@
 
                     <div class="flex flex-wrap items-center gap-2 self-start md:self-auto">
                         <span class="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#0C111D] text-slate-300 border border-white/[0.08] whitespace-nowrap">
-                            Total <strong class="text-emerald-400">{{ $cashflowItems->count() }}</strong> Transaksi
+                            Total <strong class="text-emerald-400" x-text="kasTotal"></strong> Transaksi
                         </span>
                         <span class="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 whitespace-nowrap">
                             {{ $cashflowSummary['count_collective'] }} Kolektif • {{ $cashflowSummary['count_individual'] }} Mandiri
@@ -759,15 +799,15 @@
                     <!-- Search Input -->
                     <div class="sm:col-span-6 lg:col-span-5 relative">
                         <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
-                        <input type="text" x-model="cashflowSearch" placeholder="Cari No. Tagihan, No. Reg, Nama, Lembaga, No. WA..." class="w-full pl-9 pr-8 py-2.5 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none">
-                        <button x-show="cashflowSearch" @click="cashflowSearch = ''" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs p-1 cursor-pointer" title="Hapus pencarian">
+                        <input type="text" x-model="cashflowSearch" @input="onKasFilterChange()" placeholder="Cari No. Tagihan, No. Reg, Nama, Lembaga, No. WA..." class="w-full pl-9 pr-8 py-2.5 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none">
+                        <button x-show="cashflowSearch" @click="cashflowSearch = ''; fetchKas(1);" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs p-1 cursor-pointer" title="Hapus pencarian">
                             <i data-lucide="x" class="w-3.5 h-3.5"></i>
                         </button>
                     </div>
 
                     <!-- Type Filter -->
                     <div class="sm:col-span-3 lg:col-span-4">
-                        <select x-model="cashflowFilterType" class="w-full px-3 py-2.5 rounded-xl border border-white/[0.1] text-xs font-bold text-slate-200 bg-[#0C111D] focus:border-emerald-500 outline-none cursor-pointer">
+                        <select x-model="cashflowFilterType" @change="fetchKas(1)" class="w-full px-3 py-2.5 rounded-xl border border-white/[0.1] text-xs font-bold text-slate-200 bg-[#0C111D] focus:border-emerald-500 outline-none cursor-pointer">
                             <option value="all">Semua Jenis (Mandiri & Kolektif)</option>
                             <option value="mandiri">Khusus Mandiri (Satuan)</option>
                             <option value="kolektif">Khusus Kolektif (Invoice Excel)</option>
@@ -777,13 +817,13 @@
 
                     <!-- Status Filter & Reset -->
                     <div class="sm:col-span-3 lg:col-span-3 flex items-center gap-2">
-                        <select x-model="cashflowFilterStatus" class="w-full px-3 py-2.5 rounded-xl border border-white/[0.1] text-xs font-bold text-slate-200 bg-[#0C111D] focus:border-emerald-500 outline-none cursor-pointer">
+                        <select x-model="cashflowFilterStatus" @change="fetchKas(1)" class="w-full px-3 py-2.5 rounded-xl border border-white/[0.1] text-xs font-bold text-slate-200 bg-[#0C111D] focus:border-emerald-500 outline-none cursor-pointer">
                             <option value="all">Semua Status</option>
                             <option value="verified">Lunas / Terverifikasi</option>
                             <option value="pending">Pending</option>
                             <option value="cancelled">Dibatalkan (Cancelled)</option>
                         </select>
-                        <button type="button" @click="cashflowSearch = ''; cashflowFilterType = 'all'; cashflowFilterStatus = 'all';" class="p-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-400 hover:text-white border border-white/[0.08] transition shrink-0 cursor-pointer" title="Reset filter">
+                        <button type="button" @click="cashflowSearch = ''; cashflowFilterType = 'all'; cashflowFilterStatus = 'all'; fetchKas(1);" class="p-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-400 hover:text-white border border-white/[0.08] transition shrink-0 cursor-pointer" title="Reset filter">
                             <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
                         </button>
                     </div>
@@ -806,156 +846,123 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-white/[0.04] font-medium">
-                            @forelse($cashflowItems as $item)
-                                @php
-                                    $itemJson = [
-                                        'id' => $item['id'],
-                                        'reference_type' => $item['reference_type'],
-                                        'ref_no' => $item['ref_no'],
-                                        'title' => $item['title'],
-                                        'contact_name' => $item['contact_name'],
-                                        'institution' => $item['institution'],
-                                        'gross_amount' => $item['gross_amount'],
-                                        'refund_amount' => $item['refund_amount'],
-                                        'net_amount' => $item['net_amount'],
-                                        'adjustments' => $item['adjustments']->map(fn($a) => [
-                                            'id' => $a->id,
-                                            'type_label' => $a->type_label,
-                                            'amount' => (float)$a->amount,
-                                            'bank_account' => $a->bank_account,
-                                            'reason' => $a->reason,
-                                            'proof_url' => $a->proof_file ? asset('storage/'.$a->proof_file) : null,
-                                            'creator_name' => $a->creator->name ?? 'Admin',
-                                            'created_at' => $a->created_at ? $a->created_at->translatedFormat('d M Y H:i') : '-',
-                                        ]),
-                                    ];
-                                    $searchTerms = strtolower($item['ref_no'].' '.$item['contact_name'].' '.$item['contact_phone'].' '.$item['institution'].' '.$item['title'].' '.$item['description']);
-                                    $normStatus = in_array($item['status'], ['paid', 'verified']) ? 'verified' : ($item['status'] === 'cancelled' ? 'cancelled' : ($item['status'] === 'rejected' ? 'rejected' : 'pending'));
-                                @endphp
-                                <tr x-show="(cashflowFilterType === 'all' || (cashflowFilterType === 'adjustment' ? {{ $item['refund_amount'] > 0 ? 'true' : 'false' }} : cashflowFilterType === '{{ $item['type'] }}')) && (cashflowFilterStatus === 'all' || cashflowFilterStatus === '{{ $normStatus }}') && (!cashflowSearch || {{ json_encode($searchTerms) }}.includes(cashflowSearch.toLowerCase()))"
-                                    class="hover:bg-white/[0.025] transition border-b border-white/[0.04]">
-                                    
-                                    <!-- Tgl & Waktu -->
-                                    <td class="py-3.5 px-4 whitespace-nowrap text-slate-400 font-mono text-[11px]">
-                                        {{ $item['date_formatted'] }}
-                                    </td>
-
-                                    <!-- Tipe & No Ref -->
-                                    <td class="py-3.5 px-4 whitespace-nowrap">
-                                        @if($item['type'] === 'kolektif')
+                            <!-- Loading State -->
+                            <tr x-show="kasLoading">
+                                <td colspan="9" class="py-10 text-center text-slate-400 text-xs">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <svg class="animate-spin w-4 h-4 text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
+                                        <span>Memuat data transaksi...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <!-- Not loaded yet -->
+                            <tr x-show="!kasLoaded && !kasLoading">
+                                <td colspan="9" class="py-10 text-center text-slate-500 text-xs">
+                                    Klik tab <strong class="text-emerald-400">Buku Kas & Mutasi</strong> untuk memuat data.
+                                </td>
+                            </tr>
+                            <!-- Data rows -->
+                            <template x-if="kasLoaded && !kasLoading">
+                                <template x-for="item in kasItems" :key="item.type + '-' + item.id">
+                                    <tr class="hover:bg-white/[0.025] transition border-b border-white/[0.04]">
+                                        <!-- Tgl & Waktu -->
+                                        <td class="py-3.5 px-4 whitespace-nowrap text-slate-400 font-mono text-[11px]" x-text="item.date_formatted"></td>
+                                        <!-- Tipe & No Ref -->
+                                        <td class="py-3.5 px-4 whitespace-nowrap">
                                             <div class="space-y-1">
-                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#7A5AF8]/15 text-[#A594FD] border border-[#7A5AF8]/30">
-                                                    <i data-lucide="file-spreadsheet" class="w-3 h-3"></i> Kolektif
-                                                </span>
-                                                <a href="{{ route('admin.invoices.show', $item['id']) }}" class="block font-mono font-bold text-white hover:text-[#84D0FF] hover:underline" title="Klik untuk membuka rincian invoice">
-                                                    {{ $item['ref_no'] }}
-                                                </a>
+                                                <template x-if="item.type === 'kolektif'">
+                                                    <div class="space-y-1">
+                                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#7A5AF8]/15 text-[#A594FD] border border-[#7A5AF8]/30">Kolektif</span>
+                                                        <a :href="item.invoice_url" class="block font-mono font-bold text-white hover:text-[#84D0FF] hover:underline" title="Lihat invoice" x-text="item.ref_no"></a>
+                                                    </div>
+                                                </template>
+                                                <template x-if="item.type !== 'kolektif'">
+                                                    <div class="space-y-1">
+                                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">Mandiri</span>
+                                                        <span class="block font-mono font-bold text-white" x-text="item.ref_no"></span>
+                                                    </div>
+                                                </template>
                                             </div>
-                                        @else
-                                            <div class="space-y-1">
-                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
-                                                    <i data-lucide="user" class="w-3 h-3"></i> Mandiri
-                                                </span>
-                                                <span class="block font-mono font-bold text-white">
-                                                    {{ $item['ref_no'] }}
-                                                </span>
+                                        </td>
+                                        <!-- Pendaftar / Lembaga -->
+                                        <td class="py-3.5 px-4 min-w-[200px]">
+                                            <div class="space-y-0.5">
+                                                <div class="font-bold text-white text-xs flex items-center gap-1.5">
+                                                    <span x-text="item.contact_name"></span>
+                                                    <template x-if="item.contact_phone && item.contact_phone !== '-'">
+                                                        <a :href="'https://wa.me/' + item.contact_phone.replace(/\D/g,'').replace(/^0/,'62')" target="_blank" class="text-emerald-400 hover:text-emerald-300 inline-flex items-center" title="WhatsApp">
+                                                            <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+                                                        </a>
+                                                    </template>
+                                                </div>
+                                                <div class="text-[11px] text-slate-400" x-text="item.institution"></div>
                                             </div>
-                                        @endif
-                                    </td>
-
-                                    <!-- Pendaftar / Lembaga -->
-                                    <td class="py-3.5 px-4 min-w-[200px]">
-                                        <div class="space-y-0.5">
-                                            <div class="font-bold text-white text-xs flex items-center gap-1.5">
-                                                <span>{{ $item['contact_name'] }}</span>
-                                                @if(!empty($item['contact_phone']) && $item['contact_phone'] !== '-')
-                                                    @php
-                                                        $cleanPhone = preg_replace('/[^0-9]/', '', $item['contact_phone']);
-                                                        if (str_starts_with($cleanPhone, '0')) $cleanPhone = '62' . substr($cleanPhone, 1);
-                                                    @endphp
-                                                    <a href="https://wa.me/{{ $cleanPhone }}" target="_blank" class="text-emerald-400 hover:text-emerald-300 inline-flex items-center" title="Hubungi via WhatsApp">
-                                                        <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+                                        </td>
+                                        <!-- Rincian Lomba -->
+                                        <td class="py-3.5 px-4 min-w-[220px]">
+                                            <div class="space-y-0.5">
+                                                <span class="text-xs font-semibold text-slate-200 block" x-text="item.title"></span>
+                                                <span class="text-[11px] text-slate-400 block" x-text="item.description"></span>
+                                            </div>
+                                        </td>
+                                        <!-- Bruto -->
+                                        <td class="py-3.5 px-4 text-right font-mono font-bold text-slate-200 whitespace-nowrap">
+                                            Rp <span x-text="Number(item.gross_amount).toLocaleString('id-ID')"></span>
+                                        </td>
+                                        <!-- Refund -->
+                                        <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                                            <template x-if="item.refund_amount > 0">
+                                                <button type="button" @click="openAdjustmentsListModal(item)" class="group inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-rose-500/15 text-rose-400 border border-rose-500/30 hover:bg-rose-500/25 transition cursor-pointer font-mono font-bold text-xs" title="Lihat riwayat refund">
+                                                    <i data-lucide="corner-down-left" class="w-3 h-3 text-rose-400"></i>
+                                                    <span>-Rp <span x-text="Number(item.refund_amount).toLocaleString('id-ID')"></span></span>
+                                                </button>
+                                            </template>
+                                            <template x-if="item.refund_amount <= 0">
+                                                <span class="text-slate-500 font-mono text-xs">-</span>
+                                            </template>
+                                        </td>
+                                        <!-- Net -->
+                                        <td class="py-3.5 px-4 text-right font-mono font-black text-emerald-400 text-sm whitespace-nowrap">
+                                            Rp <span x-text="Number(item.net_amount).toLocaleString('id-ID')"></span>
+                                        </td>
+                                        <!-- Status & Bukti -->
+                                        <td class="py-3.5 px-4 whitespace-nowrap text-center">
+                                            <div class="flex items-center justify-center gap-1.5">
+                                                <template x-if="item.norm_status === 'verified'">
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Lunas</span>
+                                                </template>
+                                                <template x-if="item.norm_status === 'cancelled'">
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/15 text-rose-400 border border-rose-500/30">Batal</span>
+                                                </template>
+                                                <template x-if="item.norm_status === 'rejected'">
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-red-500/15 text-red-400 border border-red-500/30">Ditolak</span>
+                                                </template>
+                                                <template x-if="item.norm_status === 'pending'">
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/15 text-amber-400 border border-amber-500/30">Pending</span>
+                                                </template>
+                                                <template x-if="item.proof_url">
+                                                    <a :href="item.proof_url" target="_blank" class="p-1 rounded-lg bg-white/[0.08] hover:bg-white/[0.15] text-[#84D0FF] border border-white/[0.1] transition cursor-pointer" title="Bukti Bayar">
+                                                        <i data-lucide="eye" class="w-3.5 h-3.5"></i>
                                                     </a>
-                                                @endif
+                                                </template>
                                             </div>
-                                            <div class="text-[11px] text-slate-400">{{ $item['institution'] }}</div>
-                                        </div>
-                                    </td>
-
-                                    <!-- Rincian Lomba / Item -->
-                                    <td class="py-3.5 px-4 min-w-[220px]">
-                                        <div class="space-y-0.5">
-                                            <span class="text-xs font-semibold text-slate-200 block">{{ $item['title'] }}</span>
-                                            <span class="text-[11px] text-slate-400 block">{{ $item['description'] }}</span>
-                                        </div>
-                                    </td>
-
-                                    <!-- Nominal Masuk (Bruto) -->
-                                    <td class="py-3.5 px-4 text-right font-mono font-bold text-slate-200 whitespace-nowrap">
-                                        Rp {{ number_format($item['gross_amount'], 0, ',', '.') }}
-                                    </td>
-
-                                    <!-- Refund / Penyesuaian -->
-                                    <td class="py-3.5 px-4 text-right whitespace-nowrap">
-                                        @if($item['refund_amount'] > 0)
-                                            <button type="button" @click="openAdjustmentsListModal({{ json_encode($itemJson) }})" class="group inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-rose-500/15 text-rose-400 border border-rose-500/30 hover:bg-rose-500/25 transition cursor-pointer font-mono font-bold text-xs" title="Lihat riwayat pengembalian dana & bukti transfer">
-                                                <i data-lucide="corner-down-left" class="w-3 h-3 text-rose-400 group-hover:-translate-x-0.5 transition"></i>
-                                                <span>-Rp {{ number_format($item['refund_amount'], 0, ',', '.') }}</span>
+                                        </td>
+                                        <!-- Aksi Bendahara -->
+                                        <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                                            <button type="button" @click="openAdjustmentModal(item)" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30 hover:bg-[#4E6EFF]/25 text-xs font-bold transition cursor-pointer">
+                                                <i data-lucide="receipt" class="w-3.5 h-3.5"></i>
+                                                <span>Catat Refund</span>
                                             </button>
-                                        @else
-                                            <span class="text-slate-500 font-mono text-xs">-</span>
-                                        @endif
-                                    </td>
-
-                                    <!-- Kas Bersih (Netto) -->
-                                    <td class="py-3.5 px-4 text-right font-mono font-black text-emerald-400 text-sm whitespace-nowrap">
-                                        Rp {{ number_format($item['net_amount'], 0, ',', '.') }}
-                                    </td>
-
-                                    <!-- Status & Bukti -->
-                                    <td class="py-3.5 px-4 whitespace-nowrap text-center">
-                                        <div class="flex items-center justify-center gap-1.5">
-                                            @if(in_array($item['status'], ['paid', 'verified']))
-                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                                                    Lunas
-                                                </span>
-                                            @elseif($item['status'] === 'cancelled')
-                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/15 text-rose-400 border border-rose-500/30">
-                                                    Batal
-                                                </span>
-                                            @elseif($item['status'] === 'rejected')
-                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-red-500/15 text-red-400 border border-red-500/30">
-                                                    Ditolak
-                                                </span>
-                                            @else
-                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/15 text-amber-400 border border-amber-500/30">
-                                                    Pending
-                                                </span>
-                                            @endif
-
-                                            @if($item['payment_proof'])
-                                                <a href="{{ $item['proof_url'] }}" target="_blank" class="p-1 rounded-lg bg-white/[0.08] hover:bg-white/[0.15] text-[#84D0FF] border border-white/[0.1] transition cursor-pointer" title="Buka Bukti Bayar Masuk">
-                                                    <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-                                                </a>
-                                            @endif
-                                        </div>
-                                    </td>
-
-                                    <!-- Aksi Bendahara -->
-                                    <td class="py-3.5 px-4 text-center whitespace-nowrap">
-                                        <button type="button" @click="openAdjustmentModal({{ json_encode($itemJson) }})" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30 hover:bg-[#4E6EFF]/25 text-xs font-bold transition cursor-pointer">
-                                            <i data-lucide="receipt" class="w-3.5 h-3.5"></i>
-                                            <span>Catat Refund</span>
-                                        </button>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="9" class="py-12 text-center text-slate-500">
-                                        Belum ada data transaksi pendaftaran mandiri maupun kolektif.
-                                    </td>
-                                </tr>
-                            @endforelse
+                                        </td>
+                                    </tr>
+                                </template>
+                            </template>
+                            <!-- Empty state -->
+                            <tr x-show="kasLoaded && !kasLoading && kasItems.length === 0">
+                                <td colspan="9" class="py-12 text-center text-slate-500">
+                                    Tidak ada data transaksi yang sesuai filter.
+                                </td>
+                            </tr>
                         </tbody>
                         <tfoot class="bg-[#0C111D] text-white font-bold border-t-2 border-white/[0.1]">
                             <tr>
@@ -977,6 +984,17 @@
                             </tr>
                         </tfoot>
                     </table>
+                </div>
+                <!-- Pagination Buku Kas -->
+                <div x-show="kasLoaded && kasLastPage > 1" class="flex items-center justify-between pt-4">
+                    <span class="text-xs text-slate-400">
+                        Halaman <span x-text="kasPage"></span> dari <span x-text="kasLastPage"></span>
+                        (<span x-text="kasTotal"></span> transaksi)
+                    </span>
+                    <div class="flex items-center gap-2">
+                        <button @click="fetchKas(kasPage - 1)" :disabled="kasPage <= 1 || kasLoading" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-white/[0.05] border border-white/[0.08] text-slate-300 hover:bg-white/[0.1] disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer">← Sebelumnya</button>
+                        <button @click="fetchKas(kasPage + 1)" :disabled="kasPage >= kasLastPage || kasLoading" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-white/[0.05] border border-white/[0.08] text-slate-300 hover:bg-white/[0.1] disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer">Berikutnya →</button>
+                    </div>
                 </div>
             </div>
     </div>
