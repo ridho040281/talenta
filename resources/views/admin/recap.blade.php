@@ -709,68 +709,7 @@
 
     <!-- ==================== TAB 2: BUKU KAS & MUTASI PEMBAYARAN TERPADU ==================== -->
     <div x-show="activeTab === 'buku_kas'" x-transition class="space-y-6">
-            <!-- 4 Financial Summary Stat Cards for Cashflow -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <div class="ai-card rounded-2xl p-3 border border-white/[0.08] shadow-md flex items-center justify-between hover:border-emerald-500/50 transition bg-[#0C111D]/90">
-                    <div class="space-y-0.5">
-                        <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">Penerimaan Bruto (Lunas)</span>
-                        <div class="text-sm sm:text-base font-black text-emerald-400 font-mono">
-                            Rp {{ number_format($cashflowSummary['gross_verified'], 0, ',', '.') }}
-                        </div>
-                        <div class="text-[10px] text-slate-400 font-medium pt-0.5">
-                            {{ $cashflowSummary['count_collective'] }} Kolektif • {{ $cashflowSummary['count_individual'] }} Mandiri
-                        </div>
-                    </div>
-                    <div class="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                        <i data-lucide="arrow-down-left" class="w-4 h-4"></i>
-                    </div>
-                </div>
 
-                <div class="ai-card rounded-2xl p-3 border border-white/[0.08] shadow-md flex items-center justify-between hover:border-rose-500/50 transition bg-[#0C111D]/90">
-                    <div class="space-y-0.5">
-                        <span class="text-[10px] font-bold text-rose-400 uppercase tracking-wider block">Refund / Penyesuaian</span>
-                        <div class="text-sm sm:text-base font-black text-rose-400 font-mono">
-                            -Rp {{ number_format($cashflowSummary['total_refunds'], 0, ',', '.') }}
-                        </div>
-                        <div class="text-[10px] text-rose-300/80 font-medium pt-0.5">
-                            {{ $cashflowSummary['count_adjustments'] }} Transaksi Penyesuaian
-                        </div>
-                    </div>
-                    <div class="w-8 h-8 rounded-xl bg-rose-500/15 text-rose-400 border border-rose-500/30 flex items-center justify-center shrink-0">
-                        <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
-                    </div>
-                </div>
-
-                <div class="ai-card rounded-2xl p-3 border border-white/[0.08] shadow-md flex items-center justify-between hover:border-teal-500/50 transition bg-gradient-to-tr from-emerald-950/40 to-teal-950/40">
-                    <div class="space-y-0.5">
-                        <span class="text-[10px] font-bold text-teal-300 uppercase tracking-wider block">Kas Bersih Riil di Bank</span>
-                        <div class="text-sm sm:text-base font-black text-white font-mono">
-                            Rp {{ number_format($cashflowSummary['net_real_cash'], 0, ',', '.') }}
-                        </div>
-                        <div class="text-[10px] text-teal-300/80 font-medium pt-0.5">
-                            Saldo Riil Mutasi BSI
-                        </div>
-                    </div>
-                    <div class="w-8 h-8 rounded-xl bg-teal-500/20 text-teal-300 border border-teal-500/40 flex items-center justify-center shrink-0">
-                        <i data-lucide="wallet" class="w-4 h-4"></i>
-                    </div>
-                </div>
-
-                <div class="ai-card rounded-2xl p-3 border border-white/[0.08] shadow-md flex items-center justify-between hover:border-amber-500/50 transition bg-[#0C111D]/90">
-                    <div class="space-y-0.5">
-                        <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">Pending Verifikasi</span>
-                        <div class="text-sm sm:text-base font-black text-amber-400 font-mono">
-                            Rp {{ number_format($cashflowSummary['gross_pending'], 0, ',', '.') }}
-                        </div>
-                        <div class="text-[10px] text-amber-300/80 font-medium pt-0.5">
-                            <span class="font-bold font-mono">{{ $cashflowSummary['count_pending'] }}</span> Transaksi ({{ $grandTotals['pending_registrations'] }} Siswa Menunggu Verif)
-                        </div>
-                    </div>
-                    <div class="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0">
-                        <i data-lucide="clock" class="w-4 h-4"></i>
-                    </div>
-                </div>
-            </div>
 
             <!-- Main Cashflow Ledger Card -->
             <div class="ai-card rounded-3xl border border-white/[0.08] shadow-xl p-5 sm:p-7 lg:p-8 space-y-6">
@@ -788,10 +727,18 @@
                         </p>
                     </div>
 
-                    <div class="flex items-center gap-2 self-start md:self-auto">
+                    <div class="flex flex-wrap items-center gap-2 self-start md:self-auto">
                         <span class="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#0C111D] text-slate-300 border border-white/[0.08] whitespace-nowrap">
                             Total <strong class="text-emerald-400">{{ $cashflowItems->count() }}</strong> Transaksi
                         </span>
+                        <span class="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 whitespace-nowrap">
+                            {{ $cashflowSummary['count_collective'] }} Kolektif • {{ $cashflowSummary['count_individual'] }} Mandiri
+                        </span>
+                        @if($cashflowSummary['total_refunds'] > 0)
+                            <span class="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-500/15 text-rose-300 border border-rose-500/30 whitespace-nowrap">
+                                {{ $cashflowSummary['count_adjustments'] }} Refund (-Rp {{ number_format($cashflowSummary['total_refunds'], 0, ',', '.') }})
+                            </span>
+                        @endif
                     </div>
                 </div>
 
