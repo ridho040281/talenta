@@ -339,7 +339,7 @@
                         </div>
 
                         <!-- Form Verifikasi -->
-                        <form :action="'/pic/peserta/' + (selectedReg ? selectedReg.id : '') + '/verifikasi'" method="POST" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3.5">
+                        <form :action="'{{ url('pic/peserta') }}/' + (selectedReg ? selectedReg.id : '') + '/verifikasi'" method="POST" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3.5">
                             @csrf
 
                             <div>

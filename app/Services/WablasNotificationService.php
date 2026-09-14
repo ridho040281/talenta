@@ -108,38 +108,33 @@ class WablasNotificationService
                 $msg = str_replace($tag, (string) $val, $msg);
             }
 
-            // 5. Send to Wablas API in background (Non-blocking / Defer)
+            // 5. Send to Wablas API directly and record delivery
             $senderId = auth()->id() ?? 1;
             $cabangLomba = $data['cabang_lomba'] ?? 'Sistem Otomatis';
+            $anySuccess = false;
 
-            $dispatchSend = function () use ($cleanPhones, $msg, $templateCode, $cabangLomba, $senderId) {
-                foreach ($cleanPhones as $cleanPhone) {
-                    try {
-                        $result = static::sendDirectMessage($cleanPhone, $msg);
-
-                        // Record each recipient delivery
-                        BroadcastLog::create([
-                            'sender_id' => $senderId,
-                            'target_audience' => 'auto_'.$templateCode,
-                            'target_competition' => $cabangLomba,
-                            'recipients_count' => 1,
-                            'message' => "Tujuan: {$cleanPhone}\n\n".$msg.($result['success'] ? '' : "\n\n[Status: Gagal - ".($result['message'] ?? 'Error')."]"),
-                            'status' => $result['success'] ? 'sent' : 'failed',
-                        ]);
-                    } catch (\Throwable $e) {
-                        Log::error("Wablas Auto Notification Exception ({$templateCode}) to {$cleanPhone}: ".$e->getMessage());
+            foreach ($cleanPhones as $cleanPhone) {
+                try {
+                    $result = static::sendDirectMessage($cleanPhone, $msg);
+                    if ($result['success'] ?? false) {
+                        $anySuccess = true;
                     }
-                }
-            };
 
-            // Execute in background after HTTP response has been sent to user/client
-            if (function_exists('Illuminate\Support\defer')) {
-                \Illuminate\Support\defer($dispatchSend);
-            } else {
-                $dispatchSend();
+                    // Record each recipient delivery in BroadcastLog
+                    BroadcastLog::create([
+                        'sender_id' => $senderId,
+                        'target_audience' => 'auto_'.$templateCode,
+                        'target_competition' => $cabangLomba,
+                        'recipients_count' => 1,
+                        'message' => "Tujuan: {$cleanPhone}\n\n".$msg.($result['success'] ? '' : "\n\n[Status: Gagal - ".($result['message'] ?? 'Error')."]"),
+                        'status' => $result['success'] ? 'sent' : 'failed',
+                    ]);
+                } catch (\Throwable $e) {
+                    Log::error("Wablas Auto Notification Exception ({$templateCode}) to {$cleanPhone}: ".$e->getMessage());
+                }
             }
 
-            return true;
+            return $anySuccess;
         } catch (\Throwable $e) {
             Log::error("Wablas Auto Notification Error ({$templateCode}): ".$e->getMessage());
 

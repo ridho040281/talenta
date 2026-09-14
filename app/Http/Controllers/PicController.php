@@ -1077,6 +1077,9 @@ class PicController extends Controller
             }
         }
 
+        $waSent = false;
+        $targetPhones = [];
+
         // Trigger Auto WhatsApp Notification: Status Verifikasi (Sah, Revisi, atau Tolak)
         try {
             $registration->loadMissing(['members', 'user', 'competition']);
@@ -1084,47 +1087,65 @@ class PicController extends Controller
             $nisn = $memberNisns->isNotEmpty() ? $memberNisns->implode(' / ') : ($registration->user?->nisn ?? '-');
             $targetPhones = $registration->recipient_phones;
 
-            if ($validated['status'] === 'verified') {
-                WablasNotificationService::sendAutoNotification('registration_verified', [
-                    'phone' => $targetPhones,
-                    'nama_peserta' => $registration->pure_name,
-                    'nisn' => $nisn,
-                    'nama_sekolah' => $registration->institution_name,
-                    'cabang_lomba' => $registration->competition->name,
-                    'no_peserta' => $registration->participant_number ?: $registration->registration_code,
-                    'kode_pendaftaran' => $registration->registration_code,
-                    'link_scoreboard' => url('/'),
-                    'link_login' => route('login'),
-                ]);
-            } elseif ($validated['status'] === 'revision') {
-                WablasNotificationService::sendAutoNotification('registration_revision', [
-                    'phone' => $targetPhones,
-                    'nama_peserta' => $registration->pure_name,
-                    'nisn' => $nisn,
-                    'nama_sekolah' => $registration->institution_name,
-                    'cabang_lomba' => $registration->competition->name,
-                    'kode_pendaftaran' => $registration->registration_code,
-                    'catatan_verifikasi' => $validated['verification_notes'] ?: 'Mohon periksa kembali berkas persyaratan lomba Anda.',
-                    'link_login' => route('peserta.registration.detail', $registration->id),
-                ]);
-            } elseif ($validated['status'] === 'rejected') {
-                WablasNotificationService::sendAutoNotification('registration_rejected', [
-                    'phone' => $targetPhones,
-                    'nama_peserta' => $registration->pure_name,
-                    'nisn' => $nisn,
-                    'nama_sekolah' => $registration->institution_name,
-                    'cabang_lomba' => $registration->competition->name,
-                    'kode_pendaftaran' => $registration->registration_code,
-                    'catatan_verifikasi' => $validated['verification_notes'] ?: 'Berkas pendaftaran tidak memenuhi kriteria lomba.',
-                    'link_login' => route('login'),
-                ]);
+            if (empty($targetPhones)) {
+                if (! empty($registration->official_phone)) {
+                    $targetPhones[] = $registration->official_phone;
+                } elseif (! empty($registration->user?->phone)) {
+                    $targetPhones[] = $registration->user->phone;
+                }
+            }
+
+            if (! empty($targetPhones)) {
+                if ($validated['status'] === 'verified') {
+                    $waSent = WablasNotificationService::sendAutoNotification('registration_verified', [
+                        'phone' => $targetPhones,
+                        'nama_peserta' => $registration->pure_name,
+                        'nisn' => $nisn,
+                        'nama_sekolah' => $registration->institution_name,
+                        'cabang_lomba' => $registration->competition->name,
+                        'no_peserta' => $registration->participant_number ?: $registration->registration_code,
+                        'kode_pendaftaran' => $registration->registration_code,
+                        'link_scoreboard' => url('/'),
+                        'link_login' => route('login'),
+                    ]);
+                } elseif ($validated['status'] === 'revision') {
+                    $waSent = WablasNotificationService::sendAutoNotification('registration_revision', [
+                        'phone' => $targetPhones,
+                        'nama_peserta' => $registration->pure_name,
+                        'nisn' => $nisn,
+                        'nama_sekolah' => $registration->institution_name,
+                        'cabang_lomba' => $registration->competition->name,
+                        'kode_pendaftaran' => $registration->registration_code,
+                        'catatan_verifikasi' => $validated['verification_notes'] ?: 'Mohon periksa kembali berkas persyaratan lomba Anda.',
+                        'link_login' => route('peserta.registration.detail', $registration->id),
+                    ]);
+                } elseif ($validated['status'] === 'rejected') {
+                    $waSent = WablasNotificationService::sendAutoNotification('registration_rejected', [
+                        'phone' => $targetPhones,
+                        'nama_peserta' => $registration->pure_name,
+                        'nisn' => $nisn,
+                        'nama_sekolah' => $registration->institution_name,
+                        'cabang_lomba' => $registration->competition->name,
+                        'kode_pendaftaran' => $registration->registration_code,
+                        'catatan_verifikasi' => $validated['verification_notes'] ?: 'Berkas pendaftaran tidak memenuhi kriteria lomba.',
+                        'link_login' => route('login'),
+                    ]);
+                }
             }
         } catch (\Throwable $e) {
             // Non-blocking
             \Illuminate\Support\Facades\Log::error("Gagal mengirim WhatsApp status verifikasi ({$validated['status']}): " . $e->getMessage());
         }
 
-        return back()->with('success', 'Status pendaftaran '.$registration->registration_code.' berhasil diubah menjadi: '.ucfirst($validated['status']));
+        $phoneList = ! empty($targetPhones) ? implode(', ', $targetPhones) : 'tidak ada nomor';
+        $msgFeedback = 'Status pendaftaran '.$registration->registration_code.' berhasil diubah menjadi: '.ucfirst($validated['status']).'.';
+        if ($waSent) {
+            $msgFeedback .= ' 📲 Notifikasi WhatsApp berhasil dikirimkan ke: '.$phoneList.'.';
+        } else {
+            $msgFeedback .= ' (Info: Notifikasi WA otomatis belum terkirim. Tujuan: '.$phoneList.').';
+        }
+
+        return back()->with('success', $msgFeedback);
     }
 
     public function updateParticipantData(Request $request, $registration_id)
