@@ -54,11 +54,13 @@
                 <span>Menu Seeded</span>
             </button>
 
+            @if(strtoupper($competition->code ?? '') === 'BLT' || str_contains(strtolower($competition->name ?? ''), 'bulu tangkis') || str_contains(strtolower($competition->name ?? ''), 'badminton'))
             <!-- Bagan Pertandingan -->
             <a :href="'{{ route('pic.bracket', $competition->id) }}' + (activePoolKey ? '?pool=' + encodeURIComponent(activePoolKey) : '')" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-500/20 to-blue-600/20 hover:from-indigo-500/30 hover:to-blue-600/30 text-indigo-300 border border-indigo-500/50 font-bold text-xs shadow-md transition cursor-pointer" title="Lihat Bagan Pertandingan (Knockout Bracket)">
                 <i data-lucide="git-branch" class="w-4 h-4 text-indigo-400"></i>
                 <span>Bagan Pertandingan</span>
             </a>
+            @endif
 
             <!-- Public Viewer TV -->
             <a href="{{ url('tv/' . $competition->slug) }}" target="_blank" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 transition" title="Link Cepat TV: /tv/{{ $competition->slug }}">

@@ -20,6 +20,7 @@ class TournamentBracketController extends Controller
     public function show(Request $request, $competition_id)
     {
         $competition = Competition::with(['category', 'registrations.members'])->findOrFail($competition_id);
+        $this->ensureIsBadminton($competition);
         $user = Auth::user();
 
         // Check authorization
@@ -51,6 +52,7 @@ class TournamentBracketController extends Controller
             ->where('slug', $slug)
             ->orWhere('id', $slug)
             ->firstOrFail();
+        $this->ensureIsBadminton($competition);
 
         $pools = $this->buildCompetitionPools($competition);
         $activePoolKey = $request->query('pool', $pools[0]['key'] ?? 'all');
@@ -72,6 +74,7 @@ class TournamentBracketController extends Controller
     public function printPdf(Request $request, $competition_id)
     {
         $competition = Competition::with(['category', 'registrations.members'])->findOrFail($competition_id);
+        $this->ensureIsBadminton($competition);
         $user = Auth::user();
 
         if (! in_array($user->role, ['superadmin', 'panitia'])) {
@@ -101,6 +104,7 @@ class TournamentBracketController extends Controller
     public function generateMatches(Request $request, $competition_id)
     {
         $competition = Competition::with(['category', 'registrations.members'])->findOrFail($competition_id);
+        $this->ensureIsBadminton($competition);
         $user = Auth::user();
 
         if (! in_array($user->role, ['superadmin', 'panitia'])) {
@@ -594,5 +598,19 @@ class TournamentBracketController extends Controller
 
         $svg[] = "</svg>";
         return implode("\n", $svg);
+    }
+
+    /**
+     * Pastikan lomba adalah cabang Bulu Tangkis
+     */
+    private function ensureIsBadminton(Competition $competition): void
+    {
+        $isBadminton = (strtoupper($competition->code ?? '') === 'BLT')
+            || str_contains(strtolower($competition->name ?? ''), 'bulu tangkis')
+            || str_contains(strtolower($competition->name ?? ''), 'badminton');
+
+        if (! $isBadminton) {
+            abort(404, 'Bagan turnamen sistem gugur hanya tersedia khusus untuk cabang Bulu Tangkis.');
+        }
     }
 }
