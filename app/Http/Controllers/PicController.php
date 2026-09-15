@@ -1911,7 +1911,7 @@ class PicController extends Controller
         $validated = $request->validate([
             'pool_key' => ['required', 'string'],
             'seeds'    => ['present', 'array'],
-            'seeds.*'  => ['nullable', 'integer', 'in:1,2,3,4'],
+            'seeds.*'  => ['nullable', 'integer', 'min:1', 'max:16'],
         ]);
 
         $pools = $this->buildCompetitionPools($competition);
@@ -1927,7 +1927,7 @@ class PicController extends Controller
         $poolParticipantIds = collect($targetPool['participants'])->pluck('id')->map(fn ($id) => (int) $id)->toArray();
         $totalInPool = count($poolParticipantIds);
 
-        // Sanity check: ensure each seed number (1, 2, 3, 4) is assigned at most once
+        // Sanity check: ensure each seed number is assigned at most once
         $assignedSeeds = [];
         $seedMap = [];
         foreach ($validated['seeds'] as $regId => $seedNum) {
@@ -1948,9 +1948,11 @@ class PicController extends Controller
 
         // Process each participant in this pool
         DB::transaction(function () use ($poolParticipantIds, $seedMap, $totalInPool, $competition, $user) {
-            foreach ($poolParticipantIds as $regId) {
-                $seedNum = $seedMap[$regId] ?? null;
+            // Sort seeds ascending so Seed 1 gets its slot first, then 2, 3, 4, 5, etc.
+            asort($seedMap);
+            $allocatedSlots = [];
 
+            foreach ($seedMap as $regId => $seedNum) {
                 $reg = Registration::where('id', $regId)
                     ->where('competition_id', $competition->id)
                     ->first();
@@ -1959,40 +1961,47 @@ class PicController extends Controller
                     continue;
                 }
 
-                if ($seedNum) {
-                    $fixedSlot = $this->calculateSeedSlot($seedNum, $totalInPool);
+                $fixedSlot = $this->calculateSeedSlot($seedNum, $totalInPool, $allocatedSlots);
+                $allocatedSlots[$regId] = $fixedSlot;
 
-                    // If another participant in the same pool currently holds this slot, clear them
-                    Registration::where('competition_id', $competition->id)
-                        ->whereIn('id', $poolParticipantIds)
-                        ->where('id', '!=', $reg->id)
-                        ->where('draw_number', $fixedSlot)
-                        ->update(['draw_number' => null, 'seed_number' => null]);
+                // If another participant in the same pool currently holds this slot, clear them
+                Registration::where('competition_id', $competition->id)
+                    ->whereIn('id', $poolParticipantIds)
+                    ->where('id', '!=', $reg->id)
+                    ->where('draw_number', $fixedSlot)
+                    ->update(['draw_number' => null, 'seed_number' => null]);
 
-                    DrawAllocation::where('competition_id', $competition->id)
-                        ->whereIn('registration_id', $poolParticipantIds)
-                        ->where('registration_id', '!=', $reg->id)
-                        ->where('draw_number', $fixedSlot)
-                        ->delete();
+                DrawAllocation::where('competition_id', $competition->id)
+                    ->whereIn('registration_id', $poolParticipantIds)
+                    ->where('registration_id', '!=', $reg->id)
+                    ->where('draw_number', $fixedSlot)
+                    ->delete();
 
-                    $reg->seed_number = $seedNum;
-                    $reg->draw_number = $fixedSlot;
-                    $reg->save();
+                $reg->seed_number = $seedNum;
+                $reg->draw_number = $fixedSlot;
+                $reg->save();
 
-                    DrawAllocation::updateOrCreate(
-                        [
-                            'competition_id'  => $competition->id,
-                            'registration_id' => $reg->id,
-                        ],
-                        [
-                            'draw_number' => $fixedSlot,
-                            'spun_at'     => now(),
-                            'spun_by'     => $user->id,
-                        ]
-                    );
-                } else {
-                    // Was previously seeded? Clear if so
-                    if ($reg->seed_number !== null) {
+                DrawAllocation::updateOrCreate(
+                    [
+                        'competition_id'  => $competition->id,
+                        'registration_id' => $reg->id,
+                    ],
+                    [
+                        'draw_number' => $fixedSlot,
+                        'spun_at'     => now(),
+                        'spun_by'     => $user->id,
+                    ]
+                );
+            }
+
+            // For participants in this pool that are NOT in seedMap:
+            foreach ($poolParticipantIds as $regId) {
+                if (! isset($seedMap[$regId])) {
+                    $reg = Registration::where('id', $regId)
+                        ->where('competition_id', $competition->id)
+                        ->first();
+
+                    if ($reg && $reg->seed_number !== null) {
                         $reg->seed_number = null;
                         $reg->draw_number = null;
                         $reg->save();
@@ -2017,19 +2026,38 @@ class PicController extends Controller
         ]);
     }
 
-    protected function calculateSeedSlot(int $seed, int $totalParticipants): int
+    protected function calculateSeedSlot(int $seed, int $totalParticipants, array $usedSlots = []): int
     {
         if ($totalParticipants <= 1) {
             return 1;
         }
 
-        return match ($seed) {
+        $baseSlot = match ($seed) {
             1 => 1,
             2 => $totalParticipants,
-            3 => ($totalParticipants >= 3) ? (int) floor($totalParticipants / 2) + 1 : 1,
-            4 => ($totalParticipants >= 4) ? (int) floor($totalParticipants / 2) : 2,
-            default => 1,
+            3 => (int) floor($totalParticipants / 2) + 1,
+            4 => (int) floor($totalParticipants / 2),
+            5 => (int) floor($totalParticipants / 4) + 1,
+            6 => (int) floor(3 * $totalParticipants / 4),
+            7 => (int) floor(3 * $totalParticipants / 4) + 1,
+            8 => (int) floor($totalParticipants / 4),
+            default => min($seed, $totalParticipants),
         };
+
+        $baseSlot = max(1, min($totalParticipants, $baseSlot));
+
+        if (in_array($baseSlot, $usedSlots, true)) {
+            for ($offset = 1; $offset < $totalParticipants; $offset++) {
+                if ($baseSlot + $offset <= $totalParticipants && ! in_array($baseSlot + $offset, $usedSlots, true)) {
+                    return $baseSlot + $offset;
+                }
+                if ($baseSlot - $offset >= 1 && ! in_array($baseSlot - $offset, $usedSlots, true)) {
+                    return $baseSlot - $offset;
+                }
+            }
+        }
+
+        return $baseSlot;
     }
 
     public function storeDrawResult(Request $request, $competition_id)

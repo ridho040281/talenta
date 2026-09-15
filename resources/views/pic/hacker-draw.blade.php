@@ -33,6 +33,16 @@
                 <span>Mode Spin Wheel</span>
             </a>
 
+            <!-- Menu Seeded Button -->
+            <button type="button" 
+                    @click="openSeededModal()" 
+                    :disabled="isDrawing"
+                    class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500/20 to-amber-600/20 hover:from-amber-500/30 hover:to-amber-600/30 text-amber-300 border border-amber-500/50 font-bold text-xs shadow-md transition cursor-pointer"
+                    title="Menu Pengaturan Pemain Unggulan (Seeded)">
+                <i data-lucide="star" class="w-4 h-4 text-amber-400"></i>
+                <span>Menu Seeded</span>
+            </button>
+
             <!-- Public Viewer TV -->
             <a href="{{ url('tv/' . $competition->slug) }}" target="_blank" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs shadow-md shadow-emerald-500/20 transition" title="Link Cepat TV: /tv/{{ $competition->slug }}">
                 <i data-lucide="tv" class="w-4 h-4"></i>
@@ -361,123 +371,91 @@
                 </button>
             </div>
 
+            <!-- Seed Menu Controls Toolbar -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800 font-sans">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center shrink-0">
+                        <i data-lucide="sliders" class="w-4 h-4 text-amber-400"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs font-black text-white block">Menu Slot Seeded:</span>
+                        <span class="text-[11px] text-slate-400 font-mono">
+                            Menampilkan <strong class="text-amber-400" x-text="visibleSeeds.length"></strong> posisi • Maks <span class="text-white font-bold" x-text="maxAvailableSeeds"></span> dari <span class="text-white font-bold" x-text="activeParticipants.length"></span> peserta
+                        </span>
+                    </div>
+                </div>
+                <div class="flex items-center flex-wrap gap-2">
+                    <button type="button" 
+                            @click="setPresetSeeds(4)" 
+                            class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer"
+                            :class="visibleSeeds.length === 4 ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'">
+                        4 Seed
+                    </button>
+                    <button type="button" 
+                            @click="setPresetSeeds(8)" 
+                            :disabled="activeParticipants.length < 8" 
+                            class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                            :class="visibleSeeds.length === 8 ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'"
+                            :title="activeParticipants.length < 8 ? 'Minimal 8 peserta untuk 8 seed' : 'Tampilkan 8 Seed'">
+                        8 Seed
+                    </button>
+                    <button type="button" 
+                            x-show="visibleSeeds.length < maxAvailableSeeds" 
+                            @click="addNextSeed()" 
+                            class="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm">
+                        <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                        <span x-text="'+ Tambah Seed ' + getNextSeedNumber()"></span>
+                    </button>
+                </div>
+            </div>
+
             <!-- Seed Selector Cards Grid -->
-            <div class="flex-1 overflow-y-auto space-y-3.5 pr-1 max-h-[420px]">
+            <div class="flex-1 overflow-y-auto space-y-3 pr-1 max-h-[420px] font-sans">
                 
-                <!-- SEED 1 -->
-                <div class="p-4 rounded-2xl bg-slate-950/70 border-2 transition"
-                     :class="selectedSeed1 ? 'border-amber-500/60 bg-amber-500/10' : 'border-slate-800'">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="flex items-center gap-2">
-                            <span class="px-2.5 py-0.5 rounded-lg text-xs font-black uppercase tracking-wider bg-amber-500 text-slate-950 flex items-center gap-1 shadow-sm font-sans">
-                                <span>⭐ SEED 1</span>
-                                <span class="opacity-80">• Slot #1</span>
-                            </span>
-                            <span class="text-[11px] text-amber-400 font-bold font-sans">Puncak Bagan Atas</span>
+                <template x-for="seedNum in visibleSeeds" :key="'seed-card-' + seedNum">
+                    <div class="p-4 rounded-2xl bg-slate-950/70 border-2 transition"
+                         :class="selectedSeeds[seedNum] ? 'border-amber-500/60 bg-amber-500/10' : 'border-slate-800'">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2.5 py-0.5 rounded-lg text-xs font-black uppercase tracking-wider flex items-center gap-1 shadow-sm"
+                                      :class="getSeedInfo(seedNum).badgeColor">
+                                    <span x-text="'⭐ SEED ' + seedNum"></span>
+                                    <span class="opacity-80" x-text="'• Slot #' + getSeedInfo(seedNum).slot"></span>
+                                </span>
+                                <span class="text-[11px] text-amber-400 font-bold" x-text="getSeedInfo(seedNum).desc"></span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button type="button" 
+                                        x-show="selectedSeeds[seedNum]" 
+                                        @click="setSeed(seedNum, '')" 
+                                        class="text-[10px] text-rose-400 hover:text-rose-300 font-bold cursor-pointer">
+                                    Kosongkan
+                                </button>
+                                <button type="button" 
+                                        x-show="seedNum > 4" 
+                                        @click="removeSeedSlot(seedNum)" 
+                                        class="text-[10px] text-slate-500 hover:text-rose-400 font-bold cursor-pointer ml-1.5 px-2 py-0.5 rounded bg-slate-900 border border-slate-800 hover:border-rose-500/40">
+                                    ✕ Hapus Slot
+                                </button>
+                            </div>
                         </div>
-                        <button type="button" x-show="selectedSeed1" @click="setSeed(1, '')" class="text-[10px] text-rose-400 hover:text-rose-300 font-bold font-sans cursor-pointer">
-                            Kosongkan Seed 1
-                        </button>
+                        <label class="block text-[11px] text-slate-400 mb-1.5 font-medium" x-text="'Pilih Peserta untuk Seed ' + seedNum + ':'"></label>
+                        <select :value="selectedSeeds[seedNum]" 
+                                @change="setSeed(seedNum, $event.target.value)" 
+                                class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border text-xs font-bold outline-none transition cursor-pointer"
+                                :class="selectedSeeds[seedNum] ? 'border-amber-400 text-amber-300' : 'border-slate-700 text-slate-300'">
+                            <option value="">— Belum Ditentukan (Tidak Ada Seed Ini) —</option>
+                            <template x-for="p in activeParticipants" :key="'s' + seedNum + '-' + p.id">
+                                <option :value="p.id" 
+                                        :selected="selectedSeeds[seedNum] == p.id"
+                                        x-text="p.name + ' (' + p.institution + ')'"></option>
+                            </template>
+                        </select>
                     </div>
-                    <label class="block text-[11px] text-slate-400 mb-1.5 font-medium font-sans">Pilih Peserta untuk Seed 1:</label>
-                    <select :value="selectedSeed1" 
-                            @change="setSeed(1, $event.target.value)" 
-                            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border text-xs font-bold outline-none transition cursor-pointer font-sans"
-                            :class="selectedSeed1 ? 'border-amber-400 text-amber-300' : 'border-slate-700 text-slate-300'">
-                        <option value="">— Belum Ditentukan (Tidak Ada Seed 1) —</option>
-                        <template x-for="p in activeParticipants" :key="'s1-' + p.id">
-                            <option :value="p.id" 
-                                    :selected="selectedSeed1 == p.id"
-                                    x-text="p.name + ' (' + p.institution + ')'"></option>
-                        </template>
-                    </select>
-                </div>
+                </template>
 
-                <!-- SEED 2 -->
-                <div class="p-4 rounded-2xl bg-slate-950/70 border-2 transition"
-                     :class="selectedSeed2 ? 'border-amber-500/60 bg-amber-500/10' : 'border-slate-800'">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="flex items-center gap-2">
-                            <span class="px-2.5 py-0.5 rounded-lg text-xs font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1 shadow-sm font-sans">
-                                <span>⭐ SEED 2</span>
-                                <span class="opacity-80" x-text="'• Slot #' + activeParticipants.length"></span>
-                            </span>
-                            <span class="text-[11px] text-amber-400 font-bold font-sans">Dasar Bagan Bawah</span>
-                        </div>
-                        <button type="button" x-show="selectedSeed2" @click="setSeed(2, '')" class="text-[10px] text-rose-400 hover:text-rose-300 font-bold font-sans cursor-pointer">
-                            Kosongkan Seed 2
-                        </button>
-                    </div>
-                    <label class="block text-[11px] text-slate-400 mb-1.5 font-medium font-sans">Pilih Peserta untuk Seed 2:</label>
-                    <select :value="selectedSeed2" 
-                            @change="setSeed(2, $event.target.value)" 
-                            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border text-xs font-bold outline-none transition cursor-pointer font-sans"
-                            :class="selectedSeed2 ? 'border-amber-400 text-amber-300' : 'border-slate-700 text-slate-300'">
-                        <option value="">— Belum Ditentukan (Tidak Ada Seed 2) —</option>
-                        <template x-for="p in activeParticipants" :key="'s2-' + p.id">
-                            <option :value="p.id" 
-                                    :selected="selectedSeed2 == p.id"
-                                    x-text="p.name + ' (' + p.institution + ')'"></option>
-                        </template>
-                    </select>
-                </div>
-
-                <!-- SEED 3 (Optional if >= 3 participants) -->
-                <div x-show="activeParticipants.length >= 3" class="p-4 rounded-2xl bg-slate-950/70 border-2 transition"
-                     :class="selectedSeed3 ? 'border-amber-500/60 bg-amber-500/10' : 'border-slate-800'">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="flex items-center gap-2">
-                            <span class="px-2.5 py-0.5 rounded-lg text-xs font-black uppercase tracking-wider bg-slate-800 text-slate-300 border border-slate-700 flex items-center gap-1 shadow-sm font-sans">
-                                <span>⭐ SEED 3</span>
-                                <span class="opacity-80" x-text="'• Slot #' + calculateSlotPreview(3)"></span>
-                            </span>
-                            <span class="text-[11px] text-slate-400 font-bold font-sans">Bagan Bawah</span>
-                        </div>
-                        <button type="button" x-show="selectedSeed3" @click="setSeed(3, '')" class="text-[10px] text-rose-400 hover:text-rose-300 font-bold font-sans cursor-pointer">
-                            Kosongkan Seed 3
-                        </button>
-                    </div>
-                    <label class="block text-[11px] text-slate-400 mb-1.5 font-medium font-sans">Pilih Peserta untuk Seed 3:</label>
-                    <select :value="selectedSeed3" 
-                            @change="setSeed(3, $event.target.value)" 
-                            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border text-xs font-bold outline-none transition cursor-pointer font-sans"
-                            :class="selectedSeed3 ? 'border-amber-400 text-amber-300' : 'border-slate-700 text-slate-300'">
-                        <option value="">— Belum Ditentukan (Tidak Ada Seed 3) —</option>
-                        <template x-for="p in activeParticipants" :key="'s3-' + p.id">
-                            <option :value="p.id" 
-                                    :selected="selectedSeed3 == p.id"
-                                    x-text="p.name + ' (' + p.institution + ')'"></option>
-                        </template>
-                    </select>
-                </div>
-
-                <!-- SEED 4 (Optional if >= 4 participants) -->
-                <div x-show="activeParticipants.length >= 4" class="p-4 rounded-2xl bg-slate-950/70 border-2 transition"
-                     :class="selectedSeed4 ? 'border-amber-500/60 bg-amber-500/10' : 'border-slate-800'">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="flex items-center gap-2">
-                            <span class="px-2.5 py-0.5 rounded-lg text-xs font-black uppercase tracking-wider bg-slate-800 text-slate-300 border border-slate-700 flex items-center gap-1 shadow-sm font-sans">
-                                <span>⭐ SEED 4</span>
-                                <span class="opacity-80" x-text="'• Slot #' + calculateSlotPreview(4)"></span>
-                            </span>
-                            <span class="text-[11px] text-slate-400 font-bold font-sans">Bagan Atas</span>
-                        </div>
-                        <button type="button" x-show="selectedSeed4" @click="setSeed(4, '')" class="text-[10px] text-rose-400 hover:text-rose-300 font-bold font-sans cursor-pointer">
-                            Kosongkan Seed 4
-                        </button>
-                    </div>
-                    <label class="block text-[11px] text-slate-400 mb-1.5 font-medium font-sans">Pilih Peserta untuk Seed 4:</label>
-                    <select :value="selectedSeed4" 
-                            @change="setSeed(4, $event.target.value)" 
-                            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border text-xs font-bold outline-none transition cursor-pointer font-sans"
-                            :class="selectedSeed4 ? 'border-amber-400 text-amber-300' : 'border-slate-700 text-slate-300'">
-                        <option value="">— Belum Ditentukan (Tidak Ada Seed 4) —</option>
-                        <template x-for="p in activeParticipants" :key="'s4-' + p.id">
-                            <option :value="p.id" 
-                                    :selected="selectedSeed4 == p.id"
-                                    x-text="p.name + ' (' + p.institution + ')'"></option>
-                        </template>
-                    </select>
+                <div x-show="activeParticipants.length === 0" class="py-8 text-center text-xs text-slate-500">
+                    Tidak ada peserta terdaftar dalam kategori ini.
                 </div>
 
             </div>
@@ -530,11 +508,16 @@
 
             // Seeded state
             isSeededModalOpen: false,
-            selectedSeed1: '',
-            selectedSeed2: '',
-            selectedSeed3: '',
-            selectedSeed4: '',
+            visibleSeeds: [1, 2, 3, 4],
+            selectedSeeds: { 1: '', 2: '', 3: '', 4: '', 5: '', 6: '', 7: '', 8: '' },
             isSavingSeeded: false,
+
+            get maxAvailableSeeds() {
+                const total = this.activeParticipants.length;
+                if (total <= 2) return Math.max(total, 1);
+                if (total < 8) return 4;
+                return Math.min(8, total);
+            },
 
             get activePool() {
                 return this.pools.find(p => p.key === this.activePoolKey) || this.pools[0];
@@ -886,17 +869,25 @@
             },
 
             openSeededModal() {
-                this.selectedSeed1 = '';
-                this.selectedSeed2 = '';
-                this.selectedSeed3 = '';
-                this.selectedSeed4 = '';
+                this.selectedSeeds = { 1: '', 2: '', 3: '', 4: '', 5: '', 6: '', 7: '', 8: '' };
+                const foundSeeds = [];
 
                 this.activeParticipants.forEach(p => {
-                    if (parseInt(p.seed_number) === 1) this.selectedSeed1 = String(p.id);
-                    if (parseInt(p.seed_number) === 2) this.selectedSeed2 = String(p.id);
-                    if (parseInt(p.seed_number) === 3) this.selectedSeed3 = String(p.id);
-                    if (parseInt(p.seed_number) === 4) this.selectedSeed4 = String(p.id);
+                    if (p.seed_number) {
+                        const s = parseInt(p.seed_number);
+                        this.selectedSeeds[s] = String(p.id);
+                        foundSeeds.push(s);
+                    }
                 });
+
+                // Default show 4 seeds, or expand if existing seeds > 4 are found
+                const maxFound = foundSeeds.length > 0 ? Math.max(...foundSeeds) : 4;
+                const targetCount = Math.max(4, Math.min(maxFound, this.maxAvailableSeeds));
+                
+                this.visibleSeeds = [];
+                for (let i = 1; i <= targetCount; i++) {
+                    this.visibleSeeds.push(i);
+                }
 
                 this.isSeededModalOpen = true;
                 this.$nextTick(() => {
@@ -909,34 +900,151 @@
 
                 // If this participant was already selected for another seed, auto-clear from that seed!
                 if (participantId !== '') {
-                    if (seedNum !== 1 && this.selectedSeed1 === participantId) this.selectedSeed1 = '';
-                    if (seedNum !== 2 && this.selectedSeed2 === participantId) this.selectedSeed2 = '';
-                    if (seedNum !== 3 && this.selectedSeed3 === participantId) this.selectedSeed3 = '';
-                    if (seedNum !== 4 && this.selectedSeed4 === participantId) this.selectedSeed4 = '';
+                    Object.keys(this.selectedSeeds).forEach(s => {
+                        if (parseInt(s) !== parseInt(seedNum) && this.selectedSeeds[s] === participantId) {
+                            this.selectedSeeds[s] = '';
+                        }
+                    });
                 }
 
-                if (seedNum === 1) this.selectedSeed1 = participantId;
-                if (seedNum === 2) this.selectedSeed2 = participantId;
-                if (seedNum === 3) this.selectedSeed3 = participantId;
-                if (seedNum === 4) this.selectedSeed4 = participantId;
+                this.selectedSeeds[seedNum] = participantId;
+            },
+
+            setPresetSeeds(count) {
+                const target = Math.min(count, this.maxAvailableSeeds);
+                const newVisible = [];
+                for (let i = 1; i <= target; i++) {
+                    newVisible.push(i);
+                }
+                // Clear any seeds beyond the preset target
+                Object.keys(this.selectedSeeds).forEach(s => {
+                    if (parseInt(s) > target) {
+                        this.selectedSeeds[s] = '';
+                    }
+                });
+                this.visibleSeeds = newVisible;
+                this.$nextTick(() => {
+                    if (window.lucide) lucide.createIcons();
+                });
+            },
+
+            addNextSeed() {
+                const next = this.getNextSeedNumber();
+                if (next && !this.visibleSeeds.includes(next)) {
+                    this.visibleSeeds.push(next);
+                    this.visibleSeeds.sort((a, b) => a - b);
+                    this.$nextTick(() => {
+                        if (window.lucide) lucide.createIcons();
+                    });
+                }
+            },
+
+            removeSeedSlot(seedNum) {
+                this.setSeed(seedNum, '');
+                this.visibleSeeds = this.visibleSeeds.filter(s => s !== seedNum);
+                this.$nextTick(() => {
+                    if (window.lucide) lucide.createIcons();
+                });
+            },
+
+            getNextSeedNumber() {
+                for (let i = 1; i <= this.maxAvailableSeeds; i++) {
+                    if (!this.visibleSeeds.includes(i)) return i;
+                }
+                return null;
+            },
+
+            getSeedInfo(seedNum) {
+                const slot = this.calculateSlotPreview(seedNum);
+                let desc = '';
+                let badgeColor = 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-sans';
+
+                if (seedNum === 1) {
+                    desc = 'Puncak Bagan Atas (QF 1)';
+                    badgeColor = 'bg-amber-500 text-slate-950 font-black font-sans';
+                } else if (seedNum === 2) {
+                    desc = 'Dasar Bagan Bawah (QF 4)';
+                    badgeColor = 'bg-amber-500/25 text-amber-300 border border-amber-500/50 font-sans';
+                } else if (seedNum === 3) {
+                    desc = 'Bagan Bawah (QF 3)';
+                } else if (seedNum === 4) {
+                    desc = 'Bagan Atas (QF 2)';
+                } else if (seedNum === 5) {
+                    desc = 'Bagan Atas (QF 2)';
+                } else if (seedNum === 6) {
+                    desc = 'Bagan Bawah (QF 3)';
+                } else if (seedNum === 7) {
+                    desc = 'Bagan Bawah (QF 4)';
+                } else if (seedNum === 8) {
+                    desc = 'Bagan Atas (QF 1)';
+                } else {
+                    desc = 'Slot Bagan Turnamen';
+                }
+
+                return { slot, desc, badgeColor };
             },
 
             calculateSlotPreview(seed) {
                 const total = this.activeParticipants.length;
                 if (total <= 1) return 1;
-                if (seed === 1) return 1;
-                if (seed === 2) return total;
-                if (seed === 3) return total >= 3 ? Math.floor(total / 2) + 1 : 1;
-                if (seed === 4) return total >= 4 ? Math.floor(total / 2) : 2;
-                return 1;
+
+                let baseSlot = 1;
+                switch (seed) {
+                    case 1: baseSlot = 1; break;
+                    case 2: baseSlot = total; break;
+                    case 3: baseSlot = Math.floor(total / 2) + 1; break;
+                    case 4: baseSlot = Math.floor(total / 2); break;
+                    case 5: baseSlot = Math.floor(total / 4) + 1; break;
+                    case 6: baseSlot = Math.floor(3 * total / 4); break;
+                    case 7: baseSlot = Math.floor(3 * total / 4) + 1; break;
+                    case 8: baseSlot = Math.floor(total / 4); break;
+                    default: baseSlot = Math.min(seed, total); break;
+                }
+                baseSlot = Math.max(1, Math.min(total, baseSlot));
+
+                const used = [];
+                const sortedSeeds = [...this.visibleSeeds].sort((a, b) => a - b);
+                for (const s of sortedSeeds) {
+                    if (s === seed) break;
+                    let sSlot = 1;
+                    switch (s) {
+                        case 1: sSlot = 1; break;
+                        case 2: sSlot = total; break;
+                        case 3: sSlot = Math.floor(total / 2) + 1; break;
+                        case 4: sSlot = Math.floor(total / 2); break;
+                        case 5: sSlot = Math.floor(total / 4) + 1; break;
+                        case 6: sSlot = Math.floor(3 * total / 4); break;
+                        case 7: sSlot = Math.floor(3 * total / 4) + 1; break;
+                        case 8: sSlot = Math.floor(total / 4); break;
+                        default: sSlot = Math.min(s, total); break;
+                    }
+                    sSlot = Math.max(1, Math.min(total, sSlot));
+                    if (used.includes(sSlot)) {
+                        for (let offset = 1; offset < total; offset++) {
+                            if (sSlot + offset <= total && !used.includes(sSlot + offset)) { sSlot += offset; break; }
+                            if (sSlot - offset >= 1 && !used.includes(sSlot - offset)) { sSlot -= offset; break; }
+                        }
+                    }
+                    used.push(sSlot);
+                }
+
+                if (used.includes(baseSlot)) {
+                    for (let offset = 1; offset < total; offset++) {
+                        if (baseSlot + offset <= total && !used.includes(baseSlot + offset)) return baseSlot + offset;
+                        if (baseSlot - offset >= 1 && !used.includes(baseSlot - offset)) return baseSlot - offset;
+                    }
+                }
+                return baseSlot;
             },
 
             async saveSeededPlayers() {
                 const seeds = {};
-                if (this.selectedSeed1) seeds[this.selectedSeed1] = 1;
-                if (this.selectedSeed2) seeds[this.selectedSeed2] = 2;
-                if (this.selectedSeed3) seeds[this.selectedSeed3] = 3;
-                if (this.selectedSeed4) seeds[this.selectedSeed4] = 4;
+                this.visibleSeeds.forEach(seedNum => {
+                    const pId = this.selectedSeeds[seedNum];
+                    if (pId) {
+                        seeds[pId] = parseInt(seedNum);
+                    }
+                });
 
                 this.isSavingSeeded = true;
                 try {
