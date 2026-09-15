@@ -862,7 +862,7 @@
                 this.isSavingSeeded = true;
                 try {
                     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
-                    const response = await fetch('{{ route("pic.set.seeded", $competition->id) }}', {
+                    const response = await fetch('/pic/lomba/' + this.competitionId + '/set-seeded', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
