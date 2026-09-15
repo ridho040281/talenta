@@ -155,8 +155,51 @@
             </div>
         </div>
 
-        <!-- Scrollable Bracket Visual Tree Container -->
-        <div class="overflow-x-auto pb-8 pt-2 scrollbar-thin">
+        <!-- View Mode Switcher -->
+        <div class="flex items-center justify-between flex-wrap gap-3 bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800 shadow-md">
+            <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-xs font-bold text-slate-400">Tampilan Bagan:</span>
+                <div class="inline-flex p-1 bg-slate-950 rounded-xl border border-slate-800">
+                    <button type="button" @click="viewMode = 'classic'" :class="viewMode === 'classic' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
+                        <i data-lucide="git-branch" class="w-3.5 h-3.5"></i>
+                        <span>Model Garis Klasik (BWF GOR)</span>
+                    </button>
+                    <button type="button" @click="viewMode = 'cards'" :class="viewMode === 'cards' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
+                        <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+                        <span>Model Kartu Pertandingan</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- In Classic Mode: Canvas Theme Toggle -->
+            <div x-show="viewMode === 'classic'" class="flex items-center gap-2">
+                <span class="text-[11px] text-slate-400">Papan:</span>
+                <div class="inline-flex p-1 bg-slate-950 rounded-xl border border-slate-800 text-xs font-bold">
+                    <button type="button" @click="classicTheme = 'white'" :class="classicTheme === 'white' ? 'bg-white text-slate-950 shadow' : 'text-slate-400 hover:text-white'" class="px-3 py-1 rounded-lg transition cursor-pointer">
+                        Kertas Putih
+                    </button>
+                    <button type="button" @click="classicTheme = 'dark'" :class="classicTheme === 'dark' ? 'bg-slate-800 text-cyan-300 shadow' : 'text-slate-400 hover:text-white'" class="px-3 py-1 rounded-lg transition cursor-pointer">
+                        Dark Mode
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Classic Line Tree (Persis Bagan GOR Standar BWF) -->
+        <div x-show="viewMode === 'classic'" class="overflow-x-auto pb-8 pt-2 scrollbar-thin">
+            <div class="p-6 rounded-3xl border shadow-2xl overflow-auto min-w-[750px] flex justify-center transition-colors duration-300"
+                 :class="classicTheme === 'white' ? 'bg-white border-slate-200 shadow-slate-950/30' : 'bg-slate-950 border-slate-800 shadow-indigo-950/30'">
+                <div x-show="classicTheme === 'white'" class="w-full flex justify-center">
+                    {!! $bracketData['classic_svg_light'] !!}
+                </div>
+                <div x-show="classicTheme === 'dark'" class="w-full flex justify-center">
+                    {!! $bracketData['classic_svg_dark'] !!}
+                </div>
+            </div>
+        </div>
+
+        <!-- Scrollable Bracket Visual Cards Container -->
+        <div x-show="viewMode === 'cards'" class="overflow-x-auto pb-8 pt-2 scrollbar-thin">
             <div class="inline-flex gap-8 min-w-full items-stretch px-2 py-4">
 
                 @foreach($bracketData['rounds'] as $round)
@@ -436,6 +479,8 @@
             competitionId: {{ $competition->id }},
             activePoolKey: '{{ $activePoolKey }}',
             hasRounds: {{ ($bracketData && !empty($bracketData['rounds'])) ? 'true' : 'false' }},
+            viewMode: 'classic',
+            classicTheme: 'white',
             isSyncing: false,
             toastMessage: '',
             toastSuccess: true,

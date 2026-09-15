@@ -23,7 +23,8 @@
     <!-- Lucide Icons -->
     <script defer src="{{ asset('vendor/lucide/lucide.min.js') }}"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white"
+      x-data="{ viewMode: 'classic', canvasTheme: 'dark' }">
 
     <!-- Top Header Bar -->
     <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 sticky top-0 z-50">
@@ -50,19 +51,29 @@
             </div>
         </div>
 
-        <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
+        <div class="flex items-center gap-3 w-full sm:w-auto justify-end flex-wrap">
+            <!-- View Mode Switcher -->
+            <div class="inline-flex p-1 bg-slate-800/80 rounded-xl border border-slate-700 text-xs font-bold">
+                <button type="button" @click="viewMode = 'classic'" :class="viewMode === 'classic' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'" class="px-2.5 py-1 rounded-lg transition cursor-pointer">
+                    Bagan Garis Klasik
+                </button>
+                <button type="button" @click="viewMode = 'cards'" :class="viewMode === 'cards' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'" class="px-2.5 py-1 rounded-lg transition cursor-pointer">
+                    Kartu Lomba
+                </button>
+            </div>
+
             <!-- Fullscreen TV toggle -->
             <button type="button" 
                     onclick="toggleFullScreen()" 
                     id="btnFullscreen"
-                    class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer">
+                    class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer">
                 <i data-lucide="maximize" class="w-3.5 h-3.5"></i>
                 <span class="hidden sm:inline">Layar Penuh TV</span>
             </button>
 
             <!-- Link to Scoreboard -->
-            <a href="{{ route('live.scoreboard', $competition->slug) }}" class="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 transition">
-                Papan Skor Live
+            <a href="{{ route('live.scoreboard', $competition->slug) }}" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 transition">
+                Papan Skor
             </a>
         </div>
     </header>
@@ -118,8 +129,17 @@
                 </div>
             </div>
 
+            <!-- Classic Line Tree (Persis Bagan GOR Standar BWF) -->
+            <div x-show="viewMode === 'classic'" class="overflow-x-auto pb-10 scrollbar-thin">
+                <div class="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl overflow-auto min-w-[750px] flex justify-center">
+                    <div class="w-full flex justify-center">
+                        {!! $bracketData['classic_svg_dark'] !!}
+                    </div>
+                </div>
+            </div>
+
             <!-- Bracket Columns Horizontal Scroll Area -->
-            <div class="overflow-x-auto pb-10 scrollbar-thin">
+            <div x-show="viewMode === 'cards'" class="overflow-x-auto pb-10 scrollbar-thin">
                 <div class="inline-flex gap-8 min-w-full items-stretch px-2">
 
                     @foreach($bracketData['rounds'] as $round)

@@ -162,112 +162,14 @@
                 </div>
             </div>
 
-            <!-- Bracket Layout Tree Grid -->
+            <!-- Classic Vector Bracket Tree (Persis Standar BWF GOR) -->
             @if(!$bracketData || empty($bracketData['rounds']))
                 <div class="py-16 text-center text-xs text-slate-500 italic">
                     Data bagan belum tersedia untuk dicetak.
                 </div>
             @else
-                <div class="flex items-stretch justify-between gap-3 my-2 w-full">
-                    @foreach($bracketData['rounds'] as $rIdx => $round)
-                        <div class="flex-1 flex flex-col">
-                            <!-- Round Title -->
-                            <div class="text-center pb-1 mb-2 border-b border-slate-700">
-                                <span class="text-[10px] font-black uppercase tracking-wider text-slate-900 font-mono">
-                                    {{ $round['round_name'] }}
-                                </span>
-                            </div>
-
-                            <!-- Matches column with justify-around -->
-                            <div class="flex-1 flex flex-col justify-around gap-2">
-                                @foreach($round['matches'] as $match)
-                                    @php
-                                        $t1 = $match['team1'];
-                                        $t2 = $match['team2'];
-                                        $isByeAdvance = ($match['status'] === 'bye_advance');
-                                        $existing = $match['existing_match'];
-                                    @endphp
-
-                                    <div class="border border-slate-700 rounded p-1.5 text-[9px] bg-white relative">
-                                        <!-- Match code & Court -->
-                                        <div class="flex items-center justify-between text-[8px] font-mono text-slate-500 mb-0.5 border-b border-slate-200 pb-0.5">
-                                            <span>{{ $match['match_code'] }}</span>
-                                            <span>{{ $existing->court_number ?? '' }}</span>
-                                        </div>
-
-                                        <!-- Team 1 -->
-                                        <div class="flex items-center justify-between gap-1 py-0.5 border-b border-slate-100">
-                                            <div class="flex items-center gap-1 min-w-0">
-                                                <span class="font-mono font-bold text-[8px] text-slate-500 w-3.5 shrink-0">
-                                                    {{ $t1['slot_number'] ?? '' }}
-                                                </span>
-                                                @if(!empty($t1['seed_number']))
-                                                    <span class="px-1 font-bold text-[7.5px] bg-amber-100 text-amber-900 border border-amber-300 rounded shrink-0">S{{ $t1['seed_number'] }}</span>
-                                                @endif
-                                                <div class="truncate">
-                                                    <strong class="text-slate-900 {{ ($t1['is_bye'] ?? false) ? 'text-slate-400 italic' : '' }}">
-                                                        {{ $t1['name'] ?? '............' }}
-                                                    </strong>
-                                                    @if(!empty($t1['institution']))
-                                                        <span class="text-[7.5px] text-slate-500 block truncate">({{ $t1['institution'] }})</span>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                            <div class="w-8 h-3.5 border border-slate-300 rounded text-center font-mono font-bold text-[8px] shrink-0 leading-3">
-                                                @if($existing && ($existing->team1_set1 > 0 || $existing->team2_set1 > 0))
-                                                    {{ $existing->team1_set1 }}-{{ $existing->team1_set2 }}
-                                                @endif
-                                            </div>
-                                        </div>
-
-                                        <!-- Team 2 -->
-                                        <div class="flex items-center justify-between gap-1 py-0.5">
-                                            <div class="flex items-center gap-1 min-w-0">
-                                                <span class="font-mono font-bold text-[8px] text-slate-500 w-3.5 shrink-0">
-                                                    {{ $t2['slot_number'] ?? '' }}
-                                                </span>
-                                                @if(!empty($t2['seed_number']))
-                                                    <span class="px-1 font-bold text-[7.5px] bg-amber-100 text-amber-900 border border-amber-300 rounded shrink-0">S{{ $t2['seed_number'] }}</span>
-                                                @endif
-                                                <div class="truncate">
-                                                    <strong class="text-slate-900 {{ ($t2['is_bye'] ?? false) ? 'text-slate-400 italic' : '' }}">
-                                                        {{ $t2['name'] ?? '............' }}
-                                                    </strong>
-                                                    @if(!empty($t2['institution']))
-                                                        <span class="text-[7.5px] text-slate-500 block truncate">({{ $t2['institution'] }})</span>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                            <div class="w-8 h-3.5 border border-slate-300 rounded text-center font-mono font-bold text-[8px] shrink-0 leading-3">
-                                                @if($existing && ($existing->team1_set1 > 0 || $existing->team2_set1 > 0))
-                                                    {{ $existing->team2_set1 }}-{{ $existing->team2_set2 }}
-                                                @endif
-                                            </div>
-                                        </div>
-
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    @endforeach
-
-                    <!-- Champion Box -->
-                    <div class="w-[120px] shrink-0 flex flex-col justify-center">
-                        <div class="border-2 border-amber-500 rounded-lg p-2.5 bg-amber-50/50 text-center">
-                            <span class="text-[9px] font-black uppercase text-amber-800 tracking-wider block mb-1">
-                                JUARA 1
-                            </span>
-                            <div class="w-8 h-8 rounded-full bg-amber-200 text-amber-800 flex items-center justify-center mx-auto mb-1.5 font-bold text-xs">
-                                🏆
-                            </div>
-                            <div class="text-[9px] font-black text-slate-900 leading-tight">
-                                {{ $bracketData['champion']['name'] ?? '........................' }}
-                            </div>
-                            <div class="text-[8px] text-slate-600 mt-0.5">
-                                {{ $bracketData['champion']['institution'] ?? '........................' }}
-                            </div>
-                        </div>
-                    </div>
+                <div class="my-2 w-full flex justify-center items-center overflow-hidden">
+                    {!! $bracketData['classic_svg_light'] !!}
                 </div>
             @endif
 

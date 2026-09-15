@@ -402,7 +402,7 @@ class TournamentBracketController extends Controller
         $finalMatch = $finalRound['matches'][0] ?? null;
         $champion = $finalMatch['winner'] ?? null;
 
-        return [
+        $bracketData = [
             'bracket_size'       => $bracketSize,
             'total_participants' => $total,
             'total_byes'         => $totalByes,
@@ -410,5 +410,189 @@ class TournamentBracketController extends Controller
             'rounds'             => $rounds,
             'champion'           => $champion,
         ];
+
+        $bracketData['classic_svg_light'] = $this->renderClassicBracketSvg($bracketData, ['isDark' => false]);
+        $bracketData['classic_svg_dark']  = $this->renderClassicBracketSvg($bracketData, ['isDark' => true]);
+
+        return $bracketData;
+    }
+
+    /**
+     * Render Bagan Turnamen Klasik (Format Garis Cabang Tradisional PBSI/BWF)
+     * Persis seperti format papan bagan resmi di GOR
+     */
+    public function renderClassicBracketSvg($bracketData, $options = [])
+    {
+        $bracketSize = $bracketData['bracket_size'] ?? 16;
+        $totalRounds = $bracketData['total_rounds'] ?? (int) log($bracketSize, 2);
+        $rounds = $bracketData['rounds'] ?? [];
+
+        $isDark = $options['isDark'] ?? false;
+        $slotHeight = $options['slotHeight'] ?? ($bracketSize > 16 ? 32 : ($bracketSize > 8 ? 42 : 54));
+        $slotWidth = $options['slotWidth'] ?? 190;
+        $branchWidth = $options['branchWidth'] ?? 110;
+        $leftMargin = $options['leftMargin'] ?? 45;
+        $topMargin = $options['topMargin'] ?? 52;
+
+        $strokeColor = $isDark ? '#64748b' : '#0f172a';
+        $strokeWidth = '1.8';
+        $textColor = $isDark ? '#f8fafc' : '#0f172a';
+        $subTextColor = $isDark ? '#94a3b8' : '#64748b';
+        $boxBg = $isDark ? '#1e293b' : '#ffffff';
+        $byeBoxBg = $isDark ? '#0f172a' : '#f8fafc';
+        $accentColor = '#d97706';
+
+        $totalHeight = ($bracketSize * $slotHeight) + $topMargin + 40;
+        $totalWidth = $leftMargin + $slotWidth + ($totalRounds * $branchWidth) + 160;
+
+        $svg = [];
+        $svg[] = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 {$totalWidth} {$totalHeight}' width='100%' height='auto' style='max-width: {$totalWidth}px; font-family: system-ui, -apple-system, sans-serif;'>";
+
+        // 1. Column Headers (Main ke -1, Main ke -2, dst.)
+        $headerX = $leftMargin + ($slotWidth / 2);
+        for ($r = 1; $r <= $totalRounds; $r++) {
+            $rName = "Main ke -{$r}";
+            $svg[] = "<text x='{$headerX}' y='26' text-anchor='middle' font-size='13' font-weight='800' fill='{$textColor}'>{$rName}</text>";
+
+            $roundSub = $rounds[$r]['round_name'] ?? '';
+            if ($roundSub) {
+                $svg[] = "<text x='{$headerX}' y='40' text-anchor='middle' font-size='9.5' font-weight='600' fill='{$subTextColor}'>({$roundSub})</text>";
+            }
+
+            $headerX += ($r === 1 ? ($slotWidth / 2 + $branchWidth / 2) : $branchWidth);
+        }
+        // Juara
+        $svg[] = "<text x='" . ($totalWidth - 70) . "' y='26' text-anchor='middle' font-size='13' font-weight='800' fill='{$accentColor}'>Juara 1</text>";
+
+        // Extract slots from Round 1
+        $r1Matches = $rounds[1]['matches'] ?? [];
+        $slots = [];
+        foreach ($r1Matches as $mIdx => $m) {
+            $s1 = ($mIdx * 2) + 1;
+            $s2 = ($mIdx * 2) + 2;
+            $slots[$s1] = $m['team1'] ?? ['name' => '', 'slot_number' => $s1];
+            $slots[$s2] = $m['team2'] ?? ['name' => '', 'slot_number' => $s2];
+        }
+
+        // 2. Draw Slot Numbers and Boxes for Round 1
+        $slotX = $leftMargin;
+        $slotYPositions = [];
+
+        for ($s = 1; $s <= $bracketSize; $s++) {
+            $slotData = $slots[$s] ?? ['name' => '', 'slot_number' => $s];
+            $isBye = $slotData['is_bye'] ?? false;
+            $yCenter = $topMargin + ($s - 0.5) * $slotHeight;
+            $slotYPositions[$s] = $yCenter;
+
+            $boxY = $yCenter - ($slotHeight * 0.42);
+            $boxH = $slotHeight * 0.84;
+
+            // Slot Number (1, 2, ..., 32)
+            $svg[] = "<text x='" . ($slotX - 10) . "' y='" . ($yCenter + 4) . "' text-anchor='end' font-size='11' font-weight='700' fill='{$subTextColor}'>{$s}</text>";
+
+            // Rectangle Box
+            $currentBoxBg = $isBye ? $byeBoxBg : $boxBg;
+            $currentBorder = $isBye ? '#94a3b8' : $strokeColor;
+            $dashAttr = $isBye ? "stroke-dasharray='4 2'" : "";
+            $svg[] = "<rect x='{$slotX}' y='{$boxY}' width='{$slotWidth}' height='{$boxH}' fill='{$currentBoxBg}' stroke='{$currentBorder}' stroke-width='1.5' rx='2' {$dashAttr}/>";
+
+            // Player Text
+            $nameText = $slotData['name'] ?? '';
+            $seedText = !empty($slotData['seed_number']) ? "(S{$slotData['seed_number']}) " : "";
+            $instText = (!empty($slotData['institution']) && !$isBye) ? " - " . $slotData['institution'] : "";
+            $fullText = $seedText . $nameText . $instText;
+
+            if (mb_strlen($fullText) > 25) {
+                $fullText = mb_substr($fullText, 0, 23) . '..';
+            }
+
+            $displayText = htmlspecialchars($fullText, ENT_QUOTES);
+            $nameColor = $isBye ? '#94a3b8' : $textColor;
+            $fontStyle = $isBye ? "font-style='italic'" : "";
+            $svg[] = "<text x='" . ($slotX + 8) . "' y='" . ($yCenter + 4) . "' font-size='10' font-weight='600' fill='{$nameColor}' {$fontStyle}>{$displayText}</text>";
+        }
+
+        // 3. Draw Branching Lines and Connectors
+        $currentStems = [];
+        for ($s = 1; $s <= $bracketSize; $s++) {
+            $currentStems[$s] = [
+                'x' => $slotX + $slotWidth,
+                'y' => $slotYPositions[$s]
+            ];
+        }
+
+        $colStartX = $slotX + $slotWidth;
+
+        for ($r = 1; $r <= $totalRounds; $r++) {
+            $rMatches = $rounds[$r]['matches'] ?? [];
+            $numMatches = count($rMatches);
+            $nextStems = [];
+
+            $branchStartX = $colStartX;
+            $bracketVLineX = $branchStartX + 20;
+            $stemEndX = $bracketVLineX + ($branchWidth - 20);
+
+            for ($m = 0; $m < $numMatches; $m++) {
+                $match = $rMatches[$m] ?? null;
+                $idx1 = ($m * 2) + 1;
+                $idx2 = ($m * 2) + 2;
+
+                $y1 = $currentStems[$idx1]['y'];
+                $y2 = $currentStems[$idx2]['y'];
+                $yMid = ($y1 + $y2) / 2;
+
+                // Horizontal arm from top
+                $svg[] = "<line x1='{$branchStartX}' y1='{$y1}' x2='{$bracketVLineX}' y2='{$y1}' stroke='{$strokeColor}' stroke-width='{$strokeWidth}'/>";
+                // Horizontal arm from bottom
+                $svg[] = "<line x1='{$branchStartX}' y1='{$y2}' x2='{$bracketVLineX}' y2='{$y2}' stroke='{$strokeColor}' stroke-width='{$strokeWidth}'/>";
+                // Vertical connector bar
+                $svg[] = "<line x1='{$bracketVLineX}' y1='{$y1}' x2='{$bracketVLineX}' y2='{$y2}' stroke='{$strokeColor}' stroke-width='{$strokeWidth}'/>";
+                // Horizontal stem to right
+                $svg[] = "<line x1='{$bracketVLineX}' y1='{$yMid}' x2='{$stemEndX}' y2='{$yMid}' stroke='{$strokeColor}' stroke-width='{$strokeWidth}'/>";
+
+                // Winner text on line
+                if (!empty($match['winner'])) {
+                    $wName = htmlspecialchars(mb_substr($match['winner']['name'] ?? '', 0, 16), ENT_QUOTES);
+                    $svg[] = "<text x='" . ($bracketVLineX + 6) . "' y='" . ($yMid - 5) . "' font-size='9' font-weight='700' fill='#059669'>{$wName}</text>";
+                }
+
+                // Match score if available
+                if (!empty($match['existing_match']) && ($match['existing_match']->team1_set1 > 0 || $match['existing_match']->team2_set1 > 0)) {
+                    $em = $match['existing_match'];
+                    $scoreStr = "{$em->team1_set1}-{$em->team2_set1}";
+                    $svg[] = "<text x='" . ($bracketVLineX + 6) . "' y='" . ($yMid + 11) . "' font-size='8' font-mono font-weight='bold' fill='{$subTextColor}'>{$scoreStr}</text>";
+                }
+
+                $nextStems[$m + 1] = [
+                    'x' => $stemEndX,
+                    'y' => $yMid
+                ];
+            }
+
+            $colStartX = $stemEndX;
+            $currentStems = $nextStems;
+        }
+
+        // 4. Final Champion Line
+        $champStem = $currentStems[1] ?? ['x' => $colStartX, 'y' => $totalHeight / 2];
+        $champX1 = $champStem['x'];
+        $champY = $champStem['y'];
+        $champX2 = $champX1 + 110;
+
+        $svg[] = "<line x1='{$champX1}' y1='{$champY}' x2='{$champX2}' y2='{$champY}' stroke='{$strokeColor}' stroke-width='2.2'/>";
+
+        $champion = $bracketData['champion'] ?? null;
+        if ($champion) {
+            $champName = htmlspecialchars($champion['name'], ENT_QUOTES);
+            $svg[] = "<rect x='{$champX2}' y='" . ($champY - 17) . "' width='130' height='34' fill='#fef3c7' stroke='{$accentColor}' stroke-width='1.8' rx='4'/>";
+            $svg[] = "<text x='" . ($champX2 + 65) . "' y='" . ($champY - 3) . "' text-anchor='middle' font-size='8.5' font-weight='800' fill='#b45309'>🏆 JUARA 1</text>";
+            $svg[] = "<text x='" . ($champX2 + 65) . "' y='" . ($champY + 10) . "' text-anchor='middle' font-size='10' font-weight='800' fill='#0f172a'>{$champName}</text>";
+        } else {
+            $svg[] = "<rect x='{$champX2}' y='" . ($champY - 15) . "' width='120' height='30' fill='{$boxBg}' stroke='{$strokeColor}' stroke-width='1.5' stroke-dasharray='3 3' rx='4'/>";
+            $svg[] = "<text x='" . ($champX2 + 60) . "' y='" . ($champY + 4) . "' text-anchor='middle' font-size='9.5' font-weight='700' fill='{$subTextColor}'>Pemenang Final</text>";
+        }
+
+        $svg[] = "</svg>";
+        return implode("\n", $svg);
     }
 }
