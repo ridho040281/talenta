@@ -1675,6 +1675,15 @@ class AdminController extends Controller
         $totalUndrawn = $drawCompetitions->sum('undrawn_count');
         $totalVerifiedAll = $drawCompetitions->sum('total_verified');
         $allCompetitions = Competition::with('category')->get();
+        $timekeeperCompetitions = $allCompetitions->filter(function ($comp) {
+            $code = strtoupper($comp->code ?? '');
+            $name = strtolower($comp->name ?? '');
+
+            return in_array($code, ['MTQ', 'THF', 'POP'])
+                || str_contains($name, 'mtq')
+                || str_contains($name, 'tahfid')
+                || str_contains($name, 'pop singer');
+        })->values();
 
         return view('admin.juri-wasit', compact(
             'activeTab',
@@ -1686,7 +1695,8 @@ class AdminController extends Controller
             'totalDrawn',
             'totalUndrawn',
             'totalVerifiedAll',
-            'allCompetitions'
+            'allCompetitions',
+            'timekeeperCompetitions'
         ));
     }
 

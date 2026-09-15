@@ -117,7 +117,7 @@
                 <i data-lucide="timer" class="w-4 h-4" :class="activeTab === 'panggung' ? 'text-white' : 'text-amber-400'"></i>
                 <span>4. Stage & Timekeeper</span>
                 <span class="px-2 py-0.5 rounded-full text-[10px] font-mono" :class="activeTab === 'panggung' ? 'bg-white/20 text-white' : 'bg-white/[0.06] text-slate-400'">
-                    {{ $allCompetitions->where('has_stage_timer', true)->count() }}
+                    {{ $timekeeperCompetitions->count() }}
                 </span>
             </button>
 
@@ -272,7 +272,13 @@
                             <i data-lucide="clipboard-pen" class="w-4 h-4 text-white group-hover/btn:scale-110 transition"></i>
                             <span>Buka Lembar Penilaian Juri</span>
                         </a>
-                        @if(!empty($comp['has_stage_timer']))
+                        @php
+                            $isTimekeeperAllowed = in_array(strtoupper($comp['code'] ?? ''), ['MTQ', 'THF', 'POP']) 
+                                || str_contains(strtolower($comp['name'] ?? ''), 'mtq') 
+                                || str_contains(strtolower($comp['name'] ?? ''), 'tahfid') 
+                                || str_contains(strtolower($comp['name'] ?? ''), 'pop');
+                        @endphp
+                        @if($isTimekeeperAllowed && !empty($comp['has_stage_timer']))
                             <a href="{{ route('pic.stage.control', $comp['id']) }}" class="py-2.5 px-3 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold transition flex items-center gap-1.5 shrink-0" title="Buka Konsol Timekeeper / Operator Panggung">
                                 <i data-lucide="timer" class="w-4 h-4 text-amber-400"></i>
                                 <span class="hidden sm:inline">Timekeeper</span>
@@ -610,7 +616,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 ai-panel p-4 rounded-2xl border border-white/[0.08]">
             <div class="flex items-center gap-2 text-xs text-slate-300">
                 <i data-lucide="tv" class="w-4 h-4 text-amber-400"></i>
-                <span>Menampilkan sistem **Layar Panggung 3-Panel** (Sedang Tampil, Berikutnya, Selesai) untuk lomba seni, MTQ, pop singer, dan pementasan.</span>
+                <span>Menampilkan sistem <strong>Layar Panggung 3-Panel & Konsol Timekeeper</strong> khusus cabang lomba panggung: <strong>MTQ, Tahfidz, dan Pop Singer</strong>.</span>
             </div>
             <a href="{{ route('admin.competitions') }}" class="px-3.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 hover:text-white text-xs font-bold border border-white/[0.08] transition flex items-center gap-1.5 shrink-0">
                 <i data-lucide="settings" class="w-3.5 h-3.5"></i>
@@ -619,7 +625,7 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-            @forelse($allCompetitions as $comp)
+            @forelse($timekeeperCompetitions as $comp)
                 @php
                     $isStageActive = $comp->has_stage_timer;
                     $durationMin = $comp->stage_duration_minutes ?: 7;
@@ -688,8 +694,8 @@
                     <div class="w-14 h-14 rounded-2xl bg-white/[0.06] flex items-center justify-center mx-auto text-slate-400 mb-3">
                         <i data-lucide="inbox" class="w-7 h-7"></i>
                     </div>
-                    <h4 class="text-white font-bold text-sm">Tidak ada cabang lomba</h4>
-                    <p class="text-xs text-slate-400 mt-1">Belum ada cabang lomba yang terdaftar dalam sistem.</p>
+                    <h4 class="text-white font-bold text-sm">Tidak ada cabang lomba Timekeeper</h4>
+                    <p class="text-xs text-slate-400 mt-1">Sistem Stage & Timekeeper hanya disediakan khusus untuk cabang lomba MTQ, Tahfidz, dan Pop Singer.</p>
                 </div>
             @endforelse
         </div>

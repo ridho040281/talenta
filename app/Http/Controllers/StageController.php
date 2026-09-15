@@ -11,6 +11,20 @@ use Illuminate\Support\Facades\Auth;
 class StageController extends Controller
 {
     /**
+     * Pastikan cabang lomba mendukung fitur Stage & Timekeeper (Hanya MTQ, Tahfidz, Pop Singer)
+     */
+    public static function isTimekeeperSupported($competition): bool
+    {
+        $code = strtoupper(is_string($competition) ? $competition : ($competition->code ?? ''));
+        $name = strtolower(is_string($competition) ? $competition : ($competition->name ?? ''));
+
+        return in_array($code, ['MTQ', 'THF', 'POP'])
+            || str_contains($name, 'mtq')
+            || str_contains($name, 'tahfid')
+            || str_contains($name, 'pop singer');
+    }
+
+    /**
      * Public / Smart TV Stage Viewer (3-Panel Display: Sedang Tampil, Berikutnya, Selesai)
      */
     public function stageViewer($slug)
@@ -21,6 +35,10 @@ class StageController extends Controller
             $query->where('slug', $slug)
                 ->orWhere('code', strtoupper($slug));
         })->firstOrFail();
+
+        if (! self::isTimekeeperSupported($competition)) {
+            abort(404, 'Fitur Layar Panggung & Timekeeper hanya tersedia untuk cabang lomba MTQ, Tahfidz, dan Pop Singer.');
+        }
 
         $appSettings = AppSetting::pluck('value', 'key')->toArray();
         $state = $this->buildStageState($competition);
@@ -44,8 +62,8 @@ class StageController extends Controller
                 ->orWhere('code', strtoupper($slug));
         })->first();
 
-        if (! $competition) {
-            return response()->json(['error' => 'Cabang lomba tidak ditemukan'], 404);
+        if (! $competition || ! self::isTimekeeperSupported($competition)) {
+            return response()->json(['error' => 'Fitur Stage & Timekeeper hanya tersedia untuk cabang lomba MTQ, Tahfidz, dan Pop Singer.'], 404);
         }
 
         $state = $this->buildStageState($competition);
@@ -73,6 +91,10 @@ class StageController extends Controller
             $q->where('status', 'verified')->with(['members', 'scores']);
         }])->findOrFail($competition_id);
 
+        if (! self::isTimekeeperSupported($competition)) {
+            abort(404, 'Fitur Konsol Timekeeper hanya tersedia untuk cabang lomba MTQ, Tahfidz, dan Pop Singer.');
+        }
+
         $appSettings = AppSetting::pluck('value', 'key')->toArray();
         $state = $this->buildStageState($competition);
 
@@ -97,6 +119,11 @@ class StageController extends Controller
         }
 
         $competition = Competition::with('registrations')->findOrFail($competition_id);
+
+        if (! self::isTimekeeperSupported($competition)) {
+            return response()->json(['error' => 'Fitur Stage & Timekeeper hanya tersedia untuk cabang lomba MTQ, Tahfidz, dan Pop Singer.'], 403);
+        }
+
         $action = $request->input('action');
         $stageState = $competition->stage_state ?? [];
 
@@ -277,6 +304,10 @@ class StageController extends Controller
         }
 
         $competition = Competition::findOrFail($competition_id);
+
+        if (! self::isTimekeeperSupported($competition)) {
+            return redirect()->back()->with('error', 'Fitur Stage & Timekeeper hanya tersedia untuk cabang lomba MTQ, Tahfidz, dan Pop Singer.');
+        }
 
         Registration::where('competition_id', $competition->id)
             ->update([

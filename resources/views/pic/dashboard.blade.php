@@ -740,6 +740,17 @@
                     </div>
                 </div>
 
+                @php
+                    $stageCompetitions = $competitions->filter(function($c) {
+                        $code = strtoupper($c->code ?? '');
+                        $name = strtolower($c->name ?? '');
+                        return in_array($code, ['MTQ', 'THF', 'POP'])
+                            || str_contains($name, 'mtq')
+                            || str_contains($name, 'tahfid')
+                            || str_contains($name, 'pop singer');
+                    });
+                @endphp
+                @if($stageCompetitions->isNotEmpty())
                 <!-- Stage Timer & Layar Panggung Launcher Button -->
                 <div class="relative" x-data="{ stageMenuOpen: false }">
                     <button @click="stageMenuOpen = !stageMenuOpen" type="button" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 font-black text-xs transition cursor-pointer shrink-0">
@@ -754,7 +765,7 @@
                             <span>Layar Panggung & Stage Timer:</span>
                         </div>
                         <div class="max-h-60 overflow-y-auto divide-y divide-white/[0.04]">
-                            @foreach($competitions as $c)
+                            @foreach($stageCompetitions as $c)
                                 <div class="p-2.5 hover:bg-white/[0.04] transition space-y-1.5">
                                     <div class="flex items-center justify-between gap-1">
                                         <span class="font-bold text-white text-xs truncate">{{ $c->name }}</span>
@@ -774,6 +785,7 @@
                         </div>
                     </div>
                 </div>
+                @endif
             </div>
 
         </div>
