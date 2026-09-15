@@ -15,6 +15,27 @@ class TournamentBracketController extends Controller
     use CompetitionPoolTrait;
 
     /**
+     * Tampilan Bagan langsung untuk Wasit & Pengurus Bulu Tangkis
+     */
+    public function badmintonShow(Request $request, $competition_id = null)
+    {
+        if (! $competition_id) {
+            $competition = Competition::where('code', 'BLT')
+                ->orWhere('name', 'like', '%Bulu Tangkis%')
+                ->orWhere('name', 'like', '%Badminton%')
+                ->first();
+
+            if (! $competition) {
+                return redirect()->route('badminton.index')->with('error', 'Cabang lomba Bulu Tangkis belum terdaftar dalam sistem.');
+            }
+
+            $competition_id = $competition->id;
+        }
+
+        return $this->show($request, $competition_id);
+    }
+
+    /**
      * Tampilan Bagan Interaktif untuk PIC & Admin
      */
     public function show(Request $request, $competition_id)
@@ -26,7 +47,13 @@ class TournamentBracketController extends Controller
         // Check authorization
         if (! in_array($user->role, ['superadmin', 'panitia'])) {
             $managedIds = PicController::getManagedCompetitionIds($user);
-            if (! in_array($competition->id, $managedIds)) {
+            $isAuthorizedBadminton = $user->managesBadminton() && (
+                strtoupper($competition->code ?? '') === 'BLT' ||
+                str_contains(strtolower($competition->name ?? ''), 'bulu tangkis') ||
+                str_contains(strtolower($competition->name ?? ''), 'badminton')
+            );
+
+            if (! in_array($competition->id, $managedIds) && ! $isAuthorizedBadminton) {
                 abort(403, 'Anda tidak memiliki hak akses untuk mengelola bagan lomba ini.');
             }
         }
@@ -79,7 +106,13 @@ class TournamentBracketController extends Controller
 
         if (! in_array($user->role, ['superadmin', 'panitia'])) {
             $managedIds = PicController::getManagedCompetitionIds($user);
-            if (! in_array($competition->id, $managedIds)) {
+            $isAuthorizedBadminton = $user->managesBadminton() && (
+                strtoupper($competition->code ?? '') === 'BLT' ||
+                str_contains(strtolower($competition->name ?? ''), 'bulu tangkis') ||
+                str_contains(strtolower($competition->name ?? ''), 'badminton')
+            );
+
+            if (! in_array($competition->id, $managedIds) && ! $isAuthorizedBadminton) {
                 abort(403, 'Akses ditolak.');
             }
         }
@@ -109,7 +142,13 @@ class TournamentBracketController extends Controller
 
         if (! in_array($user->role, ['superadmin', 'panitia'])) {
             $managedIds = PicController::getManagedCompetitionIds($user);
-            if (! in_array($competition->id, $managedIds)) {
+            $isAuthorizedBadminton = $user->managesBadminton() && (
+                strtoupper($competition->code ?? '') === 'BLT' ||
+                str_contains(strtolower($competition->name ?? ''), 'bulu tangkis') ||
+                str_contains(strtolower($competition->name ?? ''), 'badminton')
+            );
+
+            if (! in_array($competition->id, $managedIds) && ! $isAuthorizedBadminton) {
                 return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
             }
         }

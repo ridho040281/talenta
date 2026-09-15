@@ -54,6 +54,10 @@
                 <i data-lucide="tv" class="w-4 h-4 text-rose-500"></i>
                 <span class="hidden sm:inline">Layar LED</span>
             </a>
+            <a href="{{ route('badminton.bracket') }}" target="_blank" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-indigo-300 hover:text-white text-xs font-bold border border-slate-700 flex items-center gap-1.5" title="Lihat Bagan Pertandingan">
+                <i data-lucide="git-branch" class="w-4 h-4 text-indigo-400"></i>
+                <span class="hidden sm:inline">Bagan</span>
+            </a>
             <div class="px-3 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold flex items-center gap-2">
                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
                 <span>WASIT AKTIF</span>

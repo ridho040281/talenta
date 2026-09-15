@@ -30,6 +30,11 @@
                 <span>Arena Multi-Lapangan</span>
             </a>
 
+            <a href="{{ route('badminton.bracket') }}" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md shadow-indigo-600/20 flex items-center gap-2 transition" title="Buka Bagan Pertandingan Bulu Tangkis">
+                <i data-lucide="git-branch" class="w-4 h-4"></i>
+                <span>Bagan Pertandingan</span>
+            </a>
+
             @if(in_array(auth()->user()->role, ['superadmin', 'pic_lomba']))
             <button @click="createModal = true" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 flex items-center gap-2 transition">
                 <i data-lucide="plus-circle" class="w-4 h-4"></i>

@@ -128,11 +128,6 @@ Route::middleware(['auth', 'role:pic_lomba,superadmin,panitia'])->prefix('pic')-
     Route::post('/lomba/{competition_id}/spin-wheel/reset', [PicController::class, 'resetDraws'])->name('spin.wheel.reset');
     Route::post('/lomba/{competition_id}/set-seeded', [PicController::class, 'setSeededPlayers'])->name('set.seeded');
 
-    // Tournament Bracket (Bagan Pertandingan BWF & Sistem Gugur)
-    Route::get('/lomba/{competition_id}/bagan', [TournamentBracketController::class, 'show'])->name('bracket');
-    Route::get('/lomba/{competition_id}/bagan/print', [TournamentBracketController::class, 'printPdf'])->name('bracket.print');
-    Route::post('/lomba/{competition_id}/bagan/generate-matches', [TournamentBracketController::class, 'generateMatches'])->name('bracket.generate_matches');
-
     // API endpoints untuk AJAX DataTable (server-side pagination)
     Route::get('/api/participants', [PicController::class, 'apiParticipants'])->name('api.participants');
     Route::get('/api/participants/{id}', [PicController::class, 'apiParticipantDetail'])->name('api.participant.detail');
@@ -145,6 +140,18 @@ Route::middleware(['auth', 'role:pic_lomba,superadmin,panitia'])->prefix('pic')-
     // Berita Acara Lomba
     Route::get('/berita-acara', [OfficialReportController::class, 'index'])->name('berita-acara.index');
     Route::get('/berita-acara/cetak', [OfficialReportController::class, 'print'])->name('berita-acara.print');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Tournament Bracket (Bagan Pertandingan BWF & Sistem Gugur)
+| Akses Terpadu untuk PIC Lomba, Superadmin, Panitia, dan Dewan Juri/Wasit
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'role:pic_lomba,superadmin,panitia,juri'])->group(function () {
+    Route::get('/pic/lomba/{competition_id}/bagan', [TournamentBracketController::class, 'show'])->name('pic.bracket');
+    Route::get('/pic/lomba/{competition_id}/bagan/print', [TournamentBracketController::class, 'printPdf'])->name('pic.bracket.print');
+    Route::post('/pic/lomba/{competition_id}/bagan/generate-matches', [TournamentBracketController::class, 'generateMatches'])->name('pic.bracket.generate_matches');
 });
 
 /*
@@ -165,6 +172,7 @@ Route::middleware(['auth', 'role:juri,superadmin'])->prefix('juri')->name('juri.
 */
 Route::middleware(['auth', 'role:superadmin,panitia,pic_lomba,juri'])->prefix('badminton')->name('badminton.')->group(function () {
     Route::get('/matches', [BadmintonMatchController::class, 'index'])->name('index');
+    Route::get('/bagan/{competition_id?}', [TournamentBracketController::class, 'badmintonShow'])->name('bracket');
     Route::post('/matches', [BadmintonMatchController::class, 'store'])->name('store');
     Route::post('/matches/{id}/update', [BadmintonMatchController::class, 'update'])->name('update');
     Route::post('/matches/{id}/delete', [BadmintonMatchController::class, 'destroy'])->name('destroy');

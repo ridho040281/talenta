@@ -56,6 +56,13 @@
                     <span>Arena Multi-Lap</span>
                 </a>
 
+                @if($badmintonCompetitions->isNotEmpty())
+                <a href="{{ route('badminton.bracket') }}" class="px-3 py-2 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 hover:text-white text-xs font-bold border border-indigo-500/30 flex items-center gap-2 transition group" title="Buka Bagan Pertandingan Bulu Tangkis">
+                    <i data-lucide="git-branch" class="w-4 h-4 text-indigo-400 group-hover:scale-110 transition"></i>
+                    <span>Bagan Bulu Tangkis</span>
+                </a>
+                @endif
+
                 <a href="{{ route('live.scoreboard') }}" target="_blank" class="px-3 py-2 rounded-xl bg-[#7A5AF8]/20 hover:bg-[#7A5AF8]/30 text-[#C7D2FE] hover:text-white text-xs font-bold border border-[#7A5AF8]/30 flex items-center gap-2 transition group" title="Buka Live Leaderboard Panggung">
                     <i data-lucide="trophy" class="w-4 h-4 text-amber-400 group-hover:scale-110 transition"></i>
                     <span>Live Leaderboard</span>
@@ -315,6 +322,11 @@
                     <option value="finished" {{ request('match_status') == 'finished' ? 'selected' : '' }}>Selesai</option>
                 </select>
             </form>
+
+            <a href="{{ route('badminton.bracket') }}" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/25 flex items-center gap-2 shrink-0 transition cursor-pointer" title="Buka Bagan Pertandingan Bulu Tangkis">
+                <i data-lucide="git-branch" class="w-4 h-4"></i>
+                <span>Bagan Pertandingan</span>
+            </a>
 
             <button @click="createMatchModal = true" type="button" class="gradient-btn px-4 py-2.5 rounded-xl text-white text-xs font-bold shadow-lg shadow-[#7A5AF8]/25 flex items-center gap-2 shrink-0 cursor-pointer">
                 <i data-lucide="plus-circle" class="w-4 h-4"></i>
