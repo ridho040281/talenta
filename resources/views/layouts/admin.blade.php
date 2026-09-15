@@ -488,10 +488,6 @@
                             <span>Juri, Wasit & Undian</span>
                         </div>
                     </a>
-                    <a href="{{ route('badminton.bracket') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('badminton.bracket*') || request()->routeIs('pic.bracket*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
-                        <i data-lucide="git-branch" class="w-4 h-4 text-indigo-400"></i>
-                        <span>Bagan Bulu Tangkis</span>
-                    </a>
                 </div>
 
                 <!-- Group: LAPORAN (Super Admin & Panitia) -->
@@ -551,11 +547,7 @@
                         <span>Berita Acara</span>
                     </a>
                     @if(auth()->user()->managesBadminton())
-                    <a href="{{ route('badminton.bracket') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('badminton.bracket*') || request()->routeIs('pic.bracket*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
-                        <i data-lucide="git-branch" class="w-4 h-4 text-indigo-400"></i>
-                        <span>Bagan Bulu Tangkis</span>
-                    </a>
-                    <a href="{{ route('badminton.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('badminton.*') && !request()->routeIs('badminton.bracket*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
+                    <a href="{{ route('badminton.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('badminton.*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
                         <i data-lucide="activity" class="w-4 h-4 text-emerald-400"></i>
                         <span>Scoring Bulu Tangkis</span>
                     </a>
@@ -588,11 +580,7 @@
                         <span>Penilaian Juri Kriteria</span>
                     </a>
                     @if(auth()->user()->managesBadminton())
-                    <a href="{{ route('badminton.bracket') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('badminton.bracket*') || request()->routeIs('pic.bracket*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
-                        <i data-lucide="git-branch" class="w-4 h-4 text-indigo-400"></i>
-                        <span>Bagan Pertandingan</span>
-                    </a>
-                    <a href="{{ route('badminton.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('badminton.*') && !request()->routeIs('badminton.bracket*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
+                    <a href="{{ route('badminton.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('badminton.*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
                         <i data-lucide="activity" class="w-4 h-4 text-emerald-400"></i>
                         <span>Wasit Bulu Tangkis</span>
                     </a>
