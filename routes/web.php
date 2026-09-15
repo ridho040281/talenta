@@ -120,6 +120,7 @@ Route::middleware(['auth', 'role:pic_lomba,superadmin,panitia'])->prefix('pic')-
     Route::get('/lomba/{competition_id}/spin-wheel', [PicController::class, 'spinWheel'])->name('spin.wheel');
     Route::post('/lomba/{competition_id}/spin-wheel/save', [PicController::class, 'storeDrawResult'])->name('spin.wheel.save');
     Route::post('/lomba/{competition_id}/spin-wheel/reset', [PicController::class, 'resetDraws'])->name('spin.wheel.reset');
+    Route::post('/lomba/{competition_id}/set-seeded', [PicController::class, 'setSeededPlayers'])->name('set.seeded');
 
     // API endpoints untuk AJAX DataTable (server-side pagination)
     Route::get('/api/participants', [PicController::class, 'apiParticipants'])->name('api.participants');

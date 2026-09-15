@@ -61,10 +61,15 @@
                         {{ $p['has_draw'] ? $p['draw_number'] : '?' }}
                     </div>
                     <div class="overflow-hidden">
-                        <h4 class="font-bold text-white text-sm truncate">{{ $p['name'] }}</h4>
+                        <div class="flex items-center gap-2">
+                            <h4 class="font-bold text-white text-sm truncate">{{ $p['name'] }}</h4>
+                            @if(!empty($p['is_seeded']))
+                                <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0">⭐ {{ $p['seed_label'] }}</span>
+                            @endif
+                        </div>
                         <p class="text-xs text-slate-400 truncate">{{ $p['institution'] }}</p>
                         <span class="text-[10px] font-bold uppercase tracking-wider {{ $p['has_draw'] ? 'text-emerald-400' : 'text-slate-500' }}">
-                            {{ $p['has_draw'] ? 'Nomor Tampil #' . $p['draw_number'] . ' • Terkunci' : 'Menunggu Undian' }}
+                            {{ $p['has_draw'] ? (!empty($p['is_seeded']) ? 'Pemain Unggulan (' . $p['seed_label'] . ') • Slot #' . $p['draw_number'] : 'Nomor Tampil #' . $p['draw_number'] . ' • Terkunci') : 'Menunggu Undian' }}
                         </span>
                     </div>
                 </div>

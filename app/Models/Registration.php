@@ -19,6 +19,7 @@ class Registration extends Model
         'participant_number',
         'draw_number',
         'bracket_slot',
+        'seed_number',
         'team_name',
         'sub_category',
         'chosen_song',
@@ -256,6 +257,20 @@ class Registration extends Model
             'M' => 'Ganda Campuran',
             default => 'Umum',
         };
+    }
+
+    public function isSeeded(): bool
+    {
+        return ! is_null($this->seed_number) && $this->seed_number > 0;
+    }
+
+    public function getSeedLabelAttribute(): ?string
+    {
+        if (! $this->isSeeded()) {
+            return null;
+        }
+
+        return 'Seed '.$this->seed_number;
     }
 
 

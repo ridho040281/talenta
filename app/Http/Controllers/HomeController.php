@@ -178,6 +178,9 @@ class HomeController extends Controller
                 'institution' => $reg->institution_name,
                 'draw_number' => $reg->draw_number,
                 'has_draw' => ! is_null($reg->draw_number),
+                'seed_number' => $reg->seed_number,
+                'is_seeded' => $reg->isSeeded(),
+                'seed_label' => $reg->seed_label,
             ];
         });
 

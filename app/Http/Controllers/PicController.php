@@ -15,6 +15,7 @@ use App\Services\ImageOptimizerService;
 use App\Services\WablasNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -1894,8 +1895,141 @@ class PicController extends Controller
                 'gender' => $reg->primary_gender,
                 'draw_number' => $reg->draw_number,
                 'is_drawn' => ! is_null($reg->draw_number),
+                'seed_number' => $reg->seed_number,
+                'is_seeded' => $reg->isSeeded(),
+                'seed_label' => $reg->seed_label,
             ];
         })->values()->toArray();
+    }
+
+    public function setSeededPlayers(Request $request, $competition_id)
+    {
+        $competition = Competition::with(['category', 'registrations.members'])->findOrFail($competition_id);
+        $user = Auth::user();
+        $this->authorizeCompetitionManagement($user, $competition->id);
+
+        $validated = $request->validate([
+            'pool_key' => ['required', 'string'],
+            'seeds'    => ['present', 'array'],
+            'seeds.*'  => ['nullable', 'integer', 'in:1,2,3,4'],
+        ]);
+
+        $pools = $this->buildCompetitionPools($competition);
+        $targetPool = collect($pools)->firstWhere('key', $validated['pool_key']);
+
+        if (! $targetPool) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Kategori / Pool tidak ditemukan.',
+            ], 404);
+        }
+
+        $poolParticipantIds = collect($targetPool['participants'])->pluck('id')->map(fn ($id) => (int) $id)->toArray();
+        $totalInPool = count($poolParticipantIds);
+
+        // Sanity check: ensure each seed number (1, 2, 3, 4) is assigned at most once
+        $assignedSeeds = [];
+        foreach ($validated['seeds'] as $regId => $seedNum) {
+            $regId = (int) $regId;
+            $seedNum = ! empty($seedNum) ? (int) $seedNum : null;
+
+            if ($seedNum && in_array($regId, $poolParticipantIds, true)) {
+                if (in_array($seedNum, $assignedSeeds, true)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Posisi Seed {$seedNum} tidak boleh diberikan ke lebih dari satu peserta.",
+                    ], 422);
+                }
+                $assignedSeeds[] = $seedNum;
+            }
+        }
+
+        // Process each participant in this pool
+        DB::transaction(function () use ($poolParticipantIds, $validated, $totalInPool, $competition, $user) {
+            foreach ($poolParticipantIds as $regId) {
+                $seedNum = isset($validated['seeds'][$regId]) && ! empty($validated['seeds'][$regId])
+                    ? (int) $validated['seeds'][$regId]
+                    : null;
+
+                $reg = Registration::where('id', $regId)
+                    ->where('competition_id', $competition->id)
+                    ->first();
+
+                if (! $reg) {
+                    continue;
+                }
+
+                if ($seedNum) {
+                    $fixedSlot = $this->calculateSeedSlot($seedNum, $totalInPool);
+
+                    // If another participant in the same pool currently holds this slot, clear them
+                    Registration::where('competition_id', $competition->id)
+                        ->whereIn('id', $poolParticipantIds)
+                        ->where('id', '!=', $reg->id)
+                        ->where('draw_number', $fixedSlot)
+                        ->update(['draw_number' => null, 'seed_number' => null]);
+
+                    DrawAllocation::where('competition_id', $competition->id)
+                        ->whereIn('registration_id', $poolParticipantIds)
+                        ->where('registration_id', '!=', $reg->id)
+                        ->where('draw_number', $fixedSlot)
+                        ->delete();
+
+                    $reg->seed_number = $seedNum;
+                    $reg->draw_number = $fixedSlot;
+                    $reg->save();
+
+                    DrawAllocation::updateOrCreate(
+                        [
+                            'competition_id'  => $competition->id,
+                            'registration_id' => $reg->id,
+                        ],
+                        [
+                            'draw_number' => $fixedSlot,
+                            'spun_at'     => now(),
+                            'spun_by'     => $user->id,
+                        ]
+                    );
+                } else {
+                    // Was previously seeded? Clear if so
+                    if ($reg->seed_number !== null) {
+                        $reg->seed_number = null;
+                        $reg->draw_number = null;
+                        $reg->save();
+
+                        DrawAllocation::where('competition_id', $competition->id)
+                            ->where('registration_id', $reg->id)
+                            ->delete();
+                    }
+                }
+            }
+        });
+
+        // Reload fresh competition data
+        $competition->refresh();
+        $competition->load(['category', 'registrations.members']);
+        $updatedPools = $this->buildCompetitionPools($competition);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pengaturan pemain unggulan (seeded) berhasil disimpan!',
+            'pools'   => $updatedPools,
+        ]);
+    }
+
+    protected function calculateSeedSlot(int $seed, int $totalParticipants): int
+    {
+        if ($totalParticipants <= 1) {
+            return 1;
+        }
+
+        return match ($seed) {
+            1 => 1,
+            2 => $totalParticipants,
+            3 => ($totalParticipants >= 3) ? (int) floor($totalParticipants / 2) + 1 : 1,
+            4 => ($totalParticipants >= 4) ? (int) floor($totalParticipants / 2) : 2,
+            default => 1,
+        };
     }
 
     public function storeDrawResult(Request $request, $competition_id)
@@ -1970,13 +2104,13 @@ class PicController extends Controller
             if (is_string($regIds)) {
                 $regIds = array_filter(explode(',', $regIds));
             }
-            Registration::where('competition_id', $competition->id)->whereIn('id', $regIds)->update(['draw_number' => null]);
+            Registration::where('competition_id', $competition->id)->whereIn('id', $regIds)->update(['draw_number' => null, 'seed_number' => null]);
             DrawAllocation::where('competition_id', $competition->id)->whereIn('registration_id', $regIds)->delete();
 
             return back()->with('success', 'Nomor undian untuk kategori terpilih pada '.$competition->name.' berhasil di-reset.');
         }
 
-        Registration::where('competition_id', $competition->id)->update(['draw_number' => null]);
+        Registration::where('competition_id', $competition->id)->update(['draw_number' => null, 'seed_number' => null]);
         DrawAllocation::where('competition_id', $competition->id)->delete();
 
         return back()->with('success', 'Semua nomor undian pada cabang '.$competition->name.' telah di-reset.');

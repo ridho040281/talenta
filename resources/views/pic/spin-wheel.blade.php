@@ -179,7 +179,7 @@
             </div>
 
             <!-- Active Pool Status Banner -->
-            <div class="w-full max-w-md mb-3 bg-slate-900/90 rounded-2xl p-3 border border-amber-500/30 flex items-center justify-between gap-3 text-left">
+            <div class="w-full max-w-md mb-3 bg-slate-900/90 rounded-2xl p-3 border border-amber-500/30 flex items-center justify-between gap-2.5 text-left">
                 <div class="overflow-hidden">
                     <div class="flex items-center gap-2">
                         <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400">Kategori Aktif:</span>
@@ -187,13 +187,20 @@
                     </div>
                     <h4 class="text-sm font-black text-white truncate mt-0.5" x-text="activePool?.title || '{{ $competition->name }}'"></h4>
                 </div>
-                <div class="shrink-0">
+                <div class="shrink-0 flex items-center gap-1.5">
+                    <button type="button" 
+                            @click="openSeededModal()" 
+                            :disabled="isSpinning"
+                            class="px-2.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
+                            title="Atur Pemain Unggulan (Seeded) untuk kategori ini">
+                        <span>⭐ Atur Seeded</span>
+                    </button>
                     <button type="button" 
                             @click="resetActivePool()" 
                             :disabled="activeDrawnParticipants.length === 0 || isSpinning"
                             class="px-2.5 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[10px] font-bold disabled:opacity-25 disabled:cursor-not-allowed transition cursor-pointer"
                             title="Reset hanya nomor undian kategori ini">
-                        Reset Kategori Ini
+                        Reset
                     </button>
                 </div>
             </div>
@@ -317,14 +324,20 @@
                             <div class="flex items-center gap-3 overflow-hidden">
                                 <div class="w-10 h-10 rounded-xl bg-amber-400 text-slate-950 font-mono font-black flex items-center justify-center text-sm shrink-0 shadow-sm shadow-amber-400/20" x-text="'#' + item.draw_number"></div>
                                 <div class="overflow-hidden">
-                                    <h5 class="text-xs font-bold text-slate-100 truncate" x-text="item.name"></h5>
+                                    <div class="flex items-center gap-2">
+                                        <h5 class="text-xs font-bold text-slate-100 truncate" x-text="item.name"></h5>
+                                        <span x-show="item.is_seeded" class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0" x-text="'⭐ ' + (item.seed_label || 'SEED')"></span>
+                                    </div>
                                     <div class="flex items-center gap-1.5 text-[11px] text-slate-400 truncate">
                                         <span x-text="item.institution"></span>
                                         <span x-show="drawnTab === 'all' && item.target_class" class="text-amber-400 font-mono text-[10px]" x-text="'• ' + (item.target_class || '')"></span>
                                     </div>
                                 </div>
                             </div>
-                            <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/20 border border-emerald-500/30 px-2.5 py-1 rounded-lg uppercase tracking-wider shrink-0">Terkunci</span>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <span x-show="item.is_seeded" class="text-[10px] font-black text-amber-400 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-lg uppercase tracking-wider">Seeded</span>
+                                <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/20 border border-emerald-500/30 px-2.5 py-1 rounded-lg uppercase tracking-wider">Terkunci</span>
+                            </div>
                         </div>
                     </template>
 
@@ -376,6 +389,127 @@
 
     </div>
 
+    <!-- Modal Pengaturan Pemain Unggulan (Seeded) -->
+    <div x-show="isSeededModalOpen" 
+         x-cloak 
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95">
+        
+        <div class="bg-slate-900 border border-slate-700 rounded-3xl p-6 sm:p-7 max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl relative text-white space-y-4"
+             @click.away="if (!isSavingSeeded) isSeededModalOpen = false">
+            
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div class="space-y-1">
+                    <div class="flex items-center gap-2">
+                        <span class="px-2.5 py-0.5 text-[10px] font-mono font-bold rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase">
+                            ⭐ ATUR PEMAIN UNGGULAN (SEEDED)
+                        </span>
+                    </div>
+                    <h3 class="text-lg sm:text-xl font-black text-white" x-text="'Pengaturan Seeded - ' + (activePool?.short_title || activePool?.title || 'Kategori')"></h3>
+                    <p class="text-xs text-slate-400">
+                        Peserta unggulan langsung menempati slot bagan turnamen secara otomatis dan <strong class="text-amber-400">tidak diundi</strong> dalam spin wheel.
+                    </p>
+                </div>
+                <button type="button" @click="isSeededModalOpen = false" :disabled="isSavingSeeded" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Rules Explanation Banner -->
+            <div class="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-200 space-y-1.5">
+                <div class="font-bold flex items-center gap-1.5 text-amber-300">
+                    <i data-lucide="info" class="w-4 h-4 shrink-0"></i>
+                    <span>Ketentuan Slot Bagan Turnamen (Standar Bulu Tangkis / BWF):</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-300 pt-1">
+                    <div class="p-2 rounded-xl bg-slate-950/60 border border-slate-800">
+                        <span class="text-amber-400 font-bold">⭐ Seed 1:</span> Slot <strong>#1</strong> (Puncak Bagan Atas)
+                    </div>
+                    <div class="p-2 rounded-xl bg-slate-950/60 border border-slate-800">
+                        <span class="text-amber-400 font-bold">⭐ Seed 2:</span> Slot <strong>#<span x-text="activeParticipants.length"></span></strong> (Dasar Bagan Bawah)
+                    </div>
+                    <template x-if="activeParticipants.length >= 3">
+                        <div class="p-2 rounded-xl bg-slate-950/60 border border-slate-800">
+                            <span class="text-amber-400 font-bold">⭐ Seed 3:</span> Slot <strong>#<span x-text="calculateSlotPreview(3)"></span></strong> (Bagan Bawah)
+                        </div>
+                    </template>
+                    <template x-if="activeParticipants.length >= 4">
+                        <div class="p-2 rounded-xl bg-slate-950/60 border border-slate-800">
+                            <span class="text-amber-400 font-bold">⭐ Seed 4:</span> Slot <strong>#<span x-text="calculateSlotPreview(4)"></span></strong> (Bagan Atas)
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Participants Selection Table/List -->
+            <div class="flex-1 overflow-y-auto space-y-2.5 pr-1 max-h-[360px]">
+                <template x-for="p in activeParticipants" :key="p.id">
+                    <div class="p-3 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                         :class="tempSeeds[p.id] ? 'bg-amber-500/10 border-amber-500/40 shadow-sm' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'">
+                        <div class="flex items-center gap-3 overflow-hidden">
+                            <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 font-mono font-bold text-xs"
+                                 :class="tempSeeds[p.id] ? 'bg-amber-400 text-slate-950 font-black' : 'bg-slate-800 text-slate-400'">
+                                <span x-text="tempSeeds[p.id] ? 'S' + tempSeeds[p.id] : '•'"></span>
+                            </div>
+                            <div class="overflow-hidden">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-white truncate block" x-text="p.name"></span>
+                                    <span x-show="tempSeeds[p.id]" class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0" x-text="'Slot #' + calculateSlotPreview(parseInt(tempSeeds[p.id]))"></span>
+                                </div>
+                                <span class="text-[10px] text-slate-400 truncate block mt-0.5" x-text="p.institution + (p.participant_number ? ' • ' + p.participant_number : '')"></span>
+                            </div>
+                        </div>
+
+                        <!-- Dropdown Select Seed -->
+                        <div class="shrink-0 w-full sm:w-56">
+                            <select x-model="tempSeeds[p.id]" 
+                                    class="w-full px-3 py-2 rounded-xl bg-slate-900 border text-xs font-semibold outline-none transition cursor-pointer"
+                                    :class="tempSeeds[p.id] ? 'border-amber-400 text-amber-300 font-bold bg-amber-950/40' : 'border-slate-700 text-slate-300 focus:border-slate-500'">
+                                <option value="">— Bukan Unggulan (Ikut Undian) —</option>
+                                <option value="1">⭐ Seed 1 (Slot #1)</option>
+                                <option value="2" x-text="'⭐ Seed 2 (Slot #' + activeParticipants.length + ')'"></option>
+                                <template x-if="activeParticipants.length >= 3">
+                                    <option value="3" x-text="'⭐ Seed 3 (Slot #' + calculateSlotPreview(3) + ')'"></option>
+                                </template>
+                                <template x-if="activeParticipants.length >= 4">
+                                    <option value="4" x-text="'⭐ Seed 4 (Slot #' + calculateSlotPreview(4) + ')'"></option>
+                                </template>
+                            </select>
+                        </div>
+                    </div>
+                </template>
+
+                <div x-show="activeParticipants.length === 0" class="py-8 text-center text-xs text-slate-500">
+                    Tidak ada peserta terdaftar dalam kategori ini.
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+                <button type="button" 
+                        @click="isSeededModalOpen = false" 
+                        :disabled="isSavingSeeded"
+                        class="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer">
+                    Batal
+                </button>
+                <button type="button" 
+                        @click="saveSeededPlayers()" 
+                        :disabled="isSavingSeeded || activeParticipants.length === 0"
+                        class="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2 cursor-pointer">
+                    <span x-show="isSavingSeeded" class="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></span>
+                    <span x-text="isSavingSeeded ? 'Menyimpan...' : 'Simpan Pengaturan Unggulan'"></span>
+                </button>
+            </div>
+
+        </div>
+    </div>
+
 </div>
 
 @push('scripts')
@@ -394,6 +528,11 @@
             audioCtx: null,
             theme: '{{ (str_contains(strtolower($competition->name), 'bulu tangkis') || str_contains(strtolower($competition->name), 'badminton')) ? 'badminton' : 'standard' }}',
             
+            // Seeded state
+            isSeededModalOpen: false,
+            tempSeeds: {},
+            isSavingSeeded: false,
+
             // Canvas variables
             canvas: null,
             ctx: null,
@@ -882,6 +1021,74 @@
                 .catch(err => {
                     console.error('Save draw network error:', err);
                 });
+            },
+
+            openSeededModal() {
+                this.tempSeeds = {};
+                this.activeParticipants.forEach(p => {
+                    this.tempSeeds[p.id] = p.seed_number ? String(p.seed_number) : '';
+                });
+                this.isSeededModalOpen = true;
+                this.$nextTick(() => {
+                    if (window.lucide) lucide.createIcons();
+                });
+            },
+
+            calculateSlotPreview(seed) {
+                const total = this.activeParticipants.length;
+                if (total <= 1) return 1;
+                if (seed === 1) return 1;
+                if (seed === 2) return total;
+                if (seed === 3) return total >= 3 ? Math.floor(total / 2) + 1 : 1;
+                if (seed === 4) return total >= 4 ? Math.floor(total / 2) : 2;
+                return 1;
+            },
+
+            async saveSeededPlayers() {
+                const values = Object.values(this.tempSeeds).filter(v => v !== '' && v !== null);
+                const uniqueValues = new Set(values);
+                if (values.length !== uniqueValues.size) {
+                    alert('Ada posisi Seed yang dipilih lebih dari satu kali! Pastikan tiap posisi Seed unik.');
+                    return;
+                }
+
+                this.isSavingSeeded = true;
+                try {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+                    const response = await fetch('{{ route("pic.set.seeded", $competition->id) }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        body: JSON.stringify({
+                            pool_key: this.activePoolKey,
+                            seeds: this.tempSeeds
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        this.pools = data.pools;
+                        this.isSeededModalOpen = false;
+                        if (this.activeUndrawnParticipants.length > 0) {
+                            this.selectedParticipantId = this.activeUndrawnParticipants[0].id;
+                        } else {
+                            this.selectedParticipantId = null;
+                        }
+                        this.calculateAvailableSlots();
+                        this.drawWheel();
+                        alert(data.message || 'Pengaturan pemain unggulan berhasil disimpan!');
+                    } else {
+                        alert(data.message || 'Gagal menyimpan pengaturan unggulan.');
+                    }
+                } catch (err) {
+                    console.error('Save seeded error:', err);
+                    alert('Terjadi kesalahan koneksi saat menyimpan pengaturan unggulan.');
+                } finally {
+                    this.isSavingSeeded = false;
+                }
             },
 
             easeOut(t, b, c, d) {
