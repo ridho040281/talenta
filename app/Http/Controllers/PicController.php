@@ -1929,6 +1929,7 @@ class PicController extends Controller
 
         // Sanity check: ensure each seed number (1, 2, 3, 4) is assigned at most once
         $assignedSeeds = [];
+        $seedMap = [];
         foreach ($validated['seeds'] as $regId => $seedNum) {
             $regId = (int) $regId;
             $seedNum = ! empty($seedNum) ? (int) $seedNum : null;
@@ -1941,15 +1942,14 @@ class PicController extends Controller
                     ], 422);
                 }
                 $assignedSeeds[] = $seedNum;
+                $seedMap[$regId] = $seedNum;
             }
         }
 
         // Process each participant in this pool
-        DB::transaction(function () use ($poolParticipantIds, $validated, $totalInPool, $competition, $user) {
+        DB::transaction(function () use ($poolParticipantIds, $seedMap, $totalInPool, $competition, $user) {
             foreach ($poolParticipantIds as $regId) {
-                $seedNum = isset($validated['seeds'][$regId]) && ! empty($validated['seeds'][$regId])
-                    ? (int) $validated['seeds'][$regId]
-                    : null;
+                $seedNum = $seedMap[$regId] ?? null;
 
                 $reg = Registration::where('id', $regId)
                     ->where('competition_id', $competition->id)
