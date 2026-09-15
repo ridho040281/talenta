@@ -482,9 +482,9 @@
                             <span>Data Peserta</span>
                         </div>
                     </a>
-                    <a href="{{ route('admin.juri.wasit') }}" class="flex items-center justify-between px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('admin.juri.wasit*') || request()->routeIs('admin.undian*') || request()->routeIs('badminton.index*') || request()->routeIs('juri.*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
+                    <a href="{{ route('admin.juri.wasit') }}" class="flex items-center justify-between px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('admin.juri.wasit*') || request()->routeIs('admin.undian*') || request()->routeIs('badminton.index*') || request()->routeIs('juri.*') || request()->routeIs('pic.bracket*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
                         <div class="flex items-center gap-3">
-                            <i data-lucide="scale" class="w-4 h-4 {{ request()->routeIs('admin.juri.wasit*') || request()->routeIs('admin.undian*') || request()->routeIs('badminton.index*') || request()->routeIs('juri.*') ? 'text-white' : 'text-[#A594FD]' }}"></i>
+                            <i data-lucide="scale" class="w-4 h-4 {{ request()->routeIs('admin.juri.wasit*') || request()->routeIs('admin.undian*') || request()->routeIs('badminton.index*') || request()->routeIs('juri.*') || request()->routeIs('pic.bracket*') ? 'text-white' : 'text-[#A594FD]' }}"></i>
                             <span>Juri, Wasit & Undian</span>
                         </div>
                     </a>
@@ -538,7 +538,7 @@
                         <i data-lucide="users" class="w-4 h-4"></i>
                         <span>Data Peserta</span>
                     </a>
-                    <a href="{{ route('pic.undian') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('pic.undian*') || request()->routeIs('pic.hacker.draw*') || request()->routeIs('pic.spin.wheel*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
+                    <a href="{{ route('pic.undian') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('pic.undian*') || request()->routeIs('pic.hacker.draw*') || request()->routeIs('pic.spin.wheel*') || request()->routeIs('pic.bracket*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
                         <i data-lucide="disc" class="w-4 h-4 text-[#FF58D5]"></i>
                         <span>Undi Peserta</span>
                     </a>

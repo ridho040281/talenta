@@ -176,6 +176,12 @@
                             <span>Layar Publik</span>
                         </a>
                     </div>
+
+                    <!-- Bagan Pertandingan Button -->
+                    <a href="{{ route('pic.bracket', $comp['id']) }}" class="w-full py-2 px-3 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 hover:border-indigo-400/60 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer">
+                        <i data-lucide="git-branch" class="w-3.5 h-3.5 text-indigo-400"></i>
+                        <span>Bagan Pertandingan (Knockout Tree)</span>
+                    </a>
                 </div>
 
             </div>

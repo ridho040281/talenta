@@ -12,6 +12,7 @@ use App\Http\Controllers\OfficialReportController;
 use App\Http\Controllers\PesertaController;
 use App\Http\Controllers\PicController;
 use App\Http\Controllers\StageController;
+use App\Http\Controllers\TournamentBracketController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -26,6 +27,11 @@ Route::get('/lomba/{slug}/spin-viewer', [HomeController::class, 'spinViewer'])->
 Route::get('/u/{slug}', [HomeController::class, 'spinViewer'])->name('spin.viewer.u');
 Route::get('/tv/{slug}', [HomeController::class, 'spinViewer'])->name('spin.viewer.tv');
 Route::get('/undi/{slug}', [HomeController::class, 'spinViewer'])->name('spin.viewer.undi');
+
+// Tournament Bracket Public & TV Display
+Route::get('/bagan/{slug}', [TournamentBracketController::class, 'publicView'])->name('public.bracket');
+Route::get('/b/{slug}', [TournamentBracketController::class, 'publicView'])->name('public.bracket.short');
+Route::get('/tv-bagan/{slug}', [TournamentBracketController::class, 'publicView'])->name('public.bracket.tv');
 
 // Stage Display / Layar Panggung & Stage Timer (Smart TV / Proyektor View)
 Route::get('/stage/{slug}', [StageController::class, 'stageViewer'])->name('stage.viewer');
@@ -121,6 +127,11 @@ Route::middleware(['auth', 'role:pic_lomba,superadmin,panitia'])->prefix('pic')-
     Route::post('/lomba/{competition_id}/spin-wheel/save', [PicController::class, 'storeDrawResult'])->name('spin.wheel.save');
     Route::post('/lomba/{competition_id}/spin-wheel/reset', [PicController::class, 'resetDraws'])->name('spin.wheel.reset');
     Route::post('/lomba/{competition_id}/set-seeded', [PicController::class, 'setSeededPlayers'])->name('set.seeded');
+
+    // Tournament Bracket (Bagan Pertandingan BWF & Sistem Gugur)
+    Route::get('/lomba/{competition_id}/bagan', [TournamentBracketController::class, 'show'])->name('bracket');
+    Route::get('/lomba/{competition_id}/bagan/print', [TournamentBracketController::class, 'printPdf'])->name('bracket.print');
+    Route::post('/lomba/{competition_id}/bagan/generate-matches', [TournamentBracketController::class, 'generateMatches'])->name('bracket.generate_matches');
 
     // API endpoints untuk AJAX DataTable (server-side pagination)
     Route::get('/api/participants', [PicController::class, 'apiParticipants'])->name('api.participants');
