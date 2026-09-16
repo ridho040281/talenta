@@ -197,7 +197,213 @@
                 </form>
             </div>
 
-            <!-- Card Panduan Ringkas -->
+            <!-- Card 2: DAFTAR ELEMEN SERTIFIKAT (DIPISAH JADI CARD SENDIRI DI KIRI) -->
+            <div class="ai-card p-5 rounded-3xl border border-white/[0.08] shadow-lg space-y-3">
+                <div class="flex items-center justify-between border-b border-white/[0.08] pb-3">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="layers" class="w-4 h-4 text-purple-400"></i>
+                        <h3 class="text-xs font-black uppercase tracking-wider text-white">
+                            Pilih Elemen Sertifikat
+                        </h3>
+                    </div>
+                    <span class="text-[10px] text-slate-400">10 Elemen</span>
+                </div>
+                <p class="text-[11px] text-slate-400">Pilih elemen di bawah untuk mengatur posisi & gayanya pada panel kanan:</p>
+
+                <div class="space-y-1.5 max-h-[460px] overflow-y-auto pr-1">
+                    <!-- Item Nama -->
+                    <button type="button" @click="activeTab = 'nama'"
+                        :class="activeTab === 'nama' ? 'bg-purple-600/20 border-purple-500/50 text-white shadow-sm ring-1 ring-purple-500/30' : 'bg-white/[0.02] border-white/[0.06] text-slate-300 hover:bg-white/[0.05] hover:text-white'"
+                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-7 h-7 rounded-xl flex items-center justify-center" :class="activeTab === 'nama' ? 'bg-purple-600 text-white' : 'bg-white/[0.05] text-purple-400'">
+                                <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold">Nama Penerima</div>
+                                <div class="text-[10px] text-slate-400 font-mono" x-text="'Y: ' + cfg.nama.top + '% | X: ' + cfg.nama.left + '%'"></div>
+                            </div>
+                        </div>
+                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full"
+                              :class="cfg.nama.visible ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-500'">
+                            <span x-text="cfg.nama.visible ? 'Aktif' : 'Off'"></span>
+                        </span>
+                    </button>
+
+                    <!-- Item Predikat -->
+                    <button type="button" @click="activeTab = 'predikat'"
+                        :class="activeTab === 'predikat' ? 'bg-purple-600/20 border-purple-500/50 text-white shadow-sm ring-1 ring-purple-500/30' : 'bg-white/[0.02] border-white/[0.06] text-slate-300 hover:bg-white/[0.05] hover:text-white'"
+                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-7 h-7 rounded-xl flex items-center justify-center" :class="activeTab === 'predikat' ? 'bg-purple-600 text-white' : 'bg-white/[0.05] text-amber-400'">
+                                <i data-lucide="award" class="w-3.5 h-3.5"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold">Predikat / Kategori</div>
+                                <div class="text-[10px] text-slate-400 font-mono" x-text="'Y: ' + cfg.predikat.top + '% | X: ' + cfg.predikat.left + '%'"></div>
+                            </div>
+                        </div>
+                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full"
+                              :class="cfg.predikat.visible ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-500'">
+                            <span x-text="cfg.predikat.visible ? 'Aktif' : 'Off'"></span>
+                        </span>
+                    </button>
+
+                    <!-- Item Sekolah -->
+                    <button type="button" @click="activeTab = 'sekolah'"
+                        :class="activeTab === 'sekolah' ? 'bg-purple-600/20 border-purple-500/50 text-white shadow-sm ring-1 ring-purple-500/30' : 'bg-white/[0.02] border-white/[0.06] text-slate-300 hover:bg-white/[0.05] hover:text-white'"
+                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-7 h-7 rounded-xl flex items-center justify-center" :class="activeTab === 'sekolah' ? 'bg-purple-600 text-white' : 'bg-white/[0.05] text-blue-400'">
+                                <i data-lucide="school" class="w-3.5 h-3.5"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold">Asal Sekolah / Lembaga</div>
+                                <div class="text-[10px] text-slate-400 font-mono" x-text="'Y: ' + cfg.sekolah.top + '% | X: ' + cfg.sekolah.left + '%'"></div>
+                            </div>
+                        </div>
+                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full"
+                              :class="cfg.sekolah.visible ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-500'">
+                            <span x-text="cfg.sekolah.visible ? 'Aktif' : 'Off'"></span>
+                        </span>
+                    </button>
+
+                    <!-- Item Lomba -->
+                    <button type="button" @click="activeTab = 'lomba'"
+                        :class="activeTab === 'lomba' ? 'bg-purple-600/20 border-purple-500/50 text-white shadow-sm ring-1 ring-purple-500/30' : 'bg-white/[0.02] border-white/[0.06] text-slate-300 hover:bg-white/[0.05] hover:text-white'"
+                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-7 h-7 rounded-xl flex items-center justify-center" :class="activeTab === 'lomba' ? 'bg-purple-600 text-white' : 'bg-white/[0.05] text-indigo-400'">
+                                <i data-lucide="trophy" class="w-3.5 h-3.5"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold">Cabang Lomba</div>
+                                <div class="text-[10px] text-slate-400 font-mono" x-text="'Y: ' + cfg.lomba.top + '% | X: ' + cfg.lomba.left + '%'"></div>
+                            </div>
+                        </div>
+                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full"
+                              :class="cfg.lomba.visible ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-500'">
+                            <span x-text="cfg.lomba.visible ? 'Aktif' : 'Off'"></span>
+                        </span>
+                    </button>
+
+                    <!-- Item Nomor -->
+                    <button type="button" @click="activeTab = 'nomor'"
+                        :class="activeTab === 'nomor' ? 'bg-purple-600/20 border-purple-500/50 text-white shadow-sm ring-1 ring-purple-500/30' : 'bg-white/[0.02] border-white/[0.06] text-slate-300 hover:bg-white/[0.05] hover:text-white'"
+                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-7 h-7 rounded-xl flex items-center justify-center" :class="activeTab === 'nomor' ? 'bg-purple-600 text-white' : 'bg-white/[0.05] text-slate-300'">
+                                <i data-lucide="hash" class="w-3.5 h-3.5"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold">Nomor Sertifikat</div>
+                                <div class="text-[10px] text-slate-400 font-mono" x-text="'Y: ' + cfg.nomor.top + '% | X: ' + cfg.nomor.left + '%'"></div>
+                            </div>
+                        </div>
+                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full"
+                              :class="cfg.nomor.visible ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-500'">
+                            <span x-text="cfg.nomor.visible ? 'Aktif' : 'Off'"></span>
+                        </span>
+                    </button>
+
+                    <!-- Item Tanggal -->
+                    <button type="button" @click="activeTab = 'tanggal'"
+                        :class="activeTab === 'tanggal' ? 'bg-purple-600/20 border-purple-500/50 text-white shadow-sm ring-1 ring-purple-500/30' : 'bg-white/[0.02] border-white/[0.06] text-slate-300 hover:bg-white/[0.05] hover:text-white'"
+                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-7 h-7 rounded-xl flex items-center justify-center" :class="activeTab === 'tanggal' ? 'bg-purple-600 text-white' : 'bg-white/[0.05] text-cyan-400'">
+                                <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold">Tanggal Titimangsa</div>
+                                <div class="text-[10px] text-slate-400 font-mono" x-text="'Y: ' + cfg.tanggal.top + '% | X: ' + cfg.tanggal.left + '%'"></div>
+                            </div>
+                        </div>
+                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full"
+                              :class="cfg.tanggal.visible ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-500'">
+                            <span x-text="cfg.tanggal.visible ? 'Aktif' : 'Off'"></span>
+                        </span>
+                    </button>
+
+                    <!-- Item Teks 1 -->
+                    <button type="button" @click="activeTab = 'teks_1'"
+                        :class="activeTab === 'teks_1' ? 'bg-purple-600/20 border-purple-500/50 text-white shadow-sm ring-1 ring-purple-500/30' : 'bg-white/[0.02] border-white/[0.06] text-slate-300 hover:bg-white/[0.05] hover:text-white'"
+                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-7 h-7 rounded-xl flex items-center justify-center" :class="activeTab === 'teks_1' ? 'bg-purple-600 text-white' : 'bg-white/[0.05] text-violet-400'">
+                                <i data-lucide="type" class="w-3.5 h-3.5"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold">Teks Tambahan 1</div>
+                                <div class="text-[10px] text-slate-400 font-mono" x-text="'Y: ' + cfg.teks_1.top + '% | X: ' + cfg.teks_1.left + '%'"></div>
+                            </div>
+                        </div>
+                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full"
+                              :class="cfg.teks_1.visible ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-500'">
+                            <span x-text="cfg.teks_1.visible ? 'Aktif' : 'Off'"></span>
+                        </span>
+                    </button>
+
+                    <!-- Item Teks 2 -->
+                    <button type="button" @click="activeTab = 'teks_2'"
+                        :class="activeTab === 'teks_2' ? 'bg-purple-600/20 border-purple-500/50 text-white shadow-sm ring-1 ring-purple-500/30' : 'bg-white/[0.02] border-white/[0.06] text-slate-300 hover:bg-white/[0.05] hover:text-white'"
+                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-7 h-7 rounded-xl flex items-center justify-center" :class="activeTab === 'teks_2' ? 'bg-purple-600 text-white' : 'bg-white/[0.05] text-violet-400'">
+                                <i data-lucide="type" class="w-3.5 h-3.5"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold">Teks Tambahan 2</div>
+                                <div class="text-[10px] text-slate-400 font-mono" x-text="'Y: ' + cfg.teks_2.top + '% | X: ' + cfg.teks_2.left + '%'"></div>
+                            </div>
+                        </div>
+                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full"
+                              :class="cfg.teks_2.visible ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-500'">
+                            <span x-text="cfg.teks_2.visible ? 'Aktif' : 'Off'"></span>
+                        </span>
+                    </button>
+
+                    <!-- Item Teks 3 -->
+                    <button type="button" @click="activeTab = 'teks_3'"
+                        :class="activeTab === 'teks_3' ? 'bg-purple-600/20 border-purple-500/50 text-white shadow-sm ring-1 ring-purple-500/30' : 'bg-white/[0.02] border-white/[0.06] text-slate-300 hover:bg-white/[0.05] hover:text-white'"
+                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-7 h-7 rounded-xl flex items-center justify-center" :class="activeTab === 'teks_3' ? 'bg-purple-600 text-white' : 'bg-white/[0.05] text-violet-400'">
+                                <i data-lucide="type" class="w-3.5 h-3.5"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold">Teks Tambahan 3</div>
+                                <div class="text-[10px] text-slate-400 font-mono" x-text="'Y: ' + cfg.teks_3.top + '% | X: ' + cfg.teks_3.left + '%'"></div>
+                            </div>
+                        </div>
+                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full"
+                              :class="cfg.teks_3.visible ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-500'">
+                            <span x-text="cfg.teks_3.visible ? 'Aktif' : 'Off'"></span>
+                        </span>
+                    </button>
+
+                    <!-- Item QR Code -->
+                    <button type="button" @click="activeTab = 'qrcode'"
+                        :class="activeTab === 'qrcode' ? 'bg-purple-600/20 border-purple-500/50 text-white shadow-sm ring-1 ring-purple-500/30' : 'bg-white/[0.02] border-white/[0.06] text-slate-300 hover:bg-white/[0.05] hover:text-white'"
+                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-7 h-7 rounded-xl flex items-center justify-center" :class="activeTab === 'qrcode' ? 'bg-purple-600 text-white' : 'bg-white/[0.05] text-emerald-400'">
+                                <i data-lucide="qr-code" class="w-3.5 h-3.5"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold">QR Code Keabsahan</div>
+                                <div class="text-[10px] text-slate-400 font-mono" x-text="'Y: ' + cfg.qrcode.top + '% | X: ' + cfg.qrcode.left + '%'"></div>
+                            </div>
+                        </div>
+                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full"
+                              :class="cfg.qrcode.visible ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-500'">
+                            <span x-text="cfg.qrcode.visible ? 'Aktif' : 'Off'"></span>
+                        </span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Card 3: Panduan Ringkas -->
             <div class="ai-card p-5 rounded-3xl border border-white/[0.08] shadow-lg space-y-3">
                 <h4 class="text-xs font-black uppercase tracking-wider text-white flex items-center gap-2">
                     <i data-lucide="help-circle" class="w-4 h-4 text-purple-400"></i>
@@ -206,7 +412,7 @@
                 <div class="text-xs text-slate-300 space-y-2.5">
                     <p class="flex items-start gap-2">
                         <span class="text-purple-400 font-bold">1.</span>
-                        <span>Klik langsung teks pada sertifikat untuk memilih elemen yang ingin disesuaikan.</span>
+                        <span>Klik nama elemen pada daftar di atas atau klik langsung teks pada sertifikat untuk memilih elemen.</span>
                     </p>
                     <p class="flex items-start gap-2">
                         <span class="text-purple-400 font-bold">2.</span>
@@ -214,11 +420,11 @@
                     </p>
                     <p class="flex items-start gap-2">
                         <span class="text-purple-400 font-bold">3.</span>
-                        <span>Gunakan <strong>Teks 1, Teks 2, & Teks 3</strong> jika format blangko membutuhkan teks kustom dinamis.</span>
+                        <span>Gunakan <strong>Teks 1, Teks 2, & Teks 3</strong> jika format blangko membutuhkan teks kustom dinamis atau TTD.</span>
                     </p>
                     <p class="flex items-start gap-2">
                         <span class="text-purple-400 font-bold">4.</span>
-                        <span>Jangan lupa klik <strong>"Simpan Tata Letak"</strong> setelah selesai melakukan penyesuaian posisi.</span>
+                        <span>Jangan lupa klik <strong>"Simpan"</strong> setelah selesai melakukan penyesuaian posisi.</span>
                     </p>
                 </div>
             </div>
@@ -437,41 +643,34 @@
                 </div>
             </div>
 
-            <!-- Card 2: PENGATUR POSISI & GAYA TEKS (DIGESER KE BAWAH SERTIFIKAT) -->
+            <!-- Card 2: PENGATUR POSISI & GAYA TEKS (KONTROL ELEMEN TERPILIH DI BAWAH SERTIFIKAT) -->
             <div class="ai-card p-5 rounded-3xl border border-white/[0.08] shadow-lg space-y-4">
-                <div class="flex items-center justify-between border-b border-white/[0.08] pb-3">
-                    <div class="flex items-center gap-2">
-                        <i data-lucide="sliders" class="w-4 h-4 text-indigo-400"></i>
-                        <h3 class="text-xs font-black uppercase tracking-wider text-white">
-                            Pengatur Posisi & Gaya Teks
-                        </h3>
-                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 font-bold uppercase" x-text="activeTab"></span>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-white/[0.08] pb-3 gap-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                            <i data-lucide="sliders" class="w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-xs font-black uppercase tracking-wider text-white">
+                                    Pengatur Posisi & Tipografi:
+                                </h3>
+                                <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 font-bold uppercase" x-text="activeTab.replace('_', ' ')"></span>
+                            </div>
+                            <p class="text-[11px] text-slate-400">Sesuaikan koordinat posisi dan gaya teks elemen yang dipilih dari daftar di sebelah kiri</p>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <button type="button" @click="resetDefaults()" class="text-[11px] text-rose-400 hover:text-rose-300 font-bold transition flex items-center gap-1">
-                            <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+                    <div class="flex items-center gap-2.5">
+                        <button type="button" @click="resetDefaults()" class="px-3 py-1.5 rounded-xl bg-white/[0.05] hover:bg-rose-500/20 text-rose-400 text-xs font-bold border border-white/[0.08] transition flex items-center gap-1.5 cursor-pointer">
+                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
                             <span>Reset Default</span>
                         </button>
-                        <button type="button" @click="saveLayoutAjax()" :disabled="saving" class="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
+                        <button type="button" @click="saveLayoutAjax()" :disabled="saving" class="px-4 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-purple-500/20 transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
                             <i data-lucide="save" class="w-3.5 h-3.5" x-show="!saving"></i>
                             <span x-show="!saving">Simpan</span>
                             <span x-show="saving">Menyimpan...</span>
                         </button>
                     </div>
-                </div>
-
-                <!-- Sub-tab Selector Elemen Teks (10 Elemen) -->
-                <div class="grid grid-cols-5 sm:grid-cols-10 gap-1.5 p-1 bg-white/[0.04] rounded-2xl">
-                    <button type="button" @click="activeTab = 'nama'" :class="activeTab === 'nama' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Nama</button>
-                    <button type="button" @click="activeTab = 'predikat'" :class="activeTab === 'predikat' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Predikat</button>
-                    <button type="button" @click="activeTab = 'sekolah'" :class="activeTab === 'sekolah' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Sekolah</button>
-                    <button type="button" @click="activeTab = 'lomba'" :class="activeTab === 'lomba' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Lomba</button>
-                    <button type="button" @click="activeTab = 'nomor'" :class="activeTab === 'nomor' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Nomor</button>
-                    <button type="button" @click="activeTab = 'tanggal'" :class="activeTab === 'tanggal' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Tanggal</button>
-                    <button type="button" @click="activeTab = 'teks_1'" :class="activeTab === 'teks_1' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Teks 1</button>
-                    <button type="button" @click="activeTab = 'teks_2'" :class="activeTab === 'teks_2' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Teks 2</button>
-                    <button type="button" @click="activeTab = 'teks_3'" :class="activeTab === 'teks_3' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Teks 3</button>
-                    <button type="button" @click="activeTab = 'qrcode'" :class="activeTab === 'qrcode' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">QR Code</button>
                 </div>
 
                 <!-- FORM SLIDERS UNTUK ELEMEN YANG DIPILIH -->
