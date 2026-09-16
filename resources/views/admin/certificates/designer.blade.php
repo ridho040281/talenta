@@ -212,9 +212,9 @@
 
                 <div class="space-y-1.5 max-h-[460px] overflow-y-auto pr-1">
                     <!-- Item Nama -->
-                    <button type="button" @click="activeTab = 'nama'"
+                    <div @click="activeTab = 'nama'"
                         :class="activeTab === 'nama' ? 'bg-purple-600/20 border-purple-500/50 text-white shadow-sm ring-1 ring-purple-500/30' : 'bg-white/[0.02] border-white/[0.06] text-slate-300 hover:bg-white/[0.05] hover:text-white'"
-                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer">
+                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer select-none">
                         <div class="flex items-center gap-2.5">
                             <div class="w-7 h-7 rounded-xl flex items-center justify-center" :class="activeTab === 'nama' ? 'bg-purple-600 text-white' : 'bg-white/[0.05] text-purple-400'">
                                 <i data-lucide="user" class="w-3.5 h-3.5"></i>
@@ -224,16 +224,24 @@
                                 <div class="text-[10px] text-slate-400 font-mono" x-text="'Y: ' + cfg.nama.top + '% | X: ' + cfg.nama.left + '%'"></div>
                             </div>
                         </div>
-                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full"
-                              :class="cfg.nama.visible ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-500'">
-                            <span x-text="cfg.nama.visible ? 'Aktif' : 'Off'"></span>
-                        </span>
-                    </button>
+                        <button type="button" 
+                            @click.stop="cfg.nama.visible = !cfg.nama.visible"
+                            :class="cfg.nama.visible ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30' : 'bg-slate-800/80 border-white/[0.08] text-slate-500 hover:bg-slate-700 hover:text-slate-300'"
+                            class="px-2 py-1 rounded-xl text-[10px] font-extrabold border transition flex items-center gap-1.5 cursor-pointer shadow-sm hover:scale-105"
+                            :title="cfg.nama.visible ? 'Klik untuk mematikan (OFF)' : 'Klik untuk mengaktifkan (ON)'">
+                            <div class="w-6 h-3 rounded-full transition-colors relative flex items-center p-0.5"
+                                 :class="cfg.nama.visible ? 'bg-emerald-500' : 'bg-slate-700'">
+                                <div class="w-2 h-2 rounded-full bg-white transition-transform transform shadow-sm"
+                                     :class="cfg.nama.visible ? 'translate-x-3' : 'translate-x-0'"></div>
+                            </div>
+                            <span class="w-6 text-left" x-text="cfg.nama.visible ? 'ON' : 'OFF'"></span>
+                        </button>
+                    </div>
 
                     <!-- Item Predikat -->
-                    <button type="button" @click="activeTab = 'predikat'"
+                    <div @click="activeTab = 'predikat'"
                         :class="activeTab === 'predikat' ? 'bg-purple-600/20 border-purple-500/50 text-white shadow-sm ring-1 ring-purple-500/30' : 'bg-white/[0.02] border-white/[0.06] text-slate-300 hover:bg-white/[0.05] hover:text-white'"
-                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer">
+                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer select-none">
                         <div class="flex items-center gap-2.5">
                             <div class="w-7 h-7 rounded-xl flex items-center justify-center" :class="activeTab === 'predikat' ? 'bg-purple-600 text-white' : 'bg-white/[0.05] text-amber-400'">
                                 <i data-lucide="award" class="w-3.5 h-3.5"></i>
@@ -243,16 +251,24 @@
                                 <div class="text-[10px] text-slate-400 font-mono" x-text="'Y: ' + cfg.predikat.top + '% | X: ' + cfg.predikat.left + '%'"></div>
                             </div>
                         </div>
-                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full"
-                              :class="cfg.predikat.visible ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-500'">
-                            <span x-text="cfg.predikat.visible ? 'Aktif' : 'Off'"></span>
-                        </span>
-                    </button>
+                        <button type="button" 
+                            @click.stop="cfg.predikat.visible = !cfg.predikat.visible"
+                            :class="cfg.predikat.visible ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30' : 'bg-slate-800/80 border-white/[0.08] text-slate-500 hover:bg-slate-700 hover:text-slate-300'"
+                            class="px-2 py-1 rounded-xl text-[10px] font-extrabold border transition flex items-center gap-1.5 cursor-pointer shadow-sm hover:scale-105"
+                            :title="cfg.predikat.visible ? 'Klik untuk mematikan (OFF)' : 'Klik untuk mengaktifkan (ON)'">
+                            <div class="w-6 h-3 rounded-full transition-colors relative flex items-center p-0.5"
+                                 :class="cfg.predikat.visible ? 'bg-emerald-500' : 'bg-slate-700'">
+                                <div class="w-2 h-2 rounded-full bg-white transition-transform transform shadow-sm"
+                                     :class="cfg.predikat.visible ? 'translate-x-3' : 'translate-x-0'"></div>
+                            </div>
+                            <span class="w-6 text-left" x-text="cfg.predikat.visible ? 'ON' : 'OFF'"></span>
+                        </button>
+                    </div>
 
                     <!-- Item Sekolah -->
-                    <button type="button" @click="activeTab = 'sekolah'"
+                    <div @click="activeTab = 'sekolah'"
                         :class="activeTab === 'sekolah' ? 'bg-purple-600/20 border-purple-500/50 text-white shadow-sm ring-1 ring-purple-500/30' : 'bg-white/[0.02] border-white/[0.06] text-slate-300 hover:bg-white/[0.05] hover:text-white'"
-                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer">
+                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer select-none">
                         <div class="flex items-center gap-2.5">
                             <div class="w-7 h-7 rounded-xl flex items-center justify-center" :class="activeTab === 'sekolah' ? 'bg-purple-600 text-white' : 'bg-white/[0.05] text-blue-400'">
                                 <i data-lucide="school" class="w-3.5 h-3.5"></i>
@@ -262,16 +278,24 @@
                                 <div class="text-[10px] text-slate-400 font-mono" x-text="'Y: ' + cfg.sekolah.top + '% | X: ' + cfg.sekolah.left + '%'"></div>
                             </div>
                         </div>
-                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full"
-                              :class="cfg.sekolah.visible ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-500'">
-                            <span x-text="cfg.sekolah.visible ? 'Aktif' : 'Off'"></span>
-                        </span>
-                    </button>
+                        <button type="button" 
+                            @click.stop="cfg.sekolah.visible = !cfg.sekolah.visible"
+                            :class="cfg.sekolah.visible ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30' : 'bg-slate-800/80 border-white/[0.08] text-slate-500 hover:bg-slate-700 hover:text-slate-300'"
+                            class="px-2 py-1 rounded-xl text-[10px] font-extrabold border transition flex items-center gap-1.5 cursor-pointer shadow-sm hover:scale-105"
+                            :title="cfg.sekolah.visible ? 'Klik untuk mematikan (OFF)' : 'Klik untuk mengaktifkan (ON)'">
+                            <div class="w-6 h-3 rounded-full transition-colors relative flex items-center p-0.5"
+                                 :class="cfg.sekolah.visible ? 'bg-emerald-500' : 'bg-slate-700'">
+                                <div class="w-2 h-2 rounded-full bg-white transition-transform transform shadow-sm"
+                                     :class="cfg.sekolah.visible ? 'translate-x-3' : 'translate-x-0'"></div>
+                            </div>
+                            <span class="w-6 text-left" x-text="cfg.sekolah.visible ? 'ON' : 'OFF'"></span>
+                        </button>
+                    </div>
 
                     <!-- Item Lomba -->
-                    <button type="button" @click="activeTab = 'lomba'"
+                    <div @click="activeTab = 'lomba'"
                         :class="activeTab === 'lomba' ? 'bg-purple-600/20 border-purple-500/50 text-white shadow-sm ring-1 ring-purple-500/30' : 'bg-white/[0.02] border-white/[0.06] text-slate-300 hover:bg-white/[0.05] hover:text-white'"
-                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer">
+                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer select-none">
                         <div class="flex items-center gap-2.5">
                             <div class="w-7 h-7 rounded-xl flex items-center justify-center" :class="activeTab === 'lomba' ? 'bg-purple-600 text-white' : 'bg-white/[0.05] text-indigo-400'">
                                 <i data-lucide="trophy" class="w-3.5 h-3.5"></i>
@@ -281,16 +305,24 @@
                                 <div class="text-[10px] text-slate-400 font-mono" x-text="'Y: ' + cfg.lomba.top + '% | X: ' + cfg.lomba.left + '%'"></div>
                             </div>
                         </div>
-                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full"
-                              :class="cfg.lomba.visible ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-500'">
-                            <span x-text="cfg.lomba.visible ? 'Aktif' : 'Off'"></span>
-                        </span>
-                    </button>
+                        <button type="button" 
+                            @click.stop="cfg.lomba.visible = !cfg.lomba.visible"
+                            :class="cfg.lomba.visible ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30' : 'bg-slate-800/80 border-white/[0.08] text-slate-500 hover:bg-slate-700 hover:text-slate-300'"
+                            class="px-2 py-1 rounded-xl text-[10px] font-extrabold border transition flex items-center gap-1.5 cursor-pointer shadow-sm hover:scale-105"
+                            :title="cfg.lomba.visible ? 'Klik untuk mematikan (OFF)' : 'Klik untuk mengaktifkan (ON)'">
+                            <div class="w-6 h-3 rounded-full transition-colors relative flex items-center p-0.5"
+                                 :class="cfg.lomba.visible ? 'bg-emerald-500' : 'bg-slate-700'">
+                                <div class="w-2 h-2 rounded-full bg-white transition-transform transform shadow-sm"
+                                     :class="cfg.lomba.visible ? 'translate-x-3' : 'translate-x-0'"></div>
+                            </div>
+                            <span class="w-6 text-left" x-text="cfg.lomba.visible ? 'ON' : 'OFF'"></span>
+                        </button>
+                    </div>
 
                     <!-- Item Nomor -->
-                    <button type="button" @click="activeTab = 'nomor'"
+                    <div @click="activeTab = 'nomor'"
                         :class="activeTab === 'nomor' ? 'bg-purple-600/20 border-purple-500/50 text-white shadow-sm ring-1 ring-purple-500/30' : 'bg-white/[0.02] border-white/[0.06] text-slate-300 hover:bg-white/[0.05] hover:text-white'"
-                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer">
+                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer select-none">
                         <div class="flex items-center gap-2.5">
                             <div class="w-7 h-7 rounded-xl flex items-center justify-center" :class="activeTab === 'nomor' ? 'bg-purple-600 text-white' : 'bg-white/[0.05] text-slate-300'">
                                 <i data-lucide="hash" class="w-3.5 h-3.5"></i>
@@ -300,16 +332,24 @@
                                 <div class="text-[10px] text-slate-400 font-mono" x-text="'Y: ' + cfg.nomor.top + '% | X: ' + cfg.nomor.left + '%'"></div>
                             </div>
                         </div>
-                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full"
-                              :class="cfg.nomor.visible ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-500'">
-                            <span x-text="cfg.nomor.visible ? 'Aktif' : 'Off'"></span>
-                        </span>
-                    </button>
+                        <button type="button" 
+                            @click.stop="cfg.nomor.visible = !cfg.nomor.visible"
+                            :class="cfg.nomor.visible ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30' : 'bg-slate-800/80 border-white/[0.08] text-slate-500 hover:bg-slate-700 hover:text-slate-300'"
+                            class="px-2 py-1 rounded-xl text-[10px] font-extrabold border transition flex items-center gap-1.5 cursor-pointer shadow-sm hover:scale-105"
+                            :title="cfg.nomor.visible ? 'Klik untuk mematikan (OFF)' : 'Klik untuk mengaktifkan (ON)'">
+                            <div class="w-6 h-3 rounded-full transition-colors relative flex items-center p-0.5"
+                                 :class="cfg.nomor.visible ? 'bg-emerald-500' : 'bg-slate-700'">
+                                <div class="w-2 h-2 rounded-full bg-white transition-transform transform shadow-sm"
+                                     :class="cfg.nomor.visible ? 'translate-x-3' : 'translate-x-0'"></div>
+                            </div>
+                            <span class="w-6 text-left" x-text="cfg.nomor.visible ? 'ON' : 'OFF'"></span>
+                        </button>
+                    </div>
 
                     <!-- Item Tanggal -->
-                    <button type="button" @click="activeTab = 'tanggal'"
+                    <div @click="activeTab = 'tanggal'"
                         :class="activeTab === 'tanggal' ? 'bg-purple-600/20 border-purple-500/50 text-white shadow-sm ring-1 ring-purple-500/30' : 'bg-white/[0.02] border-white/[0.06] text-slate-300 hover:bg-white/[0.05] hover:text-white'"
-                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer">
+                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer select-none">
                         <div class="flex items-center gap-2.5">
                             <div class="w-7 h-7 rounded-xl flex items-center justify-center" :class="activeTab === 'tanggal' ? 'bg-purple-600 text-white' : 'bg-white/[0.05] text-cyan-400'">
                                 <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
@@ -319,16 +359,24 @@
                                 <div class="text-[10px] text-slate-400 font-mono" x-text="'Y: ' + cfg.tanggal.top + '% | X: ' + cfg.tanggal.left + '%'"></div>
                             </div>
                         </div>
-                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full"
-                              :class="cfg.tanggal.visible ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-500'">
-                            <span x-text="cfg.tanggal.visible ? 'Aktif' : 'Off'"></span>
-                        </span>
-                    </button>
+                        <button type="button" 
+                            @click.stop="cfg.tanggal.visible = !cfg.tanggal.visible"
+                            :class="cfg.tanggal.visible ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30' : 'bg-slate-800/80 border-white/[0.08] text-slate-500 hover:bg-slate-700 hover:text-slate-300'"
+                            class="px-2 py-1 rounded-xl text-[10px] font-extrabold border transition flex items-center gap-1.5 cursor-pointer shadow-sm hover:scale-105"
+                            :title="cfg.tanggal.visible ? 'Klik untuk mematikan (OFF)' : 'Klik untuk mengaktifkan (ON)'">
+                            <div class="w-6 h-3 rounded-full transition-colors relative flex items-center p-0.5"
+                                 :class="cfg.tanggal.visible ? 'bg-emerald-500' : 'bg-slate-700'">
+                                <div class="w-2 h-2 rounded-full bg-white transition-transform transform shadow-sm"
+                                     :class="cfg.tanggal.visible ? 'translate-x-3' : 'translate-x-0'"></div>
+                            </div>
+                            <span class="w-6 text-left" x-text="cfg.tanggal.visible ? 'ON' : 'OFF'"></span>
+                        </button>
+                    </div>
 
                     <!-- Item Teks 1 -->
-                    <button type="button" @click="activeTab = 'teks_1'"
+                    <div @click="activeTab = 'teks_1'"
                         :class="activeTab === 'teks_1' ? 'bg-purple-600/20 border-purple-500/50 text-white shadow-sm ring-1 ring-purple-500/30' : 'bg-white/[0.02] border-white/[0.06] text-slate-300 hover:bg-white/[0.05] hover:text-white'"
-                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer">
+                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer select-none">
                         <div class="flex items-center gap-2.5">
                             <div class="w-7 h-7 rounded-xl flex items-center justify-center" :class="activeTab === 'teks_1' ? 'bg-purple-600 text-white' : 'bg-white/[0.05] text-violet-400'">
                                 <i data-lucide="type" class="w-3.5 h-3.5"></i>
@@ -338,16 +386,24 @@
                                 <div class="text-[10px] text-slate-400 font-mono" x-text="'Y: ' + cfg.teks_1.top + '% | X: ' + cfg.teks_1.left + '%'"></div>
                             </div>
                         </div>
-                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full"
-                              :class="cfg.teks_1.visible ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-500'">
-                            <span x-text="cfg.teks_1.visible ? 'Aktif' : 'Off'"></span>
-                        </span>
-                    </button>
+                        <button type="button" 
+                            @click.stop="cfg.teks_1.visible = !cfg.teks_1.visible"
+                            :class="cfg.teks_1.visible ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30' : 'bg-slate-800/80 border-white/[0.08] text-slate-500 hover:bg-slate-700 hover:text-slate-300'"
+                            class="px-2 py-1 rounded-xl text-[10px] font-extrabold border transition flex items-center gap-1.5 cursor-pointer shadow-sm hover:scale-105"
+                            :title="cfg.teks_1.visible ? 'Klik untuk mematikan (OFF)' : 'Klik untuk mengaktifkan (ON)'">
+                            <div class="w-6 h-3 rounded-full transition-colors relative flex items-center p-0.5"
+                                 :class="cfg.teks_1.visible ? 'bg-emerald-500' : 'bg-slate-700'">
+                                <div class="w-2 h-2 rounded-full bg-white transition-transform transform shadow-sm"
+                                     :class="cfg.teks_1.visible ? 'translate-x-3' : 'translate-x-0'"></div>
+                            </div>
+                            <span class="w-6 text-left" x-text="cfg.teks_1.visible ? 'ON' : 'OFF'"></span>
+                        </button>
+                    </div>
 
                     <!-- Item Teks 2 -->
-                    <button type="button" @click="activeTab = 'teks_2'"
+                    <div @click="activeTab = 'teks_2'"
                         :class="activeTab === 'teks_2' ? 'bg-purple-600/20 border-purple-500/50 text-white shadow-sm ring-1 ring-purple-500/30' : 'bg-white/[0.02] border-white/[0.06] text-slate-300 hover:bg-white/[0.05] hover:text-white'"
-                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer">
+                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer select-none">
                         <div class="flex items-center gap-2.5">
                             <div class="w-7 h-7 rounded-xl flex items-center justify-center" :class="activeTab === 'teks_2' ? 'bg-purple-600 text-white' : 'bg-white/[0.05] text-violet-400'">
                                 <i data-lucide="type" class="w-3.5 h-3.5"></i>
@@ -357,16 +413,24 @@
                                 <div class="text-[10px] text-slate-400 font-mono" x-text="'Y: ' + cfg.teks_2.top + '% | X: ' + cfg.teks_2.left + '%'"></div>
                             </div>
                         </div>
-                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full"
-                              :class="cfg.teks_2.visible ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-500'">
-                            <span x-text="cfg.teks_2.visible ? 'Aktif' : 'Off'"></span>
-                        </span>
-                    </button>
+                        <button type="button" 
+                            @click.stop="cfg.teks_2.visible = !cfg.teks_2.visible"
+                            :class="cfg.teks_2.visible ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30' : 'bg-slate-800/80 border-white/[0.08] text-slate-500 hover:bg-slate-700 hover:text-slate-300'"
+                            class="px-2 py-1 rounded-xl text-[10px] font-extrabold border transition flex items-center gap-1.5 cursor-pointer shadow-sm hover:scale-105"
+                            :title="cfg.teks_2.visible ? 'Klik untuk mematikan (OFF)' : 'Klik untuk mengaktifkan (ON)'">
+                            <div class="w-6 h-3 rounded-full transition-colors relative flex items-center p-0.5"
+                                 :class="cfg.teks_2.visible ? 'bg-emerald-500' : 'bg-slate-700'">
+                                <div class="w-2 h-2 rounded-full bg-white transition-transform transform shadow-sm"
+                                     :class="cfg.teks_2.visible ? 'translate-x-3' : 'translate-x-0'"></div>
+                            </div>
+                            <span class="w-6 text-left" x-text="cfg.teks_2.visible ? 'ON' : 'OFF'"></span>
+                        </button>
+                    </div>
 
                     <!-- Item Teks 3 -->
-                    <button type="button" @click="activeTab = 'teks_3'"
+                    <div @click="activeTab = 'teks_3'"
                         :class="activeTab === 'teks_3' ? 'bg-purple-600/20 border-purple-500/50 text-white shadow-sm ring-1 ring-purple-500/30' : 'bg-white/[0.02] border-white/[0.06] text-slate-300 hover:bg-white/[0.05] hover:text-white'"
-                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer">
+                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer select-none">
                         <div class="flex items-center gap-2.5">
                             <div class="w-7 h-7 rounded-xl flex items-center justify-center" :class="activeTab === 'teks_3' ? 'bg-purple-600 text-white' : 'bg-white/[0.05] text-violet-400'">
                                 <i data-lucide="type" class="w-3.5 h-3.5"></i>
@@ -376,16 +440,24 @@
                                 <div class="text-[10px] text-slate-400 font-mono" x-text="'Y: ' + cfg.teks_3.top + '% | X: ' + cfg.teks_3.left + '%'"></div>
                             </div>
                         </div>
-                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full"
-                              :class="cfg.teks_3.visible ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-500'">
-                            <span x-text="cfg.teks_3.visible ? 'Aktif' : 'Off'"></span>
-                        </span>
-                    </button>
+                        <button type="button" 
+                            @click.stop="cfg.teks_3.visible = !cfg.teks_3.visible"
+                            :class="cfg.teks_3.visible ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30' : 'bg-slate-800/80 border-white/[0.08] text-slate-500 hover:bg-slate-700 hover:text-slate-300'"
+                            class="px-2 py-1 rounded-xl text-[10px] font-extrabold border transition flex items-center gap-1.5 cursor-pointer shadow-sm hover:scale-105"
+                            :title="cfg.teks_3.visible ? 'Klik untuk mematikan (OFF)' : 'Klik untuk mengaktifkan (ON)'">
+                            <div class="w-6 h-3 rounded-full transition-colors relative flex items-center p-0.5"
+                                 :class="cfg.teks_3.visible ? 'bg-emerald-500' : 'bg-slate-700'">
+                                <div class="w-2 h-2 rounded-full bg-white transition-transform transform shadow-sm"
+                                     :class="cfg.teks_3.visible ? 'translate-x-3' : 'translate-x-0'"></div>
+                            </div>
+                            <span class="w-6 text-left" x-text="cfg.teks_3.visible ? 'ON' : 'OFF'"></span>
+                        </button>
+                    </div>
 
                     <!-- Item QR Code -->
-                    <button type="button" @click="activeTab = 'qrcode'"
+                    <div @click="activeTab = 'qrcode'"
                         :class="activeTab === 'qrcode' ? 'bg-purple-600/20 border-purple-500/50 text-white shadow-sm ring-1 ring-purple-500/30' : 'bg-white/[0.02] border-white/[0.06] text-slate-300 hover:bg-white/[0.05] hover:text-white'"
-                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer">
+                        class="w-full p-2.5 rounded-2xl border transition flex items-center justify-between text-left cursor-pointer select-none">
                         <div class="flex items-center gap-2.5">
                             <div class="w-7 h-7 rounded-xl flex items-center justify-center" :class="activeTab === 'qrcode' ? 'bg-purple-600 text-white' : 'bg-white/[0.05] text-emerald-400'">
                                 <i data-lucide="qr-code" class="w-3.5 h-3.5"></i>
@@ -395,11 +467,19 @@
                                 <div class="text-[10px] text-slate-400 font-mono" x-text="'Y: ' + cfg.qrcode.top + '% | X: ' + cfg.qrcode.left + '%'"></div>
                             </div>
                         </div>
-                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full"
-                              :class="cfg.qrcode.visible ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-500'">
-                            <span x-text="cfg.qrcode.visible ? 'Aktif' : 'Off'"></span>
-                        </span>
-                    </button>
+                        <button type="button" 
+                            @click.stop="cfg.qrcode.visible = !cfg.qrcode.visible"
+                            :class="cfg.qrcode.visible ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30' : 'bg-slate-800/80 border-white/[0.08] text-slate-500 hover:bg-slate-700 hover:text-slate-300'"
+                            class="px-2 py-1 rounded-xl text-[10px] font-extrabold border transition flex items-center gap-1.5 cursor-pointer shadow-sm hover:scale-105"
+                            :title="cfg.qrcode.visible ? 'Klik untuk mematikan (OFF)' : 'Klik untuk mengaktifkan (ON)'">
+                            <div class="w-6 h-3 rounded-full transition-colors relative flex items-center p-0.5"
+                                 :class="cfg.qrcode.visible ? 'bg-emerald-500' : 'bg-slate-700'">
+                                <div class="w-2 h-2 rounded-full bg-white transition-transform transform shadow-sm"
+                                     :class="cfg.qrcode.visible ? 'translate-x-3' : 'translate-x-0'"></div>
+                            </div>
+                            <span class="w-6 text-left" x-text="cfg.qrcode.visible ? 'ON' : 'OFF'"></span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -656,6 +736,19 @@
                                     Pengatur Posisi & Tipografi:
                                 </h3>
                                 <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 font-bold uppercase" x-text="activeTab.replace('_', ' ')"></span>
+                                
+                                <button type="button" 
+                                    @click="cfg[activeTab].visible = !cfg[activeTab].visible"
+                                    :class="cfg[activeTab].visible ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' : 'bg-slate-800/80 border-white/[0.08] text-slate-500'"
+                                    class="px-2 py-0.5 rounded-full text-[10px] font-bold border transition flex items-center gap-1.5 cursor-pointer hover:scale-105"
+                                    :title="cfg[activeTab].visible ? 'Klik untuk mematikan (OFF)' : 'Klik untuk mengaktifkan (ON)'">
+                                    <div class="w-5 h-2.5 rounded-full transition-colors relative flex items-center p-0.5"
+                                         :class="cfg[activeTab].visible ? 'bg-emerald-500' : 'bg-slate-700'">
+                                        <div class="w-1.5 h-1.5 rounded-full bg-white transition-transform transform shadow-sm"
+                                             :class="cfg[activeTab].visible ? 'translate-x-2.5' : 'translate-x-0'"></div>
+                                    </div>
+                                    <span x-text="cfg[activeTab].visible ? 'ON' : 'OFF'"></span>
+                                </button>
                             </div>
                             <p class="text-[11px] text-slate-400">Sesuaikan koordinat posisi dan gaya teks elemen yang dipilih dari daftar di sebelah kiri</p>
                         </div>
@@ -677,26 +770,27 @@
                 <template x-for="(val, key) in cfg" :key="key">
                     <div x-show="activeTab === key" class="space-y-4 pt-1">
                         
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- Toggle Tampilkan -->
-                            <div class="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/[0.05]">
-                                <div>
-                                    <span class="text-xs font-bold text-slate-300 block">Tampilkan Elemen Ini</span>
-                                    <span class="text-[10px] text-slate-500">Matikan jika sudah include di gambar template</span>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" x-model="val.visible" class="sr-only peer">
-                                    <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600"></div>
-                                </label>
+                        <!-- Banner Peringatan jika elemen berstatus OFF -->
+                        <div x-show="!val.visible" class="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-semibold flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="eye-off" class="w-4 h-4 text-amber-400"></i>
+                                <span>Elemen ini berstatus <strong>OFF</strong> (disembunyikan dari tampilan sertifikat).</span>
                             </div>
+                            <button type="button" @click="val.visible = true" class="px-3 py-1 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-[10px] transition cursor-pointer flex items-center gap-1">
+                                <i data-lucide="check" class="w-3 h-3"></i>
+                                <span>Aktifkan (ON)</span>
+                            </button>
+                        </div>
 
-                            <!-- Khusus Teks Tambahan (teks_1, teks_2, teks_3): Input Teks Kustom -->
-                            <div x-show="key.startsWith('teks_')" class="space-y-1.5">
+                        <!-- Khusus Teks Tambahan (teks_1, teks_2, teks_3): Input Teks Kustom -->
+                        <div x-show="key.startsWith('teks_')" class="p-3.5 rounded-2xl bg-white/[0.02] border border-white/[0.05] space-y-1.5">
+                            <div class="flex items-center justify-between">
                                 <label class="block text-xs font-bold text-slate-300">
                                     Isi Kalimat / Teks Tambahan:
                                 </label>
-                                <textarea x-model="val.text" rows="2" placeholder="Contoh: Memberikan penghargaan kepada : atau Pada Kejuaraan Bulutangkis..." class="w-full px-3.5 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs text-white placeholder-slate-500 outline-none focus:border-purple-500"></textarea>
+                                <span class="text-[10px] text-slate-500">Mendukung Enter / multi-baris untuk format tanda tangan</span>
                             </div>
+                            <textarea x-model="val.text" rows="2" placeholder="Contoh: Memberikan penghargaan kepada : atau Pada Kejuaraan Bulutangkis..." class="w-full px-3.5 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs text-white placeholder-slate-500 outline-none focus:border-purple-500"></textarea>
                         </div>
 
                         <!-- SLIDERS & CONTROLS DALAM 2 KOLOM RAPI -->
