@@ -770,17 +770,6 @@
                 <template x-for="(val, key) in cfg" :key="key">
                     <div x-show="activeTab === key" class="space-y-4 pt-1">
                         
-                        <!-- Banner Peringatan jika elemen berstatus OFF -->
-                        <div x-show="!val.visible" class="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-semibold flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <i data-lucide="eye-off" class="w-4 h-4 text-amber-400"></i>
-                                <span>Elemen ini berstatus <strong>OFF</strong> (disembunyikan dari tampilan sertifikat).</span>
-                            </div>
-                            <button type="button" @click="val.visible = true" class="px-3 py-1 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-[10px] transition cursor-pointer flex items-center gap-1">
-                                <i data-lucide="check" class="w-3 h-3"></i>
-                                <span>Aktifkan (ON)</span>
-                            </button>
-                        </div>
 
                         <!-- Khusus Teks Tambahan (teks_1, teks_2, teks_3): Input Teks Kustom -->
                         <div x-show="key.startsWith('teks_')" class="p-3.5 rounded-2xl bg-white/[0.02] border border-white/[0.05] space-y-1.5">
