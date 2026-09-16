@@ -134,8 +134,8 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-        <!-- ==================== KOLOM KIRI: UPLOAD BLANGKO & KONTROL KOORDINAT (5 COLS) ==================== -->
-        <div class="lg:col-span-5 space-y-6">
+        <!-- ==================== KOLOM KIRI: FORM TEMPLATE & PANDUAN (4 / 5 COLS) ==================== -->
+        <div class="lg:col-span-5 xl:col-span-4 space-y-6">
 
             <!-- Card 1: Upload Blangko Template Gambar -->
             <div class="ai-card p-5 rounded-3xl border border-white/[0.08] shadow-lg space-y-4">
@@ -197,122 +197,38 @@
                 </form>
             </div>
 
-            <!-- Card 2: Pengatur Koordinat & Tipografi Teks -->
-            <div class="ai-card p-5 rounded-3xl border border-white/[0.08] shadow-lg space-y-4">
-                <div class="flex items-center justify-between border-b border-white/[0.08] pb-3">
-                    <h3 class="text-xs font-black uppercase tracking-wider text-white flex items-center gap-2">
-                        <i data-lucide="sliders" class="w-4 h-4 text-indigo-400"></i>
-                        <span>Pengatur Posisi & Gaya Teks</span>
-                    </h3>
-                    <button type="button" @click="resetDefaults()" class="text-[11px] text-rose-400 hover:text-rose-300 font-bold transition flex items-center gap-1">
-                        <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
-                        <span>Reset Default</span>
-                    </button>
+            <!-- Card Panduan Ringkas -->
+            <div class="ai-card p-5 rounded-3xl border border-white/[0.08] shadow-lg space-y-3">
+                <h4 class="text-xs font-black uppercase tracking-wider text-white flex items-center gap-2">
+                    <i data-lucide="help-circle" class="w-4 h-4 text-purple-400"></i>
+                    <span>Panduan Desainer</span>
+                </h4>
+                <div class="text-xs text-slate-300 space-y-2.5">
+                    <p class="flex items-start gap-2">
+                        <span class="text-purple-400 font-bold">1.</span>
+                        <span>Klik langsung teks pada sertifikat untuk memilih elemen yang ingin disesuaikan.</span>
+                    </p>
+                    <p class="flex items-start gap-2">
+                        <span class="text-purple-400 font-bold">2.</span>
+                        <span>Gunakan slider di bawah sertifikat untuk mengatur posisi vertikal, horizontal, ukuran huruf, dan gaya teks.</span>
+                    </p>
+                    <p class="flex items-start gap-2">
+                        <span class="text-purple-400 font-bold">3.</span>
+                        <span>Gunakan <strong>Teks 1, Teks 2, & Teks 3</strong> jika format blangko membutuhkan teks kustom dinamis.</span>
+                    </p>
+                    <p class="flex items-start gap-2">
+                        <span class="text-purple-400 font-bold">4.</span>
+                        <span>Jangan lupa klik <strong>"Simpan Tata Letak"</strong> setelah selesai melakukan penyesuaian posisi.</span>
+                    </p>
                 </div>
-
-                <!-- Sub-tab Selector Elemen Teks -->
-                <div class="grid grid-cols-5 gap-1.5 p-1 bg-white/[0.04] rounded-2xl">
-                    <button type="button" @click="activeTab = 'nama'" :class="activeTab === 'nama' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Nama</button>
-                    <button type="button" @click="activeTab = 'predikat'" :class="activeTab === 'predikat' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Predikat</button>
-                    <button type="button" @click="activeTab = 'sekolah'" :class="activeTab === 'sekolah' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Sekolah</button>
-                    <button type="button" @click="activeTab = 'lomba'" :class="activeTab === 'lomba' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Lomba</button>
-                    <button type="button" @click="activeTab = 'nomor'" :class="activeTab === 'nomor' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Nomor</button>
-                    <button type="button" @click="activeTab = 'tanggal'" :class="activeTab === 'tanggal' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Tanggal</button>
-                    <button type="button" @click="activeTab = 'teks_1'" :class="activeTab === 'teks_1' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Teks 1</button>
-                    <button type="button" @click="activeTab = 'teks_2'" :class="activeTab === 'teks_2' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Teks 2</button>
-                    <button type="button" @click="activeTab = 'teks_3'" :class="activeTab === 'teks_3' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Teks 3</button>
-                    <button type="button" @click="activeTab = 'qrcode'" :class="activeTab === 'qrcode' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">QR Code</button>
-                </div>
-
-                <!-- FORM SLIDERS UNTUK ELEMEN YANG DIPILIH -->
-                <template x-for="(val, key) in cfg" :key="key">
-                    <div x-show="activeTab === key" class="space-y-4 pt-1">
-                        <!-- Toggle Tampilkan -->
-                        <div class="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/[0.05]">
-                            <div>
-                                <span class="text-xs font-bold text-slate-300 block">Tampilkan Elemen Ini</span>
-                                <span class="text-[10px] text-slate-500">Matikan jika sudah include di gambar template</span>
-                            </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" x-model="val.visible" class="sr-only peer">
-                                <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600"></div>
-                            </label>
-                        </div>
-
-                        <!-- Khusus Teks Tambahan (teks_1, teks_2, teks_3): Input Teks Kustom -->
-                        <div x-show="key.startsWith('teks_')" class="space-y-1.5">
-                            <label class="block text-xs font-bold text-slate-300">
-                                Isi Kalimat / Teks Tambahan:
-                            </label>
-                            <textarea x-model="val.text" rows="2" placeholder="Contoh: Memberikan penghargaan kepada : atau Pada Kejuaraan Bulutangkis..." class="w-full px-3.5 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs text-white placeholder-slate-500 outline-none focus:border-purple-500"></textarea>
-                            <p class="text-[10px] text-slate-500">Kosongkan jika teks ini sudah ada pada gambar blangko template Anda.</p>
-                        </div>
-
-                        <!-- Slider Posisi Vertikal (Top %) -->
-                        <div>
-                            <div class="flex items-center justify-between text-xs font-bold mb-1.5">
-                                <span class="text-slate-400">Posisi Vertikal (Atas ke Bawah):</span>
-                                <span class="text-purple-300 font-mono" x-text="val.top + '%'"></span>
-                            </div>
-                            <input type="range" min="0" max="100" step="0.5" x-model="val.top" class="w-full accent-purple-500 cursor-pointer">
-                        </div>
-
-                        <!-- Slider Posisi Horizontal (Left %) -->
-                        <div>
-                            <div class="flex items-center justify-between text-xs font-bold mb-1.5">
-                                <span class="text-slate-400">Posisi Horizontal (Kiri ke Kanan):</span>
-                                <span class="text-purple-300 font-mono" x-text="val.left + '%'"></span>
-                            </div>
-                            <input type="range" min="0" max="100" step="0.5" x-model="val.left" class="w-full accent-purple-500 cursor-pointer">
-                        </div>
-
-                        <!-- Ukuran Font / Size -->
-                        <div>
-                            <div class="flex items-center justify-between text-xs font-bold mb-1.5">
-                                <span class="text-slate-400" x-text="key === 'qrcode' ? 'Ukuran Kotak QR (px):' : 'Ukuran Huruf / Font (px):'"></span>
-                                <span class="text-purple-300 font-mono" x-text="val.size + 'px'"></span>
-                            </div>
-                            <input type="range" :min="key === 'qrcode' ? 40 : 10" :max="key === 'qrcode' ? 160 : 72" step="1" x-model="val.size" class="w-full accent-purple-500 cursor-pointer">
-                        </div>
-
-                        <!-- Warna & Gaya Teks (Khusus Non-QR) -->
-                        <div x-show="key !== 'qrcode'" class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-                            <div>
-                                <label class="block text-xs font-bold text-slate-400 mb-1.5">Warna Teks:</label>
-                                <div class="flex items-center gap-2">
-                                    <input type="color" x-model="val.color" class="w-9 h-9 rounded-lg bg-transparent border-0 cursor-pointer">
-                                    <input type="text" x-model="val.color" class="flex-1 px-2 py-1.5 rounded-lg bg-[#0C111D] border border-white/[0.1] text-xs font-mono text-white outline-none">
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-400 mb-1.5">Rata Teks:</label>
-                                <select x-model="val.align" class="w-full px-2 py-2 rounded-lg bg-[#0C111D] border border-white/[0.1] text-xs text-white outline-none">
-                                    <option value="center">Rata Tengah (Center)</option>
-                                    <option value="left">Rata Kiri (Left)</option>
-                                    <option value="right">Rata Kanan (Right)</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-400 mb-1.5">Gaya Huruf:</label>
-                                <div class="flex items-center gap-2 pt-1">
-                                    <label class="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer">
-                                        <input type="checkbox" x-model="val.bold" class="rounded border-white/[0.2] bg-slate-900 text-purple-600 focus:ring-0">
-                                        <span>Bold</span>
-                                    </label>
-                                    <select x-show="val.font !== undefined" x-model="val.font" class="px-2 py-1 rounded bg-[#0C111D] border border-white/[0.1] text-[11px] text-white">
-                                        <option value="sans">Sans</option>
-                                        <option value="serif">Serif</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </template>
             </div>
+
         </div>
 
-        <!-- ==================== KOLOM KANAN: LIVE INTERACTIVE PREVIEW (7 COLS) ==================== -->
-        <div class="lg:col-span-7 space-y-4">
+        <!-- ==================== KOLOM KANAN: SERTIFIKAT PREVIEW & KONTROL DI BAWAHNYA (7 / 8 COLS) ==================== -->
+        <div class="lg:col-span-7 xl:col-span-8 space-y-6">
+
+            <!-- Card 1: Live Interactive Preview -->
             <div class="ai-card p-5 rounded-3xl border border-white/[0.08] shadow-lg">
                 <div class="flex items-center justify-between mb-3">
                     <h3 class="text-xs font-black uppercase tracking-wider text-white flex items-center gap-2">
@@ -520,8 +436,158 @@
                     <span class="text-purple-300 font-semibold" x-text="'Sedang mengedit: ' + activeTab.toUpperCase()"></span>
                 </div>
             </div>
+
+            <!-- Card 2: PENGATUR POSISI & GAYA TEKS (DIGESER KE BAWAH SERTIFIKAT) -->
+            <div class="ai-card p-5 rounded-3xl border border-white/[0.08] shadow-lg space-y-4">
+                <div class="flex items-center justify-between border-b border-white/[0.08] pb-3">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="sliders" class="w-4 h-4 text-indigo-400"></i>
+                        <h3 class="text-xs font-black uppercase tracking-wider text-white">
+                            Pengatur Posisi & Gaya Teks
+                        </h3>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 font-bold uppercase" x-text="activeTab"></span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button type="button" @click="resetDefaults()" class="text-[11px] text-rose-400 hover:text-rose-300 font-bold transition flex items-center gap-1">
+                            <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+                            <span>Reset Default</span>
+                        </button>
+                        <button type="button" @click="saveLayoutAjax()" :disabled="saving" class="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
+                            <i data-lucide="save" class="w-3.5 h-3.5" x-show="!saving"></i>
+                            <span x-show="!saving">Simpan</span>
+                            <span x-show="saving">Menyimpan...</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sub-tab Selector Elemen Teks (10 Elemen) -->
+                <div class="grid grid-cols-5 sm:grid-cols-10 gap-1.5 p-1 bg-white/[0.04] rounded-2xl">
+                    <button type="button" @click="activeTab = 'nama'" :class="activeTab === 'nama' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Nama</button>
+                    <button type="button" @click="activeTab = 'predikat'" :class="activeTab === 'predikat' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Predikat</button>
+                    <button type="button" @click="activeTab = 'sekolah'" :class="activeTab === 'sekolah' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Sekolah</button>
+                    <button type="button" @click="activeTab = 'lomba'" :class="activeTab === 'lomba' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Lomba</button>
+                    <button type="button" @click="activeTab = 'nomor'" :class="activeTab === 'nomor' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Nomor</button>
+                    <button type="button" @click="activeTab = 'tanggal'" :class="activeTab === 'tanggal' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Tanggal</button>
+                    <button type="button" @click="activeTab = 'teks_1'" :class="activeTab === 'teks_1' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Teks 1</button>
+                    <button type="button" @click="activeTab = 'teks_2'" :class="activeTab === 'teks_2' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Teks 2</button>
+                    <button type="button" @click="activeTab = 'teks_3'" :class="activeTab === 'teks_3' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Teks 3</button>
+                    <button type="button" @click="activeTab = 'qrcode'" :class="activeTab === 'qrcode' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">QR Code</button>
+                </div>
+
+                <!-- FORM SLIDERS UNTUK ELEMEN YANG DIPILIH -->
+                <template x-for="(val, key) in cfg" :key="key">
+                    <div x-show="activeTab === key" class="space-y-4 pt-1">
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Toggle Tampilkan -->
+                            <div class="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/[0.05]">
+                                <div>
+                                    <span class="text-xs font-bold text-slate-300 block">Tampilkan Elemen Ini</span>
+                                    <span class="text-[10px] text-slate-500">Matikan jika sudah include di gambar template</span>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" x-model="val.visible" class="sr-only peer">
+                                    <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600"></div>
+                                </label>
+                            </div>
+
+                            <!-- Khusus Teks Tambahan (teks_1, teks_2, teks_3): Input Teks Kustom -->
+                            <div x-show="key.startsWith('teks_')" class="space-y-1.5">
+                                <label class="block text-xs font-bold text-slate-300">
+                                    Isi Kalimat / Teks Tambahan:
+                                </label>
+                                <textarea x-model="val.text" rows="2" placeholder="Contoh: Memberikan penghargaan kepada : atau Pada Kejuaraan Bulutangkis..." class="w-full px-3.5 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs text-white placeholder-slate-500 outline-none focus:border-purple-500"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- SLIDERS & CONTROLS DALAM 2 KOLOM RAPI -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                            <!-- Kolom Kiri: Posisi Koordinat -->
+                            <div class="space-y-3 p-3.5 rounded-2xl bg-white/[0.02] border border-white/[0.05]">
+                                <h4 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i data-lucide="move" class="w-3.5 h-3.5 text-purple-400"></i>
+                                    <span>Koordinat Posisi (%)</span>
+                                </h4>
+
+                                <!-- Slider Posisi Vertikal (Top %) -->
+                                <div>
+                                    <div class="flex items-center justify-between text-xs font-bold mb-1">
+                                        <span class="text-slate-400">Posisi Vertikal (Atas ke Bawah):</span>
+                                        <span class="text-purple-300 font-mono" x-text="val.top + '%'"></span>
+                                    </div>
+                                    <input type="range" min="0" max="100" step="0.5" x-model="val.top" class="w-full accent-purple-500 cursor-pointer">
+                                </div>
+
+                                <!-- Slider Posisi Horizontal (Left %) -->
+                                <div>
+                                    <div class="flex items-center justify-between text-xs font-bold mb-1">
+                                        <span class="text-slate-400">Posisi Horizontal (Kiri ke Kanan):</span>
+                                        <span class="text-purple-300 font-mono" x-text="val.left + '%'"></span>
+                                    </div>
+                                    <input type="range" min="0" max="100" step="0.5" x-model="val.left" class="w-full accent-purple-500 cursor-pointer">
+                                </div>
+                            </div>
+
+                            <!-- Kolom Kanan: Ukuran & Tipografi -->
+                            <div class="space-y-3 p-3.5 rounded-2xl bg-white/[0.02] border border-white/[0.05]">
+                                <h4 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i data-lucide="type" class="w-3.5 h-3.5 text-indigo-400"></i>
+                                    <span>Ukuran & Gaya Huruf</span>
+                                </h4>
+
+                                <!-- Ukuran Font / Size -->
+                                <div>
+                                    <div class="flex items-center justify-between text-xs font-bold mb-1">
+                                        <span class="text-slate-400" x-text="key === 'qrcode' ? 'Ukuran Kotak QR (px):' : 'Ukuran Huruf / Font (px):'"></span>
+                                        <span class="text-purple-300 font-mono" x-text="val.size + 'px'"></span>
+                                    </div>
+                                    <input type="range" :min="key === 'qrcode' ? 40 : 10" :max="key === 'qrcode' ? 160 : 72" step="1" x-model="val.size" class="w-full accent-purple-500 cursor-pointer">
+                                </div>
+
+                                <!-- Warna & Gaya Teks (Khusus Non-QR) -->
+                                <div x-show="key !== 'qrcode'" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-0.5">
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-400 mb-1">Warna Teks:</label>
+                                        <div class="flex items-center gap-1.5">
+                                            <input type="color" x-model="val.color" class="w-8 h-8 rounded-lg bg-transparent border-0 cursor-pointer">
+                                            <input type="text" x-model="val.color" class="w-full px-2 py-1.5 rounded-lg bg-[#0C111D] border border-white/[0.1] text-xs font-mono text-white outline-none">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-400 mb-1">Rata Teks:</label>
+                                        <select x-model="val.align" class="w-full px-2 py-1.5 rounded-lg bg-[#0C111D] border border-white/[0.1] text-xs text-white outline-none">
+                                            <option value="center">Center</option>
+                                            <option value="left">Left</option>
+                                            <option value="right">Right</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-400 mb-1">Gaya Huruf:</label>
+                                        <div class="flex items-center gap-2 pt-0.5">
+                                            <label class="flex items-center gap-1 text-xs text-slate-300 cursor-pointer">
+                                                <input type="checkbox" x-model="val.bold" class="rounded border-white/[0.2] bg-slate-900 text-purple-600 focus:ring-0">
+                                                <span>Bold</span>
+                                            </label>
+                                            <select x-show="val.font !== undefined" x-model="val.font" class="px-2 py-1 rounded bg-[#0C111D] border border-white/[0.1] text-[11px] text-white">
+                                                <option value="sans">Sans</option>
+                                                <option value="serif">Serif</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </template>
+            </div>
+            <!-- /Card 2 -->
+
         </div>
+        <!-- /Kolom Kanan -->
 
     </div>
+    <!-- /Grid -->
 </div>
+<!-- /Root Container -->
 @endsection
