@@ -485,8 +485,13 @@ class TournamentBracketController extends Controller
         $byeBoxBg = $isDark ? '#0f172a' : '#f8fafc';
         $accentColor = '#d97706';
 
+        $champLineLength = 35;
+        $champBoxWidth = 140;
+        $champBoxHeight = 34;
+        $rightPadding = 40;
+
         $totalHeight = ($bracketSize * $slotHeight) + $topMargin + 40;
-        $totalWidth = $leftMargin + $slotWidth + ($totalRounds * $branchWidth) + 160;
+        $totalWidth = $leftMargin + $slotWidth + ($totalRounds * $branchWidth) + $champLineLength + $champBoxWidth + $rightPadding;
 
         $svg = [];
         $svg[] = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 {$totalWidth} {$totalHeight}' width='100%' height='auto' style='max-width: {$totalWidth}px; font-family: system-ui, -apple-system, sans-serif;'>";
@@ -504,8 +509,9 @@ class TournamentBracketController extends Controller
 
             $headerX += ($r === 1 ? ($slotWidth / 2 + $branchWidth / 2) : $branchWidth);
         }
-        // Juara
-        $svg[] = "<text x='" . ($totalWidth - 70) . "' y='26' text-anchor='middle' font-size='13' font-weight='800' fill='{$accentColor}'>Juara 1</text>";
+        // Juara 1 Header (tepat di atas kotak Juara 1)
+        $champHeaderX = $leftMargin + $slotWidth + ($totalRounds * $branchWidth) + $champLineLength + ($champBoxWidth / 2);
+        $svg[] = "<text x='{$champHeaderX}' y='26' text-anchor='middle' font-size='13' font-weight='800' fill='{$accentColor}'>Juara 1</text>";
 
         // Extract slots from Round 1
         $r1Matches = $rounds[1]['matches'] ?? [];
@@ -620,19 +626,21 @@ class TournamentBracketController extends Controller
         $champStem = $currentStems[1] ?? ['x' => $colStartX, 'y' => $totalHeight / 2];
         $champX1 = $champStem['x'];
         $champY = $champStem['y'];
-        $champX2 = $champX1 + 110;
+        $champX2 = $champX1 + $champLineLength;
+        $champCenterX = $champX2 + ($champBoxWidth / 2);
+        $champBoxY = $champY - ($champBoxHeight / 2);
 
         $svg[] = "<line x1='{$champX1}' y1='{$champY}' x2='{$champX2}' y2='{$champY}' stroke='{$strokeColor}' stroke-width='2.2'/>";
 
         $champion = $bracketData['champion'] ?? null;
         if ($champion) {
-            $champName = htmlspecialchars($champion['name'], ENT_QUOTES);
-            $svg[] = "<rect x='{$champX2}' y='" . ($champY - 17) . "' width='130' height='34' fill='#fef3c7' stroke='{$accentColor}' stroke-width='1.8' rx='4'/>";
-            $svg[] = "<text x='" . ($champX2 + 65) . "' y='" . ($champY - 3) . "' text-anchor='middle' font-size='8.5' font-weight='800' fill='#b45309'>🏆 JUARA 1</text>";
-            $svg[] = "<text x='" . ($champX2 + 65) . "' y='" . ($champY + 10) . "' text-anchor='middle' font-size='10' font-weight='800' fill='#0f172a'>{$champName}</text>";
+            $champName = htmlspecialchars(mb_substr($champion['name'] ?? '', 0, 18), ENT_QUOTES);
+            $svg[] = "<rect x='{$champX2}' y='{$champBoxY}' width='{$champBoxWidth}' height='{$champBoxHeight}' fill='#fef3c7' stroke='{$accentColor}' stroke-width='2' rx='6'/>";
+            $svg[] = "<text x='{$champCenterX}' y='" . ($champY - 3) . "' text-anchor='middle' font-size='9' font-weight='800' fill='#b45309'>🏆 JUARA 1</text>";
+            $svg[] = "<text x='{$champCenterX}' y='" . ($champY + 11) . "' text-anchor='middle' font-size='10.5' font-weight='800' fill='#0f172a'>{$champName}</text>";
         } else {
-            $svg[] = "<rect x='{$champX2}' y='" . ($champY - 15) . "' width='120' height='30' fill='{$boxBg}' stroke='{$strokeColor}' stroke-width='1.5' stroke-dasharray='3 3' rx='4'/>";
-            $svg[] = "<text x='" . ($champX2 + 60) . "' y='" . ($champY + 4) . "' text-anchor='middle' font-size='9.5' font-weight='700' fill='{$subTextColor}'>Pemenang Final</text>";
+            $svg[] = "<rect x='{$champX2}' y='{$champBoxY}' width='{$champBoxWidth}' height='{$champBoxHeight}' fill='{$boxBg}' stroke='{$strokeColor}' stroke-width='1.5' stroke-dasharray='4 3' rx='6'/>";
+            $svg[] = "<text x='{$champCenterX}' y='" . ($champY + 4) . "' text-anchor='middle' font-size='10' font-weight='700' fill='{$subTextColor}'>Pemenang Final</text>";
         }
 
         $svg[] = "</svg>";
