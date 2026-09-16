@@ -11,6 +11,7 @@ use App\Models\CompetitionCriterion;
 use App\Models\Invoice;
 use App\Models\PaymentAdjustment;
 use App\Models\Registration;
+use App\Models\RegistrationMember;
 use App\Models\Score;
 use App\Models\Timeline;
 use App\Models\User;
@@ -1715,5 +1716,178 @@ class AdminController extends Controller
         }
 
         return back()->with('success', 'Status Live Score untuk '.$competition->name.' berhasil diperbarui.');
+    }
+
+    /**
+     * Tampilkan Halaman Rekap & Operasional Peserta yang Mengikuti Multi Lomba.
+     * GET /admin/peserta-multi-lomba
+     */
+    public function multiParticipants(Request $request)
+    {
+        // 1. Ambil seluruh data anggota pendaftar yang status pendaftarannya aktif
+        $members = RegistrationMember::with([
+            'registration.competition.category',
+            'registration.user',
+            'registration.invoice'
+        ])
+        ->whereHas('registration', function ($q) {
+            $q->whereIn('status', ['verified', 'pending', 'revision']);
+        })
+        ->get();
+
+        // 2. Kelompokkan berdasarkan identitas unik siswa (NISN diprioritaskan, atau Nama + Asal Sekolah)
+        $grouped = [];
+        foreach ($members as $m) {
+            $reg = $m->registration;
+            if (! $reg || ! $reg->competition) {
+                continue;
+            }
+
+            $nisn = trim($m->nisn ?? '');
+            if (! empty($nisn) && strlen($nisn) >= 4 && ! in_array($nisn, ['0000000000', '1234567890', '-'])) {
+                $groupKey = 'nisn_' . $nisn;
+            } else {
+                $cleanName = strtolower(preg_replace('/[^a-z0-9]/', '', $m->full_name ?? ''));
+                $cleanSchool = strtolower(preg_replace('/[^a-z0-9]/', '', $m->school_name ?: ($reg->display_school ?? '')));
+                if (empty($cleanName)) {
+                    continue;
+                }
+                $groupKey = 'name_' . $cleanName . '_' . $cleanSchool;
+            }
+
+            if (! isset($grouped[$groupKey])) {
+                $grouped[$groupKey] = [
+                    'id_key' => $groupKey,
+                    'full_name' => $m->full_name,
+                    'nisn' => (! empty($nisn) && $nisn !== '-') ? $nisn : '-',
+                    'gender' => $m->gender ?: ($reg->primary_gender ?? 'L'),
+                    'school_name' => $m->school_name ?: ($reg->display_school ?? '-'),
+                    'photo' => $m->photo ?: null,
+                    'phone' => $m->phone ?: ($reg->recipient_phones[0] ?? ($reg->user->phone ?? '-')),
+                    'official_name' => $reg->official_name ?: ($reg->user->name ?? '-'),
+                    'official_phone' => $reg->official_phone ?: ($reg->user->phone ?? '-'),
+                    'registrations' => [],
+                    'competition_ids' => [],
+                    'categories' => [],
+                ];
+            }
+
+            // Lengkapi foto atau kontak jika di pendaftaran lain tersedia
+            if (empty($grouped[$groupKey]['photo']) && ! empty($m->photo)) {
+                $grouped[$groupKey]['photo'] = $m->photo;
+            }
+            if (($grouped[$groupKey]['phone'] === '-' || empty($grouped[$groupKey]['phone'])) && ! empty($m->phone)) {
+                $grouped[$groupKey]['phone'] = $m->phone;
+            }
+            if (($grouped[$groupKey]['official_phone'] === '-' || empty($grouped[$groupKey]['official_phone'])) && ! empty($reg->official_phone)) {
+                $grouped[$groupKey]['official_phone'] = $reg->official_phone;
+            }
+
+            // Hindari duplikasi registrasi yang sama di profil siswa
+            $existingRegIds = array_column($grouped[$groupKey]['registrations'], 'id');
+            if (! in_array($reg->id, $existingRegIds)) {
+                $comp = $reg->competition;
+                $catName = $comp->category->name ?? 'Lomba';
+                $catSlug = strtolower($comp->category->slug ?? 'lomba');
+
+                $scheduleFormatted = '-';
+                if ($comp->schedule_date) {
+                    $scheduleFormatted = $comp->schedule_date instanceof \Carbon\Carbon
+                        ? $comp->schedule_date->translatedFormat('d M Y')
+                        : \Carbon\Carbon::parse($comp->schedule_date)->translatedFormat('d M Y');
+                }
+
+                $grouped[$groupKey]['registrations'][] = [
+                    'id' => $reg->id,
+                    'registration_code' => $reg->registration_code,
+                    'competition_id' => $reg->competition_id,
+                    'competition_name' => $comp->name,
+                    'competition_code' => $comp->code,
+                    'category_name' => $catName,
+                    'category_slug' => $catSlug,
+                    'status' => $reg->status,
+                    'match_type' => $reg->match_type,
+                    'target_class' => $reg->target_class,
+                    'sub_category' => $reg->sub_category,
+                    'draw_number' => $reg->draw_number,
+                    'venue' => $comp->venue ?: 'Lokasi Ditentukan Panitia',
+                    'schedule_date' => $comp->schedule_date,
+                    'schedule_date_formatted' => $scheduleFormatted,
+                    'schedule_time' => $comp->schedule_time ?: 'Waktu Menyusul',
+                    'detail_url' => route('peserta.registration.detail', $reg->id),
+                ];
+
+                $grouped[$groupKey]['competition_ids'][] = $reg->competition_id;
+                if (! in_array($catName, $grouped[$groupKey]['categories'])) {
+                    $grouped[$groupKey]['categories'][] = $catName;
+                }
+            }
+        }
+
+        // 3. Filter HANYA peserta yang mendaftar di >= 2 registrasi/lomba
+        $multiStudents = collect($grouped)->filter(function ($item) {
+            return count($item['registrations']) >= 2;
+        })->map(function ($item) {
+            $item['total_competitions'] = count($item['registrations']);
+            $item['categories_count'] = count($item['categories']);
+            $item['is_cross_category'] = count($item['categories']) >= 2;
+
+            // Deteksi spesifik apakah ada kombinasi Seni & Olahraga
+            $hasSeni = false;
+            $hasOlahraga = false;
+            foreach ($item['registrations'] as $r) {
+                $slug = $r['category_slug'];
+                if (str_contains($slug, 'seni')) {
+                    $hasSeni = true;
+                }
+                if (str_contains($slug, 'olahraga')) {
+                    $hasOlahraga = true;
+                }
+            }
+            $item['has_seni_and_olahraga'] = ($hasSeni && $hasOlahraga);
+
+            // Deteksi potensi bentrok jadwal (tanggal tanding yang sama)
+            $dateGroups = [];
+            foreach ($item['registrations'] as $r) {
+                if (! empty($r['schedule_date'])) {
+                    $d = $r['schedule_date'] instanceof \Carbon\Carbon
+                        ? $r['schedule_date']->format('Y-m-d')
+                        : substr((string) $r['schedule_date'], 0, 10);
+                    $dateGroups[$d][] = $r['competition_name'] . ' (' . $r['schedule_time'] . ')';
+                }
+            }
+            $conflicts = [];
+            foreach ($dateGroups as $date => $comps) {
+                if (count($comps) >= 2) {
+                    $conflicts[] = [
+                        'date' => $date,
+                        'competitions' => $comps,
+                    ];
+                }
+            }
+            $item['has_conflict'] = count($conflicts) > 0;
+            $item['conflicts'] = $conflicts;
+
+            return $item;
+        })->sortByDesc('total_competitions')->values();
+
+        // 4. Hitung Statistik Ringkasan
+        $totalMultiStudents = $multiStudents->count();
+        $totalCrossCategory = $multiStudents->where('is_cross_category', true)->count();
+        $totalSeniOlahraga = $multiStudents->where('has_seni_and_olahraga', true)->count();
+        $totalConflicts = $multiStudents->where('has_conflict', true)->count();
+        $maxLomba = $multiStudents->max('total_competitions') ?? 0;
+
+        $categories = Category::orderBy('order', 'asc')->get();
+
+        return view('admin.multi-participants', compact(
+            'multiStudents',
+            'totalMultiStudents',
+            'totalCrossCategory',
+            'totalSeniOlahraga',
+            'totalConflicts',
+            'maxLomba',
+            'categories'
+        ));
     }
 }

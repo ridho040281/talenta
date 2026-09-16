@@ -195,6 +195,7 @@ Route::middleware(['auth', 'role:superadmin,panitia'])->prefix('admin')->name('a
     // Operational & Competition Routes (Data Peserta, Juri, Wasit & Undian)
     Route::get('/verifikasi', [PicController::class, 'dashboard'])->name('verifications');
     Route::get('/peserta', [PicController::class, 'dashboard'])->name('participants.index');
+    Route::get('/peserta-multi-lomba', [AdminController::class, 'multiParticipants'])->name('participants.multi');
     Route::get('/juri-wasit', [AdminController::class, 'juriWasitUndian'])->name('juri.wasit');
     Route::get('/undi-peserta', [PicController::class, 'drawIndex'])->name('undian');
 

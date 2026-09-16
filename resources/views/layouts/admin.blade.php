@@ -482,6 +482,15 @@
                             <span>Data Peserta</span>
                         </div>
                     </a>
+                    <a href="{{ route('admin.participants.multi') }}" class="flex items-center justify-between px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('admin.participants.multi*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="layers" class="w-4 h-4 {{ request()->routeIs('admin.participants.multi*') ? 'text-white' : 'text-amber-400' }}"></i>
+                            <span>Peserta Multi Lomba</span>
+                        </div>
+                        <span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono">
+                            Multi
+                        </span>
+                    </a>
                     <a href="{{ route('admin.juri.wasit') }}" class="flex items-center justify-between px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('admin.juri.wasit*') || request()->routeIs('admin.undian*') || request()->routeIs('badminton.index*') || request()->routeIs('juri.*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
                         <div class="flex items-center gap-3">
                             <i data-lucide="scale" class="w-4 h-4 {{ request()->routeIs('admin.juri.wasit*') || request()->routeIs('admin.undian*') || request()->routeIs('badminton.index*') || request()->routeIs('juri.*') ? 'text-white' : 'text-[#A594FD]' }}"></i>
