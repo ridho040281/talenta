@@ -30,7 +30,10 @@
                 predikat: { top: 61, left: 50, size: 22, color: '#b45309', bold: true, align: 'center', font: 'sans', visible: true },
                 lomba: { top: 68, left: 50, size: 18, color: '#1e293b', bold: true, align: 'center', font: 'sans', visible: true },
                 tanggal: { top: 79, left: 75, size: 14, color: '#334155', bold: false, align: 'center', font: 'sans', visible: true },
-                qrcode: { top: 75, left: 15, size: 75, visible: true }
+                qrcode: { top: 75, left: 15, size: 75, visible: true },
+                teks_1: { text: '', top: 35, left: 50, size: 16, color: '#1e293b', bold: false, align: 'center', font: 'sans', visible: false },
+                teks_2: { text: '', top: 57, left: 50, size: 15, color: '#1e293b', bold: false, align: 'center', font: 'sans', visible: false },
+                teks_3: { text: '', top: 71, left: 50, size: 14, color: '#1e293b', bold: false, align: 'center', font: 'sans', visible: false }
             };
         }
     },
@@ -208,14 +211,17 @@
                 </div>
 
                 <!-- Sub-tab Selector Elemen Teks -->
-                <div class="grid grid-cols-4 gap-1.5 p-1 bg-white/[0.04] rounded-2xl">
+                <div class="grid grid-cols-5 gap-1.5 p-1 bg-white/[0.04] rounded-2xl">
                     <button type="button" @click="activeTab = 'nama'" :class="activeTab === 'nama' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Nama</button>
                     <button type="button" @click="activeTab = 'predikat'" :class="activeTab === 'predikat' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Predikat</button>
                     <button type="button" @click="activeTab = 'sekolah'" :class="activeTab === 'sekolah' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Sekolah</button>
                     <button type="button" @click="activeTab = 'lomba'" :class="activeTab === 'lomba' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Lomba</button>
                     <button type="button" @click="activeTab = 'nomor'" :class="activeTab === 'nomor' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Nomor</button>
                     <button type="button" @click="activeTab = 'tanggal'" :class="activeTab === 'tanggal' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Tanggal</button>
-                    <button type="button" @click="activeTab = 'qrcode'" :class="activeTab === 'qrcode' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center col-span-2">QR Code</button>
+                    <button type="button" @click="activeTab = 'teks_1'" :class="activeTab === 'teks_1' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Teks 1</button>
+                    <button type="button" @click="activeTab = 'teks_2'" :class="activeTab === 'teks_2' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Teks 2</button>
+                    <button type="button" @click="activeTab = 'teks_3'" :class="activeTab === 'teks_3' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">Teks 3</button>
+                    <button type="button" @click="activeTab = 'qrcode'" :class="activeTab === 'qrcode' ? 'bg-purple-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="py-1.5 px-2 rounded-xl text-[11px] transition text-center">QR Code</button>
                 </div>
 
                 <!-- FORM SLIDERS UNTUK ELEMEN YANG DIPILIH -->
@@ -223,11 +229,23 @@
                     <div x-show="activeTab === key" class="space-y-4 pt-1">
                         <!-- Toggle Tampilkan -->
                         <div class="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/[0.05]">
-                            <span class="text-xs font-bold text-slate-300">Tampilkan Elemen Ini</span>
+                            <div>
+                                <span class="text-xs font-bold text-slate-300 block">Tampilkan Elemen Ini</span>
+                                <span class="text-[10px] text-slate-500">Matikan jika sudah include di gambar template</span>
+                            </div>
                             <label class="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" x-model="val.visible" class="sr-only peer">
                                 <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600"></div>
                             </label>
+                        </div>
+
+                        <!-- Khusus Teks Tambahan (teks_1, teks_2, teks_3): Input Teks Kustom -->
+                        <div x-show="key.startsWith('teks_')" class="space-y-1.5">
+                            <label class="block text-xs font-bold text-slate-300">
+                                Isi Kalimat / Teks Tambahan:
+                            </label>
+                            <textarea x-model="val.text" rows="2" placeholder="Contoh: Memberikan penghargaan kepada : atau Pada Kejuaraan Bulutangkis..." class="w-full px-3.5 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs text-white placeholder-slate-500 outline-none focus:border-purple-500"></textarea>
+                            <p class="text-[10px] text-slate-500">Kosongkan jika teks ini sudah ada pada gambar blangko template Anda.</p>
                         </div>
 
                         <!-- Slider Posisi Vertikal (Top %) -->
@@ -258,24 +276,32 @@
                         </div>
 
                         <!-- Warna & Gaya Teks (Khusus Non-QR) -->
-                        <div x-show="key !== 'qrcode'" class="grid grid-cols-2 gap-3 pt-1">
+                        <div x-show="key !== 'qrcode'" class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
                             <div>
                                 <label class="block text-xs font-bold text-slate-400 mb-1.5">Warna Teks:</label>
                                 <div class="flex items-center gap-2">
                                     <input type="color" x-model="val.color" class="w-9 h-9 rounded-lg bg-transparent border-0 cursor-pointer">
-                                    <input type="text" x-model="val.color" class="flex-1 px-2.5 py-1.5 rounded-lg bg-[#0C111D] border border-white/[0.1] text-xs font-mono text-white outline-none">
+                                    <input type="text" x-model="val.color" class="flex-1 px-2 py-1.5 rounded-lg bg-[#0C111D] border border-white/[0.1] text-xs font-mono text-white outline-none">
                                 </div>
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-slate-400 mb-1.5">Gaya Font:</label>
-                                <div class="flex items-center gap-2 pt-1.5">
+                                <label class="block text-xs font-bold text-slate-400 mb-1.5">Rata Teks:</label>
+                                <select x-model="val.align" class="w-full px-2 py-2 rounded-lg bg-[#0C111D] border border-white/[0.1] text-xs text-white outline-none">
+                                    <option value="center">Rata Tengah (Center)</option>
+                                    <option value="left">Rata Kiri (Left)</option>
+                                    <option value="right">Rata Kanan (Right)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 mb-1.5">Gaya Huruf:</label>
+                                <div class="flex items-center gap-2 pt-1">
                                     <label class="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer">
                                         <input type="checkbox" x-model="val.bold" class="rounded border-white/[0.2] bg-slate-900 text-purple-600 focus:ring-0">
                                         <span>Bold</span>
                                     </label>
                                     <select x-show="val.font !== undefined" x-model="val.font" class="px-2 py-1 rounded bg-[#0C111D] border border-white/[0.1] text-[11px] text-white">
-                                        <option value="sans">Sans-Serif</option>
-                                        <option value="serif">Serif Resmi</option>
+                                        <option value="sans">Sans</option>
+                                        <option value="serif">Serif</option>
                                     </select>
                                 </div>
                             </div>
@@ -416,6 +442,60 @@
                          class="cursor-pointer transition hover:outline hover:outline-2 hover:outline-purple-500 whitespace-nowrap"
                          @click="activeTab = 'tanggal'">
                         Blitar, 17 Oktober 2026
+                    </div>
+
+                    <!-- 8. Teks Tambahan 1 (Opsional) -->
+                    <div x-show="cfg.teks_1 && cfg.teks_1.visible && cfg.teks_1.text" 
+                         :style="{
+                             position: 'absolute',
+                             top: cfg.teks_1.top + '%',
+                             left: cfg.teks_1.left + '%',
+                             transform: (cfg.teks_1.align === 'left' ? 'translate(0, -50%)' : (cfg.teks_1.align === 'right' ? 'translate(-100%, -50%)' : 'translate(-50%, -50%)')),
+                             fontSize: (cfg.teks_1.size * 0.45) + 'px',
+                             color: cfg.teks_1.color,
+                             fontWeight: cfg.teks_1.bold ? 'bold' : 'normal',
+                             fontFamily: cfg.teks_1.font === 'serif' ? 'Georgia, serif' : 'Plus Jakarta Sans, sans-serif',
+                             textAlign: cfg.teks_1.align || 'center'
+                         }"
+                         class="cursor-pointer transition hover:outline hover:outline-2 hover:outline-purple-500 whitespace-pre-wrap max-w-[80%]"
+                         @click="activeTab = 'teks_1'"
+                         x-text="cfg.teks_1.text">
+                    </div>
+
+                    <!-- 9. Teks Tambahan 2 (Opsional) -->
+                    <div x-show="cfg.teks_2 && cfg.teks_2.visible && cfg.teks_2.text" 
+                         :style="{
+                             position: 'absolute',
+                             top: cfg.teks_2.top + '%',
+                             left: cfg.teks_2.left + '%',
+                             transform: (cfg.teks_2.align === 'left' ? 'translate(0, -50%)' : (cfg.teks_2.align === 'right' ? 'translate(-100%, -50%)' : 'translate(-50%, -50%)')),
+                             fontSize: (cfg.teks_2.size * 0.45) + 'px',
+                             color: cfg.teks_2.color,
+                             fontWeight: cfg.teks_2.bold ? 'bold' : 'normal',
+                             fontFamily: cfg.teks_2.font === 'serif' ? 'Georgia, serif' : 'Plus Jakarta Sans, sans-serif',
+                             textAlign: cfg.teks_2.align || 'center'
+                         }"
+                         class="cursor-pointer transition hover:outline hover:outline-2 hover:outline-purple-500 whitespace-pre-wrap max-w-[80%]"
+                         @click="activeTab = 'teks_2'"
+                         x-text="cfg.teks_2.text">
+                    </div>
+
+                    <!-- 10. Teks Tambahan 3 (Opsional) -->
+                    <div x-show="cfg.teks_3 && cfg.teks_3.visible && cfg.teks_3.text" 
+                         :style="{
+                             position: 'absolute',
+                             top: cfg.teks_3.top + '%',
+                             left: cfg.teks_3.left + '%',
+                             transform: (cfg.teks_3.align === 'left' ? 'translate(0, -50%)' : (cfg.teks_3.align === 'right' ? 'translate(-100%, -50%)' : 'translate(-50%, -50%)')),
+                             fontSize: (cfg.teks_3.size * 0.45) + 'px',
+                             color: cfg.teks_3.color,
+                             fontWeight: cfg.teks_3.bold ? 'bold' : 'normal',
+                             fontFamily: cfg.teks_3.font === 'serif' ? 'Georgia, serif' : 'Plus Jakarta Sans, sans-serif',
+                             textAlign: cfg.teks_3.align || 'center'
+                         }"
+                         class="cursor-pointer transition hover:outline hover:outline-2 hover:outline-purple-500 whitespace-pre-wrap max-w-[80%]"
+                         @click="activeTab = 'teks_3'"
+                         x-text="cfg.teks_3.text">
                     </div>
 
                     <!-- 7. QR Code Keabsahan -->
