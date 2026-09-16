@@ -261,7 +261,7 @@ class BadmintonMatchController extends Controller
 
         return response()->json([
             'success' => true,
-            'match'   => $this->formatMatchState($match),
+            'match' => $this->formatMatchState($match),
         ]);
     }
 
@@ -400,10 +400,10 @@ class BadmintonMatchController extends Controller
             return response()->json(['error' => 'Match not found'], 404);
         }
 
-        $matchId   = $match->id;
-        $cacheKey  = "blt_match_{$matchId}_ts";
-        $lastTs    = 0.0;
-        $deadline  = time() + 300; // max 5 menit per koneksi
+        $matchId = $match->id;
+        $cacheKey = "blt_match_{$matchId}_ts";
+        $lastTs = 0.0;
+        $deadline = time() + 300; // max 5 menit per koneksi
 
         return response()->stream(function () use ($matchId, $cacheKey, &$lastTs, $deadline) {
             // Kirim state awal segera
@@ -446,10 +446,10 @@ class BadmintonMatchController extends Controller
             ob_flush();
             flush();
         }, 200, [
-            'Content-Type'      => 'text/event-stream',
-            'Cache-Control'     => 'no-cache, no-store',
+            'Content-Type' => 'text/event-stream',
+            'Cache-Control' => 'no-cache, no-store',
             'X-Accel-Buffering' => 'no',  // nonaktifkan Nginx buffering
-            'Connection'        => 'keep-alive',
+            'Connection' => 'keep-alive',
         ]);
     }
 
@@ -460,7 +460,7 @@ class BadmintonMatchController extends Controller
     public function arenaStream()
     {
         $cacheKey = 'blt_arena_ts';
-        $lastTs   = 0.0;
+        $lastTs = 0.0;
         $deadline = time() + 300;
 
         return response()->stream(function () use ($cacheKey, &$lastTs, $deadline) {
@@ -477,7 +477,7 @@ class BadmintonMatchController extends Controller
 
                 $ts = (float) Cache::get($cacheKey, 0);
                 if ($ts > $lastTs) {
-                    $lastTs  = $ts;
+                    $lastTs = $ts;
                     $payload = json_encode($this->buildArenaState());
                     echo "event: arena\n";
                     echo "data: {$payload}\n\n";
@@ -496,10 +496,10 @@ class BadmintonMatchController extends Controller
             ob_flush();
             flush();
         }, 200, [
-            'Content-Type'      => 'text/event-stream',
-            'Cache-Control'     => 'no-cache, no-store',
+            'Content-Type' => 'text/event-stream',
+            'Cache-Control' => 'no-cache, no-store',
             'X-Accel-Buffering' => 'no',
-            'Connection'        => 'keep-alive',
+            'Connection' => 'keep-alive',
         ]);
     }
 
@@ -527,6 +527,7 @@ class BadmintonMatchController extends Controller
                 $courtMatches[$court] = $this->formatMatchState($m);
             }
         }
+
         return $courtMatches;
     }
 

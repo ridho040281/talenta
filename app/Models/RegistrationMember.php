@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -41,9 +42,9 @@ class RegistrationMember extends Model
         }
 
         try {
-            return $this->birth_date instanceof \Carbon\Carbon
+            return $this->birth_date instanceof Carbon
                 ? $this->birth_date->translatedFormat('d F Y')
-                : \Carbon\Carbon::parse($this->birth_date)->translatedFormat('d F Y');
+                : Carbon::parse($this->birth_date)->translatedFormat('d F Y');
         } catch (\Throwable $e) {
             return (string) $this->birth_date;
         }

@@ -47,6 +47,15 @@
                     <i data-lucide="receipt" class="w-4 h-4"></i>
                     <span>Kwitansi</span>
                 </a>
+                @php
+                    $isCertReleased = \App\Models\AppSetting::where('key', 'certificate_release_' . $registration->competition_id)->value('value') === '1';
+                @endphp
+                @if($isCertReleased)
+                    <a href="{{ route('peserta.certificate.download', $registration->id) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30 font-bold text-xs transition">
+                        <i data-lucide="award" class="w-4 h-4"></i>
+                        <span>Cetak Sertifikat</span>
+                    </a>
+                @endif
             @endif
             <a href="{{ route('peserta.registrations') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs transition">
                 <i data-lucide="arrow-left" class="w-4 h-4 text-slate-400"></i>

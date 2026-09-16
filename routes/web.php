@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminSettingsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BadmintonMatchController;
+use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\CollectiveRegistrationController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\HomeController;
@@ -52,6 +53,7 @@ Route::get('/badminton/matches/{id}/stream', [BadmintonMatchController::class, '
 Route::post('/badminton/matches/{id}/score', [BadmintonMatchController::class, 'apiScore'])->name('badminton.api.score');
 Route::get('/badminton/api/active-courts', [BadmintonMatchController::class, 'apiActiveCourts'])->name('badminton.api.active_courts');
 Route::get('/badminton/api/arena-stream', [BadmintonMatchController::class, 'arenaStream'])->name('badminton.api.arena_stream');
+Route::get('/verifikasi-sertifikat/{code}', [CertificateController::class, 'verifyPublic'])->name('certificate.verify');
 
 /*
 |--------------------------------------------------------------------------
@@ -83,6 +85,7 @@ Route::middleware(['auth', 'role:peserta,superadmin'])->prefix('peserta')->name(
     Route::post('/pendaftaran/{id}/revisi', [PesertaController::class, 'updateRevision'])->name('registration.revision');
     Route::get('/pendaftaran/{id}/cetak-kartu', [PesertaController::class, 'printIdCard'])->name('print.idcard');
     Route::get('/pendaftaran/{id}/kartu', [PesertaController::class, 'printIdCard'])->name('card');
+    Route::get('/pendaftaran/{id}/sertifikat', [CertificateController::class, 'pesertaDownload'])->name('certificate.download');
 
     // Collective Registration (Excel) & Invoices
     Route::get('/collective', [CollectiveRegistrationController::class, 'wizard'])->name('collective.wizard');
@@ -192,6 +195,16 @@ Route::middleware(['auth', 'role:superadmin,panitia'])->prefix('admin')->name('a
     Route::get('/berita-acara', [OfficialReportController::class, 'index'])->name('berita-acara.index');
     Route::get('/berita-acara/cetak', [OfficialReportController::class, 'print'])->name('berita-acara.print');
 
+    // Sertifikat & Piagam Kejuaraan
+    Route::get('/sertifikat', [CertificateController::class, 'index'])->name('certificates.index');
+    Route::get('/sertifikat/desainer/{id?}', [CertificateController::class, 'designer'])->name('certificates.designer');
+    Route::post('/sertifikat/template', [CertificateController::class, 'storeOrUpdateTemplate'])->name('certificates.template.store');
+    Route::post('/sertifikat/template/{id}/layout', [CertificateController::class, 'saveLayout'])->name('certificates.template.layout');
+    Route::post('/sertifikat/template/{id}/delete', [CertificateController::class, 'deleteTemplate'])->name('certificates.template.delete');
+    Route::post('/sertifikat/toggle-release', [CertificateController::class, 'toggleRelease'])->name('certificates.toggle-release');
+    Route::get('/sertifikat/cetak', [CertificateController::class, 'printSingle'])->name('certificates.print');
+    Route::get('/sertifikat/cetak-massal', [CertificateController::class, 'printBulk'])->name('certificates.print.bulk');
+
     // Operational & Competition Routes (Data Peserta, Juri, Wasit & Undian)
     Route::get('/verifikasi', [PicController::class, 'dashboard'])->name('verifications');
     Route::get('/peserta', [PicController::class, 'dashboard'])->name('participants.index');
@@ -269,7 +282,7 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->name('admin.')-
         Route::post('/whatsapp-blast/save-credentials', [AdminSettingsController::class, 'saveWablasCredentials'])->name('whatsapp.blast.save-credentials');
         Route::post('/whatsapp-blast/test-connection', [AdminSettingsController::class, 'testWablasConnection'])->name('whatsapp.blast.test-connection');
         Route::post('/whatsapp-blast/test-send', [AdminSettingsController::class, 'testSendWhatsappMessage'])->name('whatsapp.blast.test-send');
-        
+
         // Pop-up Announcement Modal Routes
         Route::get('/popup-announcement', [AdminSettingsController::class, 'popupAnnouncement'])->name('popup.index');
         Route::post('/popup-announcement', [AdminSettingsController::class, 'updatePopupAnnouncement'])->name('popup.update');
@@ -286,19 +299,20 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->name('admin.')-
 Route::get('/storage/{folder}/{filename}', function ($folder, $filename) {
     $allowedFolders = [
         'documents', 'payments', 'payment_proofs', 'sponsors', 'pamphlets', 'popups',
-        'settings', 'guidelines', 'certificates', 'avatars', 'qrcodes', 'invoices', 'adjustments'
+        'settings', 'guidelines', 'certificates', 'avatars', 'qrcodes', 'invoices', 'adjustments',
     ];
-    if (!in_array($folder, $allowedFolders)) {
+    if (! in_array($folder, $allowedFolders)) {
         abort(404);
     }
     $cleanFilename = basename($filename);
     $path = storage_path("app/public/{$folder}/{$cleanFilename}");
-    if (!file_exists($path)) {
+    if (! file_exists($path)) {
         $path = public_path("storage/{$folder}/{$cleanFilename}");
     }
     if (file_exists($path)) {
         $mime = mime_content_type($path) ?: 'application/octet-stream';
         $disposition = in_array(strtolower(pathinfo($path, PATHINFO_EXTENSION)), ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'svg', 'gif']) ? 'inline' : 'attachment';
+
         return response()->file($path, [
             'Content-Type' => $mime,
             'Content-Disposition' => "{$disposition}; filename=\"{$cleanFilename}\"",
@@ -307,4 +321,3 @@ Route::get('/storage/{folder}/{filename}', function ($folder, $filename) {
     }
     abort(404);
 })->where('filename', '[A-Za-z0-9_\-\.]+');
-

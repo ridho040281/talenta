@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\AppSetting;
 use App\Models\BadmintonMatch;
 use App\Models\Competition;
-use App\Models\Registration;
 use App\Traits\CompetitionPoolTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -202,21 +201,21 @@ class TournamentBracketController extends Controller
                 BadmintonMatch::updateOrCreate(
                     [
                         'competition_id' => $competition->id,
-                        'match_code'     => $match['match_code'],
+                        'match_code' => $match['match_code'],
                     ],
                     [
-                        'court_number'          => 'Lapangan 1',
-                        'round_name'            => $roundName,
-                        'category'              => $categoryCode,
-                        'match_type'            => stripos($targetPool['title'], 'ganda') !== false ? 'double' : 'single',
+                        'court_number' => 'Lapangan 1',
+                        'round_name' => $roundName,
+                        'category' => $categoryCode,
+                        'match_type' => stripos($targetPool['title'], 'ganda') !== false ? 'double' : 'single',
                         'team1_registration_id' => $team1['id'] ?? null,
-                        'team1_school'          => $team1['institution'] ?? ($isBye1 ? 'BYE' : 'TBD'),
-                        'team1_player1'         => $team1['name'] ?? ($isBye1 ? '[BYE]' : 'Menunggu Pemenang'),
+                        'team1_school' => $team1['institution'] ?? ($isBye1 ? 'BYE' : 'TBD'),
+                        'team1_player1' => $team1['name'] ?? ($isBye1 ? '[BYE]' : 'Menunggu Pemenang'),
                         'team2_registration_id' => $team2['id'] ?? null,
-                        'team2_school'          => $team2['institution'] ?? ($isBye2 ? 'BYE' : 'TBD'),
-                        'team2_player1'         => $team2['name'] ?? ($isBye2 ? '[BYE]' : 'Menunggu Pemenang'),
-                        'match_status'          => $status,
-                        'winner_team'           => $winnerTeam,
+                        'team2_school' => $team2['institution'] ?? ($isBye2 ? 'BYE' : 'TBD'),
+                        'team2_player1' => $team2['name'] ?? ($isBye2 ? '[BYE]' : 'Menunggu Pemenang'),
+                        'match_status' => $status,
+                        'winner_team' => $winnerTeam,
                     ]
                 );
 
@@ -288,10 +287,10 @@ class TournamentBracketController extends Controller
         $slots = array_fill(1, $bracketSize, null);
         foreach ($assignedByes as $bs) {
             $slots[$bs] = [
-                'is_bye'      => true,
-                'name'        => '[BYE]',
+                'is_bye' => true,
+                'name' => '[BYE]',
                 'institution' => 'Bebas Babak 1',
-                'id'          => null,
+                'id' => null,
                 'draw_number' => null,
                 'seed_number' => null,
             ];
@@ -371,25 +370,25 @@ class TournamentBracketController extends Controller
             }
 
             $r1Matches[$m] = [
-                'match_code'     => $matchCode,
-                'round_index'    => 1,
-                'match_index'    => $m,
-                'slot1'          => $slot1,
-                'slot2'          => $slot2,
-                'team1'          => $p1,
-                'team2'          => $p2,
-                'is_bye1'        => $isBye1,
-                'is_bye2'        => $isBye2,
-                'winner'         => $winner,
-                'status'         => $status,
+                'match_code' => $matchCode,
+                'round_index' => 1,
+                'match_index' => $m,
+                'slot1' => $slot1,
+                'slot2' => $slot2,
+                'team1' => $p1,
+                'team2' => $p2,
+                'is_bye1' => $isBye1,
+                'is_bye2' => $isBye2,
+                'winner' => $winner,
+                'status' => $status,
                 'existing_match' => $existingMatch,
             ];
         }
 
         $rounds[1] = [
             'round_index' => 1,
-            'round_name'  => $roundNames[1] ?? 'Babak 1',
-            'matches'     => array_values($r1Matches),
+            'round_name' => $roundNames[1] ?? 'Babak 1',
+            'matches' => array_values($r1Matches),
         ];
 
         // Subsequent rounds
@@ -422,21 +421,21 @@ class TournamentBracketController extends Controller
                 }
 
                 $currentMatches[] = [
-                    'match_code'     => $matchCode,
-                    'round_index'    => $r,
-                    'match_index'    => $m,
-                    'team1'          => $t1,
-                    'team2'          => $t2,
-                    'winner'         => $winner,
-                    'status'         => $status,
+                    'match_code' => $matchCode,
+                    'round_index' => $r,
+                    'match_index' => $m,
+                    'team1' => $t1,
+                    'team2' => $t2,
+                    'winner' => $winner,
+                    'status' => $status,
                     'existing_match' => $existingMatch,
                 ];
             }
 
             $rounds[$r] = [
                 'round_index' => $r,
-                'round_name'  => $roundNames[$r] ?? "Babak {$r}",
-                'matches'     => $currentMatches,
+                'round_name' => $roundNames[$r] ?? "Babak {$r}",
+                'matches' => $currentMatches,
             ];
         }
 
@@ -446,16 +445,16 @@ class TournamentBracketController extends Controller
         $champion = $finalMatch['winner'] ?? null;
 
         $bracketData = [
-            'bracket_size'       => $bracketSize,
+            'bracket_size' => $bracketSize,
             'total_participants' => $total,
-            'total_byes'         => $totalByes,
-            'total_rounds'       => $totalRounds,
-            'rounds'             => $rounds,
-            'champion'           => $champion,
+            'total_byes' => $totalByes,
+            'total_rounds' => $totalRounds,
+            'rounds' => $rounds,
+            'champion' => $champion,
         ];
 
         $bracketData['classic_svg_light'] = $this->renderClassicBracketSvg($bracketData, ['isDark' => false]);
-        $bracketData['classic_svg_dark']  = $this->renderClassicBracketSvg($bracketData, ['isDark' => true]);
+        $bracketData['classic_svg_dark'] = $this->renderClassicBracketSvg($bracketData, ['isDark' => true]);
 
         return $bracketData;
     }
@@ -537,28 +536,28 @@ class TournamentBracketController extends Controller
             $boxH = $slotHeight * 0.84;
 
             // Slot Number (1, 2, ..., 32)
-            $svg[] = "<text x='" . ($slotX - 10) . "' y='" . ($yCenter + 4) . "' text-anchor='end' font-size='11' font-weight='700' fill='{$subTextColor}'>{$s}</text>";
+            $svg[] = "<text x='".($slotX - 10)."' y='".($yCenter + 4)."' text-anchor='end' font-size='11' font-weight='700' fill='{$subTextColor}'>{$s}</text>";
 
             // Rectangle Box
             $currentBoxBg = $isBye ? $byeBoxBg : $boxBg;
             $currentBorder = $isBye ? '#94a3b8' : $strokeColor;
-            $dashAttr = $isBye ? "stroke-dasharray='4 2'" : "";
+            $dashAttr = $isBye ? "stroke-dasharray='4 2'" : '';
             $svg[] = "<rect x='{$slotX}' y='{$boxY}' width='{$slotWidth}' height='{$boxH}' fill='{$currentBoxBg}' stroke='{$currentBorder}' stroke-width='1.5' rx='2' {$dashAttr}/>";
 
             // Player Text
             $nameText = $slotData['name'] ?? '';
-            $seedText = !empty($slotData['seed_number']) ? "(S{$slotData['seed_number']}) " : "";
-            $instText = (!empty($slotData['institution']) && !$isBye) ? " - " . $slotData['institution'] : "";
-            $fullText = $seedText . $nameText . $instText;
+            $seedText = ! empty($slotData['seed_number']) ? "(S{$slotData['seed_number']}) " : '';
+            $instText = (! empty($slotData['institution']) && ! $isBye) ? ' - '.$slotData['institution'] : '';
+            $fullText = $seedText.$nameText.$instText;
 
             if (mb_strlen($fullText) > 25) {
-                $fullText = mb_substr($fullText, 0, 23) . '..';
+                $fullText = mb_substr($fullText, 0, 23).'..';
             }
 
             $displayText = htmlspecialchars($fullText, ENT_QUOTES);
             $nameColor = $isBye ? '#94a3b8' : $textColor;
-            $fontStyle = $isBye ? "font-style='italic'" : "";
-            $svg[] = "<text x='" . ($slotX + 8) . "' y='" . ($yCenter + 4) . "' font-size='10' font-weight='600' fill='{$nameColor}' {$fontStyle}>{$displayText}</text>";
+            $fontStyle = $isBye ? "font-style='italic'" : '';
+            $svg[] = "<text x='".($slotX + 8)."' y='".($yCenter + 4)."' font-size='10' font-weight='600' fill='{$nameColor}' {$fontStyle}>{$displayText}</text>";
         }
 
         // 3. Draw Branching Lines and Connectors
@@ -566,7 +565,7 @@ class TournamentBracketController extends Controller
         for ($s = 1; $s <= $bracketSize; $s++) {
             $currentStems[$s] = [
                 'x' => $slotX + $slotWidth,
-                'y' => $slotYPositions[$s]
+                'y' => $slotYPositions[$s],
             ];
         }
 
@@ -600,21 +599,21 @@ class TournamentBracketController extends Controller
                 $svg[] = "<line x1='{$bracketVLineX}' y1='{$yMid}' x2='{$stemEndX}' y2='{$yMid}' stroke='{$strokeColor}' stroke-width='{$strokeWidth}'/>";
 
                 // Winner text on line
-                if (!empty($match['winner'])) {
+                if (! empty($match['winner'])) {
                     $wName = htmlspecialchars(mb_substr($match['winner']['name'] ?? '', 0, 16), ENT_QUOTES);
-                    $svg[] = "<text x='" . ($bracketVLineX + 6) . "' y='" . ($yMid - 5) . "' font-size='9' font-weight='700' fill='#059669'>{$wName}</text>";
+                    $svg[] = "<text x='".($bracketVLineX + 6)."' y='".($yMid - 5)."' font-size='9' font-weight='700' fill='#059669'>{$wName}</text>";
                 }
 
                 // Match score if available
-                if (!empty($match['existing_match']) && ($match['existing_match']->team1_set1 > 0 || $match['existing_match']->team2_set1 > 0)) {
+                if (! empty($match['existing_match']) && ($match['existing_match']->team1_set1 > 0 || $match['existing_match']->team2_set1 > 0)) {
                     $em = $match['existing_match'];
                     $scoreStr = "{$em->team1_set1}-{$em->team2_set1}";
-                    $svg[] = "<text x='" . ($bracketVLineX + 6) . "' y='" . ($yMid + 11) . "' font-size='8' font-mono font-weight='bold' fill='{$subTextColor}'>{$scoreStr}</text>";
+                    $svg[] = "<text x='".($bracketVLineX + 6)."' y='".($yMid + 11)."' font-size='8' font-mono font-weight='bold' fill='{$subTextColor}'>{$scoreStr}</text>";
                 }
 
                 $nextStems[$m + 1] = [
                     'x' => $stemEndX,
-                    'y' => $yMid
+                    'y' => $yMid,
                 ];
             }
 
@@ -636,14 +635,15 @@ class TournamentBracketController extends Controller
         if ($champion) {
             $champName = htmlspecialchars(mb_substr($champion['name'] ?? '', 0, 18), ENT_QUOTES);
             $svg[] = "<rect x='{$champX2}' y='{$champBoxY}' width='{$champBoxWidth}' height='{$champBoxHeight}' fill='#fef3c7' stroke='{$accentColor}' stroke-width='2' rx='6'/>";
-            $svg[] = "<text x='{$champCenterX}' y='" . ($champY - 3) . "' text-anchor='middle' font-size='9' font-weight='800' fill='#b45309'>🏆 JUARA 1</text>";
-            $svg[] = "<text x='{$champCenterX}' y='" . ($champY + 11) . "' text-anchor='middle' font-size='10.5' font-weight='800' fill='#0f172a'>{$champName}</text>";
+            $svg[] = "<text x='{$champCenterX}' y='".($champY - 3)."' text-anchor='middle' font-size='9' font-weight='800' fill='#b45309'>🏆 JUARA 1</text>";
+            $svg[] = "<text x='{$champCenterX}' y='".($champY + 11)."' text-anchor='middle' font-size='10.5' font-weight='800' fill='#0f172a'>{$champName}</text>";
         } else {
             $svg[] = "<rect x='{$champX2}' y='{$champBoxY}' width='{$champBoxWidth}' height='{$champBoxHeight}' fill='{$boxBg}' stroke='{$strokeColor}' stroke-width='1.5' stroke-dasharray='4 3' rx='6'/>";
-            $svg[] = "<text x='{$champCenterX}' y='" . ($champY + 4) . "' text-anchor='middle' font-size='10' font-weight='700' fill='{$subTextColor}'>Pemenang Final</text>";
+            $svg[] = "<text x='{$champCenterX}' y='".($champY + 4)."' text-anchor='middle' font-size='10' font-weight='700' fill='{$subTextColor}'>Pemenang Final</text>";
         }
 
-        $svg[] = "</svg>";
+        $svg[] = '</svg>';
+
         return implode("\n", $svg);
     }
 

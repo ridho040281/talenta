@@ -184,8 +184,8 @@ class PesertaController extends Controller
 
         $isBuluTangkis = ($competition->code === 'BLT');
         $isTenisMeja = ($competition->code === 'TMJ');
-        $isPopSinger = ($competition->code === 'POP' || \Illuminate\Support\Str::contains(strtolower($competition->slug), 'pop') || \Illuminate\Support\Str::contains(strtolower($competition->name), 'pop'));
-        $isPramuka = ($competition->code === 'PRM' || \Illuminate\Support\Str::contains(strtolower($competition->slug), 'pramuka') || \Illuminate\Support\Str::contains(strtolower($competition->name), 'pramuka'));
+        $isPopSinger = ($competition->code === 'POP' || Str::contains(strtolower($competition->slug), 'pop') || Str::contains(strtolower($competition->name), 'pop'));
+        $isPramuka = ($competition->code === 'PRM' || Str::contains(strtolower($competition->slug), 'pramuka') || Str::contains(strtolower($competition->name), 'pramuka'));
         $isGandaBlt = $isBuluTangkis && (stripos($request->input('match_type', ''), 'Ganda') !== false);
 
         // Enforce tier quotas for Tenis Meja

@@ -1,5 +1,10 @@
 <?php
 
+use App\Http\Controllers\AdminSettingsController;
+use App\Models\Invoice;
+use App\Models\Registration;
+use App\Models\RegistrationMember;
+use App\Services\ImageOptimizerService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 
@@ -52,12 +57,14 @@ Artisan::command('storage:compress-existing', function () {
 
         if (! file_exists($folderPath)) {
             $this->line('  -> Folder belum ada di server, dilewati.');
+
             continue;
         }
 
         $files = glob($folderPath.'/*.*');
         if (empty($files)) {
             $this->line('  -> Tidak ada file dalam folder ini.');
+
             continue;
         }
 
@@ -68,6 +75,7 @@ Artisan::command('storage:compress-existing', function () {
             if ($ext === 'pdf') {
                 $this->line("  - [PDF] {$fileName} (dilewati)");
                 $totalSkipped++;
+
                 continue;
             }
 
@@ -82,6 +90,7 @@ Artisan::command('storage:compress-existing', function () {
                 $kb = round($originalSize / 1024, 1);
                 $this->line("  - [AMAN] {$fileName} ({$kb} KB <= {$cfg['target_kb']} KB)");
                 $totalSkipped++;
+
                 continue;
             }
 
@@ -90,7 +99,7 @@ Artisan::command('storage:compress-existing', function () {
 
             $oldRelPath = $cfg['folder'].'/'.$fileName;
 
-            $newRelPath = \App\Services\ImageOptimizerService::optimizeAndStore(
+            $newRelPath = ImageOptimizerService::optimizeAndStore(
                 $filePath,
                 $cfg['folder'],
                 $fileName,
@@ -110,14 +119,14 @@ Artisan::command('storage:compress-existing', function () {
                 $dbUpdated = true;
                 try {
                     if ($cfg['db_type'] === 'payment_proof') {
-                        \App\Models\Registration::where('payment_proof', $oldRelPath)->update(['payment_proof' => $newRelPath]);
-                        \App\Models\Invoice::where('payment_proof', $oldRelPath)->update(['payment_proof' => $newRelPath]);
+                        Registration::where('payment_proof', $oldRelPath)->update(['payment_proof' => $newRelPath]);
+                        Invoice::where('payment_proof', $oldRelPath)->update(['payment_proof' => $newRelPath]);
                     } elseif ($cfg['db_type'] === 'official_photo') {
-                        \App\Models\Registration::where('official_photo', $oldRelPath)->update(['official_photo' => $newRelPath]);
+                        Registration::where('official_photo', $oldRelPath)->update(['official_photo' => $newRelPath]);
                     } elseif ($cfg['db_type'] === 'member_photo') {
-                        \App\Models\RegistrationMember::where('photo', $oldRelPath)->update(['photo' => $newRelPath]);
+                        RegistrationMember::where('photo', $oldRelPath)->update(['photo' => $newRelPath]);
                     }
-                } catch (\Throwable $e) {
+                } catch (Throwable $e) {
                     $dbUpdated = false;
                     $this->warn('    (Catatan DB: '.$e->getMessage().')');
                 }
@@ -128,8 +137,8 @@ Artisan::command('storage:compress-existing', function () {
                 }
             }
 
-            if (class_exists(\App\Http\Controllers\AdminSettingsController::class)) {
-                \App\Http\Controllers\AdminSettingsController::ensurePublicStorageSync($newRelPath);
+            if (class_exists(AdminSettingsController::class)) {
+                AdminSettingsController::ensurePublicStorageSync($newRelPath);
             }
 
             $this->info("    ✓ Selesai: {$origKb} KB -> {$newKb} KB (Hemat: ".round($saved / 1024, 1).' KB)');
@@ -144,4 +153,3 @@ Artisan::command('storage:compress-existing', function () {
     $this->info("Total file dilewati (sudah kecil / PDF) : {$totalSkipped}");
     $this->info("Total ruang disk yang dihemat : {$totalMbSaved} MB");
 })->purpose('Kompres berkas lama (foto pramuka dan bukti transfer) yang ukurannya melebihi batas');
-

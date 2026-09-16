@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
@@ -60,22 +61,22 @@ class AppSetting extends Model
         if ($autoClose) {
             $now = now();
             $startDate = static::get('registration_start_date');
-            if (!empty($startDate) && strtotime($startDate)) {
-                if ($now->lt(\Carbon\Carbon::parse($startDate))) {
+            if (! empty($startDate) && strtotime($startDate)) {
+                if ($now->lt(Carbon::parse($startDate))) {
                     return false;
                 }
             }
 
             $deadline = static::get('registration_deadline');
-            $effectiveDeadline = !empty($deadline) && strtotime($deadline) ? \Carbon\Carbon::parse($deadline) : null;
+            $effectiveDeadline = ! empty($deadline) && strtotime($deadline) ? Carbon::parse($deadline) : null;
             try {
-                $latestCompDeadline = \App\Models\Competition::where('status', 'buka')
+                $latestCompDeadline = Competition::where('status', 'buka')
                     ->whereNotNull('registration_end_at')
                     ->max('registration_end_at');
 
                 if ($latestCompDeadline) {
-                    $latestCompCarbon = \Carbon\Carbon::parse($latestCompDeadline);
-                    if (!$effectiveDeadline || $latestCompCarbon->gt($effectiveDeadline)) {
+                    $latestCompCarbon = Carbon::parse($latestCompDeadline);
+                    if (! $effectiveDeadline || $latestCompCarbon->gt($effectiveDeadline)) {
                         $effectiveDeadline = $latestCompCarbon;
                     }
                 }
@@ -98,25 +99,25 @@ class AppSetting extends Model
         $startDate = static::get('registration_start_date', '2026-09-01T08:00');
         $deadline = static::get('registration_deadline', '2026-09-25T23:59');
         $closedMessage = static::get('registration_closed_message', 'Pendaftaran TALENTA 2026 telah resmi ditutup.');
-        
+
         $now = now();
         $isStarted = true;
         $isExpired = false;
 
-        if (!empty($startDate) && strtotime($startDate)) {
-            $isStarted = $now->gte(\Carbon\Carbon::parse($startDate));
+        if (! empty($startDate) && strtotime($startDate)) {
+            $isStarted = $now->gte(Carbon::parse($startDate));
         }
 
         // Determine effective latest deadline across global setting & individual active competitions
-        $effectiveDeadline = !empty($deadline) && strtotime($deadline) ? \Carbon\Carbon::parse($deadline) : null;
+        $effectiveDeadline = ! empty($deadline) && strtotime($deadline) ? Carbon::parse($deadline) : null;
         try {
-            $latestCompDeadline = \App\Models\Competition::where('status', 'buka')
+            $latestCompDeadline = Competition::where('status', 'buka')
                 ->whereNotNull('registration_end_at')
                 ->max('registration_end_at');
 
             if ($latestCompDeadline) {
-                $latestCompCarbon = \Carbon\Carbon::parse($latestCompDeadline);
-                if (!$effectiveDeadline || $latestCompCarbon->gt($effectiveDeadline)) {
+                $latestCompCarbon = Carbon::parse($latestCompDeadline);
+                if (! $effectiveDeadline || $latestCompCarbon->gt($effectiveDeadline)) {
                     $effectiveDeadline = $latestCompCarbon;
                 }
             }
@@ -130,7 +131,7 @@ class AppSetting extends Model
 
         $isOpen = ($status !== 'closed');
         if ($autoClose) {
-            if (!$isStarted || $isExpired) {
+            if (! $isStarted || $isExpired) {
                 $isOpen = false;
             }
         }
@@ -147,7 +148,7 @@ class AppSetting extends Model
             $statusColor = 'rose';
             $buttonText = 'Pendaftaran Ditutup';
             $buttonIcon = 'lock';
-        } elseif ($autoClose && !$isStarted) {
+        } elseif ($autoClose && ! $isStarted) {
             $statusCode = 'not_started';
             $statusLabel = 'Belum Dibuka (Terjadwal)';
             $statusColor = 'amber';
@@ -161,8 +162,8 @@ class AppSetting extends Model
             $buttonIcon = 'lock';
         }
 
-        $startDateFormatted = !empty($startDate) ? \Carbon\Carbon::parse($startDate)->translatedFormat('d F Y, H:i') : null;
-        $deadlineFormatted = !empty($deadline) ? \Carbon\Carbon::parse($deadline)->translatedFormat('d F Y, H:i') : null;
+        $startDateFormatted = ! empty($startDate) ? Carbon::parse($startDate)->translatedFormat('d F Y, H:i') : null;
+        $deadlineFormatted = ! empty($deadline) ? Carbon::parse($deadline)->translatedFormat('d F Y, H:i') : null;
 
         return [
             'is_open' => $isOpen,

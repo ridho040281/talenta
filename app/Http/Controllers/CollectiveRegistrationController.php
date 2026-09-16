@@ -8,6 +8,7 @@ use App\Models\Invoice;
 use App\Models\Registration;
 use App\Models\RegistrationMember;
 use App\Models\User;
+use App\Models\WhatsappTemplate;
 use App\Services\ImageOptimizerService;
 use App\Services\WablasNotificationService;
 use Illuminate\Http\Request;
@@ -34,7 +35,7 @@ class CollectiveRegistrationController extends Controller
     {
         $user = Auth::user();
         $regInfo = AppSetting::getRegistrationStatusInfo();
-        if (!$regInfo['is_open'] && !$user->isTester()) {
+        if (! $regInfo['is_open'] && ! $user->isTester()) {
             return redirect()->route('peserta.dashboard')
                 ->with('error', $regInfo['closed_message'] ?: 'Pendaftaran kolektif saat ini sedang ditutup.');
         }
@@ -124,7 +125,7 @@ class CollectiveRegistrationController extends Controller
         $popSongs = $popComp ? $popComp->song_options : [];
         if (empty($popSongs)) {
             $defaultRaw = AppSetting::get('pop_song_options') ?: "Deen Assalam\nRahmatun Lil'Alameen\nYa Maulana\nMan Ana\nAisyah Istri Rasulullah\nBidadari Surga\nSholawat Cinta\nKisah Sang Rasul";
-            $popSongs = array_values(array_filter(array_map('trim', explode("\n", str_replace("\r", "", $defaultRaw)))));
+            $popSongs = array_values(array_filter(array_map('trim', explode("\n", str_replace("\r", '', $defaultRaw)))));
         }
 
         // Create Helper Hidden Sheet for Dropdown Lists (Competitions & Pop Songs)
@@ -656,7 +657,7 @@ class CollectiveRegistrationController extends Controller
 
         $user = Auth::user();
         $regInfo = AppSetting::getRegistrationStatusInfo();
-        if (!$regInfo['is_open'] && !$user->isTester()) {
+        if (! $regInfo['is_open'] && ! $user->isTester()) {
             return redirect()->route('peserta.dashboard')
                 ->with('error', $regInfo['closed_message'] ?: 'Pendaftaran kolektif saat ini sedang ditutup.');
         }
@@ -976,7 +977,7 @@ class CollectiveRegistrationController extends Controller
                 $invoice->loadMissing(['user', 'registrations.competition']);
                 $targetPhone = $invoice->user?->phone;
                 if (! empty($targetPhone)) {
-                    $templateCode = \App\Models\WhatsappTemplate::where('code', 'collective_invoice_verified')->where('is_active', true)->exists()
+                    $templateCode = WhatsappTemplate::where('code', 'collective_invoice_verified')->where('is_active', true)->exists()
                         ? 'collective_invoice_verified'
                         : 'registration_verified';
 
@@ -1021,7 +1022,7 @@ class CollectiveRegistrationController extends Controller
                 $invoice->loadMissing(['user', 'registrations.competition']);
                 $targetPhone = $invoice->user?->phone;
                 if (! empty($targetPhone)) {
-                    $templateCode = \App\Models\WhatsappTemplate::where('code', 'collective_invoice_rejected')->where('is_active', true)->exists()
+                    $templateCode = WhatsappTemplate::where('code', 'collective_invoice_rejected')->where('is_active', true)->exists()
                         ? 'collective_invoice_rejected'
                         : 'registration_rejected';
 

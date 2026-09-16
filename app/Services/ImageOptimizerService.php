@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Http\Controllers\AdminSettingsController;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 
@@ -44,9 +45,10 @@ class ImageOptimizerService
         if (! file_exists($sourcePath)) {
             if ($file instanceof UploadedFile) {
                 $stored = $file->storeAs($cleanFolder, $fileName, 'public');
-                if (class_exists(\App\Http\Controllers\AdminSettingsController::class)) {
-                    \App\Http\Controllers\AdminSettingsController::ensurePublicStorageSync($stored);
+                if (class_exists(AdminSettingsController::class)) {
+                    AdminSettingsController::ensurePublicStorageSync($stored);
                 }
+
                 return $stored;
             }
 
@@ -57,14 +59,15 @@ class ImageOptimizerService
         if (! extension_loaded('gd')) {
             if ($file instanceof UploadedFile) {
                 $stored = $file->storeAs($cleanFolder, $fileName, 'public');
-                if (class_exists(\App\Http\Controllers\AdminSettingsController::class)) {
-                    \App\Http\Controllers\AdminSettingsController::ensurePublicStorageSync($stored);
+                if (class_exists(AdminSettingsController::class)) {
+                    AdminSettingsController::ensurePublicStorageSync($stored);
                 }
+
                 return $stored;
             }
             @copy($sourcePath, $targetPath);
-            if (class_exists(\App\Http\Controllers\AdminSettingsController::class)) {
-                \App\Http\Controllers\AdminSettingsController::ensurePublicStorageSync($relativeReturnPath);
+            if (class_exists(AdminSettingsController::class)) {
+                AdminSettingsController::ensurePublicStorageSync($relativeReturnPath);
             }
 
             return $relativeReturnPath;
@@ -75,14 +78,15 @@ class ImageOptimizerService
             if (! $info) {
                 if ($file instanceof UploadedFile) {
                     $stored = $file->storeAs($cleanFolder, $fileName, 'public');
-                    if (class_exists(\App\Http\Controllers\AdminSettingsController::class)) {
-                        \App\Http\Controllers\AdminSettingsController::ensurePublicStorageSync($stored);
+                    if (class_exists(AdminSettingsController::class)) {
+                        AdminSettingsController::ensurePublicStorageSync($stored);
                     }
+
                     return $stored;
                 }
                 @copy($sourcePath, $targetPath);
-                if (class_exists(\App\Http\Controllers\AdminSettingsController::class)) {
-                    \App\Http\Controllers\AdminSettingsController::ensurePublicStorageSync($relativeReturnPath);
+                if (class_exists(AdminSettingsController::class)) {
+                    AdminSettingsController::ensurePublicStorageSync($relativeReturnPath);
                 }
 
                 return $relativeReturnPath;
@@ -122,14 +126,15 @@ class ImageOptimizerService
             if (! $srcImage) {
                 if ($file instanceof UploadedFile) {
                     $stored = $file->storeAs($cleanFolder, $fileName, 'public');
-                    if (class_exists(\App\Http\Controllers\AdminSettingsController::class)) {
-                        \App\Http\Controllers\AdminSettingsController::ensurePublicStorageSync($stored);
+                    if (class_exists(AdminSettingsController::class)) {
+                        AdminSettingsController::ensurePublicStorageSync($stored);
                     }
+
                     return $stored;
                 }
                 @copy($sourcePath, $targetPath);
-                if (class_exists(\App\Http\Controllers\AdminSettingsController::class)) {
-                    \App\Http\Controllers\AdminSettingsController::ensurePublicStorageSync($relativeReturnPath);
+                if (class_exists(AdminSettingsController::class)) {
+                    AdminSettingsController::ensurePublicStorageSync($relativeReturnPath);
                 }
 
                 return $relativeReturnPath;
@@ -236,8 +241,8 @@ class ImageOptimizerService
             imagedestroy($srcImage);
             imagedestroy($dstImage);
 
-            if (class_exists(\App\Http\Controllers\AdminSettingsController::class)) {
-                \App\Http\Controllers\AdminSettingsController::ensurePublicStorageSync($normalizedRelativePath);
+            if (class_exists(AdminSettingsController::class)) {
+                AdminSettingsController::ensurePublicStorageSync($normalizedRelativePath);
             }
 
             return $normalizedRelativePath;
@@ -245,14 +250,15 @@ class ImageOptimizerService
             Log::warning('ImageOptimizerService compression failed: '.$e->getMessage());
             if ($file instanceof UploadedFile) {
                 $stored = $file->storeAs($cleanFolder, $fileName, 'public');
-                if (class_exists(\App\Http\Controllers\AdminSettingsController::class)) {
-                    \App\Http\Controllers\AdminSettingsController::ensurePublicStorageSync($stored);
+                if (class_exists(AdminSettingsController::class)) {
+                    AdminSettingsController::ensurePublicStorageSync($stored);
                 }
+
                 return $stored;
             }
             @copy($sourcePath, $targetPath);
-            if (class_exists(\App\Http\Controllers\AdminSettingsController::class)) {
-                \App\Http\Controllers\AdminSettingsController::ensurePublicStorageSync($relativeReturnPath);
+            if (class_exists(AdminSettingsController::class)) {
+                AdminSettingsController::ensurePublicStorageSync($relativeReturnPath);
             }
 
             return $relativeReturnPath;
@@ -268,9 +274,8 @@ class ImageOptimizerService
      * If image (JPG/PNG/WebP/BMP), compresses to target ~100KB with 1200px resolution so text remains crisp.
      * If PDF, bypasses GD compression and stores directly.
      *
-     * @param  UploadedFile  $file
-     * @param  string  $folder Target directory (e.g. 'payments' or 'payment_proofs')
-     * @param  string|null  $customPrefix Optional prefix for filename (e.g. 'pay', 'kolektif', 'invoice_12')
+     * @param  string  $folder  Target directory (e.g. 'payments' or 'payment_proofs')
+     * @param  string|null  $customPrefix  Optional prefix for filename (e.g. 'pay', 'kolektif', 'invoice_12')
      * @return string Relative path stored in public disk
      */
     public static function storePaymentProof(UploadedFile $file, string $folder = 'payments', ?string $customPrefix = 'pay'): string
@@ -280,19 +285,20 @@ class ImageOptimizerService
         $mime = strtolower($file->getMimeType() ?? '');
         $isPdf = ($rawExt === 'pdf' || $mime === 'application/pdf');
 
-        $prefix = $customPrefix ? rtrim($customPrefix, '_') . '_' : 'pay_';
+        $prefix = $customPrefix ? rtrim($customPrefix, '_').'_' : 'pay_';
 
         if ($isPdf) {
-            $fileName = $prefix . uniqid() . '_' . time() . '.pdf';
+            $fileName = $prefix.uniqid().'_'.time().'.pdf';
             $storedPath = $file->storeAs($cleanFolder, $fileName, 'public');
-            if (class_exists(\App\Http\Controllers\AdminSettingsController::class)) {
-                \App\Http\Controllers\AdminSettingsController::ensurePublicStorageSync($storedPath);
+            if (class_exists(AdminSettingsController::class)) {
+                AdminSettingsController::ensurePublicStorageSync($storedPath);
             }
+
             return $storedPath;
         }
 
         // Image optimization: maxDimension 1200 for sharpness of numbers/text, targetMaxKb 100 for fast loading
-        $fileName = $prefix . uniqid() . '_' . time() . '.jpg';
+        $fileName = $prefix.uniqid().'_'.time().'.jpg';
         $storedPath = static::optimizeAndStore(
             $file,
             $cleanFolder,
@@ -301,8 +307,8 @@ class ImageOptimizerService
             100   // Target 100 KB max
         );
 
-        if (class_exists(\App\Http\Controllers\AdminSettingsController::class)) {
-            \App\Http\Controllers\AdminSettingsController::ensurePublicStorageSync($storedPath);
+        if (class_exists(AdminSettingsController::class)) {
+            AdminSettingsController::ensurePublicStorageSync($storedPath);
         }
 
         return $storedPath;

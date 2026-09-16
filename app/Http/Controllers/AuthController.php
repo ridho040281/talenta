@@ -18,7 +18,7 @@ class AuthController extends Controller
             return $this->redirectBasedOnRole(Auth::user());
         }
 
-        if (!session()->has('login_captcha_question') || !session()->has('login_captcha_answer')) {
+        if (! session()->has('login_captcha_question') || ! session()->has('login_captcha_answer')) {
             static::generateMathCaptcha();
         }
 
@@ -31,6 +31,7 @@ class AuthController extends Controller
     public function refreshCaptcha()
     {
         $captcha = static::generateMathCaptcha();
+
         return response()->json(['question' => $captcha['question']]);
     }
 
@@ -86,6 +87,7 @@ class AuthController extends Controller
 
         if ($expectedAnswer === null || $userAnswer !== (string) $expectedAnswer) {
             static::generateMathCaptcha();
+
             return back()->withErrors([
                 'captcha' => 'Jawaban hitungan keamanan (Captcha) tidak sesuai. Silakan coba lagi.',
             ])->onlyInput('login');
@@ -103,6 +105,7 @@ class AuthController extends Controller
                 ActivityLog::record('LOGIN_BLOCKED', "Percobaan login pada akun yang dinonaktifkan: '{$user->name}'", $user, 'warning', $loginInput);
 
                 static::generateMathCaptcha();
+
                 return back()->withErrors(['login' => 'Akun Anda sedang dinonaktifkan oleh administrator.']);
             }
 

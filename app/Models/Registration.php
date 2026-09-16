@@ -217,16 +217,19 @@ class Registration extends Model
             if ($this->isKatB()) {
                 return (float) AppSetting::get($isPutri ? 'tmj_fee_b_tunggal_pi' : 'tmj_fee_b_tunggal_pa', $this->competition->registration_fee ?: 35000);
             }
+
             return (float) AppSetting::get($isPutri ? 'tmj_fee_a_tunggal_pi' : 'tmj_fee_a_tunggal_pa', $this->competition->registration_fee ?: 35000);
         }
 
         if ($this->competition->code === 'MTQ') {
             $isPutri = $this->primary_gender === 'P' || stripos($this->match_type ?? '', 'Putri') !== false || stripos($this->match_type ?? '', 'PI') !== false;
+
             return (float) AppSetting::get($isPutri ? 'mtq_fee_pi' : 'mtq_fee_pa', $this->competition->registration_fee);
         }
 
         if ($this->competition->code === 'POP') {
             $isPutri = $this->primary_gender === 'P' || stripos($this->match_type ?? '', 'Putri') !== false || stripos($this->match_type ?? '', 'PI') !== false;
+
             return (float) AppSetting::get($isPutri ? 'pop_fee_pi' : 'pop_fee_pa', $this->competition->registration_fee);
         }
 
@@ -272,7 +275,6 @@ class Registration extends Model
 
         return 'Seed '.$this->seed_number;
     }
-
 
     public function generateParticipantNumber(): string
     {
@@ -429,7 +431,8 @@ class Registration extends Model
             if (str_contains($sc, 'kategori a') || str_contains($sc, 'kat a') || str_contains($sc, '1 - 3') || str_contains($sc, '1-3')) {
                 return true;
             }
-            $targetStr = strtolower(($this->target_class ?? '') . ' ' . ($this->sub_category ?? '') . ' ' . ($this->team_name ?? '') . ' ' . ($this->match_type ?? ''));
+            $targetStr = strtolower(($this->target_class ?? '').' '.($this->sub_category ?? '').' '.($this->team_name ?? '').' '.($this->match_type ?? ''));
+
             return stripos($targetStr, 'kategori a') !== false || stripos($targetStr, 'kat a') !== false || stripos($targetStr, '1 - 3') !== false || stripos($targetStr, '1-3') !== false || stripos($targetStr, 'kelas 1') !== false || stripos($targetStr, 'kelas 2') !== false || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, '-a-') !== false || stripos($targetStr, 'kat_a') !== false;
         }
 
@@ -440,7 +443,8 @@ class Registration extends Model
             return true;
         }
 
-        $targetStr = strtolower(($this->target_class ?? '') . ' ' . ($this->sub_category ?? '') . ' ' . ($this->team_name ?? '') . ' ' . ($this->match_type ?? ''));
+        $targetStr = strtolower(($this->target_class ?? '').' '.($this->sub_category ?? '').' '.($this->team_name ?? '').' '.($this->match_type ?? ''));
+
         return stripos($targetStr, 'kategori a') !== false || stripos($targetStr, 'kat a') !== false || stripos($targetStr, 'kelas 1') !== false || stripos($targetStr, 'kelas 2') !== false || stripos($targetStr, '-a-') !== false || stripos($targetStr, 'kat_a') !== false;
     }
 
@@ -463,7 +467,8 @@ class Registration extends Model
             if (str_contains($sc, 'kategori a') || str_contains($sc, 'kat a') || str_contains($sc, '1 - 3') || str_contains($sc, '1-3')) {
                 return false;
             }
-            $targetStr = strtolower(($this->target_class ?? '') . ' ' . ($this->sub_category ?? '') . ' ' . ($this->team_name ?? '') . ' ' . ($this->match_type ?? ''));
+            $targetStr = strtolower(($this->target_class ?? '').' '.($this->sub_category ?? '').' '.($this->team_name ?? '').' '.($this->match_type ?? ''));
+
             return stripos($targetStr, 'kategori b') !== false || stripos($targetStr, 'kat b') !== false || stripos($targetStr, '4 - 6') !== false || stripos($targetStr, '4-6') !== false || stripos($targetStr, 'kelas 4') !== false || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '-b-') !== false || stripos($targetStr, 'kat_b') !== false;
         }
 
@@ -474,7 +479,8 @@ class Registration extends Model
             return false;
         }
 
-        $targetStr = strtolower(($this->target_class ?? '') . ' ' . ($this->sub_category ?? '') . ' ' . ($this->team_name ?? '') . ' ' . ($this->match_type ?? ''));
+        $targetStr = strtolower(($this->target_class ?? '').' '.($this->sub_category ?? '').' '.($this->team_name ?? '').' '.($this->match_type ?? ''));
+
         return stripos($targetStr, 'kategori b') !== false || stripos($targetStr, 'kat b') !== false || stripos($targetStr, 'kelas 3') !== false || stripos($targetStr, 'kelas 4') !== false || stripos($targetStr, '-b-') !== false || stripos($targetStr, 'kat_b') !== false;
     }
 
@@ -490,7 +496,8 @@ class Registration extends Model
             return false;
         }
 
-        $targetStr = strtolower(($this->target_class ?? '') . ' ' . ($this->sub_category ?? '') . ' ' . ($this->team_name ?? '') . ' ' . ($this->match_type ?? ''));
+        $targetStr = strtolower(($this->target_class ?? '').' '.($this->sub_category ?? '').' '.($this->team_name ?? '').' '.($this->match_type ?? ''));
+
         return stripos($targetStr, 'kategori c') !== false || stripos($targetStr, 'kat c') !== false || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '-c-') !== false || stripos($targetStr, 'kat_c') !== false;
     }
 }

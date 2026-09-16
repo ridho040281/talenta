@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Helpers\Terbilang;
 use App\Models\AppSetting;
 use App\Models\Competition;
-use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,8 +20,8 @@ class OfficialReportController extends Controller
         $slug = strtolower($comp->category?->slug ?? '');
         $catName = strtolower($comp->category?->name ?? '');
 
-        return in_array($code, ['BLT', 'TMJ', 'CTR']) 
-            || $slug === 'olahraga' 
+        return in_array($code, ['BLT', 'TMJ', 'CTR'])
+            || $slug === 'olahraga'
             || str_contains($catName, 'olahraga');
     }
 
@@ -41,8 +40,8 @@ class OfficialReportController extends Controller
                 'tunggal_pi_b' => ['title' => 'Kategori B (Kelas 3–4 SD/MI) - Tunggal Putri (PI)', 'group' => 'Tunggal Putri B', 'gender' => 'P', 'is_ganda' => false, 'kat' => 'b'],
                 'tunggal_pa_c' => ['title' => 'Kategori C (Kelas 5–6 SD/MI) - Tunggal Putra (PA)', 'group' => 'Tunggal Putra C', 'gender' => 'L', 'is_ganda' => false, 'kat' => 'c'],
                 'tunggal_pi_c' => ['title' => 'Kategori C (Kelas 5–6 SD/MI) - Tunggal Putri (PI)', 'group' => 'Tunggal Putri C', 'gender' => 'P', 'is_ganda' => false, 'kat' => 'c'],
-                'ganda_pa'     => ['title' => 'Kategori Ganda Putra (PA) - Semua Kelas', 'group' => 'Ganda Putra', 'gender' => 'L', 'is_ganda' => true, 'kat' => 'all'],
-                'ganda_pi'     => ['title' => 'Kategori Ganda Putri (PI) - Semua Kelas', 'group' => 'Ganda Putri', 'gender' => 'P', 'is_ganda' => true, 'kat' => 'all'],
+                'ganda_pa' => ['title' => 'Kategori Ganda Putra (PA) - Semua Kelas', 'group' => 'Ganda Putra', 'gender' => 'L', 'is_ganda' => true, 'kat' => 'all'],
+                'ganda_pi' => ['title' => 'Kategori Ganda Putri (PI) - Semua Kelas', 'group' => 'Ganda Putri', 'gender' => 'P', 'is_ganda' => true, 'kat' => 'all'],
             ];
         }
 
@@ -103,7 +102,7 @@ class OfficialReportController extends Controller
             'day_spelled' => $daySpelled,
             'month_name' => $monthName,
             'year_spelled' => $yearSpelled,
-            'date_formatted' => $date->format('d') . ' ' . $monthName . ' ' . $date->format('Y'),
+            'date_formatted' => $date->format('d').' '.$monthName.' '.$date->format('Y'),
         ];
     }
 
@@ -113,7 +112,7 @@ class OfficialReportController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        
+
         // Scope competitions based on role
         if ($user->role === 'superadmin') {
             $competitions = Competition::with(['category', 'judges', 'pic'])->get();
@@ -151,11 +150,17 @@ class OfficialReportController extends Controller
                     $gender = $r->primary_gender;
 
                     // Match Ganda
-                    if ($secDef['is_ganda'] && !$isGanda) return false;
-                    if (!$secDef['is_ganda'] && $isGanda && in_array($selectedComp->code, ['BLT', 'TMJ'])) return false;
+                    if ($secDef['is_ganda'] && ! $isGanda) {
+                        return false;
+                    }
+                    if (! $secDef['is_ganda'] && $isGanda && in_array($selectedComp->code, ['BLT', 'TMJ'])) {
+                        return false;
+                    }
 
                     // Match Gender
-                    if ($secDef['gender'] !== 'all' && $gender !== $secDef['gender']) return false;
+                    if ($secDef['gender'] !== 'all' && $gender !== $secDef['gender']) {
+                        return false;
+                    }
 
                     // Match Category / Class
                     if ($secDef['kat'] === 'a') {
@@ -173,8 +178,9 @@ class OfficialReportController extends Controller
                 $ranked = $filteredRegs->map(function ($r) {
                     $lockedScores = $r->scores->where('is_locked', true);
                     $avgScore = $lockedScores->isNotEmpty() ? round($lockedScores->avg('total_score'), 2) : 0;
-                    $participantName = $r->pure_name ?: ($r->team_name ?: ($r->members->first()?->full_name ?? ('Peserta #' . $r->id)));
+                    $participantName = $r->pure_name ?: ($r->team_name ?: ($r->members->first()?->full_name ?? ('Peserta #'.$r->id)));
                     $schoolName = $r->display_school ?: ($r->institution_name ?: '-');
+
                     return [
                         'registration' => $r,
                         'participant_number' => $r->participant_number ?: $r->registration_code,
@@ -184,8 +190,8 @@ class OfficialReportController extends Controller
                         'has_score' => ($lockedScores->isNotEmpty() && $avgScore > 0),
                     ];
                 })
-                ->filter(fn($item) => $item['has_score'])
-                ->sortByDesc(fn($item) => (float) $item['score'])->values();
+                    ->filter(fn ($item) => $item['has_score'])
+                    ->sortByDesc(fn ($item) => (float) $item['score'])->values();
 
                 $emptyWinner = [
                     'registration' => null,
@@ -264,7 +270,7 @@ class OfficialReportController extends Controller
         $reqDate = $request->query('date');
         $carbonDate = $reqDate ? Carbon::parse($reqDate) : Carbon::now();
         $dateSpelled = self::getDateSpelledOut($carbonDate);
-        
+
         $eventTime = $request->query('time', '08.00');
         $eventDay = $request->query('day', $dateSpelled['day_name']);
 
@@ -295,7 +301,7 @@ class OfficialReportController extends Controller
 
             if ($type === 'live') {
                 // If custom winners were submitted via query/form:
-                $customTiers = $request->query('winners_' . $secKey);
+                $customTiers = $request->query('winners_'.$secKey);
                 if (is_array($customTiers)) {
                     foreach ($tiers as $idx => &$t) {
                         if (isset($customTiers[$idx])) {
@@ -311,9 +317,15 @@ class OfficialReportController extends Controller
                         $isGanda = $r->isGanda();
                         $gender = $r->primary_gender;
 
-                        if ($secDef['is_ganda'] && !$isGanda) return false;
-                        if (!$secDef['is_ganda'] && $isGanda && in_array($competition->code, ['BLT', 'TMJ'])) return false;
-                        if ($secDef['gender'] !== 'all' && $gender !== $secDef['gender']) return false;
+                        if ($secDef['is_ganda'] && ! $isGanda) {
+                            return false;
+                        }
+                        if (! $secDef['is_ganda'] && $isGanda && in_array($competition->code, ['BLT', 'TMJ'])) {
+                            return false;
+                        }
+                        if ($secDef['gender'] !== 'all' && $gender !== $secDef['gender']) {
+                            return false;
+                        }
 
                         if ($secDef['kat'] === 'a') {
                             return $r->isKatA();
@@ -329,8 +341,9 @@ class OfficialReportController extends Controller
                     $ranked = $filteredRegs->map(function ($r) {
                         $lockedScores = $r->scores->where('is_locked', true);
                         $avgScore = $lockedScores->isNotEmpty() ? round($lockedScores->avg('total_score'), 2) : 0;
-                        $participantName = $r->pure_name ?: ($r->team_name ?: ($r->members->first()?->full_name ?? ('Peserta #' . $r->id)));
+                        $participantName = $r->pure_name ?: ($r->team_name ?: ($r->members->first()?->full_name ?? ('Peserta #'.$r->id)));
                         $schoolName = $r->display_school ?: ($r->institution_name ?: '-');
+
                         return [
                             'no_peserta' => $r->participant_number ?: $r->registration_code,
                             'nama' => $participantName,
@@ -339,8 +352,8 @@ class OfficialReportController extends Controller
                             'has_score' => ($lockedScores->isNotEmpty() && $avgScore > 0),
                         ];
                     })
-                    ->filter(fn($item) => $item['has_score'])
-                    ->sortByDesc(fn($item) => (float) $item['nilai'])->values();
+                        ->filter(fn ($item) => $item['has_score'])
+                        ->sortByDesc(fn ($item) => (float) $item['nilai'])->values();
 
                     foreach ($tiers as $idx => &$t) {
                         if (isset($ranked[$idx])) {

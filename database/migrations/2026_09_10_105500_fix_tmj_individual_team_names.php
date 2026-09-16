@@ -1,7 +1,7 @@
-﻿<?php
+<?php
 
-use Illuminate\Database\Migrations\Migration;
 use App\Models\Registration;
+use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
 {
@@ -32,7 +32,7 @@ return new class extends Migration
                         $reg->match_type = 'Tunggal Putra (PA)';
                     }
                 }
-                $reg->sub_category = $reg->target_class . ' - ' . $reg->match_type;
+                $reg->sub_category = $reg->target_class.' - '.$reg->match_type;
                 $reg->team_name = null;
                 $reg->saveQuietly();
             }
@@ -41,7 +41,7 @@ return new class extends Migration
         // 2. Also clean any individual registrations where team_name was accidentally filled with 'tunggal'
         Registration::where(function ($q) {
             $q->where('team_name', 'like', '%tunggal%')
-              ->orWhere('team_name', 'like', '%Tunggal%');
+                ->orWhere('team_name', 'like', '%Tunggal%');
         })->update(['team_name' => null]);
     }
 

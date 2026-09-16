@@ -12,15 +12,15 @@ return new class extends Migration
     {
         $picMap = [
             'MIPA' => 'pic.mipa@talenta.test',
-            'MTQ'  => 'pic.mtq@talenta.test',
+            'MTQ' => 'pic.mtq@talenta.test',
             'TFID' => 'pic.mtq@talenta.test',
-            'THF'  => 'pic.mtq@talenta.test',
-            'CTR'  => 'pic.olahraga@talenta.test',
-            'TMJ'  => 'pic.olahraga@talenta.test',
-            'BLT'  => 'pic.olahraga@talenta.test',
-            'POP'  => 'pic.seni@talenta.test',
-            'ROB'  => 'pic.teknologi@talenta.test',
-            'PRM'  => 'pic.teknologi@talenta.test',
+            'THF' => 'pic.mtq@talenta.test',
+            'CTR' => 'pic.olahraga@talenta.test',
+            'TMJ' => 'pic.olahraga@talenta.test',
+            'BLT' => 'pic.olahraga@talenta.test',
+            'POP' => 'pic.seni@talenta.test',
+            'ROB' => 'pic.teknologi@talenta.test',
+            'PRM' => 'pic.teknologi@talenta.test',
         ];
 
         foreach ($picMap as $code => $email) {
@@ -60,7 +60,5 @@ return new class extends Migration
         }
     }
 
-    public function down(): void
-    {
-    }
+    public function down(): void {}
 };

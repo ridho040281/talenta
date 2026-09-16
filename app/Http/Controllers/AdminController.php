@@ -15,6 +15,8 @@ use App\Models\RegistrationMember;
 use App\Models\Score;
 use App\Models\Timeline;
 use App\Models\User;
+use App\Services\WablasNotificationService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -60,7 +62,7 @@ class AdminController extends Controller
             'criteria:id,competition_id,name,weight_percentage,min_score,max_score,description',
             'registrations' => function ($q) {
                 $q->select('id', 'competition_id', 'status', 'target_class', 'sub_category', 'match_type', 'team_name')
-                  ->with('members:id,registration_id,full_name,gender');
+                    ->with('members:id,registration_id,full_name,gender');
             },
         ])->withCount('registrations')->get();
 
@@ -645,8 +647,8 @@ class AdminController extends Controller
         // 3. Set global registration status in AppSetting
         AppSetting::set('global_registration_status', ($status === 'buka' ? 'open' : 'closed'), 'general');
 
-        $msg = ($status === 'buka') 
-            ? 'Seluruh cabang lomba dan seluruh sektor berhasil DIBUKA serentak.' 
+        $msg = ($status === 'buka')
+            ? 'Seluruh cabang lomba dan seluruh sektor berhasil DIBUKA serentak.'
             : 'Seluruh cabang lomba dan seluruh sektor berhasil DITUTUP serentak.';
 
         return redirect()->route('admin.competitions')->with('success', $msg);
@@ -842,7 +844,7 @@ class AdminController extends Controller
 
         if (! empty($validated['phone'])) {
             try {
-                \App\Services\WablasNotificationService::sendAutoNotification('account_created', [
+                WablasNotificationService::sendAutoNotification('account_created', [
                     'phone' => $validated['phone'],
                     'nama_peserta' => $validated['name'],
                     'nisn' => $validated['email'],
@@ -923,7 +925,7 @@ class AdminController extends Controller
                     'members:id,registration_id,gender,full_name,school_name,nisn',
                     'scores' => function ($sq) {
                         $sq->select('id', 'registration_id', 'total_score', 'is_locked')
-                           ->where('is_locked', true);
+                            ->where('is_locked', true);
                     },
                 ]);
             },
@@ -931,18 +933,18 @@ class AdminController extends Controller
 
         // 2. Cashflow Summary — hanya agregat ringan, data tabel di-load AJAX via apiRecapCashflow()
         $totalAdjustments = (float) PaymentAdjustment::sum('amount');
-        $countAdjustments = (int)   PaymentAdjustment::count();
-        $countCollective  = (int)   Invoice::count();
+        $countAdjustments = (int) PaymentAdjustment::count();
+        $countCollective = (int) Invoice::count();
 
         // Pemasukan verifikasi dari invoice kolektif
         $verifiedInvoiceGross = (float) Invoice::whereIn('status', ['verified', 'paid'])->sum('final_amount');
-        $pendingInvoiceGross  = (float) Invoice::where('status', 'pending')->sum('final_amount');
+        $pendingInvoiceGross = (float) Invoice::where('status', 'pending')->sum('final_amount');
 
         // Pemasukan dari registrasi mandiri (non-invoice) dihitung in-memory dari $competitions yang sudah dimuat di atas
         $verifiedMandiriGross = 0.0;
-        $pendingMandiriGross  = 0.0;
-        $countIndividual      = 0;
-        $countPendingMandiri  = 0;
+        $pendingMandiriGross = 0.0;
+        $countIndividual = 0;
+        $countPendingMandiri = 0;
         $countVerifiedMandiri = 0;
 
         foreach ($competitions as $comp) {
@@ -963,31 +965,31 @@ class AdminController extends Controller
             }
         }
 
-        $countPending  = (int) Invoice::where('status', 'pending')->count() + $countPendingMandiri;
+        $countPending = (int) Invoice::where('status', 'pending')->count() + $countPendingMandiri;
         $countVerified = (int) Invoice::whereIn('status', ['verified', 'paid'])->count() + $countVerifiedMandiri;
 
         $grossVerified = $verifiedInvoiceGross + $verifiedMandiriGross;
-        $grossPending  = $pendingInvoiceGross  + $pendingMandiriGross;
+        $grossPending = $pendingInvoiceGross + $pendingMandiriGross;
 
         $cashflowSummary = [
-            'gross_verified'         => $grossVerified,
-            'gross_pending'          => $grossPending,
-            'total_refunds'          => $totalAdjustments,
-            'net_real_cash'          => max(0, $grossVerified - $totalAdjustments),
-            'count_collective'       => $countCollective,
-            'count_individual'       => $countIndividual,
-            'count_adjustments'      => $countAdjustments,
-            'count_pending'          => $countPending,
+            'gross_verified' => $grossVerified,
+            'gross_pending' => $grossPending,
+            'total_refunds' => $totalAdjustments,
+            'net_real_cash' => max(0, $grossVerified - $totalAdjustments),
+            'count_collective' => $countCollective,
+            'count_individual' => $countIndividual,
+            'count_adjustments' => $countAdjustments,
+            'count_pending' => $countPending,
             'pending_students_count' => 0, // tidak diperlukan lagi di kartu atas
-            'count_verified'         => $countVerified,
-            'verified_students_count'=> 0, // tidak diperlukan lagi di kartu atas
-            'total_count'            => $countCollective + $countIndividual,
+            'count_verified' => $countVerified,
+            'verified_students_count' => 0, // tidak diperlukan lagi di kartu atas
+            'total_count' => $countCollective + $countIndividual,
         ];
 
         // Bonus diskon per-kompetisi untuk sinkronisasi Tab Rekap Keuangan
         // Hanya load invoice yang punya bonus_discount > 0 (subset kecil)
         $compBonusVerified = [];
-        $compBonusPending  = [];
+        $compBonusPending = [];
         $bonusInvoices = Invoice::whereColumn('total_amount', '>', 'final_amount')
             ->with(['registrations.competition'])
             ->get();
@@ -995,18 +997,18 @@ class AdminController extends Controller
             foreach ($inv->registrations->groupBy('competition_id') as $cId => $cRegs) {
                 $cObj = $cRegs->first()->competition ?? null;
                 if ($cObj) {
-                    $code              = $cObj->code;
-                    $isBonusActive     = ($code === 'MIPA') || (AppSetting::get('bonus_active_'.strtolower($code), '0') === '1');
-                    $minQuota          = (int) AppSetting::get('bonus_min_'.strtolower($code), 10);
+                    $code = $cObj->code;
+                    $isBonusActive = ($code === 'MIPA') || (AppSetting::get('bonus_active_'.strtolower($code), '0') === '1');
+                    $minQuota = (int) AppSetting::get('bonus_min_'.strtolower($code), 10);
                     $freeCountPerBatch = (int) AppSetting::get('bonus_free_'.strtolower($code), 1);
-                    $count             = $cRegs->count();
+                    $count = $cRegs->count();
                     if ($isBonusActive && $minQuota > 0 && $count >= $minQuota) {
                         $freeCount = (int) (floor($count / $minQuota) * $freeCountPerBatch);
-                        $discount  = $freeCount * (float) $cObj->registration_fee;
+                        $discount = $freeCount * (float) $cObj->registration_fee;
                         if (in_array($inv->status, ['verified', 'paid'])) {
                             $compBonusVerified[$cId] = ($compBonusVerified[$cId] ?? 0) + $discount;
                         } elseif ($inv->status === 'pending') {
-                            $compBonusPending[$cId]  = ($compBonusPending[$cId] ?? 0) + $discount;
+                            $compBonusPending[$cId] = ($compBonusPending[$cId] ?? 0) + $discount;
                         }
                     }
                 }
@@ -1045,10 +1047,10 @@ class AdminController extends Controller
             $breakdown = [];
 
             if ($comp->code === 'BLT') {
-                $katA = $regs->filter(fn($r) => !$r->isGanda() && $r->isKatA());
-                $katB = $regs->filter(fn($r) => !$r->isGanda() && $r->isKatB());
-                $katC = $regs->filter(fn($r) => !$r->isGanda() && $r->isKatC());
-                $ganda = $regs->filter(fn($r) => $r->isGanda());
+                $katA = $regs->filter(fn ($r) => ! $r->isGanda() && $r->isKatA());
+                $katB = $regs->filter(fn ($r) => ! $r->isGanda() && $r->isKatB());
+                $katC = $regs->filter(fn ($r) => ! $r->isGanda() && $r->isKatC());
+                $ganda = $regs->filter(fn ($r) => $r->isGanda());
 
                 $breakdown = [
                     [
@@ -1056,37 +1058,37 @@ class AdminController extends Controller
                         'total_regs' => $katA->count(),
                         'verified_count' => $katA->where('status', 'verified')->count(),
                         'pending_count' => $katA->where('status', 'pending')->count(),
-                        'verified_income' => $katA->where('status', 'verified')->sum(fn($r) => $r->fee),
-                        'total_income' => $katA->sum(fn($r) => $r->fee),
+                        'verified_income' => $katA->where('status', 'verified')->sum(fn ($r) => $r->fee),
+                        'total_income' => $katA->sum(fn ($r) => $r->fee),
                     ],
                     [
                         'name' => '🏸 Kategori B (Kelas 3 – 4 SD/MI)',
                         'total_regs' => $katB->count(),
                         'verified_count' => $katB->where('status', 'verified')->count(),
                         'pending_count' => $katB->where('status', 'pending')->count(),
-                        'verified_income' => $katB->where('status', 'verified')->sum(fn($r) => $r->fee),
-                        'total_income' => $katB->sum(fn($r) => $r->fee),
+                        'verified_income' => $katB->where('status', 'verified')->sum(fn ($r) => $r->fee),
+                        'total_income' => $katB->sum(fn ($r) => $r->fee),
                     ],
                     [
                         'name' => '🏸 Kategori C (Kelas 5 – 6 SD/MI)',
                         'total_regs' => $katC->count(),
                         'verified_count' => $katC->where('status', 'verified')->count(),
                         'pending_count' => $katC->where('status', 'pending')->count(),
-                        'verified_income' => $katC->where('status', 'verified')->sum(fn($r) => $r->fee),
-                        'total_income' => $katC->sum(fn($r) => $r->fee),
+                        'verified_income' => $katC->where('status', 'verified')->sum(fn ($r) => $r->fee),
+                        'total_income' => $katC->sum(fn ($r) => $r->fee),
                     ],
                     [
                         'name' => '🏸 Sektor Ganda (Semua Kelas)',
                         'total_regs' => $ganda->count(),
                         'verified_count' => $ganda->where('status', 'verified')->count(),
                         'pending_count' => $ganda->where('status', 'pending')->count(),
-                        'verified_income' => $ganda->where('status', 'verified')->sum(fn($r) => $r->fee),
-                        'total_income' => $ganda->sum(fn($r) => $r->fee),
+                        'verified_income' => $ganda->where('status', 'verified')->sum(fn ($r) => $r->fee),
+                        'total_income' => $ganda->sum(fn ($r) => $r->fee),
                     ],
                 ];
             } elseif ($comp->code === 'TMJ') {
-                $katA = $regs->filter(fn($r) => !$r->isGanda() && $r->isKatA());
-                $katB = $regs->filter(fn($r) => !$r->isGanda() && $r->isKatB());
+                $katA = $regs->filter(fn ($r) => ! $r->isGanda() && $r->isKatA());
+                $katB = $regs->filter(fn ($r) => ! $r->isGanda() && $r->isKatB());
 
                 $breakdown = [
                     [
@@ -1094,16 +1096,16 @@ class AdminController extends Controller
                         'total_regs' => $katA->count(),
                         'verified_count' => $katA->where('status', 'verified')->count(),
                         'pending_count' => $katA->where('status', 'pending')->count(),
-                        'verified_income' => $katA->where('status', 'verified')->sum(fn($r) => $r->fee),
-                        'total_income' => $katA->sum(fn($r) => $r->fee),
+                        'verified_income' => $katA->where('status', 'verified')->sum(fn ($r) => $r->fee),
+                        'total_income' => $katA->sum(fn ($r) => $r->fee),
                     ],
                     [
                         'name' => '🏓 Kategori B (Kelas 4 – 6 SD/MI)',
                         'total_regs' => $katB->count(),
                         'verified_count' => $katB->where('status', 'verified')->count(),
                         'pending_count' => $katB->where('status', 'pending')->count(),
-                        'verified_income' => $katB->where('status', 'verified')->sum(fn($r) => $r->fee),
-                        'total_income' => $katB->sum(fn($r) => $r->fee),
+                        'verified_income' => $katB->where('status', 'verified')->sum(fn ($r) => $r->fee),
+                        'total_income' => $katB->sum(fn ($r) => $r->fee),
                     ],
                 ];
             }
@@ -1126,7 +1128,7 @@ class AdminController extends Controller
             if ($comp->code === 'BLT') {
                 $tQuotas = $comp->tier_quotas;
                 $tFees = $comp->tier_fees;
-                $maxQuotaIncome = 
+                $maxQuotaIncome =
                     (($tQuotas['A_tunggal_pa'] ?? 16) * ($tFees['A_tunggal_pa'] ?? 130000)) +
                     (($tQuotas['A_tunggal_pi'] ?? 16) * ($tFees['A_tunggal_pi'] ?? 130000)) +
                     (($tQuotas['B_tunggal_pa'] ?? 16) * ($tFees['B_tunggal_pa'] ?? 150000)) +
@@ -1138,7 +1140,7 @@ class AdminController extends Controller
             } elseif ($comp->code === 'TMJ') {
                 $tQuotas = $comp->tier_quotas;
                 $tFees = $comp->tier_fees;
-                $maxQuotaIncome = 
+                $maxQuotaIncome =
                     (($tQuotas['A_tunggal_pa'] ?? 16) * ($tFees['A_tunggal_pa'] ?? 35000)) +
                     (($tQuotas['A_tunggal_pi'] ?? 16) * ($tFees['A_tunggal_pi'] ?? 35000)) +
                     (($tQuotas['B_tunggal_pa'] ?? 16) * ($tFees['B_tunggal_pa'] ?? 35000)) +
@@ -1146,11 +1148,11 @@ class AdminController extends Controller
             } elseif (in_array($comp->code, ['MTQ', 'POP'])) {
                 $tQuotas = $comp->tier_quotas;
                 $tFees = $comp->tier_fees;
-                $maxQuotaIncome = 
+                $maxQuotaIncome =
                     (($tQuotas['pa'] ?? ceil($comp->quota / 2)) * ($tFees['pa'] ?? $comp->registration_fee)) +
                     (($tQuotas['pi'] ?? floor($comp->quota / 2)) * ($tFees['pi'] ?? $comp->registration_fee));
             } else {
-                $maxQuotaIncome = $comp->quota > 0 ? ($comp->quota * (float)$comp->registration_fee) : 0;
+                $maxQuotaIncome = $comp->quota > 0 ? ($comp->quota * (float) $comp->registration_fee) : 0;
             }
 
             $grandTotals['total_quota'] += $comp->quota;
@@ -1265,7 +1267,7 @@ class AdminController extends Controller
         $proofPath = null;
         if ($request->hasFile('proof_file')) {
             $file = $request->file('proof_file');
-            $fileName = 'refund_' . time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
+            $fileName = 'refund_'.time().'_'.Str::random(8).'.'.$file->getClientOriginalExtension();
             $proofPath = $file->storeAs('adjustments', $fileName, 'public');
         }
 
@@ -1283,7 +1285,7 @@ class AdminController extends Controller
         // Audit Trail
         ActivityLog::record(
             'FINANCE_ADJUSTMENT',
-            "Mencatat penyesuaian/refund kas sebesar Rp " . number_format($adjustment->amount, 0, ',', '.') . " untuk {$adjustment->reference_type} #{$adjustment->reference_id} ({$adjustment->type_label})",
+            'Mencatat penyesuaian/refund kas sebesar Rp '.number_format($adjustment->amount, 0, ',', '.')." untuk {$adjustment->reference_type} #{$adjustment->reference_id} ({$adjustment->type_label})",
             Auth::user(),
             'warning'
         );
@@ -1294,25 +1296,25 @@ class AdminController extends Controller
                 $reg = Registration::find($validated['reference_id']);
                 if ($reg) {
                     $reg->status = 'cancelled';
-                    $reg->verification_notes = trim(($reg->verification_notes ?? '') . " | Dibatalkan & Refund: " . $validated['reason']);
+                    $reg->verification_notes = trim(($reg->verification_notes ?? '').' | Dibatalkan & Refund: '.$validated['reason']);
                     $reg->save();
                 }
             } elseif ($validated['reference_type'] === 'invoice') {
                 $inv = Invoice::with('registrations')->find($validated['reference_id']);
                 if ($inv) {
                     $inv->status = 'rejected';
-                    $inv->rejection_reason = trim(($inv->rejection_reason ?? '') . " | Dibatalkan & Refund: " . $validated['reason']);
+                    $inv->rejection_reason = trim(($inv->rejection_reason ?? '').' | Dibatalkan & Refund: '.$validated['reason']);
                     $inv->save();
                     foreach ($inv->registrations as $reg) {
                         $reg->status = 'cancelled';
-                        $reg->verification_notes = trim(($reg->verification_notes ?? '') . " | Dibatalkan Kolektif (Invoice #{$inv->invoice_number})");
+                        $reg->verification_notes = trim(($reg->verification_notes ?? '')." | Dibatalkan Kolektif (Invoice #{$inv->invoice_number})");
                         $reg->save();
                     }
                 }
             }
         }
 
-        return redirect()->back()->with('success', 'Penyesuaian kas / refund sebesar Rp ' . number_format($validated['amount'], 0, ',', '.') . ' berhasil dicatat.');
+        return redirect()->back()->with('success', 'Penyesuaian kas / refund sebesar Rp '.number_format($validated['amount'], 0, ',', '.').' berhasil dicatat.');
     }
 
     /**
@@ -1325,7 +1327,7 @@ class AdminController extends Controller
 
         ActivityLog::record(
             'FINANCE_ADJUSTMENT_DELETED',
-            "Menghapus catatan penyesuaian/refund kas ID #{$adjustment->id} sebesar Rp " . number_format($adjustment->amount, 0, ',', '.'),
+            "Menghapus catatan penyesuaian/refund kas ID #{$adjustment->id} sebesar Rp ".number_format($adjustment->amount, 0, ',', '.'),
             Auth::user(),
             'warning'
         );
@@ -1363,13 +1365,13 @@ class AdminController extends Controller
             $s = trim($request->search);
             $query->where(function ($q) use ($s) {
                 $q->where('registration_code', 'like', "%{$s}%")
-                  ->orWhere('institution_name', 'like', "%{$s}%")
-                  ->orWhere('team_name', 'like', "%{$s}%")
-                  ->orWhereHas('members', function ($mq) use ($s) {
-                      $mq->where('full_name', 'like', "%{$s}%")
-                         ->orWhere('nisn', 'like', "%{$s}%")
-                         ->orWhere('school_name', 'like', "%{$s}%");
-                  });
+                    ->orWhere('institution_name', 'like', "%{$s}%")
+                    ->orWhere('team_name', 'like', "%{$s}%")
+                    ->orWhereHas('members', function ($mq) use ($s) {
+                        $mq->where('full_name', 'like', "%{$s}%")
+                            ->orWhere('nisn', 'like', "%{$s}%")
+                            ->orWhere('school_name', 'like', "%{$s}%");
+                    });
             });
         }
 
@@ -1397,7 +1399,7 @@ class AdminController extends Controller
                 'competition_type' => $reg->competition->type ?? '-',
                 'sub_category' => $reg->sub_category,
                 'fee' => number_format($reg->fee, 0, ',', '.'),
-                'proof_url' => $proofPath ? asset('storage/' . $proofPath) : null,
+                'proof_url' => $proofPath ? asset('storage/'.$proofPath) : null,
                 'status' => $reg->status,
             ];
         });
@@ -1419,7 +1421,7 @@ class AdminController extends Controller
      */
     public function apiRecapCashflow(Request $request)
     {
-        $type   = $request->input('type', 'all');   // all|mandiri|kolektif|adjustment
+        $type = $request->input('type', 'all');   // all|mandiri|kolektif|adjustment
         $status = $request->input('status', 'all'); // all|verified|pending|cancelled
         $search = trim((string) $request->input('search', ''));
         $perPage = min(max((int) $request->input('per_page', 25), 5), 100);
@@ -1432,58 +1434,62 @@ class AdminController extends Controller
             if ($search) {
                 $invQuery->where(function ($q) use ($search) {
                     $q->where('invoice_number', 'like', "%{$search}%")
-                      ->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$search}%")
-                          ->orWhere('phone', 'like', "%{$search}%")
-                          ->orWhere('institution_name', 'like', "%{$search}%")
-                          ->orWhere('school_name', 'like', "%{$search}%"));
+                        ->orWhereHas('user', fn ($u) => $u->where('name', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%")
+                            ->orWhere('institution_name', 'like', "%{$search}%")
+                            ->orWhere('school_name', 'like', "%{$search}%"));
                 });
             }
 
             $invs = $invQuery->get();
 
             foreach ($invs as $inv) {
-                $adjList     = $inv->adjustments;
-                $refundAmt   = (float) $adjList->sum('amount');
-                $gross       = (float) $inv->final_amount;
-                $net         = max(0, $gross - $refundAmt);
-                $normStatus  = in_array($inv->status, ['paid', 'verified']) ? 'verified'
+                $adjList = $inv->adjustments;
+                $refundAmt = (float) $adjList->sum('amount');
+                $gross = (float) $inv->final_amount;
+                $net = max(0, $gross - $refundAmt);
+                $normStatus = in_array($inv->status, ['paid', 'verified']) ? 'verified'
                              : ($inv->status === 'cancelled' ? 'cancelled'
-                             : ($inv->status === 'rejected'  ? 'rejected' : 'pending'));
+                             : ($inv->status === 'rejected' ? 'rejected' : 'pending'));
 
-                if ($status !== 'all' && $normStatus !== $status) continue;
-                if ($type === 'adjustment' && $refundAmt <= 0) continue;
+                if ($status !== 'all' && $normStatus !== $status) {
+                    continue;
+                }
+                if ($type === 'adjustment' && $refundAmt <= 0) {
+                    continue;
+                }
 
                 $invoiceItems->push([
-                    'id'             => $inv->id,
-                    'type'           => 'kolektif',
-                    'type_label'     => 'Kolektif (Invoice)',
-                    'ref_no'         => $inv->invoice_number,
-                    'created_at'     => $inv->created_at,
+                    'id' => $inv->id,
+                    'type' => 'kolektif',
+                    'type_label' => 'Kolektif (Invoice)',
+                    'ref_no' => $inv->invoice_number,
+                    'created_at' => $inv->created_at,
                     'date_formatted' => $inv->created_at ? $inv->created_at->translatedFormat('d M Y H:i') : '-',
-                    'contact_name'   => $inv->user ? $inv->user->name : '-',
-                    'contact_phone'  => $inv->user ? $inv->user->phone : '-',
-                    'institution'    => $inv->user ? ($inv->user->institution_name ?? $inv->user->school_name ?? '-') : '-',
-                    'title'          => 'Tagihan Kolektif #' . $inv->invoice_number,
-                    'description'    => $inv->registrations->count() . ' Pendaftar (' . $inv->registrations->pluck('competition.name')->filter()->unique()->implode(', ') . ')',
-                    'items_count'    => $inv->registrations->count(),
-                    'gross_amount'   => $gross,
-                    'refund_amount'  => $refundAmt,
-                    'net_amount'     => $net,
-                    'status'         => $inv->status,
-                    'norm_status'    => $normStatus,
-                    'payment_proof'  => $inv->payment_proof,
-                    'proof_url'      => $inv->payment_proof ? asset('storage/' . $inv->payment_proof) : null,
-                    'invoice_url'    => route('admin.invoices.show', $inv->id),
+                    'contact_name' => $inv->user ? $inv->user->name : '-',
+                    'contact_phone' => $inv->user ? $inv->user->phone : '-',
+                    'institution' => $inv->user ? ($inv->user->institution_name ?? $inv->user->school_name ?? '-') : '-',
+                    'title' => 'Tagihan Kolektif #'.$inv->invoice_number,
+                    'description' => $inv->registrations->count().' Pendaftar ('.$inv->registrations->pluck('competition.name')->filter()->unique()->implode(', ').')',
+                    'items_count' => $inv->registrations->count(),
+                    'gross_amount' => $gross,
+                    'refund_amount' => $refundAmt,
+                    'net_amount' => $net,
+                    'status' => $inv->status,
+                    'norm_status' => $normStatus,
+                    'payment_proof' => $inv->payment_proof,
+                    'proof_url' => $inv->payment_proof ? asset('storage/'.$inv->payment_proof) : null,
+                    'invoice_url' => route('admin.invoices.show', $inv->id),
                     'reference_type' => 'invoice',
-                    'adjustments'    => $adjList->map(fn($a) => [
-                        'id'           => $a->id,
-                        'type_label'   => $a->type_label ?? $a->adjustment_type,
-                        'amount'       => (float) $a->amount,
+                    'adjustments' => $adjList->map(fn ($a) => [
+                        'id' => $a->id,
+                        'type_label' => $a->type_label ?? $a->adjustment_type,
+                        'amount' => (float) $a->amount,
                         'bank_account' => $a->bank_account,
-                        'reason'       => $a->reason,
-                        'proof_url'    => $a->proof_file ? asset('storage/' . $a->proof_file) : null,
+                        'reason' => $a->reason,
+                        'proof_url' => $a->proof_file ? asset('storage/'.$a->proof_file) : null,
                         'creator_name' => $a->creator->name ?? 'Admin',
-                        'created_at'   => $a->created_at ? $a->created_at->translatedFormat('d M Y H:i') : '-',
+                        'created_at' => $a->created_at ? $a->created_at->translatedFormat('d M Y H:i') : '-',
                     ])->values()->all(),
                 ]);
             }
@@ -1495,7 +1501,7 @@ class AdminController extends Controller
             $regQuery = Registration::whereNull('invoice_id')
                 ->where(function ($q) {
                     $q->whereNotNull('payment_proof')
-                      ->orWhereIn('status', ['verified', 'pending', 'cancelled']);
+                        ->orWhereIn('status', ['verified', 'pending', 'cancelled']);
                 })
                 ->with(['user', 'competition', 'members', 'adjustments.creator'])
                 ->latest();
@@ -1511,56 +1517,58 @@ class AdminController extends Controller
             if ($search) {
                 $regQuery->where(function ($q) use ($search) {
                     $q->where('registration_code', 'like', "%{$search}%")
-                      ->orWhere('institution_name', 'like', "%{$search}%")
-                      ->orWhere('team_name', 'like', "%{$search}%")
-                      ->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$search}%")
-                          ->orWhere('phone', 'like', "%{$search}%"))
-                      ->orWhereHas('members', fn($m) => $m->where('full_name', 'like', "%{$search}%"));
+                        ->orWhere('institution_name', 'like', "%{$search}%")
+                        ->orWhere('team_name', 'like', "%{$search}%")
+                        ->orWhereHas('user', fn ($u) => $u->where('name', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%"))
+                        ->orWhereHas('members', fn ($m) => $m->where('full_name', 'like', "%{$search}%"));
                 });
             }
 
             foreach ($regQuery->get() as $reg) {
-                $adjList    = $reg->adjustments;
-                $refundAmt  = (float) $adjList->sum('amount');
-                $gross      = (float) $reg->fee;
-                $net        = max(0, $gross - $refundAmt);
+                $adjList = $reg->adjustments;
+                $refundAmt = (float) $adjList->sum('amount');
+                $gross = (float) $reg->fee;
+                $net = max(0, $gross - $refundAmt);
                 $normStatus = in_array($reg->status, ['paid', 'verified']) ? 'verified'
                             : ($reg->status === 'cancelled' ? 'cancelled'
-                            : ($reg->status === 'rejected'  ? 'rejected' : 'pending'));
+                            : ($reg->status === 'rejected' ? 'rejected' : 'pending'));
 
-                if ($type === 'adjustment' && $refundAmt <= 0) continue;
+                if ($type === 'adjustment' && $refundAmt <= 0) {
+                    continue;
+                }
 
                 $mandiriItems->push([
-                    'id'             => $reg->id,
-                    'type'           => 'mandiri',
-                    'type_label'     => 'Mandiri (Satuan)',
-                    'ref_no'         => $reg->registration_code,
-                    'created_at'     => $reg->created_at,
+                    'id' => $reg->id,
+                    'type' => 'mandiri',
+                    'type_label' => 'Mandiri (Satuan)',
+                    'ref_no' => $reg->registration_code,
+                    'created_at' => $reg->created_at,
                     'date_formatted' => $reg->created_at ? $reg->created_at->translatedFormat('d M Y H:i') : '-',
-                    'contact_name'   => $reg->user ? $reg->user->name : ($reg->pure_name ?? '-'),
-                    'contact_phone'  => $reg->user ? $reg->user->phone : ($reg->official_phone ?? '-'),
-                    'institution'    => $reg->display_school,
-                    'title'          => $reg->display_name,
-                    'description'    => ($reg->competition ? $reg->competition->name : 'Lomba') . ' (' . $reg->registration_code . ')',
-                    'items_count'    => 1,
-                    'gross_amount'   => $gross,
-                    'refund_amount'  => $refundAmt,
-                    'net_amount'     => $net,
-                    'status'         => $reg->status,
-                    'norm_status'    => $normStatus,
-                    'payment_proof'  => $reg->payment_proof,
-                    'proof_url'      => $reg->payment_proof ? asset('storage/' . $reg->payment_proof) : null,
-                    'invoice_url'    => null,
+                    'contact_name' => $reg->user ? $reg->user->name : ($reg->pure_name ?? '-'),
+                    'contact_phone' => $reg->user ? $reg->user->phone : ($reg->official_phone ?? '-'),
+                    'institution' => $reg->display_school,
+                    'title' => $reg->display_name,
+                    'description' => ($reg->competition ? $reg->competition->name : 'Lomba').' ('.$reg->registration_code.')',
+                    'items_count' => 1,
+                    'gross_amount' => $gross,
+                    'refund_amount' => $refundAmt,
+                    'net_amount' => $net,
+                    'status' => $reg->status,
+                    'norm_status' => $normStatus,
+                    'payment_proof' => $reg->payment_proof,
+                    'proof_url' => $reg->payment_proof ? asset('storage/'.$reg->payment_proof) : null,
+                    'invoice_url' => null,
                     'reference_type' => 'registration',
-                    'adjustments'    => $adjList->map(fn($a) => [
-                        'id'           => $a->id,
-                        'type_label'   => $a->type_label ?? $a->adjustment_type,
-                        'amount'       => (float) $a->amount,
+                    'adjustments' => $adjList->map(fn ($a) => [
+                        'id' => $a->id,
+                        'type_label' => $a->type_label ?? $a->adjustment_type,
+                        'amount' => (float) $a->amount,
                         'bank_account' => $a->bank_account,
-                        'reason'       => $a->reason,
-                        'proof_url'    => $a->proof_file ? asset('storage/' . $a->proof_file) : null,
+                        'reason' => $a->reason,
+                        'proof_url' => $a->proof_file ? asset('storage/'.$a->proof_file) : null,
                         'creator_name' => $a->creator->name ?? 'Admin',
-                        'created_at'   => $a->created_at ? $a->created_at->translatedFormat('d M Y H:i') : '-',
+                        'created_at' => $a->created_at ? $a->created_at->translatedFormat('d M Y H:i') : '-',
                     ])->values()->all(),
                 ]);
             }
@@ -1571,20 +1579,20 @@ class AdminController extends Controller
             ->sortByDesc('created_at')
             ->values();
 
-        $total       = $merged->count();
+        $total = $merged->count();
         $currentPage = max(1, (int) $request->input('page', 1));
-        $offset      = ($currentPage - 1) * $perPage;
-        $items       = $merged->slice($offset, $perPage)->values();
-        $lastPage    = max(1, (int) ceil($total / $perPage));
+        $offset = ($currentPage - 1) * $perPage;
+        $items = $merged->slice($offset, $perPage)->values();
+        $lastPage = max(1, (int) ceil($total / $perPage));
 
         return response()->json([
-            'data'         => $items,
-            'total'        => $total,
+            'data' => $items,
+            'total' => $total,
             'current_page' => $currentPage,
-            'last_page'    => $lastPage,
-            'per_page'     => $perPage,
-            'from'         => $total > 0 ? $offset + 1 : 0,
-            'to'           => min($offset + $perPage, $total),
+            'last_page' => $lastPage,
+            'per_page' => $perPage,
+            'from' => $total > 0 ? $offset + 1 : 0,
+            'to' => min($offset + $perPage, $total),
         ]);
     }
 
@@ -1728,12 +1736,12 @@ class AdminController extends Controller
         $members = RegistrationMember::with([
             'registration.competition.category',
             'registration.user',
-            'registration.invoice'
+            'registration.invoice',
         ])
-        ->whereHas('registration', function ($q) {
-            $q->whereIn('status', ['verified', 'pending', 'revision']);
-        })
-        ->get();
+            ->whereHas('registration', function ($q) {
+                $q->whereIn('status', ['verified', 'pending', 'revision']);
+            })
+            ->get();
 
         // 2. Kelompokkan berdasarkan identitas unik siswa (NISN diprioritaskan, atau Nama + Asal Sekolah)
         $grouped = [];
@@ -1745,14 +1753,14 @@ class AdminController extends Controller
 
             $nisn = trim($m->nisn ?? '');
             if (! empty($nisn) && strlen($nisn) >= 4 && ! in_array($nisn, ['0000000000', '1234567890', '-'])) {
-                $groupKey = 'nisn_' . $nisn;
+                $groupKey = 'nisn_'.$nisn;
             } else {
                 $cleanName = strtolower(preg_replace('/[^a-z0-9]/', '', $m->full_name ?? ''));
                 $cleanSchool = strtolower(preg_replace('/[^a-z0-9]/', '', $m->school_name ?: ($reg->display_school ?? '')));
                 if (empty($cleanName)) {
                     continue;
                 }
-                $groupKey = 'name_' . $cleanName . '_' . $cleanSchool;
+                $groupKey = 'name_'.$cleanName.'_'.$cleanSchool;
             }
 
             if (! isset($grouped[$groupKey])) {
@@ -1792,9 +1800,9 @@ class AdminController extends Controller
 
                 $scheduleFormatted = '-';
                 if ($comp->schedule_date) {
-                    $scheduleFormatted = $comp->schedule_date instanceof \Carbon\Carbon
+                    $scheduleFormatted = $comp->schedule_date instanceof Carbon
                         ? $comp->schedule_date->translatedFormat('d M Y')
-                        : \Carbon\Carbon::parse($comp->schedule_date)->translatedFormat('d M Y');
+                        : Carbon::parse($comp->schedule_date)->translatedFormat('d M Y');
                 }
 
                 $grouped[$groupKey]['registrations'][] = [
@@ -1850,10 +1858,10 @@ class AdminController extends Controller
             $dateGroups = [];
             foreach ($item['registrations'] as $r) {
                 if (! empty($r['schedule_date'])) {
-                    $d = $r['schedule_date'] instanceof \Carbon\Carbon
+                    $d = $r['schedule_date'] instanceof Carbon
                         ? $r['schedule_date']->format('Y-m-d')
                         : substr((string) $r['schedule_date'], 0, 10);
-                    $dateGroups[$d][] = $r['competition_name'] . ' (' . $r['schedule_time'] . ')';
+                    $dateGroups[$d][] = $r['competition_name'].' ('.$r['schedule_time'].')';
                 }
             }
             $conflicts = [];

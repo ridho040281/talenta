@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -453,23 +454,23 @@ class Competition extends Model
         return AppSetting::get('blt_status_ganda_pi', $this->status ?? 'buka');
     }
 
-    public function getTierEffectiveStart(string $tierKey): ?\Carbon\Carbon
+    public function getTierEffectiveStart(string $tierKey): ?Carbon
     {
         $prefix = strtolower($this->code);
         $tierStart = AppSetting::get("{$prefix}_start_{$tierKey}");
         if (! empty($tierStart) && strtotime($tierStart)) {
-            return \Carbon\Carbon::parse($tierStart);
+            return Carbon::parse($tierStart);
         }
 
         return $this->effective_registration_start;
     }
 
-    public function getTierEffectiveEnd(string $tierKey): ?\Carbon\Carbon
+    public function getTierEffectiveEnd(string $tierKey): ?Carbon
     {
         $prefix = strtolower($this->code);
         $tierEnd = AppSetting::get("{$prefix}_end_{$tierKey}");
         if (! empty($tierEnd) && strtotime($tierEnd)) {
-            return \Carbon\Carbon::parse($tierEnd);
+            return Carbon::parse($tierEnd);
         }
 
         return $this->effective_registration_end;
@@ -710,6 +711,7 @@ class Competition extends Model
             if (in_array(strtolower($secondPart), ['view', 'watch', 'edit', 'embed', 'preview', ''])) {
                 return "https://www.canva.com/design/{$designId}/view?embed";
             }
+
             return "https://www.canva.com/design/{$designId}/{$secondPart}/view?embed";
         }
 
@@ -765,6 +767,7 @@ class Competition extends Model
             if (in_array(strtolower($secondPart), ['view', 'watch', 'edit', 'embed', 'preview', ''])) {
                 return "https://www.canva.com/design/{$designId}/view";
             }
+
             return "https://www.canva.com/design/{$designId}/{$secondPart}/view";
         }
 
@@ -1063,7 +1066,7 @@ class Competition extends Model
             return [];
         }
 
-        $lines = explode("\n", str_replace("\r", "", $raw));
+        $lines = explode("\n", str_replace("\r", '', $raw));
         $songs = [];
         foreach ($lines as $line) {
             $trimmed = trim($line);
@@ -1091,15 +1094,15 @@ class Competition extends Model
     /**
      * Effective registration start date: custom if filled, otherwise global app setting
      */
-    public function getEffectiveRegistrationStartAttribute(): ?\Carbon\Carbon
+    public function getEffectiveRegistrationStartAttribute(): ?Carbon
     {
         if ($this->registration_start_at) {
-            return \Carbon\Carbon::parse($this->registration_start_at);
+            return Carbon::parse($this->registration_start_at);
         }
 
         $globalStart = AppSetting::get('registration_start_date');
         if (! empty($globalStart) && strtotime($globalStart)) {
-            return \Carbon\Carbon::parse($globalStart);
+            return Carbon::parse($globalStart);
         }
 
         return null;
@@ -1108,18 +1111,19 @@ class Competition extends Model
     /**
      * Effective registration deadline: custom if filled, otherwise global app setting
      */
-    public function getEffectiveRegistrationEndAttribute(): ?\Carbon\Carbon
+    public function getEffectiveRegistrationEndAttribute(): ?Carbon
     {
         if ($this->registration_end_at) {
-            return \Carbon\Carbon::parse($this->registration_end_at);
+            return Carbon::parse($this->registration_end_at);
         }
 
         $globalDeadline = AppSetting::get('registration_deadline');
         if (! empty($globalDeadline) && strtotime($globalDeadline)) {
-            $parsed = \Carbon\Carbon::parse($globalDeadline);
-            if (strlen(trim($globalDeadline)) === 10 && !str_contains($globalDeadline, ':') && !str_contains($globalDeadline, 'T')) {
+            $parsed = Carbon::parse($globalDeadline);
+            if (strlen(trim($globalDeadline)) === 10 && ! str_contains($globalDeadline, ':') && ! str_contains($globalDeadline, 'T')) {
                 $parsed = $parsed->endOfDay();
             }
+
             return $parsed;
         }
 

@@ -76,7 +76,7 @@ class WablasNotificationService
             $cleanNamaPeserta = $rawNamaPeserta;
             if (is_string($cleanNamaPeserta) && ! empty($namaSekolah)) {
                 $quotedSchool = preg_quote(trim($namaSekolah), '/');
-                $cleanNamaPeserta = trim(preg_replace('/\s*\(' . $quotedSchool . '\)$/i', '', $cleanNamaPeserta));
+                $cleanNamaPeserta = trim(preg_replace('/\s*\('.$quotedSchool.'\)$/i', '', $cleanNamaPeserta));
             }
 
             $placeholders = [
@@ -126,7 +126,7 @@ class WablasNotificationService
                         'target_audience' => 'auto_'.$templateCode,
                         'target_competition' => $cabangLomba,
                         'recipients_count' => 1,
-                        'message' => "Tujuan: {$cleanPhone}\n\n".$msg.($result['success'] ? '' : "\n\n[Status: Gagal - ".($result['message'] ?? 'Error')."]"),
+                        'message' => "Tujuan: {$cleanPhone}\n\n".$msg.($result['success'] ? '' : "\n\n[Status: Gagal - ".($result['message'] ?? 'Error').']'),
                         'status' => $result['success'] ? 'sent' : 'failed',
                     ]);
                 } catch (\Throwable $e) {
@@ -145,8 +145,8 @@ class WablasNotificationService
     /**
      * Send a single WhatsApp message via Wablas API with automatic retry and auto-recovery.
      *
-     * @param string $phone Target phone number (e.g. 08123456789 or 628123456789)
-     * @param string $message Text message content
+     * @param  string  $phone  Target phone number (e.g. 08123456789 or 628123456789)
+     * @param  string  $message  Text message content
      * @return array ['success' => bool, 'message' => string, 'data' => mixed]
      */
     public static function sendDirectMessage(string $phone, string $message): array
@@ -172,9 +172,9 @@ class WablasNotificationService
         }
 
         if (str_starts_with($cleanPhone, '0')) {
-            $cleanPhone = '62' . substr($cleanPhone, 1);
+            $cleanPhone = '62'.substr($cleanPhone, 1);
         } elseif (str_starts_with($cleanPhone, '8')) {
-            $cleanPhone = '628' . substr($cleanPhone, 1);
+            $cleanPhone = '628'.substr($cleanPhone, 1);
         }
 
         $payload = [
@@ -184,7 +184,7 @@ class WablasNotificationService
         ];
 
         // 1. First attempt: Use secret_key if present ($token.$secretKey), else $token
-        $authHeader = (! empty($secretKey)) ? ($token . '.' . $secretKey) : $token;
+        $authHeader = (! empty($secretKey)) ? ($token.'.'.$secretKey) : $token;
 
         try {
             $res = Http::withoutVerifying()
@@ -218,7 +218,7 @@ class WablasNotificationService
                 // If clean token works, auto-heal database by removing invalid secret_key
                 if ($isSuccess) {
                     AppSetting::set('wablas_secret_key', '');
-                    Log::info("Wablas: Auto-healed invalid secret_key setting because clean token succeeded.");
+                    Log::info('Wablas: Auto-healed invalid secret_key setting because clean token succeeded.');
                 }
             }
 
@@ -242,8 +242,8 @@ class WablasNotificationService
                     'data' => $json['data'] ?? [],
                 ];
             } else {
-                $err = $json['message'] ?? ('HTTP Error ' . $res->status() . ' dari server Wablas');
-                Log::error("Wablas Send Failed to {$cleanPhone}: {$err} | HTTP {$res->status()} | Body: " . $res->body());
+                $err = $json['message'] ?? ('HTTP Error '.$res->status().' dari server Wablas');
+                Log::error("Wablas Send Failed to {$cleanPhone}: {$err} | HTTP {$res->status()} | Body: ".$res->body());
 
                 return [
                     'success' => false,
@@ -252,11 +252,11 @@ class WablasNotificationService
                 ];
             }
         } catch (\Throwable $e) {
-            Log::error("Wablas Connection Exception to {$cleanPhone}: " . $e->getMessage());
+            Log::error("Wablas Connection Exception to {$cleanPhone}: ".$e->getMessage());
 
             return [
                 'success' => false,
-                'message' => 'Gagal koneksi ke server Wablas: ' . $e->getMessage(),
+                'message' => 'Gagal koneksi ke server Wablas: '.$e->getMessage(),
             ];
         }
     }

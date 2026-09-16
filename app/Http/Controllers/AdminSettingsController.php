@@ -10,17 +10,19 @@ use App\Models\CustomContact;
 use App\Models\Registration;
 use App\Models\User;
 use App\Models\WhatsappTemplate;
+use App\Services\WablasNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use App\Services\WablasNotificationService;
 
 class AdminSettingsController extends Controller
 {
@@ -104,7 +106,7 @@ class AdminSettingsController extends Controller
 
         // Ensure physical files are synchronized and readable in public storage
         foreach (['app_logo', 'favicon', 'event_logo', 'letterhead_image', 'kop_lembaga', 'kop_kegiatan', 'certificate_header_image'] as $k) {
-            if (!empty($settings[$k])) {
+            if (! empty($settings[$k])) {
                 self::ensurePublicStorageSync($settings[$k]);
             }
         }
@@ -275,7 +277,7 @@ class AdminSettingsController extends Controller
                     if (Storage::disk('public')->exists($cleanOld)) {
                         Storage::disk('public')->delete($cleanOld);
                     }
-                    $publicOld = public_path('storage/' . $cleanOld);
+                    $publicOld = public_path('storage/'.$cleanOld);
                     if (file_exists($publicOld)) {
                         @unlink($publicOld);
                     }
@@ -290,7 +292,7 @@ class AdminSettingsController extends Controller
         // Apply drag & drop reordered sequence if submitted
         if ($request->has('ordered_sponsor_logos') && is_array($request->ordered_sponsor_logos)) {
             $ordered = $request->ordered_sponsor_logos;
-            $cleanCurrent = array_map(fn($item) => ltrim(str_replace(['public/', 'storage/'], '', $item), '/'), $currentSponsorLogos);
+            $cleanCurrent = array_map(fn ($item) => ltrim(str_replace(['public/', 'storage/'], '', $item), '/'), $currentSponsorLogos);
             $reordered = [];
             foreach ($ordered as $logo) {
                 $cleanLogo = ltrim(str_replace(['public/', 'storage/'], '', $logo), '/');
@@ -300,7 +302,7 @@ class AdminSettingsController extends Controller
                 }
             }
             foreach ($currentSponsorLogos as $idx => $orig) {
-                if (!in_array($orig, $reordered)) {
+                if (! in_array($orig, $reordered)) {
                     $reordered[] = $orig;
                 }
             }
@@ -313,7 +315,7 @@ class AdminSettingsController extends Controller
                 if (Storage::disk('public')->exists($cleanDel)) {
                     Storage::disk('public')->delete($cleanDel);
                 }
-                $pubDel = public_path('storage/' . $cleanDel);
+                $pubDel = public_path('storage/'.$cleanDel);
                 if (file_exists($pubDel)) {
                     @unlink($pubDel);
                 }
@@ -322,7 +324,7 @@ class AdminSettingsController extends Controller
         }
 
         if ($request->hasFile('sponsor_logos')) {
-            if (!Storage::disk('public')->exists('sponsors')) {
+            if (! Storage::disk('public')->exists('sponsors')) {
                 Storage::disk('public')->makeDirectory('sponsors');
             }
             foreach ($request->file('sponsor_logos') as $sponsorFile) {
@@ -345,7 +347,7 @@ class AdminSettingsController extends Controller
                 if (Storage::disk('public')->exists($cleanDel)) {
                     Storage::disk('public')->delete($cleanDel);
                 }
-                $pubDel = public_path('storage/' . $cleanDel);
+                $pubDel = public_path('storage/'.$cleanDel);
                 if (file_exists($pubDel)) {
                     @unlink($pubDel);
                 }
@@ -354,7 +356,7 @@ class AdminSettingsController extends Controller
         }
 
         if ($request->hasFile('pamphlet_images')) {
-            if (!Storage::disk('public')->exists('pamphlets')) {
+            if (! Storage::disk('public')->exists('pamphlets')) {
                 Storage::disk('public')->makeDirectory('pamphlets');
             }
             foreach ($request->file('pamphlet_images') as $pamphletFile) {
@@ -373,7 +375,7 @@ class AdminSettingsController extends Controller
             'committee_chairman_name', 'committee_chairman_nip', 'address',
             'contact_phone', 'contact_email', 'school_website', 'event_year',
             'allow_individual_reg', 'allow_collective_reg',
-            'global_registration_status', 'registration_status', 'registration_start_date', 'registration_deadline', 
+            'global_registration_status', 'registration_status', 'registration_start_date', 'registration_deadline',
             'registration_auto_close', 'registration_closed_message', 'bank_name',
             'bank_account_number', 'bank_account_holder', 'treasurer_name', 'treasurer_nip', 'announcement_banner',
             'hero_title', 'hero_subtitle', 'how_it_works_tagline', 'how_it_works_title',
@@ -396,6 +398,7 @@ class AdminSettingsController extends Controller
         AppSetting::set('show_pamphlet_embed', $showPamphletEmbed);
 
         $activeTab = $request->input('active_tab', 'landing');
+
         return redirect()->route('admin.settings.general', ['tab' => $activeTab])->with('success', 'Pengaturan aplikasi dan konten landing page berhasil disimpan.');
     }
 
@@ -412,7 +415,7 @@ class AdminSettingsController extends Controller
         $currentSponsorLogos = json_decode(AppSetting::get('sponsor_logos', '[]'), true) ?: [];
         $uploaded = [];
 
-        if (!Storage::disk('public')->exists('sponsors')) {
+        if (! Storage::disk('public')->exists('sponsors')) {
             Storage::disk('public')->makeDirectory('sponsors');
         }
 
@@ -424,7 +427,7 @@ class AdminSettingsController extends Controller
                     $currentSponsorLogos[] = $path;
                     $uploaded[] = [
                         'path' => $path,
-                        'url' => asset('storage/' . $path),
+                        'url' => asset('storage/'.$path),
                         'id' => md5($path),
                         'name' => basename($path),
                     ];
@@ -437,14 +440,14 @@ class AdminSettingsController extends Controller
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => count($uploaded) . ' logo sponsor berhasil diunggah.',
+                'message' => count($uploaded).' logo sponsor berhasil diunggah.',
                 'uploaded' => $uploaded,
                 'total_count' => count($currentSponsorLogos),
             ]);
         }
 
         return redirect()->route('admin.settings.general', ['tab' => 'landing'])
-            ->with('success', count($uploaded) . ' logo sponsor berhasil diunggah.');
+            ->with('success', count($uploaded).' logo sponsor berhasil diunggah.');
     }
 
     /**
@@ -460,7 +463,7 @@ class AdminSettingsController extends Controller
         $currentPamphletImages = json_decode(AppSetting::get('pamphlet_images', '[]'), true) ?: [];
         $uploaded = [];
 
-        if (!Storage::disk('public')->exists('pamphlets')) {
+        if (! Storage::disk('public')->exists('pamphlets')) {
             Storage::disk('public')->makeDirectory('pamphlets');
         }
 
@@ -472,7 +475,7 @@ class AdminSettingsController extends Controller
                     $currentPamphletImages[] = $path;
                     $uploaded[] = [
                         'path' => $path,
-                        'url' => asset('storage/' . $path),
+                        'url' => asset('storage/'.$path),
                         'id' => md5($path),
                         'name' => basename($path),
                     ];
@@ -485,14 +488,14 @@ class AdminSettingsController extends Controller
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => count($uploaded) . ' gambar pamflet berhasil diunggah.',
+                'message' => count($uploaded).' gambar pamflet berhasil diunggah.',
                 'uploaded' => $uploaded,
                 'total_count' => count($currentPamphletImages),
             ]);
         }
 
         return redirect()->route('admin.settings.general', ['tab' => 'landing'])
-            ->with('success', count($uploaded) . ' gambar pamflet berhasil diunggah.');
+            ->with('success', count($uploaded).' gambar pamflet berhasil diunggah.');
     }
 
     /**
@@ -511,13 +514,14 @@ class AdminSettingsController extends Controller
         if (Storage::disk('public')->exists($cleanPath)) {
             Storage::disk('public')->delete($cleanPath);
         }
-        $publicFile = public_path('storage/' . $cleanPath);
+        $publicFile = public_path('storage/'.$cleanPath);
         if (file_exists($publicFile)) {
             @unlink($publicFile);
         }
 
         $filtered = array_values(array_filter($current, function ($item) use ($logoToDelete, $cleanPath) {
             $itemClean = ltrim(str_replace(['public/', 'storage/'], '', $item), '/');
+
             return $item !== $logoToDelete && $itemClean !== $cleanPath;
         }));
         AppSetting::set('sponsor_logos', json_encode($filtered));
@@ -549,7 +553,7 @@ class AdminSettingsController extends Controller
         $ordered = $request->input('ordered_logos');
         $current = json_decode(AppSetting::get('sponsor_logos', '[]'), true) ?: [];
 
-        $cleanCurrent = array_map(fn($item) => ltrim(str_replace(['public/', 'storage/'], '', $item), '/'), $current);
+        $cleanCurrent = array_map(fn ($item) => ltrim(str_replace(['public/', 'storage/'], '', $item), '/'), $current);
 
         $newOrder = [];
         foreach ($ordered as $logo) {
@@ -561,7 +565,7 @@ class AdminSettingsController extends Controller
         }
 
         foreach ($current as $orig) {
-            if (!in_array($orig, $newOrder)) {
+            if (! in_array($orig, $newOrder)) {
                 $newOrder[] = $orig;
             }
         }
@@ -596,13 +600,14 @@ class AdminSettingsController extends Controller
         if (Storage::disk('public')->exists($cleanPath)) {
             Storage::disk('public')->delete($cleanPath);
         }
-        $publicFile = public_path('storage/' . $cleanPath);
+        $publicFile = public_path('storage/'.$cleanPath);
         if (file_exists($publicFile)) {
             @unlink($publicFile);
         }
 
         $filtered = array_values(array_filter($current, function ($item) use ($imageToDelete, $cleanPath) {
             $itemClean = ltrim(str_replace(['public/', 'storage/'], '', $item), '/');
+
             return $item !== $imageToDelete && $itemClean !== $cleanPath;
         }));
         AppSetting::set('pamphlet_images', json_encode($filtered));
@@ -635,8 +640,8 @@ class AdminSettingsController extends Controller
             $validSponsors = [];
             foreach ($sponsors as $logo) {
                 $cleanPath = ltrim(str_replace(['public/', 'storage/'], '', $logo), '/');
-                $src = storage_path('app/public/' . $cleanPath);
-                $dest = public_path('storage/' . $cleanPath);
+                $src = storage_path('app/public/'.$cleanPath);
+                $dest = public_path('storage/'.$cleanPath);
 
                 if (file_exists($src) || file_exists($dest)) {
                     self::ensurePublicStorageSync($cleanPath);
@@ -653,8 +658,8 @@ class AdminSettingsController extends Controller
             $validPamphlets = [];
             foreach ($pamphlets as $img) {
                 $cleanPath = ltrim(str_replace(['public/', 'storage/'], '', $img), '/');
-                $src = storage_path('app/public/' . $cleanPath);
-                $dest = public_path('storage/' . $cleanPath);
+                $src = storage_path('app/public/'.$cleanPath);
+                $dest = public_path('storage/'.$cleanPath);
 
                 if (file_exists($src) || file_exists($dest)) {
                     self::ensurePublicStorageSync($cleanPath);
@@ -667,9 +672,9 @@ class AdminSettingsController extends Controller
         }
 
         $totalCleaned = $cleanedSponsors + $cleanedPamphlets;
-        $msg = $totalCleaned > 0 
-            ? "Berhasil membersihkan {$totalCleaned} file yang rusak/hilang dari database." 
-            : "Semua file logo dan pamflet dalam kondisi baik dan valid.";
+        $msg = $totalCleaned > 0
+            ? "Berhasil membersihkan {$totalCleaned} file yang rusak/hilang dari database."
+            : 'Semua file logo dan pamflet dalam kondisi baik dan valid.';
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -1342,7 +1347,7 @@ class AdminSettingsController extends Controller
         $message = trim($request->message ?? '');
         if (empty($message)) {
             $appName = AppSetting::get('app_name', 'TALENTA');
-            $message = "Halo! Ini adalah pesan tes pengujian WhatsApp Gateway dari sistem *{$appName}*.\n\nGateway Wablas berhasil terhubung dan siap beroperasi mengirim notifikasi ke peserta & panitia! 🚀\nWaktu Pengujian: " . now()->translatedFormat('d F Y H:i:s') . ' WIB';
+            $message = "Halo! Ini adalah pesan tes pengujian WhatsApp Gateway dari sistem *{$appName}*.\n\nGateway Wablas berhasil terhubung dan siap beroperasi mengirim notifikasi ke peserta & panitia! 🚀\nWaktu Pengujian: ".now()->translatedFormat('d F Y H:i:s').' WIB';
         }
 
         $result = WablasNotificationService::sendDirectMessage($phone, $message);
@@ -1350,14 +1355,14 @@ class AdminSettingsController extends Controller
         if ($result['success']) {
             return response()->json([
                 'success' => true,
-                'message' => 'Pesan uji coba berhasil dikirim ke nomor ' . $phone . ' via Wablas!',
+                'message' => 'Pesan uji coba berhasil dikirim ke nomor '.$phone.' via Wablas!',
                 'data' => $result['data'] ?? [],
             ]);
         }
 
         return response()->json([
             'success' => false,
-            'message' => 'Gagal mengirim pesan: ' . ($result['message'] ?? 'Error tidak diketahui dari server Wablas'),
+            'message' => 'Gagal mengirim pesan: '.($result['message'] ?? 'Error tidak diketahui dari server Wablas'),
             'debug' => $result['body'] ?? null,
         ], 422);
     }
@@ -1724,12 +1729,12 @@ class AdminSettingsController extends Controller
         ];
 
         $histories = json_decode(AppSetting::get('popup_history_list', '[]'), true) ?: [];
-        
+
         // Seed initial history if empty
-        if (empty($histories) && !empty($settings['popup_title'])) {
+        if (empty($histories) && ! empty($settings['popup_title'])) {
             $histories = [
                 [
-                    'id' => (string) \Illuminate\Support\Str::uuid(),
+                    'id' => (string) Str::uuid(),
                     'title' => $settings['popup_title'],
                     'subtitle' => $settings['popup_subtitle'],
                     'content' => $settings['popup_content'],
@@ -1740,10 +1745,10 @@ class AdminSettingsController extends Controller
                     'secondary_button_text' => $settings['popup_secondary_button_text'],
                     'enabled' => $settings['popup_enabled'],
                     'version' => $settings['popup_version'],
-                    'created_at' => now()->setTimezone('Asia/Jakarta')->translatedFormat('d F Y, H:i') . ' WIB',
+                    'created_at' => now()->setTimezone('Asia/Jakarta')->translatedFormat('d F Y, H:i').' WIB',
                     'timestamp' => time(),
                     'created_by' => auth()->user()->name ?? 'Administrator',
-                ]
+                ],
             ];
             AppSetting::set('popup_history_list', json_encode($histories));
         }
@@ -1781,8 +1786,8 @@ class AdminSettingsController extends Controller
         // Handle delete image
         if ($request->filled('delete_popup_image')) {
             $oldImage = AppSetting::get('popup_image');
-            if ($oldImage && \Illuminate\Support\Facades\Storage::disk('public')->exists($oldImage)) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldImage);
+            if ($oldImage && Storage::disk('public')->exists($oldImage)) {
+                Storage::disk('public')->delete($oldImage);
             }
             AppSetting::set('popup_image', null);
         }
@@ -1790,8 +1795,8 @@ class AdminSettingsController extends Controller
         // Handle upload image
         if ($request->hasFile('popup_image')) {
             $oldImage = AppSetting::get('popup_image');
-            if ($oldImage && \Illuminate\Support\Facades\Storage::disk('public')->exists($oldImage)) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldImage);
+            if ($oldImage && Storage::disk('public')->exists($oldImage)) {
+                Storage::disk('public')->delete($oldImage);
             }
             $imagePath = $request->file('popup_image')->store('popups', 'public');
             AppSetting::set('popup_image', $imagePath);
@@ -1802,11 +1807,11 @@ class AdminSettingsController extends Controller
 
         if ($saveAction === 'publish') {
             // RELEASE AS NEW ANNOUNCEMENT (Increments version & adds new history row)
-            $newVersion = 'v_' . time();
+            $newVersion = 'v_'.time();
             AppSetting::set('popup_version', $newVersion);
 
             $newHistoryItem = [
-                'id' => (string) \Illuminate\Support\Str::uuid(),
+                'id' => (string) Str::uuid(),
                 'title' => $validated['popup_title'],
                 'subtitle' => $validated['popup_subtitle'] ?? '',
                 'content' => $validated['popup_content'],
@@ -1817,7 +1822,7 @@ class AdminSettingsController extends Controller
                 'secondary_button_text' => $validated['popup_secondary_button_text'] ?? 'Saya Mengerti / Tutup',
                 'enabled' => $request->input('popup_enabled', '0'),
                 'version' => $newVersion,
-                'created_at' => now()->setTimezone('Asia/Jakarta')->translatedFormat('d F Y, H:i') . ' WIB',
+                'created_at' => now()->setTimezone('Asia/Jakarta')->translatedFormat('d F Y, H:i').' WIB',
                 'timestamp' => time(),
                 'created_by' => auth()->user()->name ?? 'Administrator',
             ];
@@ -1828,7 +1833,7 @@ class AdminSettingsController extends Controller
             return redirect()->route('admin.settings.popup.index')->with('success', 'Pengumuman baru berhasil dirilis dan dicatat ke riwayat. Pop-up akan tampil kembali ke seluruh pengunjung.');
         } else {
             // UPDATE IN-PLACE (Typo / editorial fix without resetting version or adding history row)
-            if (!empty($histories)) {
+            if (! empty($histories)) {
                 $histories[0]['title'] = $validated['popup_title'];
                 $histories[0]['subtitle'] = $validated['popup_subtitle'] ?? '';
                 $histories[0]['content'] = $validated['popup_content'];
@@ -1838,11 +1843,11 @@ class AdminSettingsController extends Controller
                 $histories[0]['button_url'] = $validated['popup_button_url'] ?? '';
                 $histories[0]['secondary_button_text'] = $validated['popup_secondary_button_text'] ?? 'Saya Mengerti / Tutup';
                 $histories[0]['enabled'] = $request->input('popup_enabled', '0');
-                $histories[0]['updated_at'] = now()->setTimezone('Asia/Jakarta')->translatedFormat('d F Y, H:i') . ' WIB';
+                $histories[0]['updated_at'] = now()->setTimezone('Asia/Jakarta')->translatedFormat('d F Y, H:i').' WIB';
             } else {
                 $histories = [
                     [
-                        'id' => (string) \Illuminate\Support\Str::uuid(),
+                        'id' => (string) Str::uuid(),
                         'title' => $validated['popup_title'],
                         'subtitle' => $validated['popup_subtitle'] ?? '',
                         'content' => $validated['popup_content'],
@@ -1853,10 +1858,10 @@ class AdminSettingsController extends Controller
                         'secondary_button_text' => $validated['popup_secondary_button_text'] ?? 'Saya Mengerti / Tutup',
                         'enabled' => $request->input('popup_enabled', '0'),
                         'version' => AppSetting::get('popup_version', 'v1'),
-                        'created_at' => now()->setTimezone('Asia/Jakarta')->translatedFormat('d F Y, H:i') . ' WIB',
+                        'created_at' => now()->setTimezone('Asia/Jakarta')->translatedFormat('d F Y, H:i').' WIB',
                         'timestamp' => time(),
                         'created_by' => auth()->user()->name ?? 'Administrator',
-                    ]
+                    ],
                 ];
             }
             AppSetting::set('popup_history_list', json_encode($histories));
@@ -1876,16 +1881,16 @@ class AdminSettingsController extends Controller
 
         $enabled = (string) $validated['popup_enabled'];
         AppSetting::set('popup_enabled', $enabled);
-        \Illuminate\Support\Facades\Cache::forget('global_app_settings');
+        Cache::forget('global_app_settings');
 
         // Keep active history item in sync
         $histories = json_decode(AppSetting::get('popup_history_list', '[]'), true) ?: [];
-        if (!empty($histories)) {
+        if (! empty($histories)) {
             $histories[0]['enabled'] = $enabled;
             AppSetting::set('popup_history_list', json_encode($histories));
         }
 
-        $message = $enabled === '1' 
+        $message = $enabled === '1'
             ? 'Pop-up Berhasil Diaktifkan! Informasi akan muncul otomatis ke pengunjung.'
             : 'Pop-up Berhasil Dinonaktifkan! Pop-up tidak akan muncul ke pengunjung.';
 
@@ -1902,7 +1907,7 @@ class AdminSettingsController extends Controller
     public function deletePopupHistory($id)
     {
         $histories = json_decode(AppSetting::get('popup_history_list', '[]'), true) ?: [];
-        $filtered = array_values(array_filter($histories, fn($item) => ($item['id'] ?? '') !== $id));
+        $filtered = array_values(array_filter($histories, fn ($item) => ($item['id'] ?? '') !== $id));
         AppSetting::set('popup_history_list', json_encode($filtered));
 
         return redirect()->route('admin.settings.popup.index')->with('success', 'Riwayat informasi berhasil dihapus.');
@@ -1913,7 +1918,7 @@ class AdminSettingsController extends Controller
      */
     public function resetPopupVersion()
     {
-        AppSetting::set('popup_version', 'v_' . time());
+        AppSetting::set('popup_version', 'v_'.time());
 
         return redirect()->route('admin.settings.popup.index')->with('success', 'Status Informasi berhasil di-reset. Pengumuman akan muncul kembali satu kali kepada seluruh pengunjung dan peserta.');
     }
@@ -1928,17 +1933,17 @@ class AdminSettingsController extends Controller
         }
 
         $cleanPath = ltrim(str_replace(['public/', 'storage/'], '', $relativePath), '/');
-        $srcPath = storage_path('app/public/' . $cleanPath);
-        $destPath = public_path('storage/' . $cleanPath);
+        $srcPath = storage_path('app/public/'.$cleanPath);
+        $destPath = public_path('storage/'.$cleanPath);
 
         // If source file exists in storage/app/public
         if (file_exists($srcPath)) {
             @chmod($srcPath, 0664);
             $destDir = dirname($destPath);
-            if (!file_exists($destDir)) {
+            if (! file_exists($destDir)) {
                 @mkdir($destDir, 0775, true);
             }
-            if (!file_exists($destPath) || (file_exists($srcPath) && filemtime($srcPath) > filemtime($destPath))) {
+            if (! file_exists($destPath) || (file_exists($srcPath) && filemtime($srcPath) > filemtime($destPath))) {
                 @copy($srcPath, $destPath);
             }
             if (file_exists($destPath)) {
@@ -1948,10 +1953,10 @@ class AdminSettingsController extends Controller
             // If exists only in public/storage, reverse sync to storage/app/public
             @chmod($destPath, 0664);
             $srcDir = dirname($srcPath);
-            if (!file_exists($srcDir)) {
+            if (! file_exists($srcDir)) {
                 @mkdir($srcDir, 0775, true);
             }
-            if (!file_exists($srcPath)) {
+            if (! file_exists($srcPath)) {
                 @copy($destPath, $srcPath);
             }
             if (file_exists($srcPath)) {

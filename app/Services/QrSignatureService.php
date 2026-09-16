@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Registration;
+use App\Models\User;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class QrSignatureService
@@ -16,6 +18,7 @@ class QrSignatureService
                 $svg = (string) QrCode::size($size)->margin(0)->errorCorrection('M')->generate($data);
                 // Strip XML declaration if present so inline SVG renders cleanly in HTML/Blade
                 $svg = preg_replace('/<\?xml[^\>]*\?>/i', '', $svg);
+
                 return trim($svg);
             }
         } catch (\Throwable $e) {
@@ -23,6 +26,7 @@ class QrSignatureService
         }
 
         $encoded = urlencode($data);
+
         return '<img src="https://api.qrserver.com/v1/create-qr-code/?size='.$size.'x'.$size.'&data='.$encoded.'" width="'.$size.'" height="'.$size.'" alt="QR Code" style="display:inline-block; border-radius: 4px;" />';
     }
 
@@ -31,7 +35,7 @@ class QrSignatureService
      */
     public static function registrationFormUrl($registration): string
     {
-        return url('/cek-status?q=' . urlencode($registration->registration_code));
+        return url('/cek-status?q='.urlencode($registration->registration_code));
     }
 
     /**
@@ -40,7 +44,8 @@ class QrSignatureService
     public static function receiptUrl($registration): string
     {
         $code = $registration->invoice ? $registration->invoice->invoice_number : $registration->registration_code;
-        return url('/cek-status?q=' . urlencode($code));
+
+        return url('/cek-status?q='.urlencode($code));
     }
 
     /**
@@ -48,24 +53,34 @@ class QrSignatureService
      */
     public static function accountProofUrl($target): string
     {
-        if ($target instanceof \App\Models\Registration) {
-            return url('/cek-status?q=' . urlencode($target->registration_code));
+        if ($target instanceof Registration) {
+            return url('/cek-status?q='.urlencode($target->registration_code));
         }
 
-        if ($target instanceof \App\Models\User) {
+        if ($target instanceof User) {
             $identifier = $target->nisn ?: ($target->email ?: $target->name);
-            return url('/cek-status?q=' . urlencode($identifier));
+
+            return url('/cek-status?q='.urlencode($identifier));
         }
 
         if (is_array($target)) {
             $identifier = $target['nisn'] ?? ($target['email'] ?? ($target['name'] ?? ''));
-            return url('/cek-status?q=' . urlencode($identifier));
+
+            return url('/cek-status?q='.urlencode($identifier));
         }
 
-        if (is_string($target) && !empty($target)) {
-            return url('/cek-status?q=' . urlencode($target));
+        if (is_string($target) && ! empty($target)) {
+            return url('/cek-status?q='.urlencode($target));
         }
 
         return url('/cek-status');
+    }
+
+    /**
+     * Generate QR Code URL for Certificate Verification
+     */
+    public static function certificateUrl(string $certCode): string
+    {
+        return route('certificate.verify', ['code' => $certCode]);
     }
 }
