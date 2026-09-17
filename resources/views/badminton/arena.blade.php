@@ -202,10 +202,7 @@
     <!-- FOOTER ARENA -->
     <footer class="bg-slate-950 border-t border-slate-900 px-4 py-2 text-center text-xs text-slate-500 flex justify-between items-center">
         <span>{{ $appSettings['app_name'] ?? 'TALENTA' }} • {{ $appSettings['institution_name'] ?? 'MTsN 1 BLITAR' }}</span>
-        <span class="font-mono flex items-center gap-1.5" :class="isConnected ? 'text-emerald-400' : 'text-amber-400'">
-            <span class="w-2 h-2 rounded-full inline-block" :class="isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400 animate-ping'"></span>
-            <span x-text="isConnected ? '● SSE LIVE PUSH' : '⟳ Menghubungkan...'"></span>
-        </span>
+        <span class="font-mono text-emerald-400">● REAL-TIME LIVE SYNC (0.3s)</span>
     </footer>
 
     <!-- JAVASCRIPT STATE APP -->
@@ -213,40 +210,41 @@
         function arenaMultiCourtApp() {
             return {
                 courtMatches: @json($courtMatches),
-                isConnected: false,
-                _es: null,
+                isSyncing: false,
+                lastDataHash: '',
 
                 init() {
                     lucide.createIcons();
-                    this.connectSSE();
+                    this.startFastSync();
                 },
 
-                connectSSE() {
-                    if (this._es) this._es.close();
+                startFastSync() {
+                    this.fetchActiveCourts();
+                    // 350ms stateless polling - no session lock, zero thread blocking
+                    setInterval(() => {
+                        this.fetchActiveCourts();
+                    }, 350);
+                },
 
-                    const url = `{{ url('/badminton/api/arena-stream') }}`;
-                    const es = new EventSource(url);
-                    this._es = es;
-
-                    es.addEventListener('arena', (e) => {
-                        try {
-                            this.courtMatches = JSON.parse(e.data);
-                            this.isConnected = true;
-                        } catch (_) {}
-                    });
-
-                    es.addEventListener('reconnect', () => {
-                        es.close();
-                        setTimeout(() => this.connectSSE(), 500);
-                    });
-
-                    es.onerror = () => {
-                        this.isConnected = false;
-                        es.close();
-                        setTimeout(() => this.connectSSE(), 2000);
-                    };
-
-                    es.onopen = () => { this.isConnected = true; };
+                async fetchActiveCourts() {
+                    if (this.isSyncing) return;
+                    this.isSyncing = true;
+                    try {
+                        const res = await fetch(`{{ url('/api/badminton/active-courts') }}?_t=${Date.now()}`, {
+                            headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache', 'Accept': 'application/json' }
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            const hash = JSON.stringify(data);
+                            if (this.lastDataHash !== hash) {
+                                this.lastDataHash = hash;
+                                this.courtMatches = data;
+                            }
+                        }
+                    } catch (_) {
+                    } finally {
+                        this.isSyncing = false;
+                    }
                 },
 
                 isServerScoreBox(match, team, set) {

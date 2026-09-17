@@ -438,12 +438,11 @@
                     while (this.actionQueue.length > 0) {
                         const payload = this.actionQueue[0];
                         try {
-                            const response = await fetch(`{{ url('/badminton/matches') }}/${this.match.id}/score`, {
+                            const response = await fetch(`{{ url('/api/badminton/matches') }}/${this.match.id}/score`, {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
-                                    'Accept': 'application/json',
-                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                    'Accept': 'application/json'
                                 },
                                 body: JSON.stringify(payload)
                             });
@@ -482,8 +481,8 @@
                         return;
                     }
                     try {
-                        const res = await fetch(`{{ url('/badminton/matches') }}/${this.match.id}/state?_t=${Date.now()}`, {
-                            headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+                        const res = await fetch(`{{ url('/api/badminton/matches') }}/${this.match.id}/state?_t=${Date.now()}`, {
+                            headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache', 'Accept': 'application/json' }
                         });
                         if (res.ok) {
                             const data = await res.json();

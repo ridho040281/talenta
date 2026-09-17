@@ -558,7 +558,7 @@ class BadmintonMatchController extends Controller
             'match_status' => $match->match_status,
             'winner_team' => $match->winner_team,
             'sets_won' => $match->getSetsWon(),
-            'updated_at' => $match->updated_at->toIso8601String(),
+            'updated_at' => $match->updated_at?->toIso8601String() ?? now()->toIso8601String(),
         ];
     }
 }

@@ -269,49 +269,43 @@
             return {
                 match: @json($match),
                 matchTimer: 18,
-                isConnected: false,
-                _es: null,
+                isSyncing: false,
+                lastDataHash: '',
 
                 init() {
                     lucide.createIcons();
                     if (this.match) {
-                        this.connectSSE();
+                        this.startFastSync();
                     }
                 },
 
-                connectSSE() {
-                    if (this._es) {
-                        this._es.close();
+                startFastSync() {
+                    this.fetchLatestScore();
+                    // Fast 300ms stateless polling - no session lock, zero delay
+                    setInterval(() => {
+                        this.fetchLatestScore();
+                    }, 300);
+                },
+
+                async fetchLatestScore() {
+                    if (!this.match || this.isSyncing) return;
+                    this.isSyncing = true;
+                    try {
+                        const res = await fetch(`{{ url('/api/badminton/matches') }}/${this.match.id}/state?_t=${Date.now()}`, {
+                            headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache', 'Accept': 'application/json' }
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            const hash = `${data.current_set}-${data.team1_set1}-${data.team2_set1}-${data.team1_set2}-${data.team2_set2}-${data.team1_set3}-${data.team2_set3}-${data.server_team}-${data.server_player}-${data.match_status}-${data.team1_player1}-${data.team2_player1}`;
+                            if (this.lastDataHash !== hash) {
+                                this.lastDataHash = hash;
+                                this.match = data;
+                            }
+                        }
+                    } catch (_) {
+                    } finally {
+                        this.isSyncing = false;
                     }
-
-                    const url = `{{ url('/badminton/matches') }}/${this.match.id}/stream`;
-                    const es = new EventSource(url);
-                    this._es = es;
-
-                    es.addEventListener('score', (e) => {
-                        try {
-                            const data = JSON.parse(e.data);
-                            this.match = data;
-                            this.isConnected = true;
-                        } catch (_) {}
-                    });
-
-                    es.addEventListener('reconnect', () => {
-                        // Server closed stream after 5 min — reconnect immediately
-                        es.close();
-                        setTimeout(() => this.connectSSE(), 500);
-                    });
-
-                    es.onerror = () => {
-                        this.isConnected = false;
-                        // EventSource auto-reconnects built-in, but we force after 2s
-                        es.close();
-                        setTimeout(() => this.connectSSE(), 2000);
-                    };
-
-                    es.onopen = () => {
-                        this.isConnected = true;
-                    };
                 },
 
                 isServing(team, player) {
