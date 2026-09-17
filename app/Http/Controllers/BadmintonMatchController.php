@@ -157,17 +157,31 @@ class BadmintonMatchController extends Controller
             $team = (int) $request->input('team');
             $set = $match->current_set;
 
-            if ($match->match_status === 'upcoming') {
-                $match->match_status = 'ongoing';
-                $match->started_at = now();
+            // Check if current set or match is already finished
+            if ($match->match_status === 'finished' || $match->isCurrentSetFinished()) {
+                return response()->json([
+                    'success' => true,
+                    'match' => $this->formatMatchState($match),
+                    'message' => 'Set sudah selesai. Silakan klik Set Selanjutnya.',
+                ]);
             }
 
-            // Increment score
+            if ($match->match_status === 'upcoming' || $match->match_status === 'interval') {
+                $match->match_status = 'ongoing';
+                $match->interval_until = null;
+                if (! $match->started_at) {
+                    $match->started_at = now();
+                }
+            }
+
+            // Increment score with cap of 30
             $t1Key = "team1_set{$set}";
             $t2Key = "team2_set{$set}";
 
             if ($team === 1) {
-                $match->{$t1Key}++;
+                if ($match->{$t1Key} < 30) {
+                    $match->{$t1Key}++;
+                }
                 if ($match->match_type === 'double') {
                     if ($match->server_team === 1) {
                         $match->server_player = ($match->server_player === 1) ? 2 : 1;
@@ -180,7 +194,9 @@ class BadmintonMatchController extends Controller
                     $match->server_player = 1;
                 }
             } else {
-                $match->{$t2Key}++;
+                if ($match->{$t2Key} < 30) {
+                    $match->{$t2Key}++;
+                }
                 if ($match->match_type === 'double') {
                     if ($match->server_team === 2) {
                         $match->server_player = ($match->server_player === 1) ? 2 : 1;
@@ -195,9 +211,9 @@ class BadmintonMatchController extends Controller
             }
 
             // Check if game won
-            $s1 = $match->{$t1Key};
-            $s2 = $match->{$t2Key};
-            if ((($s1 >= 21 || $s2 >= 21) && abs($s1 - $s2) >= 2) || max($s1, $s2) === 30) {
+            $s1 = (int) $match->{$t1Key};
+            $s2 = (int) $match->{$t2Key};
+            if ((($s1 >= 21 || $s2 >= 21) && abs($s1 - $s2) >= 2) || max($s1, $s2) >= 30) {
                 $setsWon = $match->getSetsWon();
                 if ($setsWon['t1'] >= 2) {
                     $match->match_status = 'finished';
@@ -571,6 +587,7 @@ class BadmintonMatchController extends Controller
             'match_status' => $match->match_status,
             'winner_team' => $match->winner_team,
             'sets_won' => $match->getSetsWon(),
+            'is_set_finished' => $match->isCurrentSetFinished(),
             'interval_until' => $match->interval_until?->toIso8601String(),
             'interval_remaining' => $match->interval_until ? max(0, (int) ceil(now()->diffInRealSeconds($match->interval_until, false))) : 0,
             'updated_at' => $match->updated_at?->toIso8601String() ?? now()->toIso8601String(),

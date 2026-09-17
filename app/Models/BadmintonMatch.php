@@ -135,8 +135,19 @@ class BadmintonMatch extends Model
             } elseif ($this->team2_set3 > $this->team1_set3) {
                 $w2++;
             }
-        }
-
         return ['t1' => $w1, 't2' => $w2];
+    }
+
+    public function isSetFinished(int $set): bool
+    {
+        $t1 = (int) $this->{"team1_set{$set}"};
+        $t2 = (int) $this->{"team2_set{$set}"};
+
+        return (($t1 >= 21 || $t2 >= 21) && abs($t1 - $t2) >= 2) || max($t1, $t2) >= 30;
+    }
+
+    public function isCurrentSetFinished(): bool
+    {
+        return $this->isSetFinished($this->current_set);
     }
 }

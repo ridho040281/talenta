@@ -172,20 +172,41 @@
             </div>
         </div>
 
+        <!-- SET FINISHED / MATCH FINISHED NOTICE -->
+        <template x-if="isCurrentSetFinished() && match.match_status !== 'finished'">
+            <div class="bg-purple-950/90 border-2 border-purple-400 p-3 sm:p-4 rounded-2xl text-center shadow-xl animate-pulse">
+                <span class="text-xs sm:text-sm font-black text-purple-200 uppercase tracking-wider block">
+                    🏆 SET <span x-text="match.current_set"></span> TELAH SELESAI!
+                </span>
+                <span class="text-[11px] sm:text-xs text-purple-300 font-semibold block mt-1">
+                    Silakan tekan tombol <strong>"Set Selanjutnya"</strong> di bawah untuk memulai set berikutnya.
+                </span>
+            </div>
+        </template>
+
+        <template x-if="match.match_status === 'finished'">
+            <div class="bg-emerald-950/90 border-2 border-emerald-400 p-3 sm:p-4 rounded-2xl text-center shadow-xl">
+                <span class="text-xs sm:text-sm font-black text-emerald-200 uppercase tracking-wider block">
+                    🎉 PERTANDINGAN SELESAI!
+                </span>
+                <span class="text-xs text-emerald-300 font-bold block mt-1" x-text="'Pemenang: ' + (match.winner_team == 1 ? match.team1_school : match.team2_school)"></span>
+            </div>
+        </template>
+
         <!-- BIG TOUCH SCORING PADS (PRIMARY CONTROLS) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             
             <!-- TEAM 1 TOUCH PAD -->
-            <div class="bg-slate-900 border-2 border-amber-500/30 rounded-2xl p-4 flex flex-col justify-between space-y-3">
+            <div class="bg-slate-900 border-2 border-amber-500/30 rounded-2xl p-4 flex flex-col justify-between space-y-3" :class="isCurrentSetFinished() ? 'opacity-60 grayscale-[40%]' : ''">
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-extrabold text-amber-400 truncate" x-text="match.team1_school"></span>
                     <span class="text-xs font-mono font-bold bg-slate-800 px-2 py-0.5 rounded text-amber-300">Set <span x-text="match.current_set"></span></span>
                 </div>
 
                 <!-- HUGE TAP BUTTON -->
-                <button @click="sendAction('add_point', { team: 1 })" :disabled="loading" class="w-full py-6 sm:py-8 bg-gradient-to-b from-amber-400 to-amber-500 active:from-amber-500 active:to-amber-600 text-slate-950 rounded-2xl shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-all flex flex-col items-center justify-center">
+                <button @click="sendAction('add_point', { team: 1 })" :disabled="loading || isCurrentSetFinished() || match.match_status === 'finished'" class="w-full py-6 sm:py-8 bg-gradient-to-b from-amber-400 to-amber-500 active:from-amber-500 active:to-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 rounded-2xl shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-all flex flex-col items-center justify-center">
                     <span class="text-4xl sm:text-5xl font-black font-score" x-text="getCurrentScore(1)"></span>
-                    <span class="text-xs sm:text-sm font-extrabold tracking-wider mt-1 uppercase">+1 POIN TIM 1</span>
+                    <span class="text-xs sm:text-sm font-extrabold tracking-wider mt-1 uppercase" x-text="isCurrentSetFinished() ? 'SET SELESAI' : '+1 POIN TIM 1'"></span>
                 </button>
 
                 <!-- SERVER SELECTOR -->
@@ -202,16 +223,16 @@
             </div>
 
             <!-- TEAM 2 TOUCH PAD -->
-            <div class="bg-slate-900 border-2 border-emerald-500/30 rounded-2xl p-4 flex flex-col justify-between space-y-3">
+            <div class="bg-slate-900 border-2 border-emerald-500/30 rounded-2xl p-4 flex flex-col justify-between space-y-3" :class="isCurrentSetFinished() ? 'opacity-60 grayscale-[40%]' : ''">
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-extrabold text-cyan-400 truncate" x-text="match.team2_school"></span>
                     <span class="text-xs font-mono font-bold bg-slate-800 px-2 py-0.5 rounded text-cyan-300">Set <span x-text="match.current_set"></span></span>
                 </div>
 
                 <!-- HUGE TAP BUTTON -->
-                <button @click="sendAction('add_point', { team: 2 })" :disabled="loading" class="w-full py-6 sm:py-8 bg-gradient-to-b from-emerald-500 to-teal-600 active:from-emerald-600 active:to-teal-700 text-white rounded-2xl shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-all flex flex-col items-center justify-center">
+                <button @click="sendAction('add_point', { team: 2 })" :disabled="loading || isCurrentSetFinished() || match.match_status === 'finished'" class="w-full py-6 sm:py-8 bg-gradient-to-b from-emerald-500 to-teal-600 active:from-emerald-600 active:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-all flex flex-col items-center justify-center">
                     <span class="text-4xl sm:text-5xl font-black font-score" x-text="getCurrentScore(2)"></span>
-                    <span class="text-xs sm:text-sm font-extrabold tracking-wider mt-1 uppercase">+1 POIN TIM 2</span>
+                    <span class="text-xs sm:text-sm font-extrabold tracking-wider mt-1 uppercase" x-text="isCurrentSetFinished() ? 'SET SELESAI' : '+1 POIN TIM 2'"></span>
                 </button>
 
                 <!-- SERVER SELECTOR -->
@@ -241,7 +262,7 @@
                 <span>Interval 60s</span>
             </button>
 
-            <button @click="sendAction('next_set')" :disabled="match.current_set >= 3" class="py-3 px-3 rounded-xl bg-purple-950/60 hover:bg-purple-900/60 active:scale-95 text-purple-300 font-bold text-xs border border-purple-800/60 flex items-center justify-center gap-2 transition shadow">
+            <button @click="sendAction('next_set')" :disabled="match.current_set >= 3 || match.match_status === 'finished'" :class="isCurrentSetFinished() && match.match_status !== 'finished' ? 'bg-purple-600 hover:bg-purple-500 text-white font-black animate-pulse ring-4 ring-purple-400/80 shadow-lg shadow-purple-500/50' : 'bg-purple-950/60 hover:bg-purple-900/60 text-purple-300 font-bold'" class="py-3 px-3 rounded-xl active:scale-95 text-xs border border-purple-800/60 flex items-center justify-center gap-2 transition shadow">
                 <i data-lucide="fast-forward" class="w-4 h-4"></i>
                 <span>Set Selanjutnya</span>
             </button>
@@ -369,10 +390,20 @@
                     return s1 >= 20 && s2 >= 20 && this.match.match_status !== 'finished';
                 },
 
+                isCurrentSetFinished() {
+                    if (this.match.is_set_finished) return true;
+                    const s1 = this.getCurrentScore(1);
+                    const s2 = this.getCurrentScore(2);
+                    return ((s1 >= 21 || s2 >= 21) && Math.abs(s1 - s2) >= 2) || Math.max(s1, s2) >= 30;
+                },
+
                 getStatusBadgeText() {
                     if (this.match.match_status === 'finished') {
                         const winner = this.match.winner_team == 1 ? this.match.team1_school : this.match.team2_school;
                         return 'MATCH FINISHED • WINNER: ' + winner;
+                    }
+                    if (this.isCurrentSetFinished()) {
+                        return `🏆 SET ${this.match.current_set} SELESAI • SILAKAN KLIK SET SELANJUTNYA`;
                     }
                     if (this.match.match_status === 'interval') {
                         return 'INTERVAL (11 POIN)';
@@ -404,10 +435,19 @@
                 async sendAction(action, payload = {}) {
                     // 1. OPTIMISTIC LOCAL UPDATE (0ms Instant UI Response on Tap)
                     if (action === 'add_point') {
+                        if (this.isCurrentSetFinished() || this.match.match_status === 'finished') {
+                            return;
+                        }
+
                         const team = payload.team;
                         const set = this.match.current_set;
                         const key = `team${team}_set${set}`;
-                        this.match[key] = (parseInt(this.match[key]) || 0) + 1;
+                        const currentVal = parseInt(this.match[key]) || 0;
+                        if (currentVal >= 30) {
+                            return;
+                        }
+
+                        this.match[key] = Math.min(30, currentVal + 1);
                         
                         // Update serve rotation immediately
                         if (this.match.match_type === 'double') {
@@ -421,7 +461,7 @@
                             this.match.server_team = team;
                             this.match.server_player = 1;
                         }
-                        if (this.match.match_status === 'upcoming') {
+                        if (this.match.match_status === 'upcoming' || this.match.match_status === 'interval') {
                             this.match.match_status = 'ongoing';
                         }
                     }

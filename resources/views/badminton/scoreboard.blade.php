@@ -352,6 +352,14 @@
                     }
                 },
 
+                isCurrentSetFinished() {
+                    if (!this.match) return false;
+                    if (this.match.is_set_finished) return true;
+                    const s1 = this.getCurrentScore(1);
+                    const s2 = this.getCurrentScore(2);
+                    return ((s1 >= 21 || s2 >= 21) && Math.abs(s1 - s2) >= 2) || Math.max(s1, s2) >= 30;
+                },
+
                 getMatchStatusLabel() {
                     if (!this.match) return '';
                     if (this.match.match_status === 'interval') return 'INTERVAL (11 POIN)';
@@ -361,12 +369,18 @@
                     }
                     const s1 = this.getCurrentScore(1);
                     const s2 = this.getCurrentScore(2);
+                    if (this.isCurrentSetFinished()) {
+                        return `🏆 GAME ${this.match.current_set} SELESAI (${s1} - ${s2})`;
+                    }
                     if (s1 >= 20 && s2 >= 20) {
                         return `🔥 SETTING / DEUCE (${s1} - ${s2}) • GAME ${this.match.current_set}`;
                     }
                     if (s1 >= 20 || s2 >= 20) {
                         return `⚡ GAME POINT (${s1} - ${s2}) • GAME ${this.match.current_set}`;
                     }
+                    return 'GAME ' + this.match.current_set + ' IN PROGRESS';
+                },
+
                 isIntervalActive() {
                     if (!this.match) return false;
                     if (this.match.match_status === 'interval') return true;
