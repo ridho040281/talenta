@@ -135,6 +135,8 @@ class BadmintonMatch extends Model
             } elseif ($this->team2_set3 > $this->team1_set3) {
                 $w2++;
             }
+        }
+
         return ['t1' => $w1, 't2' => $w2];
     }
 
