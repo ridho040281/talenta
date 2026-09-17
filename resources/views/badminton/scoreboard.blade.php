@@ -247,6 +247,26 @@
 
             </div>
 
+            <!-- INTERVAL COUNTDOWN OVERLAY ON TV SCOREBOARD -->
+            <template x-if="isIntervalActive()">
+                <div class="absolute inset-0 bg-[#060A14]/95 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-center animate-fade-in border-4 border-amber-400/80 rounded-2xl sm:rounded-3xl">
+                    <div class="inline-flex items-center gap-2 px-4 sm:px-6 py-1.5 sm:py-2 rounded-full bg-amber-400/20 text-amber-400 border border-amber-400/50 text-sm sm:text-xl font-black uppercase tracking-widest mb-2 sm:mb-4 animate-pulse shadow-lg">
+                        <span>⏱️</span>
+                        <span>JEDA INTERVAL (11 POIN / ANTAR-GAME)</span>
+                    </div>
+                    <div class="text-8xl sm:text-9xl md:text-[11rem] font-black font-led text-amber-400 glow-amber my-2 leading-none" x-text="getIntervalSeconds()">
+                        60
+                    </div>
+                    <p class="text-sm sm:text-2xl text-neutral-200 font-bold max-w-xl mt-3 sm:mt-4">
+                        Pemain beristirahat dan menerima instruksi pelatih.
+                    </p>
+                    <div class="mt-4 flex items-center gap-3 text-xs sm:text-sm text-neutral-400 font-mono">
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></span>
+                        <span>WASIT SEDANG MEMIMPIN INTERVAL</span>
+                    </div>
+                </div>
+            </template>
+
             <!-- FOOTER LED -->
             <div class="pt-2 border-t border-white/[0.08] flex justify-between items-center text-[10px] sm:text-xs text-neutral-400 shrink-0">
                 <div class="flex items-center gap-2">
@@ -347,7 +367,17 @@
                     if (s1 >= 20 || s2 >= 20) {
                         return `⚡ GAME POINT (${s1} - ${s2}) • GAME ${this.match.current_set}`;
                     }
-                    return 'GAME ' + this.match.current_set + ' IN PROGRESS';
+                isIntervalActive() {
+                    if (!this.match) return false;
+                    if (this.match.match_status === 'interval') return true;
+                    if (this.match.interval_until && new Date(this.match.interval_until) > new Date()) return true;
+                    return false;
+                },
+
+                getIntervalSeconds() {
+                    if (!this.match || !this.match.interval_until) return 0;
+                    const diff = Math.ceil((new Date(this.match.interval_until).getTime() - Date.now()) / 1000);
+                    return Math.max(0, diff);
                 },
 
                 toggleFullscreen() {

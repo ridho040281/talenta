@@ -213,6 +213,19 @@ class BadmintonMatchController extends Controller
             $match->scores_history = $history;
             $match->save();
             $this->touchMatchTimestamp($match->id);
+        } elseif ($action === 'start_interval') {
+            $seconds = (int) $request->input('seconds', 60);
+            $match->match_status = 'interval';
+            $match->interval_until = now()->addSeconds($seconds);
+            $match->scores_history = $history;
+            $match->save();
+            $this->touchMatchTimestamp($match->id);
+        } elseif ($action === 'stop_interval') {
+            $match->match_status = 'ongoing';
+            $match->interval_until = null;
+            $match->scores_history = $history;
+            $match->save();
+            $this->touchMatchTimestamp($match->id);
         } elseif ($action === 'undo') {
             if (! empty($history)) {
                 $last = array_pop($history);
@@ -558,6 +571,8 @@ class BadmintonMatchController extends Controller
             'match_status' => $match->match_status,
             'winner_team' => $match->winner_team,
             'sets_won' => $match->getSetsWon(),
+            'interval_until' => $match->interval_until?->toIso8601String(),
+            'interval_remaining' => $match->interval_until ? max(0, (int) ceil(now()->diffInRealSeconds($match->interval_until, false))) : 0,
             'updated_at' => $match->updated_at?->toIso8601String() ?? now()->toIso8601String(),
         ];
     }

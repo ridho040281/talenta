@@ -39,6 +39,7 @@ class BadmintonMatch extends Model
         'umpire_id',
         'started_at',
         'finished_at',
+        'interval_until',
         'scores_history',
     ];
 
@@ -48,6 +49,7 @@ class BadmintonMatch extends Model
             'scores_history' => 'array',
             'started_at' => 'datetime',
             'finished_at' => 'datetime',
+            'interval_until' => 'datetime',
             'current_set' => 'integer',
             'server_team' => 'integer',
             'server_player' => 'integer',

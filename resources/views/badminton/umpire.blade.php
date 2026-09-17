@@ -501,6 +501,7 @@
                 startIntervalTimer(sec) {
                     this.intervalSeconds = sec;
                     this.intervalModal = true;
+                    this.sendAction('start_interval', { seconds: sec });
                     clearInterval(this.intervalTimerId);
                     this.intervalTimerId = setInterval(() => {
                         if (this.intervalSeconds > 0) {
@@ -514,6 +515,7 @@
                 stopInterval() {
                     clearInterval(this.intervalTimerId);
                     this.intervalModal = false;
+                    this.sendAction('stop_interval');
                 },
 
                 confirmReset() {

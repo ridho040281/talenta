@@ -67,8 +67,17 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 w-full">
             
             <template x-for="(courtName, index) in Object.keys(courtMatches)" :key="courtName">
-                <div class="led-panel border-2 sm:border-4 border-neutral-900 rounded-2xl p-4 sm:p-6 shadow-2xl flex flex-col justify-between relative overflow-hidden">
+                <div class="bg-[#0b101d]/90 border border-white/[0.08] rounded-2xl p-3 sm:p-4 lg:p-5 flex flex-col justify-between shadow-xl relative overflow-hidden transition-all duration-300 hover:border-amber-400/40">
                     
+                    <!-- INTERVAL OVERLAY FOR THIS COURT -->
+                    <template x-if="courtMatches[courtName].match_status === 'interval'">
+                        <div class="absolute inset-0 bg-[#060A14]/95 backdrop-blur-sm z-30 flex flex-col items-center justify-center p-3 text-center rounded-2xl border-2 border-amber-400">
+                            <span class="text-xs sm:text-sm font-black text-amber-400 uppercase tracking-widest mb-1 animate-pulse">⏱️ JEDA INTERVAL</span>
+                            <span class="text-5xl sm:text-7xl font-black font-led text-amber-400 glow-amber my-1" x-text="courtMatches[courtName].interval_remaining ? courtMatches[courtName].interval_remaining : '60'"></span>
+                            <span class="text-[10px] sm:text-xs text-neutral-300 font-semibold">Pemain istirahat & arahan pelatih</span>
+                        </div>
+                    </template>
+
                     <!-- Top Match Info -->
                     <div>
                         <div class="flex justify-between items-center pb-2.5 border-b-2 border-neutral-800/80 mb-3 text-xs tracking-wider">
