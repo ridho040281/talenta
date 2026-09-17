@@ -368,6 +368,7 @@
                 editInfoModal: false,
                 intervalSeconds: 60,
                 intervalTimerId: null,
+                intervalSetsTriggered: { 1: false, 2: false, 3: false },
                 actionQueue: [],
                 isProcessingQueue: false,
                 lastSyncTime: 0,
@@ -494,11 +495,16 @@
                                     this.match = data.match;
                                     this.$nextTick(() => { lucide.createIcons(); });
 
-                                    // Check 11 point interval
+                                    // Check 11 point interval (Only triggers ONCE per set when first player reaches 11)
                                     const currentS1 = this.getCurrentScore(1);
                                     const currentS2 = this.getCurrentScore(2);
-                                    if (payload.action === 'add_point' && (currentS1 === 11 || currentS2 === 11) && Math.abs(currentS1 - currentS2) <= 11) {
-                                        this.startIntervalTimer(60);
+                                    const currentSet = this.match.current_set;
+                                    if (payload.action === 'add_point' && !this.intervalSetsTriggered[currentSet]) {
+                                        const isFirstTo11 = (currentS1 === 11 && currentS2 < 11) || (currentS2 === 11 && currentS1 < 11);
+                                        if (isFirstTo11) {
+                                            this.intervalSetsTriggered[currentSet] = true;
+                                            this.startIntervalTimer(60);
+                                        }
                                     }
                                 }
                             } else {
