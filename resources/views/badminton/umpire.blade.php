@@ -489,8 +489,8 @@
 
                             if (response.ok) {
                                 const data = await response.json();
+                                this.actionQueue.shift(); // Remove successful item
                                 if (data.success) {
-                                    this.actionQueue.shift(); // Remove successful item
                                     this.match = data.match;
                                     this.$nextTick(() => { lucide.createIcons(); });
 
@@ -500,15 +500,17 @@
                                     if (payload.action === 'add_point' && (currentS1 === 11 || currentS2 === 11) && Math.abs(currentS1 - currentS2) <= 11) {
                                         this.startIntervalTimer(60);
                                     }
-                                } else {
-                                    this.actionQueue.shift();
                                 }
                             } else {
-                                // Retry after a short pause if server error
+                                // Discard bad request on 4xx to prevent permanent queue freeze
+                                if (response.status >= 400 && response.status < 500) {
+                                    this.actionQueue.shift();
+                                }
                                 break;
                             }
                         } catch (e) {
                             console.error('Queue network error:', e);
+                            this.actionQueue.shift(); // Prevent blocking
                             break;
                         }
                     }

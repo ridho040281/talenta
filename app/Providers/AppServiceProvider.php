@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\AppSetting;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -26,6 +27,11 @@ class AppServiceProvider extends ServiceProvider
         $timezone = config('app.timezone', 'Asia/Jakarta');
         date_default_timezone_set($timezone);
         Carbon::setLocale(config('app.locale', 'id'));
+
+        // Force HTTPS when running on HTTPS / behind proxy (prevents Mixed Content errors)
+        if (request()->isSecure() || request()->header('x-forwarded-proto') === 'https' || str_starts_with(config('app.url'), 'https://')) {
+            URL::forceScheme('https');
+        }
 
         // Share App Settings globally across all views with intelligent caching
         View::composer('*', function ($view) {
