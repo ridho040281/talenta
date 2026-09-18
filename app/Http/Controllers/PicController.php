@@ -215,10 +215,16 @@ class PicController extends Controller
                             ->orWhere('target_class', 'LIKE', '%1–2%')
                             ->orWhere('target_class', 'LIKE', '%Kategori A%')
                             ->orWhere('target_class', 'LIKE', '%Kat A%')
+                            ->orWhere('target_class', 'LIKE', '%Kat_A%')
+                            ->orWhere('target_class', 'LIKE', '%Kelas 1%')
+                            ->orWhere('target_class', 'LIKE', '%Kelas 2%')
                             ->orWhere('sub_category', 'LIKE', '%1 - 2%')
                             ->orWhere('sub_category', 'LIKE', '%1-2%')
                             ->orWhere('sub_category', 'LIKE', '%1–2%')
-                            ->orWhere('sub_category', 'LIKE', '%Kategori A%');
+                            ->orWhere('sub_category', 'LIKE', '%Kategori A%')
+                            ->orWhere('sub_category', 'LIKE', '%Kelas 1%')
+                            ->orWhere('sub_category', 'LIKE', '%Kelas 2%')
+                            ->orWhere('registration_code', 'LIKE', '%-A-%');
                     })->where(function ($q) {
                         $q->where('match_type', 'NOT LIKE', '%Ganda%')->orWhereNull('match_type');
                     });
@@ -230,13 +236,23 @@ class PicController extends Controller
                             ->orWhere('target_class', 'LIKE', '%1–2%')
                             ->orWhere('target_class', 'LIKE', '%Kategori A%')
                             ->orWhere('target_class', 'LIKE', '%Kat A%')
+                            ->orWhere('target_class', 'LIKE', '%Kat_A%')
+                            ->orWhere('target_class', 'LIKE', '%Kelas 1%')
+                            ->orWhere('target_class', 'LIKE', '%Kelas 2%')
                             ->orWhere('sub_category', 'LIKE', '%1 - 2%')
                             ->orWhere('sub_category', 'LIKE', '%1-2%')
                             ->orWhere('sub_category', 'LIKE', '%1–2%')
-                            ->orWhere('sub_category', 'LIKE', '%Kategori A%');
+                            ->orWhere('sub_category', 'LIKE', '%Kategori A%')
+                            ->orWhere('sub_category', 'LIKE', '%Kelas 1%')
+                            ->orWhere('sub_category', 'LIKE', '%Kelas 2%')
+                            ->orWhere('registration_code', 'LIKE', '%-A-%');
                     })->where(function ($q) {
                         $q->where('match_type', 'NOT LIKE', '%Ganda%')->orWhereNull('match_type');
-                    })->whereHas('members', fn ($q) => $q->where('gender', 'L'));
+                    })->where(function ($q) {
+                        $q->whereHas('members', fn ($m) => $m->where('gender', 'L'))
+                            ->orWhere('match_type', 'LIKE', '%Putra%')
+                            ->orWhere('match_type', 'LIKE', '%(PA)%');
+                    });
                     break;
                 case 'tunggal_pi_a':
                     $query->where(function ($q) {
@@ -245,13 +261,23 @@ class PicController extends Controller
                             ->orWhere('target_class', 'LIKE', '%1–2%')
                             ->orWhere('target_class', 'LIKE', '%Kategori A%')
                             ->orWhere('target_class', 'LIKE', '%Kat A%')
+                            ->orWhere('target_class', 'LIKE', '%Kat_A%')
+                            ->orWhere('target_class', 'LIKE', '%Kelas 1%')
+                            ->orWhere('target_class', 'LIKE', '%Kelas 2%')
                             ->orWhere('sub_category', 'LIKE', '%1 - 2%')
                             ->orWhere('sub_category', 'LIKE', '%1-2%')
                             ->orWhere('sub_category', 'LIKE', '%1–2%')
-                            ->orWhere('sub_category', 'LIKE', '%Kategori A%');
+                            ->orWhere('sub_category', 'LIKE', '%Kategori A%')
+                            ->orWhere('sub_category', 'LIKE', '%Kelas 1%')
+                            ->orWhere('sub_category', 'LIKE', '%Kelas 2%')
+                            ->orWhere('registration_code', 'LIKE', '%-A-%');
                     })->where(function ($q) {
                         $q->where('match_type', 'NOT LIKE', '%Ganda%')->orWhereNull('match_type');
-                    })->whereHas('members', fn ($q) => $q->where('gender', 'P'));
+                    })->where(function ($q) {
+                        $q->whereHas('members', fn ($m) => $m->where('gender', 'P'))
+                            ->orWhere('match_type', 'LIKE', '%Putri%')
+                            ->orWhere('match_type', 'LIKE', '%(PI)%');
+                    });
                     break;
                 case 'blt_b_all':
                     $query->where(function ($q) {
@@ -260,10 +286,16 @@ class PicController extends Controller
                             ->orWhere('target_class', 'LIKE', '%3–4%')
                             ->orWhere('target_class', 'LIKE', '%Kategori B%')
                             ->orWhere('target_class', 'LIKE', '%Kat B%')
+                            ->orWhere('target_class', 'LIKE', '%Kat_B%')
+                            ->orWhere('target_class', 'LIKE', '%Kelas 3%')
+                            ->orWhere('target_class', 'LIKE', '%Kelas 4%')
                             ->orWhere('sub_category', 'LIKE', '%3 - 4%')
                             ->orWhere('sub_category', 'LIKE', '%3-4%')
                             ->orWhere('sub_category', 'LIKE', '%3–4%')
-                            ->orWhere('sub_category', 'LIKE', '%Kategori B%');
+                            ->orWhere('sub_category', 'LIKE', '%Kategori B%')
+                            ->orWhere('sub_category', 'LIKE', '%Kelas 3%')
+                            ->orWhere('sub_category', 'LIKE', '%Kelas 4%')
+                            ->orWhere('registration_code', 'LIKE', '%-B-%');
                     })->where(function ($q) {
                         $q->where('match_type', 'NOT LIKE', '%Ganda%')->orWhereNull('match_type');
                     });
@@ -275,13 +307,23 @@ class PicController extends Controller
                             ->orWhere('target_class', 'LIKE', '%3–4%')
                             ->orWhere('target_class', 'LIKE', '%Kategori B%')
                             ->orWhere('target_class', 'LIKE', '%Kat B%')
+                            ->orWhere('target_class', 'LIKE', '%Kat_B%')
+                            ->orWhere('target_class', 'LIKE', '%Kelas 3%')
+                            ->orWhere('target_class', 'LIKE', '%Kelas 4%')
                             ->orWhere('sub_category', 'LIKE', '%3 - 4%')
                             ->orWhere('sub_category', 'LIKE', '%3-4%')
                             ->orWhere('sub_category', 'LIKE', '%3–4%')
-                            ->orWhere('sub_category', 'LIKE', '%Kategori B%');
+                            ->orWhere('sub_category', 'LIKE', '%Kategori B%')
+                            ->orWhere('sub_category', 'LIKE', '%Kelas 3%')
+                            ->orWhere('sub_category', 'LIKE', '%Kelas 4%')
+                            ->orWhere('registration_code', 'LIKE', '%-B-%');
                     })->where(function ($q) {
                         $q->where('match_type', 'NOT LIKE', '%Ganda%')->orWhereNull('match_type');
-                    })->whereHas('members', fn ($q) => $q->where('gender', 'L'));
+                    })->where(function ($q) {
+                        $q->whereHas('members', fn ($m) => $m->where('gender', 'L'))
+                            ->orWhere('match_type', 'LIKE', '%Putra%')
+                            ->orWhere('match_type', 'LIKE', '%(PA)%');
+                    });
                     break;
                 case 'tunggal_pi_b':
                     $query->where(function ($q) {
@@ -290,13 +332,23 @@ class PicController extends Controller
                             ->orWhere('target_class', 'LIKE', '%3–4%')
                             ->orWhere('target_class', 'LIKE', '%Kategori B%')
                             ->orWhere('target_class', 'LIKE', '%Kat B%')
+                            ->orWhere('target_class', 'LIKE', '%Kat_B%')
+                            ->orWhere('target_class', 'LIKE', '%Kelas 3%')
+                            ->orWhere('target_class', 'LIKE', '%Kelas 4%')
                             ->orWhere('sub_category', 'LIKE', '%3 - 4%')
                             ->orWhere('sub_category', 'LIKE', '%3-4%')
                             ->orWhere('sub_category', 'LIKE', '%3–4%')
-                            ->orWhere('sub_category', 'LIKE', '%Kategori B%');
+                            ->orWhere('sub_category', 'LIKE', '%Kategori B%')
+                            ->orWhere('sub_category', 'LIKE', '%Kelas 3%')
+                            ->orWhere('sub_category', 'LIKE', '%Kelas 4%')
+                            ->orWhere('registration_code', 'LIKE', '%-B-%');
                     })->where(function ($q) {
                         $q->where('match_type', 'NOT LIKE', '%Ganda%')->orWhereNull('match_type');
-                    })->whereHas('members', fn ($q) => $q->where('gender', 'P'));
+                    })->where(function ($q) {
+                        $q->whereHas('members', fn ($m) => $m->where('gender', 'P'))
+                            ->orWhere('match_type', 'LIKE', '%Putri%')
+                            ->orWhere('match_type', 'LIKE', '%(PI)%');
+                    });
                     break;
                 case 'blt_c_all':
                     $query->where(function ($q) {
@@ -305,10 +357,16 @@ class PicController extends Controller
                             ->orWhere('target_class', 'LIKE', '%5–6%')
                             ->orWhere('target_class', 'LIKE', '%Kategori C%')
                             ->orWhere('target_class', 'LIKE', '%Kat C%')
+                            ->orWhere('target_class', 'LIKE', '%Kat_C%')
+                            ->orWhere('target_class', 'LIKE', '%Kelas 5%')
+                            ->orWhere('target_class', 'LIKE', '%Kelas 6%')
                             ->orWhere('sub_category', 'LIKE', '%5 - 6%')
                             ->orWhere('sub_category', 'LIKE', '%5-6%')
                             ->orWhere('sub_category', 'LIKE', '%5–6%')
-                            ->orWhere('sub_category', 'LIKE', '%Kategori C%');
+                            ->orWhere('sub_category', 'LIKE', '%Kategori C%')
+                            ->orWhere('sub_category', 'LIKE', '%Kelas 5%')
+                            ->orWhere('sub_category', 'LIKE', '%Kelas 6%')
+                            ->orWhere('registration_code', 'LIKE', '%-C-%');
                     })->where(function ($q) {
                         $q->where('match_type', 'NOT LIKE', '%Ganda%')->orWhereNull('match_type');
                     });
@@ -320,13 +378,23 @@ class PicController extends Controller
                             ->orWhere('target_class', 'LIKE', '%5–6%')
                             ->orWhere('target_class', 'LIKE', '%Kategori C%')
                             ->orWhere('target_class', 'LIKE', '%Kat C%')
+                            ->orWhere('target_class', 'LIKE', '%Kat_C%')
+                            ->orWhere('target_class', 'LIKE', '%Kelas 5%')
+                            ->orWhere('target_class', 'LIKE', '%Kelas 6%')
                             ->orWhere('sub_category', 'LIKE', '%5 - 6%')
                             ->orWhere('sub_category', 'LIKE', '%5-6%')
                             ->orWhere('sub_category', 'LIKE', '%5–6%')
-                            ->orWhere('sub_category', 'LIKE', '%Kategori C%');
+                            ->orWhere('sub_category', 'LIKE', '%Kategori C%')
+                            ->orWhere('sub_category', 'LIKE', '%Kelas 5%')
+                            ->orWhere('sub_category', 'LIKE', '%Kelas 6%')
+                            ->orWhere('registration_code', 'LIKE', '%-C-%');
                     })->where(function ($q) {
                         $q->where('match_type', 'NOT LIKE', '%Ganda%')->orWhereNull('match_type');
-                    })->whereHas('members', fn ($q) => $q->where('gender', 'L'));
+                    })->where(function ($q) {
+                        $q->whereHas('members', fn ($m) => $m->where('gender', 'L'))
+                            ->orWhere('match_type', 'LIKE', '%Putra%')
+                            ->orWhere('match_type', 'LIKE', '%(PA)%');
+                    });
                     break;
                 case 'tunggal_pi_c':
                     $query->where(function ($q) {
@@ -335,13 +403,23 @@ class PicController extends Controller
                             ->orWhere('target_class', 'LIKE', '%5–6%')
                             ->orWhere('target_class', 'LIKE', '%Kategori C%')
                             ->orWhere('target_class', 'LIKE', '%Kat C%')
+                            ->orWhere('target_class', 'LIKE', '%Kat_C%')
+                            ->orWhere('target_class', 'LIKE', '%Kelas 5%')
+                            ->orWhere('target_class', 'LIKE', '%Kelas 6%')
                             ->orWhere('sub_category', 'LIKE', '%5 - 6%')
                             ->orWhere('sub_category', 'LIKE', '%5-6%')
                             ->orWhere('sub_category', 'LIKE', '%5–6%')
-                            ->orWhere('sub_category', 'LIKE', '%Kategori C%');
+                            ->orWhere('sub_category', 'LIKE', '%Kategori C%')
+                            ->orWhere('sub_category', 'LIKE', '%Kelas 5%')
+                            ->orWhere('sub_category', 'LIKE', '%Kelas 6%')
+                            ->orWhere('registration_code', 'LIKE', '%-C-%');
                     })->where(function ($q) {
                         $q->where('match_type', 'NOT LIKE', '%Ganda%')->orWhereNull('match_type');
-                    })->whereHas('members', fn ($q) => $q->where('gender', 'P'));
+                    })->where(function ($q) {
+                        $q->whereHas('members', fn ($m) => $m->where('gender', 'P'))
+                            ->orWhere('match_type', 'LIKE', '%Putri%')
+                            ->orWhere('match_type', 'LIKE', '%(PI)%');
+                    });
                     break;
                 case 'tmj_pa_a':
                 case 'kat_a':
@@ -351,11 +429,17 @@ class PicController extends Controller
                             ->orWhere('target_class', 'LIKE', '%1–3%')
                             ->orWhere('target_class', 'LIKE', '%Kategori A%')
                             ->orWhere('target_class', 'LIKE', '%Kat A%')
+                            ->orWhere('target_class', 'LIKE', '%Kat_A%')
                             ->orWhere('sub_category', 'LIKE', '%1 - 3%')
                             ->orWhere('sub_category', 'LIKE', '%1-3%')
                             ->orWhere('sub_category', 'LIKE', '%1–3%')
-                            ->orWhere('sub_category', 'LIKE', '%Kategori A%');
-                    })->whereHas('members', fn ($q) => $q->where('gender', 'L'));
+                            ->orWhere('sub_category', 'LIKE', '%Kategori A%')
+                            ->orWhere('registration_code', 'LIKE', '%-A-%');
+                    })->where(function ($q) {
+                        $q->whereHas('members', fn ($m) => $m->where('gender', 'L'))
+                            ->orWhere('match_type', 'LIKE', '%Putra%')
+                            ->orWhere('match_type', 'LIKE', '%(PA)%');
+                    });
                     break;
                 case 'tmj_pi_a':
                     $query->where(function ($q) {
@@ -364,11 +448,17 @@ class PicController extends Controller
                             ->orWhere('target_class', 'LIKE', '%1–3%')
                             ->orWhere('target_class', 'LIKE', '%Kategori A%')
                             ->orWhere('target_class', 'LIKE', '%Kat A%')
+                            ->orWhere('target_class', 'LIKE', '%Kat_A%')
                             ->orWhere('sub_category', 'LIKE', '%1 - 3%')
                             ->orWhere('sub_category', 'LIKE', '%1-3%')
                             ->orWhere('sub_category', 'LIKE', '%1–3%')
-                            ->orWhere('sub_category', 'LIKE', '%Kategori A%');
-                    })->whereHas('members', fn ($q) => $q->where('gender', 'P'));
+                            ->orWhere('sub_category', 'LIKE', '%Kategori A%')
+                            ->orWhere('registration_code', 'LIKE', '%-A-%');
+                    })->where(function ($q) {
+                        $q->whereHas('members', fn ($m) => $m->where('gender', 'P'))
+                            ->orWhere('match_type', 'LIKE', '%Putri%')
+                            ->orWhere('match_type', 'LIKE', '%(PI)%');
+                    });
                     break;
                 case 'tmj_a_all':
                     $query->where(function ($q) {
@@ -377,10 +467,12 @@ class PicController extends Controller
                             ->orWhere('target_class', 'LIKE', '%1–3%')
                             ->orWhere('target_class', 'LIKE', '%Kategori A%')
                             ->orWhere('target_class', 'LIKE', '%Kat A%')
+                            ->orWhere('target_class', 'LIKE', '%Kat_A%')
                             ->orWhere('sub_category', 'LIKE', '%1 - 3%')
                             ->orWhere('sub_category', 'LIKE', '%1-3%')
                             ->orWhere('sub_category', 'LIKE', '%1–3%')
-                            ->orWhere('sub_category', 'LIKE', '%Kategori A%');
+                            ->orWhere('sub_category', 'LIKE', '%Kategori A%')
+                            ->orWhere('registration_code', 'LIKE', '%-A-%');
                     });
                     break;
                 case 'tmj_pa_b':
@@ -391,11 +483,17 @@ class PicController extends Controller
                             ->orWhere('target_class', 'LIKE', '%4–6%')
                             ->orWhere('target_class', 'LIKE', '%Kategori B%')
                             ->orWhere('target_class', 'LIKE', '%Kat B%')
+                            ->orWhere('target_class', 'LIKE', '%Kat_B%')
                             ->orWhere('sub_category', 'LIKE', '%4 - 6%')
                             ->orWhere('sub_category', 'LIKE', '%4-6%')
                             ->orWhere('sub_category', 'LIKE', '%4–6%')
-                            ->orWhere('sub_category', 'LIKE', '%Kategori B%');
-                    })->whereHas('members', fn ($q) => $q->where('gender', 'L'));
+                            ->orWhere('sub_category', 'LIKE', '%Kategori B%')
+                            ->orWhere('registration_code', 'LIKE', '%-B-%');
+                    })->where(function ($q) {
+                        $q->whereHas('members', fn ($m) => $m->where('gender', 'L'))
+                            ->orWhere('match_type', 'LIKE', '%Putra%')
+                            ->orWhere('match_type', 'LIKE', '%(PA)%');
+                    });
                     break;
                 case 'tmj_pi_b':
                     $query->where(function ($q) {
@@ -404,11 +502,17 @@ class PicController extends Controller
                             ->orWhere('target_class', 'LIKE', '%4–6%')
                             ->orWhere('target_class', 'LIKE', '%Kategori B%')
                             ->orWhere('target_class', 'LIKE', '%Kat B%')
+                            ->orWhere('target_class', 'LIKE', '%Kat_B%')
                             ->orWhere('sub_category', 'LIKE', '%4 - 6%')
                             ->orWhere('sub_category', 'LIKE', '%4-6%')
                             ->orWhere('sub_category', 'LIKE', '%4–6%')
-                            ->orWhere('sub_category', 'LIKE', '%Kategori B%');
-                    })->whereHas('members', fn ($q) => $q->where('gender', 'P'));
+                            ->orWhere('sub_category', 'LIKE', '%Kategori B%')
+                            ->orWhere('registration_code', 'LIKE', '%-B-%');
+                    })->where(function ($q) {
+                        $q->whereHas('members', fn ($m) => $m->where('gender', 'P'))
+                            ->orWhere('match_type', 'LIKE', '%Putri%')
+                            ->orWhere('match_type', 'LIKE', '%(PI)%');
+                    });
                     break;
                 case 'tmj_b_all':
                     $query->where(function ($q) {
@@ -417,10 +521,12 @@ class PicController extends Controller
                             ->orWhere('target_class', 'LIKE', '%4–6%')
                             ->orWhere('target_class', 'LIKE', '%Kategori B%')
                             ->orWhere('target_class', 'LIKE', '%Kat B%')
+                            ->orWhere('target_class', 'LIKE', '%Kat_B%')
                             ->orWhere('sub_category', 'LIKE', '%4 - 6%')
                             ->orWhere('sub_category', 'LIKE', '%4-6%')
                             ->orWhere('sub_category', 'LIKE', '%4–6%')
-                            ->orWhere('sub_category', 'LIKE', '%Kategori B%');
+                            ->orWhere('sub_category', 'LIKE', '%Kategori B%')
+                            ->orWhere('registration_code', 'LIKE', '%-B-%');
                     });
                     break;
             }
@@ -447,8 +553,16 @@ class PicController extends Controller
         // Dihitung sebelum filter gender diterapkan agar badge tab filter PA dan PI tetap konsisten
         $baseGenderQuery = clone $query;
         $totalAll = (clone $baseGenderQuery)->count();
-        $totalPa = (clone $baseGenderQuery)->whereHas('members', fn ($q) => $q->where('gender', 'L'))->count();
-        $totalPi = (clone $baseGenderQuery)->whereHas('members', fn ($q) => $q->where('gender', 'P'))->count();
+        $totalPa = (clone $baseGenderQuery)->where(function ($q) {
+            $q->whereHas('members', fn ($m) => $m->where('gender', 'L'))
+                ->orWhere('match_type', 'LIKE', '%Putra%')
+                ->orWhere('match_type', 'LIKE', '%(PA)%');
+        })->count();
+        $totalPi = (clone $baseGenderQuery)->where(function ($q) {
+            $q->whereHas('members', fn ($m) => $m->where('gender', 'P'))
+                ->orWhere('match_type', 'LIKE', '%Putri%')
+                ->orWhere('match_type', 'LIKE', '%(PI)%');
+        })->count();
 
         // Hitung statistik terverifikasi, sudah diundi, dan status counts khusus untuk cabang lomba (dan gender) aktif
         $statsCompQuery = Registration::whereIn('competition_id', $competitionIds);
@@ -456,7 +570,16 @@ class PicController extends Controller
             $statsCompQuery->where('competition_id', $request->competition_id);
         }
         if ($request->filled('gender') && $request->gender !== 'all') {
-            $statsCompQuery->whereHas('members', fn ($q) => $q->where('gender', $request->gender));
+            $statsCompQuery->where(function ($q) use ($request) {
+                $q->whereHas('members', fn ($m) => $m->where('gender', $request->gender))
+                    ->orWhere(function ($q2) use ($request) {
+                        if ($request->gender === 'L') {
+                            $q2->where('match_type', 'LIKE', '%Putra%')->orWhere('match_type', 'LIKE', '%(PA)%');
+                        } else {
+                            $q2->where('match_type', 'LIKE', '%Putri%')->orWhere('match_type', 'LIKE', '%(PI)%');
+                        }
+                    });
+            });
         }
 
         $totalVerified = (clone $statsCompQuery)->where('status', 'verified')->count();
@@ -474,7 +597,7 @@ class PicController extends Controller
             'rejected' => (int) ($statusGroupCounts->get('rejected', 0)),
         ];
 
-        // Filter gender (via first member)
+        // Filter gender (via first member or match_type fallback)
         if ($request->filled('gender') && $request->gender !== 'all') {
             $g = $request->gender;
             $sectorIsPa = str_ends_with($request->sector ?? '', '_pa');
@@ -482,8 +605,15 @@ class PicController extends Controller
 
             // Abaikan filter gender jika sektor sudah spesifik gender berlawanan (mencegah tabrakan 0 data)
             if (! ($sectorIsPa && $g === 'P') && ! ($sectorIsPi && $g === 'L')) {
-                $query->whereHas('members', function ($q) use ($g) {
-                    $q->where('gender', $g);
+                $query->where(function ($q) use ($g) {
+                    $q->whereHas('members', fn ($m) => $m->where('gender', $g))
+                        ->orWhere(function ($q2) use ($g) {
+                            if ($g === 'L') {
+                                $q2->where('match_type', 'LIKE', '%Putra%')->orWhere('match_type', 'LIKE', '%(PA)%');
+                            } else {
+                                $q2->where('match_type', 'LIKE', '%Putri%')->orWhere('match_type', 'LIKE', '%(PI)%');
+                            }
+                        });
                 });
             }
         }
