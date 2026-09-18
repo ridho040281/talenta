@@ -111,6 +111,7 @@
             <table class="w-full text-left text-xs sm:text-sm text-slate-600">
                 <thead class="text-[11px] font-bold uppercase tracking-wider bg-slate-50 text-slate-500 border-b border-slate-200">
                     <tr>
+                        <th class="py-3 px-3 sm:px-4 text-center w-12 text-slate-400">No.</th>
                         <th class="py-3 px-3.5 sm:px-6">Kode Reg</th>
                         <th class="py-3 px-3.5 sm:px-6">No. Peserta</th>
                         <th class="py-3 px-3.5 sm:px-6">Nama Peserta / Tim</th>
@@ -124,6 +125,9 @@
                 <tbody class="divide-y divide-slate-100 font-medium">
                     @forelse($registrations as $reg)
                         <tr class="hover:bg-slate-50/80 transition">
+                            <td class="py-4 px-3 sm:px-4 text-center font-mono font-bold text-slate-400 text-xs whitespace-nowrap">
+                                {{ ($registrations->firstItem() ?? 1) + $loop->index }}
+                            </td>
                             <td class="py-4 px-6 font-mono text-xs font-bold text-brand-700">
                                 {{ $reg->registration_code }}
                             </td>
@@ -197,7 +201,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="py-12 text-center text-slate-400">
+                            <td colspan="9" class="py-12 text-center text-slate-400">
                                 Tidak ada data pendaftar pada kategori filter ini.
                             </td>
                         </tr>

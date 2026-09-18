@@ -852,6 +852,7 @@
             <table class="w-full text-left text-xs sm:text-sm text-slate-300">
                 <thead class="text-[11px] font-bold uppercase tracking-wider bg-[#0C111D]/90 text-slate-400 border-b border-white/[0.08]">
                     <tr>
+                        <th class="py-3 px-3 sm:px-4 text-center w-12 text-slate-400">No.</th>
                         <th class="py-3 px-3.5 sm:px-4">Kode & No. Reg</th>
                         <th class="py-3 px-3.5 sm:px-4">Nama Peserta / Tim</th>
                         <th class="py-3 px-3.5 sm:px-4">Cabang & Sektor / Kelas</th>
@@ -864,8 +865,13 @@
                 </thead>
                 <tbody class="divide-y divide-white/[0.04] font-medium">
                     <!-- High-Performance Dynamic Template Rows (Only active page rows rendered in DOM) -->
-                    <template x-for="item in paginatedList" :key="item.id">
+                    <template x-for="(item, index) in paginatedList" :key="item.id">
                         <tr class="hover:bg-white/[0.025] transition">
+                            <!-- No. Urut -->
+                            <td class="py-3 px-3 sm:px-4 text-center font-mono font-bold text-slate-400 text-xs whitespace-nowrap">
+                                <span x-text="(fromItem || ((currentPage - 1) * perPage + 1)) + index"></span>
+                            </td>
+
                             <!-- Kode & No Reg -->
                             <td class="py-3 px-3.5 sm:px-4">
                                 <span class="font-mono font-bold text-[#84D0FF] block text-xs" x-text="item.participant_number || '-'"></span>
@@ -1075,7 +1081,7 @@
 
                     <!-- Loading Spinner Row -->
                     <tr x-show="isLoading" x-cloak>
-                        <td colspan="8" class="text-center py-10 text-slate-400 text-xs">
+                        <td colspan="9" class="text-center py-10 text-slate-400 text-xs">
                             <div class="flex items-center justify-center gap-2">
                                 <svg class="animate-spin w-4 h-4 text-[#7A5AF8]" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4l-3 3 3 3H4z"/></svg>
                                 <span>Memuat data peserta...</span>
@@ -1085,7 +1091,7 @@
 
                     <!-- Fetch Error State -->
                     <tr x-show="!isLoading && fetchError" x-cloak>
-                        <td colspan="8" class="text-center py-10 text-rose-400 text-xs">
+                        <td colspan="9" class="text-center py-10 text-rose-400 text-xs">
                             <div class="flex flex-col items-center justify-center gap-2">
                                 <div class="w-10 h-10 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
@@ -1102,14 +1108,14 @@
 
                     <!-- Empty: No participants at all -->
                     <tr x-show="!isLoading && !fetchError && totalItems === 0 && !searchQuery && selectedCompetition === 'all' && selectedStatus === 'all' && selectedGender === 'all' && selectedSector === 'all'" x-cloak>
-                        <td colspan="8" class="text-center py-12 text-slate-500 text-xs">
+                        <td colspan="9" class="text-center py-12 text-slate-500 text-xs">
                             Belum ada data pendaftar yang masuk.
                         </td>
                     </tr>
 
                     <!-- Empty Filter State -->
                     <tr x-show="!isLoading && !fetchError && items.length === 0 && totalItems === 0 && (searchQuery || selectedCompetition !== 'all' || selectedStatus !== 'all' || selectedGender !== 'all' || selectedSector !== 'all')" x-cloak>
-                        <td colspan="8" class="text-center py-12 text-slate-400 text-xs">
+                        <td colspan="9" class="text-center py-12 text-slate-400 text-xs">
                             <div class="flex flex-col items-center justify-center gap-2">
                                 <div class="w-10 h-10 rounded-2xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-slate-400">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"/></svg>
