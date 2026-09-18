@@ -45,6 +45,36 @@
         </div>
     </div>
 
+    @php
+        $compCode = strtoupper($competition->code ?? '');
+        $isBadminton = ($compCode === 'BLT' || str_contains(strtolower($competition->name ?? ''), 'bulu tangkis') || str_contains(strtolower($competition->name ?? ''), 'badminton'));
+        $isMipa = ($compCode === 'MIPA' || str_contains(strtolower($competition->name ?? ''), 'mipa'));
+        $isTmjCtr = in_array($compCode, ['TMJ', 'CTR']) || str_contains(strtolower($competition->name ?? ''), 'tenis meja') || str_contains(strtolower($competition->name ?? ''), 'catur');
+    @endphp
+
+    @if($isBadminton)
+        <div class="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-2.5 text-emerald-300">
+                <i data-lucide="activity" class="w-5 h-5 text-emerald-400 shrink-0"></i>
+                <span><strong>Cabang Bulu Tangkis</strong> menggunakan sistem pertandingan per set & reli poin. Anda disarankan menggunakan modul <strong>Wasit Digital & Papan Skor Lapangan</strong>.</span>
+            </div>
+            <a href="{{ route('badminton.index') }}" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs shrink-0 transition flex items-center gap-1.5 justify-center shadow-lg shadow-emerald-500/20">
+                <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                <span>Buka Panel Wasit Bulu Tangkis</span>
+            </a>
+        </div>
+    @elseif($isMipa)
+        <div class="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/30 flex items-center gap-2.5 text-xs text-blue-300">
+            <i data-lucide="info" class="w-5 h-5 text-[#84D0FF] shrink-0"></i>
+            <span><strong>Olimpiade MIPA:</strong> Penilaian berbasis skor ujian CBT / tes objektif. Masukkan nilai hasil tes masing-masing peserta pada formulir di bawah ini untuk ditayangkan pada Live Leaderboard.</span>
+        </div>
+    @elseif($isTmjCtr)
+        <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center gap-2.5 text-xs text-amber-300">
+            <i data-lucide="trophy" class="w-5 h-5 text-amber-400 shrink-0"></i>
+            <span><strong>{{ $competition->name }}:</strong> Masukkan perolehan skor pertandingan / poin kemenangan match peserta pada formulir penilaian di bawah ini.</span>
+        </div>
+    @endif
+
     <!-- Participants Scoring Grid / Accordion -->
     <div class="space-y-6">
         <div class="flex items-center justify-between px-2">

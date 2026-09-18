@@ -38,25 +38,103 @@
 
                         <h4 class="text-lg font-black text-white group-hover:text-[#A594FD] transition">{{ $comp->name }}</h4>
                         
+                        @php
+                            $compCode = strtoupper($comp->code ?? '');
+                            $isBadminton = ($compCode === 'BLT' || str_contains(strtolower($comp->name ?? ''), 'bulu tangkis') || str_contains(strtolower($comp->name ?? ''), 'badminton'));
+                            $isMipa = ($compCode === 'MIPA' || str_contains(strtolower($comp->name ?? ''), 'mipa'));
+                            $isTmjCtr = in_array($compCode, ['TMJ', 'CTR']) || str_contains(strtolower($comp->name ?? ''), 'tenis meja') || str_contains(strtolower($comp->name ?? ''), 'catur');
+                        @endphp
+
                         <!-- Criteria summary -->
                         <div class="mt-4 pt-3 border-t border-white/[0.06] space-y-1.5">
-                            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Kriteria Bobot Penilaian:</span>
-                            <div class="flex flex-wrap gap-1.5">
-                                @foreach($comp->criteria as $crit)
-                                    <span class="px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/[0.08] text-[11px] font-semibold text-slate-300">
-                                        {{ $crit->name }} ({{ $crit->weight_percentage }}%)
+                            @if($isBadminton)
+                                <span class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider block flex items-center gap-1">
+                                    <i data-lucide="activity" class="w-3.5 h-3.5"></i>
+                                    Format Pertandingan:
+                                </span>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <span class="px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-xs font-semibold text-emerald-300 inline-flex items-center gap-1.5">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                        Sistem Reli & Poin Wasit Digital (21 Poin / Set)
                                     </span>
-                                @endforeach
-                            </div>
+                                </div>
+                            @elseif($isMipa)
+                                <span class="text-[11px] font-bold text-[#84D0FF] uppercase tracking-wider block flex items-center gap-1">
+                                    <i data-lucide="file-check" class="w-3.5 h-3.5"></i>
+                                    Format Penilaian:
+                                </span>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <span class="px-2.5 py-1 rounded-xl bg-blue-500/10 border border-blue-500/25 text-xs font-semibold text-[#84D0FF] inline-flex items-center gap-1.5">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                                        Skor Ujian Objektif / CBT
+                                    </span>
+                                    @foreach($comp->criteria as $crit)
+                                        <span class="px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/[0.08] text-[11px] font-semibold text-slate-300">
+                                            {{ $crit->name }} ({{ $crit->weight_percentage }}%)
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @elseif($isTmjCtr)
+                                <span class="text-[11px] font-bold text-amber-400 uppercase tracking-wider block flex items-center gap-1">
+                                    <i data-lucide="trophy" class="w-3.5 h-3.5"></i>
+                                    Format Pertandingan:
+                                </span>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <span class="px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/25 text-xs font-semibold text-amber-300 inline-flex items-center gap-1.5">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                                        {{ $compCode === 'CTR' ? 'Poin Match Kemenangan & Taktik' : 'Poin Game & Skor Match' }}
+                                    </span>
+                                    @foreach($comp->criteria as $crit)
+                                        <span class="px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/[0.08] text-[11px] font-semibold text-slate-300">
+                                            {{ $crit->name }} ({{ $crit->weight_percentage }}%)
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @else
+                                <span class="text-[11px] font-bold text-[#A594FD] uppercase tracking-wider block flex items-center gap-1">
+                                    <i data-lucide="award" class="w-3.5 h-3.5"></i>
+                                    Kriteria Bobot Penilaian:
+                                </span>
+                                <div class="flex flex-wrap gap-1.5">
+                                    @forelse($comp->criteria as $crit)
+                                        <span class="px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/[0.08] text-[11px] font-semibold text-slate-300">
+                                            {{ $crit->name }} ({{ $crit->weight_percentage }}%)
+                                        </span>
+                                    @empty
+                                        <span class="text-xs text-slate-500 italic">Penilaian Umum (100%)</span>
+                                    @endforelse
+                                </div>
+                            @endif
                         </div>
                     </div>
 
                     <!-- Action Button -->
-                    <div class="pt-4 border-t border-white/[0.08]">
-                        <a href="{{ route('juri.scoring', $comp->id) }}" class="gradient-btn w-full text-center py-3 px-4 rounded-xl text-white font-bold text-xs shadow-lg shadow-[#7A5AF8]/25 transition flex items-center justify-center gap-2">
-                            <i data-lucide="clipboard-pen" class="w-4 h-4"></i>
-                            <span>Buka Lembar Penilaian Digital</span>
-                        </a>
+                    <div class="pt-4 border-t border-white/[0.08] flex flex-wrap items-center gap-2">
+                        @if($isBadminton)
+                            <a href="{{ route('badminton.index') }}" class="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/25 transition flex items-center justify-center gap-2 cursor-pointer">
+                                <i data-lucide="activity" class="w-4 h-4 text-slate-950"></i>
+                                <span>Buka Wasit & Scoring Bulu Tangkis</span>
+                            </a>
+                            <a href="{{ route('badminton.scoreboard') }}" target="_blank" class="py-3 px-3 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 text-xs font-bold transition flex items-center gap-1.5 shrink-0" title="Buka Papan Skor LED TV">
+                                <i data-lucide="tv" class="w-4 h-4 text-rose-400"></i>
+                                <span class="hidden sm:inline">Papan Skor TV</span>
+                            </a>
+                        @elseif($isMipa)
+                            <a href="{{ route('juri.scoring', $comp->id) }}" class="gradient-btn w-full text-center py-3 px-4 rounded-xl text-white font-bold text-xs shadow-lg shadow-[#7A5AF8]/25 transition flex items-center justify-center gap-2">
+                                <i data-lucide="file-edit" class="w-4 h-4"></i>
+                                <span>Input / Rekap Nilai CBT</span>
+                            </a>
+                        @elseif($isTmjCtr)
+                            <a href="{{ route('juri.scoring', $comp->id) }}" class="gradient-btn w-full text-center py-3 px-4 rounded-xl text-white font-bold text-xs shadow-lg shadow-[#7A5AF8]/25 transition flex items-center justify-center gap-2">
+                                <i data-lucide="clipboard-pen" class="w-4 h-4"></i>
+                                <span>Input Skor Pertandingan</span>
+                            </a>
+                        @else
+                            <a href="{{ route('juri.scoring', $comp->id) }}" class="gradient-btn w-full text-center py-3 px-4 rounded-xl text-white font-bold text-xs shadow-lg shadow-[#7A5AF8]/25 transition flex items-center justify-center gap-2">
+                                <i data-lucide="clipboard-pen" class="w-4 h-4"></i>
+                                <span>Buka Lembar Penilaian Digital</span>
+                            </a>
+                        @endif
                     </div>
                 </div>
             @empty

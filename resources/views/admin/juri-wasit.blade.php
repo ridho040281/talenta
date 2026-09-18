@@ -183,18 +183,77 @@
                             </div>
                         </div>
 
-                        <!-- Criteria tags -->
+                        @php
+                            $compCode = strtoupper($comp['code'] ?? '');
+                            $isBadminton = ($compCode === 'BLT' || str_contains(strtolower($comp['name'] ?? ''), 'bulu tangkis') || str_contains(strtolower($comp['name'] ?? ''), 'badminton'));
+                            $isMipa = ($compCode === 'MIPA' || str_contains(strtolower($comp['name'] ?? ''), 'mipa'));
+                            $isTmjCtr = in_array($compCode, ['TMJ', 'CTR']) || str_contains(strtolower($comp['name'] ?? ''), 'tenis meja') || str_contains(strtolower($comp['name'] ?? ''), 'catur');
+                            $isTimekeeperAllowed = in_array($compCode, ['MTQ', 'THF', 'TFID', 'POP']) 
+                                || str_contains(strtolower($comp['name'] ?? ''), 'mtq') 
+                                || str_contains(strtolower($comp['name'] ?? ''), 'tahfid') 
+                                || str_contains(strtolower($comp['name'] ?? ''), 'pop');
+                        @endphp
+
+                        <!-- Criteria / Match Format tags -->
                         <div class="pt-2">
-                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Bobot Kriteria:</span>
-                            <div class="flex flex-wrap gap-1.5">
-                                @forelse($comp['criteria'] as $crit)
-                                    <span class="px-2 py-0.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-[10px] font-semibold text-slate-300">
-                                        {{ $crit->name }} ({{ $crit->weight_percentage }}%)
+                            @if($isBadminton)
+                                <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block mb-1.5 flex items-center gap-1">
+                                    <i data-lucide="activity" class="w-3 h-3"></i>
+                                    Format Pertandingan:
+                                </span>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <span class="px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-[11px] font-semibold text-emerald-300 inline-flex items-center gap-1.5">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                        Sistem Reli & Poin Wasit (21 Poin / Set)
                                     </span>
-                                @empty
-                                    <span class="text-[10px] text-slate-500 italic">Umum (100%)</span>
-                                @endforelse
-                            </div>
+                                </div>
+                            @elseif($isMipa)
+                                <span class="text-[10px] font-bold text-[#84D0FF] uppercase tracking-wider block mb-1.5 flex items-center gap-1">
+                                    <i data-lucide="file-check" class="w-3 h-3"></i>
+                                    Format Penilaian:
+                                </span>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <span class="px-2.5 py-1 rounded-xl bg-blue-500/10 border border-blue-500/25 text-[11px] font-semibold text-[#84D0FF] inline-flex items-center gap-1.5">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                                        Skor Ujian Objektif / CBT
+                                    </span>
+                                    @foreach($comp['criteria'] as $crit)
+                                        <span class="px-2 py-0.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-[10px] font-semibold text-slate-300">
+                                            {{ $crit->name }} ({{ $crit->weight_percentage }}%)
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @elseif($isTmjCtr)
+                                <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider block mb-1.5 flex items-center gap-1">
+                                    <i data-lucide="trophy" class="w-3 h-3"></i>
+                                    Format Pertandingan:
+                                </span>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <span class="px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/25 text-[11px] font-semibold text-amber-300 inline-flex items-center gap-1.5">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                                        {{ $compCode === 'CTR' ? 'Poin Match Kemenangan & Taktik' : 'Poin Game & Skor Match' }}
+                                    </span>
+                                    @foreach($comp['criteria'] as $crit)
+                                        <span class="px-2 py-0.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-[10px] font-semibold text-slate-300">
+                                            {{ $crit->name }} ({{ $crit->weight_percentage }}%)
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @else
+                                <span class="text-[10px] font-bold text-[#A594FD] uppercase tracking-wider block mb-1.5 flex items-center gap-1">
+                                    <i data-lucide="award" class="w-3 h-3"></i>
+                                    Kriteria Bobot Dewan Juri:
+                                </span>
+                                <div class="flex flex-wrap gap-1.5">
+                                    @forelse($comp['criteria'] as $crit)
+                                        <span class="px-2 py-0.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-[10px] font-semibold text-slate-300">
+                                            {{ $crit->name }} ({{ $crit->weight_percentage }}%)
+                                        </span>
+                                    @empty
+                                        <span class="text-[10px] text-slate-500 italic">Penilaian Umum (100%)</span>
+                                    @endforelse
+                                </div>
+                            @endif
                         </div>
 
                         <!-- Live Score Broadcast Setting & Toggle Switch -->
@@ -266,23 +325,51 @@
                         </div>
                     </div>
 
-                    <!-- CTA Action -->
-                    <div class="pt-3 border-t border-white/[0.08] flex items-center gap-2">
-                        <a href="{{ route('juri.scoring', $comp['id']) }}" class="gradient-btn flex-1 py-2.5 px-4 rounded-xl text-white font-bold text-xs shadow-lg shadow-[#7A5AF8]/20 transition flex items-center justify-center gap-2 group/btn cursor-pointer">
-                            <i data-lucide="clipboard-pen" class="w-4 h-4 text-white group-hover/btn:scale-110 transition"></i>
-                            <span>Buka Lembar Penilaian Juri</span>
-                        </a>
-                        @php
-                            $isTimekeeperAllowed = in_array(strtoupper($comp['code'] ?? ''), ['MTQ', 'THF', 'POP']) 
-                                || str_contains(strtolower($comp['name'] ?? ''), 'mtq') 
-                                || str_contains(strtolower($comp['name'] ?? ''), 'tahfid') 
-                                || str_contains(strtolower($comp['name'] ?? ''), 'pop');
-                        @endphp
-                        @if($isTimekeeperAllowed && !empty($comp['has_stage_timer']))
-                            <a href="{{ route('pic.stage.control', $comp['id']) }}" class="py-2.5 px-3 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold transition flex items-center gap-1.5 shrink-0" title="Buka Konsol Timekeeper / Operator Panggung">
-                                <i data-lucide="timer" class="w-4 h-4 text-amber-400"></i>
-                                <span class="hidden sm:inline">Timekeeper</span>
+                    <!-- CTA Action (Differentiated per Competition Type) -->
+                    <div class="pt-3 border-t border-white/[0.08] flex flex-wrap items-center gap-2">
+                        @if($isBadminton)
+                            <a href="{{ route('badminton.index') }}" class="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-2 cursor-pointer">
+                                <i data-lucide="activity" class="w-4 h-4 text-slate-950"></i>
+                                <span>Scoring & Wasit Lapangan</span>
                             </a>
+                            <a href="{{ route('badminton.scoreboard') }}" target="_blank" class="py-2.5 px-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 text-xs font-bold transition flex items-center gap-1 shrink-0" title="Buka Papan Skor LED TV">
+                                <i data-lucide="tv" class="w-3.5 h-3.5 text-rose-400"></i>
+                                <span class="hidden sm:inline">Papan Skor TV</span>
+                            </a>
+                            <a href="{{ route('badminton.arena') }}" target="_blank" class="py-2.5 px-2.5 rounded-xl bg-[#4E6EFF]/15 hover:bg-[#4E6EFF]/25 text-[#84D0FF] border border-[#4E6EFF]/30 text-xs font-bold transition flex items-center gap-1 shrink-0" title="Buka Arena Multi-Lapangan">
+                                <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-[#4E6EFF]"></i>
+                                <span class="hidden sm:inline">Arena</span>
+                            </a>
+                        @elseif($isMipa)
+                            <a href="{{ route('juri.scoring', $comp['id']) }}" class="gradient-btn flex-1 py-2.5 px-4 rounded-xl text-white font-bold text-xs shadow-lg shadow-[#7A5AF8]/20 transition flex items-center justify-center gap-2 group/btn cursor-pointer">
+                                <i data-lucide="file-edit" class="w-4 h-4 text-white group-hover/btn:scale-110 transition"></i>
+                                <span>Input / Rekap Nilai CBT</span>
+                            </a>
+                            @php
+                                $cbtUrl = \App\Models\AppSetting::get('cbt_url');
+                            @endphp
+                            @if($cbtUrl)
+                                <a href="{{ $cbtUrl }}" target="_blank" class="py-2.5 px-3 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 text-xs font-bold transition flex items-center gap-1.5 shrink-0" title="Buka Portal Ujian CBT">
+                                    <i data-lucide="external-link" class="w-4 h-4 text-cyan-400"></i>
+                                    <span class="hidden sm:inline">Portal CBT</span>
+                                </a>
+                            @endif
+                        @elseif($isTmjCtr)
+                            <a href="{{ route('juri.scoring', $comp['id']) }}" class="gradient-btn flex-1 py-2.5 px-4 rounded-xl text-white font-bold text-xs shadow-lg shadow-[#7A5AF8]/20 transition flex items-center justify-center gap-2 group/btn cursor-pointer">
+                                <i data-lucide="clipboard-pen" class="w-4 h-4 text-white group-hover/btn:scale-110 transition"></i>
+                                <span>Input Skor Pertandingan</span>
+                            </a>
+                        @else
+                            <a href="{{ route('juri.scoring', $comp['id']) }}" class="gradient-btn flex-1 py-2.5 px-4 rounded-xl text-white font-bold text-xs shadow-lg shadow-[#7A5AF8]/20 transition flex items-center justify-center gap-2 group/btn cursor-pointer">
+                                <i data-lucide="clipboard-pen" class="w-4 h-4 text-white group-hover/btn:scale-110 transition"></i>
+                                <span>Buka Lembar Penilaian Juri</span>
+                            </a>
+                            @if($isTimekeeperAllowed && !empty($comp['has_stage_timer']))
+                                <a href="{{ route('pic.stage.control', $comp['id']) }}" class="py-2.5 px-3 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold transition flex items-center gap-1.5 shrink-0" title="Buka Konsol Timekeeper / Operator Panggung">
+                                    <i data-lucide="timer" class="w-4 h-4 text-amber-400"></i>
+                                    <span class="hidden sm:inline">Timekeeper</span>
+                                </a>
+                            @endif
                         @endif
                     </div>
                 </div>
