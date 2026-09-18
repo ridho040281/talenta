@@ -288,6 +288,8 @@ class BadmintonMatchController extends Controller
             $this->touchMatchTimestamp($match->id);
         }
 
+        $this->syncPlayoffWinnerToMainBracket($match);
+
         return response()->json([
             'success' => true,
             'match' => $this->formatMatchState($match),
@@ -592,5 +594,44 @@ class BadmintonMatchController extends Controller
             'interval_remaining' => $match->interval_until ? max(0, (int) ceil(now()->diffInRealSeconds($match->interval_until, false))) : 0,
             'updated_at' => $match->updated_at?->toIso8601String() ?? now()->toIso8601String(),
         ];
+    }
+
+    private function syncPlayoffWinnerToMainBracket(BadmintonMatch $match): void
+    {
+        if (! preg_match('/^(.+)-PO-M(\d+)$/', $match->match_code, $m)) {
+            return;
+        }
+
+        $poolKey = $m[1];
+        $poNum = (int) $m[2];
+
+        // In standard brackets, PO 1 feeds into the highest Match in Round 1 (Team 2)
+        $targetR1Match = BadmintonMatch::where('competition_id', $match->competition_id)
+            ->where('match_code', 'like', "{$poolKey}-R1-M%")
+            ->orderByRaw('CAST(SUBSTRING_INDEX(match_code, "-M", -1) AS UNSIGNED) DESC')
+            ->first();
+
+        if (! $targetR1Match) {
+            return;
+        }
+
+        if ($match->match_status === 'finished' && in_array($match->winner_team, [1, 2])) {
+            $isT1 = ($match->winner_team === 1);
+            $targetR1Match->team2_registration_id = $isT1 ? $match->team1_registration_id : $match->team2_registration_id;
+            $targetR1Match->team2_player1 = $isT1 ? $match->team1_player1 : $match->team2_player1;
+            $targetR1Match->team2_player2 = $isT1 ? $match->team1_player2 : $match->team2_player2;
+            $targetR1Match->team2_school = $isT1 ? $match->team1_school : $match->team2_school;
+            $targetR1Match->save();
+            $this->touchMatchTimestamp($targetR1Match->id);
+        } elseif (in_array($match->match_status, ['upcoming', 'ongoing', 'interval'])) {
+            if ($targetR1Match->team2_player1 !== '[Pemenang Play-off]') {
+                $targetR1Match->team2_registration_id = null;
+                $targetR1Match->team2_player1 = '[Pemenang Play-off]';
+                $targetR1Match->team2_player2 = null;
+                $targetR1Match->team2_school = 'TBD';
+                $targetR1Match->save();
+                $this->touchMatchTimestamp($targetR1Match->id);
+            }
+        }
     }
 }

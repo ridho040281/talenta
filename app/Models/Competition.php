@@ -23,6 +23,7 @@ class Competition extends Model
         'min_members',
         'max_members',
         'quota',
+        'bracket_settings',
         'registration_fee',
         'rules',
         'show_rules',
@@ -115,6 +116,7 @@ class Competition extends Model
             'stage_state' => 'array',
             'registration_fee' => 'decimal:2',
             'order' => 'integer',
+            'bracket_settings' => 'array',
         ];
     }
 

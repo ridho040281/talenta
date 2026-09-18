@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bagan Resmi 33 Peserta (Play-off + 32 Besar) - TALENTA 2026</title>
+    <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 5mm 8mm;
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        .print-canvas {
+            width: 285mm;
+            min-height: 196mm;
+            margin: 0 auto;
+            background: #ffffff;
+            box-sizing: border-box;
+            padding: 5mm 7mm;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        @media print {
+            body {
+                background: #ffffff !important;
+                padding: 0 !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-canvas {
+                width: 100% !important;
+                min-height: auto !important;
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+        }
+    </style>
+</head>
+<body class="py-4">
+
+    <!-- Action Bar (Hanya tampil di layar monitor, tidak tercetak di PDF) -->
+    <div class="no-print max-w-[285mm] mx-auto mb-4 px-2">
+        <div class="bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-xl flex items-center justify-between flex-wrap gap-3 border border-slate-800">
+            <div class="flex items-center gap-3">
+                <span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>
+                <div>
+                    <h1 class="text-sm font-black tracking-wide">Pratinjau Dokumen Cetak / PDF Bagan 33 Peserta</h1>
+                    <p class="text-xs text-slate-400">Skema 1 Partai Play-off (Kualifikasi) + Bagan Utama 32 Besar Standar BWF</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2.5">
+                <button onclick="window.print()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 transition flex items-center gap-2 cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                    <span>Cetak / Simpan Sebagai PDF</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Halaman Kertas Resmi (A4 Landscape) -->
+    <div class="print-canvas flex flex-col justify-between">
+
+        <!-- 1. KOP SURAT FORMAL -->
+        <div>
+            <div class="border-b-2 border-slate-900 pb-2 mb-2 flex items-center justify-between gap-4">
+                <div class="w-14 h-14 shrink-0 flex items-center justify-center bg-emerald-700 text-white font-black rounded-xl text-sm shadow">
+                    KEMENAG
+                </div>
+                <div class="flex-1 text-center">
+                    <div class="text-[9px] font-bold uppercase tracking-widest text-slate-600">PANITIA PELAKSANA AJANG PRESTASI OLAHRAGA & SENI TAHUN 2026</div>
+                    <div class="text-sm sm:text-base font-black uppercase text-slate-900 tracking-tight">TALENTA TINGKAT MI / SD SE-JAWA TIMUR</div>
+                    <div class="text-[9px] font-bold text-slate-700">MTs NEGERI 1 BLITAR — KEMENTERIAN AGAMA KABUPATEN BLITAR</div>
+                    <div class="text-[8px] text-slate-500">Jl. Raya Kunir, Srengat, Kab. Blitar • Website: talenta.mtsn1blitar.sch.id</div>
+                </div>
+                <div class="w-14 h-14 shrink-0 flex items-center justify-center bg-slate-900 text-amber-400 font-black rounded-xl text-xs shadow">
+                    TALENTA
+                </div>
+            </div>
+
+            <!-- Judul & Parameter Bagan -->
+            <div class="text-center mb-1.5">
+                <h2 class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900">
+                    BAGAN RESMI PERTANDINGAN BULU TANGKIS TUNGGAL PUTRA (33 PESERTA)
+                </h2>
+                <div class="text-[9.5px] font-bold text-slate-600 flex items-center justify-center gap-3">
+                    <span>Format: <strong>1 Partai Play-off + Bagan Utama 32</strong></span>
+                    <span>•</span>
+                    <span>Total Kuota: <strong>33 Peserta (32 Terdaftar + 1 Play-off)</strong></span>
+                    <span>•</span>
+                    <span class="text-emerald-700">Sistem: <strong>Gugur Tunggal BWF</strong></span>
+                </div>
+            </div>
+
+            <!-- 2. DIAGRAM POHON VEKTOR LENGKAP (SVG 32 BESAR + PLAY-OFF WING) -->
+            <div class="w-full flex justify-center items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1020 540" width="100%" height="auto" style="max-height: 405px; font-family: system-ui, -apple-system, sans-serif;">
+                    
+                    <!-- COLUMN HEADERS -->
+                    <text x="75" y="16" text-anchor="middle" font-size="9" font-weight="900" fill="#b45309">KUALIFIKASI</text>
+                    <text x="75" y="27" text-anchor="middle" font-size="8" font-weight="700" fill="#64748b">(Play-off #0)</text>
+
+                    <text x="215" y="16" text-anchor="middle" font-size="10" font-weight="900" fill="#0f172a">BABAK 32 BESAR</text>
+                    <text x="215" y="27" text-anchor="middle" font-size="8" font-weight="700" fill="#64748b">(Main ke-1 • 16 Partai)</text>
+
+                    <text x="375" y="16" text-anchor="middle" font-size="10" font-weight="900" fill="#0f172a">BABAK 16 BESAR</text>
+                    <text x="375" y="27" text-anchor="middle" font-size="8" font-weight="700" fill="#64748b">(Main ke-2 • 8 Partai)</text>
+
+                    <text x="535" y="16" text-anchor="middle" font-size="10" font-weight="900" fill="#0f172a">PEREMPAT FINAL</text>
+                    <text x="535" y="27" text-anchor="middle" font-size="8" font-weight="700" fill="#64748b">(Main ke-3 • 4 Partai)</text>
+
+                    <text x="695" y="16" text-anchor="middle" font-size="10" font-weight="900" fill="#0f172a">SEMIFINAL</text>
+                    <text x="695" y="27" text-anchor="middle" font-size="8" font-weight="700" fill="#64748b">(Main ke-4 • 2 Partai)</text>
+
+                    <text x="835" y="16" text-anchor="middle" font-size="10" font-weight="900" fill="#0f172a">FINAL</text>
+                    <text x="835" y="27" text-anchor="middle" font-size="8" font-weight="700" fill="#64748b">(Main ke-5)</text>
+
+                    <text x="955" y="16" text-anchor="middle" font-size="10" font-weight="900" fill="#d97706">JUARA 1</text>
+                    <text x="955" y="27" text-anchor="middle" font-size="8" font-weight="700" fill="#d97706">🏆 TROPHY</text>
+
+                    <!-- SEPARATOR LINE -->
+                    <line x1="10" y1="34" x2="1010" y2="34" stroke="#cbd5e1" stroke-width="1"/>
+
+                    <!-- ========================================== -->
+                    <!-- SAYAP KHUSUS: PARTAI PLAY-OFF KUALIFIKASI  -->
+                    <!-- ========================================== -->
+                    <g id="playoff-wing">
+                        <!-- Kotak Background Highlight Play-off -->
+                        <rect x="15" y="475" width="125" height="52" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5" rx="5" stroke-dasharray="3 2"/>
+                        <text x="77" y="487" text-anchor="middle" font-size="8" font-weight="900" fill="#b45309">PARTAI #0 • PLAY-OFF</text>
+                        <text x="77" y="497" text-anchor="middle" font-size="7" font-mono font-weight="700" fill="#78350f">07:30 WIB • Lapangan 1</text>
+
+                        <!-- Slot P32 -->
+                        <rect x="20" y="501" width="115" height="11" fill="#ffffff" stroke="#94a3b8" stroke-width="0.8" rx="2"/>
+                        <text x="24" y="509" font-size="6.5" font-weight="800" fill="#0f172a">32a. Ahmad Fauzi (SMP 1)</text>
+
+                        <!-- Slot P33 -->
+                        <rect x="20" y="514" width="115" height="11" fill="#ffffff" stroke="#94a3b8" stroke-width="0.8" rx="2"/>
+                        <text x="24" y="522" font-size="6.5" font-weight="800" fill="#0f172a">33. Rizky Pratama (SMP 2)</text>
+
+                        <!-- Garis Hubung Play-off ke Slot 32 -->
+                        <line x1="135" y1="506" x2="148" y2="506" stroke="#b45309" stroke-width="1.2"/>
+                        <line x1="135" y1="519" x2="148" y2="519" stroke="#b45309" stroke-width="1.2"/>
+                        <line x1="148" y1="506" x2="148" y2="519" stroke="#b45309" stroke-width="1.2"/>
+                        <line x1="148" y1="512.5" x2="160" y2="512.5" stroke="#b45309" stroke-width="1.5"/>
+                        <!-- Panah ke Slot 32 -->
+                        <polygon points="160,510 165,512.5 160,515" fill="#b45309"/>
+                    </g>
+
+                    <!-- ========================================== -->
+                    <!-- GENERATE 32 SLOTS & BRACKET TREE VIA SVG   -->
+                    <!-- ========================================== -->
+                    <!-- SLOTS 1..32 -->
+                    <!-- Parameters: yStart=42, slotH=15.2, boxW=120 -->
+                    
+                    <!-- Loop Slot 1 s/d 32 -->
+                    <!-- Kiri: Nomor Slot, Kotak Nama -->
+
+                    <!-- 1 -->
+                    <text x="170" y="52" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">1</text>
+                    <rect x="175" y="44" width="125" height="11.5" fill="#fef3c7" stroke="#d97706" stroke-width="1.2" rx="2"/>
+                    <text x="179" y="52.5" font-size="7" font-weight="800" fill="#92400e">(S1) M. Alfi P. - MTsN 1</text>
+
+                    <!-- 2 -->
+                    <text x="170" y="67" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">2</text>
+                    <rect x="175" y="59" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="67.5" font-size="7" font-weight="700" fill="#0f172a">Daffa Arya - MIN 2 Blitar</text>
+
+                    <!-- 3 -->
+                    <text x="170" y="82" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">3</text>
+                    <rect x="175" y="74" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="82.5" font-size="7" font-weight="700" fill="#0f172a">Fajar Sidik - SD Sukorejo</text>
+
+                    <!-- 4 -->
+                    <text x="170" y="97" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">4</text>
+                    <rect x="175" y="89" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="97.5" font-size="7" font-weight="700" fill="#0f172a">Rian Bagus - MI Darussalam</text>
+
+                    <!-- 5 -->
+                    <text x="170" y="112" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">5</text>
+                    <rect x="175" y="104" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="112.5" font-size="7" font-weight="700" fill="#0f172a">(S5) Kevin A. - SDI Garum</text>
+
+                    <!-- 6 -->
+                    <text x="170" y="127" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">6</text>
+                    <rect x="175" y="119" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="127.5" font-size="7" font-weight="700" fill="#0f172a">Bagus Tri - SD Kepanjen 1</text>
+
+                    <!-- 7 -->
+                    <text x="170" y="142" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">7</text>
+                    <rect x="175" y="134" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="142.5" font-size="7" font-weight="700" fill="#0f172a">Dimas Wahyu - MI Bahrul</text>
+
+                    <!-- 8 -->
+                    <text x="170" y="157" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">8</text>
+                    <rect x="175" y="149" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="157.5" font-size="7" font-weight="700" fill="#0f172a">Iqbal Fikri - SDN Kanigoro</text>
+
+                    <!-- 9 -->
+                    <text x="170" y="172" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">9</text>
+                    <rect x="175" y="164" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="172.5" font-size="7" font-weight="700" fill="#0f172a">(S4) Farhan M. - SD Srengat</text>
+
+                    <!-- 10 -->
+                    <text x="170" y="187" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">10</text>
+                    <rect x="175" y="179" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="187.5" font-size="7" font-weight="700" fill="#0f172a">Haidar Ali - MIN 1 Blitar</text>
+
+                    <!-- 11 -->
+                    <text x="170" y="202" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">11</text>
+                    <rect x="175" y="194" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="202.5" font-size="7" font-weight="700" fill="#0f172a">Rendy Kurnia - SDI Al-Falah</text>
+
+                    <!-- 12 -->
+                    <text x="170" y="217" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">12</text>
+                    <rect x="175" y="209" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="217.5" font-size="7" font-weight="700" fill="#0f172a">Galang Saputra - SD Bendo</text>
+
+                    <!-- 13 -->
+                    <text x="170" y="232" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">13</text>
+                    <rect x="175" y="224" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="232.5" font-size="7" font-weight="700" fill="#0f172a">(S8) Alvin Jaya - MI Sanan</text>
+
+                    <!-- 14 -->
+                    <text x="170" y="247" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">14</text>
+                    <rect x="175" y="239" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="247.5" font-size="7" font-weight="700" fill="#0f172a">Yusuf Habib - SD Kauman 2</text>
+
+                    <!-- 15 -->
+                    <text x="170" y="262" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">15</text>
+                    <rect x="175" y="254" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="262.5" font-size="7" font-weight="700" fill="#0f172a">Tegar Abadi - SD Selorejo</text>
+
+                    <!-- 16 -->
+                    <text x="170" y="277" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">16</text>
+                    <rect x="175" y="269" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="277.5" font-size="7" font-weight="700" fill="#0f172a">Yoga Prasetyo - MI Kunir</text>
+
+                    <!-- 17 -->
+                    <text x="170" y="292" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">17</text>
+                    <rect x="175" y="284" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="292.5" font-size="7" font-weight="700" fill="#0f172a">(S3) Bayu Aji - SDI Tanjungsari</text>
+
+                    <!-- 18 -->
+                    <text x="170" y="307" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">18</text>
+                    <rect x="175" y="299" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="307.5" font-size="7" font-weight="700" fill="#0f172a">Zidan Ilham - SD Gandusari</text>
+
+                    <!-- 19 -->
+                    <text x="170" y="322" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">19</text>
+                    <rect x="175" y="314" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="322.5" font-size="7" font-weight="700" fill="#0f172a">Wahyu Hidayat - MI Darul</text>
+
+                    <!-- 20 -->
+                    <text x="170" y="337" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">20</text>
+                    <rect x="175" y="329" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="337.5" font-size="7" font-weight="700" fill="#0f172a">Eko Saputro - SD Talun 1</text>
+
+                    <!-- 21 -->
+                    <text x="170" y="352" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">21</text>
+                    <rect x="175" y="344" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="352.5" font-size="7" font-weight="700" fill="#0f172a">(S6) Rendy F. - SD Tlogo</text>
+
+                    <!-- 22 -->
+                    <text x="170" y="367" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">22</text>
+                    <rect x="175" y="359" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="367.5" font-size="7" font-weight="700" fill="#0f172a">Naufal Azzam - MI Al-Huda</text>
+
+                    <!-- 23 -->
+                    <text x="170" y="382" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">23</text>
+                    <rect x="175" y="374" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="382.5" font-size="7" font-weight="700" fill="#0f172a">Irfan Maulana - SD Wlingi 3</text>
+
+                    <!-- 24 -->
+                    <text x="170" y="397" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">24</text>
+                    <rect x="175" y="389" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="397.5" font-size="7" font-weight="700" fill="#0f172a">Satria Bintang - MIN 3 Blitar</text>
+
+                    <!-- 25 -->
+                    <text x="170" y="412" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">25</text>
+                    <rect x="175" y="404" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="412.5" font-size="7" font-weight="700" fill="#0f172a">(S7) Bagas P. - SD Kesamben</text>
+
+                    <!-- 26 -->
+                    <text x="170" y="427" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">26</text>
+                    <rect x="175" y="419" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="427.5" font-size="7" font-weight="700" fill="#0f172a">Dani Firmansyah - MI Sanan</text>
+
+                    <!-- 27 -->
+                    <text x="170" y="442" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">27</text>
+                    <rect x="175" y="434" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="442.5" font-size="7" font-weight="700" fill="#0f172a">Arkananta - SD Bendogerit</text>
+
+                    <!-- 28 -->
+                    <text x="170" y="457" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">28</text>
+                    <rect x="175" y="449" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="457.5" font-size="7" font-weight="700" fill="#0f172a">Fahmi Idris - MI Ponggok</text>
+
+                    <!-- 29 -->
+                    <text x="170" y="472" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">29</text>
+                    <rect x="175" y="464" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="472.5" font-size="7" font-weight="700" fill="#0f172a">Aldo Nugraha - SD Kademangan</text>
+
+                    <!-- 30 -->
+                    <text x="170" y="487" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">30</text>
+                    <rect x="175" y="479" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="487.5" font-size="7" font-weight="700" fill="#0f172a">Hilman Zaki - SDI Garum</text>
+
+                    <!-- 31 -->
+                    <text x="170" y="502" font-size="7.5" font-weight="800" fill="#64748b" text-anchor="end">31</text>
+                    <rect x="175" y="494" width="125" height="11.5" fill="#ffffff" stroke="#334155" stroke-width="0.9" rx="2"/>
+                    <text x="179" y="502.5" font-size="7" font-weight="700" fill="#0f172a">Guntur Ramadhan - SD Nglegok</text>
+
+                    <!-- 32: SLOT PEMENANG PLAY-OFF DENGAN HIGHLIGHT KHUSUS -->
+                    <text x="170" y="517" font-size="7.5" font-weight="900" fill="#b45309" text-anchor="end">32</text>
+                    <rect x="175" y="509" width="125" height="13.5" fill="#fef3c7" stroke="#b45309" stroke-width="1.6" rx="2"/>
+                    <text x="179" y="517.5" font-size="6.8" font-weight="900" fill="#92400e">🏆 [PEMENANG PLAY-OFF]</text>
+                    <text x="179" y="521.5" font-size="5.5" font-weight="700" fill="#78350f">(Ahmad Fauzi vs Rizky P.)</text>
+
+
+                    <!-- ========================================== -->
+                    <!-- BRANCH LINES ROUND 1 -> ROUND 2 (16 Matches) -->
+                    <!-- ========================================== -->
+                    <!-- Match 1: Slot 1 vs 2 -->
+                    <line x1="300" y1="50" x2="315" y2="50" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="300" y1="65" x2="315" y2="65" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="315" y1="50" x2="315" y2="65" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="315" y1="57.5" x2="335" y2="57.5" stroke="#0f172a" stroke-width="1.2"/>
+                    <text x="320" y="55" font-size="6" font-mono font-weight="bold" fill="#0284c7">#1 Lap 1 08:00</text>
+
+                    <!-- Match 2: Slot 3 vs 4 -->
+                    <line x1="300" y1="80" x2="315" y2="80" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="300" y1="95" x2="315" y2="95" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="315" y1="80" x2="315" y2="95" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="315" y1="87.5" x2="335" y2="87.5" stroke="#0f172a" stroke-width="1.2"/>
+                    <text x="320" y="85" font-size="6" font-mono font-weight="bold" fill="#0284c7">#1 Lap 2 08:00</text>
+
+                    <!-- Match 3: Slot 5 vs 6 -->
+                    <line x1="300" y1="110" x2="315" y2="110" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="300" y1="125" x2="315" y2="125" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="315" y1="110" x2="315" y2="125" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="315" y1="117.5" x2="335" y2="117.5" stroke="#0f172a" stroke-width="1.2"/>
+                    <text x="320" y="115" font-size="6" font-mono font-weight="bold" fill="#0284c7">#1 Lap 3 08:00</text>
+
+                    <!-- Match 4: Slot 7 vs 8 -->
+                    <line x1="300" y1="140" x2="315" y2="140" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="300" y1="155" x2="315" y2="155" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="315" y1="140" x2="315" y2="155" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="315" y1="147.5" x2="335" y2="147.5" stroke="#0f172a" stroke-width="1.2"/>
+                    <text x="320" y="145" font-size="6" font-mono font-weight="bold" fill="#0284c7">#2 Lap 1 08:35</text>
+
+                    <!-- Match 5..15 Connectors (Batch rendered) -->
+                    <!-- Match 5: 9 vs 10 -->
+                    <line x1="300" y1="170" x2="315" y2="170" stroke="#0f172a" stroke-width="1.2"/><line x1="300" y1="185" x2="315" y2="185" stroke="#0f172a" stroke-width="1.2"/><line x1="315" y1="170" x2="315" y2="185" stroke="#0f172a" stroke-width="1.2"/><line x1="315" y1="177.5" x2="335" y2="177.5" stroke="#0f172a" stroke-width="1.2"/>
+                    <text x="320" y="175" font-size="6" font-mono font-weight="bold" fill="#0284c7">#2 Lap 2 08:35</text>
+
+                    <!-- Match 6: 11 vs 12 -->
+                    <line x1="300" y1="200" x2="315" y2="200" stroke="#0f172a" stroke-width="1.2"/><line x1="300" y1="215" x2="315" y2="215" stroke="#0f172a" stroke-width="1.2"/><line x1="315" y1="200" x2="315" y2="215" stroke="#0f172a" stroke-width="1.2"/><line x1="315" y1="207.5" x2="335" y2="207.5" stroke="#0f172a" stroke-width="1.2"/>
+
+                    <!-- Match 7: 13 vs 14 -->
+                    <line x1="300" y1="230" x2="315" y2="230" stroke="#0f172a" stroke-width="1.2"/><line x1="300" y1="245" x2="315" y2="245" stroke="#0f172a" stroke-width="1.2"/><line x1="315" y1="230" x2="315" y2="245" stroke="#0f172a" stroke-width="1.2"/><line x1="315" y1="237.5" x2="335" y2="237.5" stroke="#0f172a" stroke-width="1.2"/>
+
+                    <!-- Match 8: 15 vs 16 -->
+                    <line x1="300" y1="260" x2="315" y2="260" stroke="#0f172a" stroke-width="1.2"/><line x1="300" y1="275" x2="315" y2="275" stroke="#0f172a" stroke-width="1.2"/><line x1="315" y1="260" x2="315" y2="275" stroke="#0f172a" stroke-width="1.2"/><line x1="315" y1="267.5" x2="335" y2="267.5" stroke="#0f172a" stroke-width="1.2"/>
+
+                    <!-- Match 9: 17 vs 18 -->
+                    <line x1="300" y1="290" x2="315" y2="290" stroke="#0f172a" stroke-width="1.2"/><line x1="300" y1="305" x2="315" y2="305" stroke="#0f172a" stroke-width="1.2"/><line x1="315" y1="290" x2="315" y2="305" stroke="#0f172a" stroke-width="1.2"/><line x1="315" y1="297.5" x2="335" y2="297.5" stroke="#0f172a" stroke-width="1.2"/>
+
+                    <!-- Match 10: 19 vs 20 -->
+                    <line x1="300" y1="320" x2="315" y2="320" stroke="#0f172a" stroke-width="1.2"/><line x1="300" y1="335" x2="315" y2="335" stroke="#0f172a" stroke-width="1.2"/><line x1="315" y1="320" x2="315" y2="335" stroke="#0f172a" stroke-width="1.2"/><line x1="315" y1="327.5" x2="335" y2="327.5" stroke="#0f172a" stroke-width="1.2"/>
+
+                    <!-- Match 11: 21 vs 22 -->
+                    <line x1="300" y1="350" x2="315" y2="350" stroke="#0f172a" stroke-width="1.2"/><line x1="300" y1="365" x2="315" y2="365" stroke="#0f172a" stroke-width="1.2"/><line x1="315" y1="350" x2="315" y2="365" stroke="#0f172a" stroke-width="1.2"/><line x1="315" y1="357.5" x2="335" y2="357.5" stroke="#0f172a" stroke-width="1.2"/>
+
+                    <!-- Match 12: 23 vs 24 -->
+                    <line x1="300" y1="380" x2="315" y2="380" stroke="#0f172a" stroke-width="1.2"/><line x1="300" y1="395" x2="315" y2="395" stroke="#0f172a" stroke-width="1.2"/><line x1="315" y1="380" x2="315" y2="395" stroke="#0f172a" stroke-width="1.2"/><line x1="315" y1="387.5" x2="335" y2="387.5" stroke="#0f172a" stroke-width="1.2"/>
+
+                    <!-- Match 13: 25 vs 26 -->
+                    <line x1="300" y1="410" x2="315" y2="410" stroke="#0f172a" stroke-width="1.2"/><line x1="300" y1="425" x2="315" y2="425" stroke="#0f172a" stroke-width="1.2"/><line x1="315" y1="410" x2="315" y2="425" stroke="#0f172a" stroke-width="1.2"/><line x1="315" y1="417.5" x2="335" y2="417.5" stroke="#0f172a" stroke-width="1.2"/>
+
+                    <!-- Match 14: 27 vs 28 -->
+                    <line x1="300" y1="440" x2="315" y2="440" stroke="#0f172a" stroke-width="1.2"/><line x1="300" y1="455" x2="315" y2="455" stroke="#0f172a" stroke-width="1.2"/><line x1="315" y1="440" x2="315" y2="455" stroke="#0f172a" stroke-width="1.2"/><line x1="315" y1="447.5" x2="335" y2="447.5" stroke="#0f172a" stroke-width="1.2"/>
+
+                    <!-- Match 15: 29 vs 30 -->
+                    <line x1="300" y1="470" x2="315" y2="470" stroke="#0f172a" stroke-width="1.2"/><line x1="300" y1="485" x2="315" y2="485" stroke="#0f172a" stroke-width="1.2"/><line x1="315" y1="470" x2="315" y2="485" stroke="#0f172a" stroke-width="1.2"/><line x1="315" y1="477.5" x2="335" y2="477.5" stroke="#0f172a" stroke-width="1.2"/>
+
+                    <!-- Match 16: Slot 31 vs 32 (Partai Kunci Play-off Winner) -->
+                    <line x1="300" y1="500" x2="315" y2="500" stroke="#b45309" stroke-width="1.5"/>
+                    <line x1="300" y1="515" x2="315" y2="515" stroke="#b45309" stroke-width="1.5"/>
+                    <line x1="315" y1="500" x2="315" y2="515" stroke="#b45309" stroke-width="1.5"/>
+                    <line x1="315" y1="507.5" x2="335" y2="507.5" stroke="#b45309" stroke-width="1.5"/>
+                    <text x="320" y="504" font-size="6" font-mono font-weight="900" fill="#b45309">#16 Lap 1 09:10</text>
+
+
+                    <!-- ========================================== -->
+                    <!-- ROUND 2 (16 Besar) -> ROUND 3 (Perempat)  -->
+                    <!-- ========================================== -->
+                    <!-- R2 M1 (57.5 & 87.5) -> yMid = 72.5 -->
+                    <line x1="335" y1="57.5" x2="475" y2="57.5" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="335" y1="87.5" x2="475" y2="87.5" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="475" y1="57.5" x2="475" y2="87.5" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="475" y1="72.5" x2="495" y2="72.5" stroke="#0f172a" stroke-width="1.2"/>
+
+                    <!-- R2 M2 (117.5 & 147.5) -> yMid = 132.5 -->
+                    <line x1="335" y1="117.5" x2="475" y2="117.5" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="335" y1="147.5" x2="475" y2="147.5" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="475" y1="117.5" x2="475" y2="147.5" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="475" y1="132.5" x2="495" y2="132.5" stroke="#0f172a" stroke-width="1.2"/>
+
+                    <!-- R2 M3 (177.5 & 207.5) -> yMid = 192.5 -->
+                    <line x1="335" y1="177.5" x2="475" y2="177.5" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="335" y1="207.5" x2="475" y2="207.5" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="475" y1="177.5" x2="475" y2="207.5" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="475" y1="192.5" x2="495" y2="192.5" stroke="#0f172a" stroke-width="1.2"/>
+
+                    <!-- R2 M4 (237.5 & 267.5) -> yMid = 252.5 -->
+                    <line x1="335" y1="237.5" x2="475" y2="237.5" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="335" y1="267.5" x2="475" y2="267.5" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="475" y1="237.5" x2="475" y2="267.5" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="475" y1="252.5" x2="495" y2="252.5" stroke="#0f172a" stroke-width="1.2"/>
+
+                    <!-- R2 M5 (297.5 & 327.5) -> yMid = 312.5 -->
+                    <line x1="335" y1="297.5" x2="475" y2="297.5" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="335" y1="327.5" x2="475" y2="327.5" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="475" y1="297.5" x2="475" y2="327.5" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="475" y1="312.5" x2="495" y2="312.5" stroke="#0f172a" stroke-width="1.2"/>
+
+                    <!-- R2 M6 (357.5 & 387.5) -> yMid = 372.5 -->
+                    <line x1="335" y1="357.5" x2="475" y2="357.5" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="335" y1="387.5" x2="475" y2="387.5" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="475" y1="357.5" x2="475" y2="387.5" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="475" y1="372.5" x2="495" y2="372.5" stroke="#0f172a" stroke-width="1.2"/>
+
+                    <!-- R2 M7 (417.5 & 447.5) -> yMid = 432.5 -->
+                    <line x1="335" y1="417.5" x2="475" y2="417.5" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="335" y1="447.5" x2="475" y2="447.5" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="475" y1="417.5" x2="475" y2="447.5" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="475" y1="432.5" x2="495" y2="432.5" stroke="#0f172a" stroke-width="1.2"/>
+
+                    <!-- R2 M8 (477.5 & 507.5) -> yMid = 492.5 -->
+                    <line x1="335" y1="477.5" x2="475" y2="477.5" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="335" y1="507.5" x2="475" y2="507.5" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="475" y1="477.5" x2="475" y2="507.5" stroke="#0f172a" stroke-width="1.2"/>
+                    <line x1="475" y1="492.5" x2="495" y2="492.5" stroke="#0f172a" stroke-width="1.2"/>
+
+
+                    <!-- ========================================== -->
+                    <!-- ROUND 3 (Perempat) -> ROUND 4 (Semifinal)  -->
+                    <!-- ========================================== -->
+                    <!-- QF 1 (72.5 & 132.5) -> yMid = 102.5 -->
+                    <line x1="495" y1="72.5" x2="635" y2="72.5" stroke="#0f172a" stroke-width="1.4"/>
+                    <line x1="495" y1="132.5" x2="635" y2="132.5" stroke="#0f172a" stroke-width="1.4"/>
+                    <line x1="635" y1="72.5" x2="635" y2="132.5" stroke="#0f172a" stroke-width="1.4"/>
+                    <line x1="635" y1="102.5" x2="655" y2="102.5" stroke="#0f172a" stroke-width="1.4"/>
+
+                    <!-- QF 2 (192.5 & 252.5) -> yMid = 222.5 -->
+                    <line x1="495" y1="192.5" x2="635" y2="192.5" stroke="#0f172a" stroke-width="1.4"/>
+                    <line x1="495" y1="252.5" x2="635" y2="252.5" stroke="#0f172a" stroke-width="1.4"/>
+                    <line x1="635" y1="192.5" x2="635" y2="252.5" stroke="#0f172a" stroke-width="1.4"/>
+                    <line x1="635" y1="222.5" x2="655" y2="222.5" stroke="#0f172a" stroke-width="1.4"/>
+
+                    <!-- QF 3 (312.5 & 372.5) -> yMid = 342.5 -->
+                    <line x1="495" y1="312.5" x2="635" y2="312.5" stroke="#0f172a" stroke-width="1.4"/>
+                    <line x1="495" y1="372.5" x2="635" y2="372.5" stroke="#0f172a" stroke-width="1.4"/>
+                    <line x1="635" y1="312.5" x2="635" y2="372.5" stroke="#0f172a" stroke-width="1.4"/>
+                    <line x1="635" y1="342.5" x2="655" y2="342.5" stroke="#0f172a" stroke-width="1.4"/>
+
+                    <!-- QF 4 (432.5 & 492.5) -> yMid = 462.5 -->
+                    <line x1="495" y1="432.5" x2="635" y2="432.5" stroke="#0f172a" stroke-width="1.4"/>
+                    <line x1="495" y1="492.5" x2="635" y2="492.5" stroke="#0f172a" stroke-width="1.4"/>
+                    <line x1="635" y1="432.5" x2="635" y2="492.5" stroke="#0f172a" stroke-width="1.4"/>
+                    <line x1="635" y1="462.5" x2="655" y2="462.5" stroke="#0f172a" stroke-width="1.4"/>
+
+
+                    <!-- ========================================== -->
+                    <!-- ROUND 4 (Semifinal) -> ROUND 5 (Final)     -->
+                    <!-- ========================================== -->
+                    <!-- SF 1 (102.5 & 222.5) -> yMid = 162.5 -->
+                    <line x1="655" y1="102.5" x2="780" y2="102.5" stroke="#0f172a" stroke-width="1.6"/>
+                    <line x1="655" y1="222.5" x2="780" y2="222.5" stroke="#0f172a" stroke-width="1.6"/>
+                    <line x1="780" y1="102.5" x2="780" y2="222.5" stroke="#0f172a" stroke-width="1.6"/>
+                    <line x1="780" y1="162.5" x2="800" y2="162.5" stroke="#0f172a" stroke-width="1.6"/>
+
+                    <!-- SF 2 (342.5 & 462.5) -> yMid = 402.5 -->
+                    <line x1="655" y1="342.5" x2="780" y2="342.5" stroke="#0f172a" stroke-width="1.6"/>
+                    <line x1="655" y1="462.5" x2="780" y2="462.5" stroke="#0f172a" stroke-width="1.6"/>
+                    <line x1="780" y1="342.5" x2="780" y2="462.5" stroke="#0f172a" stroke-width="1.6"/>
+                    <line x1="780" y1="402.5" x2="800" y2="402.5" stroke="#0f172a" stroke-width="1.6"/>
+
+
+                    <!-- ========================================== -->
+                    <!-- ROUND 5 (FINAL) -> PODIUM JUARA 1          -->
+                    <!-- ========================================== -->
+                    <!-- Final (162.5 & 402.5) -> yMid = 282.5 -->
+                    <line x1="800" y1="162.5" x2="895" y2="162.5" stroke="#0f172a" stroke-width="2"/>
+                    <line x1="800" y1="402.5" x2="895" y2="402.5" stroke="#0f172a" stroke-width="2"/>
+                    <line x1="895" y1="162.5" x2="895" y2="402.5" stroke="#0f172a" stroke-width="2"/>
+                    <line x1="895" y1="282.5" x2="920" y2="282.5" stroke="#d97706" stroke-width="2.5"/>
+
+                    <!-- Kotak Juara 1 -->
+                    <rect x="920" y="260" width="90" height="45" fill="#fef3c7" stroke="#d97706" stroke-width="2" rx="6"/>
+                    <text x="965" y="276" text-anchor="middle" font-size="9" font-weight="900" fill="#b45309">🏆 JUARA 1</text>
+                    <text x="965" y="291" text-anchor="middle" font-size="8" font-weight="800" fill="#0f172a">[Pemenang Final]</text>
+
+                </svg>
+            </div>
+        </div>
+
+        <!-- 3. TANDA TANGAN RESMI PANITIA & REFEREE -->
+        <div class="pt-2 border-t border-slate-300 text-[9px]">
+            <div class="grid grid-cols-3 text-center">
+                <div>
+                    <div class="text-slate-500">Mengetahui,</div>
+                    <div class="font-bold text-slate-900 uppercase">Ketua Panitia Pelaksana</div>
+                    <div class="h-10"></div>
+                    <div class="font-bold text-slate-900 border-b border-slate-400 inline-block px-6 pb-0.5">
+                        ( Drs. H. Ahmad Khoirudin, M.Pd )
+                    </div>
+                </div>
+
+                <div>
+                    <div class="text-slate-500">Diverifikasi Oleh,</div>
+                    <div class="font-bold text-slate-900 uppercase">Koordinator Lomba / PIC Bulu Tangkis</div>
+                    <div class="h-10"></div>
+                    <div class="font-bold text-slate-900 border-b border-slate-400 inline-block px-6 pb-0.5">
+                        ( Moch. Ridwan, S.Pd )
+                    </div>
+                </div>
+
+                <div>
+                    <div class="text-slate-500">Blitar, 19 September 2026</div>
+                    <div class="font-bold text-slate-900 uppercase">Wasit Utama / Referee PBSI</div>
+                    <div class="h-10"></div>
+                    <div class="font-bold text-slate-900 border-b border-slate-400 inline-block px-6 pb-0.5">
+                        ( Slamet Riyadi, S.Or )
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-1.5 flex items-center justify-between text-[7.5px] text-slate-400 font-mono">
+                <span>Dokumen Resmi Sistem TALENTA MTsN 1 Blitar • Tercetak Otomatis Standard BWF & PBSI</span>
+                <span>Halaman 1 / 1 (A4 Landscape)</span>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

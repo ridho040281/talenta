@@ -42,9 +42,15 @@
                 <div class="flex items-center gap-2">
                     <h1 class="text-base sm:text-lg font-black text-white tracking-tight">BAGAN PERTANDINGAN</h1>
                     @if($bracketData)
-                        <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-[10px] font-black uppercase font-mono">
-                            BAGAN {{ $bracketData['bracket_size'] }}
-                        </span>
+                        @if(!empty($bracketData['playoffs']['has_playoffs']))
+                            <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-black uppercase font-mono">
+                                BAGAN {{ $bracketData['bracket_size'] }} + {{ $bracketData['playoffs']['num_playoffs'] }} PLAY-OFF
+                            </span>
+                        @else
+                            <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-[10px] font-black uppercase font-mono">
+                                BAGAN {{ $bracketData['bracket_size'] }}
+                            </span>
+                        @endif
                     @endif
                 </div>
                 <p class="text-xs text-amber-400 font-bold">{{ $competition->name }} <span class="text-slate-500">•</span> <span class="text-slate-400 font-normal">{{ $appSettings['event_name'] ?? 'Festival Lomba' }}</span></p>
@@ -163,6 +169,115 @@
             <!-- Bracket Columns Horizontal Scroll Area -->
             <div x-show="viewMode === 'cards'" class="overflow-x-auto pb-10 scrollbar-thin">
                 <div class="inline-flex gap-8 min-w-full items-stretch px-2">
+
+                    <!-- Play-off Column (if active) -->
+                    @if(!empty($bracketData['playoffs']['has_playoffs']) && !empty($bracketData['playoffs']['matches']))
+                        <div class="flex flex-col min-w-[280px] sm:min-w-[320px] max-w-[340px]">
+                            <div class="mb-5 text-center">
+                                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/15 border border-amber-500/30 shadow-md">
+                                    <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                                    <span class="text-xs font-black text-amber-300 tracking-wide uppercase">Play-off Kualifikasi</span>
+                                    <span class="text-[10px] font-mono text-amber-400">({{ count($bracketData['playoffs']['matches']) }})</span>
+                                </div>
+                            </div>
+
+                            <div class="flex-1 flex flex-col justify-around gap-6 py-2">
+                                @foreach($bracketData['playoffs']['matches'] as $poMatch)
+                                    @php
+                                        $poT1 = $poMatch['team1'];
+                                        $poT2 = $poMatch['team2'];
+                                        $poExisting = $poMatch['existing_match'];
+                                        $isPoFinished = ($poMatch['status'] === 'finished');
+                                        $isPoOngoing = ($poMatch['status'] === 'ongoing');
+                                        $isPoPending = ($poMatch['status'] === 'pending_draw');
+                                    @endphp
+                                    <div class="bg-slate-900/90 rounded-2xl border transition-all duration-200 shadow-lg relative overflow-hidden
+                                        {{ $isPoOngoing ? 'border-amber-500/70 shadow-amber-500/20 ring-1 ring-amber-500/50' : ($isPoFinished ? 'border-emerald-500/40' : 'border-amber-500/30') }}">
+                                        <!-- Header Bar -->
+                                        <div class="px-3.5 py-2 bg-slate-950/70 border-b border-slate-800/80 flex items-center justify-between text-[11px]">
+                                            <div class="flex items-center gap-1.5 font-mono font-bold text-amber-400">
+                                                <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+                                                <span>{{ $poMatch['match_code'] }}</span>
+                                            </div>
+                                            <div>
+                                                @if($isPoOngoing)
+                                                    <span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold text-[10px] border border-amber-500/40 flex items-center gap-1">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span> Live Tanding
+                                                    </span>
+                                                @elseif($isPoFinished)
+                                                    <span class="px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 font-bold text-[10px] border border-emerald-500/30">
+                                                        Selesai
+                                                    </span>
+                                                @elseif($isPoPending)
+                                                    <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-400 font-bold text-[10px] border border-slate-700/60">
+                                                        Menunggu Undian
+                                                    </span>
+                                                @else
+                                                    <span class="px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 font-mono text-[10px] border border-amber-500/30">
+                                                        Pra-Babak 1
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+
+                                        <!-- Schedule Info Bar -->
+                                        @if($poExisting && $poExisting->court_number)
+                                            <div class="px-3.5 py-1.5 bg-slate-950/80 border-b border-slate-800/80 flex items-center justify-between text-[11px] font-mono">
+                                                <div class="flex items-center gap-1.5 flex-wrap">
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-bold text-[10px] border border-indigo-500/30">
+                                                        🏸 {{ $poExisting->court_number }}
+                                                    </span>
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[10px] border border-emerald-500/30">
+                                                        ⏰ {{ $poExisting->scheduled_time ?? '07:30' }}
+                                                    </span>
+                                                </div>
+                                                <span class="text-[9px] text-slate-500 font-bold uppercase">GOR</span>
+                                            </div>
+                                        @endif
+
+                                        <!-- Teams -->
+                                        <div class="p-3 space-y-2">
+                                            @php
+                                                $isT1Winner = ($poMatch['winner'] && ($poT1['id'] ?? null) && ($poMatch['winner']['id'] ?? null) === $poT1['id']);
+                                                $isT2Winner = ($poMatch['winner'] && ($poT2['id'] ?? null) && ($poMatch['winner']['id'] ?? null) === $poT2['id']);
+                                            @endphp
+                                            <!-- Team 1 -->
+                                            <div class="flex items-center justify-between gap-2 p-2 rounded-xl transition {{ $isT1Winner ? 'bg-emerald-500/15 border border-emerald-500/30' : 'bg-slate-950/40' }}">
+                                                <div class="min-w-0 flex-1">
+                                                    <p class="text-xs font-bold text-white truncate">{{ $poT1['name'] ?? '[Menunggu Undian]' }}</p>
+                                                    <p class="text-[10px] text-slate-400 truncate">{{ $poT1['institution'] ?? 'Peserta Undian' }}</p>
+                                                </div>
+                                                @if($isT1Winner)
+                                                    <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-black text-[9px] uppercase">Lolos</span>
+                                                @endif
+                                            </div>
+
+                                            <!-- Team 2 -->
+                                            <div class="flex items-center justify-between gap-2 p-2 rounded-xl transition {{ $isT2Winner ? 'bg-emerald-500/15 border border-emerald-500/30' : 'bg-slate-950/40' }}">
+                                                <div class="min-w-0 flex-1">
+                                                    <p class="text-xs font-bold text-white truncate">{{ $poT2['name'] ?? '[Menunggu Undian]' }}</p>
+                                                    <p class="text-[10px] text-slate-400 truncate">{{ $poT2['institution'] ?? 'Peserta Undian' }}</p>
+                                                </div>
+                                                @if($isT2Winner)
+                                                    <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-black text-[9px] uppercase">Lolos</span>
+                                                @endif
+                                            </div>
+                                        </div>
+
+                                        <!-- Qualification Target Footer -->
+                                        <div class="px-3.5 py-2 bg-amber-500/5 border-t border-amber-500/20 flex items-center justify-between text-[10px]">
+                                            <span class="text-amber-400 font-bold flex items-center gap-1">
+                                                <span>&rarr; Menuju Slot #{{ $poMatch['target_slot'] }} Babak 1</span>
+                                            </span>
+                                            @if($poExisting)
+                                                <a href="{{ route('live.scoreboard', $competition->slug) }}" target="_blank" class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">Live Skor</a>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
 
                     @foreach($bracketData['rounds'] as $round)
                         <div class="flex flex-col min-w-[280px] sm:min-w-[320px] max-w-[340px]">

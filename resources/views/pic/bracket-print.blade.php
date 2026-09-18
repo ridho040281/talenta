@@ -157,7 +157,11 @@
                     <span>Kategori: <strong>{{ $activePool['title'] ?? 'Semua' }}</strong></span>
                     @if($bracketData)
                         <span>•</span>
-                        <span>Format: <strong>Bagan {{ $bracketData['bracket_size'] }} ({{ $bracketData['total_participants'] }} Peserta, {{ $bracketData['total_byes'] }} BYE)</strong></span>
+                        @if(!empty($bracketData['playoffs']['has_playoffs']))
+                            <span>Format: <strong>Bagan {{ $bracketData['bracket_size'] }} + {{ $bracketData['playoffs']['num_playoffs'] }} Play-off ({{ $bracketData['total_participants'] }} Peserta)</strong></span>
+                        @else
+                            <span>Format: <strong>Bagan {{ $bracketData['bracket_size'] }} ({{ $bracketData['total_participants'] }} Peserta, {{ $bracketData['total_byes'] }} BYE)</strong></span>
+                        @endif
                     @endif
                 </div>
             </div>

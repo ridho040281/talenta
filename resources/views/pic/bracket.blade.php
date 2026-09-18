@@ -17,9 +17,15 @@
                     {{ $competition->category->name }}
                 </span>
                 @if($bracketData)
-                    <span class="px-2.5 py-0.5 text-[10px] font-mono font-bold rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase">
-                        SISTEM GUGUR BWF (BAGAN {{ $bracketData['bracket_size'] }})
-                    </span>
+                    @if(!empty($bracketData['playoffs']['has_playoffs']))
+                        <span class="px-2.5 py-0.5 text-[10px] font-mono font-bold rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase flex items-center gap-1">
+                            <span>BAGAN PADAT {{ $bracketData['bracket_size'] }} + {{ $bracketData['playoffs']['num_playoffs'] }} PLAY-OFF</span>
+                        </span>
+                    @else
+                        <span class="px-2.5 py-0.5 text-[10px] font-mono font-bold rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase">
+                            SISTEM GUGUR BWF (BAGAN {{ $bracketData['bracket_size'] }})
+                        </span>
+                    @endif
                 @endif
             </div>
             <h2 class="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
@@ -29,7 +35,13 @@
                 @if($bracketData)
                     <span class="text-indigo-400 font-bold">{{ $bracketData['total_participants'] }} Peserta Terdaftar</span>
                     <span>•</span>
-                    <span class="text-amber-400 font-bold">{{ $bracketData['total_byes'] }} Bebas Babak 1 (BYE)</span>
+                    @if(!empty($bracketData['playoffs']['has_playoffs']))
+                        <span class="text-amber-400 font-bold">{{ $bracketData['playoffs']['num_playoffs'] }} Partai Play-off</span>
+                        <span>•</span>
+                        <span class="text-emerald-400 font-bold">{{ $bracketData['bracket_size'] - $bracketData['playoffs']['num_playoffs'] }} Lolos Langsung</span>
+                    @else
+                        <span class="text-amber-400 font-bold">{{ $bracketData['total_byes'] }} Bebas Babak 1 (BYE)</span>
+                    @endif
                     <span>•</span>
                     <span class="text-cyan-400 font-bold">{{ $bracketData['total_rounds'] }} Babak Pertandingan</span>
                 @else
@@ -39,6 +51,20 @@
         </div>
 
         <div class="flex items-center flex-wrap gap-2.5">
+            <!-- Format Bagan & Play-off Selector -->
+            <button type="button" 
+                    @click="openFormatModal()" 
+                    class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-200 border border-indigo-500/40 font-bold text-xs shadow-sm transition cursor-pointer"
+                    title="Pilih format bagan: Bagan Otomatis BWF vs Bagan Padat + Play-off Kualifikasi">
+                <i data-lucide="sliders" class="w-4 h-4 text-indigo-400"></i>
+                <span>Format Bagan</span>
+                @if(!empty($bracketData['playoffs']['has_playoffs']))
+                    <span class="px-1.5 py-0.5 rounded bg-amber-500 text-slate-950 text-[9px] font-black tracking-wider">
+                        PLAY-OFF
+                    </span>
+                @endif
+            </button>
+
             <!-- Sync to Referee Match Schedule -->
             <button type="button" 
                     @click="openSyncModal()" 
@@ -230,6 +256,122 @@
         <!-- Scrollable Bracket Visual Cards Container -->
         <div x-show="viewMode === 'cards'" class="overflow-x-auto pb-8 pt-2 scrollbar-thin">
             <div class="inline-flex gap-8 min-w-full items-stretch px-2 py-4">
+
+                <!-- Play-off Column (if active) -->
+                @if(!empty($bracketData['playoffs']['has_playoffs']) && !empty($bracketData['playoffs']['matches']))
+                    <div class="flex flex-col min-w-[280px] sm:min-w-[320px] max-w-[340px]">
+                        <div class="mb-5 text-center">
+                            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 shadow-md">
+                                <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                                <span class="text-xs font-black text-amber-300 tracking-wide uppercase">Play-off Kualifikasi</span>
+                                <span class="text-[10px] font-mono text-amber-400">({{ count($bracketData['playoffs']['matches']) }} Partai)</span>
+                            </div>
+                        </div>
+
+                        <div class="flex-1 flex flex-col justify-around gap-6 py-2">
+                            @foreach($bracketData['playoffs']['matches'] as $poMatch)
+                                @php
+                                    $poT1 = $poMatch['team1'];
+                                    $poT2 = $poMatch['team2'];
+                                    $poExisting = $poMatch['existing_match'];
+                                    $isPoFinished = ($poMatch['status'] === 'finished');
+                                    $isPoOngoing = ($poMatch['status'] === 'ongoing');
+                                    $isPoPending = ($poMatch['status'] === 'pending_draw');
+                                @endphp
+                                <div class="bg-slate-900/90 rounded-2xl border transition-all duration-200 shadow-lg relative overflow-hidden group
+                                    {{ $isPoOngoing ? 'border-amber-500/60 ring-1 ring-amber-500/40' : ($isPoFinished ? 'border-emerald-500/40 shadow-emerald-500/5' : 'border-amber-500/30 hover:border-amber-500/50') }}">
+                                    <!-- Header Bar -->
+                                    <div class="px-3.5 py-2 bg-slate-950/80 border-b border-slate-800/80 flex items-center justify-between text-[11px]">
+                                        <div class="flex items-center gap-1.5 font-mono font-bold text-amber-400">
+                                            <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+                                            <span>{{ $poMatch['match_code'] }}</span>
+                                        </div>
+                                        <div>
+                                            @if($isPoOngoing)
+                                                <span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold text-[10px] border border-amber-500/40 flex items-center gap-1">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span> Live Tanding
+                                                </span>
+                                            @elseif($isPoFinished)
+                                                <span class="px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 font-bold text-[10px] border border-emerald-500/30">
+                                                    Selesai
+                                                </span>
+                                            @elseif($isPoPending)
+                                                <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-400 font-bold text-[10px] border border-slate-700/60">
+                                                    Menunggu Undian
+                                                </span>
+                                            @else
+                                                <span class="px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 font-mono text-[10px] border border-amber-500/30">
+                                                    Jadwal
+                                                </span>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    <!-- Schedule Info Bar -->
+                                    @if($poExisting && $poExisting->court_number)
+                                        <div class="px-3 py-1.5 bg-slate-950/80 border-b border-slate-800/80 flex items-center justify-between text-[11px] font-mono">
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-bold text-[10px] border border-indigo-500/30">
+                                                    🏸 {{ $poExisting->court_number }}
+                                                </span>
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[10px] border border-emerald-500/30">
+                                                    ⏰ {{ $poExisting->scheduled_time ?? '07:30' }}
+                                                </span>
+                                            </div>
+                                            <button type="button" 
+                                                    @click="openEditScheduleModal('{{ $poMatch['match_code'] }}', '{{ $poExisting->court_number }}', '{{ $poExisting->scheduled_time ?? '07:30' }}', '{{ $poExisting->match_order ?? 0 }}')"
+                                                    class="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-amber-300 transition cursor-pointer"
+                                                    title="Ubah Jadwal Play-off">
+                                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                            </button>
+                                        </div>
+                                    @endif
+
+                                    <!-- Teams -->
+                                    <div class="p-3 space-y-2">
+                                        @php
+                                            $isT1Winner = ($poMatch['winner'] && ($poT1['id'] ?? null) && ($poMatch['winner']['id'] ?? null) === $poT1['id']);
+                                            $isT2Winner = ($poMatch['winner'] && ($poT2['id'] ?? null) && ($poMatch['winner']['id'] ?? null) === $poT2['id']);
+                                        @endphp
+                                        <!-- Team 1 -->
+                                        <div class="flex items-center justify-between gap-2 p-2 rounded-xl transition {{ $isT1Winner ? 'bg-emerald-500/15 border border-emerald-500/30' : 'bg-slate-950/40' }}">
+                                            <div class="min-w-0 flex-1">
+                                                <p class="text-xs font-bold text-white truncate">{{ $poT1['name'] ?? '[Menunggu Undian]' }}</p>
+                                                <p class="text-[10px] text-slate-400 truncate">{{ $poT1['institution'] ?? 'Peserta Undian' }}</p>
+                                            </div>
+                                            @if($isT1Winner)
+                                                <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-black text-[9px] uppercase">Lolos</span>
+                                            @endif
+                                        </div>
+
+                                        <!-- Team 2 -->
+                                        <div class="flex items-center justify-between gap-2 p-2 rounded-xl transition {{ $isT2Winner ? 'bg-emerald-500/15 border border-emerald-500/30' : 'bg-slate-950/40' }}">
+                                            <div class="min-w-0 flex-1">
+                                                <p class="text-xs font-bold text-white truncate">{{ $poT2['name'] ?? '[Menunggu Undian]' }}</p>
+                                                <p class="text-[10px] text-slate-400 truncate">{{ $poT2['institution'] ?? 'Peserta Undian' }}</p>
+                                            </div>
+                                            @if($isT2Winner)
+                                                <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-black text-[9px] uppercase">Lolos</span>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    <!-- Qualification Target Footer -->
+                                    <div class="px-3.5 py-2 bg-amber-500/5 border-t border-amber-500/20 flex items-center justify-between text-[10px]">
+                                        <span class="text-amber-400 font-bold flex items-center gap-1">
+                                            <span>&rarr; Menuju Slot #{{ $poMatch['target_slot'] }} Babak 1</span>
+                                        </span>
+                                        @if($poExisting)
+                                            <div class="flex items-center gap-1">
+                                                <a href="{{ route('badminton.umpire', $poExisting->id) }}" target="_blank" class="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-bold">Wasit</a>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
 
                 @foreach($bracketData['rounds'] as $round)
                     <div class="flex flex-col min-w-[280px] sm:min-w-[320px] max-w-[340px]">
@@ -562,6 +704,102 @@
 
     @endif
 
+    <!-- Modal: Pengaturan Format Bagan & Play-off Kualifikasi -->
+    <div x-show="showFormatModal" 
+         x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div @click.away="closeFormatModal()" 
+             class="bg-slate-900 border border-slate-800 w-full max-w-xl rounded-3xl p-6 shadow-2xl space-y-5 text-white animate-in fade-in zoom-in-95 duration-200">
+            
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-500 to-amber-500 text-slate-950 flex items-center justify-center font-bold shadow-lg shadow-indigo-500/20">
+                        <i data-lucide="sliders" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-base text-white">Pengaturan Format Bagan</h3>
+                        <p class="text-xs text-slate-400">Pilih format bagan pertandingan untuk kategori {{ $activePool['title'] ?? '' }}</p>
+                    </div>
+                </div>
+                <button type="button" @click="closeFormatModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4 text-xs">
+                <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-slate-300 flex items-center justify-between">
+                    <span>Jumlah Peserta Terdaftar:</span>
+                    <span class="font-mono font-black text-amber-400 text-sm">{{ $bracketData ? $bracketData['total_participants'] : 0 }} Peserta</span>
+                </div>
+
+                <!-- Opsi Format -->
+                <div class="space-y-3">
+                    <!-- Opsi 1: Play-off Kualifikasi -->
+                    <label class="block p-4 rounded-2xl border cursor-pointer transition relative"
+                           :class="bracketMode === 'playoff' ? 'bg-indigo-950/40 border-indigo-500 ring-2 ring-indigo-500/40' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'">
+                        <div class="flex items-start gap-3">
+                            <input type="radio" name="format_mode" value="playoff" x-model="bracketMode" class="mt-1 text-indigo-600 focus:ring-indigo-500">
+                            <div class="flex-1 space-y-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-black text-white text-sm">Bagan Padat + Play-off Kualifikasi</span>
+                                    <span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-black uppercase">
+                                        Rekomendasi Efisiensi
+                                    </span>
+                                </div>
+                                <p class="text-slate-400 text-[11px] leading-relaxed">
+                                    Menggunakan bagan kelipatan di bawahnya (misal: 33 peserta &rarr; Bagan 32).
+                                    31 peserta langsung masuk Bagan Utama (Slot 1..31). 2 peserta bertanding di 1 partai Play-off (jam 07:30) memperebutkan Slot #32.
+                                </p>
+                                <div class="pt-2 flex items-center gap-3">
+                                    <span class="text-slate-400 font-bold">Target Ukuran Bagan Utama:</span>
+                                    <select x-model="targetBracketSize" 
+                                            class="bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1 text-white font-mono font-bold text-xs focus:ring-1 focus:ring-indigo-500">
+                                        <option value="8">Bagan 8</option>
+                                        <option value="16">Bagan 16</option>
+                                        <option value="32">Bagan 32 (Standar 33 Peserta)</option>
+                                        <option value="64">Bagan 64</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </label>
+
+                    <!-- Opsi 2: Standar BWF Baku Otomatis -->
+                    <label class="block p-4 rounded-2xl border cursor-pointer transition relative"
+                           :class="bracketMode === 'auto' ? 'bg-indigo-950/40 border-indigo-500 ring-2 ring-indigo-500/40' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'">
+                        <div class="flex items-start gap-3">
+                            <input type="radio" name="format_mode" value="auto" x-model="bracketMode" class="mt-1 text-indigo-600 focus:ring-indigo-500">
+                            <div class="flex-1 space-y-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-black text-white text-sm">Standar BWF Baku (Bagan Otomatis + BYE)</span>
+                                </div>
+                                <p class="text-slate-400 text-[11px] leading-relaxed">
+                                    Menggunakan kelipatan 2 di atasnya (misal: 33 peserta &rarr; Bagan 64).
+                                    Menghasilkan 31 slot [BYE] (Bebas Babak 1). Tidak ada babak play-off kualifikasi.
+                                </p>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-800">
+                <button type="button" 
+                        @click="closeFormatModal()"
+                        class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition cursor-pointer">
+                    Batal
+                </button>
+                <button type="button" 
+                        @click="saveBracketFormat()"
+                        :disabled="isSavingFormat"
+                        class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs shadow-lg shadow-indigo-600/20 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-1.5 cursor-pointer">
+                    <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                    <span x-text="isSavingFormat ? 'Menyimpan...' : 'Terapkan Format Bagan'"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Sinkronisasi Jadwal & Pembagian Lapangan Otomatis -->
     <div x-show="showSyncScheduleModal" 
          x-cloak
@@ -797,6 +1035,12 @@
             toastMessage: '',
             toastSuccess: true,
 
+            // Format & Play-off Modal State
+            showFormatModal: false,
+            bracketMode: '{{ $bracketData['playoffs']['mode'] ?? ($competition->bracket_settings[$activePoolKey]['mode'] ?? 'auto') }}',
+            targetBracketSize: {{ $bracketData['playoffs']['target_bracket_size'] ?? ($competition->bracket_settings[$activePoolKey]['target_bracket_size'] ?? 32) }},
+            isSavingFormat: false,
+
             // Schedule & Court Management State
             showSyncScheduleModal: false,
             showEditMatchModal: false,
@@ -814,6 +1058,53 @@
                 matchOrder: ''
             },
             isSavingSchedule: false,
+
+            openFormatModal() {
+                this.showFormatModal = true;
+                this.$nextTick(() => {
+                    if (window.lucide) window.lucide.createIcons();
+                });
+            },
+
+            closeFormatModal() {
+                this.showFormatModal = false;
+            },
+
+            async saveBracketFormat() {
+                if (this.isSavingFormat) return;
+                this.isSavingFormat = true;
+                try {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+                    const response = await fetch('{{ route("pic.bracket.save_format", $competition->id) }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            pool_key: this.activePoolKey,
+                            mode: this.bracketMode,
+                            target_bracket_size: parseInt(this.targetBracketSize)
+                        })
+                    });
+
+                    const res = await response.json();
+                    if (res.success) {
+                        this.toastSuccess = true;
+                        this.toastMessage = res.message;
+                        this.closeFormatModal();
+                        setTimeout(() => window.location.reload(), 600);
+                    } else {
+                        alert(res.message || 'Gagal menyimpan format bagan.');
+                    }
+                } catch (err) {
+                    console.error('Save format error:', err);
+                    alert('Terjadi kesalahan jaringan.');
+                } finally {
+                    this.isSavingFormat = false;
+                }
+            },
 
             openSyncModal() {
                 this.showSyncScheduleModal = true;

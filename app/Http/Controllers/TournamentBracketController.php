@@ -132,6 +132,52 @@ class TournamentBracketController extends Controller
     }
 
     /**
+     * Simpan Pengaturan Format Bagan (Auto BWF vs Play-off Kualifikasi)
+     */
+    public function saveBracketFormat(Request $request, $competition_id)
+    {
+        $competition = Competition::findOrFail($competition_id);
+        $this->ensureIsBadminton($competition);
+        $user = Auth::user();
+
+        if (! in_array($user->role, ['superadmin', 'panitia'])) {
+            $managedIds = PicController::getManagedCompetitionIds($user);
+            $isAuthorizedBadminton = $user->managesBadminton() && (
+                strtoupper($competition->code ?? '') === 'BLT' ||
+                str_contains(strtolower($competition->name ?? ''), 'bulu tangkis') ||
+                str_contains(strtolower($competition->name ?? ''), 'badminton')
+            );
+
+            if (! in_array($competition->id, $managedIds) && ! $isAuthorizedBadminton) {
+                return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
+            }
+        }
+
+        $request->validate([
+            'pool_key' => 'required|string',
+            'mode' => 'required|in:auto,playoff',
+            'target_bracket_size' => 'nullable|integer|in:4,8,16,32,64',
+        ]);
+
+        $settings = $competition->bracket_settings ?? [];
+        $poolKey = $request->input('pool_key');
+        $settings[$poolKey] = [
+            'mode' => $request->input('mode', 'auto'),
+            'target_bracket_size' => (int) $request->input('target_bracket_size', 32),
+            'updated_at' => now()->toIso8601String(),
+        ];
+
+        $competition->bracket_settings = $settings;
+        $competition->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Format bagan untuk kategori ini berhasil diperbarui!',
+            'settings' => $settings[$poolKey],
+        ]);
+    }
+
+    /**
      * Sinkronkan Pasangan Bagan ke Jadwal Pertandingan Wasit (badminton_matches)
      */
     public function generateMatches(Request $request, $competition_id)
@@ -195,6 +241,60 @@ class TournamentBracketController extends Controller
         $categoryCode = stripos($targetPool['title'], 'putri') !== false ? 'WS' : 'MS';
         if (stripos($targetPool['title'], 'ganda') !== false) {
             $categoryCode = stripos($targetPool['title'], 'putri') !== false ? 'WD' : 'MD';
+        }
+
+        // 1. Sync Play-off matches if active
+        if (! empty($bracketData['playoffs']['has_playoffs']) && ! empty($bracketData['playoffs']['matches'])) {
+            $poCourt = $courts[0] ?? 'Lapangan 1';
+            $poEarlyTime = Carbon::createFromFormat('H:i', $startTime)->subMinutes(30)->format('H:i');
+
+            foreach ($bracketData['playoffs']['matches'] as $poIdx => $poMatch) {
+                $poTeam1 = $poMatch['team1'];
+                $poTeam2 = $poMatch['team2'];
+
+                if (! $poTeam1 && ! $poTeam2) {
+                    continue;
+                }
+                if (! empty($poTeam1['is_pending_draw']) || ! empty($poTeam2['is_pending_draw'])) {
+                    continue;
+                }
+
+                $poExisting = BadmintonMatch::where('competition_id', $competition->id)
+                    ->where('match_code', $poMatch['match_code'])
+                    ->first();
+
+                $poStatus = 'upcoming';
+                $poWinnerTeam = null;
+                if ($poExisting && in_array($poExisting->match_status, ['ongoing', 'finished'])) {
+                    $poStatus = $poExisting->match_status;
+                    $poWinnerTeam = $poExisting->winner_team;
+                }
+
+                BadmintonMatch::updateOrCreate(
+                    [
+                        'competition_id' => $competition->id,
+                        'match_code' => $poMatch['match_code'],
+                    ],
+                    [
+                        'court_number' => $poExisting?->court_number ?: $poCourt,
+                        'scheduled_time' => $poExisting?->scheduled_time ?: $poEarlyTime,
+                        'match_order' => $poExisting?->match_order ?? 0,
+                        'round_name' => 'Play-off Kualifikasi',
+                        'category' => $categoryCode,
+                        'match_type' => stripos($targetPool['title'], 'ganda') !== false ? 'double' : 'single',
+                        'team1_registration_id' => $poTeam1['id'] ?? null,
+                        'team1_school' => $poTeam1['institution'] ?? 'TBD',
+                        'team1_player1' => $poTeam1['name'] ?? 'Peserta 1',
+                        'team2_registration_id' => $poTeam2['id'] ?? null,
+                        'team2_school' => $poTeam2['institution'] ?? 'TBD',
+                        'team2_player1' => $poTeam2['name'] ?? 'Peserta 2',
+                        'match_status' => $poStatus,
+                        'winner_team' => $poWinnerTeam,
+                    ]
+                );
+
+                $syncedCount++;
+            }
         }
 
         foreach ($bracketData['rounds'] as $round) {
@@ -358,23 +458,38 @@ class TournamentBracketController extends Controller
      */
     public function buildTournamentTree(array $poolParticipants, Competition $competition, string $poolKey = 'pool'): array
     {
+        $settings = $competition->bracket_settings[$poolKey] ?? null;
+        $bracketMode = $settings['mode'] ?? 'auto';
+        $targetBracketSize = (int) ($settings['target_bracket_size'] ?? 32);
+
         $total = count($poolParticipants);
-        if ($total <= 2) {
-            $bracketSize = 2;
-        } elseif ($total <= 4) {
-            $bracketSize = 4;
-        } elseif ($total <= 8) {
-            $bracketSize = 8;
-        } elseif ($total <= 16) {
-            $bracketSize = 16;
-        } elseif ($total <= 32) {
-            $bracketSize = 32;
+        $isPlayoff = false;
+        $surplus = 0;
+        $numPlayoffs = 0;
+
+        if ($bracketMode === 'playoff' && $targetBracketSize > 0 && $total > $targetBracketSize) {
+            $bracketSize = $targetBracketSize;
+            $isPlayoff = true;
+            $surplus = $total - $bracketSize;
+            $numPlayoffs = $surplus;
         } else {
-            $bracketSize = 64;
+            if ($total <= 2) {
+                $bracketSize = 2;
+            } elseif ($total <= 4) {
+                $bracketSize = 4;
+            } elseif ($total <= 8) {
+                $bracketSize = 8;
+            } elseif ($total <= 16) {
+                $bracketSize = 16;
+            } elseif ($total <= 32) {
+                $bracketSize = 32;
+            } else {
+                $bracketSize = 64;
+            }
         }
 
         $totalRounds = (int) log($bracketSize, 2);
-        $totalByes = $bracketSize - $total;
+        $totalByes = $isPlayoff ? 0 : max(0, $bracketSize - $total);
 
         // BWF Seed Slots (Standard Tournament Placements)
         $seedSlots = [
@@ -388,74 +503,191 @@ class TournamentBracketController extends Controller
             8 => (int) ($bracketSize / 4),
         ];
 
-        // Priority slots for BYEs (paired with seeds 1..8)
-        $byePrioritySlots = [
-            2,
-            $bracketSize - 1,
-            (int) ($bracketSize / 2) + 2,
-            (int) ($bracketSize / 2) - 1,
-            (int) ($bracketSize / 4) + 2,
-            (int) (3 * $bracketSize / 4) - 1,
-            (int) (3 * $bracketSize / 4) + 2,
-            (int) ($bracketSize / 4) - 1,
-        ];
+        $slots = array_fill(1, $bracketSize, null);
 
-        for ($i = 4; $i <= $bracketSize; $i += 2) {
-            if (! in_array($i, $byePrioritySlots, true) && ! in_array($i - 1, $byePrioritySlots, true)) {
-                $byePrioritySlots[] = $i;
+        // Priority slots for BYEs (paired with seeds 1..8) if not playoff
+        if (! $isPlayoff && $totalByes > 0) {
+            $byePrioritySlots = [
+                2,
+                $bracketSize - 1,
+                (int) ($bracketSize / 2) + 2,
+                (int) ($bracketSize / 2) - 1,
+                (int) ($bracketSize / 4) + 2,
+                (int) (3 * $bracketSize / 4) - 1,
+                (int) (3 * $bracketSize / 4) + 2,
+                (int) ($bracketSize / 4) - 1,
+            ];
+
+            for ($i = 4; $i <= $bracketSize; $i += 2) {
+                if (! in_array($i, $byePrioritySlots, true) && ! in_array($i - 1, $byePrioritySlots, true)) {
+                    $byePrioritySlots[] = $i;
+                }
+            }
+
+            $assignedByes = array_slice($byePrioritySlots, 0, $totalByes);
+
+            foreach ($assignedByes as $bs) {
+                $slots[$bs] = [
+                    'is_bye' => true,
+                    'is_pending_draw' => false,
+                    'name' => '[BYE]',
+                    'institution' => 'Bebas Babak 1',
+                    'id' => null,
+                    'draw_number' => null,
+                    'seed_number' => null,
+                    'slot_number' => $bs,
+                ];
             }
         }
 
-        $assignedByes = array_slice($byePrioritySlots, 0, $totalByes);
+        // Separate Seeded vs Unseeded participants
+        $seededParticipants = [];
+        $unseededParticipants = [];
 
-        $slots = array_fill(1, $bracketSize, null);
-        foreach ($assignedByes as $bs) {
-            $slots[$bs] = [
-                'is_bye' => true,
-                'is_pending_draw' => false,
-                'name' => '[BYE]',
-                'institution' => 'Bebas Babak 1',
-                'id' => null,
-                'draw_number' => null,
-                'seed_number' => null,
-                'slot_number' => $bs,
-            ];
-        }
-
-        // Place seeded participants first
-        $drawnUnseeded = [];
         foreach ($poolParticipants as $p) {
             $seedNum = $p['seed_number'] ?? null;
             if (! empty($seedNum) && isset($seedSlots[$seedNum])) {
-                $targetSlot = $seedSlots[$seedNum];
-                $p['slot_number'] = $targetSlot;
-                $p['is_pending_draw'] = false;
-                $slots[$targetSlot] = $p;
+                $seededParticipants[] = $p;
             } else {
-                // Only participants who have actually been drawn in the spin wheel
-                if (! empty($p['draw_number'])) {
-                    $drawnUnseeded[] = $p;
-                }
+                $unseededParticipants[] = $p;
             }
         }
 
-        // Sort drawn unseeded by draw_number ascending
-        usort($drawnUnseeded, fn ($a, $b) => ((int) ($a['draw_number'] ?? 999)) <=> ((int) ($b['draw_number'] ?? 999)));
-
-        // Fill remaining open slots applying BWF GCR 14 (Separation of Entries from same school/institution)
-        $bwfProtections = $this->assignSlotsWithBwfSeparation($slots, $drawnUnseeded, $bracketSize);
+        // Place seeded participants first into their official BWF slots
+        foreach ($seededParticipants as $p) {
+            $targetSlot = $seedSlots[$p['seed_number']];
+            $p['slot_number'] = $targetSlot;
+            $p['is_pending_draw'] = false;
+            $slots[$targetSlot] = $p;
+        }
 
         // Fetch existing BadmintonMatch records for this competition to overlay live scores & match statuses
         $existingMatches = collect();
         if (! empty($competition->id)) {
             try {
                 $existingMatches = BadmintonMatch::where('competition_id', $competition->id)
-                    ->where('match_code', 'like', "{$poolKey}-R%")
+                    ->where('match_code', 'like', "{$poolKey}-%")
                     ->get()
                     ->keyBy('match_code');
             } catch (\Throwable $e) {
                 $existingMatches = collect();
             }
+        }
+
+        $drawnUnseeded = [];
+        $undrawnUnseeded = [];
+        foreach ($unseededParticipants as $p) {
+            if (! empty($p['draw_number'])) {
+                $drawnUnseeded[] = $p;
+            } else {
+                $undrawnUnseeded[] = $p;
+            }
+        }
+        usort($drawnUnseeded, fn ($a, $b) => ((int) ($a['draw_number'] ?? 999)) <=> ((int) ($b['draw_number'] ?? 999)));
+
+        $playoffMatchesList = [];
+
+        if ($isPlayoff) {
+            $poNeeded = $numPlayoffs * 2;
+            $poTargetSlots = [
+                1 => $bracketSize,
+                2 => (int) ($bracketSize / 2),
+                3 => (int) (3 * $bracketSize / 4),
+                4 => (int) ($bracketSize / 4),
+            ];
+
+            // If drawn participants >= $poNeeded, the highest drawn numbers enter play-off
+            if (count($drawnUnseeded) >= $poNeeded) {
+                $directDrawn = array_slice($drawnUnseeded, 0, count($drawnUnseeded) - $poNeeded);
+                $poPlayers = array_slice($drawnUnseeded, -$poNeeded);
+            } else {
+                $allUnseededCombined = array_merge($drawnUnseeded, $undrawnUnseeded);
+                $directDrawn = array_slice($allUnseededCombined, 0, max(0, count($allUnseededCombined) - $poNeeded));
+                $poPlayers = array_slice($allUnseededCombined, -$poNeeded);
+            }
+
+            for ($po = 1; $po <= $numPlayoffs; $po++) {
+                $poMatchCode = "{$poolKey}-PO-M{$po}";
+                $targetSlot = $poTargetSlots[$po] ?? ($bracketSize - ($po - 1));
+
+                $p1 = $poPlayers[($po - 1) * 2] ?? null;
+                $p2 = $poPlayers[($po - 1) * 2 + 1] ?? null;
+
+                if (! $p1 || empty($p1['name'])) {
+                    $p1 = [
+                        'id' => null,
+                        'name' => "[Undian Play-off #{$po}-1]",
+                        'institution' => 'Menunggu Undian',
+                        'is_pending_draw' => true,
+                    ];
+                }
+                if (! $p2 || empty($p2['name'])) {
+                    $p2 = [
+                        'id' => null,
+                        'name' => "[Undian Play-off #{$po}-2]",
+                        'institution' => 'Menunggu Undian',
+                        'is_pending_draw' => true,
+                    ];
+                }
+
+                $poExisting = $existingMatches->get($poMatchCode);
+                $poWinner = null;
+                $poStatus = 'upcoming';
+
+                if ($poExisting && $poExisting->match_status === 'finished') {
+                    $poStatus = 'finished';
+                    $poWinner = ($poExisting->winner_team === 1) ? $p1 : (($poExisting->winner_team === 2) ? $p2 : null);
+                } elseif ($poExisting && $poExisting->match_status === 'ongoing') {
+                    $poStatus = 'ongoing';
+                } elseif (! empty($p1['is_pending_draw']) || ! empty($p2['is_pending_draw'])) {
+                    $poStatus = 'pending_draw';
+                }
+
+                $playoffMatchesList[] = [
+                    'match_code' => $poMatchCode,
+                    'playoff_index' => $po,
+                    'target_slot' => $targetSlot,
+                    'round_name' => 'Play-off Kualifikasi',
+                    'team1' => $p1,
+                    'team2' => $p2,
+                    'winner' => $poWinner,
+                    'status' => $poStatus,
+                    'existing_match' => $poExisting,
+                ];
+
+                // Populate Target Slot in Main Draw
+                if ($poWinner) {
+                    $slots[$targetSlot] = array_merge($poWinner, [
+                        'slot_number' => $targetSlot,
+                        'is_bye' => false,
+                        'is_pending_draw' => false,
+                        'is_playoff_winner' => true,
+                        'playoff_match_code' => $poMatchCode,
+                        'playoff_label' => "Pemenang Play-off #{$po}",
+                    ]);
+                } else {
+                    $poVersusText = (empty($p1['is_pending_draw']) && empty($p2['is_pending_draw']))
+                        ? ($p1['name'].' vs '.$p2['name'])
+                        : "Partai Play-off #{$po}";
+
+                    $slots[$targetSlot] = [
+                        'id' => null,
+                        'name' => "[Pemenang Play-off #{$po}]",
+                        'institution' => $poVersusText,
+                        'is_bye' => false,
+                        'is_pending_draw' => false,
+                        'is_playoff_slot' => true,
+                        'slot_number' => $targetSlot,
+                        'playoff_match_code' => $poMatchCode,
+                        'draw_number' => null,
+                        'seed_number' => null,
+                    ];
+                }
+            }
+
+            $bwfProtections = $this->assignSlotsWithBwfSeparation($slots, $directDrawn, $bracketSize);
+        } else {
+            $bwfProtections = $this->assignSlotsWithBwfSeparation($slots, $drawnUnseeded, $bracketSize);
         }
 
         $roundNames = [
@@ -593,6 +825,14 @@ class TournamentBracketController extends Controller
             'champion' => $champion,
             'bwf_protections' => $bwfProtections,
             'has_bwf_protections' => count($bwfProtections) > 0,
+            'playoffs' => [
+                'has_playoffs' => $isPlayoff,
+                'mode' => $bracketMode,
+                'target_bracket_size' => $bracketSize,
+                'surplus' => $surplus,
+                'num_playoffs' => $numPlayoffs,
+                'matches' => $playoffMatchesList,
+            ],
         ];
 
         $bracketData['classic_svg_light'] = $this->renderClassicBracketSvg($bracketData, ['isDark' => false]);
@@ -742,12 +982,16 @@ class TournamentBracketController extends Controller
         $bracketSize = $bracketData['bracket_size'] ?? 16;
         $totalRounds = $bracketData['total_rounds'] ?? (int) log($bracketSize, 2);
         $rounds = $bracketData['rounds'] ?? [];
+        $playoffs = $bracketData['playoffs'] ?? null;
+        $hasPlayoffs = ! empty($playoffs['has_playoffs']) && ! empty($playoffs['matches']);
 
         $isDark = $options['isDark'] ?? false;
         $slotHeight = $options['slotHeight'] ?? ($bracketSize > 16 ? 32 : ($bracketSize > 8 ? 42 : 54));
         $slotWidth = $options['slotWidth'] ?? 190;
         $branchWidth = $options['branchWidth'] ?? 110;
-        $leftMargin = $options['leftMargin'] ?? 45;
+
+        $poWidth = $hasPlayoffs ? 180 : 0;
+        $leftMargin = ($options['leftMargin'] ?? 45) + $poWidth;
         $topMargin = $options['topMargin'] ?? 52;
 
         $strokeColor = $isDark ? '#64748b' : '#0f172a';
@@ -768,6 +1012,13 @@ class TournamentBracketController extends Controller
 
         $svg = [];
         $svg[] = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 {$totalWidth} {$totalHeight}' width='100%' height='auto' style='max-width: {$totalWidth}px; font-family: system-ui, -apple-system, sans-serif;'>";
+
+        // 0. Play-off Column Header (if active)
+        if ($hasPlayoffs) {
+            $poHeaderX = $leftMargin - ($poWidth / 2);
+            $svg[] = "<text x='{$poHeaderX}' y='26' text-anchor='middle' font-size='12' font-weight='800' fill='{$accentColor}'>Play-off Kualifikasi</text>";
+            $svg[] = "<text x='{$poHeaderX}' y='40' text-anchor='middle' font-size='9.5' font-weight='600' fill='{$subTextColor}'>Memperebutkan Slot #{$bracketSize}</text>";
+        }
 
         // 1. Column Headers (Main ke -1, Main ke -2, dst.)
         $headerX = $leftMargin + ($slotWidth / 2);
@@ -804,6 +1055,9 @@ class TournamentBracketController extends Controller
             $slotData = $slots[$s] ?? ['name' => '', 'slot_number' => $s];
             $isBye = $slotData['is_bye'] ?? false;
             $isPending = $slotData['is_pending_draw'] ?? false;
+            $isPlayoffSlot = ! empty($slotData['is_playoff_slot']);
+            $isPlayoffWinner = ! empty($slotData['is_playoff_winner']);
+
             $yCenter = $topMargin + ($s - 0.5) * $slotHeight;
             $slotYPositions[$s] = $yCenter;
 
@@ -814,7 +1068,15 @@ class TournamentBracketController extends Controller
             $svg[] = "<text x='".($slotX - 10)."' y='".($yCenter + 4)."' text-anchor='end' font-size='11' font-weight='700' fill='{$subTextColor}'>{$s}</text>";
 
             // Rectangle Box
-            if ($isPending) {
+            if ($isPlayoffSlot) {
+                $currentBoxBg = $isDark ? '#2a1b08' : '#fffbeb';
+                $currentBorder = '#f59e0b';
+                $dashAttr = "stroke-dasharray='4 2'";
+            } elseif ($isPlayoffWinner) {
+                $currentBoxBg = $isDark ? '#064e3b' : '#ecfdf5';
+                $currentBorder = '#059669';
+                $dashAttr = '';
+            } elseif ($isPending) {
                 $currentBoxBg = $isDark ? '#090d16' : '#f8fafc';
                 $currentBorder = $isDark ? '#334155' : '#cbd5e1';
                 $dashAttr = "stroke-dasharray='3 3'";
@@ -830,25 +1092,91 @@ class TournamentBracketController extends Controller
             $svg[] = "<rect x='{$slotX}' y='{$boxY}' width='{$slotWidth}' height='{$boxH}' fill='{$currentBoxBg}' stroke='{$currentBorder}' stroke-width='1.5' rx='2' {$dashAttr}/>";
 
             // Player Text
-            if ($isPending) {
+            if ($isPlayoffSlot) {
+                $displayText = htmlspecialchars($slotData['name'] ?? '[Pemenang Play-off]', ENT_QUOTES);
+                $nameColor = '#d97706';
+                $fontStyle = "font-weight='700'";
+            } elseif ($isPending) {
                 $displayText = '[Menunggu Undian]';
                 $nameColor = $isDark ? '#475569' : '#94a3b8';
                 $fontStyle = "font-style='italic'";
             } else {
                 $nameText = $slotData['name'] ?? '';
                 $seedText = ! empty($slotData['seed_number']) ? "(S{$slotData['seed_number']}) " : '';
+                $poBadge = $isPlayoffWinner ? '[PO] ' : '';
                 $instText = (! empty($slotData['institution']) && ! $isBye) ? ' - '.$slotData['institution'] : '';
-                $fullText = $seedText.$nameText.$instText;
+                $fullText = $poBadge.$seedText.$nameText.$instText;
 
                 if (mb_strlen($fullText) > 25) {
                     $fullText = mb_substr($fullText, 0, 23).'..';
                 }
 
                 $displayText = htmlspecialchars($fullText, ENT_QUOTES);
-                $nameColor = $isBye ? '#94a3b8' : $textColor;
+                $nameColor = $isPlayoffWinner ? '#059669' : ($isBye ? '#94a3b8' : $textColor);
                 $fontStyle = $isBye ? "font-style='italic'" : '';
             }
             $svg[] = "<text x='".($slotX + 8)."' y='".($yCenter + 4)."' font-size='10' font-weight='600' fill='{$nameColor}' {$fontStyle}>{$displayText}</text>";
+        }
+
+        // 2.5 Draw Play-off Wing (Left Section)
+        if ($hasPlayoffs) {
+            foreach ($playoffs['matches'] as $po) {
+                $targetSlot = $po['target_slot'] ?? $bracketSize;
+                $targetY = $slotYPositions[$targetSlot] ?? ($topMargin + ($targetSlot - 0.5) * $slotHeight);
+
+                $poBoxW = 120;
+                $poBoxH = max(20, $slotHeight * 0.72);
+                $poX = $leftMargin - $poWidth + 8;
+                $poY1 = $targetY - ($slotHeight * 0.75);
+                $poY2 = $targetY + ($slotHeight * 0.75);
+                $poStemX = $leftMargin - 28;
+
+                $team1 = $po['team1'] ?? null;
+                $team2 = $po['team2'] ?? null;
+                $isPendingT1 = empty($team1['name']) || ! empty($team1['is_pending_draw']);
+                $isPendingT2 = empty($team2['name']) || ! empty($team2['is_pending_draw']);
+                $poWinnerTeam = $po['existing_match']?->winner_team;
+
+                $t1Name = $isPendingT1 ? '[Menunggu Undian]' : ($team1['name'] ?? '');
+                $t2Name = $isPendingT2 ? '[Menunggu Undian]' : ($team2['name'] ?? '');
+                if (mb_strlen($t1Name) > 16) {
+                    $t1Name = mb_substr($t1Name, 0, 14).'..';
+                }
+                if (mb_strlen($t2Name) > 16) {
+                    $t2Name = mb_substr($t2Name, 0, 14).'..';
+                }
+
+                $box1Y = $poY1 - ($poBoxH / 2);
+                $box2Y = $poY2 - ($poBoxH / 2);
+
+                $border1 = ($poWinnerTeam === 1) ? '#059669' : ($isDark ? '#475569' : '#cbd5e1');
+                $border2 = ($poWinnerTeam === 2) ? '#059669' : ($isDark ? '#475569' : '#cbd5e1');
+                $fill1 = ($poWinnerTeam === 1) ? ($isDark ? '#064e3b' : '#ecfdf5') : $boxBg;
+                $fill2 = ($poWinnerTeam === 2) ? ($isDark ? '#064e3b' : '#ecfdf5') : $boxBg;
+
+                // Box 1
+                $svg[] = "<rect x='{$poX}' y='{$box1Y}' width='{$poBoxW}' height='{$poBoxH}' fill='{$fill1}' stroke='{$border1}' stroke-width='1.4' rx='2'/>";
+                $svg[] = "<text x='".($poX + 6)."' y='".($poY1 + 4)."' font-size='9' font-weight='600' fill='{$textColor}'>".htmlspecialchars($t1Name, ENT_QUOTES).'</text>';
+
+                // Box 2
+                $svg[] = "<rect x='{$poX}' y='{$box2Y}' width='{$poBoxW}' height='{$poBoxH}' fill='{$fill2}' stroke='{$border2}' stroke-width='1.4' rx='2'/>";
+                $svg[] = "<text x='".($poX + 6)."' y='".($poY2 + 4)."' font-size='9' font-weight='600' fill='{$textColor}'>".htmlspecialchars($t2Name, ENT_QUOTES).'</text>';
+
+                // Connecting lines to Main Draw target slot
+                $lineX1 = $poX + $poBoxW;
+                $svg[] = "<line x1='{$lineX1}' y1='{$poY1}' x2='{$poStemX}' y2='{$poY1}' stroke='{$strokeColor}' stroke-width='{$strokeWidth}'/>";
+                $svg[] = "<line x1='{$lineX1}' y1='{$poY2}' x2='{$poStemX}' y2='{$poY2}' stroke='{$strokeColor}' stroke-width='{$strokeWidth}'/>";
+                $svg[] = "<line x1='{$poStemX}' y1='{$poY1}' x2='{$poStemX}' y2='{$poY2}' stroke='{$strokeColor}' stroke-width='{$strokeWidth}'/>";
+                $svg[] = "<line x1='{$poStemX}' y1='{$targetY}' x2='".($slotX - 18)."' y2='{$targetY}' stroke='{$strokeColor}' stroke-width='{$strokeWidth}' stroke-dasharray='3 2'/>";
+
+                // Arrowhead pointing into Slot box
+                $arrowX = $slotX - 18;
+                $svg[] = "<polygon points='{$arrowX},{$targetY} ".($arrowX - 6).','.($targetY - 4).' '.($arrowX - 6).','.($targetY + 4)."' fill='{$accentColor}'/>";
+
+                // Play-off schedule text above the line
+                $poSched = $po['existing_match']?->scheduled_time ?? '07:30';
+                $svg[] = "<text x='".($poStemX + 3)."' y='".($targetY - 4)."' font-size='7.5' font-mono font-weight='700' fill='{$accentColor}'>{$poSched}</text>";
+            }
         }
 
         // 3. Draw Branching Lines and Connectors
