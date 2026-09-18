@@ -572,13 +572,13 @@ class TournamentBracketController extends Controller
                 if (! empty($school) && count($existingSlots) > 0) {
                     $isSeparated = true;
                     $halfName = $bestSlot <= ($bracketSize / 2) ? 'Pool Atas' : 'Pool Bawah';
-                    $bwfNote = "Proteksi BWF GCR 14: Pemisahan kontingen {$p['institution']} ke {$halfName} (Slot #{$bestSlot})";
+                    $bwfNote = "Proteksi BWF GCR 14: Pemisahan satu delegasi {$p['institution']} ke {$halfName} (Slot #{$bestSlot})";
                     $bwfProtections[] = [
                         'participant_name' => $p['name'],
                         'institution' => $p['institution'],
                         'slot' => $bestSlot,
                         'teammate_slots' => $existingSlots,
-                        'message' => "Peserta dari {$p['institution']} ({$p['name']}) dialokasikan ke {$halfName} (Slot #{$bestSlot}) sesuai aturan BWF GCR 14 tentang pemisahan sesama kontingen.",
+                        'message' => "Peserta dari {$p['institution']} ({$p['name']}) dialokasikan ke {$halfName} (Slot #{$bestSlot}) sesuai aturan BWF GCR 14 tentang proteksi satu delegasi.",
                     ];
                 }
 

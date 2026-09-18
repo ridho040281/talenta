@@ -166,10 +166,10 @@
                     <span class="font-black text-indigo-300 uppercase tracking-wider text-[10px] bg-indigo-500/20 px-2.5 py-0.5 rounded-md border border-indigo-500/40 shadow-sm">
                         Proteksi Resmi BWF GCR 14 Aktif
                     </span>
-                    <span class="text-white font-bold">Pemisahan Sesama Kontingen / Sekolah</span>
+                    <span class="text-white font-bold">Proteksi Satu Delegasi Sekolah</span>
                 </div>
                 <p class="text-slate-300 text-[11px] leading-relaxed">
-                    Sistem mendeteksi sekolah yang memiliki lebih dari 1 peserta dan secara otomatis memisahkan mereka ke pool berlawanan (Pool Atas & Pool Bawah) untuk menjamin <strong>tidak terjadi bentrok satu sekolah di Babak 1</strong>.
+                    Sistem mendeteksi peserta dari satu delegasi sekolah yang sama dan secara otomatis memisahkan mereka ke pool berlawanan (Pool Atas & Pool Bawah) untuk menjamin <strong>tidak terjadi bentrok sesama rekan delegasi di Babak 1</strong>.
                 </p>
                 <div class="flex flex-wrap gap-2 pt-1">
                     @foreach($bracketData['bwf_protections'] as $prot)

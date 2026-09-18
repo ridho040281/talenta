@@ -138,7 +138,7 @@
                     </div>
                     <div>
                         <span class="font-bold text-white">Proteksi BWF GCR 14 Aktif:</span>
-                        <span class="text-slate-300">Peserta dari kontingen/sekolah yang sama dipisahkan pool untuk menjamin tidak bentrok di Babak 1.</span>
+                        <span class="text-slate-300">Peserta dari satu delegasi sekolah yang sama dipisahkan pool untuk menjamin tidak bentrok di Babak 1.</span>
                     </div>
                 </div>
                 <div class="flex flex-wrap gap-1.5">

@@ -233,7 +233,7 @@
                             <span class="text-base shrink-0">🛡️</span>
                             <div class="space-y-0.5 min-w-0">
                                 <span class="text-[10px] font-mono font-black uppercase tracking-wider text-indigo-300 block">
-                                    [BWF GCR 14] PEMISAHAN KONTINGEN AKTIF
+                                    [BWF GCR 14] PROTEKSI SATU DELEGASI
                                 </span>
                                 <p class="text-xs text-slate-200 leading-snug" x-text="bwfNotification"></p>
                             </div>
@@ -340,8 +340,8 @@
                                     <div class="flex items-center gap-1.5 mt-0.5">
                                         <span class="text-[10px] text-slate-400 truncate block font-mono" x-text="item.institution"></span>
                                         <template x-if="hasTeammatesInPool(item)">
-                                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0 font-mono" title="Sekolah ini memiliki lebih dari 1 peserta (Proteksi BWF Aktif)">
-                                                👥 Multi-Wakil
+                                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0 font-mono" title="Sekolah ini memiliki rekan satu delegasi di kategori ini (Proteksi BWF Aktif)">
+                                                🛡️ Satu Delegasi
                                             </span>
                                         </template>
                                     </div>
@@ -856,9 +856,9 @@
                             const alreadyDrawn = sameSchoolTeammates.filter(p => p.is_drawn || p.is_seeded);
                             if (alreadyDrawn.length > 0) {
                                 const names = alreadyDrawn.map(p => p.name).join(', ');
-                                this.bwfNotification = `Terdeteksi sesama wakil dari ${winnerParticipant.institution} (${names}) yang telah terundi/seeded sebelumnya. Sesuai aturan resmi BWF GCR 14 (Pemisahan Kontingen), peserta ini dialokasikan ke sisi bagan yang berseberangan agar tidak saling berhadapan di Babak 1.`;
+                                this.bwfNotification = `Terdeteksi rekan satu delegasi dari ${winnerParticipant.institution} (${names}) yang telah terundi/seeded sebelumnya. Sesuai aturan resmi BWF GCR 14 (Proteksi Satu Delegasi), peserta ini dialokasikan ke sisi bagan yang berseberangan agar tidak saling berhadapan di Babak 1.`;
                             } else {
-                                this.bwfNotification = `Peserta dari ${winnerParticipant.institution} memiliki rekan satu sekolah dalam kategori ini. Proteksi BWF GCR 14 aktif untuk memastikan mereka dipisahkan pool dan tidak bertemu di Babak 1.`;
+                                this.bwfNotification = `Peserta dari ${winnerParticipant.institution} memiliki rekan satu delegasi dalam kategori ini. Proteksi BWF GCR 14 aktif untuk memastikan mereka dipisahkan pool dan tidak bertemu di Babak 1.`;
                             }
                         } else {
                             this.bwfNotification = '';
