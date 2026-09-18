@@ -22,6 +22,18 @@
     selectedGender: 'all',
     selectedSector: 'all',
     selectedStatus: 'all',
+    sortBy: 'created_at',
+    sortDir: 'desc',
+    toggleSort(col) {
+        if (this.sortBy === col) {
+            this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            this.sortBy = col;
+            this.sortDir = (col === 'name' || col === 'school' || col === 'participant_number' || col === 'id' || col === 'draw_number') ? 'asc' : 'desc';
+        }
+        this.currentPage = 1;
+        this.fetchParticipants(true);
+    },
     totalItems: {{ $stats['total_registrations'] ?? 0 }},
     totalAll: {{ $stats['total_registrations'] ?? 0 }},
     totalPa: {{ $stats['total_pa'] ?? 0 }},
@@ -457,6 +469,8 @@
                 gender:         this.selectedGender,
                 sector:         this.selectedSector,
                 search:         this.searchQuery,
+                sort_by:        this.sortBy,
+                sort_dir:       this.sortDir,
             });
             fetch(this.apiUrl + '?' + params.toString(), {
                 headers: {
@@ -850,16 +864,105 @@
     <div id="participantsTableCard" class="ai-card rounded-3xl border border-white/[0.08] shadow-xl overflow-hidden scroll-mt-6">
         <div class="overflow-x-auto">
             <table class="w-full text-left text-xs sm:text-sm text-slate-300">
-                <thead class="text-[11px] font-bold uppercase tracking-wider bg-[#0C111D]/90 text-slate-400 border-b border-white/[0.08]">
+                <thead class="text-[11px] font-bold uppercase tracking-wider bg-[#0C111D]/90 text-slate-400 border-b border-white/[0.08] select-none">
                     <tr>
-                        <th class="py-3 px-3 sm:px-4 text-center w-12 text-slate-400">No.</th>
-                        <th class="py-3 px-3.5 sm:px-4">Kode & No. Reg</th>
-                        <th class="py-3 px-3.5 sm:px-4">Nama Peserta / Tim</th>
-                        <th class="py-3 px-3.5 sm:px-4">Cabang & Sektor / Kelas</th>
-                        <th class="py-3 px-3.5 sm:px-4">Asal Sekolah</th>
-                        <th class="py-3 px-3.5 sm:px-4 text-center">Berkas & Slip</th>
-                        <th class="py-3 px-3.5 sm:px-4 text-center">No. Undian</th>
-                        <th class="py-3 px-3.5 sm:px-4 text-center">Status</th>
+                        <!-- 1. No. -->
+                        <th @click="toggleSort('id')" class="py-3 px-3 sm:px-4 text-center w-14 cursor-pointer hover:text-white hover:bg-white/[0.03] transition group" title="Klik untuk mengurutkan No. Pendaftaran">
+                            <div class="inline-flex items-center justify-center gap-1">
+                                <span :class="sortBy === 'id' ? 'text-[#84D0FF] font-black' : ''">No.</span>
+                                <span class="inline-flex items-center text-slate-500">
+                                    <svg x-show="sortBy === 'id' && sortDir === 'asc'" class="w-3.5 h-3.5 text-[#84D0FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
+                                    <svg x-show="sortBy === 'id' && sortDir === 'desc'" class="w-3.5 h-3.5 text-[#84D0FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                                    <svg x-show="sortBy !== 'id'" class="w-3 h-3 text-slate-600 opacity-40 group-hover:opacity-100 group-hover:text-slate-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9"/></svg>
+                                </span>
+                            </div>
+                        </th>
+
+                        <!-- 2. Kode & No. Reg -->
+                        <th @click="toggleSort('participant_number')" class="py-3 px-3.5 sm:px-4 cursor-pointer hover:text-white hover:bg-white/[0.03] transition group" title="Klik untuk mengurutkan No. Peserta / Kode Reg">
+                            <div class="inline-flex items-center gap-1.5">
+                                <span :class="sortBy === 'participant_number' ? 'text-[#84D0FF] font-black' : ''">Kode & No. Reg</span>
+                                <span class="inline-flex items-center text-slate-500">
+                                    <svg x-show="sortBy === 'participant_number' && sortDir === 'asc'" class="w-3.5 h-3.5 text-[#84D0FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
+                                    <svg x-show="sortBy === 'participant_number' && sortDir === 'desc'" class="w-3.5 h-3.5 text-[#84D0FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                                    <svg x-show="sortBy !== 'participant_number'" class="w-3 h-3 text-slate-600 opacity-40 group-hover:opacity-100 group-hover:text-slate-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9"/></svg>
+                                </span>
+                            </div>
+                        </th>
+
+                        <!-- 3. Nama Peserta / Tim -->
+                        <th @click="toggleSort('name')" class="py-3 px-3.5 sm:px-4 cursor-pointer hover:text-white hover:bg-white/[0.03] transition group" title="Klik untuk mengurutkan Nama Peserta (A-Z / Z-A)">
+                            <div class="inline-flex items-center gap-1.5">
+                                <span :class="sortBy === 'name' ? 'text-[#84D0FF] font-black' : ''">Nama Peserta / Tim</span>
+                                <span class="inline-flex items-center text-slate-500">
+                                    <svg x-show="sortBy === 'name' && sortDir === 'asc'" class="w-3.5 h-3.5 text-[#84D0FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
+                                    <svg x-show="sortBy === 'name' && sortDir === 'desc'" class="w-3.5 h-3.5 text-[#84D0FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                                    <svg x-show="sortBy !== 'name'" class="w-3 h-3 text-slate-600 opacity-40 group-hover:opacity-100 group-hover:text-slate-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9"/></svg>
+                                </span>
+                            </div>
+                        </th>
+
+                        <!-- 4. Cabang & Sektor / Kelas -->
+                        <th @click="toggleSort('category')" class="py-3 px-3.5 sm:px-4 cursor-pointer hover:text-white hover:bg-white/[0.03] transition group" title="Klik untuk mengurutkan Cabang & Sektor Lomba">
+                            <div class="inline-flex items-center gap-1.5">
+                                <span :class="sortBy === 'category' ? 'text-[#84D0FF] font-black' : ''">Cabang & Sektor / Kelas</span>
+                                <span class="inline-flex items-center text-slate-500">
+                                    <svg x-show="sortBy === 'category' && sortDir === 'asc'" class="w-3.5 h-3.5 text-[#84D0FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
+                                    <svg x-show="sortBy === 'category' && sortDir === 'desc'" class="w-3.5 h-3.5 text-[#84D0FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                                    <svg x-show="sortBy !== 'category'" class="w-3 h-3 text-slate-600 opacity-40 group-hover:opacity-100 group-hover:text-slate-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9"/></svg>
+                                </span>
+                            </div>
+                        </th>
+
+                        <!-- 5. Asal Sekolah -->
+                        <th @click="toggleSort('school')" class="py-3 px-3.5 sm:px-4 cursor-pointer hover:text-white hover:bg-white/[0.03] transition group" title="Klik untuk mengurutkan Asal Sekolah (A-Z / Z-A)">
+                            <div class="inline-flex items-center gap-1.5">
+                                <span :class="sortBy === 'school' ? 'text-[#84D0FF] font-black' : ''">Asal Sekolah</span>
+                                <span class="inline-flex items-center text-slate-500">
+                                    <svg x-show="sortBy === 'school' && sortDir === 'asc'" class="w-3.5 h-3.5 text-[#84D0FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
+                                    <svg x-show="sortBy === 'school' && sortDir === 'desc'" class="w-3.5 h-3.5 text-[#84D0FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                                    <svg x-show="sortBy !== 'school'" class="w-3 h-3 text-slate-600 opacity-40 group-hover:opacity-100 group-hover:text-slate-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9"/></svg>
+                                </span>
+                            </div>
+                        </th>
+
+                        <!-- 6. Berkas & Slip -->
+                        <th @click="toggleSort('documents')" class="py-3 px-3.5 sm:px-4 text-center cursor-pointer hover:text-white hover:bg-white/[0.03] transition group" title="Klik untuk mengurutkan Kelengkapan Berkas">
+                            <div class="inline-flex items-center justify-center gap-1">
+                                <span :class="sortBy === 'documents' ? 'text-[#84D0FF] font-black' : ''">Berkas & Slip</span>
+                                <span class="inline-flex items-center text-slate-500">
+                                    <svg x-show="sortBy === 'documents' && sortDir === 'asc'" class="w-3.5 h-3.5 text-[#84D0FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
+                                    <svg x-show="sortBy === 'documents' && sortDir === 'desc'" class="w-3.5 h-3.5 text-[#84D0FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                                    <svg x-show="sortBy !== 'documents'" class="w-3 h-3 text-slate-600 opacity-40 group-hover:opacity-100 group-hover:text-slate-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9"/></svg>
+                                </span>
+                            </div>
+                        </th>
+
+                        <!-- 7. No. Undian -->
+                        <th @click="toggleSort('draw_number')" class="py-3 px-3.5 sm:px-4 text-center cursor-pointer hover:text-white hover:bg-white/[0.03] transition group" title="Klik untuk mengurutkan Nomor Undian Tampil">
+                            <div class="inline-flex items-center justify-center gap-1">
+                                <span :class="sortBy === 'draw_number' ? 'text-[#84D0FF] font-black' : ''">No. Undian</span>
+                                <span class="inline-flex items-center text-slate-500">
+                                    <svg x-show="sortBy === 'draw_number' && sortDir === 'asc'" class="w-3.5 h-3.5 text-[#84D0FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
+                                    <svg x-show="sortBy === 'draw_number' && sortDir === 'desc'" class="w-3.5 h-3.5 text-[#84D0FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                                    <svg x-show="sortBy !== 'draw_number'" class="w-3 h-3 text-slate-600 opacity-40 group-hover:opacity-100 group-hover:text-slate-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9"/></svg>
+                                </span>
+                            </div>
+                        </th>
+
+                        <!-- 8. Status -->
+                        <th @click="toggleSort('status')" class="py-3 px-3.5 sm:px-4 text-center cursor-pointer hover:text-white hover:bg-white/[0.03] transition group" title="Klik untuk mengurutkan Status Keabsahan">
+                            <div class="inline-flex items-center justify-center gap-1">
+                                <span :class="sortBy === 'status' ? 'text-[#84D0FF] font-black' : ''">Status</span>
+                                <span class="inline-flex items-center text-slate-500">
+                                    <svg x-show="sortBy === 'status' && sortDir === 'asc'" class="w-3.5 h-3.5 text-[#84D0FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
+                                    <svg x-show="sortBy === 'status' && sortDir === 'desc'" class="w-3.5 h-3.5 text-[#84D0FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                                    <svg x-show="sortBy !== 'status'" class="w-3 h-3 text-slate-600 opacity-40 group-hover:opacity-100 group-hover:text-slate-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9"/></svg>
+                                </span>
+                            </div>
+                        </th>
+
+                        <!-- 9. Aksi -->
                         <th class="py-3 px-3.5 sm:px-4 text-center">Aksi</th>
                     </tr>
                 </thead>

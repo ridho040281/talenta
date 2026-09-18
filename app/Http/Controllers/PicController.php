@@ -146,8 +146,7 @@ class PicController extends Controller
             'members:id,registration_id,full_name,gender,nisn,school_name,birth_place,birth_date',
             'invoice:id,invoice_number,status,payment_proof,final_amount',
         ])
-            ->whereIn('competition_id', $competitionIds)
-            ->latest();
+            ->whereIn('competition_id', $competitionIds);
 
         // Filter competition
         if ($request->filled('competition_id') && $request->competition_id !== 'all') {
@@ -616,6 +615,49 @@ class PicController extends Controller
                         });
                 });
             }
+        }
+
+        // Dynamic Sorting
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortDir = strtolower($request->get('sort_dir', 'desc')) === 'asc' ? 'asc' : 'desc';
+
+        switch ($sortBy) {
+            case 'id':
+            case 'no':
+                $query->orderBy('registrations.id', $sortDir);
+                break;
+            case 'participant_number':
+            case 'code':
+                $query->orderByRaw('CASE WHEN participant_number IS NULL OR participant_number = "" THEN 1 ELSE 0 END, participant_number '.$sortDir)
+                    ->orderBy('registrations.registration_code', $sortDir);
+                break;
+            case 'name':
+                $query->orderByRaw('COALESCE(team_name, (SELECT full_name FROM registration_members WHERE registration_members.registration_id = registrations.id ORDER BY id ASC LIMIT 1), "") '.$sortDir);
+                break;
+            case 'category':
+            case 'branch':
+                $query->orderBy('registrations.competition_id', $sortDir)
+                    ->orderBy('registrations.target_class', $sortDir)
+                    ->orderBy('registrations.match_type', $sortDir);
+                break;
+            case 'school':
+                $query->orderByRaw('COALESCE(institution_name, (SELECT school_name FROM registration_members WHERE registration_members.registration_id = registrations.id ORDER BY id ASC LIMIT 1), "") '.$sortDir);
+                break;
+            case 'draw_number':
+                $query->orderByRaw('CASE WHEN draw_number IS NULL THEN 1 ELSE 0 END, draw_number '.$sortDir);
+                break;
+            case 'documents':
+            case 'files':
+                $query->orderByRaw('CASE WHEN (document_file IS NOT NULL AND document_file != "") OR (payment_proof IS NOT NULL AND payment_proof != "") THEN 0 ELSE 1 END '.$sortDir)
+                    ->orderBy('registrations.id', 'desc');
+                break;
+            case 'status':
+                $query->orderBy('registrations.status', $sortDir);
+                break;
+            case 'created_at':
+            default:
+                $query->orderBy('registrations.created_at', $sortDir)->orderBy('registrations.id', $sortDir);
+                break;
         }
 
         $perPage = min((int) $request->get('per_page', 15), 100);
