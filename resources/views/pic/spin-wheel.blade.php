@@ -111,13 +111,13 @@
         </div>
     </div>
 
-    <!-- Category & Sector Navigation Bar (Smart & Practical) -->
+    <!-- Category & Sector Navigation Bar (Smart & Practical - Single Unified Selector) -->
     @if(count($pools) > 1)
-    <div class="bg-slate-900 rounded-3xl p-4 sm:p-5 border border-slate-800 shadow-xl space-y-3.5">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+    <div class="bg-slate-900 rounded-3xl p-4 sm:px-6 sm:py-4 border border-slate-800 shadow-xl">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <!-- Left: Smart Category Dropdown -->
-            <div class="flex items-center gap-3 flex-1">
-                <div class="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0 text-amber-400">
+            <div class="flex items-center gap-3.5 flex-1">
+                <div class="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0 text-amber-400 shadow-inner">
                     <i data-lucide="layers" class="w-5 h-5"></i>
                 </div>
                 <div class="flex-1 max-w-lg">
@@ -140,7 +140,7 @@
             </div>
 
             <!-- Right: Active Status & Reset Kategori -->
-            <div class="flex items-center justify-between md:justify-end gap-3 pt-2 md:pt-0 border-t md:border-t-0 border-slate-800">
+            <div class="flex items-center justify-between md:justify-end gap-4 pt-2 md:pt-0 border-t md:border-t-0 border-slate-800">
                 <div class="text-left md:text-right">
                     <span class="text-[10px] text-slate-400 font-mono block">Status Undian Kategori Ini:</span>
                     <span class="text-xs font-mono font-bold" 
@@ -150,29 +150,11 @@
                 <button type="button" 
                         @click="resetActivePool()" 
                         :disabled="activeDrawnParticipants.length === 0 || isSpinning"
-                        class="px-3 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold disabled:opacity-25 disabled:cursor-not-allowed transition cursor-pointer"
+                        class="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold disabled:opacity-25 disabled:cursor-not-allowed transition cursor-pointer"
                         title="Reset nomor undian khusus kategori ini">
                     Reset Kategori
                 </button>
             </div>
-        </div>
-
-        <!-- Sleek Quick Tabs (Horizontal swipe without thick scrollbar) -->
-        <div class="flex items-center gap-2 overflow-x-auto pt-1 pb-1" style="scrollbar-width: thin;">
-            <template x-for="p in pools" :key="'tab-' + p.key">
-                <button type="button" 
-                        @click="switchPool(p.key)"
-                        class="px-3.5 py-2 rounded-xl font-bold text-xs transition flex items-center gap-2 whitespace-nowrap cursor-pointer shrink-0 border"
-                        :class="activePoolKey === p.key 
-                            ? 'bg-amber-400 text-slate-950 border-amber-300 shadow-md shadow-amber-400/20 font-black scale-[1.01]' 
-                            : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'">
-                    <span x-text="p.short_title"></span>
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold transition"
-                          :class="activePoolKey === p.key ? 'bg-slate-950 text-amber-400' : (getPoolStats(p.key).undrawn === 0 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400')">
-                        <span x-text="getPoolStats(p.key).drawn + '/' + p.participants.length"></span>
-                    </span>
-                </button>
-            </template>
         </div>
     </div>
     @endif
