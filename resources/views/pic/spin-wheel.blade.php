@@ -133,7 +133,7 @@
                         <template x-for="p in pools" :key="p.key">
                             <option :value="p.key" 
                                     :selected="activePoolKey === p.key"
-                                    x-text="p.title + ' (' + getPoolStats(p.key).drawn + '/' + p.participants.length + ' Selesai)'"></option>
+                                    x-text="p.title + ' (' + p.participants.length + ' Peserta)'"></option>
                         </template>
                     </select>
                 </div>
@@ -142,10 +142,14 @@
             <!-- Right: Active Status & Reset Kategori -->
             <div class="flex items-center justify-between md:justify-end gap-4 pt-2 md:pt-0 border-t md:border-t-0 border-slate-800">
                 <div class="text-left md:text-right">
-                    <span class="text-[10px] text-slate-400 font-mono block">Status Undian Kategori Ini:</span>
+                    <span class="text-[10px] text-slate-400 font-mono block">Status Undian Kategori:</span>
                     <span class="text-xs font-mono font-bold" 
-                          :class="getPoolStats(activePoolKey).undrawn === 0 ? 'text-emerald-400' : 'text-amber-400'"
-                          x-text="getPoolStats(activePoolKey).drawn + ' Selesai • ' + getPoolStats(activePoolKey).undrawn + ' Tersisa'"></span>
+                          :class="getPoolStats(activePoolKey).undrawn === 0 ? 'text-emerald-400' : (getPoolStats(activePoolKey).drawn === 0 ? 'text-slate-300' : 'text-amber-400')"
+                          x-text="getPoolStats(activePoolKey).drawn === 0 
+                              ? ('Belum Diundi • ' + getPoolStats(activePoolKey).undrawn + ' Peserta') 
+                              : (getPoolStats(activePoolKey).undrawn === 0 
+                                  ? ('Selesai Diundi (' + getPoolStats(activePoolKey).drawn + ' Peserta)') 
+                                  : (getPoolStats(activePoolKey).drawn + ' Terundi • ' + getPoolStats(activePoolKey).undrawn + ' Tersisa'))"></span>
                 </div>
                 <button type="button" 
                         @click="resetActivePool()" 
