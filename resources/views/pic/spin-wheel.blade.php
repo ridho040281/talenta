@@ -6,19 +6,11 @@
 @section('content')
 <div class="space-y-6 font-sans" x-data="spinWheelApp()">
     
-    <!-- Top Action Bar (Cohesive Dark Card matching Hacker Draw) -->
-    <div class="bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-800 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-white">
+    <!-- Top Action Bar (Clean & Focused) -->
+    <div class="bg-slate-900 rounded-3xl p-4 sm:p-6 border border-slate-800 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-white">
         <div class="space-y-1">
-            <div class="flex items-center gap-2">
-                <span class="px-2.5 py-0.5 text-[10px] font-mono font-bold rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase">
-                    SYS_MODULE: SPIN_WHEEL
-                </span>
-                <span class="px-2.5 py-0.5 text-[10px] font-mono font-bold rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 uppercase">
-                    {{ $competition->category->name }}
-                </span>
-            </div>
             <h2 class="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-                <span>{{ $competition->name }}</span>
+                <span>🏸 {{ $competition->name }}</span>
             </h2>
             <p class="text-xs text-slate-400 font-mono">
                 <span class="text-amber-400 font-bold" x-text="allUndrawnParticipants.length"></span> Belum Diundi • 
@@ -27,87 +19,156 @@
         </div>
 
         <div class="flex items-center flex-wrap gap-2.5">
-            <!-- Theme Switcher Pill -->
-            <div class="inline-flex items-center p-1 bg-slate-950/80 rounded-2xl border border-slate-800 shadow-inner">
-                <button type="button" @click="setTheme('standard')" :class="theme === 'standard' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-white'" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
-                    <i data-lucide="disc" class="w-3.5 h-3.5"></i>
-                    <span>Standar</span>
-                </button>
-                <button type="button" @click="setTheme('badminton')" :class="theme === 'badminton' ? 'bg-emerald-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-white'" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
-                    <span>🏸 Bulu Tangkis</span>
-                </button>
-            </div>
-
-            <!-- Switch to Hacker Draw -->
-            <a href="{{ route('pic.hacker.draw', $competition->id) }}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 font-bold text-xs shadow-md transition">
-                <i data-lucide="terminal" class="w-4 h-4 text-emerald-400"></i>
-                <span>Mode Hacker</span>
-            </a>
-
             <!-- Menu Seeded Button -->
             <button type="button" 
                     @click="openSeededModal()" 
                     :disabled="isSpinning"
-                    class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500/20 to-amber-600/20 hover:from-amber-500/30 hover:to-amber-600/30 text-amber-300 border border-amber-500/50 font-bold text-xs shadow-md transition cursor-pointer"
+                    class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 font-bold text-xs shadow-sm transition cursor-pointer"
                     title="Menu Pengaturan Pemain Unggulan (Seeded)">
                 <i data-lucide="star" class="w-4 h-4 text-amber-400"></i>
-                <span>Menu Seeded</span>
+                <span>Atur Seeded</span>
             </button>
 
             @if(strtoupper($competition->code ?? '') === 'BLT' || str_contains(strtolower($competition->name ?? ''), 'bulu tangkis') || str_contains(strtolower($competition->name ?? ''), 'badminton'))
             <!-- Bagan Pertandingan -->
-            <a :href="'{{ route('pic.bracket', $competition->id) }}' + (activePoolKey ? '?pool=' + encodeURIComponent(activePoolKey) : '')" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-500/20 to-blue-600/20 hover:from-indigo-500/30 hover:to-blue-600/30 text-indigo-300 border border-indigo-500/50 font-bold text-xs shadow-md transition cursor-pointer" title="Lihat Bagan Pertandingan (Knockout Bracket)">
+            <a :href="'{{ route('pic.bracket', $competition->id) }}' + (activePoolKey ? '?pool=' + encodeURIComponent(activePoolKey) : '')" 
+               class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/40 font-bold text-xs shadow-sm transition cursor-pointer" 
+               title="Lihat Bagan Pertandingan (Knockout Bracket)">
                 <i data-lucide="git-branch" class="w-4 h-4 text-indigo-400"></i>
-                <span>Bagan Pertandingan</span>
+                <span>Bagan</span>
             </a>
             @endif
 
             <!-- Public Viewer TV -->
-            <a href="{{ url('tv/' . $competition->slug) }}" target="_blank" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 transition" title="Link Cepat TV: /tv/{{ $competition->slug }}">
+            <a href="{{ url('tv/' . $competition->slug) }}" target="_blank" 
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 transition cursor-pointer" 
+               title="Buka Layar Tampilan TV: /tv/{{ $competition->slug }}">
                 <i data-lucide="tv" class="w-4 h-4"></i>
-                <span>Layar TV (/tv/{{ $competition->slug }})</span>
+                <span>Layar TV</span>
             </a>
-            
-            <!-- Reset All -->
-            <form action="{{ route('pic.spin.wheel.reset', $competition->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin me-reset SEMUA nomor undian pada cabang {{ addslashes($competition->name) }}?')">
-                @csrf
-                <button type="submit" class="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold text-xs transition cursor-pointer">
-                    Reset Semua Undian
-                </button>
-            </form>
 
+            <!-- Dropdown Menu Lainnya (⋮) -->
+            <div class="relative" x-data="{ open: false }" @click.outside="open = false">
+                <button type="button" 
+                        @click="open = !open; $nextTick(() => { if (window.lucide) window.lucide.createIcons(); })" 
+                        class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold text-xs transition flex items-center gap-1 cursor-pointer"
+                        title="Menu Tambahan & Pengaturan">
+                    <i data-lucide="more-vertical" class="w-4 h-4"></i>
+                    <span>Lainnya</span>
+                </button>
+
+                <div x-show="open" 
+                     x-cloak 
+                     x-transition:enter="transition ease-out duration-100"
+                     x-transition:enter-start="opacity-0 scale-95"
+                     x-transition:enter-end="opacity-100 scale-100"
+                     x-transition:leave="transition ease-in duration-75"
+                     x-transition:leave-start="opacity-100 scale-100"
+                     x-transition:leave-end="opacity-0 scale-95"
+                     class="absolute right-0 mt-2 w-56 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl py-2 z-50 text-xs">
+                    
+                    <div class="px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold border-b border-slate-800">
+                        Opsi & Tampilan
+                    </div>
+
+                    <!-- Mode Hacker Link -->
+                    <a href="{{ route('pic.hacker.draw', $competition->id) }}" 
+                       class="flex items-center gap-2.5 px-3.5 py-2 text-emerald-400 hover:bg-slate-800 transition font-bold">
+                        <i data-lucide="terminal" class="w-4 h-4"></i>
+                        <span>Mode Hacker</span>
+                    </a>
+
+                    <!-- Switch Theme -->
+                    <div class="px-3.5 py-2 flex items-center justify-between border-t border-slate-800/80">
+                        <span class="text-slate-300 font-bold">Tema Roda:</span>
+                        <div class="inline-flex rounded-lg bg-slate-950 p-0.5 border border-slate-800 text-[10px]">
+                            <button type="button" @click="setTheme('badminton')" :class="theme === 'badminton' ? 'bg-emerald-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white'" class="px-2 py-0.5 rounded transition cursor-pointer">
+                                🏸 Arena
+                            </button>
+                            <button type="button" @click="setTheme('standard')" :class="theme === 'standard' ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white'" class="px-2 py-0.5 rounded transition cursor-pointer">
+                                Standar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="my-1 border-t border-slate-800"></div>
+
+                    <!-- Reset All Undian -->
+                    <form action="{{ route('pic.spin.wheel.reset', $competition->id) }}" method="POST" onsubmit="return confirm('PERINGATAN: Apakah Anda yakin ingin me-reset SEMUA nomor undian untuk semua kategori di cabang {{ addslashes($competition->name) }}?')">
+                        @csrf
+                        <button type="submit" class="w-full text-left flex items-center gap-2 px-3.5 py-2 text-rose-400 hover:bg-rose-500/10 transition font-bold cursor-pointer">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                            <span>Reset Semua Undian</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Back Button -->
             <a href="{{ route('pic.undian') }}" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition">
                 Kembali
             </a>
         </div>
     </div>
 
-    <!-- Category & Sector Navigation Tabs (Bulu Tangkis & Tenis Meja Pools) -->
+    <!-- Category & Sector Navigation Bar (Smart & Practical) -->
     @if(count($pools) > 1)
-    <div class="bg-slate-900 rounded-3xl p-4 sm:p-5 border border-slate-800 shadow-xl space-y-3">
-        <div class="flex items-center justify-between gap-3 px-1">
-            <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
-                <span class="text-xs font-mono font-black uppercase tracking-wider text-amber-400">Pilih Kategori Kelas & Sektor (PA / PI):</span>
+    <div class="bg-slate-900 rounded-3xl p-4 sm:p-5 border border-slate-800 shadow-xl space-y-3.5">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <!-- Left: Smart Category Dropdown -->
+            <div class="flex items-center gap-3 flex-1">
+                <div class="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0 text-amber-400">
+                    <i data-lucide="layers" class="w-5 h-5"></i>
+                </div>
+                <div class="flex-1 max-w-lg">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400">Pilih Kategori / Sektor:</span>
+                        <span class="text-[10px] font-mono text-slate-400">
+                            (<span class="text-white font-bold" x-text="pools.length"></span> Kategori)
+                        </span>
+                    </div>
+                    <select :value="activePoolKey" 
+                            @change="switchPool($event.target.value)" 
+                            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border-2 border-slate-700 hover:border-slate-600 focus:border-amber-400 text-white font-bold text-xs sm:text-sm outline-none transition cursor-pointer shadow-inner">
+                        <template x-for="p in pools" :key="p.key">
+                            <option :value="p.key" 
+                                    :selected="activePoolKey === p.key"
+                                    x-text="p.title + ' (' + getPoolStats(p.key).drawn + '/' + p.participants.length + ' Selesai)'"></option>
+                        </template>
+                    </select>
+                </div>
             </div>
-            <span class="text-[11px] font-mono text-slate-400">
-                <span class="text-white font-bold" x-text="pools.length"></span> Kategori / Kelompok Terdaftar
-            </span>
+
+            <!-- Right: Active Status & Reset Kategori -->
+            <div class="flex items-center justify-between md:justify-end gap-3 pt-2 md:pt-0 border-t md:border-t-0 border-slate-800">
+                <div class="text-left md:text-right">
+                    <span class="text-[10px] text-slate-400 font-mono block">Status Undian Kategori Ini:</span>
+                    <span class="text-xs font-mono font-bold" 
+                          :class="getPoolStats(activePoolKey).undrawn === 0 ? 'text-emerald-400' : 'text-amber-400'"
+                          x-text="getPoolStats(activePoolKey).drawn + ' Selesai • ' + getPoolStats(activePoolKey).undrawn + ' Tersisa'"></span>
+                </div>
+                <button type="button" 
+                        @click="resetActivePool()" 
+                        :disabled="activeDrawnParticipants.length === 0 || isSpinning"
+                        class="px-3 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold disabled:opacity-25 disabled:cursor-not-allowed transition cursor-pointer"
+                        title="Reset nomor undian khusus kategori ini">
+                    Reset Kategori
+                </button>
+            </div>
         </div>
-        
-        <div class="flex items-center gap-2.5 overflow-x-auto pb-1.5 scrollbar-thin scrollbar-thumb-slate-700">
-            <template x-for="p in pools" :key="p.key">
+
+        <!-- Sleek Quick Tabs (Horizontal swipe without thick scrollbar) -->
+        <div class="flex items-center gap-2 overflow-x-auto pt-1 pb-1" style="scrollbar-width: thin;">
+            <template x-for="p in pools" :key="'tab-' + p.key">
                 <button type="button" 
                         @click="switchPool(p.key)"
-                        class="px-4 py-2.5 rounded-2xl font-bold text-xs transition-all duration-200 flex items-center gap-2.5 whitespace-nowrap cursor-pointer shrink-0 border"
+                        class="px-3.5 py-2 rounded-xl font-bold text-xs transition flex items-center gap-2 whitespace-nowrap cursor-pointer shrink-0 border"
                         :class="activePoolKey === p.key 
-                            ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 border-amber-300 shadow-lg shadow-amber-500/25 scale-[1.02]' 
+                            ? 'bg-amber-400 text-slate-950 border-amber-300 shadow-md shadow-amber-400/20 font-black scale-[1.01]' 
                             : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'">
                     <span x-text="p.short_title"></span>
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-black transition"
-                          :class="activePoolKey === p.key 
-                              ? 'bg-slate-950 text-amber-400' 
-                              : (getPoolStats(p.key).undrawn === 0 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400')">
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold transition"
+                          :class="activePoolKey === p.key ? 'bg-slate-950 text-amber-400' : (getPoolStats(p.key).undrawn === 0 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400')">
                         <span x-text="getPoolStats(p.key).drawn + '/' + p.participants.length"></span>
                     </span>
                 </button>
@@ -196,31 +257,14 @@
                 </svg>
             </div>
 
-            <!-- Active Pool Status Banner -->
-            <div class="w-full max-w-md mb-3 bg-slate-900/90 rounded-2xl p-3 border border-amber-500/30 flex items-center justify-between gap-2.5 text-left">
-                <div class="overflow-hidden">
-                    <div class="flex items-center gap-2">
-                        <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400">Kategori Aktif:</span>
-                        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold" x-text="activeDrawnParticipants.length + '/' + activeParticipants.length + ' Selesai'"></span>
-                    </div>
-                    <h4 class="text-sm font-black text-white truncate mt-0.5" x-text="activePool?.title || '{{ $competition->name }}'"></h4>
+            <!-- Active Pool Title Banner (Clean & Focused) -->
+            <div class="w-full max-w-md mb-2 bg-slate-900/80 rounded-2xl py-2 px-4 border border-slate-800 flex items-center justify-between gap-3 text-left shadow-lg">
+                <div class="flex items-center gap-2.5 overflow-hidden">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+                    <h4 class="text-xs sm:text-sm font-black text-white truncate" x-text="activePool?.title || '{{ $competition->name }}'"></h4>
                 </div>
-                <div class="shrink-0 flex items-center gap-1.5">
-                    <button type="button" 
-                            @click="openSeededModal()" 
-                            :disabled="isSpinning"
-                            class="px-2.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
-                            title="Atur Pemain Unggulan (Seeded) untuk kategori ini">
-                        <span>⭐ Atur Seeded</span>
-                    </button>
-                    <button type="button" 
-                            @click="resetActivePool()" 
-                            :disabled="activeDrawnParticipants.length === 0 || isSpinning"
-                            class="px-2.5 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[10px] font-bold disabled:opacity-25 disabled:cursor-not-allowed transition cursor-pointer"
-                            title="Reset hanya nomor undian kategori ini">
-                        Reset
-                    </button>
-                </div>
+                <span class="text-[11px] font-mono font-bold text-amber-400 shrink-0 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20" 
+                      x-text="activeUndrawnParticipants.length + ' Belum Diundi'"></span>
             </div>
 
             <div class="relative z-10 w-full flex flex-col items-center">
