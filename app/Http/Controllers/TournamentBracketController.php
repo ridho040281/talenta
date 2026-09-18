@@ -6,6 +6,7 @@ use App\Models\AppSetting;
 use App\Models\BadmintonMatch;
 use App\Models\Competition;
 use App\Traits\CompetitionPoolTrait;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -165,6 +166,31 @@ class TournamentBracketController extends Controller
             return response()->json(['success' => false, 'message' => 'Peserta belum cukup untuk membuat jadwal.'], 422);
         }
 
+        // Auto-Schedule configuration parameters
+        $rawCourts = $request->input('courts', ['Lapangan 1', 'Lapangan 2']);
+        if (is_string($rawCourts)) {
+            $courts = array_values(array_filter(array_map('trim', explode(',', $rawCourts))));
+        } elseif (is_array($rawCourts)) {
+            $courts = array_values(array_filter(array_map('trim', $rawCourts)));
+        } else {
+            $courts = [];
+        }
+        if (empty($courts)) {
+            $courts = ['Lapangan 1', 'Lapangan 2'];
+        }
+
+        $startTime = $request->input('start_time', '08:00');
+        if (! preg_match('/^\d{1,2}:\d{2}$/', $startTime)) {
+            $startTime = '08:00';
+        }
+        $matchDuration = max(10, (int) $request->input('match_duration', 35));
+
+        $courtMatchCounts = [];
+        foreach ($courts as $c) {
+            $courtMatchCounts[$c] = 0;
+        }
+        $courtIndex = 0;
+
         $syncedCount = 0;
         $categoryCode = stripos($targetPool['title'], 'putri') !== false ? 'WS' : 'MS';
         if (stripos($targetPool['title'], 'ganda') !== false) {
@@ -189,6 +215,7 @@ class TournamentBracketController extends Controller
 
                 $isBye1 = ! empty($match['is_bye1']);
                 $isBye2 = ! empty($match['is_bye2']);
+                $isContested = (! $isBye1 && ! $isBye2);
 
                 // If one team is BYE, mark as finished with winner
                 $status = 'upcoming';
@@ -202,13 +229,41 @@ class TournamentBracketController extends Controller
                     $winnerTeam = 2;
                 }
 
+                $assignedCourt = 'Lapangan 1';
+                $assignedTime = null;
+                $assignedOrder = null;
+
+                if ($isContested) {
+                    $assignedCourt = $courts[$courtIndex % count($courts)];
+                    $courtMatchCounts[$assignedCourt]++;
+                    $assignedOrder = $courtMatchCounts[$assignedCourt];
+
+                    $minutesToAdd = ($assignedOrder - 1) * $matchDuration;
+                    $assignedTime = Carbon::createFromFormat('H:i', $startTime)->addMinutes($minutesToAdd)->format('H:i');
+
+                    $courtIndex++;
+                } else {
+                    $assignedCourt = 'BYE';
+                }
+
+                $existingMatchRecord = BadmintonMatch::where('competition_id', $competition->id)
+                    ->where('match_code', $match['match_code'])
+                    ->first();
+
+                if ($existingMatchRecord && in_array($existingMatchRecord->match_status, ['ongoing', 'finished'])) {
+                    $status = $existingMatchRecord->match_status;
+                    $winnerTeam = $existingMatchRecord->winner_team;
+                }
+
                 BadmintonMatch::updateOrCreate(
                     [
                         'competition_id' => $competition->id,
                         'match_code' => $match['match_code'],
                     ],
                     [
-                        'court_number' => 'Lapangan 1',
+                        'court_number' => $assignedCourt,
+                        'scheduled_time' => $assignedTime,
+                        'match_order' => $assignedOrder,
                         'round_name' => $roundName,
                         'category' => $categoryCode,
                         'match_type' => stripos($targetPool['title'], 'ganda') !== false ? 'double' : 'single',
@@ -227,9 +282,74 @@ class TournamentBracketController extends Controller
             }
         }
 
+        $courtListStr = implode(', ', $courts);
+
         return response()->json([
             'success' => true,
-            'message' => "Berhasil menyinkronkan {$syncedCount} pertandingan ke modul wasit & jadwal!",
+            'message' => "Berhasil menyinkronkan {$syncedCount} pertandingan ke modul wasit & membagi jadwal otomatis ({$courtListStr}, mulai {$startTime})!",
+        ]);
+    }
+
+    /**
+     * Update cepat jadwal lapangan, waktu dan nomor partai per pertandingan (AJAX)
+     */
+    public function updateMatchSchedule(Request $request, $competition_id)
+    {
+        $competition = Competition::findOrFail($competition_id);
+        $this->ensureIsBadminton($competition);
+        $user = Auth::user();
+
+        if (! in_array($user->role, ['superadmin', 'panitia'])) {
+            $managedIds = PicController::getManagedCompetitionIds($user);
+            $isAuthorizedBadminton = $user->managesBadminton() && (
+                strtoupper($competition->code ?? '') === 'BLT' ||
+                str_contains(strtolower($competition->name ?? ''), 'bulu tangkis') ||
+                str_contains(strtolower($competition->name ?? ''), 'badminton')
+            );
+
+            if (! in_array($competition->id, $managedIds) && ! $isAuthorizedBadminton) {
+                return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
+            }
+        }
+
+        $request->validate([
+            'match_code' => 'required|string',
+            'court_number' => 'nullable|string|max:50',
+            'scheduled_time' => 'nullable|string|max:10',
+            'match_order' => 'nullable|integer|min:1|max:999',
+        ]);
+
+        $match = BadmintonMatch::firstOrNew([
+            'competition_id' => $competition->id,
+            'match_code' => $request->input('match_code'),
+        ]);
+
+        $match->court_number = $request->input('court_number') ?: ($match->court_number ?: 'Lapangan 1');
+        $match->scheduled_time = $request->input('scheduled_time');
+        $match->match_order = $request->input('match_order');
+
+        if (! $match->exists) {
+            $match->round_name = $request->input('round_name', 'Babak 1');
+            $match->category = $request->input('category', 'MS');
+            $match->match_type = $request->input('match_type', 'single');
+            $match->team1_school = $request->input('team1_school', 'TBD');
+            $match->team1_player1 = $request->input('team1_player1', 'TBD');
+            $match->team2_school = $request->input('team2_school', 'TBD');
+            $match->team2_player1 = $request->input('team2_player1', 'TBD');
+            $match->match_status = 'upcoming';
+        }
+
+        $match->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Jadwal pertandingan {$match->match_code} ({$match->court_number}) berhasil disimpan!",
+            'data' => [
+                'match_code' => $match->match_code,
+                'court_number' => $match->court_number,
+                'scheduled_time' => $match->scheduled_time,
+                'match_order' => $match->match_order,
+            ],
         ]);
     }
 
@@ -775,11 +895,28 @@ class TournamentBracketController extends Controller
                     $svg[] = "<text x='".($bracketVLineX + 6)."' y='".($yMid - 5)."' font-size='9' font-weight='700' fill='#059669'>{$wName}</text>";
                 }
 
-                // Match score if available
-                if (! empty($match['existing_match']) && ($match['existing_match']->team1_set1 > 0 || $match['existing_match']->team2_set1 > 0)) {
+                // Match score or Court Schedule if available
+                if (! empty($match['existing_match'])) {
                     $em = $match['existing_match'];
-                    $scoreStr = "{$em->team1_set1}-{$em->team2_set1}";
-                    $svg[] = "<text x='".($bracketVLineX + 6)."' y='".($yMid + 11)."' font-size='8' font-mono font-weight='bold' fill='{$subTextColor}'>{$scoreStr}</text>";
+                    if ($em->team1_set1 > 0 || $em->team2_set1 > 0) {
+                        $scoreStr = "{$em->team1_set1}-{$em->team2_set1}";
+                        $svg[] = "<text x='".($bracketVLineX + 6)."' y='".($yMid + 11)."' font-size='8' font-mono font-weight='bold' fill='{$subTextColor}'>{$scoreStr}</text>";
+                    } elseif (! empty($em->court_number) || ! empty($em->scheduled_time)) {
+                        $schedParts = [];
+                        if (! empty($em->match_order)) {
+                            $schedParts[] = "#{$em->match_order}";
+                        }
+                        if (! empty($em->court_number) && strtoupper($em->court_number) !== 'BYE') {
+                            $schedParts[] = $em->court_number;
+                        }
+                        if (! empty($em->scheduled_time)) {
+                            $schedParts[] = $em->scheduled_time;
+                        }
+                        if (! empty($schedParts)) {
+                            $schedStr = htmlspecialchars(implode(' • ', $schedParts), ENT_QUOTES);
+                            $svg[] = "<text x='".($bracketVLineX + 6)."' y='".($yMid + 10)."' font-size='7' font-mono font-weight='700' fill='{$accentColor}'>{$schedStr}</text>";
+                        }
+                    }
                 }
 
                 $nextStems[$m + 1] = [

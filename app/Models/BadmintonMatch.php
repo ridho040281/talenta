@@ -13,6 +13,8 @@ class BadmintonMatch extends Model
     protected $fillable = [
         'competition_id',
         'court_number',
+        'scheduled_time',
+        'match_order',
         'match_code',
         'round_name',
         'category',
@@ -54,6 +56,7 @@ class BadmintonMatch extends Model
             'server_team' => 'integer',
             'server_player' => 'integer',
             'winner_team' => 'integer',
+            'match_order' => 'integer',
         ];
     }
 

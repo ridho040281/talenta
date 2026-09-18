@@ -155,6 +155,7 @@ Route::middleware(['auth', 'role:pic_lomba,superadmin,panitia,juri'])->group(fun
     Route::get('/pic/lomba/{competition_id}/bagan', [TournamentBracketController::class, 'show'])->name('pic.bracket');
     Route::get('/pic/lomba/{competition_id}/bagan/print', [TournamentBracketController::class, 'printPdf'])->name('pic.bracket.print');
     Route::post('/pic/lomba/{competition_id}/bagan/generate-matches', [TournamentBracketController::class, 'generateMatches'])->name('pic.bracket.generate_matches');
+    Route::post('/pic/lomba/{competition_id}/bagan/update-schedule', [TournamentBracketController::class, 'updateMatchSchedule'])->name('pic.bracket.update_schedule');
 });
 
 /*

@@ -41,12 +41,12 @@
         <div class="flex items-center flex-wrap gap-2.5">
             <!-- Sync to Referee Match Schedule -->
             <button type="button" 
-                    @click="syncMatches()" 
+                    @click="openSyncModal()" 
                     :disabled="isSyncing || !hasRounds"
                     class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer"
-                    title="Sinkronkan susunan bagan ke sistem skor wasit bulu tangkis">
-                <i data-lucide="refresh-cw" class="w-4 h-4" :class="isSyncing ? 'animate-spin' : ''"></i>
-                <span x-text="isSyncing ? 'Menyinkronkan...' : 'Sinkronkan ke Wasit'"></span>
+                    title="Atur lapangan, jam tanding, dan sinkronkan ke sistem wasit">
+                <i data-lucide="calendar-clock" class="w-4 h-4"></i>
+                <span>Atur Jadwal & Wasit</span>
             </button>
 
             <!-- Public TV View -->
@@ -296,6 +296,43 @@
                                         </div>
                                     </div>
 
+                                    <!-- Court & Time Schedule Badge Bar -->
+                                    @if($existing && $existing->court_number && strtoupper($existing->court_number) !== 'BYE')
+                                        <div class="px-3 py-1.5 bg-slate-950/80 border-b border-slate-800/80 flex items-center justify-between text-[11px] font-mono">
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-bold text-[10px] border border-indigo-500/30">
+                                                    🏸 {{ $existing->court_number }}
+                                                </span>
+                                                @if($existing->match_order)
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold text-[10px] border border-amber-500/30">
+                                                        Partai #{{ $existing->match_order }}
+                                                    </span>
+                                                @endif
+                                                @if($existing->scheduled_time)
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[10px] border border-emerald-500/30">
+                                                        ⏰ {{ $existing->scheduled_time }}
+                                                    </span>
+                                                @endif
+                                            </div>
+                                            <button type="button" 
+                                                    @click="openEditScheduleModal('{{ $match['match_code'] }}', '{{ $existing->court_number }}', '{{ $existing->scheduled_time ?? '' }}', '{{ $existing->match_order ?? '' }}')"
+                                                    class="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-amber-300 transition cursor-pointer"
+                                                    title="Ubah Lapangan / Jam Tanding Partai Ini">
+                                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                            </button>
+                                        </div>
+                                    @elseif(!$isByeAdvance && ($match['status'] ?? '') !== 'pending_draw')
+                                        <div class="px-3 py-1.5 bg-slate-950/40 border-b border-slate-800/60 flex items-center justify-between text-[10px] text-slate-400 font-mono">
+                                            <span class="text-slate-500">Jadwal belum diset</span>
+                                            <button type="button" 
+                                                    @click="openEditScheduleModal('{{ $match['match_code'] }}', 'Lapangan 1', '', '')"
+                                                    class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold transition flex items-center gap-1 cursor-pointer">
+                                                <i data-lucide="clock" class="w-3 h-3 text-amber-400"></i>
+                                                <span>Set Jadwal</span>
+                                            </button>
+                                        </div>
+                                    @endif
+
                                     <!-- Match Competitors List -->
                                     <div class="p-3 space-y-2">
                                         <!-- Team 1 Slot -->
@@ -444,8 +481,22 @@
                                     <!-- Card Action Footer (Umpire & TV buttons if synced) -->
                                     @if($existing)
                                         <div class="px-3 py-2 bg-slate-950/80 border-t border-slate-800/80 flex items-center justify-between text-[10px]">
-                                            <span class="text-slate-400 font-mono">{{ $existing->court_number }}</span>
+                                            <span class="text-slate-400 font-mono font-bold">
+                                                {{ $existing->court_number !== 'BYE' ? $existing->court_number : 'Lolos Langsung' }}
+                                                @if($existing->scheduled_time)
+                                                    • {{ $existing->scheduled_time }}
+                                                @endif
+                                            </span>
                                             <div class="flex items-center gap-1.5">
+                                                @if($existing->court_number !== 'BYE')
+                                                    <button type="button" 
+                                                            @click="openEditScheduleModal('{{ $match['match_code'] }}', '{{ $existing->court_number }}', '{{ $existing->scheduled_time ?? '' }}', '{{ $existing->match_order ?? '' }}')"
+                                                            class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold transition flex items-center gap-1 cursor-pointer"
+                                                            title="Atur Jadwal / Lapangan">
+                                                        <i data-lucide="calendar" class="w-3 h-3 text-amber-400"></i>
+                                                        <span>Jadwal</span>
+                                                    </button>
+                                                @endif
                                                 <a href="{{ route('badminton.umpire', $existing->id) }}" target="_blank" class="px-2 py-1 rounded bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 font-bold transition flex items-center gap-1">
                                                     <i data-lucide="activity" class="w-3 h-3"></i>
                                                     <span>Wasit</span>
@@ -511,6 +562,225 @@
 
     @endif
 
+    <!-- Modal: Sinkronisasi Jadwal & Pembagian Lapangan Otomatis -->
+    <div x-show="showSyncScheduleModal" 
+         x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div @click.away="closeSyncModal()" 
+             class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-3xl p-6 shadow-2xl space-y-5 text-white animate-in fade-in zoom-in-95 duration-200">
+            
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-slate-950 flex items-center justify-center font-bold shadow-lg shadow-emerald-500/20">
+                        <i data-lucide="calendar-clock" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-base text-white">Atur Lapangan & Waktu Tanding</h3>
+                        <p class="text-xs text-slate-400">Sinkronisasi otomatis ke Modul Wasit & Jadwal</p>
+                    </div>
+                </div>
+                <button type="button" @click="closeSyncModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4 text-xs">
+                <!-- Pilihan Lapangan Aktif -->
+                <div>
+                    <label class="block font-bold text-slate-300 mb-2">
+                        Pilih Lapangan Aktif (Bisa pilih lebih dari 1):
+                    </label>
+                    <div class="grid grid-cols-2 gap-2 mb-2">
+                        <template x-for="court in defaultCourtOptions" :key="court">
+                            <button type="button" 
+                                    @click="toggleCourt(court)"
+                                    :class="scheduleCourts.includes(court) ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300 font-extrabold ring-1 ring-indigo-500/40' : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'"
+                                    class="p-2.5 rounded-xl border flex items-center justify-between transition cursor-pointer text-left">
+                                <span class="flex items-center gap-2">
+                                    <i data-lucide="map-pin" class="w-3.5 h-3.5" :class="scheduleCourts.includes(court) ? 'text-indigo-400' : 'text-slate-600'"></i>
+                                    <span x-text="court"></span>
+                                </span>
+                                <span class="w-4 h-4 rounded-md flex items-center justify-center text-[10px]"
+                                      :class="scheduleCourts.includes(court) ? 'bg-indigo-500 text-white' : 'border border-slate-700'">
+                                    <i data-lucide="check" class="w-3 h-3" x-show="scheduleCourts.includes(court)"></i>
+                                </span>
+                            </button>
+                        </template>
+                    </div>
+
+                    <!-- Custom Lapangan Input -->
+                    <div class="flex items-center gap-2 mt-2">
+                        <input type="text" 
+                               x-model="newCourtInput" 
+                               @keydown.enter.prevent="addCustomCourt()"
+                               placeholder="Nama lapangan lain (cth: Lapangan 5)..."
+                               class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white placeholder-slate-500 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+                        <button type="button" 
+                                @click="addCustomCourt()"
+                                class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-bold transition flex items-center gap-1 cursor-pointer">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                            <span>Tambah</span>
+                        </button>
+                    </div>
+
+                    <!-- Selected Courts Pill List -->
+                    <div class="mt-2.5 flex flex-wrap gap-1.5 items-center">
+                        <span class="text-[11px] text-slate-500 font-bold">Terpilih:</span>
+                        <template x-for="court in scheduleCourts" :key="court">
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 font-mono text-[11px] border border-indigo-500/30">
+                                <span x-text="court"></span>
+                                <button type="button" @click="removeCourt(court)" class="hover:text-rose-400 text-indigo-400 ml-0.5 cursor-pointer" title="Hapus lapangan">
+                                    &times;
+                                </button>
+                            </span>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Jam Mulai & Estimasi Durasi -->
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <div>
+                        <label class="block font-bold text-slate-300 mb-1.5">
+                            Jam Mulai Tanding:
+                        </label>
+                        <div class="relative">
+                            <input type="time" 
+                                   x-model="scheduleStartTime"
+                                   class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono font-bold text-sm focus:ring-1 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+                        <p class="text-[10px] text-slate-500 mt-1">Format: 24 Jam (WIB)</p>
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-300 mb-1.5">
+                            Estimasi Durasi / Partai:
+                        </label>
+                        <div class="relative flex items-center">
+                            <input type="number" 
+                                   x-model="scheduleMatchDuration"
+                                   min="15" 
+                                   max="120" 
+                                   step="5"
+                                   class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono font-bold text-sm focus:ring-1 focus:ring-emerald-500 focus:outline-none pr-14">
+                            <span class="absolute right-3 text-slate-500 font-bold text-xs pointer-events-none">menit</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 mt-1">Standar BWF: 30-40 menit</p>
+                    </div>
+                </div>
+
+                <!-- Simulation Info Card -->
+                <div class="p-3 rounded-2xl bg-slate-950/70 border border-slate-800 text-[11px] text-slate-400 space-y-1">
+                    <div class="font-bold text-emerald-400 flex items-center gap-1.5">
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        <span>Cara Kerja Distribusi Otomatis:</span>
+                    </div>
+                    <p class="leading-relaxed">
+                        Sistem akan membagi seluruh partai yang bertanding secara bergiliran ke <span class="text-white font-bold" x-text="scheduleCourts.length + ' lapangan aktif'"></span>. 
+                        Partai awal akan dimulai serentak pukul <span class="text-white font-bold" x-text="scheduleStartTime"></span> WIB, dan partai berikutnya bertambah <span class="text-white font-bold" x-text="scheduleMatchDuration + ' menit'"></span> per giliran.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Modal Action Buttons -->
+            <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-800">
+                <button type="button" 
+                        @click="closeSyncModal()"
+                        class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition cursor-pointer">
+                    Batal
+                </button>
+                <button type="button" 
+                        @click="executeSyncSchedule()"
+                        :disabled="isSyncing || scheduleCourts.length === 0"
+                        class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2 cursor-pointer">
+                    <i data-lucide="refresh-cw" class="w-4 h-4" :class="isSyncing ? 'animate-spin' : ''"></i>
+                    <span x-text="isSyncing ? 'Memproses Jadwal...' : 'Terapkan & Sinkronkan'"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Quick Edit Single Match Schedule -->
+    <div x-show="showEditMatchModal" 
+         x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div @click.away="closeEditModal()" 
+             class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 text-white animate-in fade-in zoom-in-95 duration-200">
+            
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3.5">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-400 flex items-center justify-center font-bold">
+                        <i data-lucide="edit-2" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-sm text-white">Ubah Jadwal Partai</h3>
+                        <p class="text-[11px] font-mono text-amber-400 font-bold" x-text="editMatchData.matchCode"></p>
+                    </div>
+                </div>
+                <button type="button" @click="closeEditModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3.5 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-300 mb-1">
+                        Pilih Lapangan:
+                    </label>
+                    <select x-model="editMatchData.courtNumber" 
+                            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-bold text-xs focus:ring-1 focus:ring-amber-500 focus:outline-none">
+                        <template x-for="court in defaultCourtOptions" :key="court">
+                            <option :value="court" x-text="court"></option>
+                        </template>
+                        <option value="Lapangan 5">Lapangan 5</option>
+                        <option value="Lapangan 6">Lapangan 6</option>
+                        <option value="BYE">BYE (Lolos Langsung)</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-300 mb-1">
+                            Nomor Partai:
+                        </label>
+                        <input type="number" 
+                               x-model="editMatchData.matchOrder"
+                               min="1" 
+                               max="999"
+                               placeholder="Cth: 1"
+                               class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono font-bold text-xs focus:ring-1 focus:ring-amber-500 focus:outline-none">
+                        <p class="text-[10px] text-slate-500 mt-1">Urutan partai di lapangan</p>
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-300 mb-1">
+                            Jam Tanding (WIB):
+                        </label>
+                        <input type="text" 
+                               x-model="editMatchData.scheduledTime"
+                               placeholder="Cth: 08:35"
+                               class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono font-bold text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none">
+                        <p class="text-[10px] text-slate-500 mt-1">Estimasi jam main</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-800">
+                <button type="button" 
+                        @click="closeEditModal()"
+                        class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition cursor-pointer">
+                    Batal
+                </button>
+                <button type="button" 
+                        @click="saveSingleMatchSchedule()"
+                        :disabled="isSavingSchedule"
+                        class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-1.5 cursor-pointer">
+                    <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                    <span x-text="isSavingSchedule ? 'Menyimpan...' : 'Simpan Jadwal'"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
 </div>
 @endsection
 
@@ -527,13 +797,120 @@
             toastMessage: '',
             toastSuccess: true,
 
-            async syncMatches() {
-                if (this.isSyncing) return;
-                
-                if (!confirm('Apakah Anda ingin menyinkronkan seluruh pertandingan babak 1 dan babak berikutnya ke jadwal wasit bulu tangkis?')) {
-                    return;
-                }
+            // Schedule & Court Management State
+            showSyncScheduleModal: false,
+            showEditMatchModal: false,
+            defaultCourtOptions: ['Lapangan 1', 'Lapangan 2', 'Lapangan 3', 'Lapangan 4'],
+            scheduleCourts: ['Lapangan 1', 'Lapangan 2', 'Lapangan 3'],
+            newCourtInput: '',
+            scheduleStartTime: '08:00',
+            scheduleMatchDuration: 35,
 
+            // Single match edit state
+            editMatchData: {
+                matchCode: '',
+                courtNumber: 'Lapangan 1',
+                scheduledTime: '',
+                matchOrder: ''
+            },
+            isSavingSchedule: false,
+
+            openSyncModal() {
+                this.showSyncScheduleModal = true;
+                this.$nextTick(() => {
+                    if (window.lucide) window.lucide.createIcons();
+                });
+            },
+
+            closeSyncModal() {
+                this.showSyncScheduleModal = false;
+            },
+
+            toggleCourt(courtName) {
+                if (this.scheduleCourts.includes(courtName)) {
+                    if (this.scheduleCourts.length > 1) {
+                        this.scheduleCourts = this.scheduleCourts.filter(c => c !== courtName);
+                    }
+                } else {
+                    this.scheduleCourts.push(courtName);
+                }
+            },
+
+            addCustomCourt() {
+                const name = this.newCourtInput.trim();
+                if (name && !this.scheduleCourts.includes(name)) {
+                    this.scheduleCourts.push(name);
+                    if (!this.defaultCourtOptions.includes(name)) {
+                        this.defaultCourtOptions.push(name);
+                    }
+                    this.newCourtInput = '';
+                }
+            },
+
+            removeCourt(courtName) {
+                if (this.scheduleCourts.length > 1) {
+                    this.scheduleCourts = this.scheduleCourts.filter(c => c !== courtName);
+                }
+            },
+
+            openEditScheduleModal(matchCode, courtNumber, scheduledTime, matchOrder) {
+                this.editMatchData = {
+                    matchCode: matchCode,
+                    courtNumber: courtNumber || 'Lapangan 1',
+                    scheduledTime: scheduledTime || '',
+                    matchOrder: matchOrder || ''
+                };
+                this.showEditMatchModal = true;
+                this.$nextTick(() => {
+                    if (window.lucide) window.lucide.createIcons();
+                });
+            },
+
+            closeEditModal() {
+                this.showEditMatchModal = false;
+            },
+
+            async saveSingleMatchSchedule() {
+                if (this.isSavingSchedule) return;
+                this.isSavingSchedule = true;
+
+                try {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+                    const response = await fetch('{{ route("pic.bracket.update_schedule", $competition->id) }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            match_code: this.editMatchData.matchCode,
+                            court_number: this.editMatchData.courtNumber,
+                            scheduled_time: this.editMatchData.scheduledTime,
+                            match_order: this.editMatchData.matchOrder ? parseInt(this.editMatchData.matchOrder) : null
+                        })
+                    });
+
+                    const res = await response.json();
+                    if (res.success) {
+                        this.toastSuccess = true;
+                        this.toastMessage = res.message;
+                        this.closeEditModal();
+                        setTimeout(() => window.location.reload(), 700);
+                    } else {
+                        alert(res.message || 'Gagal menyimpan perubahan.');
+                    }
+                } catch (err) {
+                    console.error('Save schedule error:', err);
+                    alert('Terjadi kesalahan jaringan.');
+                } finally {
+                    this.isSavingSchedule = false;
+                    if (window.lucide) window.lucide.createIcons();
+                }
+            },
+
+            async executeSyncSchedule() {
+                if (this.isSyncing) return;
                 this.isSyncing = true;
                 this.toastMessage = '';
 
@@ -547,7 +924,10 @@
                             'Accept': 'application/json'
                         },
                         body: JSON.stringify({
-                            pool_key: this.activePoolKey
+                            pool_key: this.activePoolKey,
+                            courts: this.scheduleCourts,
+                            start_time: this.scheduleStartTime,
+                            match_duration: parseInt(this.scheduleMatchDuration)
                         })
                     });
 
@@ -555,7 +935,8 @@
                     if (res.success) {
                         this.toastSuccess = true;
                         this.toastMessage = res.message || 'Jadwal pertandingan berhasil disinkronkan ke sistem wasit!';
-                        setTimeout(() => window.location.reload(), 1200);
+                        this.closeSyncModal();
+                        setTimeout(() => window.location.reload(), 1000);
                     } else {
                         this.toastSuccess = false;
                         this.toastMessage = res.message || 'Gagal menyinkronkan jadwal pertandingan.';

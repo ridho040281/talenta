@@ -81,9 +81,18 @@
             
             <!-- Card Header -->
             <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-2.5 text-xs">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
                     <span class="px-2 py-0.5 rounded-md font-bold bg-slate-900 text-amber-400 font-mono text-[11px]">{{ $match->category }}</span>
                     <span class="font-bold text-slate-700 dark:text-slate-200">{{ $match->court_number }}</span>
+                    @if($match->match_order)
+                        <span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-400 font-mono font-bold text-[10px]">Partai #{{ $match->match_order }}</span>
+                    @endif
+                    @if($match->scheduled_time)
+                        <span class="text-emerald-600 dark:text-emerald-400 font-mono text-[11px] font-bold flex items-center gap-1">
+                            <i data-lucide="clock" class="w-3 h-3"></i>
+                            {{ $match->scheduled_time }}
+                        </span>
+                    @endif
                 </div>
                 <div>
                     @if($match->match_status === 'ongoing')

@@ -217,6 +217,28 @@
                                             </div>
                                         </div>
 
+                                        <!-- Court & Time Schedule Badge Bar (Public) -->
+                                        @if($existing && $existing->court_number && strtoupper($existing->court_number) !== 'BYE')
+                                            <div class="px-3.5 py-1.5 bg-slate-950/80 border-b border-slate-800/80 flex items-center justify-between text-[11px] font-mono">
+                                                <div class="flex items-center gap-1.5 flex-wrap">
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-bold text-[10px] border border-indigo-500/30">
+                                                        🏸 {{ $existing->court_number }}
+                                                    </span>
+                                                    @if($existing->match_order)
+                                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold text-[10px] border border-amber-500/30">
+                                                            Partai #{{ $existing->match_order }}
+                                                        </span>
+                                                    @endif
+                                                    @if($existing->scheduled_time)
+                                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[10px] border border-emerald-500/30">
+                                                            ⏰ {{ $existing->scheduled_time }}
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                                <span class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">GOR</span>
+                                            </div>
+                                        @endif
+
                                         <!-- Competitors -->
                                         <div class="p-3 space-y-2">
                                             <!-- Team 1 -->
@@ -354,11 +376,11 @@
                                             </div>
                                         </div>
 
-                                        @if($existing && $existing->court_number)
+                                        @if($existing && $existing->court_number && strtoupper($existing->court_number) !== 'BYE')
                                             <div class="px-3 py-1.5 bg-slate-950/80 border-t border-slate-800 text-[10px] text-slate-400 flex items-center justify-between font-mono">
-                                                <span>{{ $existing->court_number }}</span>
-                                                <a href="{{ route('badminton.scoreboard', $existing->id) }}" target="_blank" class="text-amber-400 hover:text-amber-300 font-bold">
-                                                    Lihat Skor »
+                                                <span>{{ $existing->court_number }} {{ $existing->scheduled_time ? '• ' . $existing->scheduled_time : '' }}</span>
+                                                <a href="{{ route('badminton.scoreboard', $existing->id) }}" target="_blank" class="text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1">
+                                                    <span>Lihat Skor »</span>
                                                 </a>
                                             </div>
                                         @endif

@@ -39,7 +39,16 @@
             <div>
                 <div class="flex items-center gap-2">
                     <span class="px-2 py-0.5 rounded font-mono font-bold bg-amber-400 text-black text-xs">{{ $match->category }}</span>
-                    <h1 class="text-sm sm:text-base font-extrabold text-white">{{ $match->court_number }} • {{ $match->round_name }}</h1>
+                    <h1 class="text-sm sm:text-base font-extrabold text-white flex items-center gap-1.5 flex-wrap">
+                        <span>{{ $match->court_number }}</span>
+                        @if($match->match_order)
+                            <span class="text-amber-400 font-mono text-xs font-bold">(Partai #{{ $match->match_order }})</span>
+                        @endif
+                        @if($match->scheduled_time)
+                            <span class="text-emerald-400 font-mono text-xs font-bold">• {{ $match->scheduled_time }}</span>
+                        @endif
+                        <span class="text-slate-400">• {{ $match->round_name }}</span>
+                    </h1>
                 </div>
                 <p class="text-[11px] text-slate-400 font-medium">{{ $match->match_type === 'double' ? 'Ganda (Double)' : 'Tunggal (Single)' }}</p>
             </div>
