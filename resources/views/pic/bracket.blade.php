@@ -155,6 +155,35 @@
             </div>
         </div>
 
+        <!-- BWF Separation of Entries Notification Banner -->
+        @if(!empty($bracketData['has_bwf_protections']))
+        <div class="bg-indigo-950/60 border border-indigo-500/30 rounded-2xl p-4 flex flex-col md:flex-row items-start gap-3.5 text-xs text-indigo-200 shadow-xl">
+            <div class="w-9 h-9 rounded-xl bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-indigo-300 flex-shrink-0 text-base shadow-sm">
+                🛡️
+            </div>
+            <div class="flex-1 space-y-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="font-black text-indigo-300 uppercase tracking-wider text-[10px] bg-indigo-500/20 px-2.5 py-0.5 rounded-md border border-indigo-500/40 shadow-sm">
+                        Proteksi Resmi BWF GCR 14 Aktif
+                    </span>
+                    <span class="text-white font-bold">Pemisahan Sesama Kontingen / Sekolah</span>
+                </div>
+                <p class="text-slate-300 text-[11px] leading-relaxed">
+                    Sistem mendeteksi sekolah yang memiliki lebih dari 1 peserta dan secara otomatis memisahkan mereka ke pool berlawanan (Pool Atas & Pool Bawah) untuk menjamin <strong>tidak terjadi bentrok satu sekolah di Babak 1</strong>.
+                </p>
+                <div class="flex flex-wrap gap-2 pt-1">
+                    @foreach($bracketData['bwf_protections'] as $prot)
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900/90 border border-indigo-500/30 text-[11px] text-slate-200 shadow-sm">
+                            <span class="text-indigo-400 font-bold">🛡️ {{ $prot['institution'] }}:</span>
+                            <span>{{ $prot['participant_name'] }}</span>
+                            <span class="text-amber-400 font-mono font-bold">&rarr; Slot #{{ $prot['slot'] }}</span>
+                        </span>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+        @endif
+
         <!-- View Mode Switcher -->
         <div class="flex items-center justify-between flex-wrap gap-3 bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800 shadow-md">
             <div class="flex items-center gap-2 flex-wrap">
@@ -256,6 +285,12 @@
                                             @else
                                                 <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-400 font-mono text-[10px]">
                                                     Jadwal
+                                                </span>
+                                            @endif
+
+                                            @if(!empty($match['has_bwf_protection']))
+                                                <span class="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-bold text-[9px] border border-indigo-500/40 flex items-center gap-1 shadow-sm" title="{{ $match['bwf_note'] ?? 'Proteksi BWF GCR 14' }}">
+                                                    🛡️ BWF
                                                 </span>
                                             @endif
                                         </div>

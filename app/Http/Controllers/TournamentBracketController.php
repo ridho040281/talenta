@@ -322,30 +322,8 @@ class TournamentBracketController extends Controller
         // Sort drawn unseeded by draw_number ascending
         usort($drawnUnseeded, fn ($a, $b) => ((int) ($a['draw_number'] ?? 999)) <=> ((int) ($b['draw_number'] ?? 999)));
 
-        // Fill remaining open slots
-        $uIdx = 0;
-        for ($s = 1; $s <= $bracketSize; $s++) {
-            if ($slots[$s] === null) {
-                if ($uIdx < count($drawnUnseeded)) {
-                    $drawnP = $drawnUnseeded[$uIdx++];
-                    $drawnP['slot_number'] = $s;
-                    $drawnP['is_pending_draw'] = false;
-                    $slots[$s] = $drawnP;
-                } else {
-                    // This slot has not been drawn yet
-                    $slots[$s] = [
-                        'is_bye' => false,
-                        'is_pending_draw' => true,
-                        'name' => '[Menunggu Undian]',
-                        'institution' => 'Slot #'.$s,
-                        'id' => null,
-                        'draw_number' => null,
-                        'seed_number' => null,
-                        'slot_number' => $s,
-                    ];
-                }
-            }
-        }
+        // Fill remaining open slots applying BWF GCR 14 (Separation of Entries from same school/institution)
+        $bwfProtections = $this->assignSlotsWithBwfSeparation($slots, $drawnUnseeded, $bracketSize);
 
         // Fetch existing BadmintonMatch records for this competition to overlay live scores & match statuses
         $existingMatches = collect();
@@ -406,6 +384,9 @@ class TournamentBracketController extends Controller
                 $status = 'pending_draw';
             }
 
+            $hasBwfProtection = ! empty($p1['is_bwf_separated']) || ! empty($p2['is_bwf_separated']);
+            $bwfNote = $p1['bwf_note'] ?? ($p2['bwf_note'] ?? null);
+
             $r1Matches[$m] = [
                 'match_code' => $matchCode,
                 'round_index' => 1,
@@ -419,6 +400,8 @@ class TournamentBracketController extends Controller
                 'winner' => $winner,
                 'status' => $status,
                 'existing_match' => $existingMatch,
+                'has_bwf_protection' => $hasBwfProtection,
+                'bwf_note' => $bwfNote,
             ];
         }
 
@@ -488,12 +471,146 @@ class TournamentBracketController extends Controller
             'total_rounds' => $totalRounds,
             'rounds' => $rounds,
             'champion' => $champion,
+            'bwf_protections' => $bwfProtections,
+            'has_bwf_protections' => count($bwfProtections) > 0,
         ];
 
         $bracketData['classic_svg_light'] = $this->renderClassicBracketSvg($bracketData, ['isDark' => false]);
         $bracketData['classic_svg_dark'] = $this->renderClassicBracketSvg($bracketData, ['isDark' => true]);
 
         return $bracketData;
+    }
+
+    /**
+     * Alokasi Slot Terbuka Mengikuti Regulasi Resmi BWF GCR Pasal 14 (Separation of Entries)
+     * 1. Dua atlet dari sekolah yang sama TIDAK BOLEH bertemu di Babak 1 (Match yang sama).
+     * 2. Dua atlet dari sekolah yang sama dipisahkan ke Pool Atas (Top Half) dan Pool Bawah (Bottom Half).
+     * 3. Tiga atau empat atlet dari sekolah yang sama disebar ke 4 Kuadran (Quarters) berbeda.
+     */
+    protected function assignSlotsWithBwfSeparation(array &$slots, array $drawnUnseeded, int $bracketSize): array
+    {
+        $placedSchools = [];
+        for ($s = 1; $s <= $bracketSize; $s++) {
+            if (! empty($slots[$s]) && empty($slots[$s]['is_bye']) && ! empty($slots[$s]['institution'])) {
+                $school = trim(mb_strtolower($slots[$s]['institution']));
+                $placedSchools[$school][] = $s;
+            }
+        }
+
+        $bwfProtections = [];
+
+        foreach ($drawnUnseeded as $p) {
+            $school = trim(mb_strtolower($p['institution'] ?? ''));
+            $openSlots = [];
+            for ($s = 1; $s <= $bracketSize; $s++) {
+                if ($slots[$s] === null) {
+                    $openSlots[] = $s;
+                }
+            }
+
+            if (empty($openSlots)) {
+                break;
+            }
+
+            $existingSlots = $placedSchools[$school] ?? [];
+            $existingInTop = 0;
+            $existingInBottom = 0;
+            $existingInQuarter = [1 => 0, 2 => 0, 3 => 0, 4 => 0];
+
+            foreach ($existingSlots as $es) {
+                if ($es <= $bracketSize / 2) {
+                    $existingInTop++;
+                } else {
+                    $existingInBottom++;
+                }
+                $q = (int) ceil($es / max(1, $bracketSize / 4));
+                $existingInQuarter[$q] = ($existingInQuarter[$q] ?? 0) + 1;
+            }
+
+            $bestSlot = null;
+            $bestPenalty = PHP_INT_MAX;
+
+            foreach ($openSlots as $s) {
+                $penalty = 0;
+
+                // Aturan 1 (Mutlak): Proteksi bentrok sesama sekolah di Babak 1
+                $partnerSlot = ($s % 2 === 1) ? $s + 1 : $s - 1;
+                $partner = $slots[$partnerSlot] ?? null;
+                if ($partner && empty($partner['is_bye']) && ! empty($partner['institution'])) {
+                    $partnerSchool = trim(mb_strtolower($partner['institution']));
+                    if (! empty($school) && $partnerSchool === $school) {
+                        $penalty += 100000; // Penalti sangat tinggi agar tidak pernah berhadapan di R1
+                    }
+                }
+
+                // Aturan 2: Keseimbangan Pool Atas (Top Half) vs Pool Bawah (Bottom Half)
+                if (! empty($school) && count($existingSlots) > 0) {
+                    $candidateHalf = ($s <= $bracketSize / 2) ? 'top' : 'bottom';
+                    if ($candidateHalf === 'top' && $existingInTop > $existingInBottom) {
+                        $penalty += 1000 * ($existingInTop - $existingInBottom);
+                    } elseif ($candidateHalf === 'bottom' && $existingInBottom > $existingInTop) {
+                        $penalty += 1000 * ($existingInBottom - $existingInTop);
+                    }
+
+                    // Aturan 3: Distribusi Kuadran (Quarters) jika peserta >= 3
+                    $q = (int) ceil($s / max(1, $bracketSize / 4));
+                    $penalty += 100 * ($existingInQuarter[$q] ?? 0);
+                }
+
+                // Penentu urutan: utamakan slot terendah yang aman
+                $penalty += $s;
+
+                if ($penalty < $bestPenalty) {
+                    $bestPenalty = $penalty;
+                    $bestSlot = $s;
+                }
+            }
+
+            if ($bestSlot !== null) {
+                $isSeparated = false;
+                $bwfNote = null;
+                if (! empty($school) && count($existingSlots) > 0) {
+                    $isSeparated = true;
+                    $halfName = $bestSlot <= ($bracketSize / 2) ? 'Pool Atas' : 'Pool Bawah';
+                    $bwfNote = "Proteksi BWF GCR 14: Pemisahan kontingen {$p['institution']} ke {$halfName} (Slot #{$bestSlot})";
+                    $bwfProtections[] = [
+                        'participant_name' => $p['name'],
+                        'institution' => $p['institution'],
+                        'slot' => $bestSlot,
+                        'teammate_slots' => $existingSlots,
+                        'message' => "Peserta dari {$p['institution']} ({$p['name']}) dialokasikan ke {$halfName} (Slot #{$bestSlot}) sesuai aturan BWF GCR 14 tentang pemisahan sesama kontingen.",
+                    ];
+                }
+
+                $p['slot_number'] = $bestSlot;
+                $p['is_pending_draw'] = false;
+                $p['is_bwf_separated'] = $isSeparated;
+                $p['bwf_note'] = $bwfNote;
+                $slots[$bestSlot] = $p;
+
+                if (! empty($school)) {
+                    $placedSchools[$school][] = $bestSlot;
+                }
+            }
+        }
+
+        // Isi sisa slot yang belum diundi sebagai pending draw
+        for ($s = 1; $s <= $bracketSize; $s++) {
+            if ($slots[$s] === null) {
+                $slots[$s] = [
+                    'is_bye' => false,
+                    'is_pending_draw' => true,
+                    'name' => '[Menunggu Undian]',
+                    'institution' => 'Slot #'.$s,
+                    'id' => null,
+                    'draw_number' => null,
+                    'seed_number' => null,
+                    'slot_number' => $s,
+                ];
+            }
+        }
+
+        return $bwfProtections;
     }
 
     /**

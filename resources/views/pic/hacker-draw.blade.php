@@ -227,6 +227,17 @@
                                 <span>BERHASIL DIKUNCI (TARGET LOCKED)</span>
                             </span>
                         </div>
+
+                        <!-- BWF Separation Alert if same school detected -->
+                        <div x-show="bwfNotification" x-transition class="mt-3 p-3 rounded-xl bg-indigo-950/80 border border-indigo-500/50 text-left flex items-start gap-2.5 shadow-lg max-w-md">
+                            <span class="text-base shrink-0">🛡️</span>
+                            <div class="space-y-0.5 min-w-0">
+                                <span class="text-[10px] font-mono font-black uppercase tracking-wider text-indigo-300 block">
+                                    [BWF GCR 14] PEMISAHAN KONTINGEN AKTIF
+                                </span>
+                                <p class="text-xs text-slate-200 leading-snug" x-text="bwfNotification"></p>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Target Selection (Only active in draw_participant mode) -->
@@ -326,7 +337,14 @@
                                 </div>
                                 <div class="overflow-hidden">
                                     <span class="font-bold truncate block font-sans" :class="(item.id == selectedParticipantId && drawMode === 'draw_participant') ? 'text-emerald-300 font-extrabold' : 'text-slate-200'" x-text="item.name"></span>
-                                    <span class="text-[10px] text-slate-400 truncate block mt-0.5 font-mono" x-text="item.institution"></span>
+                                    <div class="flex items-center gap-1.5 mt-0.5">
+                                        <span class="text-[10px] text-slate-400 truncate block font-mono" x-text="item.institution"></span>
+                                        <template x-if="hasTeammatesInPool(item)">
+                                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0 font-mono" title="Sekolah ini memiliki lebih dari 1 peserta (Proteksi BWF Aktif)">
+                                                👥 Multi-Wakil
+                                            </span>
+                                        </template>
+                                    </div>
                                 </div>
                             </div>
                             <button type="button" x-show="drawMode === 'draw_participant'" @click="selectedParticipantId = item.id" 
@@ -513,6 +531,13 @@
             radarTicker: 'IDLE',
             soundEnabled: true,
             audioCtx: null,
+            bwfNotification: '',
+
+            hasTeammatesInPool(participant) {
+                if (!participant || !participant.institution) return false;
+                const school = participant.institution.trim().toLowerCase();
+                return this.activeParticipants.filter(p => p.id !== participant.id && (p.institution || '').trim().toLowerCase() === school).length > 0;
+            },
 
             // Seeded state
             isSeededModalOpen: false,
@@ -706,6 +731,7 @@
                 if (this.isDecoding || this.activeUndrawnParticipants.length === 0) return;
                 this.isDecoding = true;
                 this.lockedWinner = null;
+                this.bwfNotification = '';
 
                 // High entropy shuffle of the candidate pool
                 const shuffledCandidates = this.cryptoShuffle(this.activeUndrawnParticipants);
@@ -821,6 +847,22 @@
                             participant: winnerParticipant,
                             drawNumber: winnerDrawNumber
                         };
+
+                        // Check BWF Separation Notification
+                        const school = (winnerParticipant.institution || '').trim().toLowerCase();
+                        const sameSchoolTeammates = this.activeParticipants.filter(p => p.id !== winnerParticipant.id && (p.institution || '').trim().toLowerCase() === school);
+
+                        if (sameSchoolTeammates.length > 0) {
+                            const alreadyDrawn = sameSchoolTeammates.filter(p => p.is_drawn || p.is_seeded);
+                            if (alreadyDrawn.length > 0) {
+                                const names = alreadyDrawn.map(p => p.name).join(', ');
+                                this.bwfNotification = `Terdeteksi sesama wakil dari ${winnerParticipant.institution} (${names}) yang telah terundi/seeded sebelumnya. Sesuai aturan resmi BWF GCR 14 (Pemisahan Kontingen), peserta ini dialokasikan ke sisi bagan yang berseberangan agar tidak saling berhadapan di Babak 1.`;
+                            } else {
+                                this.bwfNotification = `Peserta dari ${winnerParticipant.institution} memiliki rekan satu sekolah dalam kategori ini. Proteksi BWF GCR 14 aktif untuk memastikan mereka dipisahkan pool dan tidak bertemu di Babak 1.`;
+                            }
+                        } else {
+                            this.bwfNotification = '';
+                        }
 
                         this.playLockSound();
 

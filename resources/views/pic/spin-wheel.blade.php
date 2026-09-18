@@ -340,6 +340,17 @@
                             <span x-text="wonParticipantSchool"></span>
                         </div>
                     </div>
+
+                    <!-- BWF Separation Alert if same school detected -->
+                    <div x-show="bwfNotification" x-transition class="mt-3 p-3 rounded-xl bg-indigo-950/80 border border-indigo-500/40 text-left flex items-start gap-2.5 shadow-lg">
+                        <span class="text-base shrink-0">🛡️</span>
+                        <div class="space-y-0.5 min-w-0">
+                            <span class="text-[10px] font-black uppercase tracking-wider text-indigo-300 block">
+                                Proteksi BWF GCR 14 (Pemisahan Kontingen)
+                            </span>
+                            <p class="text-xs text-slate-200 leading-snug" x-text="bwfNotification"></p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -416,7 +427,14 @@
                                 </div>
                                 <div class="overflow-hidden">
                                     <span class="font-bold truncate block" :class="item.id == selectedParticipantId ? 'text-amber-300 font-extrabold' : 'text-slate-200'" x-text="item.name"></span>
-                                    <span class="text-[10px] text-slate-400 truncate block mt-0.5" x-text="item.institution"></span>
+                                    <div class="flex items-center gap-1.5 mt-0.5">
+                                        <span class="text-[10px] text-slate-400 truncate block" x-text="item.institution"></span>
+                                        <template x-if="hasTeammatesInPool(item)">
+                                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0" title="Sekolah ini memiliki lebih dari 1 peserta (Proteksi BWF Aktif)">
+                                                👥 Multi-Wakil
+                                            </span>
+                                        </template>
+                                    </div>
                                 </div>
                             </div>
                             <button type="button" @click="selectedParticipantId = item.id" 
@@ -593,8 +611,15 @@
             wonDrawNumber: null,
             wonParticipantName: '',
             wonParticipantSchool: '',
+            bwfNotification: '',
             audioCtx: null,
             theme: '{{ (str_contains(strtolower($competition->name), 'bulu tangkis') || str_contains(strtolower($competition->name), 'badminton')) ? 'badminton' : 'standard' }}',
+            
+            hasTeammatesInPool(participant) {
+                if (!participant || !participant.institution) return false;
+                const school = participant.institution.trim().toLowerCase();
+                return this.activeParticipants.filter(p => p.id !== participant.id && (p.institution || '').trim().toLowerCase() === school).length > 0;
+            },
             
             // Seeded state
             isSeededModalOpen: false,
@@ -1000,6 +1025,7 @@
                 if (this.isSpinning || this.activeUndrawnParticipants.length === 0 || this.wheelSlots.length === 0) return;
                 this.isSpinning = true;
                 this.wonDrawNumber = null;
+                this.bwfNotification = '';
 
                 this.spinAngleStart = Math.random() * 10 + 20;
                 this.spinTime = 0;
@@ -1042,6 +1068,22 @@
 
                 this.wonParticipantName = participant.name;
                 this.wonParticipantSchool = participant.institution;
+
+                // Check BWF Separation Notification
+                const school = (participant.institution || '').trim().toLowerCase();
+                const sameSchoolTeammates = this.activeParticipants.filter(p => p.id !== participant.id && (p.institution || '').trim().toLowerCase() === school);
+
+                if (sameSchoolTeammates.length > 0) {
+                    const alreadyDrawn = sameSchoolTeammates.filter(p => p.is_drawn || p.is_seeded);
+                    if (alreadyDrawn.length > 0) {
+                        const names = alreadyDrawn.map(p => p.name).join(', ');
+                        this.bwfNotification = `Terdeteksi sesama wakil dari ${participant.institution} (${names}) yang telah terundi/seeded sebelumnya. Sesuai aturan resmi BWF GCR 14 (Pemisahan Kontingen), peserta ini dialokasikan ke sisi bagan yang berseberangan agar tidak saling berhadapan di Babak 1.`;
+                    } else {
+                        this.bwfNotification = `Peserta dari ${participant.institution} memiliki rekan satu sekolah dalam kategori ini. Proteksi BWF GCR 14 aktif untuk memastikan mereka dipisahkan pool dan tidak bertemu di Babak 1.`;
+                    }
+                } else {
+                    this.bwfNotification = '';
+                }
 
                 // Trigger Confetti Celebration & Sound
                 if (typeof confetti === 'function') {

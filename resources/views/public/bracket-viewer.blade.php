@@ -129,6 +129,28 @@
                 </div>
             </div>
 
+            <!-- BWF Separation Notification (Public View) -->
+            @if(!empty($bracketData['has_bwf_protections']))
+            <div class="mb-6 bg-indigo-950/50 border border-indigo-500/30 rounded-2xl p-4 flex items-center justify-between flex-wrap gap-3 text-xs text-indigo-200">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-300 shrink-0">
+                        🛡️
+                    </div>
+                    <div>
+                        <span class="font-bold text-white">Proteksi BWF GCR 14 Aktif:</span>
+                        <span class="text-slate-300">Peserta dari kontingen/sekolah yang sama dipisahkan pool untuk menjamin tidak bentrok di Babak 1.</span>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                    @foreach($bracketData['bwf_protections'] as $prot)
+                        <span class="px-2.5 py-1 rounded-lg bg-slate-900 border border-indigo-500/30 text-[10px] text-indigo-300 font-mono">
+                            🛡️ {{ $prot['institution'] }} (Slot #{{ $prot['slot'] }})
+                        </span>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
             <!-- Classic Line Tree (Persis Bagan GOR Standar BWF) -->
             <div x-show="viewMode === 'classic'" class="overflow-x-auto pb-10 scrollbar-thin">
                 <div class="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl overflow-auto min-w-[750px] flex justify-center">
