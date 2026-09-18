@@ -239,6 +239,11 @@
                                                 <span class="px-2 py-0.5 rounded-md bg-cyan-500/15 text-cyan-300 font-bold text-[10px] border border-cyan-500/30">
                                                     BYE Advance
                                                 </span>
+                                            @elseif(($match['status'] ?? '') === 'pending_draw')
+                                                <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-400 font-bold text-[10px] border border-slate-700/60 flex items-center gap-1">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+                                                    Menunggu Undian
+                                                </span>
                                             @elseif($isOngoing)
                                                 <span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold text-[10px] border border-amber-500/40 flex items-center gap-1">
                                                     <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
@@ -260,16 +265,17 @@
                                     <div class="p-3 space-y-2">
                                         <!-- Team 1 Slot -->
                                         @php
+                                            $isT1Pending = !empty($t1['is_pending_draw']);
                                             $isT1Winner = false;
                                             if ($match['winner'] && ($t1['id'] ?? null) && ($match['winner']['id'] ?? null) === $t1['id']) {
                                                 $isT1Winner = true;
                                             }
-                                            if ($isByeAdvance && !($t1['is_bye'] ?? false)) {
+                                            if ($isByeAdvance && !($t1['is_bye'] ?? false) && !$isT1Pending) {
                                                 $isT1Winner = true;
                                             }
                                         @endphp
                                         <div class="flex items-center justify-between gap-2 p-2 rounded-xl transition
-                                            {{ $isT1Winner ? 'bg-emerald-500/15 border border-emerald-500/30' : (($t1['is_bye'] ?? false) ? 'bg-cyan-950/20 border border-cyan-500/20 opacity-70' : 'bg-slate-950/40 border border-transparent') }}">
+                                            {{ $isT1Winner ? 'bg-emerald-500/15 border border-emerald-500/30' : (($t1['is_bye'] ?? false) ? 'bg-cyan-950/20 border border-cyan-500/20 opacity-70' : ($isT1Pending ? 'bg-slate-950/30 border border-dashed border-slate-800' : 'bg-slate-950/40 border border-transparent')) }}">
                                             <div class="flex items-center gap-2.5 min-w-0">
                                                 <!-- Slot & Seed Badge -->
                                                 <div class="flex-shrink-0 flex items-center gap-1">
@@ -291,10 +297,10 @@
 
                                                 <!-- Player Name & School -->
                                                 <div class="min-w-0">
-                                                    <div class="text-xs font-bold truncate {{ $isT1Winner ? 'text-emerald-300 font-black' : (($t1['is_bye'] ?? false) ? 'text-cyan-400 italic' : 'text-slate-200') }}">
+                                                    <div class="text-xs font-bold truncate {{ $isT1Winner ? 'text-emerald-300 font-black' : (($t1['is_bye'] ?? false) ? 'text-cyan-400 italic' : ($isT1Pending ? 'text-slate-500 italic' : 'text-slate-200')) }}">
                                                         {{ $t1['name'] ?? 'Menunggu Pemenang' }}
                                                     </div>
-                                                    @if(!empty($t1['institution']))
+                                                    @if(!empty($t1['institution']) && !$isT1Pending && !($t1['is_bye'] ?? false))
                                                         <div class="text-[10px] text-slate-400 truncate">
                                                             {{ $t1['institution'] }}
                                                         </div>
@@ -307,7 +313,7 @@
                                                 @if($existing)
                                                     <div class="flex items-center gap-1 text-[11px]">
                                                         @if($existing->team1_set1 > 0 || $existing->team2_set1 > 0)
-                                                            <span class="{{ $existing->team1_set1 > $existing->team2_set1 ? 'text-emerald-400 font-bold' : 'text-slate-400' }}">{{ $existing->team1_set1 }}</span>
+                                                             <span class="{{ $existing->team1_set1 > $existing->team2_set1 ? 'text-emerald-400 font-bold' : 'text-slate-400' }}">{{ $existing->team1_set1 }}</span>
                                                         @endif
                                                         @if($existing->team1_set2 > 0 || $existing->team2_set2 > 0)
                                                             <span class="text-slate-600">/</span>
@@ -333,16 +339,17 @@
 
                                         <!-- Team 2 Slot -->
                                         @php
+                                            $isT2Pending = !empty($t2['is_pending_draw']);
                                             $isT2Winner = false;
                                             if ($match['winner'] && ($t2['id'] ?? null) && ($match['winner']['id'] ?? null) === $t2['id']) {
                                                 $isT2Winner = true;
                                             }
-                                            if ($isByeAdvance && !($t2['is_bye'] ?? false)) {
+                                            if ($isByeAdvance && !($t2['is_bye'] ?? false) && !$isT2Pending) {
                                                 $isT2Winner = true;
                                             }
                                         @endphp
                                         <div class="flex items-center justify-between gap-2 p-2 rounded-xl transition
-                                            {{ $isT2Winner ? 'bg-emerald-500/15 border border-emerald-500/30' : (($t2['is_bye'] ?? false) ? 'bg-cyan-950/20 border border-cyan-500/20 opacity-70' : 'bg-slate-950/40 border border-transparent') }}">
+                                            {{ $isT2Winner ? 'bg-emerald-500/15 border border-emerald-500/30' : (($t2['is_bye'] ?? false) ? 'bg-cyan-950/20 border border-cyan-500/20 opacity-70' : ($isT2Pending ? 'bg-slate-950/30 border border-dashed border-slate-800' : 'bg-slate-950/40 border border-transparent')) }}">
                                             <div class="flex items-center gap-2.5 min-w-0">
                                                 <!-- Slot & Seed Badge -->
                                                 <div class="flex-shrink-0 flex items-center gap-1">
@@ -364,10 +371,10 @@
 
                                                 <!-- Player Name & School -->
                                                 <div class="min-w-0">
-                                                    <div class="text-xs font-bold truncate {{ $isT2Winner ? 'text-emerald-300 font-black' : (($t2['is_bye'] ?? false) ? 'text-cyan-400 italic' : 'text-slate-200') }}">
+                                                    <div class="text-xs font-bold truncate {{ $isT2Winner ? 'text-emerald-300 font-black' : (($t2['is_bye'] ?? false) ? 'text-cyan-400 italic' : ($isT2Pending ? 'text-slate-500 italic' : 'text-slate-200')) }}">
                                                         {{ $t2['name'] ?? 'Menunggu Pemenang' }}
                                                     </div>
-                                                    @if(!empty($t2['institution']))
+                                                    @if(!empty($t2['institution']) && !$isT2Pending && !($t2['is_bye'] ?? false))
                                                         <div class="text-[10px] text-slate-400 truncate">
                                                             {{ $t2['institution'] }}
                                                         </div>

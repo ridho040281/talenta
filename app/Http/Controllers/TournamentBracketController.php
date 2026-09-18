@@ -178,8 +178,12 @@ class TournamentBracketController extends Controller
                 $team1 = $match['team1'];
                 $team2 = $match['team2'];
 
-                // Skip if both are empty
+                // Skip if both are empty or any team is pending draw
                 if (! $team1 && ! $team2) {
+                    continue;
+                }
+
+                if (! empty($team1['is_pending_draw']) || ! empty($team2['is_pending_draw'])) {
                     continue;
                 }
 
@@ -288,44 +292,73 @@ class TournamentBracketController extends Controller
         foreach ($assignedByes as $bs) {
             $slots[$bs] = [
                 'is_bye' => true,
+                'is_pending_draw' => false,
                 'name' => '[BYE]',
                 'institution' => 'Bebas Babak 1',
                 'id' => null,
                 'draw_number' => null,
                 'seed_number' => null,
+                'slot_number' => $bs,
             ];
         }
 
         // Place seeded participants first
-        $unseeded = [];
+        $drawnUnseeded = [];
         foreach ($poolParticipants as $p) {
             $seedNum = $p['seed_number'] ?? null;
             if (! empty($seedNum) && isset($seedSlots[$seedNum])) {
                 $targetSlot = $seedSlots[$seedNum];
+                $p['slot_number'] = $targetSlot;
+                $p['is_pending_draw'] = false;
                 $slots[$targetSlot] = $p;
             } else {
-                $unseeded[] = $p;
+                // Only participants who have actually been drawn in the spin wheel
+                if (! empty($p['draw_number'])) {
+                    $drawnUnseeded[] = $p;
+                }
             }
         }
 
-        // Sort unseeded by draw_number
-        usort($unseeded, fn ($a, $b) => ($a['draw_number'] ?? 999) <=> ($b['draw_number'] ?? 999));
+        // Sort drawn unseeded by draw_number ascending
+        usort($drawnUnseeded, fn ($a, $b) => ((int) ($a['draw_number'] ?? 999)) <=> ((int) ($b['draw_number'] ?? 999)));
 
         // Fill remaining open slots
         $uIdx = 0;
         for ($s = 1; $s <= $bracketSize; $s++) {
             if ($slots[$s] === null) {
-                if ($uIdx < count($unseeded)) {
-                    $slots[$s] = $unseeded[$uIdx++];
+                if ($uIdx < count($drawnUnseeded)) {
+                    $drawnP = $drawnUnseeded[$uIdx++];
+                    $drawnP['slot_number'] = $s;
+                    $drawnP['is_pending_draw'] = false;
+                    $slots[$s] = $drawnP;
+                } else {
+                    // This slot has not been drawn yet
+                    $slots[$s] = [
+                        'is_bye' => false,
+                        'is_pending_draw' => true,
+                        'name' => '[Menunggu Undian]',
+                        'institution' => 'Slot #'.$s,
+                        'id' => null,
+                        'draw_number' => null,
+                        'seed_number' => null,
+                        'slot_number' => $s,
+                    ];
                 }
             }
         }
 
         // Fetch existing BadmintonMatch records for this competition to overlay live scores & match statuses
-        $existingMatches = BadmintonMatch::where('competition_id', $competition->id)
-            ->where('match_code', 'like', "{$poolKey}-R%")
-            ->get()
-            ->keyBy('match_code');
+        $existingMatches = collect();
+        if (! empty($competition->id)) {
+            try {
+                $existingMatches = BadmintonMatch::where('competition_id', $competition->id)
+                    ->where('match_code', 'like', "{$poolKey}-R%")
+                    ->get()
+                    ->keyBy('match_code');
+            } catch (\Throwable $e) {
+                $existingMatches = collect();
+            }
+        }
 
         $roundNames = [
             1 => $bracketSize === 8 ? 'Perempat Final' : ($bracketSize === 16 ? 'Babak 16 Besar' : ($bracketSize === 32 ? 'Babak 32 Besar' : 'Babak 1')),
@@ -349,6 +382,8 @@ class TournamentBracketController extends Controller
 
             $isBye1 = ! empty($p1['is_bye']);
             $isBye2 = ! empty($p2['is_bye']);
+            $isPending1 = ! empty($p1['is_pending_draw']);
+            $isPending2 = ! empty($p2['is_pending_draw']);
 
             $matchCode = "{$poolKey}-R1-M{$m}";
             $existingMatch = $existingMatches->get($matchCode);
@@ -359,14 +394,16 @@ class TournamentBracketController extends Controller
             if ($existingMatch && $existingMatch->match_status === 'finished') {
                 $status = 'finished';
                 $winner = $existingMatch->winner_team === 1 ? $p1 : ($existingMatch->winner_team === 2 ? $p2 : null);
-            } elseif ($p1 && ! $isBye1 && $isBye2) {
+            } elseif ($p1 && ! $isBye1 && ! $isPending1 && $isBye2) {
                 $winner = $p1;
                 $status = 'bye_advance';
-            } elseif ($p2 && ! $isBye2 && $isBye1) {
+            } elseif ($p2 && ! $isBye2 && ! $isPending2 && $isBye1) {
                 $winner = $p2;
                 $status = 'bye_advance';
             } elseif ($existingMatch && $existingMatch->match_status === 'ongoing') {
                 $status = 'ongoing';
+            } elseif ($isPending1 || $isPending2) {
+                $status = 'pending_draw';
             }
 
             $r1Matches[$m] = [
@@ -529,6 +566,7 @@ class TournamentBracketController extends Controller
         for ($s = 1; $s <= $bracketSize; $s++) {
             $slotData = $slots[$s] ?? ['name' => '', 'slot_number' => $s];
             $isBye = $slotData['is_bye'] ?? false;
+            $isPending = $slotData['is_pending_draw'] ?? false;
             $yCenter = $topMargin + ($s - 0.5) * $slotHeight;
             $slotYPositions[$s] = $yCenter;
 
@@ -539,24 +577,40 @@ class TournamentBracketController extends Controller
             $svg[] = "<text x='".($slotX - 10)."' y='".($yCenter + 4)."' text-anchor='end' font-size='11' font-weight='700' fill='{$subTextColor}'>{$s}</text>";
 
             // Rectangle Box
-            $currentBoxBg = $isBye ? $byeBoxBg : $boxBg;
-            $currentBorder = $isBye ? '#94a3b8' : $strokeColor;
-            $dashAttr = $isBye ? "stroke-dasharray='4 2'" : '';
+            if ($isPending) {
+                $currentBoxBg = $isDark ? '#090d16' : '#f8fafc';
+                $currentBorder = $isDark ? '#334155' : '#cbd5e1';
+                $dashAttr = "stroke-dasharray='3 3'";
+            } elseif ($isBye) {
+                $currentBoxBg = $byeBoxBg;
+                $currentBorder = '#94a3b8';
+                $dashAttr = "stroke-dasharray='4 2'";
+            } else {
+                $currentBoxBg = $boxBg;
+                $currentBorder = $strokeColor;
+                $dashAttr = '';
+            }
             $svg[] = "<rect x='{$slotX}' y='{$boxY}' width='{$slotWidth}' height='{$boxH}' fill='{$currentBoxBg}' stroke='{$currentBorder}' stroke-width='1.5' rx='2' {$dashAttr}/>";
 
             // Player Text
-            $nameText = $slotData['name'] ?? '';
-            $seedText = ! empty($slotData['seed_number']) ? "(S{$slotData['seed_number']}) " : '';
-            $instText = (! empty($slotData['institution']) && ! $isBye) ? ' - '.$slotData['institution'] : '';
-            $fullText = $seedText.$nameText.$instText;
+            if ($isPending) {
+                $displayText = '[Menunggu Undian]';
+                $nameColor = $isDark ? '#475569' : '#94a3b8';
+                $fontStyle = "font-style='italic'";
+            } else {
+                $nameText = $slotData['name'] ?? '';
+                $seedText = ! empty($slotData['seed_number']) ? "(S{$slotData['seed_number']}) " : '';
+                $instText = (! empty($slotData['institution']) && ! $isBye) ? ' - '.$slotData['institution'] : '';
+                $fullText = $seedText.$nameText.$instText;
 
-            if (mb_strlen($fullText) > 25) {
-                $fullText = mb_substr($fullText, 0, 23).'..';
+                if (mb_strlen($fullText) > 25) {
+                    $fullText = mb_substr($fullText, 0, 23).'..';
+                }
+
+                $displayText = htmlspecialchars($fullText, ENT_QUOTES);
+                $nameColor = $isBye ? '#94a3b8' : $textColor;
+                $fontStyle = $isBye ? "font-style='italic'" : '';
             }
-
-            $displayText = htmlspecialchars($fullText, ENT_QUOTES);
-            $nameColor = $isBye ? '#94a3b8' : $textColor;
-            $fontStyle = $isBye ? "font-style='italic'" : '';
             $svg[] = "<text x='".($slotX + 8)."' y='".($yCenter + 4)."' font-size='10' font-weight='600' fill='{$nameColor}' {$fontStyle}>{$displayText}</text>";
         }
 
