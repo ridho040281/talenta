@@ -986,11 +986,11 @@ class TournamentBracketController extends Controller
         $hasPlayoffs = ! empty($playoffs['has_playoffs']) && ! empty($playoffs['matches']);
 
         $isDark = $options['isDark'] ?? false;
-        $slotHeight = $options['slotHeight'] ?? ($bracketSize > 16 ? 32 : ($bracketSize > 8 ? 42 : 54));
-        $slotWidth = $options['slotWidth'] ?? 190;
-        $branchWidth = $options['branchWidth'] ?? 110;
+        $slotHeight = $options['slotHeight'] ?? ($bracketSize > 16 ? 38 : ($bracketSize > 8 ? 46 : 56));
+        $slotWidth = $options['slotWidth'] ?? 240;
+        $branchWidth = $options['branchWidth'] ?? 115;
 
-        $poWidth = $hasPlayoffs ? 180 : 0;
+        $poWidth = $hasPlayoffs ? 205 : 0;
         $leftMargin = ($options['leftMargin'] ?? 45) + $poWidth;
         $topMargin = $options['topMargin'] ?? 52;
 
@@ -1003,8 +1003,8 @@ class TournamentBracketController extends Controller
         $accentColor = '#d97706';
 
         $champLineLength = 35;
-        $champBoxWidth = 140;
-        $champBoxHeight = 34;
+        $champBoxWidth = 155;
+        $champBoxHeight = 36;
         $rightPadding = 40;
 
         $totalHeight = ($bracketSize * $slotHeight) + $topMargin + 40;
@@ -1061,8 +1061,8 @@ class TournamentBracketController extends Controller
             $yCenter = $topMargin + ($s - 0.5) * $slotHeight;
             $slotYPositions[$s] = $yCenter;
 
-            $boxY = $yCenter - ($slotHeight * 0.42);
-            $boxH = $slotHeight * 0.84;
+            $boxY = $yCenter - ($slotHeight * 0.44);
+            $boxH = $slotHeight * 0.88;
 
             // Slot Number (1, 2, ..., 32)
             $svg[] = "<text x='".($slotX - 10)."' y='".($yCenter + 4)."' text-anchor='end' font-size='11' font-weight='700' fill='{$subTextColor}'>{$s}</text>";
@@ -1089,33 +1089,51 @@ class TournamentBracketController extends Controller
                 $currentBorder = $strokeColor;
                 $dashAttr = '';
             }
-            $svg[] = "<rect x='{$slotX}' y='{$boxY}' width='{$slotWidth}' height='{$boxH}' fill='{$currentBoxBg}' stroke='{$currentBorder}' stroke-width='1.5' rx='2' {$dashAttr}/>";
+            $svg[] = "<rect x='{$slotX}' y='{$boxY}' width='{$slotWidth}' height='{$boxH}' fill='{$currentBoxBg}' stroke='{$currentBorder}' stroke-width='1.5' rx='3' {$dashAttr}/>";
 
-            // Player Text
+            // Player Text & Institution (2-Line Clear Layout)
             if ($isPlayoffSlot) {
                 $displayText = htmlspecialchars($slotData['name'] ?? '[Pemenang Play-off]', ENT_QUOTES);
                 $nameColor = '#d97706';
-                $fontStyle = "font-weight='700'";
+                $svg[] = "<text x='".($slotX + 8)."' y='".($yCenter + 4)."' font-size='10' font-weight='700' fill='{$nameColor}'>{$displayText}</text>";
             } elseif ($isPending) {
                 $displayText = '[Menunggu Undian]';
                 $nameColor = $isDark ? '#475569' : '#94a3b8';
-                $fontStyle = "font-style='italic'";
+                $svg[] = "<text x='".($slotX + 8)."' y='".($yCenter + 4)."' font-size='10' font-style='italic' fill='{$nameColor}'>{$displayText}</text>";
+            } elseif ($isBye) {
+                $displayText = '[BYE] Bebas Babak 1';
+                $svg[] = "<text x='".($slotX + 8)."' y='".($yCenter + 4)."' font-size='10' font-style='italic' fill='#94a3b8'>{$displayText}</text>";
             } else {
                 $nameText = $slotData['name'] ?? '';
                 $seedText = ! empty($slotData['seed_number']) ? "(S{$slotData['seed_number']}) " : '';
                 $poBadge = $isPlayoffWinner ? '[PO] ' : '';
-                $instText = (! empty($slotData['institution']) && ! $isBye) ? ' - '.$slotData['institution'] : '';
-                $fullText = $poBadge.$seedText.$nameText.$instText;
-
-                if (mb_strlen($fullText) > 25) {
-                    $fullText = mb_substr($fullText, 0, 23).'..';
+                $fullPlayerName = $poBadge.$seedText.$nameText;
+                if (mb_strlen($fullPlayerName) > 28) {
+                    $fullPlayerName = mb_substr($fullPlayerName, 0, 26).'..';
                 }
 
-                $displayText = htmlspecialchars($fullText, ENT_QUOTES);
-                $nameColor = $isPlayoffWinner ? '#059669' : ($isBye ? '#94a3b8' : $textColor);
-                $fontStyle = $isBye ? "font-style='italic'" : '';
+                $instText = trim($slotData['institution'] ?? '');
+                if (mb_strlen($instText) > 32) {
+                    $instText = mb_substr($instText, 0, 30).'..';
+                }
+
+                $displayName = htmlspecialchars($fullPlayerName, ENT_QUOTES);
+                $displayInst = htmlspecialchars($instText, ENT_QUOTES);
+                $nameColor = $isPlayoffWinner ? '#059669' : $textColor;
+
+                if (! empty($instText)) {
+                    // Two lines: Line 1 Player Name, Line 2 Institution / School
+                    $nameY = $yCenter - 3;
+                    $instY = $yCenter + 10;
+                    $nameSize = ($bracketSize > 16) ? '9.5' : '10.5';
+                    $instSize = ($bracketSize > 16) ? '8' : '9';
+                    $svg[] = "<text x='".($slotX + 8)."' y='{$nameY}' font-size='{$nameSize}' font-weight='700' fill='{$nameColor}'>{$displayName}</text>";
+                    $svg[] = "<text x='".($slotX + 8)."' y='{$instY}' font-size='{$instSize}' font-weight='500' fill='{$subTextColor}'>{$displayInst}</text>";
+                } else {
+                    // Single line
+                    $svg[] = "<text x='".($slotX + 8)."' y='".($yCenter + 4)."' font-size='10' font-weight='700' fill='{$nameColor}'>{$displayName}</text>";
+                }
             }
-            $svg[] = "<text x='".($slotX + 8)."' y='".($yCenter + 4)."' font-size='10' font-weight='600' fill='{$nameColor}' {$fontStyle}>{$displayText}</text>";
         }
 
         // 2.5 Draw Play-off Wing (Left Section)
@@ -1124,8 +1142,8 @@ class TournamentBracketController extends Controller
                 $targetSlot = $po['target_slot'] ?? $bracketSize;
                 $targetY = $slotYPositions[$targetSlot] ?? ($topMargin + ($targetSlot - 0.5) * $slotHeight);
 
-                $poBoxW = 120;
-                $poBoxH = max(20, $slotHeight * 0.72);
+                $poBoxW = 145;
+                $poBoxH = max(26, $slotHeight * 0.85);
                 $poX = $leftMargin - $poWidth + 8;
                 $poY1 = $targetY - ($slotHeight * 0.75);
                 $poY2 = $targetY + ($slotHeight * 0.75);
@@ -1137,15 +1155,6 @@ class TournamentBracketController extends Controller
                 $isPendingT2 = empty($team2['name']) || ! empty($team2['is_pending_draw']);
                 $poWinnerTeam = $po['existing_match']?->winner_team;
 
-                $t1Name = $isPendingT1 ? '[Menunggu Undian]' : ($team1['name'] ?? '');
-                $t2Name = $isPendingT2 ? '[Menunggu Undian]' : ($team2['name'] ?? '');
-                if (mb_strlen($t1Name) > 16) {
-                    $t1Name = mb_substr($t1Name, 0, 14).'..';
-                }
-                if (mb_strlen($t2Name) > 16) {
-                    $t2Name = mb_substr($t2Name, 0, 14).'..';
-                }
-
                 $box1Y = $poY1 - ($poBoxH / 2);
                 $box2Y = $poY2 - ($poBoxH / 2);
 
@@ -1155,12 +1164,46 @@ class TournamentBracketController extends Controller
                 $fill2 = ($poWinnerTeam === 2) ? ($isDark ? '#064e3b' : '#ecfdf5') : $boxBg;
 
                 // Box 1
-                $svg[] = "<rect x='{$poX}' y='{$box1Y}' width='{$poBoxW}' height='{$poBoxH}' fill='{$fill1}' stroke='{$border1}' stroke-width='1.4' rx='2'/>";
-                $svg[] = "<text x='".($poX + 6)."' y='".($poY1 + 4)."' font-size='9' font-weight='600' fill='{$textColor}'>".htmlspecialchars($t1Name, ENT_QUOTES).'</text>';
+                $svg[] = "<rect x='{$poX}' y='{$box1Y}' width='{$poBoxW}' height='{$poBoxH}' fill='{$fill1}' stroke='{$border1}' stroke-width='1.4' rx='3'/>";
+                if ($isPendingT1) {
+                    $svg[] = "<text x='".($poX + 6)."' y='".($poY1 + 4)."' font-size='8.5' font-style='italic' fill='".($isDark ? '#475569' : '#94a3b8')."'>[Menunggu Undian]</text>";
+                } else {
+                    $t1Name = $team1['name'] ?? '';
+                    if (mb_strlen($t1Name) > 20) {
+                        $t1Name = mb_substr($t1Name, 0, 18).'..';
+                    }
+                    $t1Inst = trim($team1['institution'] ?? '');
+                    if (mb_strlen($t1Inst) > 22) {
+                        $t1Inst = mb_substr($t1Inst, 0, 20).'..';
+                    }
+                    if (! empty($t1Inst)) {
+                        $svg[] = "<text x='".($poX + 6)."' y='".($poY1 - 2)."' font-size='8.5' font-weight='700' fill='{$textColor}'>".htmlspecialchars($t1Name, ENT_QUOTES).'</text>';
+                        $svg[] = "<text x='".($poX + 6)."' y='".($poY1 + 9)."' font-size='7.5' font-weight='500' fill='{$subTextColor}'>".htmlspecialchars($t1Inst, ENT_QUOTES).'</text>';
+                    } else {
+                        $svg[] = "<text x='".($poX + 6)."' y='".($poY1 + 4)."' font-size='8.5' font-weight='700' fill='{$textColor}'>".htmlspecialchars($t1Name, ENT_QUOTES).'</text>';
+                    }
+                }
 
                 // Box 2
-                $svg[] = "<rect x='{$poX}' y='{$box2Y}' width='{$poBoxW}' height='{$poBoxH}' fill='{$fill2}' stroke='{$border2}' stroke-width='1.4' rx='2'/>";
-                $svg[] = "<text x='".($poX + 6)."' y='".($poY2 + 4)."' font-size='9' font-weight='600' fill='{$textColor}'>".htmlspecialchars($t2Name, ENT_QUOTES).'</text>';
+                $svg[] = "<rect x='{$poX}' y='{$box2Y}' width='{$poBoxW}' height='{$poBoxH}' fill='{$fill2}' stroke='{$border2}' stroke-width='1.4' rx='3'/>";
+                if ($isPendingT2) {
+                    $svg[] = "<text x='".($poX + 6)."' y='".($poY2 + 4)."' font-size='8.5' font-style='italic' fill='".($isDark ? '#475569' : '#94a3b8')."'>[Menunggu Undian]</text>";
+                } else {
+                    $t2Name = $team2['name'] ?? '';
+                    if (mb_strlen($t2Name) > 20) {
+                        $t2Name = mb_substr($t2Name, 0, 18).'..';
+                    }
+                    $t2Inst = trim($team2['institution'] ?? '');
+                    if (mb_strlen($t2Inst) > 22) {
+                        $t2Inst = mb_substr($t2Inst, 0, 20).'..';
+                    }
+                    if (! empty($t2Inst)) {
+                        $svg[] = "<text x='".($poX + 6)."' y='".($poY2 - 2)."' font-size='8.5' font-weight='700' fill='{$textColor}'>".htmlspecialchars($t2Name, ENT_QUOTES).'</text>';
+                        $svg[] = "<text x='".($poX + 6)."' y='".($poY2 + 9)."' font-size='7.5' font-weight='500' fill='{$subTextColor}'>".htmlspecialchars($t2Inst, ENT_QUOTES).'</text>';
+                    } else {
+                        $svg[] = "<text x='".($poX + 6)."' y='".($poY2 + 4)."' font-size='8.5' font-weight='700' fill='{$textColor}'>".htmlspecialchars($t2Name, ENT_QUOTES).'</text>';
+                    }
+                }
 
                 // Connecting lines to Main Draw target slot
                 $lineX1 = $poX + $poBoxW;
@@ -1204,8 +1247,8 @@ class TournamentBracketController extends Controller
                 $idx1 = ($m * 2) + 1;
                 $idx2 = ($m * 2) + 2;
 
-                $y1 = $currentStems[$idx1]['y'];
-                $y2 = $currentStems[$idx2]['y'];
+                $y1 = $currentStems[$idx1]['y'] ?? 0;
+                $y2 = $currentStems[$idx2]['y'] ?? $y1;
                 $yMid = ($y1 + $y2) / 2;
 
                 // Horizontal arm from top
