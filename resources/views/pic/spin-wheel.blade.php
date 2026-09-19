@@ -148,26 +148,21 @@
                 <label class="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-400 shrink-0 hidden sm:inline">
                     Kategori:
                 </label>
-                <div class="relative">
-                    <select x-model="activeClassKey" 
-                            @change="switchClass($event.target.value)"
-                            :disabled="isSpinning"
-                            class="bg-slate-950 border border-slate-700/80 hover:border-amber-500/60 text-amber-300 font-bold text-xs rounded-xl pl-3 pr-8 py-2 outline-none focus:ring-2 focus:ring-amber-500/40 cursor-pointer shadow-inner appearance-none disabled:opacity-50 transition">
-                        @foreach($classGroups as $cKey => $cPools)
-                            @php
-                                $firstP = $cPools->first();
-                                $cLabel = $firstP['class_label'] ?? $firstP['title'];
-                                $cTotal = $cPools->sum(fn($p) => count($p['participants']));
-                            @endphp
-                            <option value="{{ $cKey }}" class="bg-slate-900 text-white font-semibold">
-                                {{ $cLabel }} ({{ $cTotal }} Peserta)
-                            </option>
-                        @endforeach
-                    </select>
-                    <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-amber-400/70">
-                        <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
-                    </div>
-                </div>
+                <select x-model="activeClassKey" 
+                        @change="switchClass($event.target.value)"
+                        :disabled="isSpinning"
+                        class="bg-slate-950 border border-slate-700/80 hover:border-amber-500/60 text-amber-300 font-bold text-xs rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-amber-500/40 cursor-pointer shadow-inner disabled:opacity-50 transition">
+                    @foreach($classGroups as $cKey => $cPools)
+                        @php
+                            $firstP = $cPools->first();
+                            $cLabel = $firstP['class_label'] ?? $firstP['title'];
+                            $cTotal = $cPools->sum(fn($p) => count($p['participants']));
+                        @endphp
+                        <option value="{{ $cKey }}" class="bg-slate-900 text-white font-semibold">
+                            {{ $cLabel }} ({{ $cTotal }} Peserta)
+                        </option>
+                    @endforeach
+                </select>
             </div>
 
             <!-- Divider Vertical -->
