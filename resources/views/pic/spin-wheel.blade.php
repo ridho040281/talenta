@@ -129,96 +129,100 @@
         </div>
     </div>
 
-    <!-- Category & Sector Navigation Bar (Kategori Kelas di Atas, PA/PI di Bawah Sesuai Kategori Aktif) -->
+    <!-- Category & Sector Navigation Bar (Option 2: 1 Baris Ramping Terpadu) -->
     @if(count($pools) > 1)
-    <div class="bg-slate-900 rounded-3xl p-4 sm:px-6 sm:py-5 border border-slate-800 shadow-xl space-y-4">
-        <!-- BARIS 1 (ATAS): PILIH KATEGORI KELAS + STATUS & RESET -->
-        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+    @php
+        $classGroups = collect($pools)->groupBy('class_key');
+    @endphp
+    <div class="bg-slate-900/95 backdrop-blur-md rounded-2xl px-4 py-2.5 sm:px-5 border border-slate-800 shadow-xl flex flex-wrap items-center justify-between gap-3">
+        
+        <!-- Left: Dropdown Kategori Kelas + Toggle Sektor PA / PI -->
+        <div class="flex flex-wrap items-center gap-2.5 sm:gap-3.5">
             
-            <!-- Left: Kategori Kelas Selector -->
-            <div class="flex items-center gap-3 flex-wrap">
-                <div class="flex items-center gap-2 shrink-0">
-                    <div class="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0 text-amber-400">
-                        <i data-lucide="layers" class="w-4 h-4"></i>
-                    </div>
-                    <span class="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-400">Pilih Kategori:</span>
+            @if($classGroups->count() > 1)
+            <!-- Dropdown Kategori Kelas -->
+            <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0 text-amber-400">
+                    <i data-lucide="layers" class="w-3.5 h-3.5"></i>
                 </div>
+                <label class="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-400 shrink-0 hidden sm:inline">
+                    Kategori:
+                </label>
+                <div class="relative">
+                    <select x-model="activeClassKey" 
+                            @change="switchClass($event.target.value)"
+                            :disabled="isSpinning"
+                            class="bg-slate-950 border border-slate-700/80 hover:border-amber-500/60 text-amber-300 font-bold text-xs rounded-xl pl-3 pr-8 py-2 outline-none focus:ring-2 focus:ring-amber-500/40 cursor-pointer shadow-inner appearance-none disabled:opacity-50 transition">
+                        @foreach($classGroups as $cKey => $cPools)
+                            @php
+                                $firstP = $cPools->first();
+                                $cLabel = $firstP['class_label'] ?? $firstP['title'];
+                                $cTotal = $cPools->sum(fn($p) => count($p['participants']));
+                            @endphp
+                            <option value="{{ $cKey }}" class="bg-slate-900 text-white font-semibold">
+                                {{ $cLabel }} ({{ $cTotal }} Peserta)
+                            </option>
+                        @endforeach
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-amber-400/70">
+                        <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+                    </div>
+                </div>
+            </div>
 
-                <!-- Kategori Kelas Pills -->
-                <div class="inline-flex p-1 bg-slate-950 rounded-2xl border border-slate-800 shadow-inner gap-1 flex-wrap">
-                    <template x-for="cls in availableClasses" :key="cls.key">
+            <!-- Divider Vertical -->
+            <div class="hidden sm:block h-6 w-px bg-slate-800"></div>
+            @endif
+
+            <!-- Segmented Sektor Toggle Buttons (PA vs PI) -->
+            <div class="flex items-center gap-2">
+                <span class="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-400 shrink-0 hidden md:inline">
+                    Sektor:
+                </span>
+                <div class="inline-flex p-1 bg-slate-950 rounded-xl border border-slate-800/90 shadow-inner gap-1">
+                    <template x-for="sec in availableSectors" :key="sec.key">
                         <button type="button" 
-                                @click="switchClass(cls.key)"
-                                :disabled="isSpinning"
-                                class="px-3.5 py-2 rounded-xl font-bold text-xs transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
-                                :class="activeClassKey === cls.key 
-                                    ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black shadow-lg shadow-amber-500/25 border border-amber-400/50 ring-1 ring-amber-400/30' 
-                                    : 'text-slate-300 hover:text-white hover:bg-slate-900 border border-transparent'">
-                            <span x-text="cls.label"></span>
-                            <span class="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold"
-                                  :class="activeClassKey === cls.key ? 'bg-slate-950/30 text-slate-950 font-black' : 'bg-slate-800 text-slate-400'"
-                                  x-text="cls.totalParticipants + ' Peserta'"></span>
+                                @click="switchSector(sec.key)"
+                                :disabled="isSpinning || !sec.exists || sec.count === 0"
+                                class="px-3.5 py-1.5 rounded-lg font-black text-xs transition-all duration-200 flex items-center gap-2 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                                :class="activeSector === sec.key 
+                                    ? (sec.key === 'PA' 
+                                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/30 border border-blue-400/60 ring-1 ring-blue-400/40' 
+                                        : (sec.key === 'PI' 
+                                            ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-md shadow-rose-500/30 border border-rose-400/60 ring-1 ring-rose-400/40' 
+                                            : 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-md shadow-amber-500/30 border border-amber-400/60 ring-1 ring-amber-400/40')) 
+                                    : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'">
+                            <span x-text="sec.icon" class="text-sm"></span>
+                            <span x-text="sec.label"></span>
+                            <span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-black"
+                                  :class="activeSector === sec.key ? 'bg-black/35 text-white' : 'bg-slate-900 text-slate-300 border border-slate-800'"
+                                  x-text="sec.count + ' Peserta'"></span>
+                            <span x-show="sec.pool && getPoolStats(sec.pool.key).undrawn === 0" class="text-emerald-400 text-xs font-black" title="Selesai Diundi">✓</span>
                         </button>
                     </template>
                 </div>
             </div>
-
-            <!-- Right: Active Status & Reset Kategori -->
-            <div class="flex items-center justify-between lg:justify-end gap-3.5 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-800">
-                <div class="text-left lg:text-right">
-                    <span class="text-[10px] text-slate-400 font-mono block">Status Undian:</span>
-                    <span class="text-xs font-mono font-bold" 
-                          :class="getPoolStats(activePoolKey).undrawn === 0 ? 'text-emerald-400' : (getPoolStats(activePoolKey).drawn === 0 ? 'text-slate-300' : 'text-amber-400')"
-                          x-text="getPoolStats(activePoolKey).drawn === 0 
-                              ? ('Belum Diundi • ' + getPoolStats(activePoolKey).undrawn + ' Peserta') 
-                              : (getPoolStats(activePoolKey).undrawn === 0 
-                                  ? ('Selesai Diundi (' + getPoolStats(activePoolKey).drawn + ' Peserta)') 
-                                  : (getPoolStats(activePoolKey).drawn + ' Terundi • ' + getPoolStats(activePoolKey).undrawn + ' Tersisa'))"></span>
-                </div>
-                <button type="button" 
-                        @click="resetActivePool()" 
-                        :disabled="activeDrawnParticipants.length === 0 || isSpinning"
-                        class="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold disabled:opacity-25 disabled:cursor-not-allowed transition cursor-pointer"
-                        title="Reset nomor undian khusus kategori ini">
-                    Reset Kategori
-                </button>
-            </div>
         </div>
 
-        <!-- BARIS 2 (BAWAH): PILIH SEKTOR PA / PI (JUMLAH MENGIKUTI KATEGORI KELAS YANG AKTIF) -->
-        <div class="pt-3 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div class="flex items-center gap-2 shrink-0">
-                <span class="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-400">
-                    Sektor:
-                </span>
-                <span class="text-[11px] font-mono text-amber-400 font-bold">
-                    [ <span x-text="activePool?.class_label || activePool?.category_label || 'Kategori Terpilih'"></span> ]
-                </span>
+        <!-- Right: Status Undian & Reset Kategori -->
+        <div class="flex items-center gap-3 shrink-0 ml-auto">
+            <div class="text-right hidden sm:block">
+                <span class="text-[10px] text-slate-500 font-mono block leading-none mb-0.5">Status Undian:</span>
+                <span class="text-xs font-mono font-bold" 
+                      :class="getPoolStats(activePoolKey).undrawn === 0 ? 'text-emerald-400' : (getPoolStats(activePoolKey).drawn === 0 ? 'text-slate-400' : 'text-amber-400')"
+                      x-text="getPoolStats(activePoolKey).drawn === 0 
+                          ? ('Belum Diundi • ' + getPoolStats(activePoolKey).undrawn + ' Peserta') 
+                          : (getPoolStats(activePoolKey).undrawn === 0 
+                              ? ('Selesai Diundi (' + getPoolStats(activePoolKey).drawn + ')') 
+                              : (getPoolStats(activePoolKey).drawn + ' Terundi • ' + getPoolStats(activePoolKey).undrawn + ' Sisa'))"></span>
             </div>
-
-            <!-- Sektor Toggle Buttons (PA vs PI) -->
-            <div class="flex items-center gap-2.5 flex-wrap">
-                <template x-for="sec in availableSectors" :key="sec.key">
-                    <button type="button" 
-                            @click="switchSector(sec.key)"
-                            :disabled="isSpinning || !sec.exists || sec.count === 0"
-                            class="px-4 py-2 rounded-xl font-black text-xs transition flex items-center gap-2.5 border cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed"
-                            :class="activeSector === sec.key 
-                                ? (sec.key === 'PA' 
-                                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 border-blue-400/60 ring-2 ring-blue-400/40' 
-                                    : (sec.key === 'PI' 
-                                        ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-lg shadow-rose-500/30 border-rose-400/60 ring-2 ring-rose-400/40' 
-                                        : 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-lg shadow-amber-500/30 border-amber-400/60 ring-2 ring-amber-400/40')) 
-                                : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white hover:bg-slate-900'">
-                        <span x-text="sec.icon" class="text-base"></span>
-                        <span x-text="sec.label"></span>
-                        <span class="px-2 py-0.5 rounded-md text-[11px] font-mono font-black"
-                              :class="activeSector === sec.key ? 'bg-black/30 text-white' : 'bg-slate-900 text-slate-300 border border-slate-800'"
-                              x-text="sec.count + ' Peserta'"></span>
-                        <span x-show="sec.pool && getPoolStats(sec.pool.key).undrawn === 0" class="text-emerald-400 text-xs font-black" title="Selesai Diundi">✓</span>
-                    </button>
-                </template>
-            </div>
+            <button type="button" 
+                    @click="resetActivePool()" 
+                    :disabled="activeDrawnParticipants.length === 0 || isSpinning"
+                    class="px-3.5 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold disabled:opacity-25 disabled:cursor-not-allowed transition cursor-pointer shrink-0"
+                    title="Reset nomor undian kategori aktif">
+                Reset Kategori
+            </button>
         </div>
     </div>
     @endif
@@ -1087,6 +1091,9 @@
                     this.calculateAvailableSlots();
                     this.drawWheel();
                 }
+                this.$nextTick(() => {
+                    if (window.lucide) window.lucide.createIcons();
+                });
             },
 
             switchPool(key) {
