@@ -53,7 +53,7 @@
                     <div class="w-10 h-10 rounded-2xl bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center">
                         <i data-lucide="scale" class="w-5 h-5"></i>
                     </div>
-                    <h2 class="text-lg sm:text-xl font-black text-white font-display">Kriteria Penilaian Dewan Juri</h2>
+                    <h2 class="text-lg sm:text-xl font-black text-white font-display">Kriteria Penilaian {{ $competition->judge_panel_title }}</h2>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">

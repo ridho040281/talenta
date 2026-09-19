@@ -58,6 +58,68 @@ class User extends Authenticatable
         return $this->role === 'juri';
     }
 
+    public function getJudgeRoleDisplayAttribute(): string
+    {
+        if ($this->role !== 'juri') {
+            return match ($this->role) {
+                'superadmin' => '👑 Super Admin',
+                'panitia' => '🎗️ Panitia Pelaksana',
+                'pic_lomba' => '🛡️ PIC Lomba',
+                default => '🎓 Peserta'
+            };
+        }
+
+        $judged = $this->relationLoaded('judgedCompetitions')
+            ? $this->judgedCompetitions
+            : $this->judgedCompetitions()->with('category')->get();
+
+        if ($judged->isEmpty()) {
+            return '⚖️ Dewan Juri / Wasit';
+        }
+
+        $allSports = $judged->every(fn ($c) => $c->isSports());
+        $allNonSports = $judged->every(fn ($c) => ! $c->isSports());
+
+        if ($allSports) {
+            return '🏁 Wasit';
+        } elseif ($allNonSports) {
+            return '⚖️ Dewan Juri';
+        }
+
+        return '⚖️ Juri & Wasit';
+    }
+
+    public function getJudgeTitleAttribute(): string
+    {
+        if ($this->role !== 'juri') {
+            return match ($this->role) {
+                'superadmin' => 'Super Administrator',
+                'panitia' => 'Panitia Pelaksana',
+                'pic_lomba' => 'PIC Koordinator',
+                default => 'Pendaftar Resmi'
+            };
+        }
+
+        $judged = $this->relationLoaded('judgedCompetitions')
+            ? $this->judgedCompetitions
+            : $this->judgedCompetitions()->with('category')->get();
+
+        if ($judged->isEmpty()) {
+            return 'Dewan Juri / Wasit';
+        }
+
+        $allSports = $judged->every(fn ($c) => $c->isSports());
+        $allNonSports = $judged->every(fn ($c) => ! $c->isSports());
+
+        if ($allSports) {
+            return 'Wasit Pertandingan';
+        } elseif ($allNonSports) {
+            return 'Dewan Juri';
+        }
+
+        return 'Dewan Juri & Wasit';
+    }
+
     public function isParticipant(): bool
     {
         return $this->role === 'peserta';

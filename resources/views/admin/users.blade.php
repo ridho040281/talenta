@@ -160,23 +160,18 @@
                                     'superadmin' => 'bg-[#7A5AF8]/15 text-[#A594FD] border border-[#7A5AF8]/30',
                                     'panitia' => 'bg-amber-500/15 text-amber-300 border border-amber-500/30',
                                     'pic_lomba' => 'bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30',
-                                    'juri' => 'bg-[#FF58D5]/15 text-[#FFA0E7] border border-[#FF58D5]/30',
+                                    'juri' => ($u->judge_role_display === '🏁 Wasit' ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30' : 'bg-[#FF58D5]/15 text-[#FFA0E7] border border-[#FF58D5]/30'),
                                     default => 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
                                 } }}">
-                                    {{ match($u->role) {
-                                        'superadmin' => '👑 Super Admin',
-                                        'panitia' => '🎗️ Panitia Pelaksana',
-                                        'pic_lomba' => '🛡️ PIC Lomba',
-                                        'juri' => '⚖️ Dewan Juri',
-                                        default => '🎓 Peserta'
-                                    } }}
+                                    {{ $u->judge_role_display }}
                                 </span>
                                 @if($u->role === 'juri')
                                     <div class="mt-1 flex flex-wrap gap-1 items-center justify-center max-w-[200px] mx-auto">
                                         @forelse($u->judgedCompetitions as $jc)
-                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[#7A5AF8]/15 text-[#C7D2FE] border border-[#7A5AF8]/30 font-bold text-[9px]" title="{{ $jc->name }} ({{ $jc->category->name ?? '' }})">
-                                                <span class="w-1 h-1 rounded-full bg-[#A594FD]"></span>
+                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md {{ $jc->isSports() ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30' : 'bg-[#7A5AF8]/15 text-[#C7D2FE] border border-[#7A5AF8]/30' }} font-bold text-[9px]" title="{{ $jc->name }} ({{ $jc->isSports() ? 'Wasit' : 'Dewan Juri' }})">
+                                                <span class="w-1 h-1 rounded-full {{ $jc->isSports() ? 'bg-amber-400' : 'bg-[#A594FD]' }}"></span>
                                                 <span class="truncate max-w-[120px]">{{ $jc->code ?: $jc->name }}</span>
+                                                <span class="text-[8px] opacity-75 font-mono">({{ $jc->isSports() ? 'Wasit' : 'Juri' }})</span>
                                             </span>
                                         @empty
                                             <span class="text-[9px] text-amber-400/80 italic">Belum ada cabang</span>
@@ -424,11 +419,16 @@
                         <p class="text-[11px] text-slate-400">Pilih satu atau lebih cabang lomba yang menjadi wewenang juri ini (menu juri akan menyesuaikan cabang yang dipilih):</p>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-700 pt-1">
                             @foreach($competitions as $comp)
-                                <label class="flex items-start gap-2.5 p-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] cursor-pointer transition select-none">
+                                <label class="flex items-start gap-2.5 p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] cursor-pointer transition select-none">
                                     <input type="checkbox" name="competition_ids[]" value="{{ $comp->id }}" x-model="selectedCompetitions" class="mt-0.5 rounded text-[#7A5AF8] focus:ring-[#7A5AF8]/30 w-4 h-4 bg-[#161F30] border-white/20">
                                     <div class="overflow-hidden min-w-0 flex-1">
-                                        <span class="text-white font-bold block truncate text-xs">{{ $comp->name }}</span>
-                                        <span class="text-[10px] text-slate-400 font-mono">{{ $comp->category->name ?? '' }} ({{ $comp->code }})</span>
+                                        <div class="flex items-center justify-between gap-1">
+                                            <span class="text-white font-bold block truncate text-xs">{{ $comp->name }}</span>
+                                            <span class="text-[9px] px-1.5 py-0.2 rounded font-bold shrink-0 {{ $comp->isSports() ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30' : 'bg-[#7A5AF8]/15 text-[#A594FD] border border-[#7A5AF8]/30' }}">
+                                                {{ $comp->isSports() ? 'Wasit' : 'Juri' }}
+                                            </span>
+                                        </div>
+                                        <span class="text-[10px] text-slate-400 font-mono block mt-0.5">{{ $comp->category->name ?? '' }} ({{ $comp->code }})</span>
                                     </div>
                                 </label>
                             @endforeach
@@ -539,11 +539,16 @@
                         <p class="text-[11px] text-slate-400">Pilih satu atau lebih cabang lomba yang menjadi wewenang juri ini (menu juri akan menyesuaikan cabang yang dipilih):</p>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-700 pt-1">
                             @foreach($competitions as $comp)
-                                <label class="flex items-start gap-2.5 p-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] cursor-pointer transition select-none">
+                                <label class="flex items-start gap-2.5 p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] cursor-pointer transition select-none">
                                     <input type="checkbox" name="competition_ids[]" value="{{ $comp->id }}" x-model="newCompetitions" class="mt-0.5 rounded text-[#7A5AF8] focus:ring-[#7A5AF8]/30 w-4 h-4 bg-[#161F30] border-white/20">
                                     <div class="overflow-hidden min-w-0 flex-1">
-                                        <span class="text-white font-bold block truncate text-xs">{{ $comp->name }}</span>
-                                        <span class="text-[10px] text-slate-400 font-mono">{{ $comp->category->name ?? '' }} ({{ $comp->code }})</span>
+                                        <div class="flex items-center justify-between gap-1">
+                                            <span class="text-white font-bold block truncate text-xs">{{ $comp->name }}</span>
+                                            <span class="text-[9px] px-1.5 py-0.2 rounded font-bold shrink-0 {{ $comp->isSports() ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30' : 'bg-[#7A5AF8]/15 text-[#A594FD] border border-[#7A5AF8]/30' }}">
+                                                {{ $comp->isSports() ? 'Wasit' : 'Juri' }}
+                                            </span>
+                                        </div>
+                                        <span class="text-[10px] text-slate-400 font-mono block mt-0.5">{{ $comp->category->name ?? '' }} ({{ $comp->code }})</span>
                                     </div>
                                 </label>
                             @endforeach

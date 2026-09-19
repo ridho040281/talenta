@@ -16,13 +16,7 @@ class OfficialReportController extends Controller
      */
     public static function isSportsCompetition(Competition $comp): bool
     {
-        $code = strtoupper($comp->code ?? '');
-        $slug = strtolower($comp->category?->slug ?? '');
-        $catName = strtolower($comp->category?->name ?? '');
-
-        return in_array($code, ['BLT', 'TMJ', 'CTR'])
-            || $slug === 'olahraga'
-            || str_contains($catName, 'olahraga');
+        return $comp->isSports();
     }
 
     /**

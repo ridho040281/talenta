@@ -1,7 +1,10 @@
-@extends('layouts.admin')
+@php
+    $isSports = $competition->isSports();
+    $roleName = $isSports ? 'Wasit' : 'Dewan Juri';
+@endphp
 
-@section('title', 'Lembar Penilaian - ' . $competition->name)
-@section('page_title', 'Lembar Penilaian Juri Digital')
+@section('title', 'Lembar ' . ($isSports ? 'Skor Wasit' : 'Penilaian Dewan Juri') . ' - ' . $competition->name)
+@section('page_title', 'Lembar ' . ($isSports ? 'Skor Wasit Digital' : 'Penilaian Juri Digital'))
 
 @section('content')
 <div class="space-y-8" x-data="scoringApp()">
@@ -12,6 +15,9 @@
             <div class="flex items-center gap-2">
                 <span class="px-3 py-1 text-xs font-black uppercase tracking-wider rounded-xl bg-[#7A5AF8]/15 text-[#A594FD] border border-[#7A5AF8]/30">
                     {{ $competition->category->name }}
+                </span>
+                <span class="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-md {{ $isSports ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30' : 'bg-purple-500/15 text-purple-300 border border-purple-500/30' }}">
+                    {{ $isSports ? '🏁 Wasit' : '⚖️ Dewan Juri' }}
                 </span>
                 @if($competition->is_live_score)
                     <span class="px-2.5 py-1 text-[11px] font-black rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 inline-flex items-center gap-1.5 shadow-sm shadow-emerald-500/20">
@@ -27,7 +33,7 @@
             </div>
             <h2 class="text-2xl sm:text-3xl font-black text-white tracking-tight font-display">{{ $competition->name }}</h2>
             <p class="text-xs text-slate-400">
-                Dewan Juri: <strong class="text-[#84D0FF]">{{ $user->name }}</strong> • Urutan Tampil: <strong class="text-white font-mono">{{ $participants->count() }} Peserta Sah</strong>
+                {{ $roleName }}: <strong class="text-[#84D0FF]">{{ $user->name }}</strong> • Urutan Tampil: <strong class="text-white font-mono">{{ $participants->count() }} Peserta Sah</strong>
             </p>
         </div>
 
@@ -133,12 +139,12 @@
                                         {{ number_format($existingScore->total_score, 2) }}
                                     </span>
                                     <span class="text-[10px] font-bold uppercase tracking-wider block {{ $isLocked ? 'text-emerald-400' : 'text-amber-300' }}">
-                                        {{ $isLocked ? '🔒 Nilai Terkunci' : '📝 Draft' }}
+                                        {{ $isLocked ? ($isSports ? '🔒 Skor Terkunci' : '🔒 Nilai Terkunci') : '📝 Draft' }}
                                     </span>
                                 </div>
                             @else
                                 <span class="px-3 py-1 rounded-full text-xs font-bold bg-white/[0.04] text-slate-400 border border-white/[0.08]">
-                                    Belum Dinilai
+                                    {{ $isSports ? 'Belum Diskor' : 'Belum Dinilai' }}
                                 </span>
                             @endif
 
@@ -181,20 +187,20 @@
 
                             <!-- Notes / Feedback Input -->
                             <div>
-                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Catatan / Ulasan Dewan Juri</label>
-                                <textarea name="notes" rows="2" placeholder="Tuliskan catatan teknis, saran penampilan, atau evaluasi peserta..." class="block w-full px-4 py-3 rounded-xl border border-white/[0.12] focus:border-[#7A5AF8] focus:ring-2 focus:ring-[#7A5AF8]/30 text-xs text-slate-200 bg-slate-950/80 placeholder:text-slate-600 outline-none transition">{{ old('notes', $existingScore?->notes) }}</textarea>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Catatan / Ulasan {{ $roleName }}</label>
+                                <textarea name="notes" rows="2" placeholder="Tuliskan catatan teknis {{ $isSports ? 'pertandingan' : 'penampilan' }}, evaluasi peserta, atau masukan {{ strtolower($roleName) }}..." class="block w-full px-4 py-3 rounded-xl border border-white/[0.12] focus:border-[#7A5AF8] focus:ring-2 focus:ring-[#7A5AF8]/30 text-xs text-slate-200 bg-slate-950/80 placeholder:text-slate-600 outline-none transition">{{ old('notes', $existingScore?->notes) }}</textarea>
                             </div>
 
                             <!-- Lock Checkbox & Submit Buttons -->
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
                                 <label class="flex items-center gap-3 cursor-pointer text-xs font-bold text-amber-300 bg-amber-500/10 hover:bg-amber-500/15 px-4 py-3 rounded-2xl border border-amber-500/30 transition">
                                     <input type="checkbox" name="is_locked" value="1" {{ ($existingScore && $existingScore->is_locked) ? 'checked' : '' }} class="w-4 h-4 rounded text-amber-500 focus:ring-amber-400 bg-slate-950 border-amber-500/40">
-                                    <span>Kunci Nilai Ini (Finalisasi & Publish ke Scoreboard)</span>
+                                    <span>Kunci {{ $isSports ? 'Skor' : 'Nilai' }} Ini (Finalisasi & Publish ke Scoreboard)</span>
                                 </label>
 
                                 <button type="submit" class="gradient-btn px-8 py-3 rounded-2xl text-white font-black text-xs tracking-wider uppercase shadow-lg shadow-[#7A5AF8]/25 hover:scale-[1.01] transition flex items-center justify-center gap-2 cursor-pointer">
                                     <i data-lucide="save" class="w-4 h-4 text-white"></i>
-                                    <span>Simpan Nilai Peserta</span>
+                                    <span>Simpan {{ $isSports ? 'Skor Wasit' : 'Nilai Peserta' }}</span>
                                 </button>
                             </div>
 

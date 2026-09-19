@@ -990,6 +990,32 @@ class Competition extends Model
         return $this->hasMany(DrawAllocation::class);
     }
 
+    public function isSports(): bool
+    {
+        $code = strtoupper($this->code ?? '');
+        $slug = strtolower($this->category?->slug ?? '');
+        $catName = strtolower($this->category?->name ?? '');
+        $compName = strtolower($this->name ?? '');
+
+        return in_array($code, ['BLT', 'TMJ', 'CTR'])
+            || $slug === 'olahraga'
+            || str_contains($catName, 'olahraga')
+            || str_contains($compName, 'catur')
+            || str_contains($compName, 'bulu tangkis')
+            || str_contains($compName, 'badminton')
+            || str_contains($compName, 'tenis meja');
+    }
+
+    public function getJudgeRoleTitleAttribute(): string
+    {
+        return $this->isSports() ? 'Wasit' : 'Dewan Juri';
+    }
+
+    public function getJudgePanelTitleAttribute(): string
+    {
+        return $this->isSports() ? 'Dewan Wasit' : 'Dewan Juri';
+    }
+
     public function isIndividual(): bool
     {
         return $this->type === 'individu';

@@ -592,13 +592,18 @@
             @if(auth()->user()->role === 'juri')
                 @php
                     $judgedComps = auth()->user()->judgedCompetitions()->with('category')->get();
+                    $hasSports = $judgedComps->contains(fn($c) => $c->isSports());
+                    $hasNonSports = $judgedComps->contains(fn($c) => !$c->isSports());
                     $hasBlt = auth()->user()->managesBadminton() || $judgedComps->contains(fn($c) => $c->code === 'BLT' || str_contains(strtolower($c->name ?? ''), 'bulu tangkis'));
+
+                    $menuTitle = ($hasSports && !$hasNonSports) ? 'Menu Wasit Olahraga' : ((!$hasSports && $hasNonSports) ? 'Menu Dewan Juri' : 'Menu Dewan Juri & Wasit');
+                    $dashboardLabel = ($hasSports && !$hasNonSports) ? 'Dashboard Wasit' : ((!$hasSports && $hasNonSports) ? 'Dashboard Juri' : 'Dashboard Juri & Wasit');
                 @endphp
                 <div class="space-y-1">
-                    <div class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Menu Dewan Juri & Wasit</div>
+                    <div class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">{{ $menuTitle }}</div>
                     <a href="{{ route('juri.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('juri.dashboard') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
                         <i data-lucide="layout-dashboard" class="w-4 h-4 {{ request()->routeIs('juri.dashboard') ? 'text-white' : 'text-[#7A5AF8]' }}"></i>
-                        <span>Dashboard Juri</span>
+                        <span>{{ $dashboardLabel }}</span>
                     </a>
 
                     @if($judgedComps->isNotEmpty())
@@ -606,6 +611,7 @@
                         @foreach($judgedComps as $jComp)
                             @php
                                 $isBltComp = ($jComp->code === 'BLT' || str_contains(strtolower($jComp->name ?? ''), 'bulu tangkis'));
+                                $isSportComp = $jComp->isSports();
                             @endphp
                             @if($isBltComp)
                                 <a href="{{ route('badminton.index') }}" class="flex items-center justify-between px-3 py-2 rounded-xl transition text-xs {{ request()->routeIs('badminton.*') ? 'bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-300 font-bold border border-emerald-500/30' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
@@ -613,7 +619,15 @@
                                         <i data-lucide="activity" class="w-3.5 h-3.5 text-emerald-400 shrink-0"></i>
                                         <span class="truncate">{{ $jComp->name }}</span>
                                     </div>
-                                    <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-mono">Wasit</span>
+                                    <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-mono font-bold">Wasit</span>
+                                </a>
+                            @elseif($isSportComp)
+                                <a href="{{ route('juri.scoring', $jComp->id) }}" class="flex items-center justify-between px-3 py-2 rounded-xl transition text-xs {{ request()->routeIs('juri.scoring') && request()->route('competition_id') == $jComp->id ? 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
+                                    <div class="flex items-center gap-2 truncate">
+                                        <i data-lucide="trophy" class="w-3.5 h-3.5 text-amber-400 shrink-0"></i>
+                                        <span class="truncate">{{ $jComp->name }}</span>
+                                    </div>
+                                    <span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 font-mono font-bold">Wasit</span>
                                 </a>
                             @else
                                 <a href="{{ route('juri.scoring', $jComp->id) }}" class="flex items-center justify-between px-3 py-2 rounded-xl transition text-xs {{ request()->routeIs('juri.scoring') && request()->route('competition_id') == $jComp->id ? 'bg-[#7A5AF8]/20 text-[#A594FD] font-bold border border-[#7A5AF8]/30' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
@@ -621,7 +635,7 @@
                                         <i data-lucide="clipboard-pen" class="w-3.5 h-3.5 text-[#A594FD] shrink-0"></i>
                                         <span class="truncate">{{ $jComp->name }}</span>
                                     </div>
-                                    <span class="text-[9px] px-1.5 py-0.5 rounded bg-white/[0.06] text-slate-400 font-mono">{{ $jComp->code }}</span>
+                                    <span class="text-[9px] px-1.5 py-0.5 rounded bg-[#7A5AF8]/15 text-[#A594FD] font-mono font-bold">Juri</span>
                                 </a>
                             @endif
                         @endforeach
@@ -674,13 +688,7 @@
                     <div class="overflow-hidden">
                         <p class="text-xs font-bold text-white truncate">{{ auth()->user()->name }}</p>
                         <p class="text-[10px] font-semibold text-[#A594FD] uppercase tracking-wider truncate">
-                            {{ auth()->user()->position ?: match(auth()->user()->role) {
-                                'superadmin' => 'Super Administrator',
-                                'panitia' => 'Panitia Pelaksana',
-                                'pic_lomba' => 'PIC Koordinator',
-                                'juri' => 'Dewan Juri',
-                                default => 'Pendaftar Resmi'
-                            } }}
+                            {{ auth()->user()->position ?: auth()->user()->judge_title }}
                         </p>
                     </div>
                 </div>
