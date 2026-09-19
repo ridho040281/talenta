@@ -1954,9 +1954,9 @@ class PicController extends Controller
                 'kat_b_pi' => ['name' => 'Kategori B (Kelas 3–4) - Tunggal Putri (PI)', 'label' => 'Kategori B (Kelas 3–4)', 'short' => '👧 Kat B (3-4) Putri', 'gender' => 'P', 'sector' => 'PI', 'type' => 'kat_b', 'ganda' => false],
                 'kat_c_pa' => ['name' => 'Kategori C (Kelas 5–6) - Tunggal Putra (PA)', 'label' => 'Kategori C (Kelas 5–6)', 'short' => '👦 Kat C (5-6) Putra', 'gender' => 'L', 'sector' => 'PA', 'type' => 'kat_c', 'ganda' => false],
                 'kat_c_pi' => ['name' => 'Kategori C (Kelas 5–6) - Tunggal Putri (PI)', 'label' => 'Kategori C (Kelas 5–6)', 'short' => '👧 Kat C (5-6) Putri', 'gender' => 'P', 'sector' => 'PI', 'type' => 'kat_c', 'ganda' => false],
-                'ganda_pa' => ['name' => 'Ganda Putra (PA) - Semua Kelas', 'label' => 'Ganda Putra (Semua Kelas)', 'short' => '👥 Ganda Putra', 'gender' => 'L', 'sector' => 'PA', 'type' => 'ganda', 'ganda' => true],
-                'ganda_pi' => ['name' => 'Ganda Putri (PI) - Semua Kelas', 'label' => 'Ganda Putri (Semua Kelas)', 'short' => '👥 Ganda Putri', 'gender' => 'P', 'sector' => 'PI', 'type' => 'ganda', 'ganda' => true],
-                'ganda_mix' => ['name' => 'Ganda Campuran - Semua Kelas', 'label' => 'Ganda Campuran (Semua Kelas)', 'short' => '👥 Ganda Campuran', 'gender' => 'M', 'sector' => 'MIX', 'type' => 'ganda', 'ganda' => true],
+                'ganda_pa' => ['name' => 'Ganda Putra (PA) - Semua Kelas', 'label' => 'Ganda (Semua Kelas)', 'short' => '👥 Ganda Putra', 'gender' => 'L', 'sector' => 'PA', 'type' => 'ganda', 'ganda' => true],
+                'ganda_pi' => ['name' => 'Ganda Putri (PI) - Semua Kelas', 'label' => 'Ganda (Semua Kelas)', 'short' => '👥 Ganda Putri', 'gender' => 'P', 'sector' => 'PI', 'type' => 'ganda', 'ganda' => true],
+                'ganda_mix' => ['name' => 'Ganda Campuran - Semua Kelas', 'label' => 'Ganda (Semua Kelas)', 'short' => '👥 Ganda Campuran', 'gender' => 'M', 'sector' => 'MIX', 'type' => 'ganda', 'ganda' => true],
             ];
 
             foreach ($poolDefs as $key => $def) {
@@ -1995,6 +1995,8 @@ class PicController extends Controller
                     $classified[$key] = [
                         'key' => $key,
                         'title' => $def['name'],
+                        'class_key' => $def['type'] ?? 'all',
+                        'class_label' => $def['label'] ?? $def['name'],
                         'category_label' => $def['label'] ?? $def['name'],
                         'short_title' => $def['short'],
                         'gender' => $def['gender'] ?? 'L',
@@ -2032,6 +2034,8 @@ class PicController extends Controller
                     $classified[$key] = [
                         'key' => $key,
                         'title' => $def['name'],
+                        'class_key' => $def['type'] ?? 'all',
+                        'class_label' => $def['label'] ?? $def['name'],
                         'category_label' => $def['label'] ?? $def['name'],
                         'short_title' => $def['short'],
                         'gender' => $def['gender'] ?? 'L',
@@ -2056,6 +2060,8 @@ class PicController extends Controller
                     $classified['pa'] = [
                         'key' => 'pa',
                         'title' => 'Kelompok Putra (PA)',
+                        'class_key' => 'all',
+                        'class_label' => 'Semua Kelas',
                         'category_label' => 'Putra (PA)',
                         'short_title' => '👦 Putra (PA)',
                         'gender' => 'L',
@@ -2065,6 +2071,8 @@ class PicController extends Controller
                     $classified['pi'] = [
                         'key' => 'pi',
                         'title' => 'Kelompok Putri (PI)',
+                        'class_key' => 'all',
+                        'class_label' => 'Semua Kelas',
                         'category_label' => 'Putri (PI)',
                         'short_title' => '👧 Putri (PI)',
                         'gender' => 'P',
