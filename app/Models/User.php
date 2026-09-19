@@ -83,7 +83,9 @@ class User extends Authenticatable
 
     public function judgedCompetitions()
     {
-        return $this->belongsToMany(Competition::class, 'competition_judges', 'user_id', 'competition_id');
+        return $this->belongsToMany(Competition::class, 'competition_judges', 'user_id', 'competition_id')
+            ->withPivot('role_title')
+            ->withTimestamps();
     }
 
     public function scores(): HasMany

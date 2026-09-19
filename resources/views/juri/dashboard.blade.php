@@ -138,8 +138,14 @@
                     </div>
                 </div>
             @empty
-                <div class="col-span-2 text-center py-12 text-slate-500">
-                    Belum ada penugasan cabang lomba untuk akun juri Anda.
+                <div class="col-span-full text-center py-12 px-4 rounded-2xl bg-[#0C111D] border border-white/[0.06] space-y-3">
+                    <div class="w-12 h-12 rounded-2xl bg-[#7A5AF8]/15 text-[#A594FD] border border-[#7A5AF8]/30 flex items-center justify-center mx-auto">
+                        <i data-lucide="award" class="w-6 h-6"></i>
+                    </div>
+                    <div class="space-y-1">
+                        <h4 class="text-sm font-bold text-white">Belum Ada Cabang Lomba Ditugaskan</h4>
+                        <p class="text-xs text-slate-400 max-w-md mx-auto">Akun dewan juri/wasit Anda saat ini belum ditugaskan ke cabang perlombaan manapun. Silakan hubungi Super Administrator untuk penugasan cabang lomba.</p>
+                    </div>
                 </div>
             @endforelse
         </div>

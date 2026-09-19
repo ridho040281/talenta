@@ -155,8 +155,8 @@
                             </td>
 
                             <!-- Kolom 3: Role / Hak Akses -->
-                            <td class="py-2.5 px-2.5 text-center whitespace-nowrap">
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold capitalize {{ match($u->role) {
+                            <td class="py-2.5 px-2.5 text-center">
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold capitalize whitespace-nowrap {{ match($u->role) {
                                     'superadmin' => 'bg-[#7A5AF8]/15 text-[#A594FD] border border-[#7A5AF8]/30',
                                     'panitia' => 'bg-amber-500/15 text-amber-300 border border-amber-500/30',
                                     'pic_lomba' => 'bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30',
@@ -171,6 +171,18 @@
                                         default => '🎓 Peserta'
                                     } }}
                                 </span>
+                                @if($u->role === 'juri')
+                                    <div class="mt-1 flex flex-wrap gap-1 items-center justify-center max-w-[200px] mx-auto">
+                                        @forelse($u->judgedCompetitions as $jc)
+                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[#7A5AF8]/15 text-[#C7D2FE] border border-[#7A5AF8]/30 font-bold text-[9px]" title="{{ $jc->name }} ({{ $jc->category->name ?? '' }})">
+                                                <span class="w-1 h-1 rounded-full bg-[#A594FD]"></span>
+                                                <span class="truncate max-w-[120px]">{{ $jc->code ?: $jc->name }}</span>
+                                            </span>
+                                        @empty
+                                            <span class="text-[9px] text-amber-400/80 italic">Belum ada cabang</span>
+                                        @endforelse
+                                    </div>
+                                @endif
                             </td>
 
                             <!-- Kolom 4: Instansi / Asal Sekolah -->
@@ -394,6 +406,35 @@
                         </div>
                     </div>
 
+                    <!-- Cabang Lomba Khusus Dewan Juri / Wasit -->
+                    <div x-show="selectedUser && selectedUser.role === 'juri'" x-cloak class="space-y-2.5 p-4 rounded-2xl bg-[#0C111D] border border-white/[0.08]">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-1.5">
+                                <i data-lucide="award" class="w-3.5 h-3.5 text-[#A594FD]"></i>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-[#A594FD]">
+                                    Cabang Lomba yang Dinilai / Diwasiti <span class="text-rose-400">*</span>
+                                </label>
+                            </div>
+                            <div class="flex items-center gap-2 text-[10px]">
+                                <button type="button" @click="selectAllEditComps()" class="text-[#84D0FF] hover:underline font-bold cursor-pointer">Pilih Semua</button>
+                                <span class="text-slate-600">•</span>
+                                <button type="button" @click="selectedCompetitions = []" class="text-slate-400 hover:text-white font-bold cursor-pointer">Kosongkan</button>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-400">Pilih satu atau lebih cabang lomba yang menjadi wewenang juri ini (menu juri akan menyesuaikan cabang yang dipilih):</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-700 pt-1">
+                            @foreach($competitions as $comp)
+                                <label class="flex items-start gap-2.5 p-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] cursor-pointer transition select-none">
+                                    <input type="checkbox" name="competition_ids[]" value="{{ $comp->id }}" x-model="selectedCompetitions" class="mt-0.5 rounded text-[#7A5AF8] focus:ring-[#7A5AF8]/30 w-4 h-4 bg-[#161F30] border-white/20">
+                                    <div class="overflow-hidden min-w-0 flex-1">
+                                        <span class="text-white font-bold block truncate text-xs">{{ $comp->name }}</span>
+                                        <span class="text-[10px] text-slate-400 font-mono">{{ $comp->category->name ?? '' }} ({{ $comp->code }})</span>
+                                    </div>
+                                </label>
+                            @endforeach
+                        </div>
+                    </div>
+
                     <div>
                         <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Nama Lengkap & Gelar <span class="text-rose-400">*</span></label>
                         <input name="name" type="text" x-model="selectedUser.name" required class="block w-full px-4 py-2.5 rounded-xl bg-[#0C111D] border border-white/[0.12] text-sm text-white outline-none focus:border-[#7A5AF8] focus:ring-2 focus:ring-[#7A5AF8]/30">
@@ -462,7 +503,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Role / Wewenang <span class="text-rose-400">*</span></label>
-                            <select name="role" required class="block w-full px-4 py-2.5 rounded-xl bg-[#0C111D] border border-white/[0.12] text-sm text-white outline-none focus:border-[#7A5AF8] focus:ring-2 focus:ring-[#7A5AF8]/30">
+                            <select name="role" x-model="createRole" required class="block w-full px-4 py-2.5 rounded-xl bg-[#0C111D] border border-white/[0.12] text-sm text-white outline-none focus:border-[#7A5AF8] focus:ring-2 focus:ring-[#7A5AF8]/30">
                                 <option value="superadmin">👑 Super Administrator</option>
                                 <option value="panitia">🎗️ Panitia Pelaksana (Operasional & Laporan)</option>
                                 <option value="pic_lomba">🛡️ Koordinator PIC Cabang Lomba</option>
@@ -477,6 +518,35 @@
                                 <option value="active" selected>🟢 Aktif (Bisa Langsung Login)</option>
                                 <option value="inactive">🔴 Nonaktif (Dibekukan)</option>
                             </select>
+                        </div>
+                    </div>
+
+                    <!-- Cabang Lomba Khusus Dewan Juri / Wasit -->
+                    <div x-show="createRole === 'juri'" x-cloak class="space-y-2.5 p-4 rounded-2xl bg-[#0C111D] border border-white/[0.08]">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-1.5">
+                                <i data-lucide="award" class="w-3.5 h-3.5 text-[#A594FD]"></i>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-[#A594FD]">
+                                    Cabang Lomba yang Dinilai / Diwasiti <span class="text-rose-400">*</span>
+                                </label>
+                            </div>
+                            <div class="flex items-center gap-2 text-[10px]">
+                                <button type="button" @click="selectAllNewComps()" class="text-[#84D0FF] hover:underline font-bold cursor-pointer">Pilih Semua</button>
+                                <span class="text-slate-600">•</span>
+                                <button type="button" @click="newCompetitions = []" class="text-slate-400 hover:text-white font-bold cursor-pointer">Kosongkan</button>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-400">Pilih satu atau lebih cabang lomba yang menjadi wewenang juri ini (menu juri akan menyesuaikan cabang yang dipilih):</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-700 pt-1">
+                            @foreach($competitions as $comp)
+                                <label class="flex items-start gap-2.5 p-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] cursor-pointer transition select-none">
+                                    <input type="checkbox" name="competition_ids[]" value="{{ $comp->id }}" x-model="newCompetitions" class="mt-0.5 rounded text-[#7A5AF8] focus:ring-[#7A5AF8]/30 w-4 h-4 bg-[#161F30] border-white/20">
+                                    <div class="overflow-hidden min-w-0 flex-1">
+                                        <span class="text-white font-bold block truncate text-xs">{{ $comp->name }}</span>
+                                        <span class="text-[10px] text-slate-400 font-mono">{{ $comp->category->name ?? '' }} ({{ $comp->code }})</span>
+                                    </div>
+                                </label>
+                            @endforeach
                         </div>
                     </div>
 
@@ -605,6 +675,9 @@
             editUserModal: false,
             resetPasswordModal: false,
             deleteUserModal: false,
+            createRole: 'superadmin',
+            newCompetitions: [],
+            allCompetitionIds: @js($competitions->pluck('id')),
             selectedUser: {
                 id: null,
                 name: '',
@@ -615,8 +688,15 @@
                 institution_name: '',
                 position: ''
             },
+            selectedCompetitions: [],
             newPassword: '',
             showPassword: true,
+            selectAllNewComps() {
+                this.newCompetitions = [...this.allCompetitionIds];
+            },
+            selectAllEditComps() {
+                this.selectedCompetitions = [...this.allCompetitionIds];
+            },
             openResetPassword(user) {
                 this.selectedUser = Object.assign({}, user);
                 this.newPassword = '';
@@ -641,6 +721,7 @@
                 this.selectedUser.institution_name = this.selectedUser.institution_name || '';
                 this.selectedUser.position = this.selectedUser.position || '';
                 this.selectedUser.status = this.selectedUser.status || 'active';
+                this.selectedCompetitions = (user.judged_competitions || []).map(c => c.id);
                 this.editUserModal = true;
                 this.$nextTick(() => {
                     if (window.lucide) window.lucide.createIcons();

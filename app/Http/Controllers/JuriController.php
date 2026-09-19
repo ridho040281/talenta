@@ -30,6 +30,12 @@ class JuriController extends Controller
     public function scoringSheet($competition_id)
     {
         $user = Auth::user();
+
+        // Ensure judge is assigned to this competition (or superadmin)
+        if ($user->role === 'juri' && ! $user->judgedCompetitions()->where('competitions.id', $competition_id)->exists()) {
+            abort(403, 'Anda tidak memiliki hak akses penilaian untuk cabang lomba ini.');
+        }
+
         $competition = Competition::with(['criteria', 'registrations' => function ($q) {
             $q->where('status', 'verified')->with(['members', 'scores']);
         }])->findOrFail($competition_id);
@@ -52,6 +58,12 @@ class JuriController extends Controller
     public function storeScore(Request $request, $competition_id, $registration_id)
     {
         $user = Auth::user();
+
+        // Ensure judge is assigned to this competition (or superadmin)
+        if ($user->role === 'juri' && ! $user->judgedCompetitions()->where('competitions.id', $competition_id)->exists()) {
+            abort(403, 'Anda tidak memiliki hak akses penilaian untuk cabang lomba ini.');
+        }
+
         $competition = Competition::with('criteria')->findOrFail($competition_id);
         $registration = Registration::where('id', $registration_id)
             ->where('competition_id', $competition->id)

@@ -590,17 +590,45 @@
             @endif
 
             @if(auth()->user()->role === 'juri')
+                @php
+                    $judgedComps = auth()->user()->judgedCompetitions()->with('category')->get();
+                    $hasBlt = auth()->user()->managesBadminton() || $judgedComps->contains(fn($c) => $c->code === 'BLT' || str_contains(strtolower($c->name ?? ''), 'bulu tangkis'));
+                @endphp
                 <div class="space-y-1">
                     <div class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Menu Dewan Juri & Wasit</div>
                     <a href="{{ route('juri.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('juri.dashboard') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
-                        <i data-lucide="clipboard-pen" class="w-4 h-4"></i>
-                        <span>Penilaian Juri Kriteria</span>
+                        <i data-lucide="layout-dashboard" class="w-4 h-4 {{ request()->routeIs('juri.dashboard') ? 'text-white' : 'text-[#7A5AF8]' }}"></i>
+                        <span>Dashboard Juri</span>
                     </a>
-                    @if(auth()->user()->managesBadminton())
-                    <a href="{{ route('badminton.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('badminton.*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
-                        <i data-lucide="activity" class="w-4 h-4 text-emerald-400"></i>
-                        <span>Wasit Bulu Tangkis</span>
-                    </a>
+
+                    @if($judgedComps->isNotEmpty())
+                        <div class="pt-2 pb-1 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Cabang Penugasan</div>
+                        @foreach($judgedComps as $jComp)
+                            @php
+                                $isBltComp = ($jComp->code === 'BLT' || str_contains(strtolower($jComp->name ?? ''), 'bulu tangkis'));
+                            @endphp
+                            @if($isBltComp)
+                                <a href="{{ route('badminton.index') }}" class="flex items-center justify-between px-3 py-2 rounded-xl transition text-xs {{ request()->routeIs('badminton.*') ? 'bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-300 font-bold border border-emerald-500/30' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
+                                    <div class="flex items-center gap-2 truncate">
+                                        <i data-lucide="activity" class="w-3.5 h-3.5 text-emerald-400 shrink-0"></i>
+                                        <span class="truncate">{{ $jComp->name }}</span>
+                                    </div>
+                                    <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-mono">Wasit</span>
+                                </a>
+                            @else
+                                <a href="{{ route('juri.scoring', $jComp->id) }}" class="flex items-center justify-between px-3 py-2 rounded-xl transition text-xs {{ request()->routeIs('juri.scoring') && request()->route('competition_id') == $jComp->id ? 'bg-[#7A5AF8]/20 text-[#A594FD] font-bold border border-[#7A5AF8]/30' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
+                                    <div class="flex items-center gap-2 truncate">
+                                        <i data-lucide="clipboard-pen" class="w-3.5 h-3.5 text-[#A594FD] shrink-0"></i>
+                                        <span class="truncate">{{ $jComp->name }}</span>
+                                    </div>
+                                    <span class="text-[9px] px-1.5 py-0.5 rounded bg-white/[0.06] text-slate-400 font-mono">{{ $jComp->code }}</span>
+                                </a>
+                            @endif
+                        @endforeach
+                    @endif
+
+                    @if($hasBlt)
+                    <div class="pt-2 pb-1 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Live Skor Bulu Tangkis</div>
                     <a href="{{ route('badminton.scoreboard') }}" target="_blank" class="flex items-center justify-between px-3 py-2.5 rounded-2xl transition hover:bg-white/[0.04] text-slate-400 hover:text-slate-200">
                         <div class="flex items-center gap-3">
                             <i data-lucide="tv" class="w-4 h-4 text-rose-400"></i>

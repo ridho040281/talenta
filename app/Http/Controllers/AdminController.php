@@ -792,7 +792,7 @@ class AdminController extends Controller
 
     public function users(Request $request)
     {
-        $query = User::query();
+        $query = User::with('judgedCompetitions');
 
         if ($request->filled('search')) {
             $search = trim($request->search);
@@ -814,8 +814,9 @@ class AdminController extends Controller
         }
 
         $users = $query->latest()->paginate(20)->withQueryString();
+        $competitions = Competition::with('category')->orderBy('order')->get();
 
-        return view('admin.users', compact('users'));
+        return view('admin.users', compact('users', 'competitions'));
     }
 
     public function storeUser(Request $request)
@@ -829,6 +830,8 @@ class AdminController extends Controller
             'phone' => ['nullable', 'string', 'max:50'],
             'institution_name' => ['nullable', 'string', 'max:255'],
             'position' => ['nullable', 'string', 'max:255'],
+            'competition_ids' => ['nullable', 'array'],
+            'competition_ids.*' => ['exists:competitions,id'],
         ]);
 
         $newUser = User::create([
@@ -841,6 +844,10 @@ class AdminController extends Controller
             'position' => $validated['position'] ?? null,
             'status' => $validated['status'] ?? 'active',
         ]);
+
+        if ($validated['role'] === 'juri' && ! empty($request->input('competition_ids'))) {
+            $newUser->judgedCompetitions()->sync($request->input('competition_ids'));
+        }
 
         if (! empty($validated['phone'])) {
             try {
@@ -871,6 +878,8 @@ class AdminController extends Controller
             'phone' => ['nullable', 'string', 'max:50'],
             'institution_name' => ['nullable', 'string', 'max:255'],
             'position' => ['nullable', 'string', 'max:255'],
+            'competition_ids' => ['nullable', 'array'],
+            'competition_ids.*' => ['exists:competitions,id'],
         ]);
 
         $user->update([
@@ -882,6 +891,12 @@ class AdminController extends Controller
             'institution_name' => $validated['institution_name'] ?? null,
             'position' => $validated['position'] ?? null,
         ]);
+
+        if ($validated['role'] === 'juri') {
+            $user->judgedCompetitions()->sync($request->input('competition_ids', []));
+        } else {
+            $user->judgedCompetitions()->detach();
+        }
 
         return redirect()->route('admin.users')->with('success', 'Data pengguna '.$user->name.' berhasil diperbarui.');
     }
