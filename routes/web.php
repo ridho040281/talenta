@@ -128,6 +128,7 @@ Route::middleware(['auth', 'role:pic_lomba,superadmin,panitia'])->prefix('pic')-
     Route::get('/lomba/{competition_id}/undi', [PicController::class, 'hackerDraw'])->name('hacker.draw');
     Route::get('/lomba/{competition_id}/spin-wheel', [PicController::class, 'spinWheel'])->name('spin.wheel');
     Route::post('/lomba/{competition_id}/spin-wheel/save', [PicController::class, 'storeDrawResult'])->name('spin.wheel.save');
+    Route::post('/lomba/{competition_id}/batch-draw', [PicController::class, 'batchAutoDraw'])->name('batch.draw');
     Route::post('/lomba/{competition_id}/spin-wheel/reset', [PicController::class, 'resetDraws'])->name('spin.wheel.reset');
     Route::post('/lomba/{competition_id}/set-seeded', [PicController::class, 'setSeededPlayers'])->name('set.seeded');
 

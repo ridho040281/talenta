@@ -2324,6 +2324,157 @@ class PicController extends Controller
         ]);
     }
 
+    public function batchAutoDraw(Request $request, $competition_id)
+    {
+        $competition = Competition::with(['category', 'registrations' => function ($q) {
+            $q->where('status', 'verified')->with('members');
+        }])->findOrFail($competition_id);
+
+        $user = Auth::user();
+        $this->authorizeCompetitionManagement($user, $competition->id);
+
+        $poolKey = $request->input('pool_key');
+        $pools = $this->buildCompetitionPools($competition);
+
+        // Determine target pools
+        $targetPools = [];
+        if (! empty($poolKey) && $poolKey !== 'all') {
+            $selected = collect($pools)->firstWhere('key', $poolKey);
+            if (! $selected) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Kategori / Pool tidak ditemukan.',
+                ], 404);
+            }
+            $targetPools[] = $selected;
+        } else {
+            $targetPools = $pools;
+        }
+
+        $allDrawnResults = [];
+        $totalNewlyDrawn = 0;
+
+        DB::transaction(function () use ($targetPools, $competition, $user, &$allDrawnResults, &$totalNewlyDrawn) {
+            foreach ($targetPools as $pool) {
+                $poolParticipants = $pool['participants'];
+                $totalInPool = count($poolParticipants);
+
+                if ($totalInPool === 0) {
+                    continue;
+                }
+
+                // Get IDs of already drawn participants and used draw numbers
+                $usedSlots = collect($poolParticipants)
+                    ->where('is_drawn', true)
+                    ->pluck('draw_number')
+                    ->filter()
+                    ->map(fn ($n) => (int) $n)
+                    ->toArray();
+
+                // Undrawn participants in this pool
+                $undrawn = collect($poolParticipants)
+                    ->where('is_drawn', false)
+                    ->values();
+
+                if ($undrawn->isEmpty()) {
+                    continue;
+                }
+
+                // Available slots in range 1..totalInPool not yet taken
+                $availableSlots = [];
+                for ($slot = 1; $slot <= $totalInPool; $slot++) {
+                    if (! in_array($slot, $usedSlots, true)) {
+                        $availableSlots[] = $slot;
+                    }
+                }
+
+                // Shuffle available slots cryptographically / Fisher-Yates
+                shuffle($availableSlots);
+
+                foreach ($undrawn as $participantData) {
+                    if (empty($availableSlots)) {
+                        break;
+                    }
+
+                    $assignedSlot = array_shift($availableSlots);
+
+                    $reg = Registration::where('id', $participantData['id'])
+                        ->where('competition_id', $competition->id)
+                        ->first();
+
+                    if ($reg) {
+                        $reg->draw_number = $assignedSlot;
+                        $reg->save();
+
+                        DrawAllocation::updateOrCreate(
+                            [
+                                'competition_id' => $competition->id,
+                                'registration_id' => $reg->id,
+                            ],
+                            [
+                                'draw_number' => $assignedSlot,
+                                'spun_at' => now(),
+                                'spun_by' => $user->id,
+                            ]
+                        );
+
+                        $allDrawnResults[] = [
+                            'id' => $reg->id,
+                            'draw_number' => $assignedSlot,
+                            'name' => $participantData['name'],
+                            'institution' => $participantData['institution'],
+                            'pool_key' => $pool['key'],
+                        ];
+
+                        $totalNewlyDrawn++;
+                    }
+                }
+            }
+        });
+
+        if ($totalNewlyDrawn === 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Semua peserta pada kategori ini sudah memiliki nomor undian.',
+            ], 422);
+        }
+
+        // Trigger Auto WhatsApp Notification for all newly drawn participants (non-blocking)
+        try {
+            $regIds = collect($allDrawnResults)->pluck('id')->toArray();
+            $registrations = Registration::whereIn('id', $regIds)->with(['members', 'user', 'competition'])->get();
+
+            foreach ($registrations as $reg) {
+                $memberNisns = $reg->members->pluck('nisn')->filter()->unique();
+                $nisn = $memberNisns->isNotEmpty() ? $memberNisns->implode(' / ') : ($reg->user?->nisn ?? '-');
+                $targetPhones = $reg->recipient_phones;
+
+                WablasNotificationService::sendAutoNotification('draw_result_picked', [
+                    'phone' => $targetPhones,
+                    'nama_peserta' => $reg->pure_name,
+                    'nisn' => $nisn,
+                    'nama_sekolah' => $reg->institution_name,
+                    'cabang_lomba' => $competition->name,
+                    'no_peserta' => $reg->participant_number ?: $reg->registration_code,
+                    'kode_pendaftaran' => $reg->registration_code,
+                    'nomor_undian' => $reg->draw_number,
+                    'draw_number' => $reg->draw_number,
+                    'link_scoreboard' => url('/'),
+                    'link_login' => route('login'),
+                ]);
+            }
+        } catch (\Throwable $e) {
+            // Non-blocking
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Berhasil mengacak '.$totalNewlyDrawn.' peserta secara serentak via Batch / Full-Shuffle Auto Draw.',
+            'drawn_count' => $totalNewlyDrawn,
+            'results' => $allDrawnResults,
+        ]);
+    }
+
     public function resetDraws(Request $request, $competition_id)
     {
         $competition = Competition::findOrFail($competition_id);

@@ -646,10 +646,10 @@
 
                     <!-- Action Launchers -->
                     <div class="space-y-2 pt-3 border-t border-white/[0.08] relative z-10">
-                        <!-- Primary: Hacker Scramble Animation Button -->
+                        <!-- Primary: Hacker Scramble Animation Button (1-by-1) -->
                         <a href="{{ route('pic.hacker.draw', $comp['id']) }}" class="w-full py-2.5 px-4 rounded-xl gradient-btn font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-[#7A5AF8]/20 transition group/btn cursor-pointer">
                             <i data-lucide="terminal" class="w-4 h-4 text-emerald-300 group-hover/btn:scale-110 transition-transform"></i>
-                            <span>Undi Mode Hacker (Live Decoder)</span>
+                            <span>Mode 1-by-1 & Batch Draw</span>
                         </a>
 
                         <!-- Secondary Actions Grid (Spin Wheel & Public TV) -->
@@ -657,13 +657,13 @@
                             <!-- Spin Wheel Button -->
                             <a href="{{ route('pic.spin.wheel', $comp['id']) }}" class="py-2 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:border-amber-400/60 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer">
                                 <i data-lucide="disc" class="w-3.5 h-3.5 text-amber-400"></i>
-                                <span>Spin Wheel</span>
+                                <span>Spin Wheel (1-by-1)</span>
                             </a>
 
                             <!-- Public Screen Viewer -->
                             <a href="{{ route('spin.viewer', $comp['slug']) }}" target="_blank" class="py-2 px-3 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-300 hover:text-white border border-white/[0.10] hover:border-white/[0.25] font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer">
                                 <i data-lucide="tv" class="w-3.5 h-3.5 text-[#84D0FF]"></i>
-                                <span>Layar Publik</span>
+                                <span>Layar TV Publik</span>
                             </a>
                         </div>
 

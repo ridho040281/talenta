@@ -15,6 +15,67 @@
         const matchesSearch = this.searchQuery === '' || (comp.name + ' ' + comp.code + ' ' + comp.category).toLowerCase().includes(this.searchQuery.toLowerCase());
         const matchesCat = this.activeCategory === 'all' || comp.category === this.activeCategory;
         return matchesSearch && matchesCat;
+    },
+    batchModalOpen: false,
+    selectedComp: null,
+    isProcessingBatch: false,
+    batchSuccessMessage: '',
+    batchErrorMessage: '',
+    batchCountdown: null,
+    
+    openBatchModal(comp) {
+        this.selectedComp = comp;
+        this.batchSuccessMessage = '';
+        this.batchErrorMessage = '';
+        this.isProcessingBatch = false;
+        this.batchCountdown = null;
+        this.batchModalOpen = true;
+        this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
+    },
+    
+    async executeBatchDraw() {
+        if (!this.selectedComp || this.isProcessingBatch) return;
+        this.isProcessingBatch = true;
+        this.batchErrorMessage = '';
+        this.batchSuccessMessage = '';
+        
+        // Animasi countdown 3 detik
+        for (let i = 3; i >= 1; i--) {
+            this.batchCountdown = i;
+            await new Promise(r => setTimeout(r, 600));
+        }
+        this.batchCountdown = 'SHUFFLING...';
+        await new Promise(r => setTimeout(r, 600));
+        
+        try {
+            const res = await fetch(`/pic/lomba/${this.selectedComp.id}/batch-draw`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']').getAttribute('content'),
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ pool_key: 'all' })
+            });
+            const data = await res.json();
+            if (data.success) {
+                this.batchSuccessMessage = data.message;
+                if (typeof confetti === 'function') {
+                    confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+                }
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1600);
+            } else {
+                this.batchErrorMessage = data.message || 'Gagal melakukan pengacakan nomor undian.';
+                this.isProcessingBatch = false;
+            }
+        } catch (e) {
+            this.batchErrorMessage = 'Terjadi kesalahan server saat memproses batch draw.';
+            this.isProcessingBatch = false;
+        } finally {
+            this.batchCountdown = null;
+        }
     }
 }">
 
@@ -28,7 +89,7 @@
                 </div>
                 <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-white font-display">Undi Peserta Cabang Lomba</h2>
                 <p class="text-xs sm:text-sm text-slate-400 max-w-2xl leading-relaxed">
-                    Pilih cabang lomba untuk memulai pengundian nomor urut tampil peserta secara transparan. Tersedia animasi pengacakan <span class="text-[#84D0FF] font-bold">Hacker Matrix Live Decoder</span> dan <span class="text-amber-400 font-bold">Spin Wheel Interaktif</span>.
+                    Pilih metode pengundian sesuai kebutuhan: <span class="text-amber-400 font-bold">Mode 1-by-1 (Interaktif)</span> via Hacker Matrix / Spin Wheel, atau <span class="text-emerald-400 font-bold">⚡ Batch / Full-Shuffle Auto Draw</span> untuk mengacak seluruh nomor urut sekaligus dalam 1 kali putar.
                 </p>
             </div>
 
@@ -156,24 +217,34 @@
 
                 <!-- Action Launchers (Clean & Structured) -->
                 <div class="space-y-2 pt-3 border-t border-white/[0.08] relative z-10">
-                    <!-- Primary: Hacker Scramble Animation Button -->
+                    <!-- Option 1: 1-by-1 Interactive Mode (Hacker Terminal) -->
                     <a href="{{ route('pic.hacker.draw', $comp['id']) }}" class="w-full py-2.5 px-4 rounded-xl gradient-btn font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-[#7A5AF8]/20 transition group/btn cursor-pointer">
                         <i data-lucide="terminal" class="w-4 h-4 text-emerald-300 group-hover/btn:scale-110 transition-transform"></i>
-                        <span>Undi Mode Hacker (Live Decoder)</span>
+                        <span>Mode 1-by-1 (Live Decoder)</span>
                     </a>
+
+                    <!-- Option 2: Batch / Full-Shuffle Auto Draw Quick Trigger -->
+                    @if(!$comp['is_complete'])
+                        <button type="button" 
+                                @click="openBatchModal({{ json_encode($comp) }})"
+                                class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-emerald-600/20 hover:from-emerald-500/30 hover:to-teal-500/30 text-emerald-300 border border-emerald-500/40 hover:border-emerald-400 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-md shadow-emerald-500/10">
+                            <i data-lucide="zap" class="w-4 h-4 text-emerald-400"></i>
+                            <span>⚡ Batch / Full-Shuffle Auto Draw</span>
+                        </button>
+                    @endif
 
                     <!-- Secondary Actions Grid (Spin Wheel & Public TV) -->
                     <div class="grid grid-cols-2 gap-2">
                         <!-- Spin Wheel Button -->
                         <a href="{{ route('pic.spin.wheel', $comp['id']) }}" class="py-2 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:border-amber-400/60 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer">
                             <i data-lucide="disc" class="w-3.5 h-3.5 text-amber-400"></i>
-                            <span>Spin Wheel</span>
+                            <span>Spin Wheel (1-by-1)</span>
                         </a>
 
                         <!-- Public Screen Viewer -->
                         <a href="{{ route('spin.viewer', $comp['slug']) }}" target="_blank" class="py-2 px-3 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-300 hover:text-white border border-white/[0.10] hover:border-white/[0.25] font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer">
                             <i data-lucide="tv" class="w-3.5 h-3.5 text-[#84D0FF]"></i>
-                            <span>Layar Publik</span>
+                            <span>Layar TV Publik</span>
                         </a>
                     </div>
 
@@ -203,5 +274,81 @@
         @endforelse
     </div>
 
+    <!-- Modal Batch / Full-Shuffle Auto Draw -->
+    <div x-show="batchModalOpen" 
+         x-cloak 
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
+        
+        <div class="bg-slate-900 border border-emerald-500/40 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-5 relative text-white"
+             @click.outside="if (!isProcessingBatch) batchModalOpen = false">
+            
+            <div class="flex items-start justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/20">
+                        <i data-lucide="zap" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400 block">MODUL PENGACAKAN MASSAL</span>
+                        <h3 class="text-lg font-black text-white font-display">Batch / Full-Shuffle Auto Draw</h3>
+                    </div>
+                </div>
+                <button type="button" @click="batchModalOpen = false" :disabled="isProcessingBatch" class="text-slate-400 hover:text-white p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3 bg-slate-950/60 p-4 rounded-2xl border border-white/[0.08] text-xs leading-relaxed text-slate-300">
+                <p>Cabang Lomba: <strong class="text-white" x-text="selectedComp ? selectedComp.name : ''"></strong></p>
+                <div class="flex items-center justify-between text-[11px] font-mono bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+                    <span class="text-slate-400">Peserta Belum Diundi:</span>
+                    <span class="text-amber-400 font-bold" x-text="selectedComp ? (selectedComp.total_verified - selectedComp.drawn_count) + ' Peserta' : '0'"></span>
+                </div>
+                <p class="text-[11px] text-slate-400">
+                    Sistem akan mengacak seluruh slot nomor urut peserta yang belum diundi secara kriptografis & adil dalam 1 kali proses. Hasil akan langsung tersimpan dan otomatis sinkron ke Layar TV Publik.
+                </p>
+            </div>
+
+            <!-- Countdown / Processing Animation Banner -->
+            <div x-show="isProcessingBatch" class="p-4 rounded-2xl bg-emerald-950/60 border border-emerald-500/50 text-center space-y-2">
+                <div class="text-3xl font-black font-mono text-emerald-400 animate-bounce" x-text="batchCountdown || 'MEMPROSES...'"></div>
+                <div class="text-xs font-mono text-emerald-300 tracking-wider">Mengacak & Mengunci Seluruh Nomor Peserta...</div>
+            </div>
+
+            <!-- Success / Error Alerts -->
+            <div x-show="batchSuccessMessage" class="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center gap-2">
+                <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+                <span x-text="batchSuccessMessage"></span>
+            </div>
+            <div x-show="batchErrorMessage" class="p-3 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs font-bold flex items-center gap-2">
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-400"></i>
+                <span x-text="batchErrorMessage"></span>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <button type="button" 
+                        @click="batchModalOpen = false" 
+                        :disabled="isProcessingBatch"
+                        class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition cursor-pointer">
+                    Batal
+                </button>
+                <button type="button" 
+                        @click="executeBatchDraw()" 
+                        :disabled="isProcessingBatch"
+                        class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/25 flex items-center gap-2 transition cursor-pointer disabled:opacity-50">
+                    <i data-lucide="zap" class="w-4 h-4"></i>
+                    <span>Mulai Batch / Full-Shuffle Auto Draw</span>
+                </button>
+            </div>
+
+        </div>
+    </div>
+
 </div>
 @endsection
+
