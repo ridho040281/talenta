@@ -1948,15 +1948,15 @@ class PicController extends Controller
 
         if ($isBuluTangkis) {
             $poolDefs = [
-                'kat_a_pa' => ['name' => 'Kategori A (Kelas 1–2) - Tunggal Putra (PA)', 'short' => '👦 Kat A (1-2) Putra', 'gender' => 'L', 'type' => 'kat_a', 'ganda' => false],
-                'kat_a_pi' => ['name' => 'Kategori A (Kelas 1–2) - Tunggal Putri (PI)', 'short' => '👧 Kat A (1-2) Putri', 'gender' => 'P', 'type' => 'kat_a', 'ganda' => false],
-                'kat_b_pa' => ['name' => 'Kategori B (Kelas 3–4) - Tunggal Putra (PA)', 'short' => '👦 Kat B (3-4) Putra', 'gender' => 'L', 'type' => 'kat_b', 'ganda' => false],
-                'kat_b_pi' => ['name' => 'Kategori B (Kelas 3–4) - Tunggal Putri (PI)', 'short' => '👧 Kat B (3-4) Putri', 'gender' => 'P', 'type' => 'kat_b', 'ganda' => false],
-                'kat_c_pa' => ['name' => 'Kategori C (Kelas 5–6) - Tunggal Putra (PA)', 'short' => '👦 Kat C (5-6) Putra', 'gender' => 'L', 'type' => 'kat_c', 'ganda' => false],
-                'kat_c_pi' => ['name' => 'Kategori C (Kelas 5–6) - Tunggal Putri (PI)', 'short' => '👧 Kat C (5-6) Putri', 'gender' => 'P', 'type' => 'kat_c', 'ganda' => false],
-                'ganda_pa' => ['name' => 'Ganda Putra (PA) - Semua Kelas', 'short' => '👥 Ganda Putra', 'gender' => 'L', 'type' => 'ganda', 'ganda' => true],
-                'ganda_pi' => ['name' => 'Ganda Putri (PI) - Semua Kelas', 'short' => '👥 Ganda Putri', 'gender' => 'P', 'type' => 'ganda', 'ganda' => true],
-                'ganda_mix' => ['name' => 'Ganda Campuran - Semua Kelas', 'short' => '👥 Ganda Campuran', 'gender' => 'M', 'type' => 'ganda', 'ganda' => true],
+                'kat_a_pa' => ['name' => 'Kategori A (Kelas 1–2) - Tunggal Putra (PA)', 'label' => 'Kategori A (Kelas 1–2)', 'short' => '👦 Kat A (1-2) Putra', 'gender' => 'L', 'sector' => 'PA', 'type' => 'kat_a', 'ganda' => false],
+                'kat_a_pi' => ['name' => 'Kategori A (Kelas 1–2) - Tunggal Putri (PI)', 'label' => 'Kategori A (Kelas 1–2)', 'short' => '👧 Kat A (1-2) Putri', 'gender' => 'P', 'sector' => 'PI', 'type' => 'kat_a', 'ganda' => false],
+                'kat_b_pa' => ['name' => 'Kategori B (Kelas 3–4) - Tunggal Putra (PA)', 'label' => 'Kategori B (Kelas 3–4)', 'short' => '👦 Kat B (3-4) Putra', 'gender' => 'L', 'sector' => 'PA', 'type' => 'kat_b', 'ganda' => false],
+                'kat_b_pi' => ['name' => 'Kategori B (Kelas 3–4) - Tunggal Putri (PI)', 'label' => 'Kategori B (Kelas 3–4)', 'short' => '👧 Kat B (3-4) Putri', 'gender' => 'P', 'sector' => 'PI', 'type' => 'kat_b', 'ganda' => false],
+                'kat_c_pa' => ['name' => 'Kategori C (Kelas 5–6) - Tunggal Putra (PA)', 'label' => 'Kategori C (Kelas 5–6)', 'short' => '👦 Kat C (5-6) Putra', 'gender' => 'L', 'sector' => 'PA', 'type' => 'kat_c', 'ganda' => false],
+                'kat_c_pi' => ['name' => 'Kategori C (Kelas 5–6) - Tunggal Putri (PI)', 'label' => 'Kategori C (Kelas 5–6)', 'short' => '👧 Kat C (5-6) Putri', 'gender' => 'P', 'sector' => 'PI', 'type' => 'kat_c', 'ganda' => false],
+                'ganda_pa' => ['name' => 'Ganda Putra (PA) - Semua Kelas', 'label' => 'Ganda Putra (Semua Kelas)', 'short' => '👥 Ganda Putra', 'gender' => 'L', 'sector' => 'PA', 'type' => 'ganda', 'ganda' => true],
+                'ganda_pi' => ['name' => 'Ganda Putri (PI) - Semua Kelas', 'label' => 'Ganda Putri (Semua Kelas)', 'short' => '👥 Ganda Putri', 'gender' => 'P', 'sector' => 'PI', 'type' => 'ganda', 'ganda' => true],
+                'ganda_mix' => ['name' => 'Ganda Campuran - Semua Kelas', 'label' => 'Ganda Campuran (Semua Kelas)', 'short' => '👥 Ganda Campuran', 'gender' => 'M', 'sector' => 'MIX', 'type' => 'ganda', 'ganda' => true],
             ];
 
             foreach ($poolDefs as $key => $def) {
@@ -1995,17 +1995,20 @@ class PicController extends Controller
                     $classified[$key] = [
                         'key' => $key,
                         'title' => $def['name'],
+                        'category_label' => $def['label'] ?? $def['name'],
                         'short_title' => $def['short'],
+                        'gender' => $def['gender'] ?? 'L',
+                        'sector' => $def['sector'] ?? (($def['gender'] ?? 'L') === 'P' ? 'PI' : 'PA'),
                         'participants' => $this->formatParticipantList($poolRegs),
                     ];
                 }
             }
         } elseif ($isTenisMeja) {
             $poolDefs = [
-                'kat_a_pa' => ['name' => 'Kategori A (Kelas 1–3) - Tunggal Putra (PA)', 'short' => '👦 Kat A (1-3) Putra', 'gender' => 'L', 'type' => 'kat_a', 'ganda' => false],
-                'kat_a_pi' => ['name' => 'Kategori A (Kelas 1–3) - Tunggal Putri (PI)', 'short' => '👧 Kat A (1-3) Putri', 'gender' => 'P', 'type' => 'kat_a', 'ganda' => false],
-                'kat_b_pa' => ['name' => 'Kategori B (Kelas 4–6) - Tunggal Putra (PA)', 'short' => '👦 Kat B (4-6) Putra', 'gender' => 'L', 'type' => 'kat_b', 'ganda' => false],
-                'kat_b_pi' => ['name' => 'Kategori B (Kelas 4–6) - Tunggal Putri (PI)', 'short' => '👧 Kat B (4-6) Putri', 'gender' => 'P', 'type' => 'kat_b', 'ganda' => false],
+                'kat_a_pa' => ['name' => 'Kategori A (Kelas 1–3) - Tunggal Putra (PA)', 'label' => 'Kategori A (Kelas 1–3)', 'short' => '👦 Kat A (1-3) Putra', 'gender' => 'L', 'sector' => 'PA', 'type' => 'kat_a', 'ganda' => false],
+                'kat_a_pi' => ['name' => 'Kategori A (Kelas 1–3) - Tunggal Putri (PI)', 'label' => 'Kategori A (Kelas 1–3)', 'short' => '👧 Kat A (1-3) Putri', 'gender' => 'P', 'sector' => 'PI', 'type' => 'kat_a', 'ganda' => false],
+                'kat_b_pa' => ['name' => 'Kategori B (Kelas 4–6) - Tunggal Putra (PA)', 'label' => 'Kategori B (Kelas 4–6)', 'short' => '👦 Kat B (4-6) Putra', 'gender' => 'L', 'sector' => 'PA', 'type' => 'kat_b', 'ganda' => false],
+                'kat_b_pi' => ['name' => 'Kategori B (Kelas 4–6) - Tunggal Putri (PI)', 'label' => 'Kategori B (Kelas 4–6)', 'short' => '👧 Kat B (4-6) Putri', 'gender' => 'P', 'sector' => 'PI', 'type' => 'kat_b', 'ganda' => false],
             ];
 
             foreach ($poolDefs as $key => $def) {
@@ -2029,7 +2032,10 @@ class PicController extends Controller
                     $classified[$key] = [
                         'key' => $key,
                         'title' => $def['name'],
+                        'category_label' => $def['label'] ?? $def['name'],
                         'short_title' => $def['short'],
+                        'gender' => $def['gender'] ?? 'L',
+                        'sector' => $def['sector'] ?? (($def['gender'] ?? 'L') === 'P' ? 'PI' : 'PA'),
                         'participants' => $this->formatParticipantList($poolRegs),
                     ];
                 }
@@ -2050,13 +2056,19 @@ class PicController extends Controller
                     $classified['pa'] = [
                         'key' => 'pa',
                         'title' => 'Kelompok Putra (PA)',
+                        'category_label' => 'Putra (PA)',
                         'short_title' => '👦 Putra (PA)',
+                        'gender' => 'L',
+                        'sector' => 'PA',
                         'participants' => $this->formatParticipantList($paRegs),
                     ];
                     $classified['pi'] = [
                         'key' => 'pi',
                         'title' => 'Kelompok Putri (PI)',
+                        'category_label' => 'Putri (PI)',
                         'short_title' => '👧 Putri (PI)',
+                        'gender' => 'P',
+                        'sector' => 'PI',
                         'participants' => $this->formatParticipantList($piRegs),
                     ];
                 } else {

@@ -129,37 +129,47 @@
         </div>
     </div>
 
-    <!-- Category & Sector Navigation Bar (Smart & Practical - Single Unified Selector) -->
+    <!-- Category & Sector Navigation Bar (Pemisahan Sektor PA / PI Bersih & Rapi) -->
     @if(count($pools) > 1)
-    <div class="bg-slate-900 rounded-3xl p-4 sm:px-6 sm:py-4 border border-slate-800 shadow-xl">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <!-- Left: Smart Category Dropdown -->
-            <div class="flex items-center gap-3.5 flex-1">
-                <div class="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0 text-amber-400 shadow-inner">
-                    <i data-lucide="layers" class="w-5 h-5"></i>
-                </div>
-                <div class="flex-1 max-w-lg">
-                    <div class="flex items-center gap-2 mb-1">
-                        <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400">Pilih Kategori / Sektor:</span>
-                        <span class="text-[10px] font-mono text-slate-400">
-                            (<span class="text-white font-bold" x-text="pools.length"></span> Kategori)
-                        </span>
+    <div class="bg-slate-900 rounded-3xl p-4 sm:px-6 sm:py-5 border border-slate-800 shadow-xl space-y-4">
+        <!-- Top Row: Sector Tabs (PA / PI / MIX) + Active Pool Status & Reset -->
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            
+            <!-- Left: Sector Toggle Buttons -->
+            <div class="flex items-center gap-3 flex-wrap">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0 text-amber-400">
+                        <i data-lucide="layers" class="w-4 h-4"></i>
                     </div>
-                    <select :value="activePoolKey" 
-                            @change="switchPool($event.target.value)" 
-                            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border-2 border-slate-700 hover:border-slate-600 focus:border-amber-400 text-white font-bold text-xs sm:text-sm outline-none transition cursor-pointer shadow-inner">
-                        <template x-for="p in pools" :key="p.key">
-                            <option :value="p.key" 
-                                    :selected="activePoolKey === p.key"
-                                    x-text="p.title + ' (' + p.participants.length + ' Peserta)'"></option>
-                        </template>
-                    </select>
+                    <span class="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-400">Sektor:</span>
+                </div>
+
+                <div class="inline-flex p-1 bg-slate-950 rounded-2xl border border-slate-800 shadow-inner gap-1 flex-wrap">
+                    <template x-for="sec in availableSectors" :key="sec.key">
+                        <button type="button" 
+                                @click="switchSector(sec.key)"
+                                :disabled="isSpinning"
+                                class="px-3.5 py-2 rounded-xl font-black text-xs transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                                :class="activeSector === sec.key 
+                                    ? (sec.key === 'PA' 
+                                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 border border-blue-400/50 ring-1 ring-blue-400/30' 
+                                        : (sec.key === 'PI' 
+                                            ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-lg shadow-rose-500/30 border border-rose-400/50 ring-1 ring-rose-400/30' 
+                                            : 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-lg shadow-amber-500/30 border border-amber-400/50 ring-1 ring-amber-400/30')) 
+                                    : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'">
+                            <span x-text="sec.icon" class="text-sm"></span>
+                            <span x-text="sec.label"></span>
+                            <span class="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold"
+                                  :class="activeSector === sec.key ? 'bg-black/30 text-white' : 'bg-slate-800 text-slate-400'"
+                                  x-text="getSectorStats(sec.key).total + ' Peserta'"></span>
+                        </button>
+                    </template>
                 </div>
             </div>
 
             <!-- Right: Active Status & Reset Kategori -->
-            <div class="flex items-center justify-between md:justify-end gap-4 pt-2 md:pt-0 border-t md:border-t-0 border-slate-800">
-                <div class="text-left md:text-right">
+            <div class="flex items-center justify-between lg:justify-end gap-3.5 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-800">
+                <div class="text-left lg:text-right">
                     <span class="text-[10px] text-slate-400 font-mono block">Status Undian Kategori:</span>
                     <span class="text-xs font-mono font-bold" 
                           :class="getPoolStats(activePoolKey).undrawn === 0 ? 'text-emerald-400' : (getPoolStats(activePoolKey).drawn === 0 ? 'text-slate-300' : 'text-amber-400')"
@@ -176,6 +186,53 @@
                         title="Reset nomor undian khusus kategori ini">
                     Reset Kategori
                 </button>
+            </div>
+        </div>
+
+        <!-- Bottom Row: Filtered Category Class Selector (Pill Chips & Dropdown) -->
+        <div class="pt-3 border-t border-slate-800/80 flex flex-col md:flex-row md:items-center gap-3">
+            <div class="flex items-center gap-2 shrink-0">
+                <span class="text-[10px] font-mono font-bold uppercase tracking-wider"
+                      :class="activeSector === 'PI' ? 'text-rose-400' : 'text-amber-400'">
+                    Kategori Kelas:
+                </span>
+                <span class="text-[10px] font-mono text-slate-400">
+                    (<span class="text-white font-bold" x-text="currentSectorPools.length"></span> Pilihan)
+                </span>
+            </div>
+
+            <!-- Quick Pills for Direct 1-Click Selection -->
+            <div class="flex-1 flex items-center gap-2 overflow-x-auto scrollbar-thin py-0.5">
+                <template x-for="p in currentSectorPools" :key="'chip-' + p.key">
+                    <button type="button"
+                            @click="switchPool(p.key)"
+                            :disabled="isSpinning"
+                            class="px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-2 border cursor-pointer disabled:opacity-50"
+                            :class="activePoolKey === p.key 
+                                ? (activeSector === 'PI' 
+                                    ? 'bg-rose-500/20 border-rose-400 text-rose-300 ring-2 ring-rose-400/40 shadow-lg shadow-rose-950/40' 
+                                    : 'bg-amber-500/20 border-amber-400 text-amber-300 ring-2 ring-amber-400/40 shadow-lg shadow-amber-950/40') 
+                                : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700 hover:text-white'">
+                        <span x-text="getCleanCategoryTitle(p)"></span>
+                        <span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold"
+                              :class="activePoolKey === p.key ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'"
+                              x-text="p.participants.length + ' Peserta'"></span>
+                        <span x-show="getPoolStats(p.key).undrawn === 0" class="text-emerald-400 text-xs font-black" title="Selesai Diundi">✓</span>
+                    </button>
+                </template>
+            </div>
+
+            <!-- Compact Dropdown (For Narrow/Mobile Screens) -->
+            <div class="w-full md:hidden pt-1">
+                <select :value="activePoolKey" 
+                        @change="switchPool($event.target.value)" 
+                        class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border-2 border-slate-700 text-white font-bold text-xs outline-none transition cursor-pointer">
+                    <template x-for="p in currentSectorPools" :key="'sel-' + p.key">
+                        <option :value="p.key" 
+                                :selected="activePoolKey === p.key"
+                                x-text="getCleanCategoryTitle(p) + ' (' + p.participants.length + ' Peserta)'"></option>
+                    </template>
+                </select>
             </div>
         </div>
     </div>
@@ -728,6 +785,7 @@
             competitionId: {{ $competition->id }},
             pools: @json($pools),
             activePoolKey: '{{ $pools[0]['key'] ?? 'all' }}',
+            activeSector: 'PA',
             drawnTab: 'pool',
             selectedParticipantId: null,
             isSpinning: false,
@@ -897,7 +955,75 @@
                 };
             },
 
+            getSector(p) {
+                if (!p) return 'PA';
+                if (p.sector) return p.sector;
+                const k = (p.key || '').toLowerCase();
+                const t = (p.title || '').toLowerCase();
+                if (p.gender === 'P' || k.endsWith('_pi') || t.includes('putri') || t.includes('(pi)')) return 'PI';
+                if (p.gender === 'M' || k.endsWith('_mix') || t.includes('campuran')) return 'MIX';
+                return 'PA';
+            },
+
+            getCleanCategoryTitle(p) {
+                if (!p) return '';
+                if (p.category_label) return p.category_label;
+                let title = p.title || '';
+                title = title.replace(/\s*-\s*Tunggal\s+(Putra|Putri)\s*\(P[AI]\)/gi, '');
+                title = title.replace(/\s*\(P[AI]\)/gi, '');
+                return title.trim();
+            },
+
+            get availableSectors() {
+                const sectors = [];
+                const hasPA = this.pools.some(p => this.getSector(p) === 'PA');
+                const hasPI = this.pools.some(p => this.getSector(p) === 'PI');
+                const hasMIX = this.pools.some(p => this.getSector(p) === 'MIX');
+
+                if (hasPA) sectors.push({ key: 'PA', label: 'PUTRA (PA)', icon: '👦' });
+                if (hasPI) sectors.push({ key: 'PI', label: 'PUTRI (PI)', icon: '👧' });
+                if (hasMIX) sectors.push({ key: 'MIX', label: 'CAMPURAN', icon: '👥' });
+
+                return sectors;
+            },
+
+            get currentSectorPools() {
+                if (this.availableSectors.length <= 1) {
+                    return this.pools;
+                }
+                const filtered = this.pools.filter(p => this.getSector(p) === this.activeSector);
+                return filtered.length > 0 ? filtered : this.pools;
+            },
+
+            getSectorStats(sec) {
+                const sectorPools = this.pools.filter(p => this.getSector(p) === sec);
+                const total = sectorPools.reduce((sum, p) => sum + p.participants.length, 0);
+                const drawn = sectorPools.reduce((sum, p) => sum + p.participants.filter(item => item.is_drawn).length, 0);
+                return {
+                    count: sectorPools.length,
+                    total: total,
+                    drawn: drawn,
+                    undrawn: total - drawn
+                };
+            },
+
+            switchSector(sec) {
+                if (this.isSpinning) return;
+                this.activeSector = sec;
+                const sectorPools = this.pools.filter(p => this.getSector(p) === sec);
+                if (sectorPools.length > 0) {
+                    if (!sectorPools.some(p => p.key === this.activePoolKey)) {
+                        this.switchPool(sectorPools[0].key);
+                    }
+                }
+            },
+
             init() {
+                const cur = this.pools.find(p => p.key === this.activePoolKey) || this.pools[0];
+                if (cur) {
+                    this.activeSector = this.getSector(cur);
+                }
+
                 if (this.activeUndrawnParticipants.length > 0) {
                     this.selectedParticipantId = this.activeUndrawnParticipants[0].id;
                 }
@@ -913,6 +1039,10 @@
             switchPool(key) {
                 if (this.isSpinning) return;
                 this.activePoolKey = key;
+                const target = this.pools.find(p => p.key === key);
+                if (target) {
+                    this.activeSector = this.getSector(target);
+                }
                 this.wonDrawNumber = null;
                 if (this.activeUndrawnParticipants.length > 0) {
                     this.selectedParticipantId = this.activeUndrawnParticipants[0].id;

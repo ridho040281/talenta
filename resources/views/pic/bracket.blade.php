@@ -107,15 +107,22 @@
         </div>
     </div>
 
-    <!-- Pool / Category Filter Tabs -->
+    <!-- Pool / Category Filter Tabs (Pemisahan Visual Sektor PA & PI) -->
     @if(count($pools) > 1)
     <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
         @foreach($pools as $p)
-            @php $isActive = ($p['key'] === $activePoolKey); @endphp
+            @php 
+                $isActive = ($p['key'] === $activePoolKey); 
+                $isPi = ($p['sector'] ?? '') === 'PI' || str_contains($p['key'], '_pi') || stripos($p['title'], 'putri') !== false;
+                $cleanTitle = $p['category_label'] ?? $p['short_title'] ?? $p['title'];
+                if (!empty($p['category_label'])) {
+                    $cleanTitle = ($isPi ? '👧 ' : '👦 ') . $p['category_label'];
+                }
+            @endphp
             <a href="{{ route('pic.bracket', $competition->id) }}?pool={{ urlencode($p['key']) }}"
-               class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold transition whitespace-nowrap {{ $isActive ? 'bg-gradient-to-r from-indigo-500 to-blue-600 text-white shadow-lg shadow-indigo-500/25 border border-indigo-400/30' : 'bg-slate-900/80 text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-800' }}">
-                <span>{{ $p['title'] }}</span>
-                <span class="px-2 py-0.5 rounded-full text-[10px] {{ $isActive ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400' }}">
+               class="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-bold transition whitespace-nowrap {{ $isActive ? ($isPi ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-lg shadow-rose-500/25 border border-rose-400/40 ring-1 ring-rose-400/30' : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 border border-blue-400/40 ring-1 ring-blue-400/30') : 'bg-slate-900/80 text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-800' }}">
+                <span>{{ $cleanTitle }}</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] {{ $isActive ? 'bg-white/20 text-white font-mono font-bold' : 'bg-slate-800 text-slate-400 font-mono' }}">
                     {{ count($p['participants']) }}
                 </span>
             </a>
