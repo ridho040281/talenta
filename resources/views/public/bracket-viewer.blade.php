@@ -224,11 +224,21 @@
                                         @if($poExisting && $poExisting->court_number)
                                             <div class="px-3.5 py-1.5 bg-slate-950/80 border-b border-slate-800/80 flex items-center justify-between text-[11px] font-mono">
                                                 <div class="flex items-center gap-1.5 flex-wrap">
+                                                    @if($poExisting->match_day_label || $poExisting->match_day)
+                                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 font-bold text-[10px] border border-sky-500/30">
+                                                            📅 {{ $poExisting->match_day_label ?: ('Hari ' . ($poExisting->match_day ?: 1)) }}
+                                                        </span>
+                                                    @endif
                                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-bold text-[10px] border border-indigo-500/30">
                                                         🏸 {{ $poExisting->court_number }}
                                                     </span>
+                                                    @if($poExisting->match_order)
+                                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold text-[10px] border border-amber-500/30">
+                                                            Partai #{{ $poExisting->match_order }}
+                                                        </span>
+                                                    @endif
                                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[10px] border border-emerald-500/30">
-                                                        ⏰ {{ $poExisting->scheduled_time ?? '07:30' }}
+                                                        ⏰ {{ $poExisting->scheduled_time ?? '08:30' }}
                                                     </span>
                                                 </div>
                                                 <span class="text-[9px] text-slate-500 font-bold uppercase">GOR</span>
@@ -336,6 +346,11 @@
                                         @if($existing && $existing->court_number && strtoupper($existing->court_number) !== 'BYE')
                                             <div class="px-3.5 py-1.5 bg-slate-950/80 border-b border-slate-800/80 flex items-center justify-between text-[11px] font-mono">
                                                 <div class="flex items-center gap-1.5 flex-wrap">
+                                                    @if($existing->match_day_label || $existing->match_day)
+                                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 font-bold text-[10px] border border-sky-500/30">
+                                                            📅 {{ $existing->match_day_label ?: ('Hari ' . $existing->match_day) }}
+                                                        </span>
+                                                    @endif
                                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-bold text-[10px] border border-indigo-500/30">
                                                         🏸 {{ $existing->court_number }}
                                                     </span>

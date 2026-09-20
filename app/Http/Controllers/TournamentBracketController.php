@@ -225,17 +225,130 @@ class TournamentBracketController extends Controller
             $courts = ['Lapangan 1', 'Lapangan 2'];
         }
 
-        $startTime = $request->input('start_time', '08:00');
-        if (! preg_match('/^\d{1,2}:\d{2}$/', $startTime)) {
-            $startTime = '08:00';
+        $tournamentDays = max(1, min(7, (int) $request->input('tournament_days', 4)));
+        $rawStartDate = $request->input('start_date');
+        $startDate = null;
+        if (! empty($rawStartDate)) {
+            try {
+                $startDate = Carbon::parse($rawStartDate);
+            } catch (\Throwable $e) {
+                $startDate = null;
+            }
         }
-        $matchDuration = max(10, (int) $request->input('match_duration', 35));
+        if (! $startDate && ! empty($competition->schedule_date)) {
+            try {
+                $startDate = Carbon::parse($competition->schedule_date);
+            } catch (\Throwable $e) {
+                $startDate = null;
+            }
+        }
 
-        $courtMatchCounts = [];
-        foreach ($courts as $c) {
-            $courtMatchCounts[$c] = 0;
+        $startTime = $request->input('start_time', '08:30');
+        if (! preg_match('/^\d{1,2}:\d{2}$/', $startTime)) {
+            $startTime = '08:30';
         }
-        $courtIndex = 0;
+        $matchDuration = max(10, (int) $request->input('match_duration', 30));
+
+        $totalRounds = count($bracketData['rounds'] ?? []);
+
+        // Helper closures: mapping round to day
+        $getDayForRound = function ($roundIndex) use ($totalRounds, $tournamentDays) {
+            if ($tournamentDays <= 1) {
+                return 1;
+            }
+            if ($tournamentDays === 2) {
+                if ($totalRounds <= 2) {
+                    return $roundIndex;
+                }
+
+                return ($roundIndex <= 2) ? 1 : 2;
+            }
+            if ($tournamentDays === 3) {
+                if ($totalRounds <= 3) {
+                    return min($roundIndex, 3);
+                }
+                if ($totalRounds === 4) {
+                    if ($roundIndex === 1) {
+                        return 1;
+                    }
+                    if ($roundIndex <= 3) {
+                        return 2;
+                    }
+
+                    return 3;
+                }
+                // 5 rounds (bracket 32): R1 -> D1, R2 & R3 -> D2, R4 & R5 -> D3
+                if ($roundIndex === 1) {
+                    return 1;
+                }
+                if ($roundIndex <= 3) {
+                    return 2;
+                }
+
+                return 3;
+            }
+            // 4 Days (default)
+            if ($totalRounds >= 5) {
+                // R1 (32 besar) -> D1, R2 (16 besar) -> D2, R3 (QF) -> D3, R4 (SF) & R5 (Final) -> D4
+                if ($roundIndex === 1) {
+                    return 1;
+                }
+                if ($roundIndex === 2) {
+                    return 2;
+                }
+                if ($roundIndex === 3) {
+                    return 3;
+                }
+
+                return 4;
+            } elseif ($totalRounds === 4) {
+                if ($roundIndex === 1) {
+                    return 1;
+                }
+                if ($roundIndex === 2) {
+                    return 2;
+                }
+                if ($roundIndex === 3) {
+                    return 3;
+                }
+
+                return 4;
+            } elseif ($totalRounds === 3) {
+                if ($roundIndex === 1) {
+                    return 2;
+                }
+                if ($roundIndex === 2) {
+                    return 3;
+                }
+
+                return 4;
+            }
+
+            return min($roundIndex, $tournamentDays);
+        };
+
+        $getDayDateAndLabel = function ($dayNum) use ($startDate) {
+            $mDate = null;
+            $mLabel = "Hari {$dayNum}";
+            if ($startDate) {
+                $cDate = $startDate->copy()->addDays($dayNum - 1);
+                $mDate = $cDate->format('Y-m-d');
+                $mLabel = "Hari {$dayNum} (".$cDate->locale('id')->isoFormat('dddd, D MMM').')';
+            }
+
+            return [$mDate, $mLabel];
+        };
+
+        // Per-day court tracking counters (each day starts fresh from startTime)
+        $courtMatchCountsByDay = [];
+        $courtIndexByDay = [];
+        for ($d = 1; $d <= max($tournamentDays, 5); $d++) {
+            $courtIndexByDay[$d] = 0;
+            $courtMatchCountsByDay[$d] = [];
+            foreach ($courts as $c) {
+                $courtMatchCountsByDay[$d][$c] = 0;
+            }
+        }
 
         $syncedCount = 0;
         $categoryCode = stripos($targetPool['title'], 'putri') !== false ? 'WS' : 'MS';
@@ -243,10 +356,11 @@ class TournamentBracketController extends Controller
             $categoryCode = stripos($targetPool['title'], 'putri') !== false ? 'WD' : 'MD';
         }
 
-        // 1. Sync Play-off matches if active
+        // 1. Sync Play-off matches if active (always on Day 1 early)
         if (! empty($bracketData['playoffs']['has_playoffs']) && ! empty($bracketData['playoffs']['matches'])) {
             $poCourt = $courts[0] ?? 'Lapangan 1';
             $poEarlyTime = Carbon::createFromFormat('H:i', $startTime)->subMinutes(30)->format('H:i');
+            [$poDate, $poDayLabel] = $getDayDateAndLabel(1);
 
             foreach ($bracketData['playoffs']['matches'] as $poIdx => $poMatch) {
                 $poTeam1 = $poMatch['team1'];
@@ -279,6 +393,9 @@ class TournamentBracketController extends Controller
                         'court_number' => $poExisting?->court_number ?: $poCourt,
                         'scheduled_time' => $poExisting?->scheduled_time ?: $poEarlyTime,
                         'match_order' => $poExisting?->match_order ?? 0,
+                        'match_day' => $poExisting?->match_day ?: 1,
+                        'match_date' => $poExisting?->match_date ?: $poDate,
+                        'match_day_label' => $poExisting?->match_day_label ?: $poDayLabel,
                         'round_name' => 'Play-off Kualifikasi',
                         'category' => $categoryCode,
                         'match_type' => stripos($targetPool['title'], 'ganda') !== false ? 'double' : 'single',
@@ -298,7 +415,10 @@ class TournamentBracketController extends Controller
         }
 
         foreach ($bracketData['rounds'] as $round) {
+            $roundIndex = (int) ($round['round_index'] ?? 1);
             $roundName = $round['round_name'];
+            $mDay = $getDayForRound($roundIndex);
+            [$mDate, $mDayLabel] = $getDayDateAndLabel($mDay);
 
             foreach ($round['matches'] as $match) {
                 $team1 = $match['team1'];
@@ -334,14 +454,14 @@ class TournamentBracketController extends Controller
                 $assignedOrder = null;
 
                 if ($isContested) {
-                    $assignedCourt = $courts[$courtIndex % count($courts)];
-                    $courtMatchCounts[$assignedCourt]++;
-                    $assignedOrder = $courtMatchCounts[$assignedCourt];
+                    $assignedCourt = $courts[$courtIndexByDay[$mDay] % count($courts)];
+                    $courtMatchCountsByDay[$mDay][$assignedCourt]++;
+                    $assignedOrder = $courtMatchCountsByDay[$mDay][$assignedCourt];
 
                     $minutesToAdd = ($assignedOrder - 1) * $matchDuration;
                     $assignedTime = Carbon::createFromFormat('H:i', $startTime)->addMinutes($minutesToAdd)->format('H:i');
 
-                    $courtIndex++;
+                    $courtIndexByDay[$mDay]++;
                 } else {
                     $assignedCourt = 'BYE';
                 }
@@ -364,6 +484,9 @@ class TournamentBracketController extends Controller
                         'court_number' => $assignedCourt,
                         'scheduled_time' => $assignedTime,
                         'match_order' => $assignedOrder,
+                        'match_day' => $mDay,
+                        'match_date' => $mDate,
+                        'match_day_label' => $mDayLabel,
                         'round_name' => $roundName,
                         'category' => $categoryCode,
                         'match_type' => stripos($targetPool['title'], 'ganda') !== false ? 'double' : 'single',
@@ -386,7 +509,7 @@ class TournamentBracketController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Berhasil menyinkronkan {$syncedCount} pertandingan ke modul wasit & membagi jadwal otomatis ({$courtListStr}, mulai {$startTime})!",
+            'message' => "Berhasil menyinkronkan {$syncedCount} pertandingan ke jadwal {$tournamentDays} Hari ({$courtListStr}, mulai {$startTime} WIB)!",
         ]);
     }
 
@@ -417,6 +540,8 @@ class TournamentBracketController extends Controller
             'court_number' => 'nullable|string|max:50',
             'scheduled_time' => 'nullable|string|max:10',
             'match_order' => 'nullable|integer|min:1|max:999',
+            'match_day' => 'nullable|integer|min:1|max:7',
+            'match_date' => 'nullable|date',
         ]);
 
         $match = BadmintonMatch::firstOrNew([
@@ -427,6 +552,25 @@ class TournamentBracketController extends Controller
         $match->court_number = $request->input('court_number') ?: ($match->court_number ?: 'Lapangan 1');
         $match->scheduled_time = $request->input('scheduled_time');
         $match->match_order = $request->input('match_order');
+
+        if ($request->filled('match_day')) {
+            $match->match_day = (int) $request->input('match_day');
+            $match->match_day_label = "Hari {$match->match_day}";
+            if ($request->filled('match_date')) {
+                try {
+                    $cd = Carbon::parse($request->input('match_date'));
+                    $match->match_date = $cd->format('Y-m-d');
+                    $match->match_day_label .= ' ('.$cd->locale('id')->isoFormat('dddd, D MMM').')';
+                } catch (\Throwable $e) {
+                }
+            }
+        } elseif ($request->filled('match_date')) {
+            try {
+                $cd = Carbon::parse($request->input('match_date'));
+                $match->match_date = $cd->format('Y-m-d');
+            } catch (\Throwable $e) {
+            }
+        }
 
         if (! $match->exists) {
             $match->round_name = $request->input('round_name', 'Babak 1');
@@ -443,12 +587,15 @@ class TournamentBracketController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Jadwal pertandingan {$match->match_code} ({$match->court_number}) berhasil disimpan!",
+            'message' => "Jadwal pertandingan {$match->match_code} ({$match->court_number} • {$match->match_day_label}) berhasil disimpan!",
             'data' => [
                 'match_code' => $match->match_code,
                 'court_number' => $match->court_number,
                 'scheduled_time' => $match->scheduled_time,
                 'match_order' => $match->match_order,
+                'match_day' => $match->match_day,
+                'match_date' => $match->match_date?->format('Y-m-d'),
+                'match_day_label' => $match->match_day_label,
             ],
         ]);
     }
@@ -1274,6 +1421,9 @@ class TournamentBracketController extends Controller
                         $svg[] = "<text x='".($bracketVLineX + 6)."' y='".($yMid + 11)."' font-size='8' font-mono font-weight='bold' fill='{$subTextColor}'>{$scoreStr}</text>";
                     } elseif (! empty($em->court_number) || ! empty($em->scheduled_time)) {
                         $schedParts = [];
+                        if (! empty($em->match_day)) {
+                            $schedParts[] = "H{$em->match_day}";
+                        }
                         if (! empty($em->match_order)) {
                             $schedParts[] = "#{$em->match_order}";
                         }

@@ -318,15 +318,23 @@
                                     @if($poExisting && $poExisting->court_number)
                                         <div class="px-3 py-1.5 bg-slate-950/80 border-b border-slate-800/80 flex items-center justify-between text-[11px] font-mono">
                                             <div class="flex items-center gap-1.5 flex-wrap">
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 font-bold text-[10px] border border-sky-500/30">
+                                                    📅 {{ $poExisting->match_day_label ?: ('Hari ' . ($poExisting->match_day ?: 1)) }}
+                                                </span>
                                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-bold text-[10px] border border-indigo-500/30">
                                                     🏸 {{ $poExisting->court_number }}
                                                 </span>
+                                                @if($poExisting->match_order)
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold text-[10px] border border-amber-500/30">
+                                                        Partai #{{ $poExisting->match_order }}
+                                                    </span>
+                                                @endif
                                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[10px] border border-emerald-500/30">
                                                     ⏰ {{ $poExisting->scheduled_time ?? '07:30' }}
                                                 </span>
                                             </div>
                                             <button type="button" 
-                                                    @click="openEditScheduleModal('{{ $poMatch['match_code'] }}', '{{ $poExisting->court_number }}', '{{ $poExisting->scheduled_time ?? '07:30' }}', '{{ $poExisting->match_order ?? 0 }}')"
+                                                    @click="openEditScheduleModal('{{ $poMatch['match_code'] }}', '{{ $poExisting->court_number }}', '{{ $poExisting->scheduled_time ?? '07:30' }}', '{{ $poExisting->match_order ?? 0 }}', '{{ $poExisting->match_day ?? 1 }}', '{{ $poExisting->match_date?->format('Y-m-d') ?? '' }}')"
                                                     class="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-amber-300 transition cursor-pointer"
                                                     title="Ubah Jadwal Play-off">
                                                 <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
@@ -449,6 +457,11 @@
                                     @if($existing && $existing->court_number && strtoupper($existing->court_number) !== 'BYE')
                                         <div class="px-3 py-1.5 bg-slate-950/80 border-b border-slate-800/80 flex items-center justify-between text-[11px] font-mono">
                                             <div class="flex items-center gap-1.5 flex-wrap">
+                                                @if($existing->match_day_label || $existing->match_day)
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 font-bold text-[10px] border border-sky-500/30">
+                                                        📅 {{ $existing->match_day_label ?: ('Hari ' . $existing->match_day) }}
+                                                    </span>
+                                                @endif
                                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-bold text-[10px] border border-indigo-500/30">
                                                     🏸 {{ $existing->court_number }}
                                                 </span>
@@ -464,9 +477,9 @@
                                                 @endif
                                             </div>
                                             <button type="button" 
-                                                    @click="openEditScheduleModal('{{ $match['match_code'] }}', '{{ $existing->court_number }}', '{{ $existing->scheduled_time ?? '' }}', '{{ $existing->match_order ?? '' }}')"
+                                                    @click="openEditScheduleModal('{{ $match['match_code'] }}', '{{ $existing->court_number }}', '{{ $existing->scheduled_time ?? '' }}', '{{ $existing->match_order ?? '' }}', '{{ $existing->match_day ?? 1 }}', '{{ $existing->match_date?->format('Y-m-d') ?? '' }}')"
                                                     class="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-amber-300 transition cursor-pointer"
-                                                    title="Ubah Lapangan / Jam Tanding Partai Ini">
+                                                    title="Ubah Hari, Lapangan & Jam Tanding Partai Ini">
                                                 <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                                             </button>
                                         </div>
@@ -474,7 +487,7 @@
                                         <div class="px-3 py-1.5 bg-slate-950/40 border-b border-slate-800/60 flex items-center justify-between text-[10px] text-slate-400 font-mono">
                                             <span class="text-slate-500">Jadwal belum diset</span>
                                             <button type="button" 
-                                                    @click="openEditScheduleModal('{{ $match['match_code'] }}', 'Lapangan 1', '', '')"
+                                                    @click="openEditScheduleModal('{{ $match['match_code'] }}', 'Lapangan 1', '', '', 1, '{{ $competition->schedule_date ? \Carbon\Carbon::parse($competition->schedule_date)->format('Y-m-d') : '' }}')"
                                                     class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold transition flex items-center gap-1 cursor-pointer">
                                                 <i data-lucide="clock" class="w-3 h-3 text-amber-400"></i>
                                                 <span>Set Jadwal</span>
@@ -830,22 +843,68 @@
             </div>
 
             <div class="space-y-4 text-xs">
+                <!-- Durasi Turnamen & Tanggal Mulai -->
+                <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+                    <div>
+                        <label class="block font-bold text-slate-300 mb-1.5 flex items-center justify-between">
+                            <span class="flex items-center gap-1.5 text-amber-400 font-extrabold">
+                                <i data-lucide="calendar" class="w-4 h-4"></i>
+                                <span>Durasi Turnamen (Hari):</span>
+                            </span>
+                            <span class="text-[10px] text-emerald-400 font-bold font-mono">Disarankan: 4 Hari</span>
+                        </label>
+                        <div class="grid grid-cols-4 gap-2">
+                            <template x-for="days in [1, 2, 3, 4]" :key="days">
+                                <button type="button" 
+                                        @click="tournamentDays = days"
+                                        :class="tournamentDays === days ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black shadow-md border-amber-400' : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'"
+                                        class="py-2 px-1 text-center rounded-xl border text-xs font-bold transition cursor-pointer">
+                                    <span x-text="days + ' Hari'"></span>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-800/80">
+                        <div>
+                            <label class="block font-bold text-slate-400 text-[11px] mb-1">
+                                Tanggal Mulai (Hari 1):
+                            </label>
+                            <input type="date" 
+                                   x-model="scheduleStartDate"
+                                   class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono font-bold text-xs focus:ring-1 focus:ring-amber-500 focus:outline-none">
+                        </div>
+                        <div class="flex flex-col justify-center">
+                            <span class="text-[10px] text-slate-500 font-mono">Alokasi Babak Otomatis:</span>
+                            <div class="text-[11px] font-bold text-slate-300 leading-relaxed">
+                                <span x-show="tournamentDays === 4">📅 H1: 32 Besar • H2: 16 Besar • H3: QF • H4: SF & Final</span>
+                                <span x-show="tournamentDays === 3">📅 H1: 32 Besar • H2: 16B & QF • H3: SF & Final</span>
+                                <span x-show="tournamentDays === 2">📅 H1: Babak Penyisihan • H2: Babak Utama</span>
+                                <span x-show="tournamentDays === 1">📅 Semua babak dimainkan dalam 1 hari</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Pilihan Lapangan Aktif -->
                 <div>
-                    <label class="block font-bold text-slate-300 mb-2">
-                        Pilih Lapangan Aktif (Bisa pilih lebih dari 1):
-                    </label>
-                    <div class="grid grid-cols-2 gap-2 mb-2">
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="font-bold text-slate-300">
+                            Pilih Lapangan Aktif:
+                        </label>
+                        <span class="text-[10px] text-slate-400 font-mono">Utama: Lap 1 & 2 • Opsional: Lap 3</span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2">
                         <template x-for="court in defaultCourtOptions" :key="court">
                             <button type="button" 
                                     @click="toggleCourt(court)"
                                     :class="scheduleCourts.includes(court) ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300 font-extrabold ring-1 ring-indigo-500/40' : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'"
                                     class="p-2.5 rounded-xl border flex items-center justify-between transition cursor-pointer text-left">
-                                <span class="flex items-center gap-2">
-                                    <i data-lucide="map-pin" class="w-3.5 h-3.5" :class="scheduleCourts.includes(court) ? 'text-indigo-400' : 'text-slate-600'"></i>
-                                    <span x-text="court"></span>
+                                <span class="flex items-center gap-1.5 truncate">
+                                    <i data-lucide="map-pin" class="w-3.5 h-3.5 shrink-0" :class="scheduleCourts.includes(court) ? 'text-indigo-400' : 'text-slate-600'"></i>
+                                    <span x-text="court" class="truncate text-xs"></span>
                                 </span>
-                                <span class="w-4 h-4 rounded-md flex items-center justify-center text-[10px]"
+                                <span class="w-4 h-4 rounded-md flex items-center justify-center text-[10px] shrink-0"
                                       :class="scheduleCourts.includes(court) ? 'bg-indigo-500 text-white' : 'border border-slate-700'">
                                     <i data-lucide="check" class="w-3 h-3" x-show="scheduleCourts.includes(court)"></i>
                                 </span>
@@ -869,10 +928,10 @@
                     </div>
 
                     <!-- Selected Courts Pill List -->
-                    <div class="mt-2.5 flex flex-wrap gap-1.5 items-center">
+                    <div class="mt-2 flex flex-wrap gap-1.5 items-center">
                         <span class="text-[11px] text-slate-500 font-bold">Terpilih:</span>
                         <template x-for="court in scheduleCourts" :key="court">
-                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 font-mono text-[11px] border border-indigo-500/30">
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-indigo-500/20 text-indigo-300 font-mono text-[11px] border border-indigo-500/30">
                                 <span x-text="court"></span>
                                 <button type="button" @click="removeCourt(court)" class="hover:text-rose-400 text-indigo-400 ml-0.5 cursor-pointer" title="Hapus lapangan">
                                     &times;
@@ -886,14 +945,14 @@
                 <div class="grid grid-cols-2 gap-3 pt-2">
                     <div>
                         <label class="block font-bold text-slate-300 mb-1.5">
-                            Jam Mulai Tanding:
+                            Jam Mulai Setiap Hari:
                         </label>
                         <div class="relative">
                             <input type="time" 
                                    x-model="scheduleStartTime"
                                    class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono font-bold text-sm focus:ring-1 focus:ring-emerald-500 focus:outline-none">
                         </div>
-                        <p class="text-[10px] text-slate-500 mt-1">Format: 24 Jam (WIB)</p>
+                        <p class="text-[10px] text-slate-500 mt-1">Reset tiap hari (WIB)</p>
                     </div>
 
                     <div>
@@ -917,11 +976,10 @@
                 <div class="p-3 rounded-2xl bg-slate-950/70 border border-slate-800 text-[11px] text-slate-400 space-y-1">
                     <div class="font-bold text-emerald-400 flex items-center gap-1.5">
                         <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-                        <span>Cara Kerja Distribusi Otomatis:</span>
+                        <span>Cara Kerja Distribusi Multi-Hari:</span>
                     </div>
                     <p class="leading-relaxed">
-                        Sistem akan membagi seluruh partai yang bertanding secara bergiliran ke <span class="text-white font-bold" x-text="scheduleCourts.length + ' lapangan aktif'"></span>. 
-                        Partai awal akan dimulai serentak pukul <span class="text-white font-bold" x-text="scheduleStartTime"></span> WIB, dan partai berikutnya bertambah <span class="text-white font-bold" x-text="scheduleMatchDuration + ' menit'"></span> per giliran.
+                        Sistem membagi babak pertandingan ke dalam <span class="text-white font-bold" x-text="tournamentDays + ' Hari'"></span>. Tiap hari, pertandingan dimainkan bergiliran di <span class="text-white font-bold" x-text="scheduleCourts.join(', ')"></span> mulai pukul <span class="text-white font-bold" x-text="scheduleStartTime"></span> WIB dengan interval <span class="text-white font-bold" x-text="scheduleMatchDuration + ' menit'"></span>.
                     </p>
                 </div>
             </div>
@@ -938,7 +996,7 @@
                         :disabled="isSyncing || scheduleCourts.length === 0"
                         class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2 cursor-pointer">
                     <i data-lucide="refresh-cw" class="w-4 h-4" :class="isSyncing ? 'animate-spin' : ''"></i>
-                    <span x-text="isSyncing ? 'Memproses Jadwal...' : 'Terapkan & Sinkronkan'"></span>
+                    <span x-text="isSyncing ? 'Memproses Jadwal...' : 'Terapkan & Sinkronkan Jadwal'"></span>
                 </button>
             </div>
         </div>
@@ -967,6 +1025,34 @@
             </div>
 
             <div class="space-y-3.5 text-xs">
+                <!-- Hari & Tanggal -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-300 mb-1">
+                            Pilih Hari:
+                        </label>
+                        <select x-model="editMatchData.matchDay" 
+                                class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-bold text-xs focus:ring-1 focus:ring-amber-500 focus:outline-none">
+                            <option value="1">Hari 1</option>
+                            <option value="2">Hari 2</option>
+                            <option value="3">Hari 3</option>
+                            <option value="4">Hari 4</option>
+                            <option value="5">Hari 5</option>
+                            <option value="6">Hari 6</option>
+                            <option value="7">Hari 7</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-300 mb-1">
+                            Tanggal Main:
+                        </label>
+                        <input type="date" 
+                               x-model="editMatchData.matchDate"
+                               class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono text-xs focus:ring-1 focus:ring-amber-500 focus:outline-none">
+                    </div>
+                </div>
+
                 <div>
                     <label class="block font-bold text-slate-300 mb-1">
                         Pilih Lapangan:
@@ -1052,17 +1138,21 @@
             showSyncScheduleModal: false,
             showEditMatchModal: false,
             defaultCourtOptions: ['Lapangan 1', 'Lapangan 2', 'Lapangan 3', 'Lapangan 4'],
-            scheduleCourts: ['Lapangan 1', 'Lapangan 2', 'Lapangan 3'],
+            scheduleCourts: ['Lapangan 1', 'Lapangan 2'],
+            tournamentDays: 4,
+            scheduleStartDate: '{{ $competition->schedule_date ? \Carbon\Carbon::parse($competition->schedule_date)->format("Y-m-d") : now()->format("Y-m-d") }}',
             newCourtInput: '',
-            scheduleStartTime: '08:00',
-            scheduleMatchDuration: 35,
+            scheduleStartTime: '08:30',
+            scheduleMatchDuration: 30,
 
             // Single match edit state
             editMatchData: {
                 matchCode: '',
                 courtNumber: 'Lapangan 1',
                 scheduledTime: '',
-                matchOrder: ''
+                matchOrder: '',
+                matchDay: 1,
+                matchDate: ''
             },
             isSavingSchedule: false,
 
@@ -1151,12 +1241,14 @@
                 }
             },
 
-            openEditScheduleModal(matchCode, courtNumber, scheduledTime, matchOrder) {
+            openEditScheduleModal(matchCode, courtNumber, scheduledTime, matchOrder, matchDay, matchDate) {
                 this.editMatchData = {
                     matchCode: matchCode,
                     courtNumber: courtNumber || 'Lapangan 1',
                     scheduledTime: scheduledTime || '',
-                    matchOrder: matchOrder || ''
+                    matchOrder: matchOrder || '',
+                    matchDay: matchDay || 1,
+                    matchDate: matchDate || ''
                 };
                 this.showEditMatchModal = true;
                 this.$nextTick(() => {
@@ -1185,7 +1277,9 @@
                             match_code: this.editMatchData.matchCode,
                             court_number: this.editMatchData.courtNumber,
                             scheduled_time: this.editMatchData.scheduledTime,
-                            match_order: this.editMatchData.matchOrder ? parseInt(this.editMatchData.matchOrder) : null
+                            match_order: this.editMatchData.matchOrder ? parseInt(this.editMatchData.matchOrder) : null,
+                            match_day: this.editMatchData.matchDay ? parseInt(this.editMatchData.matchDay) : 1,
+                            match_date: this.editMatchData.matchDate || null
                         })
                     });
 
@@ -1225,7 +1319,9 @@
                             pool_key: this.activePoolKey,
                             courts: this.scheduleCourts,
                             start_time: this.scheduleStartTime,
-                            match_duration: parseInt(this.scheduleMatchDuration)
+                            match_duration: parseInt(this.scheduleMatchDuration),
+                            tournament_days: parseInt(this.tournamentDays),
+                            start_date: this.scheduleStartDate
                         })
                     });
 

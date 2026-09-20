@@ -15,6 +15,9 @@ class BadmintonMatch extends Model
         'court_number',
         'scheduled_time',
         'match_order',
+        'match_day',
+        'match_date',
+        'match_day_label',
         'match_code',
         'round_name',
         'category',
@@ -57,6 +60,8 @@ class BadmintonMatch extends Model
             'server_player' => 'integer',
             'winner_team' => 'integer',
             'match_order' => 'integer',
+            'match_day' => 'integer',
+            'match_date' => 'date',
         ];
     }
 
