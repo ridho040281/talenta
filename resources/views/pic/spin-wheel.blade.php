@@ -815,20 +815,24 @@
                 this.batchErrorMessage = '';
                 this.batchSuccessMessage = '';
 
-                // Countdown animation
-                for (let i = 3; i >= 1; i--) {
-                    this.batchCountdown = i;
-                    this.playBeep(420 + (4 - i) * 140, 0.08, 'triangle');
-                    await new Promise(r => setTimeout(r, 600));
-                }
-                this.batchCountdown = 'SHUFFLING...';
-                this.playBeep(880, 0.15, 'sine');
-                await new Promise(r => setTimeout(r, 500));
-
-                const poolKey = this.batchTargetScope === 'pool' ? this.activePoolKey : 'all';
-                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
-
                 try {
+                    // Countdown animation
+                    for (let i = 3; i >= 1; i--) {
+                        this.batchCountdown = i;
+                        if (typeof this.playBeep === 'function') {
+                            this.playBeep(420 + (4 - i) * 140, 0.08, 'triangle');
+                        }
+                        await new Promise(r => setTimeout(r, 600));
+                    }
+                    this.batchCountdown = 'SHUFFLING...';
+                    if (typeof this.playBeep === 'function') {
+                        this.playBeep(880, 0.15, 'sine');
+                    }
+                    await new Promise(r => setTimeout(r, 500));
+
+                    const poolKey = this.batchTargetScope === 'pool' ? this.activePoolKey : 'all';
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+
                     const response = await fetch(`/pic/lomba/${this.competitionId}/batch-draw`, {
                         method: 'POST',
                         headers: {
@@ -860,7 +864,9 @@
                         this.wonParticipantName = '⚡ BATCH SHUFFLE SELESAI';
                         this.wonParticipantSchool = `${data.drawn_count} peserta berhasil diundi secara serentak`;
 
-                        this.playWinnerSound();
+                        if (typeof this.playWinnerSound === 'function') {
+                            this.playWinnerSound();
+                        }
 
                         if (typeof confetti === 'function') {
                             confetti({ particleCount: 160, spread: 90, origin: { y: 0.6 } });
@@ -879,7 +885,7 @@
                     }
                 } catch (err) {
                     console.error('Batch draw network error:', err);
-                    this.batchErrorMessage = 'Terjadi gangguan jaringan saat memproses Batch Auto Draw.';
+                    this.batchErrorMessage = 'Terjadi gangguan saat memproses Batch Auto Draw: ' + (err.message || err);
                     this.isProcessingBatch = false;
                     this.batchCountdown = null;
                 }
@@ -1434,6 +1440,41 @@
                     gain.connect(this.audioCtx.destination);
                     osc.start();
                     osc.stop(this.audioCtx.currentTime + 0.15);
+                } catch(e) {}
+            },
+
+            playBeep(freq = 600, duration = 0.03, type = 'sine') {
+                try {
+                    if (!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = this.audioCtx.createOscillator();
+                    const gain = this.audioCtx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.08, this.audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.audioCtx.destination);
+                    osc.start();
+                    osc.stop(this.audioCtx.currentTime + duration);
+                } catch(e) {}
+            },
+
+            playWinnerSound() {
+                try {
+                    if (!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                    notes.forEach((freq, idx) => {
+                        const osc = this.audioCtx.createOscillator();
+                        const gain = this.audioCtx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, this.audioCtx.currentTime + idx * 0.12);
+                        gain.gain.setValueAtTime(0.12, this.audioCtx.currentTime + idx * 0.12);
+                        gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + idx * 0.12 + 0.35);
+                        osc.connect(gain);
+                        gain.connect(this.audioCtx.destination);
+                        osc.start(this.audioCtx.currentTime + idx * 0.12);
+                        osc.stop(this.audioCtx.currentTime + idx * 0.12 + 0.35);
+                    });
                 } catch(e) {}
             },
 

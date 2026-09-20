@@ -673,20 +673,24 @@
                 this.batchErrorMessage = '';
                 this.batchSuccessMessage = '';
 
-                // Countdown animation
-                for (let i = 3; i >= 1; i--) {
-                    this.batchCountdown = i;
-                    this.playBeep(400 + (4 - i) * 150, 0.08, 'square');
-                    await new Promise(r => setTimeout(r, 600));
-                }
-                this.batchCountdown = 'SHUFFLING...';
-                this.playBeep(850, 0.15, 'triangle');
-                await new Promise(r => setTimeout(r, 500));
-
-                const poolKey = this.batchTargetScope === 'pool' ? this.activePoolKey : 'all';
-                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
-
                 try {
+                    // Countdown animation
+                    for (let i = 3; i >= 1; i--) {
+                        this.batchCountdown = i;
+                        if (typeof this.playBeep === 'function') {
+                            this.playBeep(400 + (4 - i) * 150, 0.08, 'square');
+                        }
+                        await new Promise(r => setTimeout(r, 600));
+                    }
+                    this.batchCountdown = 'SHUFFLING...';
+                    if (typeof this.playBeep === 'function') {
+                        this.playBeep(850, 0.15, 'triangle');
+                    }
+                    await new Promise(r => setTimeout(r, 500));
+
+                    const poolKey = this.batchTargetScope === 'pool' ? this.activePoolKey : 'all';
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+
                     const response = await fetch(`/pic/lomba/${this.competitionId}/batch-draw`, {
                         method: 'POST',
                         headers: {
@@ -718,7 +722,9 @@
                         this.displaySchool = `${data.drawn_count} peserta berhasil diundi secara serentak`;
                         this.radarTicker = 'BATCH_COMPLETED >> ' + data.drawn_count + ' SLOTS ALLOCATED';
 
-                        this.playLockSound();
+                        if (typeof this.playLockSound === 'function') {
+                            this.playLockSound();
+                        }
 
                         if (typeof confetti === 'function') {
                             confetti({ particleCount: 160, spread: 90, origin: { y: 0.6 } });
@@ -737,7 +743,7 @@
                     }
                 } catch (err) {
                     console.error('Batch draw network error:', err);
-                    this.batchErrorMessage = 'Terjadi gangguan jaringan saat memproses Batch Auto Draw.';
+                    this.batchErrorMessage = 'Terjadi gangguan saat memproses Batch Auto Draw: ' + (err.message || err);
                     this.isProcessingBatch = false;
                     this.batchCountdown = null;
                 }
