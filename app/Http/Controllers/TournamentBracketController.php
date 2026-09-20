@@ -21,24 +21,84 @@ class TournamentBracketController extends Controller
     {
         if (! $competition_id) {
             $user = Auth::user();
+
+            // 1. Jika PIC Lomba, cari cabor turnamen yang dikelolanya dengan prioritas Bulu Tangkis
             if ($user && $user->role === 'pic_lomba') {
-                $comp = $user->managedCompetitions()
-                    ->where(function ($q) {
-                        $q->whereIn('code', ['BLT', 'TMJ'])
+                $comp = null;
+
+                // Cek apakah mengelola Bulu Tangkis
+                if ($user->managesBadminton()) {
+                    $comp = Competition::where(function ($q) {
+                        $q->where('code', 'BLT')
                             ->orWhere('name', 'like', '%Bulu Tangkis%')
-                            ->orWhere('name', 'like', '%Tenis Meja%');
-                    })
-                    ->first();
+                            ->orWhere('name', 'like', '%Badminton%');
+                    })->first();
+                }
+
+                if (! $comp) {
+                    $comp = $user->managedCompetitions()
+                        ->where(function ($q) {
+                            $q->where('code', 'BLT')
+                                ->orWhere('name', 'like', '%Bulu Tangkis%')
+                                ->orWhere('name', 'like', '%Badminton%');
+                        })
+                        ->first();
+                }
+
+                // Fallback ke Tenis Meja hanya jika BUKAN PIC Bulu Tangkis
+                if (! $comp) {
+                    $comp = $user->managedCompetitions()
+                        ->where(function ($q) {
+                            $q->where('code', 'TMJ')
+                                ->orWhere('name', 'like', '%Tenis Meja%');
+                        })
+                        ->first();
+                }
+
                 if ($comp) {
                     $competition_id = $comp->id;
                 }
             }
 
-            if (! $competition_id) {
-                $competition = Competition::whereIn('code', ['BLT', 'TMJ'])
-                    ->orWhere('name', 'like', '%Bulu Tangkis%')
-                    ->orWhere('name', 'like', '%Tenis Meja%')
+            // 2. Jika Juri / Wasit
+            if (! $competition_id && $user && $user->role === 'juri') {
+                $comp = $user->judgedCompetitions()
+                    ->where(function ($q) {
+                        $q->where('code', 'BLT')
+                            ->orWhere('name', 'like', '%Bulu Tangkis%')
+                            ->orWhere('name', 'like', '%Badminton%');
+                    })
                     ->first();
+
+                if (! $comp) {
+                    $comp = $user->judgedCompetitions()
+                        ->where(function ($q) {
+                            $q->where('code', 'TMJ')
+                                ->orWhere('name', 'like', '%Tenis Meja%');
+                        })
+                        ->first();
+                }
+
+                if ($comp) {
+                    $competition_id = $comp->id;
+                }
+            }
+
+            // 3. Default Global (Super Admin, Panitia, atau Pengguna Umum): SELALU Bulu Tangkis Utama
+            if (! $competition_id) {
+                $competition = Competition::where(function ($q) {
+                    $q->where('code', 'BLT')
+                        ->orWhere('name', 'like', '%Bulu Tangkis%')
+                        ->orWhere('name', 'like', '%Badminton%');
+                })->first();
+
+                // Secondary fallback jika cabor Bulu Tangkis belum ada di DB
+                if (! $competition) {
+                    $competition = Competition::where(function ($q) {
+                        $q->where('code', 'TMJ')
+                            ->orWhere('name', 'like', '%Tenis Meja%');
+                    })->first();
+                }
 
                 if (! $competition) {
                     return redirect()->route('admin.dashboard')->with('error', 'Cabang lomba turnamen belum terdaftar dalam sistem.');
@@ -84,7 +144,21 @@ class TournamentBracketController extends Controller
             $bracketData = $this->buildTournamentTree($activePool['participants'], $competition, $activePoolKey);
         }
 
-        return view('pic.bracket', compact('competition', 'pools', 'activePoolKey', 'activePool', 'bracketData'));
+        // Daftar Cabor Turnamen untuk Cabor Switcher (Bulu Tangkis vs Tenis Meja)
+        $tCompQuery = Competition::where(function ($q) {
+            $q->whereIn('code', ['BLT', 'TMJ'])
+                ->orWhere('name', 'like', '%Bulu Tangkis%')
+                ->orWhere('name', 'like', '%Badminton%')
+                ->orWhere('name', 'like', '%Tenis Meja%');
+        })
+            ->orderByRaw("CASE WHEN code = 'BLT' OR name LIKE '%Bulu Tangkis%' OR name LIKE '%Badminton%' THEN 1 ELSE 2 END");
+
+        if (! in_array($user->role, ['superadmin', 'panitia']) && ! $user->managesTournamentBracket()) {
+            $tCompQuery->whereIn('id', PicController::getManagedCompetitionIds($user));
+        }
+        $tournamentCompetitions = $tCompQuery->get();
+
+        return view('pic.bracket', compact('competition', 'pools', 'activePoolKey', 'activePool', 'bracketData', 'tournamentCompetitions'));
     }
 
     /**

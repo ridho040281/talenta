@@ -160,13 +160,17 @@ class User extends Authenticatable
      */
     public function managesBadminton(): bool
     {
-        if ($this->role === 'superadmin') {
+        if (in_array($this->role, ['superadmin', 'panitia'])) {
             return true;
         }
 
         if ($this->role === 'pic_lomba') {
             // Primary PIC for Bulu Tangkis
-            if (Competition::where('code', 'BLT')->where('pic_id', $this->id)->exists()) {
+            if (Competition::where(function ($q) {
+                $q->where('code', 'BLT')
+                    ->orWhere('name', 'like', '%Bulu Tangkis%')
+                    ->orWhere('name', 'like', '%Badminton%');
+            })->where('pic_id', $this->id)->exists()) {
                 return true;
             }
 
@@ -182,7 +186,11 @@ class User extends Authenticatable
         }
 
         if ($this->role === 'juri') {
-            return $this->judgedCompetitions()->where('code', 'BLT')->exists();
+            return $this->judgedCompetitions()->where(function ($q) {
+                $q->where('code', 'BLT')
+                    ->orWhere('name', 'like', '%Bulu Tangkis%')
+                    ->orWhere('name', 'like', '%Badminton%');
+            })->exists();
         }
 
         return false;
@@ -198,16 +206,19 @@ class User extends Authenticatable
         }
 
         if ($this->role === 'pic_lomba') {
-            return Competition::where('code', 'TMJ')
-                ->orWhere('name', 'like', '%Tenis Meja%')
-                ->where('pic_id', $this->id)
+            return Competition::where(function ($q) {
+                $q->where('code', 'TMJ')
+                    ->orWhere('name', 'like', '%Tenis Meja%');
+            })->where('pic_id', $this->id)
                 ->exists();
         }
 
         if ($this->role === 'juri') {
             return $this->judgedCompetitions()
-                ->where('code', 'TMJ')
-                ->orWhere('name', 'like', '%Tenis Meja%')
+                ->where(function ($q) {
+                    $q->where('code', 'TMJ')
+                        ->orWhere('name', 'like', '%Tenis Meja%');
+                })
                 ->exists();
         }
 
@@ -232,6 +243,7 @@ class User extends Authenticatable
                 ->where(function ($q) {
                     $q->whereIn('code', ['BLT', 'TMJ'])
                         ->orWhere('name', 'like', '%Bulu Tangkis%')
+                        ->orWhere('name', 'like', '%Badminton%')
                         ->orWhere('name', 'like', '%Tenis Meja%');
                 })
                 ->exists();
@@ -242,6 +254,7 @@ class User extends Authenticatable
                 ->where(function ($q) {
                     $q->whereIn('code', ['BLT', 'TMJ'])
                         ->orWhere('name', 'like', '%Bulu Tangkis%')
+                        ->orWhere('name', 'like', '%Badminton%')
                         ->orWhere('name', 'like', '%Tenis Meja%');
                 })
                 ->exists();

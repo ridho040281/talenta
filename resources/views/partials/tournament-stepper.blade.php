@@ -12,29 +12,77 @@
     $isBadminton = (strtoupper($competition->code ?? '') === 'BLT') 
         || str_contains(strtolower($competition->name ?? ''), 'bulu tangkis') 
         || str_contains(strtolower($competition->name ?? ''), 'badminton');
+
+    // Retrieve tournament competitions for instant switching (Bulu Tangkis vs Tenis Meja)
+    if (!isset($tournamentCompetitions)) {
+        $user = auth()->user();
+        $tCompQuery = \App\Models\Competition::where(function($q) {
+            $q->whereIn('code', ['BLT', 'TMJ'])
+              ->orWhere('name', 'like', '%Bulu Tangkis%')
+              ->orWhere('name', 'like', '%Badminton%')
+              ->orWhere('name', 'like', '%Tenis Meja%');
+        })->orderByRaw("CASE WHEN code = 'BLT' OR name LIKE '%Bulu Tangkis%' OR name LIKE '%Badminton%' THEN 1 ELSE 2 END");
+
+        if ($user && !in_array($user->role, ['superadmin', 'panitia']) && !$user->managesTournamentBracket()) {
+            $tCompQuery->whereIn('id', \App\Http\Controllers\PicController::getManagedCompetitionIds($user));
+        }
+        $tournamentCompetitions = $tCompQuery->get();
+    }
 @endphp
 
 <div class="ai-card bg-[#090D17]/95 border border-white/[0.12] rounded-3xl p-3 sm:p-4 mb-6 shadow-2xl backdrop-blur-xl">
     <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
         
-        <!-- Left: Competition Context & Title -->
-        <div class="flex items-center gap-3 shrink-0">
-            <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#7A5AF8] to-[#4E6EFF] text-white flex items-center justify-center font-bold shadow-lg shadow-[#7A5AF8]/30 shrink-0">
-                <i data-lucide="git-branch" class="w-5 h-5"></i>
-            </div>
-            <div class="min-w-0">
-                <div class="flex items-center gap-2 flex-wrap">
-                    <span class="px-2 py-0.5 rounded-md bg-[#7A5AF8]/20 text-[#A594FD] border border-[#7A5AF8]/40 text-[10px] font-mono font-bold uppercase tracking-wider">
-                        {{ $competition->code ?? 'BLT' }}
-                    </span>
-                    <h2 class="text-sm sm:text-base font-black text-white truncate font-display">
-                        {{ $competition->name }}
-                    </h2>
+        <!-- Left: Competition Context & Title & Cabor Switcher -->
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3 shrink-0">
+            <div class="flex items-center gap-3 shrink-0">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#7A5AF8] to-[#4E6EFF] text-white flex items-center justify-center font-bold shadow-lg shadow-[#7A5AF8]/30 shrink-0">
+                    <i data-lucide="git-branch" class="w-5 h-5"></i>
                 </div>
-                <p class="text-[11px] text-slate-400 font-medium truncate mt-0.5">
-                    Alur Kerja Turnamen: 5 Langkah Terarah Sistem Gugur
-                </p>
+                <div class="min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="px-2 py-0.5 rounded-md bg-[#7A5AF8]/20 text-[#A594FD] border border-[#7A5AF8]/40 text-[10px] font-mono font-bold uppercase tracking-wider">
+                            {{ $competition->code ?? 'BLT' }}
+                        </span>
+                        <h2 class="text-sm sm:text-base font-black text-white truncate font-display">
+                            {{ $competition->name }}
+                        </h2>
+                    </div>
+                    <p class="text-[11px] text-slate-400 font-medium truncate mt-0.5">
+                        Alur Kerja Turnamen: 5 Langkah Terarah Sistem Gugur
+                    </p>
+                </div>
             </div>
+
+            @if(isset($tournamentCompetitions) && $tournamentCompetitions->count() > 1)
+            <!-- Cabor Switcher Pill Tabs -->
+            <div class="inline-flex items-center gap-1 p-1 bg-white/[0.04] border border-white/[0.10] rounded-2xl shrink-0 self-start sm:self-center sm:ml-2">
+                @foreach($tournamentCompetitions as $tc)
+                    @php
+                        $isCurComp = ($tc->id === $competition->id);
+                        $isTcBadminton = (strtoupper($tc->code ?? '') === 'BLT') 
+                            || str_contains(strtolower($tc->name ?? ''), 'bulu tangkis') 
+                            || str_contains(strtolower($tc->name ?? ''), 'badminton');
+                        $icon = $isTcBadminton ? '🏸' : '🏓';
+                        $shortName = $isTcBadminton ? 'Bulu Tangkis' : 'Tenis Meja';
+
+                        $targetUrl = match($activeStep ?? 'bagan') {
+                            'peserta' => route('pic.dashboard') . '?competition_id=' . $tc->id,
+                            'seeded' => route('pic.spin.wheel', $tc->id) . '?open_seeded=1',
+                            'undian' => route('pic.spin.wheel', $tc->id),
+                            'wasit' => $isTcBadminton ? route('badminton.index') : route('juri.scoring', $tc->id),
+                            default => route('pic.bracket', $tc->id),
+                        };
+                    @endphp
+                    <a href="{{ $targetUrl }}" 
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer {{ $isCurComp ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.06]' }}"
+                       title="Beralih ke {{ $tc->name }}">
+                        <span>{{ $icon }}</span>
+                        <span>{{ $shortName }}</span>
+                    </a>
+                @endforeach
+            </div>
+            @endif
         </div>
 
         <!-- Center: 5-Step Pipeline -->
