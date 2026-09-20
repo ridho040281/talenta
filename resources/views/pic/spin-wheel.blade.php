@@ -39,7 +39,7 @@
                 </label>
                 <select x-model="activeClassKey" 
                         @change="switchClass($event.target.value)"
-                        :disabled="isSpinning"
+                        :disabled="isSpinning || isDecoding"
                         class="bg-slate-950 border border-slate-700/80 hover:border-amber-500/60 text-amber-300 font-bold text-xs rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-amber-500/40 cursor-pointer shadow-inner disabled:opacity-50 transition">
                     @foreach($classGroups as $cKey => $cPools)
                         @php
@@ -67,7 +67,7 @@
                     <template x-for="sec in availableSectors" :key="sec.key">
                         <button type="button" 
                                 @click="switchSector(sec.key)"
-                                :disabled="isSpinning || !sec.exists || sec.count === 0"
+                                :disabled="isSpinning || isDecoding || !sec.exists || sec.count === 0"
                                 class="px-3.5 py-1.5 rounded-lg font-black text-xs transition-all duration-200 flex items-center gap-2 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                                 :class="activeSector === sec.key 
                                     ? (sec.key === 'PA' 
@@ -126,226 +126,390 @@
     <!-- Main Workspace Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-0">
         
-        <!-- Left 7 Cols: Interactive Canvas Wheel -->
-        <div class="lg:col-span-7 bg-slate-950 rounded-3xl p-6 sm:p-8 border-2 transition-all duration-500 shadow-2xl flex flex-col items-center justify-center text-center relative overflow-hidden"
-             :class="theme === 'badminton' ? 'border-emerald-500/40 shadow-emerald-950/40' : 'border-amber-500/30 shadow-slate-950/50'">
+        <!-- Left 7 Cols: Interactive Canvas Wheel & Hacker Live Terminal -->
+        <div class="lg:col-span-7 space-y-4">
             
-            <!-- Background Glow Overlay -->
-            <div class="absolute inset-0 transition-all duration-500 pointer-events-none"
-                 :class="theme === 'badminton' ? 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-950/40 via-slate-950 to-slate-950' : 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-950/20 via-slate-950 to-slate-950'"></div>
+            <!-- VIEW 1: Interactive Canvas Wheel -->
+            <div x-show="visualMode === 'wheel'"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 class="bg-slate-950 rounded-3xl p-6 sm:p-8 border-2 transition-all duration-500 shadow-2xl flex flex-col items-center justify-center text-center relative overflow-hidden"
+                 :class="theme === 'badminton' ? 'border-emerald-500/40 shadow-emerald-950/40' : 'border-amber-500/30 shadow-slate-950/50'">
+                
+                <!-- Background Glow Overlay -->
+                <div class="absolute inset-0 transition-all duration-500 pointer-events-none"
+                     :class="theme === 'badminton' ? 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-950/40 via-slate-950 to-slate-950' : 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-950/20 via-slate-950 to-slate-950'"></div>
 
-            <!-- BADMINTON ARENA DECORATION: Crossed Rackets & Golden Ribbons (Active in Badminton Theme) -->
-            <div x-show="theme === 'badminton'" x-transition.opacity.duration.400ms class="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
-                <svg class="w-[620px] h-[620px] max-w-none opacity-85 -translate-y-6" viewBox="0 0 600 600" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                        <linearGradient id="goldRibbon" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#fef08a" />
-                            <stop offset="50%" stop-color="#f59e0b" />
-                            <stop offset="100%" stop-color="#b45309" />
-                        </linearGradient>
-                        <linearGradient id="racketFrameGreen" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#15803d" />
-                            <stop offset="50%" stop-color="#166534" />
-                            <stop offset="100%" stop-color="#14532d" />
-                        </linearGradient>
-                        <pattern id="racketStrings" width="8" height="8" patternUnits="userSpaceOnUse">
-                            <path d="M 8 0 L 0 0 0 8" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.75" />
-                        </pattern>
-                    </defs>
+                <!-- BADMINTON ARENA DECORATION: Crossed Rackets & Golden Ribbons (Active in Badminton Theme) -->
+                <div x-show="theme === 'badminton'" x-transition.opacity.duration.400ms class="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
+                    <svg class="w-[620px] h-[620px] max-w-none opacity-85 -translate-y-6" viewBox="0 0 600 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="goldRibbon" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#fef08a" />
+                                <stop offset="50%" stop-color="#f59e0b" />
+                                <stop offset="100%" stop-color="#b45309" />
+                            </linearGradient>
+                            <linearGradient id="racketFrameGreen" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#15803d" />
+                                <stop offset="50%" stop-color="#166534" />
+                                <stop offset="100%" stop-color="#14532d" />
+                            </linearGradient>
+                            <pattern id="racketStrings" width="8" height="8" patternUnits="userSpaceOnUse">
+                                <path d="M 8 0 L 0 0 0 8" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.75" />
+                            </pattern>
+                        </defs>
 
-                    <!-- Left Racket (Tilted -35 deg) -->
-                    <g transform="translate(300, 270) rotate(-35) translate(-300, -270)">
-                        <!-- Handle -->
-                        <rect x="291" y="380" width="18" height="170" rx="6" fill="#1e293b" stroke="#0f172a" stroke-width="2" />
-                        <!-- Grip tape ridges -->
-                        <line x1="291" y1="410" x2="309" y2="415" stroke="#334155" stroke-width="1.5" />
-                        <line x1="291" y1="440" x2="309" y2="445" stroke="#334155" stroke-width="1.5" />
-                        <line x1="291" y1="470" x2="309" y2="475" stroke="#334155" stroke-width="1.5" />
-                        <line x1="291" y1="500" x2="309" y2="505" stroke="#334155" stroke-width="1.5" />
-                        <!-- Gold end cap -->
-                        <rect x="290" y="540" width="20" height="12" rx="3" fill="url(#goldRibbon)" />
-                        <!-- Shaft -->
-                        <rect x="296" y="240" width="8" height="145" fill="url(#racketFrameGreen)" stroke="#f59e0b" stroke-width="1" />
-                        <!-- T-Joint -->
-                        <path d="M 294 240 Q 300 230 306 240 Z" fill="url(#goldRibbon)" />
-                        <!-- Head Oval with strings -->
-                        <ellipse cx="300" cy="115" rx="85" ry="110" fill="url(#racketStrings)" />
-                        <!-- Head Outer Frame (Green & Gold Bevel) -->
-                        <ellipse cx="300" cy="115" rx="85" ry="110" stroke="url(#goldRibbon)" stroke-width="10" fill="none" />
-                        <ellipse cx="300" cy="115" rx="85" ry="110" stroke="url(#racketFrameGreen)" stroke-width="6" fill="none" />
-                    </g>
+                        <!-- Left Racket (Tilted -35 deg) -->
+                        <g transform="translate(300, 270) rotate(-35) translate(-300, -270)">
+                            <!-- Handle -->
+                            <rect x="291" y="380" width="18" height="170" rx="6" fill="#1e293b" stroke="#0f172a" stroke-width="2" />
+                            <!-- Grip tape ridges -->
+                            <line x1="291" y1="410" x2="309" y2="415" stroke="#334155" stroke-width="1.5" />
+                            <line x1="291" y1="440" x2="309" y2="445" stroke="#334155" stroke-width="1.5" />
+                            <line x1="291" y1="470" x2="309" y2="475" stroke="#334155" stroke-width="1.5" />
+                            <line x1="291" y1="500" x2="309" y2="505" stroke="#334155" stroke-width="1.5" />
+                            <!-- Gold end cap -->
+                            <rect x="290" y="540" width="20" height="12" rx="3" fill="url(#goldRibbon)" />
+                            <!-- Shaft -->
+                            <rect x="296" y="240" width="8" height="145" fill="url(#racketFrameGreen)" stroke="#f59e0b" stroke-width="1" />
+                            <!-- T-Joint -->
+                            <path d="M 294 240 Q 300 230 306 240 Z" fill="url(#goldRibbon)" />
+                            <!-- Head Oval with strings -->
+                            <ellipse cx="300" cy="115" rx="85" ry="110" fill="url(#racketStrings)" />
+                            <!-- Head Outer Frame (Green & Gold Bevel) -->
+                            <ellipse cx="300" cy="115" rx="85" ry="110" stroke="url(#goldRibbon)" stroke-width="10" fill="none" />
+                            <ellipse cx="300" cy="115" rx="85" ry="110" stroke="url(#racketFrameGreen)" stroke-width="6" fill="none" />
+                        </g>
 
-                    <!-- Right Racket (Tilted +35 deg) -->
-                    <g transform="translate(300, 270) rotate(35) translate(-300, -270)">
-                        <!-- Handle -->
-                        <rect x="291" y="380" width="18" height="170" rx="6" fill="#1e293b" stroke="#0f172a" stroke-width="2" />
-                        <!-- Grip tape ridges -->
-                        <line x1="291" y1="410" x2="309" y2="415" stroke="#334155" stroke-width="1.5" />
-                        <line x1="291" y1="440" x2="309" y2="445" stroke="#334155" stroke-width="1.5" />
-                        <line x1="291" y1="470" x2="309" y2="475" stroke="#334155" stroke-width="1.5" />
-                        <line x1="291" y1="500" x2="309" y2="505" stroke="#334155" stroke-width="1.5" />
-                        <!-- Gold end cap -->
-                        <rect x="290" y="540" width="20" height="12" rx="3" fill="url(#goldRibbon)" />
-                        <!-- Shaft -->
-                        <rect x="296" y="240" width="8" height="145" fill="url(#racketFrameGreen)" stroke="#f59e0b" stroke-width="1" />
-                        <!-- T-Joint -->
-                        <path d="M 294 240 Q 300 230 306 240 Z" fill="url(#goldRibbon)" />
-                        <!-- Head Oval with strings -->
-                        <ellipse cx="300" cy="115" rx="85" ry="110" fill="url(#racketStrings)" />
-                        <!-- Head Outer Frame (Green & Gold Bevel) -->
-                        <ellipse cx="300" cy="115" rx="85" ry="110" stroke="url(#goldRibbon)" stroke-width="10" fill="none" />
-                        <ellipse cx="300" cy="115" rx="85" ry="110" stroke="url(#racketFrameGreen)" stroke-width="6" fill="none" />
-                    </g>
+                        <!-- Right Racket (Tilted +35 deg) -->
+                        <g transform="translate(300, 270) rotate(35) translate(-300, -270)">
+                            <!-- Handle -->
+                            <rect x="291" y="380" width="18" height="170" rx="6" fill="#1e293b" stroke="#0f172a" stroke-width="2" />
+                            <!-- Grip tape ridges -->
+                            <line x1="291" y1="410" x2="309" y2="415" stroke="#334155" stroke-width="1.5" />
+                            <line x1="291" y1="440" x2="309" y2="445" stroke="#334155" stroke-width="1.5" />
+                            <line x1="291" y1="470" x2="309" y2="475" stroke="#334155" stroke-width="1.5" />
+                            <line x1="291" y1="500" x2="309" y2="505" stroke="#334155" stroke-width="1.5" />
+                            <!-- Gold end cap -->
+                            <rect x="290" y="540" width="20" height="12" rx="3" fill="url(#goldRibbon)" />
+                            <!-- Shaft -->
+                            <rect x="296" y="240" width="8" height="145" fill="url(#racketFrameGreen)" stroke="#f59e0b" stroke-width="1" />
+                            <!-- T-Joint -->
+                            <path d="M 294 240 Q 300 230 306 240 Z" fill="url(#goldRibbon)" />
+                            <!-- Head Oval with strings -->
+                            <ellipse cx="300" cy="115" rx="85" ry="110" fill="url(#racketStrings)" />
+                            <!-- Head Outer Frame (Green & Gold Bevel) -->
+                            <ellipse cx="300" cy="115" rx="85" ry="110" stroke="url(#goldRibbon)" stroke-width="10" fill="none" />
+                            <ellipse cx="300" cy="115" rx="85" ry="110" stroke="url(#racketFrameGreen)" stroke-width="6" fill="none" />
+                        </g>
 
-                    <!-- Golden Swirling Ribbons on the sides -->
-                    <path d="M 70 230 C 30 300, 50 400, 110 440 C 160 470, 180 400, 160 360 C 130 310, 80 300, 70 230 Z" fill="url(#goldRibbon)" opacity="0.85" filter="drop-shadow(0 4px 10px rgba(0,0,0,0.5))" />
-                    <path d="M 530 230 C 570 300, 550 400, 490 440 C 440 470, 420 400, 440 360 C 470 310, 520 300, 530 230 Z" fill="url(#goldRibbon)" opacity="0.85" filter="drop-shadow(0 4px 10px rgba(0,0,0,0.5))" />
-                </svg>
+                        <!-- Golden Swirling Ribbons on the sides -->
+                        <path d="M 70 230 C 30 300, 50 400, 110 440 C 160 470, 180 400, 160 360 C 130 310, 80 300, 70 230 Z" fill="url(#goldRibbon)" opacity="0.85" filter="drop-shadow(0 4px 10px rgba(0,0,0,0.5))" />
+                        <path d="M 530 230 C 570 300, 550 400, 490 440 C 440 470, 420 400, 440 360 C 470 310, 520 300, 530 230 Z" fill="url(#goldRibbon)" opacity="0.85" filter="drop-shadow(0 4px 10px rgba(0,0,0,0.5))" />
+                    </svg>
+                </div>
+
+                <!-- Top Controls Bar: Tema Roda (Kiri) | Kategori Aktif (Tengah) | Mode Hacker (Kanan) -->
+                <div class="w-full flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5 mb-4 relative z-20">
+                    <!-- Pojok Kiri Atas: Switcher Tema Roda (Sesuai Panah Merah 1) -->
+                    <div class="inline-flex items-center p-1 bg-slate-900/90 backdrop-blur-md rounded-xl border border-slate-800 shadow-md shrink-0">
+                        <span class="text-[10px] text-slate-400 font-bold px-2 hidden sm:inline">Tema:</span>
+                        <button type="button" @click="setTheme('badminton')" 
+                                :class="theme === 'badminton' ? 'bg-emerald-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-white'" 
+                                class="px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1">
+                            <span>🏸</span>
+                            <span>Arena</span>
+                        </button>
+                        <button type="button" @click="setTheme('standard')" 
+                                :class="theme === 'standard' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-white'" 
+                                class="px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer">
+                            Standar
+                        </button>
+                    </div>
+
+                    <!-- Bagian Tengah: Banner Info Kategori Aktif & Sisa Belum Diundi -->
+                    <div class="flex-1 max-w-sm mx-auto bg-slate-900/80 backdrop-blur-md rounded-2xl py-1.5 px-3.5 border border-slate-800 flex items-center justify-between gap-2 text-left shadow-lg order-last sm:order-none w-full sm:w-auto">
+                        <div class="flex items-center gap-2 overflow-hidden">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+                            <h4 class="text-xs font-black text-white truncate" x-text="activePool?.title || '{{ $competition->name }}'"></h4>
+                        </div>
+                        <span class="text-[10px] font-mono font-bold text-amber-400 shrink-0 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20" 
+                              x-text="activeUndrawnParticipants.length + ' Belum Diundi'"></span>
+                    </div>
+
+                    <!-- Pojok Kanan Atas: Tombol Mode Hacker (In-place Toggle) -->
+                    <button type="button" 
+                            @click="setVisualMode('hacker')" 
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-xs font-bold transition cursor-pointer shadow-md shrink-0 font-sans"
+                            title="Beralih ke Tampilan Terminal Mode Hacker">
+                        <i data-lucide="terminal" class="w-3.5 h-3.5 text-cyan-400"></i>
+                        <span class="hidden sm:inline">Mode Hacker</span>
+                    </button>
+                </div>
+
+                <div class="relative z-10 w-full flex flex-col items-center">
+                    <!-- Wheel Pointer Arrow -->
+                    <div class="relative mb-3">
+                        <!-- Standard Pointer -->
+                        <div x-show="theme === 'standard'" class="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 w-8 h-8 flex items-center justify-center">
+                            <div class="w-0 h-0 border-l-[14px] border-l-transparent border-r-[14px] border-r-transparent border-t-[24px] border-t-amber-400 drop-shadow-[0_4px_10px_rgba(251,191,36,0.8)]"></div>
+                        </div>
+
+                        <!-- Badminton Pointer (Red Triangle with Gold Trim & White Shuttlecock Cork) -->
+                        <div x-show="theme === 'badminton'" class="absolute -top-5 left-1/2 -translate-x-1/2 z-20 flex items-center justify-center pointer-events-none">
+                            <svg width="42" height="48" viewBox="0 0 42 48" fill="none" class="drop-shadow-[0_4px_12px_rgba(220,38,38,0.85)]">
+                                <!-- Gold outer frame -->
+                                <polygon points="21,46 2,4 40,4" fill="#f59e0b" stroke="#fef08a" stroke-width="2.5" />
+                                <!-- Red inner body -->
+                                <polygon points="21,40 6,7 36,7" fill="#dc2626" />
+                                <!-- White shuttlecock head dot -->
+                                <circle cx="21" cy="18" r="6.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+                                <circle cx="21" cy="18" r="3.5" fill="#f8fafc" />
+                            </svg>
+                        </div>
+
+                        <!-- Canvas Wheel Container -->
+                        <div class="relative p-2.5 rounded-full bg-slate-900 border-4 shadow-2xl transition-all duration-500"
+                             :class="theme === 'badminton' ? 'border-amber-400/90 shadow-amber-500/10' : 'border-slate-800'">
+                            <canvas id="wheelCanvas" width="440" height="440" class="max-w-full rounded-full cursor-pointer transition-transform"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Badminton Court Base Podium (Active in Badminton Theme) -->
+                    <div x-show="theme === 'badminton'" x-transition class="w-full max-w-md my-2 relative z-10 flex flex-col items-center select-none">
+                        <div class="w-full h-14 bg-gradient-to-b from-emerald-600 via-emerald-700 to-emerald-900 border-2 border-amber-400/90 rounded-2xl shadow-2xl relative overflow-hidden flex items-center justify-between px-4">
+                            <!-- White Court Line Grid -->
+                            <div class="absolute inset-x-4 top-2.5 bottom-2.5 border-2 border-white/80 pointer-events-none"></div>
+                            <div class="absolute inset-x-8 top-2.5 bottom-2.5 border-x-2 border-white/80 pointer-events-none"></div>
+                            <div class="absolute inset-y-2.5 left-1/2 -translate-x-1/2 w-0.5 bg-white/80 pointer-events-none"></div>
+                            <div class="absolute inset-x-4 top-1/2 -translate-y-1/2 h-0.5 bg-white/80 pointer-events-none"></div>
+
+                            <!-- Left Shuttlecock on Court -->
+                            <div class="relative z-10 flex items-center gap-1.5 bg-slate-950/80 px-2.5 py-1 rounded-xl border border-amber-400/40">
+                                <span class="text-sm">🏸</span>
+                                <span class="text-[10px] font-black text-amber-300 font-mono uppercase tracking-wider">COURT A</span>
+                            </div>
+
+                            <!-- Center Tournament Badge -->
+                            <div class="relative z-10 text-[10px] font-black text-white uppercase tracking-widest bg-emerald-950/90 px-3 py-1 rounded-lg border border-emerald-400/50 shadow-md">
+                                ARENA BULU TANGKIS
+                            </div>
+
+                            <!-- Right Shuttlecock on Court -->
+                            <div class="relative z-10 flex items-center gap-1.5 bg-slate-950/80 px-2.5 py-1 rounded-xl border border-amber-400/40">
+                                <span class="text-[10px] font-black text-amber-300 font-mono uppercase tracking-wider">OFFICIAL</span>
+                                <span class="text-sm">🏸</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Target Participant Selector & Spin Button -->
+                    <div class="w-full max-w-md space-y-4 pt-1">
+                        <div class="text-left">
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-amber-400 mb-1">
+                                Peserta yang Sedang Diundi:
+                                <span class="text-slate-400 font-normal font-mono" x-text="'(' + activeUndrawnParticipants.length + ' tersisa)'"></span>
+                            </label>
+                            <select x-model="selectedParticipantId" :disabled="isSpinning || activeUndrawnParticipants.length === 0" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-amber-500/30 text-white text-xs font-bold outline-none focus:border-amber-400">
+                                <template x-for="p in activeUndrawnParticipants" :key="p.id">
+                                    <option :value="p.id" x-text="p.name + ' (' + p.institution + ')'"></option>
+                                </template>
+                            </select>
+                        </div>
+
+                        <!-- Spin Trigger Button -->
+                        <button type="button" @click="spin()" :disabled="isSpinning || activeUndrawnParticipants.length === 0" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-black text-sm sm:text-base tracking-wider uppercase shadow-xl shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.99] transition duration-200 flex items-center justify-center gap-3 cursor-pointer">
+                            <i data-lucide="disc" class="w-5 h-5" :class="{ 'animate-spin': isSpinning }"></i>
+                            <span x-text="isSpinning ? 'RODA SEDANG BERPUTAR...' : (activeUndrawnParticipants.length === 0 ? 'KATEGORI INI SELESAI DIUNDI' : 'PUTAR RODA UNDIAN (1-BY-1)')"></span>
+                        </button>
+
+                        <!-- Batch / Full-Shuffle Auto Draw Quick Trigger Button -->
+                        <button type="button" @click="openBatchModal()" :disabled="isSpinning || activeUndrawnParticipants.length === 0" class="w-full py-3 px-4 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-emerald-500/30 hover:border-emerald-400 text-emerald-300 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-md">
+                            <i data-lucide="zap" class="w-4 h-4 text-emerald-400"></i>
+                            <span>⚡ Undi Sekaligus: Batch / Full-Shuffle Auto Draw (<span x-text="activeUndrawnParticipants.length"></span> Sisa)</span>
+                        </button>
+                    </div>
+
+                    <!-- Winner Result Announcement Card -->
+                    <div x-show="wonDrawNumber" x-transition class="mt-5 p-5 rounded-2xl bg-slate-900/90 border border-amber-400/40 text-center space-y-2 w-full max-w-md shadow-2xl">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-amber-400 block">🎉 HASIL PUTARAN RODA RESMI</span>
+                        <div class="text-3xl sm:text-4xl font-black text-amber-300 font-mono tracking-wider drop-shadow-[0_0_10px_rgba(251,191,36,0.6)]" x-text="'NOMOR UNDIAN #' + wonDrawNumber"></div>
+                        <div class="space-y-1 pt-1">
+                            <h4 class="text-base font-bold text-white" x-text="wonParticipantName"></h4>
+                            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800 border border-emerald-500/30 text-xs font-semibold text-emerald-400">
+                                <span x-text="wonParticipantSchool"></span>
+                            </div>
+                        </div>
+
+                        <!-- BWF Separation Alert if same school detected -->
+                        <div x-show="bwfNotification" x-transition class="mt-3 p-3 rounded-xl bg-indigo-950/80 border border-indigo-500/40 text-left flex items-start gap-2.5 shadow-lg">
+                            <span class="text-base shrink-0">🛡️</span>
+                            <div class="space-y-0.5 min-w-0">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-indigo-300 block">
+                                    Proteksi BWF GCR 14 (Satu Delegasi Sekolah)
+                                </span>
+                                <p class="text-xs text-slate-200 leading-snug" x-text="bwfNotification"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <!-- Top Controls Bar: Tema Roda (Kiri) | Kategori Aktif (Tengah) | Mode Hacker (Kanan) -->
-            <div class="w-full flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5 mb-4 relative z-20">
-                <!-- Pojok Kiri Atas: Switcher Tema Roda (Sesuai Panah Merah 1) -->
-                <div class="inline-flex items-center p-1 bg-slate-900/90 backdrop-blur-md rounded-xl border border-slate-800 shadow-md shrink-0">
-                    <span class="text-[10px] text-slate-400 font-bold px-2 hidden sm:inline">Tema:</span>
-                    <button type="button" @click="setTheme('badminton')" 
-                            :class="theme === 'badminton' ? 'bg-emerald-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-white'" 
-                            class="px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1">
-                        <span>🏸</span>
-                        <span>Arena</span>
-                    </button>
-                    <button type="button" @click="setTheme('standard')" 
-                            :class="theme === 'standard' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-white'" 
-                            class="px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer">
-                        Standar
-                    </button>
-                </div>
+            <!-- VIEW 2: Hacker Live Decoder Terminal -->
+            <div x-show="visualMode === 'hacker'" 
+                 x-cloak
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 class="relative bg-slate-950 rounded-3xl p-6 sm:p-8 border-2 border-emerald-500/40 shadow-2xl shadow-emerald-950/50 text-emerald-400 font-mono overflow-hidden">
+                
+                <!-- Background Scanlines & Glow Overlay -->
+                <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-950/30 via-slate-950 to-slate-950 pointer-events-none"></div>
+                <div class="absolute inset-0 bg-[linear-gradient(rgba(16,185,129,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.03)_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
 
-                <!-- Bagian Tengah: Banner Info Kategori Aktif & Sisa Belum Diundi -->
-                <div class="flex-1 max-w-sm mx-auto bg-slate-900/80 backdrop-blur-md rounded-2xl py-1.5 px-3.5 border border-slate-800 flex items-center justify-between gap-2 text-left shadow-lg order-last sm:order-none w-full sm:w-auto">
-                    <div class="flex items-center gap-2 overflow-hidden">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
-                        <h4 class="text-xs font-black text-white truncate" x-text="activePool?.title || '{{ $competition->name }}'"></h4>
-                    </div>
-                    <span class="text-[10px] font-mono font-bold text-amber-400 shrink-0 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20" 
-                          x-text="activeUndrawnParticipants.length + ' Belum Diundi'"></span>
-                </div>
-
-                <!-- Pojok Kanan Atas: Tombol Mode Hacker (Sesuai Panah Merah 2) -->
-                <a href="{{ route('pic.hacker.draw', $competition->id) }}" 
-                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-xs font-bold transition cursor-pointer shadow-md shrink-0"
-                   title="Beralih ke Terminal Mode Hacker">
-                    <i data-lucide="terminal" class="w-3.5 h-3.5 text-cyan-400"></i>
-                    <span class="hidden sm:inline">Mode Hacker</span>
-                </a>
-            </div>
-
-            <div class="relative z-10 w-full flex flex-col items-center">
-                <!-- Wheel Pointer Arrow -->
-                <div class="relative mb-3">
-                    <!-- Standard Pointer -->
-                    <div x-show="theme === 'standard'" class="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 w-8 h-8 flex items-center justify-center">
-                        <div class="w-0 h-0 border-l-[14px] border-l-transparent border-r-[14px] border-r-transparent border-t-[24px] border-t-amber-400 drop-shadow-[0_4px_10px_rgba(251,191,36,0.8)]"></div>
-                    </div>
-
-                    <!-- Badminton Pointer (Red Triangle with Gold Trim & White Shuttlecock Cork) -->
-                    <div x-show="theme === 'badminton'" class="absolute -top-5 left-1/2 -translate-x-1/2 z-20 flex items-center justify-center pointer-events-none">
-                        <svg width="42" height="48" viewBox="0 0 42 48" fill="none" class="drop-shadow-[0_4px_12px_rgba(220,38,38,0.85)]">
-                            <!-- Gold outer frame -->
-                            <polygon points="21,46 2,4 40,4" fill="#f59e0b" stroke="#fef08a" stroke-width="2.5" />
-                            <!-- Red inner body -->
-                            <polygon points="21,40 6,7 36,7" fill="#dc2626" />
-                            <!-- White shuttlecock head dot -->
-                            <circle cx="21" cy="18" r="6.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
-                            <circle cx="21" cy="18" r="3.5" fill="#f8fafc" />
-                        </svg>
-                    </div>
-
-                    <!-- Canvas Wheel Container -->
-                    <div class="relative p-2.5 rounded-full bg-slate-900 border-4 shadow-2xl transition-all duration-500"
-                         :class="theme === 'badminton' ? 'border-amber-400/90 shadow-amber-500/10' : 'border-slate-800'">
-                        <canvas id="wheelCanvas" width="440" height="440" class="max-w-full rounded-full cursor-pointer transition-transform"></canvas>
-                    </div>
-                </div>
-
-                <!-- Badminton Court Base Podium (Active in Badminton Theme) -->
-                <div x-show="theme === 'badminton'" x-transition class="w-full max-w-md my-2 relative z-10 flex flex-col items-center select-none">
-                    <div class="w-full h-14 bg-gradient-to-b from-emerald-600 via-emerald-700 to-emerald-900 border-2 border-amber-400/90 rounded-2xl shadow-2xl relative overflow-hidden flex items-center justify-between px-4">
-                        <!-- White Court Line Grid -->
-                        <div class="absolute inset-x-4 top-2.5 bottom-2.5 border-2 border-white/80 pointer-events-none"></div>
-                        <div class="absolute inset-x-8 top-2.5 bottom-2.5 border-x-2 border-white/80 pointer-events-none"></div>
-                        <div class="absolute inset-y-2.5 left-1/2 -translate-x-1/2 w-0.5 bg-white/80 pointer-events-none"></div>
-                        <div class="absolute inset-x-4 top-1/2 -translate-y-1/2 h-0.5 bg-white/80 pointer-events-none"></div>
-
-                        <!-- Left Shuttlecock on Court -->
-                        <div class="relative z-10 flex items-center gap-1.5 bg-slate-950/80 px-2.5 py-1 rounded-xl border border-amber-400/40">
-                            <span class="text-sm">🏸</span>
-                            <span class="text-[10px] font-black text-amber-300 font-mono uppercase tracking-wider">COURT A</span>
-                        </div>
-
-                        <!-- Center Tournament Badge -->
-                        <div class="relative z-10 text-[10px] font-black text-white uppercase tracking-widest bg-emerald-950/90 px-3 py-1 rounded-lg border border-emerald-400/50 shadow-md">
-                            ARENA BULU TANGKIS
-                        </div>
-
-                        <!-- Right Shuttlecock on Court -->
-                        <div class="relative z-10 flex items-center gap-1.5 bg-slate-950/80 px-2.5 py-1 rounded-xl border border-amber-400/40">
-                            <span class="text-[10px] font-black text-amber-300 font-mono uppercase tracking-wider">OFFICIAL</span>
-                            <span class="text-sm">🏸</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Target Participant Selector & Spin Button -->
-                <div class="w-full max-w-md space-y-4 pt-1">
-                    <div class="text-left">
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-amber-400 mb-1">
-                            Peserta yang Sedang Diundi:
-                            <span class="text-slate-400 font-normal font-mono" x-text="'(' + activeUndrawnParticipants.length + ' tersisa)'"></span>
-                        </label>
-                        <select x-model="selectedParticipantId" :disabled="isSpinning || activeUndrawnParticipants.length === 0" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-amber-500/30 text-white text-xs font-bold outline-none focus:border-amber-400">
-                            <template x-for="p in activeUndrawnParticipants" :key="p.id">
-                                <option :value="p.id" x-text="p.name + ' (' + p.institution + ')'"></option>
-                            </template>
-                        </select>
-                    </div>
-
-                    <!-- Spin Trigger Button -->
-                    <button type="button" @click="spin()" :disabled="isSpinning || activeUndrawnParticipants.length === 0" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-black text-sm sm:text-base tracking-wider uppercase shadow-xl shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.99] transition duration-200 flex items-center justify-center gap-3 cursor-pointer">
-                        <i data-lucide="disc" class="w-5 h-5" :class="{ 'animate-spin': isSpinning }"></i>
-                        <span x-text="isSpinning ? 'RODA SEDANG BERPUTAR...' : (activeUndrawnParticipants.length === 0 ? 'KATEGORI INI SELESAI DIUNDI' : 'PUTAR RODA UNDIAN (1-BY-1)')"></span>
-                    </button>
-
-                    <!-- Batch / Full-Shuffle Auto Draw Quick Trigger Button -->
-                    <button type="button" @click="openBatchModal()" :disabled="isSpinning || activeUndrawnParticipants.length === 0" class="w-full py-3 px-4 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-emerald-500/30 hover:border-emerald-400 text-emerald-300 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-md">
-                        <i data-lucide="zap" class="w-4 h-4 text-emerald-400"></i>
-                        <span>⚡ Undi Sekaligus: Batch / Full-Shuffle Auto Draw (<span x-text="activeUndrawnParticipants.length"></span> Sisa)</span>
-                    </button>
-                </div>
-
-                <!-- Winner Result Announcement Card -->
-                <div x-show="wonDrawNumber" x-transition class="mt-5 p-5 rounded-2xl bg-slate-900/90 border border-amber-400/40 text-center space-y-2 w-full max-w-md shadow-2xl">
-                    <span class="text-[10px] font-black uppercase tracking-widest text-amber-400 block">🎉 HASIL PUTARAN RODA RESMI</span>
-                    <div class="text-3xl sm:text-4xl font-black text-amber-300 font-mono tracking-wider drop-shadow-[0_0_10px_rgba(251,191,36,0.6)]" x-text="'NOMOR UNDIAN #' + wonDrawNumber"></div>
-                    <div class="space-y-1 pt-1">
-                        <h4 class="text-base font-bold text-white" x-text="wonParticipantName"></h4>
-                        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800 border border-emerald-500/30 text-xs font-semibold text-emerald-400">
-                            <span x-text="wonParticipantSchool"></span>
-                        </div>
-                    </div>
-
-                    <!-- BWF Separation Alert if same school detected -->
-                    <div x-show="bwfNotification" x-transition class="mt-3 p-3 rounded-xl bg-indigo-950/80 border border-indigo-500/40 text-left flex items-start gap-2.5 shadow-lg">
-                        <span class="text-base shrink-0">🛡️</span>
-                        <div class="space-y-0.5 min-w-0">
-                            <span class="text-[10px] font-black uppercase tracking-wider text-indigo-300 block">
-                                Proteksi BWF GCR 14 (Satu Delegasi Sekolah)
+                <div class="relative z-10 space-y-5">
+                    <!-- Top Bar in Terminal: Module Status | Category Banner | Mode Roda Switcher -->
+                    <div class="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5 border-b border-emerald-500/20 pb-3 text-xs">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span class="font-black tracking-widest text-emerald-400 uppercase text-[11px]">SYS_MODULE: CSPRNG // LIVE_DECODER</span>
+                            <span class="text-[10px] text-emerald-600 hidden md:inline font-mono">
+                                [SFX: <button type="button" @click="soundEnabled = !soundEnabled" class="text-emerald-400 font-bold underline cursor-pointer" x-text="soundEnabled ? 'ON' : 'OFF'"></button>]
                             </span>
-                            <p class="text-xs text-slate-200 leading-snug" x-text="bwfNotification"></p>
+                        </div>
+
+                        <!-- Tengah: Info Kategori -->
+                        <div class="bg-slate-900/80 rounded-xl py-1 px-3 border border-emerald-500/30 text-xs font-bold text-white flex items-center gap-2">
+                            <span class="text-emerald-400 truncate max-w-[150px] sm:max-w-none" x-text="activePool?.title"></span>
+                            <span class="text-[10px] font-mono text-amber-400" x-text="activeUndrawnParticipants.length + ' Sisa'"></span>
+                        </div>
+
+                        <!-- Pojok Kanan Atas: Tombol Balik ke Mode Roda -->
+                        <button type="button" 
+                                @click="setVisualMode('wheel')" 
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/40 text-xs font-bold transition cursor-pointer shadow-md shrink-0 font-sans"
+                                title="Kembali ke Tampilan Spin Wheel">
+                            <i data-lucide="disc" class="w-3.5 h-3.5 text-amber-400"></i>
+                            <span>Mode Roda</span>
+                        </button>
+                    </div>
+
+                    <!-- Scramble Duration & Mode Controls -->
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 text-xs font-sans">
+                        <!-- Mode Selector (8 cols) -->
+                        <div class="sm:col-span-8 flex items-center bg-slate-900/90 p-1 rounded-xl border border-emerald-500/30">
+                            <button type="button" @click="drawMode = 'draw_slot'; updateDisplayNumber()" 
+                                    :class="drawMode === 'draw_slot' ? 'bg-emerald-500 text-slate-950 font-black shadow-md' : 'text-emerald-400 hover:text-white font-bold'" 
+                                    class="flex-1 py-1.5 px-2.5 rounded-lg transition text-center cursor-pointer text-[11px]">
+                                🎲 1. Urutan Tampil (#1, #2...)
+                            </button>
+                            <button type="button" @click="drawMode = 'draw_participant'; updateDisplayNumber()" 
+                                    :class="drawMode === 'draw_participant' ? 'bg-emerald-500 text-slate-950 font-black shadow-md' : 'text-emerald-400 hover:text-white font-bold'" 
+                                    class="flex-1 py-1.5 px-2.5 rounded-lg transition text-center cursor-pointer text-[11px]">
+                                👤 2. Pilih Peserta Manual
+                            </button>
+                        </div>
+
+                        <!-- Duration Selector (4 cols) -->
+                        <div class="sm:col-span-4 flex items-center bg-slate-900/90 p-1 rounded-xl border border-emerald-500/30 text-[10px]">
+                            <button type="button" @click="shuffleDuration = 3000" :class="shuffleDuration === 3000 ? 'bg-emerald-500 text-slate-950 font-black' : 'text-emerald-400 hover:text-white'" class="flex-1 py-1.5 rounded-lg text-center font-bold transition cursor-pointer">3s</button>
+                            <button type="button" @click="shuffleDuration = 5000" :class="shuffleDuration === 5000 ? 'bg-emerald-500 text-slate-950 font-black' : 'text-emerald-400 hover:text-white'" class="flex-1 py-1.5 rounded-lg text-center font-bold transition cursor-pointer">5s</button>
+                            <button type="button" @click="shuffleDuration = 8000" :class="shuffleDuration === 8000 ? 'bg-emerald-500 text-slate-950 font-black' : 'text-emerald-400 hover:text-white'" class="flex-1 py-1.5 rounded-lg text-center font-bold transition cursor-pointer">8s 🔥</button>
                         </div>
                     </div>
+
+                    <!-- Target Number / Slot Display Box -->
+                    <div class="text-center py-1 space-y-1.5">
+                        <span class="text-[10px] font-bold tracking-widest text-emerald-500/70 uppercase block"
+                              x-text="drawMode === 'draw_slot' ? '[ MENGUNDI SIAPA PEMENANG NOMOR URUT TAMPIL ]' : '[ TARGET NOMOR UNDIAN PESERTA ]'">
+                        </span>
+                        
+                        <div class="inline-flex items-center justify-center min-w-[160px] px-6 py-2.5 rounded-2xl bg-emerald-950/60 border-2 border-emerald-400/50 shadow-lg shadow-emerald-500/10">
+                            <span class="text-4xl sm:text-5xl font-black tracking-widest text-emerald-300 drop-shadow-[0_0_15px_rgba(52,211,153,0.8)] font-mono" x-text="displayNumber">
+                                #01
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- High-Speed Live Stream Feed -->
+                    <div x-show="isDecoding" x-transition class="p-2.5 rounded-xl bg-slate-900/60 border border-emerald-500/20 text-[10px] font-mono text-emerald-400/80 flex items-center justify-between overflow-hidden">
+                        <span class="truncate">RADAR_STREAM: <span class="text-white font-bold" x-text="radarTicker"></span></span>
+                        <span class="text-emerald-500 font-bold shrink-0 ml-2 animate-pulse">>>> SHUFFLING</span>
+                    </div>
+
+                    <!-- Hacker Scramble Display Arena (Name & School) -->
+                    <div class="p-6 sm:p-8 rounded-2xl bg-slate-900/90 border border-emerald-500/40 min-h-[170px] flex flex-col items-center justify-center text-center space-y-3 relative overflow-hidden">
+                        
+                        <div class="text-xs uppercase tracking-widest text-emerald-600 font-bold flex items-center gap-2">
+                            <span x-text="isDecoding ? '>>> HIGH-ENTROPY CRYPTOGRAPHIC DECODER ACTIVE <<<' : (lockedWinner ? '>>> TARGET IDENTIFIED & LOCKED <<<' : '>>> READY FOR SHUFFLE <<<')"></span>
+                        </div>
+
+                        <!-- Scrambled Name Display -->
+                        <div class="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white break-words drop-shadow-[0_0_15px_rgba(255,255,255,0.7)] transition duration-75"
+                             :class="{ 'text-emerald-300': !isDecoding && lockedWinner, 'text-emerald-400 scale-[1.02]': isDecoding }"
+                             x-text="displayName">
+                            SIAP UNTUK DIUNDI
+                        </div>
+
+                        <!-- Scrambled School Display -->
+                        <div class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-slate-800/80 border border-emerald-500/30 text-xs sm:text-sm font-semibold text-emerald-300 tracking-wide max-w-md truncate shadow-inner font-sans"
+                             x-text="displaySchool">
+                            Tekan tombol di bawah untuk mengacak seluruh nama peserta
+                        </div>
+
+                        <!-- Target Locked Status Badge -->
+                        <div x-show="lockedWinner" x-transition class="pt-2">
+                            <span class="px-4 py-1.5 rounded-full bg-emerald-500 text-slate-950 font-black text-xs tracking-widest uppercase shadow-md shadow-emerald-400/30 inline-flex items-center gap-1.5 font-sans">
+                                <i data-lucide="check-circle" class="w-4 h-4"></i>
+                                <span>BERHASIL DIKUNCI (TARGET LOCKED)</span>
+                            </span>
+                        </div>
+
+                        <!-- BWF Separation Alert if same school detected -->
+                        <div x-show="bwfNotification" x-transition class="mt-3 p-3 rounded-xl bg-indigo-950/80 border border-indigo-500/50 text-left flex items-start gap-2.5 shadow-lg max-w-md font-sans">
+                            <span class="text-base shrink-0">🛡️</span>
+                            <div class="space-y-0.5 min-w-0">
+                                <span class="text-[10px] font-mono font-black uppercase tracking-wider text-indigo-300 block">
+                                    [BWF GCR 14] PROTEKSI SATU DELEGASI
+                                </span>
+                                <p class="text-xs text-slate-200 leading-snug" x-text="bwfNotification"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Target Selection (Only active in draw_participant mode) -->
+                    <div x-show="drawMode === 'draw_participant'" x-transition class="space-y-3 pt-1 font-sans">
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-emerald-600 mb-1">Pilih Peserta yang Ingin Diundi:</label>
+                            <select x-model="selectedParticipantId" :disabled="isDecoding || activeUndrawnParticipants.length === 0" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-emerald-500/30 text-emerald-200 text-xs font-mono outline-none focus:border-emerald-400">
+                                <template x-for="p in activeUndrawnParticipants" :key="p.id">
+                                    <option :value="p.id" x-text="p.name + ' (' + p.institution + ')'"></option>
+                                </template>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Trigger Buttons (1-by-1 vs Batch All) -->
+                    <div class="space-y-2.5 pt-1 font-sans">
+                        <!-- Big Hacker 1-by-1 Trigger Button -->
+                        <button type="button" @click="startHackerDraw()" :disabled="isDecoding || activeUndrawnParticipants.length === 0" class="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500 hover:from-emerald-400 hover:to-teal-300 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-black text-sm tracking-wider uppercase shadow-xl shadow-emerald-500/25 hover:scale-[1.01] active:scale-[0.99] transition duration-200 flex items-center justify-center gap-2.5 cursor-pointer">
+                            <i data-lucide="terminal" class="w-5 h-5" :class="{ 'animate-spin': isDecoding }"></i>
+                            <span x-text="isDecoding ? 'SEDANG MENGACAK SELURUH KANDIDAT PESERTA...' : (activeUndrawnParticipants.length === 0 ? 'KATEGORI INI TELAH SELESAI DIUNDI' : (drawMode === 'draw_slot' ? 'UNDI 1-BY-1 UNTUK NO ' + displayNumber : 'UNDI 1-BY-1 NOMOR PESERTA'))"></span>
+                        </button>
+
+                        <!-- Batch / Full-Shuffle Auto Draw Quick Trigger Button -->
+                        <button type="button" @click="openBatchModal()" :disabled="isDecoding || activeUndrawnParticipants.length === 0" class="w-full py-3 px-4 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-emerald-500/30 hover:border-emerald-400 text-emerald-300 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-md">
+                            <i data-lucide="zap" class="w-4 h-4 text-emerald-400"></i>
+                            <span>⚡ Undi Sekaligus: Batch / Full-Shuffle Auto Draw (<span x-text="activeUndrawnParticipants.length"></span> Sisa)</span>
+                        </button>
+                    </div>
+
                 </div>
+
             </div>
+
+        </div>
 
         </div>
 
@@ -817,6 +981,41 @@
             audioCtx: null,
             theme: '{{ (str_contains(strtolower($competition->name), 'bulu tangkis') || str_contains(strtolower($competition->name), 'badminton')) ? 'badminton' : 'standard' }}',
             
+            // Visual Mode: 'wheel' (Interactive Wheel Canvas) or 'hacker' (Hacker Live Decoder Terminal)
+            visualMode: 'wheel',
+
+            // Hacker Live Decoder Specific States
+            drawMode: 'draw_slot', // 'draw_slot' or 'draw_participant'
+            shuffleDuration: 5000,
+            isDecoding: false,
+            lockedWinner: null,
+            displayName: 'SIAP UNTUK DIUNDI',
+            displaySchool: 'Tekan tombol di bawah untuk mengacak seluruh nama peserta',
+            displayNumber: '#01',
+            radarTicker: 'IDLE',
+            soundEnabled: true,
+
+            setVisualMode(mode) {
+                if (this.isSpinning || this.isDecoding) return;
+                this.visualMode = mode;
+                if (mode === 'wheel') {
+                    this.$nextTick(() => {
+                        this.canvas = document.getElementById("wheelCanvas");
+                        if (this.canvas) {
+                            this.ctx = this.canvas.getContext("2d");
+                            this.calculateAvailableSlots();
+                            this.drawWheel();
+                        }
+                        if (window.lucide) window.lucide.createIcons();
+                    });
+                } else if (mode === 'hacker') {
+                    this.updateDisplayNumber();
+                    this.$nextTick(() => {
+                        if (window.lucide) window.lucide.createIcons();
+                    });
+                }
+            },
+
             // Reset with Password Modal States
             isResetModalOpen: false,
             resetScope: 'pool',
@@ -1095,7 +1294,7 @@
             },
 
             switchClass(cKey) {
-                if (this.isSpinning) return;
+                if (this.isSpinning || this.isDecoding) return;
                 this.activeClassKey = cKey;
                 const classPools = this.pools.filter(p => this.getClassKey(p) === cKey);
                 const targetPool = classPools.find(p => this.getSector(p) === this.activeSector) || classPools[0];
@@ -1105,7 +1304,7 @@
             },
 
             switchSector(secKey) {
-                if (this.isSpinning) return;
+                if (this.isSpinning || this.isDecoding) return;
                 this.activeSector = secKey;
                 const classPools = this.currentClassPools;
                 const targetPool = classPools.find(p => this.getSector(p) === secKey);
@@ -1119,6 +1318,227 @@
                 }
             },
 
+            get nextAvailableSlot() {
+                if (!this.activePool) return 1;
+                const assigned = this.activeDrawnParticipants.map(d => parseInt(d.draw_number));
+                const total = this.activePool.participants.length;
+                for (let i = 1; i <= Math.max(total, 1); i++) {
+                    if (!assigned.includes(i)) return i;
+                }
+                return 1;
+            },
+
+            get availableSlots() {
+                if (!this.activePool) return [];
+                const assigned = this.activeDrawnParticipants.map(d => parseInt(d.draw_number));
+                const total = this.activePool.participants.length;
+                let slots = [];
+                for (let i = 1; i <= Math.max(total, 1); i++) {
+                    if (!assigned.includes(i)) slots.push(i);
+                }
+                return slots;
+            },
+
+            updateDisplayNumber() {
+                if (this.drawMode === 'draw_slot') {
+                    const nextSlot = this.nextAvailableSlot;
+                    this.displayNumber = '#' + String(nextSlot).padStart(2, '0');
+                } else {
+                    this.displayNumber = '#??';
+                }
+            },
+
+            getCryptoRandomInt(max) {
+                if (max <= 0) return 0;
+                const array = new Uint32Array(1);
+                window.crypto.getRandomValues(array);
+                return array[0] % max;
+            },
+
+            cryptoShuffle(arr) {
+                const shuffled = [...arr];
+                for (let round = 0; round < 3; round++) {
+                    for (let i = shuffled.length - 1; i > 0; i--) {
+                        const j = this.getCryptoRandomInt(i + 1);
+                        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                    }
+                }
+                return shuffled;
+            },
+
+            playLockSound() {
+                if (!this.soundEnabled) return;
+                try {
+                    if (!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const chord = [440, 554.37, 659.25, 880, 1108.73];
+                    chord.forEach((freq, idx) => {
+                        setTimeout(() => {
+                            const osc = this.audioCtx.createOscillator();
+                            const gain = this.audioCtx.createGain();
+                            osc.type = (idx === 0) ? 'sawtooth' : 'triangle';
+                            osc.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
+                            gain.gain.setValueAtTime(0.12, this.audioCtx.currentTime);
+                            gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.45);
+                            osc.connect(gain);
+                            gain.connect(this.audioCtx.destination);
+                            osc.start();
+                            osc.stop(this.audioCtx.currentTime + 0.45);
+                        }, idx * 50);
+                    });
+                } catch(e) {}
+            },
+
+            startHackerDraw() {
+                if (this.isDecoding || this.activeUndrawnParticipants.length === 0) return;
+                this.isDecoding = true;
+                this.lockedWinner = null;
+                this.bwfNotification = '';
+
+                const shuffledCandidates = this.cryptoShuffle(this.activeUndrawnParticipants);
+
+                let winnerParticipant;
+                let winnerDrawNumber;
+
+                if (this.drawMode === 'draw_slot') {
+                    const randIndex = this.getCryptoRandomInt(shuffledCandidates.length);
+                    winnerParticipant = shuffledCandidates[randIndex];
+                    winnerDrawNumber = this.nextAvailableSlot;
+                } else {
+                    winnerParticipant = this.activeUndrawnParticipants.find(p => p.id == this.selectedParticipantId) || shuffledCandidates[0];
+                    const shuffledSlots = this.cryptoShuffle(this.availableSlots);
+                    if (shuffledSlots.length > 0) {
+                        const randSlotIdx = this.getCryptoRandomInt(shuffledSlots.length);
+                        winnerDrawNumber = shuffledSlots[randSlotIdx];
+                    } else {
+                        winnerDrawNumber = this.activeDrawnParticipants.length + 1;
+                    }
+                }
+
+                const targetName = winnerParticipant.name;
+                const targetSchool = winnerParticipant.institution;
+                const targetNumStr = '#' + String(winnerDrawNumber).padStart(2, '0');
+
+                const glitchChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*<>/=[]{}?+~§µ";
+                const totalDuration = this.shuffleDuration;
+                const startTime = performance.now();
+                let frameCount = 0;
+
+                const animate = (currentTime) => {
+                    const elapsed = currentTime - startTime;
+                    const progress = Math.min(elapsed / totalDuration, 1);
+                    frameCount++;
+
+                    if (progress < 0.65) {
+                        const randCandidate = shuffledCandidates[this.getCryptoRandomInt(shuffledCandidates.length)];
+                        const baseName = randCandidate ? randCandidate.name : targetName;
+                        
+                        let scrambledName = "";
+                        for (let i = 0; i < baseName.length; i++) {
+                            if (baseName[i] === ' ') {
+                                scrambledName += ' ';
+                            } else if (Math.random() > 0.35) {
+                                scrambledName += baseName[i];
+                            } else {
+                                scrambledName += glitchChars[this.getCryptoRandomInt(glitchChars.length)];
+                            }
+                        }
+                        this.displayName = scrambledName;
+                        this.displaySchool = randCandidate ? randCandidate.institution : 'SCANNING DATABASE ENTROPY...';
+                        this.radarTicker = (randCandidate ? randCandidate.name : '0x' + this.getCryptoRandomInt(99999).toString(16).toUpperCase()) + ' [' + (randCandidate ? randCandidate.institution : 'SCAN') + ']';
+
+                        if (this.drawMode === 'draw_slot') {
+                            this.displayNumber = targetNumStr;
+                        } else {
+                            const randNum = this.availableSlots.length > 0 ? this.availableSlots[this.getCryptoRandomInt(this.availableSlots.length)] : this.getCryptoRandomInt(99) + 1;
+                            this.displayNumber = '#' + String(randNum).padStart(2, '0');
+                        }
+
+                        if (frameCount % 2 === 0) {
+                            this.playBeep(450 + (Math.sin(frameCount) * 350) + this.getCryptoRandomInt(200), 0.025, 'square');
+                        }
+                    } else {
+                        const resolveRatio = (progress - 0.65) / 0.35;
+                        const charsToLock = Math.floor(resolveRatio * targetName.length);
+
+                        let partialName = "";
+                        for (let i = 0; i < targetName.length; i++) {
+                            if (i <= charsToLock) {
+                                partialName += targetName[i];
+                            } else if (targetName[i] === ' ') {
+                                partialName += ' ';
+                            } else {
+                                partialName += glitchChars[this.getCryptoRandomInt(glitchChars.length)];
+                            }
+                        }
+                        this.displayName = partialName;
+                        this.displaySchool = targetSchool;
+                        this.displayNumber = targetNumStr;
+                        this.radarTicker = 'LOCKING_ON >> ' + targetName + ' (' + Math.floor(resolveRatio * 100) + '%)';
+
+                        if (frameCount % 3 === 0) {
+                            this.playBeep(600 + (resolveRatio * 600), 0.04, 'triangle');
+                        }
+                    }
+
+                    if (progress < 1) {
+                        const stepDelay = progress > 0.70 ? (progress - 0.70) * 160 : 20;
+                        setTimeout(() => {
+                            requestAnimationFrame(animate);
+                        }, stepDelay);
+                    } else {
+                        this.displayName = targetName;
+                        this.displaySchool = targetSchool;
+                        this.displayNumber = targetNumStr;
+                        this.radarTicker = 'TARGET_LOCKED >> ' + targetName;
+                        this.isDecoding = false;
+                        this.lockedWinner = {
+                            participant: winnerParticipant,
+                            drawNumber: winnerDrawNumber
+                        };
+
+                        const school = (winnerParticipant.institution || '').trim().toLowerCase();
+                        const sameSchoolTeammates = this.activeParticipants.filter(p => p.id !== winnerParticipant.id && (p.institution || '').trim().toLowerCase() === school);
+
+                        if (sameSchoolTeammates.length > 0) {
+                            const alreadyDrawn = sameSchoolTeammates.filter(p => p.is_drawn || p.is_seeded);
+                            if (alreadyDrawn.length > 0) {
+                                const names = alreadyDrawn.map(p => p.name).join(', ');
+                                this.bwfNotification = `Terdeteksi rekan satu delegasi dari ${winnerParticipant.institution} (${names}) yang telah terundi/seeded sebelumnya. Sesuai aturan resmi BWF GCR 14 (Proteksi Satu Delegasi), peserta ini dialokasikan ke sisi bagan yang berseberangan agar tidak saling berhadapan di Babak 1.`;
+                            } else {
+                                this.bwfNotification = `Peserta dari ${winnerParticipant.institution} memiliki rekan satu delegasi dalam kategori ini. Proteksi BWF GCR 14 aktif untuk memastikan mereka dipisahkan pool dan tidak bertemu di Babak 1.`;
+                            }
+                        } else {
+                            this.bwfNotification = '';
+                        }
+
+                        this.playLockSound();
+
+                        if (typeof confetti === 'function') {
+                            confetti({
+                                particleCount: 140,
+                                spread: 90,
+                                origin: { y: 0.6 }
+                            });
+                        }
+
+                        winnerParticipant.is_drawn = true;
+                        winnerParticipant.draw_number = winnerDrawNumber;
+
+                        if (this.activeUndrawnParticipants.length > 0) {
+                            this.selectedParticipantId = this.activeUndrawnParticipants[0].id;
+                        } else {
+                            this.selectedParticipantId = null;
+                        }
+                        this.updateDisplayNumber();
+                        this.calculateAvailableSlots();
+
+                        this.saveDrawResult(winnerParticipant.id, winnerDrawNumber);
+                    }
+                };
+
+                requestAnimationFrame(animate);
+            },
+
             init() {
                 const cur = this.pools.find(p => p.key === this.activePoolKey) || this.pools[0];
                 if (cur) {
@@ -1129,6 +1549,8 @@
                 if (this.activeUndrawnParticipants.length > 0) {
                     this.selectedParticipantId = this.activeUndrawnParticipants[0].id;
                 }
+
+                this.updateDisplayNumber();
 
                 this.canvas = document.getElementById("wheelCanvas");
                 if (this.canvas) {
@@ -1145,7 +1567,7 @@
             },
 
             switchPool(key) {
-                if (this.isSpinning) return;
+                if (this.isSpinning || this.isDecoding) return;
                 this.activePoolKey = key;
                 const target = this.pools.find(p => p.key === key);
                 if (target) {
@@ -1153,13 +1575,19 @@
                     this.activeSector = this.getSector(target);
                 }
                 this.wonDrawNumber = null;
+                this.lockedWinner = null;
+                this.displayName = 'SIAP UNTUK DIUNDI';
+                this.displaySchool = 'Tekan tombol di bawah untuk mengacak seluruh nama peserta';
                 if (this.activeUndrawnParticipants.length > 0) {
                     this.selectedParticipantId = this.activeUndrawnParticipants[0].id;
                 } else {
                     this.selectedParticipantId = null;
                 }
+                this.updateDisplayNumber();
                 this.calculateAvailableSlots();
-                this.drawWheel();
+                if (this.visualMode === 'wheel') {
+                    this.drawWheel();
+                }
             },
 
             setTheme(t) {
