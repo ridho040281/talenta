@@ -18,10 +18,10 @@
 
 <div class="space-y-6" x-data="{ 
     searchQuery: '',
-    selectedCompetition: 'all',
-    selectedGender: 'all',
-    selectedSector: 'all',
-    selectedStatus: 'all',
+    selectedCompetition: '{{ $selectedCompId ? (string) $selectedCompId : request('competition_id', 'all') }}',
+    selectedGender: '{{ request('gender', 'all') }}',
+    selectedSector: '{{ request('sector', request('pool', 'all')) }}',
+    selectedStatus: '{{ request('status', 'all') }}',
     sortBy: 'created_at',
     sortDir: 'desc',
     toggleSort(col) {
@@ -54,7 +54,7 @@
     exportModal: false,
     singlePrintModal: false,
     createModal: false,
-    createCompId: '',
+    createCompId: '{{ $selectedCompId ? (string) $selectedCompId : "" }}',
     createPaymentMethod: 'tunai',
     popSongOptions: @js($popSongOptions),
     get isPopSinger() {
@@ -179,13 +179,13 @@
         return comp.fee || 35000;
     },
     get currentCompCode() {
-        if (this.selectedCompetition === 'all') return 'ALL';
-        const comp = this.competitionsData.find(c => c.id === this.selectedCompetition);
+        if (!this.selectedCompetition || this.selectedCompetition === 'all') return 'ALL';
+        const comp = this.competitionsData.find(c => String(c.id) === String(this.selectedCompetition));
         return comp ? comp.code : '';
     },
     get currentCompName() {
-        if (this.selectedCompetition === 'all') return 'Semua Cabang';
-        const comp = this.competitionsData.find(c => c.id === this.selectedCompetition);
+        if (!this.selectedCompetition || this.selectedCompetition === 'all') return 'Semua Cabang';
+        const comp = this.competitionsData.find(c => String(c.id) === String(this.selectedCompetition));
         return comp ? comp.name : 'Cabang';
     },
     get sectorOptions() {
@@ -561,6 +561,15 @@
         this.selectedGender = 'all';
         this.currentPage = 1;
         this.fetchParticipants(true);
+        try {
+            const url = new URL(window.location);
+            if (this.selectedCompetition && this.selectedCompetition !== 'all') {
+                url.searchParams.set('competition_id', this.selectedCompetition);
+            } else {
+                url.searchParams.delete('competition_id');
+            }
+            window.history.replaceState({}, '', url);
+        } catch(e) {}
     },
 
     init() {
@@ -581,6 +590,20 @@
         this.$watch('perPage',             () => { this.currentPage = 1; this.fetchParticipants(true); });
     },
 }">
+
+    <!-- Tournament 5-Step Workflow Stepper (Jika mengelola atau memilih cabor turnamen seperti Bulu Tangkis & Tenis Meja) -->
+    @if(isset($activeCompetition) && $activeCompetition && (
+        in_array(strtoupper($activeCompetition->code ?? ''), ['BLT', 'TMJ']) ||
+        str_contains(strtolower($activeCompetition->name ?? ''), 'bulu tangkis') ||
+        str_contains(strtolower($activeCompetition->name ?? ''), 'badminton') ||
+        str_contains(strtolower($activeCompetition->name ?? ''), 'tenis meja')
+    ))
+        @include('partials.tournament-stepper', [
+            'competition' => $activeCompetition,
+            'activeStep' => 'peserta',
+            'activePoolKey' => request('pool', request('sector', 'all')),
+        ])
+    @endif
 
     <!-- Flash Notifications (Success & Error Feedback) -->
     @if(session('success'))
@@ -831,7 +854,7 @@
                 <select x-model="selectedCompetition" @change="onCompetitionChange()" class="w-full px-3 py-2.5 h-[42px] rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8] cursor-pointer">
                     <option value="all">Semua Cabang Lomba ({{ $competitions->count() }})</option>
                     @foreach($competitions as $comp)
-                        <option value="{{ $comp->id }}">{{ $comp->name }} ({{ $comp->registrations->count() }} Pendaftar)</option>
+                        <option value="{{ $comp->id }}" {{ (string)($selectedCompId ?? '') === (string)$comp->id ? 'selected' : '' }}>{{ $comp->name }} ({{ $comp->registrations->count() }} Pendaftar)</option>
                     @endforeach
                 </select>
             </div>

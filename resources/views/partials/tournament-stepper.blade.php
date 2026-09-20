@@ -27,7 +27,24 @@
             $tCompQuery->whereIn('id', \App\Http\Controllers\PicController::getManagedCompetitionIds($user));
         }
         $tournamentCompetitions = $tCompQuery->get();
+    // Map activePoolKey to sector option for seamless filtering in data peserta
+    $sectorParam = '';
+    if (!empty($activePoolKey) && $activePoolKey !== 'all') {
+        if (str_contains($activePoolKey, 'kat_a') || str_contains($activePoolKey, 'blt_a')) {
+            $sectorParam = 'blt_a_all';
+        } elseif (str_contains($activePoolKey, 'kat_b') || str_contains($activePoolKey, 'blt_b')) {
+            $sectorParam = 'blt_b_all';
+        } elseif (str_contains($activePoolKey, 'kat_c') || str_contains($activePoolKey, 'blt_c')) {
+            $sectorParam = 'blt_c_all';
+        } elseif (str_contains($activePoolKey, 'ganda')) {
+            $sectorParam = 'ganda_all';
+        } elseif (str_contains($activePoolKey, 'tmj_a')) {
+            $sectorParam = 'tmj_a_all';
+        } elseif (str_contains($activePoolKey, 'tmj_b')) {
+            $sectorParam = 'tmj_b_all';
+        }
     }
+    $pesertaUrl = route('pic.dashboard') . '?competition_id=' . $competition->id . ($sectorParam ? '&sector=' . $sectorParam : '');
 @endphp
 
 <div class="ai-card bg-[#090D17]/95 border border-white/[0.12] rounded-3xl p-3 sm:p-4 mb-6 shadow-2xl backdrop-blur-xl">
@@ -89,7 +106,7 @@
         <div class="flex items-center gap-1 sm:gap-2 overflow-x-auto pb-1 xl:pb-0 scrollbar-none">
             
             <!-- Step 1: Peserta -->
-            <a href="{{ route('pic.dashboard') }}?competition_id={{ $competition->id }}" 
+            <a href="{{ $pesertaUrl }}" 
                class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap {{ ($activeStep ?? '') === 'peserta' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'bg-white/[0.04] text-slate-400 hover:text-slate-200 hover:bg-white/[0.08] border border-white/[0.06]' }}"
                title="Langkah 1: Verifikasi data peserta & pembagian pool kategori">
                 <i data-lucide="users" class="w-3.5 h-3.5 {{ ($activeStep ?? '') === 'peserta' ? 'text-white' : 'text-[#4E6EFF]' }}"></i>

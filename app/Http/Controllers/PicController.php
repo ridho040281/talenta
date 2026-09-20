@@ -84,7 +84,7 @@ class PicController extends Controller
         }
     }
 
-    public function dashboard()
+    public function dashboard(Request $request)
     {
         $user = Auth::user();
         $competitionIds = self::getManagedCompetitionIds($user);
@@ -94,27 +94,51 @@ class PicController extends Controller
             ->whereIn('id', $competitionIds)
             ->get();
 
-        $statusCounts = Registration::whereIn('competition_id', $competitionIds)
+        $selectedCompId = $request->query('competition_id');
+
+        // Jika tidak ada competition_id yang dipilih secara eksplisit:
+        // Jika PIC hanya mengelola 1 cabor, arahkan langsung ke cabor tersebut
+        if (! $selectedCompId && $user && $user->role === 'pic_lomba') {
+            if (count($competitionIds) === 1) {
+                $selectedCompId = (string) $competitionIds[0];
+            } elseif ($user->managesBadminton()) {
+                $bltComp = $competitions->first(fn ($c) => $c->code === 'BLT' || str_contains(strtolower($c->name), 'bulu tangkis'));
+                if ($bltComp) {
+                    $selectedCompId = (string) $bltComp->id;
+                }
+            }
+        }
+
+        // Ambil instance kompetisi aktif jika ada
+        $activeCompetition = null;
+        if ($selectedCompId && $selectedCompId !== 'all') {
+            $activeCompetition = $competitions->firstWhere('id', (int) $selectedCompId)
+                ?? Competition::with(['category', 'registrations.members'])->find($selectedCompId);
+        }
+
+        $statsCompIds = ($activeCompetition) ? [$activeCompetition->id] : $competitionIds;
+
+        $statusCounts = Registration::whereIn('competition_id', $statsCompIds)
             ->selectRaw('status, count(*) as count')
             ->groupBy('status')
             ->pluck('count', 'status');
 
-        $totalRegistrations = Registration::whereIn('competition_id', $competitionIds)->count();
+        $totalRegistrations = Registration::whereIn('competition_id', $statsCompIds)->count();
 
-        $drawnCount = Registration::whereIn('competition_id', $competitionIds)
+        $drawnCount = Registration::whereIn('competition_id', $statsCompIds)
             ->whereNotNull('draw_number')
             ->count();
 
-        $totalPa = Registration::whereIn('competition_id', $competitionIds)
+        $totalPa = Registration::whereIn('competition_id', $statsCompIds)
             ->whereHas('members', fn ($q) => $q->where('gender', 'L'))
             ->count();
 
-        $totalPi = Registration::whereIn('competition_id', $competitionIds)
+        $totalPi = Registration::whereIn('competition_id', $statsCompIds)
             ->whereHas('members', fn ($q) => $q->where('gender', 'P'))
             ->count();
 
         $stats = [
-            'total_competitions' => $competitions->count(),
+            'total_competitions' => $activeCompetition ? 1 : $competitions->count(),
             'total_registrations' => $totalRegistrations,
             'pending_verifications' => (int) ($statusCounts->get('pending', 0)),
             'pending_registrations' => (int) ($statusCounts->get('pending', 0)),
@@ -128,8 +152,16 @@ class PicController extends Controller
 
         $categories = Category::all();
 
-        // Pass competitionIds to view (for AJAX context)
-        return view('pic.dashboard', compact('user', 'competitions', 'stats', 'categories', 'competitionIds'));
+        // Pass competitionIds and active competition to view
+        return view('pic.dashboard', compact(
+            'user',
+            'competitions',
+            'stats',
+            'categories',
+            'competitionIds',
+            'selectedCompId',
+            'activeCompetition'
+        ));
     }
 
     /**
