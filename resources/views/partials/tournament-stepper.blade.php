@@ -27,6 +27,8 @@
             $tCompQuery->whereIn('id', \App\Http\Controllers\PicController::getManagedCompetitionIds($user));
         }
         $tournamentCompetitions = $tCompQuery->get();
+    }
+
     // Map activePoolKey to sector option for seamless filtering in data peserta
     $sectorParam = '';
     if (!empty($activePoolKey) && $activePoolKey !== 'all') {
