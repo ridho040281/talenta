@@ -16,92 +16,7 @@
         ])
     @endif
     
-    <!-- Baris Info Undian (Bersih & Rapi Tanpa Tombol Duplikat) -->
-    <div class="bg-slate-900/90 backdrop-blur-md rounded-2xl p-3.5 sm:p-4 px-5 border border-slate-800 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-white">
-        <div class="space-y-0.5">
-            <h2 class="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2 font-display">
-                <span>🏸 {{ $competition->name }}</span>
-            </h2>
-            <p class="text-[11px] text-slate-400 font-mono">
-                Sistem Undian Nomor Bagan & Slot Turnamen
-            </p>
-        </div>
 
-        <div class="flex items-center gap-2.5">
-            <div class="flex items-center gap-2 font-mono text-xs">
-                <span class="px-3 py-1 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-300 font-bold text-[11px]">
-                    <span x-text="allUndrawnParticipants.length"></span> Belum Diundi
-                </span>
-                <span class="px-3 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 font-bold text-[11px]">
-                    <span x-text="allDrawnParticipants.length"></span> Selesai Terkunci
-                </span>
-            </div>
-
-            <!-- Opsi Tambahan (Discreet ⋮) -->
-            <div class="relative" x-data="{ open: false }" @click.outside="open = false">
-                <button type="button" 
-                        @click="open = !open; $nextTick(() => { if (window.lucide) window.lucide.createIcons(); })" 
-                        class="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700/60 transition cursor-pointer"
-                        title="Pengaturan & Opsi Lainnya">
-                    <i data-lucide="more-vertical" class="w-4 h-4"></i>
-                </button>
-
-                <div x-show="open" 
-                     x-cloak 
-                     x-transition:enter="transition ease-out duration-100"
-                     x-transition:enter-start="opacity-0 scale-95"
-                     x-transition:enter-end="opacity-100 scale-100"
-                     x-transition:leave="transition ease-in duration-75"
-                     x-transition:leave-start="opacity-100 scale-100"
-                     x-transition:leave-end="opacity-0 scale-95"
-                     class="absolute right-0 mt-2 w-52 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl py-2 z-50 text-xs">
-                    
-                    <div class="px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold border-b border-slate-800">
-                        Opsi & Tampilan
-                    </div>
-
-                    <!-- Batch / Full-Shuffle Auto Draw Link -->
-                    <button type="button" 
-                            @click="open = false; openBatchModal()"
-                            class="w-full text-left flex items-center gap-2.5 px-3.5 py-2 text-emerald-400 hover:bg-slate-800 transition font-bold cursor-pointer">
-                        <i data-lucide="zap" class="w-4 h-4 text-emerald-400"></i>
-                        <span>⚡ Batch Auto Draw</span>
-                    </button>
-
-                    <!-- Mode Hacker Link -->
-                    <a href="{{ route('pic.hacker.draw', $competition->id) }}" 
-                       class="flex items-center gap-2.5 px-3.5 py-2 text-cyan-400 hover:bg-slate-800 transition font-bold">
-                        <i data-lucide="terminal" class="w-4 h-4"></i>
-                        <span>Mode Hacker</span>
-                    </a>
-
-                    <!-- Switch Theme -->
-                    <div class="px-3.5 py-2 flex items-center justify-between border-t border-slate-800/80">
-                        <span class="text-slate-300 font-bold">Tema Roda:</span>
-                        <div class="inline-flex rounded-lg bg-slate-950 p-0.5 border border-slate-800 text-[10px]">
-                            <button type="button" @click="setTheme('badminton')" :class="theme === 'badminton' ? 'bg-emerald-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white'" class="px-2 py-0.5 rounded transition cursor-pointer">
-                                🏸 Arena
-                            </button>
-                            <button type="button" @click="setTheme('standard')" :class="theme === 'standard' ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white'" class="px-2 py-0.5 rounded transition cursor-pointer">
-                                Standar
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="my-1 border-t border-slate-800"></div>
-
-                    <!-- Reset All Undian -->
-                    <form action="{{ route('pic.spin.wheel.reset', $competition->id) }}" method="POST" onsubmit="return confirm('PERINGATAN: Apakah Anda yakin ingin me-reset SEMUA nomor undian untuk semua kategori di cabang {{ addslashes($competition->name) }}?')">
-                        @csrf
-                        <button type="submit" class="w-full text-left flex items-center gap-2 px-3.5 py-2 text-rose-400 hover:bg-rose-500/10 transition font-bold cursor-pointer">
-                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-                            <span>Reset Semua Undian</span>
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Category & Sector Navigation Bar (Option 2: 1 Baris Ramping Terpadu) -->
     @if(count($pools) > 1)
@@ -196,13 +111,14 @@
                 <span>⚡ Auto Draw</span>
             </button>
 
-            <button type="button" 
-                    @click="resetActivePool()" 
-                    :disabled="activeDrawnParticipants.length === 0 || isSpinning"
-                    class="px-3.5 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold disabled:opacity-25 disabled:cursor-not-allowed transition cursor-pointer shrink-0"
-                    title="Reset nomor undian kategori aktif">
-                Reset Kategori
-            </button>
+            <!-- Selesai Undi / Selesai Terkunci Badge (Menggantikan Reset Kategori Sesuai Arahan User) -->
+            <div class="flex items-center gap-1.5 shrink-0">
+                <span class="px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-mono font-bold text-xs flex items-center gap-1.5 whitespace-nowrap shadow-inner"
+                      title="Jumlah peserta yang sudah selesai diundi & terkunci nomornya">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span x-text="allDrawnParticipants.length + ' Selesai Terkunci'"></span>
+                </span>
+            </div>
         </div>
     </div>
     @endif
