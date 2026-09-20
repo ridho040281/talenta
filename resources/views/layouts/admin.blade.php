@@ -396,13 +396,16 @@
 </head>
 <body class="text-slate-100 font-sans antialiased min-h-screen flex selection:bg-[#7A5AF8] selection:text-white relative overflow-x-hidden" 
       x-data="{ 
+          userRole: '{{ auth()->check() ? auth()->user()->role : 'guest' }}',
           sidebarOpen: window.innerWidth >= 1024 
-              ? (localStorage.getItem('talenta_sidebar_open') !== null ? localStorage.getItem('talenta_sidebar_open') === 'true' : true) 
+              ? (['pic_lomba', 'juri'].includes('{{ auth()->check() ? auth()->user()->role : '' }}') 
+                  ? true 
+                  : (localStorage.getItem('talenta_sidebar_open') !== null ? localStorage.getItem('talenta_sidebar_open') === 'true' : true)) 
               : false, 
           passwordModal: false,
           toggleSidebar() {
               this.sidebarOpen = !this.sidebarOpen;
-              if (window.innerWidth >= 1024) {
+              if (window.innerWidth >= 1024 && !['pic_lomba', 'juri'].includes(this.userRole)) {
                   localStorage.setItem('talenta_sidebar_open', this.sidebarOpen);
               }
               this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });

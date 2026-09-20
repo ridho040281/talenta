@@ -1,3 +1,5 @@
+@extends('layouts.admin')
+
 @php
     $isSports = $competition->isSports();
     $roleName = $isSports ? 'Wasit' : 'Dewan Juri';
