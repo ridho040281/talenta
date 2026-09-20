@@ -16,65 +16,34 @@
         ])
     @endif
     
-    <!-- Top Action Bar (Clean & Focused) -->
-    <div class="bg-slate-900 rounded-3xl p-4 sm:p-6 border border-slate-800 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-white">
-        <div class="space-y-1">
-            <h2 class="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+    <!-- Baris Info Undian (Bersih & Rapi Tanpa Tombol Duplikat) -->
+    <div class="bg-slate-900/90 backdrop-blur-md rounded-2xl p-3.5 sm:p-4 px-5 border border-slate-800 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-white">
+        <div class="space-y-0.5">
+            <h2 class="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2 font-display">
                 <span>🏸 {{ $competition->name }}</span>
             </h2>
-            <p class="text-xs text-slate-400 font-mono">
-                <span class="text-amber-400 font-bold" x-text="allUndrawnParticipants.length"></span> Belum Diundi • 
-                <span class="text-emerald-400 font-bold" x-text="allDrawnParticipants.length"></span> Selesai Terkunci
+            <p class="text-[11px] text-slate-400 font-mono">
+                Sistem Undian Nomor Bagan & Slot Turnamen
             </p>
         </div>
 
-        <div class="flex items-center flex-wrap gap-2.5">
-            <!-- Batch / Full-Shuffle Auto Draw -->
-            <button type="button" 
-                    @click="openBatchModal()" 
-                    :disabled="isSpinning || allUndrawnParticipants.length === 0"
-                    class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 hover:from-emerald-500/30 hover:to-teal-500/30 text-emerald-300 border border-emerald-500/50 font-bold text-xs shadow-md transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                    title="Undi Semua Peserta Sekaligus dalam 1 Kali Putar">
-                <i data-lucide="zap" class="w-4 h-4 text-emerald-400"></i>
-                <span>⚡ Batch / Full-Shuffle Auto Draw</span>
-            </button>
+        <div class="flex items-center gap-2.5">
+            <div class="flex items-center gap-2 font-mono text-xs">
+                <span class="px-3 py-1 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-300 font-bold text-[11px]">
+                    <span x-text="allUndrawnParticipants.length"></span> Belum Diundi
+                </span>
+                <span class="px-3 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 font-bold text-[11px]">
+                    <span x-text="allDrawnParticipants.length"></span> Selesai Terkunci
+                </span>
+            </div>
 
-            <!-- Menu Seeded Button -->
-            <button type="button" 
-                    @click="openSeededModal()" 
-                    :disabled="isSpinning"
-                    class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 font-bold text-xs shadow-sm transition cursor-pointer"
-                    title="Menu Pengaturan Pemain Unggulan (Seeded)">
-                <i data-lucide="star" class="w-4 h-4 text-amber-400"></i>
-                <span>Atur Seeded</span>
-            </button>
-
-            @if(strtoupper($competition->code ?? '') === 'BLT' || str_contains(strtolower($competition->name ?? ''), 'bulu tangkis') || str_contains(strtolower($competition->name ?? ''), 'badminton'))
-            <!-- Bagan Pertandingan -->
-            <a :href="'{{ route('pic.bracket', $competition->id) }}' + (activePoolKey ? '?pool=' + encodeURIComponent(activePoolKey) : '')" 
-               class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/40 font-bold text-xs shadow-sm transition cursor-pointer" 
-               title="Lihat Bagan Pertandingan (Knockout Bracket)">
-                <i data-lucide="git-branch" class="w-4 h-4 text-indigo-400"></i>
-                <span>Bagan</span>
-            </a>
-            @endif
-
-            <!-- Public Viewer TV -->
-            <a href="{{ url('tv/' . $competition->slug) }}" target="_blank" 
-               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 transition cursor-pointer" 
-               title="Buka Layar Tampilan TV: /tv/{{ $competition->slug }}">
-                <i data-lucide="tv" class="w-4 h-4"></i>
-                <span>Layar TV</span>
-            </a>
-
-            <!-- Dropdown Menu Lainnya (⋮) -->
+            <!-- Opsi Tambahan (Discreet ⋮) -->
             <div class="relative" x-data="{ open: false }" @click.outside="open = false">
                 <button type="button" 
                         @click="open = !open; $nextTick(() => { if (window.lucide) window.lucide.createIcons(); })" 
-                        class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold text-xs transition flex items-center gap-1 cursor-pointer"
-                        title="Menu Tambahan & Pengaturan">
+                        class="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700/60 transition cursor-pointer"
+                        title="Pengaturan & Opsi Lainnya">
                     <i data-lucide="more-vertical" class="w-4 h-4"></i>
-                    <span>Lainnya</span>
                 </button>
 
                 <div x-show="open" 
@@ -85,7 +54,7 @@
                      x-transition:leave="transition ease-in duration-75"
                      x-transition:leave-start="opacity-100 scale-100"
                      x-transition:leave-end="opacity-0 scale-95"
-                     class="absolute right-0 mt-2 w-56 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl py-2 z-50 text-xs">
+                     class="absolute right-0 mt-2 w-52 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl py-2 z-50 text-xs">
                     
                     <div class="px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold border-b border-slate-800">
                         Opsi & Tampilan
@@ -131,11 +100,6 @@
                     </form>
                 </div>
             </div>
-
-            <!-- Back Button -->
-            <a href="{{ route('pic.undian') }}" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition">
-                Kembali
-            </a>
         </div>
     </div>
 
@@ -209,8 +173,8 @@
             </div>
         </div>
 
-        <!-- Right: Status Undian & Reset Kategori -->
-        <div class="flex items-center gap-3 shrink-0 ml-auto">
+        <!-- Right: Status Undian, Auto Draw, & Reset Kategori -->
+        <div class="flex items-center gap-2.5 shrink-0 ml-auto">
             <div class="text-right hidden sm:block">
                 <span class="text-[10px] text-slate-500 font-mono block leading-none mb-0.5">Status Undian:</span>
                 <span class="text-xs font-mono font-bold" 
@@ -221,6 +185,17 @@
                               ? ('Selesai Diundi (' + getPoolStats(activePoolKey).drawn + ')') 
                               : (getPoolStats(activePoolKey).drawn + ' Terundi • ' + getPoolStats(activePoolKey).undrawn + ' Sisa'))"></span>
             </div>
+
+            <!-- Fast Auto Draw Button -->
+            <button type="button" 
+                    @click="openBatchModal()" 
+                    :disabled="isSpinning || activeUndrawnParticipants.length === 0"
+                    class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 hover:from-emerald-500/30 hover:to-teal-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer shrink-0 flex items-center gap-1.5 shadow-sm"
+                    title="Undi Cepat Semua Peserta di Kategori / Pool Aktif">
+                <i data-lucide="zap" class="w-3.5 h-3.5 text-emerald-400"></i>
+                <span>⚡ Auto Draw</span>
+            </button>
+
             <button type="button" 
                     @click="resetActivePool()" 
                     :disabled="activeDrawnParticipants.length === 0 || isSpinning"
@@ -488,7 +463,17 @@
                         <i data-lucide="users" class="w-4 h-4 text-amber-400"></i>
                         <span>Antrean Belum Diundi</span>
                     </h3>
-                    <span class="text-xs font-mono font-bold text-amber-300 bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded-full" x-text="activeUndrawnParticipants.length + ' Peserta'"></span>
+                    <div class="flex items-center gap-2">
+                        <button type="button" 
+                                @click="openBatchModal()" 
+                                :disabled="isSpinning || activeUndrawnParticipants.length === 0"
+                                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/40 text-[11px] font-black transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed shadow-sm"
+                                title="Undi Cepat Semua Peserta di Antrean Ini">
+                            <i data-lucide="zap" class="w-3 h-3 text-emerald-400"></i>
+                            <span>⚡ Auto Draw</span>
+                        </button>
+                        <span class="text-xs font-mono font-bold text-amber-300 bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded-full" x-text="activeUndrawnParticipants.length + ' Peserta'"></span>
+                    </div>
                 </div>
 
                 <div class="space-y-2.5 max-h-[260px] overflow-y-auto p-1 pr-2">
