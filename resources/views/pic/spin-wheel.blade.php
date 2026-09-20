@@ -511,8 +511,6 @@
 
         </div>
 
-        </div>
-
         <!-- Right 5 Cols: Drawn & Undrawn Lists (Dark Theme) -->
         <div class="lg:col-span-5 space-y-6">
             
