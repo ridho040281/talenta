@@ -23,7 +23,7 @@
     @php
         $classGroups = collect($pools)->groupBy('class_key');
     @endphp
-    <div class="bg-slate-900/95 backdrop-blur-md rounded-2xl px-4 py-2.5 sm:px-5 border border-slate-800 shadow-xl flex flex-wrap items-center justify-between gap-3">
+    <div class="bg-slate-900/95 backdrop-blur-md rounded-2xl px-4 py-2.5 sm:px-5 border border-slate-800 shadow-xl flex flex-wrap items-center justify-between gap-3 relative z-10">
         
         <!-- Left: Dropdown Kategori Kelas + Toggle Sektor PA / PI -->
         <div class="flex flex-wrap items-center gap-2.5 sm:gap-3.5">
@@ -124,7 +124,7 @@
     @endif
 
     <!-- Main Workspace Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-0">
         
         <!-- Left 7 Cols: Interactive Canvas Wheel -->
         <div class="lg:col-span-7 bg-slate-950 rounded-3xl p-6 sm:p-8 border-2 transition-all duration-500 shadow-2xl flex flex-col items-center justify-center text-center relative overflow-hidden"

@@ -49,7 +49,7 @@
     $pesertaUrl = route('pic.dashboard') . '?competition_id=' . $competition->id . ($sectorParam ? '&sector=' . $sectorParam : '');
 @endphp
 
-<div class="ai-card bg-[#090D17]/95 border border-white/[0.12] rounded-3xl p-3 sm:p-4 mb-6 shadow-2xl backdrop-blur-xl">
+<div class="ai-card bg-[#090D17]/95 border border-white/[0.12] rounded-3xl p-3 sm:p-4 mb-6 shadow-2xl backdrop-blur-xl relative z-40">
     <div class="flex flex-col gap-3.5">
         
         <!-- Baris Atas: Competition Context & Cabor Switcher (Kiri) vs Quick Actions & Titik 3 (Pojok Kanan Atas) -->
@@ -129,7 +129,7 @@
 
                 @if(($activeStep ?? '') === 'undian')
                 <!-- Dropdown Menu Opsi Undian (Titik 3 di Pojok Kanan Atas) -->
-                <div class="relative" x-data="{ openMenu: false }" @click.outside="openMenu = false">
+                <div class="relative z-50" x-data="{ openMenu: false }" @click.outside="openMenu = false">
                     <button type="button" 
                             @click="openMenu = !openMenu; $nextTick(() => { if (window.lucide) window.lucide.createIcons(); })" 
                             class="p-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-300 hover:text-white border border-white/[0.12] transition cursor-pointer flex items-center justify-center shadow-sm"
