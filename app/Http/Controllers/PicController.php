@@ -2533,6 +2533,39 @@ class PicController extends Controller
         $user = Auth::user();
         $this->authorizeCompetitionManagement($user, $competition->id);
 
+        $adminPassword = $request->input('admin_password');
+        if (empty($adminPassword)) {
+            $errMsg = 'Password admin wajib diisi untuk melakukan reset undian.';
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => $errMsg], 422);
+            }
+
+            return back()->with('error', $errMsg);
+        }
+
+        // Cek kecocokan password: user login saat ini atau superadmin
+        $isPasswordValid = false;
+        if ($user && Hash::check($adminPassword, $user->password)) {
+            $isPasswordValid = true;
+        } else {
+            $superAdmins = User::where('role', 'superadmin')->get();
+            foreach ($superAdmins as $sa) {
+                if (Hash::check($adminPassword, $sa->password)) {
+                    $isPasswordValid = true;
+                    break;
+                }
+            }
+        }
+
+        if (! $isPasswordValid) {
+            $errMsg = 'Password admin salah! Proses reset undian dibatalkan.';
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => $errMsg], 403);
+            }
+
+            return back()->with('error', $errMsg);
+        }
+
         $regIds = $request->input('registration_ids');
         if (! empty($regIds)) {
             if (is_string($regIds)) {
@@ -2541,12 +2574,22 @@ class PicController extends Controller
             Registration::where('competition_id', $competition->id)->whereIn('id', $regIds)->update(['draw_number' => null, 'seed_number' => null]);
             DrawAllocation::where('competition_id', $competition->id)->whereIn('registration_id', $regIds)->delete();
 
-            return back()->with('success', 'Nomor undian untuk kategori terpilih pada '.$competition->name.' berhasil di-reset.');
+            $msg = 'Nomor undian untuk kategori terpilih pada '.$competition->name.' berhasil di-reset.';
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => true, 'message' => $msg]);
+            }
+
+            return back()->with('success', $msg);
         }
 
         Registration::where('competition_id', $competition->id)->update(['draw_number' => null, 'seed_number' => null]);
         DrawAllocation::where('competition_id', $competition->id)->delete();
 
-        return back()->with('success', 'Semua nomor undian pada cabang '.$competition->name.' telah di-reset.');
+        $msg = 'Semua nomor undian pada cabang '.$competition->name.' telah di-reset.';
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => $msg]);
+        }
+
+        return back()->with('success', $msg);
     }
 }

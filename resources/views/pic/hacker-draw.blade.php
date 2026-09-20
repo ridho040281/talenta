@@ -848,9 +848,8 @@
 
             resetActivePool() {
                 if (!this.activePool || this.activeDrawnParticipants.length === 0) return;
-                if (!confirm('Apakah Anda yakin ingin me-reset nomor undian KHUSUS untuk kategori ' + this.activePool.title + '?')) {
-                    return;
-                }
+                const password = window.prompt('KONFIRMASI RESET: Masukkan Password Admin untuk me-reset kategori "' + this.activePool.title + '":');
+                if (!password) return;
 
                 const regIds = this.activePool.participants.map(p => p.id);
                 const form = document.createElement('form');
@@ -868,6 +867,12 @@
                 idsInput.name = 'registration_ids';
                 idsInput.value = regIds.join(',');
                 form.appendChild(idsInput);
+
+                const pwdInput = document.createElement('input');
+                pwdInput.type = 'hidden';
+                pwdInput.name = 'admin_password';
+                pwdInput.value = password;
+                form.appendChild(pwdInput);
 
                 document.body.appendChild(form);
                 form.submit();

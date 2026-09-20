@@ -146,15 +146,10 @@
                          x-transition:leave-start="opacity-100 scale-100"
                          x-transition:leave-end="opacity-0 scale-95"
                          class="absolute right-0 mt-2 w-56 bg-[#0B1120] border border-slate-700/90 rounded-2xl shadow-2xl py-2 z-50 text-xs">
-                        
-                        <div class="px-3.5 py-1.5 text-[10px] font-mono uppercase tracking-wider text-rose-400 font-bold border-b border-slate-800 flex items-center gap-1.5">
-                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-rose-400"></i>
-                            <span>Menu Reset Undian</span>
-                        </div>
 
                         <!-- 1. Reset Kategori Ini -->
                         <button type="button" 
-                                @click="openMenu = false; resetActivePool()"
+                                @click="openMenu = false; promptResetWithPassword('pool')"
                                 :disabled="activeDrawnParticipants.length === 0 || isSpinning"
                                 class="w-full text-left flex items-center gap-2.5 px-3.5 py-2.5 text-amber-400 hover:bg-amber-500/10 transition font-bold cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed">
                             <i data-lucide="rotate-ccw" class="w-4 h-4 text-amber-400 shrink-0"></i>
@@ -167,16 +162,15 @@
                         <div class="my-1 border-t border-slate-800"></div>
 
                         <!-- 2. Reset Semua Undian -->
-                        <form action="{{ route('pic.spin.wheel.reset', $competition->id) }}" method="POST" onsubmit="return confirm('PERINGATAN: Apakah Anda yakin ingin me-reset SEMUA nomor undian untuk semua kategori di cabang {{ addslashes($competition->name) }}?')">
-                            @csrf
-                            <button type="submit" class="w-full text-left flex items-center gap-2.5 px-3.5 py-2.5 text-rose-400 hover:bg-rose-500/10 transition font-bold cursor-pointer">
-                                <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-400 shrink-0"></i>
-                                <div>
-                                    <span class="block">Reset Semua Undian</span>
-                                    <span class="text-[10px] text-slate-500 font-normal block">Hapus seluruh undian cabor ini</span>
-                                </div>
-                            </button>
-                        </form>
+                        <button type="button" 
+                                @click="openMenu = false; promptResetWithPassword('all')"
+                                class="w-full text-left flex items-center gap-2.5 px-3.5 py-2.5 text-rose-400 hover:bg-rose-500/10 transition font-bold cursor-pointer">
+                            <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-400 shrink-0"></i>
+                            <div>
+                                <span class="block">Reset Semua Undian</span>
+                                <span class="text-[10px] text-slate-500 font-normal block">Hapus seluruh undian cabor ini</span>
+                            </div>
+                        </button>
                     </div>
                 </div>
                 @endif
