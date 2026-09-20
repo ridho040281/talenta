@@ -397,7 +397,7 @@
 <body class="text-slate-100 font-sans antialiased min-h-screen flex selection:bg-[#7A5AF8] selection:text-white relative overflow-x-hidden" 
       x-data="{ 
           userRole: '{{ auth()->check() ? auth()->user()->role : 'guest' }}',
-          sidebarOpen: window.innerWidth >= 1024 
+          sidebarOpen: window.innerWidth >= 768 
               ? (['pic_lomba', 'juri'].includes('{{ auth()->check() ? auth()->user()->role : '' }}') 
                   ? true 
                   : (localStorage.getItem('talenta_sidebar_open') !== null ? localStorage.getItem('talenta_sidebar_open') === 'true' : true)) 
@@ -405,7 +405,7 @@
           passwordModal: false,
           toggleSidebar() {
               this.sidebarOpen = !this.sidebarOpen;
-              if (window.innerWidth >= 1024 && !['pic_lomba', 'juri'].includes(this.userRole)) {
+              if (window.innerWidth >= 768 && !['pic_lomba', 'juri'].includes(this.userRole)) {
                   localStorage.setItem('talenta_sidebar_open', this.sidebarOpen);
               }
               this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
@@ -422,10 +422,10 @@
          x-transition:leave="transition-opacity ease-in duration-200"
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm lg:hidden"></div>
+         class="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm md:hidden"></div>
 
     <!-- Sidebar Navigation (AIStarterKit Dark Glass Structure) -->
-    <aside :class="sidebarOpen ? 'w-72 max-w-[85vw] sm:w-64 translate-x-0' : '-translate-x-full lg:translate-x-0 lg:w-20'" 
+    <aside :class="sidebarOpen ? 'w-72 max-w-[85vw] sm:w-64 translate-x-0' : '-translate-x-full md:translate-x-0 md:w-20'" 
            class="fixed inset-y-0 left-0 z-50 bg-[#090D17]/98 backdrop-blur-2xl text-slate-300 flex flex-col transition-all duration-300 ease-in-out border-r border-white/[0.12] shadow-[4px_0_25px_rgba(0,0,0,0.6)]">
         
         <!-- Sidebar Brand Header -->
@@ -447,8 +447,8 @@
                 </div>
             </a>
             <button x-show="sidebarOpen" @click="toggleSidebar()" class="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/[0.08] transition cursor-pointer flex items-center justify-center shrink-0" aria-label="Tutup Menu" title="Sembunyikan Sidebar">
-                <i data-lucide="chevron-left" class="w-5 h-5 hidden lg:block"></i>
-                <i data-lucide="x" class="w-5 h-5 lg:hidden"></i>
+                <i data-lucide="chevron-left" class="w-5 h-5 hidden md:block"></i>
+                <i data-lucide="x" class="w-5 h-5 md:hidden"></i>
             </button>
         </div>
 
@@ -459,13 +459,13 @@
                 <!-- Group: OVERVIEW (Super Admin & Panitia) -->
                 <div class="space-y-1">
                     <div x-show="sidebarOpen" class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Overview</div>
-                    <div x-show="!sidebarOpen" class="hidden lg:block border-t border-white/[0.08] mx-2 my-2"></div>
+                    <div x-show="!sidebarOpen" class="hidden md:block border-t border-white/[0.08] mx-2 my-2"></div>
                     <a href="{{ route('admin.dashboard') }}" 
                        class="relative group flex items-center rounded-2xl transition {{ request()->routeIs('admin.dashboard') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}"
                        :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
                         <i data-lucide="layout-dashboard" class="w-4 h-4 shrink-0 {{ request()->routeIs('admin.dashboard') ? 'text-white' : 'text-slate-400' }}"></i>
                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Dashboard Utama</span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Dashboard Utama</span>
                         </div>
                     </a>
@@ -475,13 +475,13 @@
                 <!-- Group: MASTER DATA (Khusus Super Admin) -->
                 <div class="space-y-1">
                     <div x-show="sidebarOpen" class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Master Data</div>
-                    <div x-show="!sidebarOpen" class="hidden lg:block border-t border-white/[0.08] mx-2 my-2"></div>
+                    <div x-show="!sidebarOpen" class="hidden md:block border-t border-white/[0.08] mx-2 my-2"></div>
                     <a href="{{ route('admin.competitions') }}" 
                        class="relative group flex items-center rounded-2xl transition {{ request()->routeIs('admin.competitions*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}"
                        :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
                         <i data-lucide="medal" class="w-4 h-4 shrink-0 {{ request()->routeIs('admin.competitions*') ? 'text-white' : 'text-slate-400' }}"></i>
                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Master Cabang Lomba</span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Master Cabang Lomba</span>
                         </div>
                     </a>
@@ -490,7 +490,7 @@
                        :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
                         <i data-lucide="users" class="w-4 h-4 shrink-0 {{ request()->routeIs('admin.users*') ? 'text-white' : 'text-slate-400' }}"></i>
                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Kelola Pengguna</span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Kelola Pengguna</span>
                         </div>
                     </a>
@@ -500,13 +500,13 @@
                 <!-- Group: OPERASIONAL PERLOMBAAN (Super Admin & Panitia) -->
                 <div class="space-y-1">
                     <div x-show="sidebarOpen" class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Operasional Lomba</div>
-                    <div x-show="!sidebarOpen" class="hidden lg:block border-t border-white/[0.08] mx-2 my-2"></div>
+                    <div x-show="!sidebarOpen" class="hidden md:block border-t border-white/[0.08] mx-2 my-2"></div>
                     <a href="{{ route('admin.verifications') }}" 
                        class="relative group flex items-center rounded-2xl transition {{ request()->routeIs('admin.verifications*') || request()->routeIs('admin.participants.index*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}"
                        :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
                         <i data-lucide="users" class="w-4 h-4 shrink-0 {{ request()->routeIs('admin.verifications*') || request()->routeIs('admin.participants.index*') ? 'text-white' : 'text-[#4E6EFF]' }}"></i>
                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Data Peserta</span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Data Peserta</span>
                         </div>
                     </a>
@@ -520,7 +520,7 @@
                         <span x-show="sidebarOpen" class="px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono">
                             Multi
                         </span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Peserta Multi Lomba</span>
                             <span class="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono">Multi</span>
                         </div>
@@ -530,7 +530,7 @@
                        :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
                         <i data-lucide="scale" class="w-4 h-4 shrink-0 {{ request()->routeIs('admin.juri.wasit*') || request()->routeIs('admin.undian*') || request()->routeIs('juri.*') ? 'text-white' : 'text-[#A594FD]' }}"></i>
                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Juri, Wasit & Undian</span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Juri, Wasit & Undian</span>
                         </div>
                     </a>
@@ -540,7 +540,7 @@
                        title="Bagan Turnamen Sistem Gugur BWF">
                         <i data-lucide="git-branch" class="w-4 h-4 shrink-0 {{ request()->routeIs('badminton.bracket*') || request()->routeIs('pic.bracket*') ? 'text-white' : 'text-indigo-400' }}"></i>
                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Bagan Pertandingan</span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Bagan Pertandingan</span>
                         </div>
                     </a>
@@ -549,13 +549,13 @@
                 <!-- Group: LAPORAN (Super Admin & Panitia) -->
                 <div class="space-y-1">
                     <div x-show="sidebarOpen" class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Laporan</div>
-                    <div x-show="!sidebarOpen" class="hidden lg:block border-t border-white/[0.08] mx-2 my-2"></div>
+                    <div x-show="!sidebarOpen" class="hidden md:block border-t border-white/[0.08] mx-2 my-2"></div>
                     <a href="{{ route('admin.recap') }}" 
                        class="relative group flex items-center rounded-2xl transition {{ request()->routeIs('admin.recap*') || request()->routeIs('admin.scores*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}"
                        :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
                         <i data-lucide="bar-chart-3" class="w-4 h-4 shrink-0 {{ request()->routeIs('admin.recap*') || request()->routeIs('admin.scores*') ? 'text-white' : 'text-amber-400' }}"></i>
                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Rekapitulasi</span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Rekapitulasi</span>
                         </div>
                     </a>
@@ -564,7 +564,7 @@
                        :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
                         <i data-lucide="file-text" class="w-4 h-4 shrink-0 {{ request()->routeIs('admin.berita-acara*') ? 'text-white' : 'text-emerald-400' }}"></i>
                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Berita Acara</span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Berita Acara</span>
                         </div>
                     </a>
@@ -573,7 +573,7 @@
                        :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
                         <i data-lucide="award" class="w-4 h-4 shrink-0 {{ request()->routeIs('admin.certificates*') ? 'text-white' : 'text-purple-400' }}"></i>
                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Sertifikat & Piagam</span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Sertifikat & Piagam</span>
                         </div>
                     </a>
@@ -583,13 +583,13 @@
                 <!-- Group: PENGATURAN & TOOLS (Khusus Super Admin) -->
                 <div class="space-y-1">
                     <div x-show="sidebarOpen" class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Pengaturan Sistem</div>
-                    <div x-show="!sidebarOpen" class="hidden lg:block border-t border-white/[0.08] mx-2 my-2"></div>
+                    <div x-show="!sidebarOpen" class="hidden md:block border-t border-white/[0.08] mx-2 my-2"></div>
                     <a href="{{ route('admin.settings.general') }}" 
                        class="relative group flex items-center rounded-2xl transition {{ request()->routeIs('admin.settings.general*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}"
                        :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
                         <i data-lucide="sliders" class="w-4 h-4 shrink-0 {{ request()->routeIs('admin.settings.general*') ? 'text-white' : 'text-[#7A5AF8]' }}"></i>
                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Pengaturan Aplikasi</span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Pengaturan Aplikasi</span>
                         </div>
                     </a>
@@ -598,7 +598,7 @@
                        :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
                         <i data-lucide="message-square" class="w-4 h-4 shrink-0 {{ request()->routeIs('admin.settings.whatsapp*') ? 'text-white' : 'text-green-400' }}"></i>
                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">WhatsApp Blast</span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>WhatsApp Blast</span>
                         </div>
                     </a>
@@ -607,7 +607,7 @@
                        :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
                         <i data-lucide="bell-ring" class="w-4 h-4 shrink-0 {{ request()->routeIs('admin.settings.popup*') ? 'text-white' : 'text-amber-400' }}"></i>
                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Informasi</span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Informasi</span>
                         </div>
                     </a>
@@ -616,7 +616,7 @@
                        :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
                         <i data-lucide="history" class="w-4 h-4 shrink-0 text-blue-400"></i>
                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Changelog Rilis</span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Changelog Rilis</span>
                         </div>
                     </a>
@@ -625,7 +625,7 @@
                        :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
                         <i data-lucide="info" class="w-4 h-4 shrink-0 text-amber-400"></i>
                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Info Aplikasi & Server</span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Info Aplikasi & Server</span>
                         </div>
                     </a>
@@ -637,13 +637,13 @@
                 <!-- Fase 1: Persiapan Lomba -->
                 <div class="space-y-1">
                     <div x-show="sidebarOpen" class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Persiapan Lomba</div>
-                    <div x-show="!sidebarOpen" class="hidden lg:block border-t border-white/[0.08] mx-2 my-2"></div>
+                    <div x-show="!sidebarOpen" class="hidden md:block border-t border-white/[0.08] mx-2 my-2"></div>
                     <a href="{{ route('pic.dashboard') }}" 
                        class="relative group flex items-center rounded-2xl transition {{ request()->routeIs('pic.dashboard') || request()->routeIs('pic.participants*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}"
                        :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
                         <i data-lucide="users" class="w-4 h-4 shrink-0"></i>
                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Data Peserta</span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Data Peserta</span>
                         </div>
                     </a>
@@ -652,7 +652,7 @@
                        :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
                         <i data-lucide="disc" class="w-4 h-4 shrink-0 text-[#FF58D5]"></i>
                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Undi Peserta</span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Undi Peserta</span>
                         </div>
                     </a>
@@ -662,13 +662,13 @@
                 <!-- Fase 2: Turnamen & Wasit (Bulu Tangkis & Tenis Meja) -->
                 <div class="space-y-1 pt-1">
                     <div x-show="sidebarOpen" class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Turnamen & Wasit</div>
-                    <div x-show="!sidebarOpen" class="hidden lg:block border-t border-white/[0.08] mx-2 my-2"></div>
+                    <div x-show="!sidebarOpen" class="hidden md:block border-t border-white/[0.08] mx-2 my-2"></div>
                     <a href="{{ route('badminton.bracket') }}" 
                        class="relative group flex items-center rounded-2xl transition {{ request()->routeIs('badminton.bracket*') || request()->routeIs('pic.bracket*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}"
                        :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
                         <i data-lucide="git-branch" class="w-4 h-4 shrink-0 text-indigo-400"></i>
                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Bagan Pertandingan</span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Bagan Pertandingan</span>
                         </div>
                     </a>
@@ -677,7 +677,7 @@
                        :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
                         <i data-lucide="activity" class="w-4 h-4 shrink-0 text-emerald-400"></i>
                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Scoring Wasit (Umpire)</span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Scoring Wasit (Umpire)</span>
                         </div>
                     </a>
@@ -689,7 +689,7 @@
                             <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Papan Skor LED TV</span>
                         </div>
                         <span x-show="sidebarOpen" class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Papan Skor LED TV</span>
                             <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
                         </div>
@@ -699,7 +699,7 @@
                        :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
                         <i data-lucide="layout-grid" class="w-4 h-4 shrink-0 text-[#4E6EFF]"></i>
                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Arena Multi-Lapangan</span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Arena Multi-Lapangan</span>
                         </div>
                     </a>
@@ -709,7 +709,7 @@
                 <!-- Fase 3: Pasca Lomba & Hasil -->
                 <div class="space-y-1 pt-1">
                     <div x-show="sidebarOpen" class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Pasca Lomba</div>
-                    <div x-show="!sidebarOpen" class="hidden lg:block border-t border-white/[0.08] mx-2 my-2"></div>
+                    <div x-show="!sidebarOpen" class="hidden md:block border-t border-white/[0.08] mx-2 my-2"></div>
                     <a href="{{ route('live.scoreboard') }}" target="_blank" 
                        class="relative group flex items-center rounded-2xl transition hover:bg-white/[0.04] text-slate-400 hover:text-slate-200"
                        :class="sidebarOpen ? 'justify-between px-3 py-2.5' : 'justify-center px-0 py-2.5'">
@@ -717,7 +717,7 @@
                             <i data-lucide="trophy" class="w-4 h-4 shrink-0 text-amber-400"></i>
                             <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Live Leaderboard</span>
                         </div>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Live Leaderboard</span>
                         </div>
                     </a>
@@ -726,7 +726,7 @@
                        :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
                         <i data-lucide="file-text" class="w-4 h-4 shrink-0 text-emerald-400"></i>
                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Berita Acara</span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Berita Acara</span>
                         </div>
                     </a>
@@ -735,7 +735,7 @@
                        :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
                         <i data-lucide="award" class="w-4 h-4 shrink-0 {{ request()->routeIs('admin.certificates*') ? 'text-white' : 'text-purple-400' }}"></i>
                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Sertifikat & Piagam</span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Sertifikat & Piagam</span>
                         </div>
                     </a>
@@ -754,20 +754,20 @@
                 @endphp
                 <div class="space-y-1">
                     <div x-show="sidebarOpen" class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">{{ $menuTitle }}</div>
-                    <div x-show="!sidebarOpen" class="hidden lg:block border-t border-white/[0.08] mx-2 my-2"></div>
+                    <div x-show="!sidebarOpen" class="hidden md:block border-t border-white/[0.08] mx-2 my-2"></div>
                     <a href="{{ route('juri.dashboard') }}" 
                        class="relative group flex items-center rounded-2xl transition {{ request()->routeIs('juri.dashboard') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}"
                        :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
                         <i data-lucide="layout-dashboard" class="w-4 h-4 shrink-0 {{ request()->routeIs('juri.dashboard') ? 'text-white' : 'text-[#7A5AF8]' }}"></i>
                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">{{ $dashboardLabel }}</span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>{{ $dashboardLabel }}</span>
                         </div>
                     </a>
 
                     @if($judgedComps->isNotEmpty())
                         <div x-show="sidebarOpen" class="pt-2 pb-1 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Cabang Penugasan</div>
-                        <div x-show="!sidebarOpen" class="hidden lg:block border-t border-white/[0.08] mx-2 my-2"></div>
+                        <div x-show="!sidebarOpen" class="hidden md:block border-t border-white/[0.08] mx-2 my-2"></div>
                         @foreach($judgedComps as $jComp)
                             @php
                                 $isBltComp = ($jComp->code === 'BLT' || str_contains(strtolower($jComp->name ?? ''), 'bulu tangkis'));
@@ -782,7 +782,7 @@
                                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">{{ $jComp->name }}</span>
                                     </div>
                                     <span x-show="sidebarOpen" class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-mono font-bold">Wasit</span>
-                                    <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                                    <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                                         <span>{{ $jComp->name }}</span>
                                         <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-mono font-bold">Wasit</span>
                                     </div>
@@ -796,7 +796,7 @@
                                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">{{ $jComp->name }}</span>
                                     </div>
                                     <span x-show="sidebarOpen" class="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 font-mono font-bold">Wasit</span>
-                                    <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                                    <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                                         <span>{{ $jComp->name }}</span>
                                         <span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 font-mono font-bold">Wasit</span>
                                     </div>
@@ -810,7 +810,7 @@
                                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">{{ $jComp->name }}</span>
                                     </div>
                                     <span x-show="sidebarOpen" class="text-[9px] px-1.5 py-0.5 rounded bg-[#7A5AF8]/15 text-[#A594FD] font-mono font-bold">Juri</span>
-                                    <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                                    <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                                         <span>{{ $jComp->name }}</span>
                                         <span class="text-[9px] px-1.5 py-0.5 rounded bg-[#7A5AF8]/15 text-[#A594FD] font-mono font-bold">Juri</span>
                                     </div>
@@ -821,13 +821,13 @@
 
                     @if($hasTournament)
                     <div x-show="sidebarOpen" class="pt-2 pb-1 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Turnamen & Wasit</div>
-                    <div x-show="!sidebarOpen" class="hidden lg:block border-t border-white/[0.08] mx-2 my-2"></div>
+                    <div x-show="!sidebarOpen" class="hidden md:block border-t border-white/[0.08] mx-2 my-2"></div>
                     <a href="{{ route('badminton.bracket') }}" 
                        class="relative group flex items-center rounded-2xl transition {{ request()->routeIs('badminton.bracket*') || request()->routeIs('pic.bracket*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}"
                        :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
                         <i data-lucide="git-branch" class="w-4 h-4 shrink-0 text-indigo-400"></i>
                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Bagan Pertandingan</span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Bagan Pertandingan</span>
                         </div>
                     </a>
@@ -839,7 +839,7 @@
                             <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Papan Skor LED TV</span>
                         </div>
                         <span x-show="sidebarOpen" class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Papan Skor LED TV</span>
                             <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
                         </div>
@@ -849,7 +849,7 @@
                        :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
                         <i data-lucide="layout-grid" class="w-4 h-4 shrink-0 text-[#4E6EFF]"></i>
                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Arena Multi-Lapangan</span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Arena Multi-Lapangan</span>
                         </div>
                     </a>
@@ -860,13 +860,13 @@
             @if(auth()->user()->role === 'peserta')
                 <div class="space-y-1">
                     <div x-show="sidebarOpen" class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Menu Pendaftar</div>
-                    <div x-show="!sidebarOpen" class="hidden lg:block border-t border-white/[0.08] mx-2 my-2"></div>
+                    <div x-show="!sidebarOpen" class="hidden md:block border-t border-white/[0.08] mx-2 my-2"></div>
                     <a href="{{ route('peserta.dashboard') }}" 
                        class="relative group flex items-center rounded-2xl transition {{ request()->routeIs('peserta.dashboard') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}"
                        :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
                         <i data-lucide="layout-grid" class="w-4 h-4 shrink-0 {{ request()->routeIs('peserta.dashboard') ? 'text-white' : 'text-[#7A5AF8]' }}"></i>
                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Dashboard</span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Dashboard</span>
                         </div>
                     </a>
@@ -875,7 +875,7 @@
                        :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
                         <i data-lucide="award" class="w-4 h-4 shrink-0 {{ request()->routeIs('peserta.registrations*') ? 'text-white' : 'text-amber-400' }}"></i>
                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Pendaftaran Saya</span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Pendaftaran Saya</span>
                         </div>
                     </a>
@@ -884,7 +884,7 @@
                        :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
                         <i data-lucide="file-spreadsheet" class="w-4 h-4 shrink-0 {{ request()->routeIs('peserta.collective*') ? 'text-white' : 'text-[#4E6EFF]' }}"></i>
                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Daftar Kolektif (Excel)</span>
-                        <div x-show="!sidebarOpen" class="hidden lg:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Daftar Kolektif (Excel)</span>
                         </div>
                     </a>
@@ -916,12 +916,12 @@
                 </form>
             </div>
             <!-- Mini icon mode footer -->
-            <div x-show="!sidebarOpen" class="hidden lg:flex flex-col items-center gap-2">
+            <div x-show="!sidebarOpen" class="hidden md:flex flex-col items-center gap-2">
                 <div class="relative group">
                     <button type="button" @click="passwordModal = true" class="w-8 h-8 rounded-full bg-gradient-to-tr from-[#7A5AF8] to-[#4E6EFF] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-md shadow-[#7A5AF8]/30 cursor-pointer">
                         {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
                     </button>
-                    <div class="hidden lg:group-hover:flex absolute left-full bottom-0 ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none flex-col">
+                    <div class="hidden md:group-hover:flex absolute left-full bottom-0 ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none flex-col">
                         <span>{{ auth()->user()->name }}</span>
                         <span class="text-[10px] text-[#A594FD] font-normal">{{ auth()->user()->position ?: auth()->user()->judge_title }}</span>
                     </div>
@@ -938,7 +938,7 @@
     </aside>
 
     <!-- Main Content Area with AIStarterKit Ambient Glow Effects -->
-    <div :class="sidebarOpen ? 'lg:pl-64' : 'lg:pl-20'" 
+    <div :class="sidebarOpen ? 'md:pl-64' : 'md:pl-20'" 
          class="flex-1 flex flex-col min-w-0 relative w-full max-w-full transition-all duration-300 ease-in-out">
         
         <!-- Ambient AI Glow Orbs in Dashboard -->
