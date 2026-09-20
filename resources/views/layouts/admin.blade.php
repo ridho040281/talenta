@@ -397,12 +397,19 @@
 <body class="text-slate-100 font-sans antialiased min-h-screen flex selection:bg-[#7A5AF8] selection:text-white relative overflow-x-hidden" 
       x-data="{ 
           userRole: '{{ auth()->check() ? auth()->user()->role : 'guest' }}',
+          isMobile: window.innerWidth < 768,
           sidebarOpen: window.innerWidth >= 768 
               ? (['pic_lomba', 'juri'].includes('{{ auth()->check() ? auth()->user()->role : '' }}') 
                   ? true 
                   : (localStorage.getItem('talenta_sidebar_open') !== null ? localStorage.getItem('talenta_sidebar_open') === 'true' : true)) 
               : false, 
           passwordModal: false,
+          checkScreen() {
+              this.isMobile = window.innerWidth < 768;
+              if (!this.isMobile && ['pic_lomba', 'juri'].includes(this.userRole)) {
+                  this.sidebarOpen = true;
+              }
+          },
           toggleSidebar() {
               this.sidebarOpen = !this.sidebarOpen;
               if (window.innerWidth >= 768 && !['pic_lomba', 'juri'].includes(this.userRole)) {
@@ -410,10 +417,11 @@
               }
               this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
           }
-      }">
+      }"
+      @resize.window.debounce.150ms="checkScreen()">
 
-    <!-- Mobile Sidebar Backdrop -->
-    <div x-show="sidebarOpen" 
+    <!-- Mobile Sidebar Backdrop (HANYA MUNCUL DI HP / SCREEN KECIL) -->
+    <div x-show="sidebarOpen && isMobile" 
          @click="sidebarOpen = false" 
          x-cloak 
          x-transition:enter="transition-opacity ease-out duration-300"
@@ -422,7 +430,8 @@
          x-transition:leave="transition-opacity ease-in duration-200"
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm md:hidden"></div>
+         class="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm md:hidden"
+         style="display: none;"></div>
 
     <!-- Sidebar Navigation (AIStarterKit Dark Glass Structure) -->
     <aside :class="sidebarOpen ? 'w-72 max-w-[85vw] sm:w-64 translate-x-0' : '-translate-x-full md:translate-x-0 md:w-20'" 
@@ -939,6 +948,7 @@
 
     <!-- Main Content Area with AIStarterKit Ambient Glow Effects -->
     <div :class="sidebarOpen ? 'md:pl-64' : 'md:pl-20'" 
+         :style="!isMobile ? (sidebarOpen ? 'padding-left: 16rem;' : 'padding-left: 5rem;') : ''"
          class="flex-1 flex flex-col min-w-0 relative w-full max-w-full transition-all duration-300 ease-in-out">
         
         <!-- Ambient AI Glow Orbs in Dashboard -->
