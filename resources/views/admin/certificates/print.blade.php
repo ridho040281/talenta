@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CETAK SERTIFIKAT & PIAGAM - TALENTA MTsN 1 BLITAR</title>
     
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet">
+    <!-- Self-hosted Fonts (lokal) -->
+    <link rel="stylesheet" href="{{ asset('vendor/fonts/fonts.css') }}">
     
     <!-- Lucide Icons -->
     <script src="{{ asset('vendor/lucide/lucide.min.js') }}"></script>

@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VERIFIKASI KEABSAHAN SERTIFIKAT - TALENTA MTsN 1 BLITAR</title>
     
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Self-hosted Fonts (lokal) -->
+    <link rel="stylesheet" href="{{ asset('vendor/fonts/fonts.css') }}">
     
     <!-- Vite Local Tailwind CSS & JS Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])

@@ -16,8 +16,10 @@
     <script defer src="{{ asset('vendor/lucide/lucide.min.js') }}"></script>
     <script defer src="{{ asset('vendor/alpine/alpine.min.js') }}"></script>
 
+    <!-- Self-hosted Fonts (lokal) -->
+    <link rel="stylesheet" href="{{ asset('vendor/fonts/fonts.css') }}">
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700;800;900&family=Orbitron:wght@700;900&family=Rajdhani:wght@600;700;800;900&display=swap');
         
         body {
             background-color: #060913;

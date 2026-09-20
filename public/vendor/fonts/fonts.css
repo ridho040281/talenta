@@ -1,0 +1,275 @@
+﻿/* ============================================================
+   Self-hosted fonts — Menggantikan Google Fonts CDN
+   File ini dimuat lokal, tidak ada request ke googleapis.com
+   ============================================================ */
+
+/* Plus Jakarta Sans — 300 */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('/vendor/fonts/plus-jakarta-sans.woff2') format('woff2');
+}
+
+/* Plus Jakarta Sans — 400 */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/vendor/fonts/plus-jakarta-sans.woff2') format('woff2');
+}
+
+/* Plus Jakarta Sans — 500 */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/vendor/fonts/plus-jakarta-sans.woff2') format('woff2');
+}
+
+/* Plus Jakarta Sans — 600 */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/vendor/fonts/plus-jakarta-sans.woff2') format('woff2');
+}
+
+/* Plus Jakarta Sans — 700 */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/vendor/fonts/plus-jakarta-sans.woff2') format('woff2');
+}
+
+/* Plus Jakarta Sans — 800 */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('/vendor/fonts/plus-jakarta-sans.woff2') format('woff2');
+}
+
+/* Plus Jakarta Sans — 900 */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url('/vendor/fonts/plus-jakarta-sans.woff2') format('woff2');
+}
+
+/* Space Grotesk — 500 */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/vendor/fonts/space-grotesk.woff2') format('woff2');
+}
+
+/* Space Grotesk — 700 */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/vendor/fonts/space-grotesk.woff2') format('woff2');
+}
+
+/* Space Mono — 700 */
+@font-face {
+  font-family: 'Space Mono';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/vendor/fonts/space-mono-700.woff2') format('woff2');
+}
+
+/* ============================================================
+   Font Khusus — Badminton, Scoreboard, Stage, Sertifikat
+   ============================================================ */
+
+/* Chakra Petch — 600 */
+@font-face {
+  font-family: 'Chakra Petch';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/vendor/fonts/chakra-petch-600.woff2') format('woff2');
+}
+/* Chakra Petch — 700 */
+@font-face {
+  font-family: 'Chakra Petch';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/vendor/fonts/chakra-petch-700.woff2') format('woff2');
+}
+/* Chakra Petch — 800, 900 (fallback ke 700) */
+@font-face {
+  font-family: 'Chakra Petch';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('/vendor/fonts/chakra-petch-700.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Chakra Petch';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url('/vendor/fonts/chakra-petch-700.woff2') format('woff2');
+}
+
+/* Orbitron — 700, 900 */
+@font-face {
+  font-family: 'Orbitron';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/vendor/fonts/orbitron.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Orbitron';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url('/vendor/fonts/orbitron.woff2') format('woff2');
+}
+
+/* Rajdhani — 600 */
+@font-face {
+  font-family: 'Rajdhani';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/vendor/fonts/rajdhani-600.woff2') format('woff2');
+}
+/* Rajdhani — 700, 800, 900 */
+@font-face {
+  font-family: 'Rajdhani';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/vendor/fonts/rajdhani-700.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Rajdhani';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('/vendor/fonts/rajdhani-700.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Rajdhani';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url('/vendor/fonts/rajdhani-700.woff2') format('woff2');
+}
+
+/* Outfit — 400 to 900 */
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/vendor/fonts/outfit.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/vendor/fonts/outfit.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/vendor/fonts/outfit.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/vendor/fonts/outfit.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('/vendor/fonts/outfit.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url('/vendor/fonts/outfit.woff2') format('woff2');
+}
+
+/* JetBrains Mono — 600 to 900 */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/vendor/fonts/jetbrains-mono.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/vendor/fonts/jetbrains-mono.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('/vendor/fonts/jetbrains-mono.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url('/vendor/fonts/jetbrains-mono.woff2') format('woff2');
+}
+
+/* Playfair Display — 700, 900 (normal) */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/vendor/fonts/playfair-display.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url('/vendor/fonts/playfair-display.woff2') format('woff2');
+}
+/* Playfair Display — 700 italic */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/vendor/fonts/playfair-display-italic.woff2') format('woff2');
+}

@@ -14,10 +14,8 @@
         <link rel="icon" href="{{ asset('favicon.ico') }}">
     @endif
 
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@600;700;800;900&family=JetBrains+Mono:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Self-hosted Fonts (lokal) -->
+    <link rel="stylesheet" href="{{ asset('vendor/fonts/fonts.css') }}">
     
     <!-- Vite Local Tailwind CSS & JS Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])

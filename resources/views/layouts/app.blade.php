@@ -15,10 +15,11 @@
         <link rel="icon" href="{{ asset('favicon.ico') }}">
     @endif
 
-    <!-- Preconnect CDNs for faster loading -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@500;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+    <!-- Self-hosted Fonts (lokal, tanpa request ke Google) -->
+    <link rel="preload" href="{{ asset('vendor/fonts/plus-jakarta-sans.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="{{ asset('vendor/fonts/space-grotesk.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="{{ asset('vendor/fonts/space-mono-700.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="{{ asset('vendor/fonts/fonts.css') }}">
     
     <!-- Vite Local Tailwind CSS & JS Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])

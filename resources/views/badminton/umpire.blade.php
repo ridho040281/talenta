@@ -21,8 +21,10 @@
     <script defer src="{{ asset('vendor/lucide/lucide.min.js') }}"></script>
     <script defer src="{{ asset('vendor/alpine/alpine.min.js') }}"></script>
 
+    <!-- Self-hosted Fonts (lokal) -->
+    <link rel="stylesheet" href="{{ asset('vendor/fonts/fonts.css') }}">
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700;800&family=Orbitron:wght@700;900&family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap');
         .font-score { font-family: 'Orbitron', monospace, sans-serif; }
         .font-badminton { font-family: 'Chakra Petch', sans-serif; }
         [x-cloak] { display: none !important; }
