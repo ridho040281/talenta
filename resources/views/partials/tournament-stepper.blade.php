@@ -128,12 +128,12 @@
                 @endif
 
                 @if(($activeStep ?? '') === 'undian')
-                <!-- Dropdown Menu Opsi Undian (Titik 3 di Pojok Kanan Atas) -->
+                <!-- Dropdown Menu Khusus Reset Undian (Titik 3 Khusus Reset Sesuai Instruksi User) -->
                 <div class="relative z-50" x-data="{ openMenu: false }" @click.outside="openMenu = false">
                     <button type="button" 
                             @click="openMenu = !openMenu; $nextTick(() => { if (window.lucide) window.lucide.createIcons(); })" 
                             class="p-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-300 hover:text-white border border-white/[0.12] transition cursor-pointer flex items-center justify-center shadow-sm"
-                            title="Opsi & Pengaturan Undian">
+                            title="Menu Reset Undian">
                         <i data-lucide="more-vertical" class="w-4 h-4"></i>
                     </button>
 
@@ -147,55 +147,34 @@
                          x-transition:leave-end="opacity-0 scale-95"
                          class="absolute right-0 mt-2 w-56 bg-[#0B1120] border border-slate-700/90 rounded-2xl shadow-2xl py-2 z-50 text-xs">
                         
-                        <div class="px-3.5 py-1.5 text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold border-b border-slate-800">
-                            Opsi & Pengaturan Undian
+                        <div class="px-3.5 py-1.5 text-[10px] font-mono uppercase tracking-wider text-rose-400 font-bold border-b border-slate-800 flex items-center gap-1.5">
+                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-rose-400"></i>
+                            <span>Menu Reset Undian</span>
                         </div>
 
-                        <!-- Batch / Full-Shuffle Auto Draw -->
-                        <button type="button" 
-                                @click="openMenu = false; openBatchModal()"
-                                class="w-full text-left flex items-center gap-2.5 px-3.5 py-2.5 text-emerald-400 hover:bg-slate-800/80 transition font-bold cursor-pointer">
-                            <i data-lucide="zap" class="w-4 h-4 text-emerald-400"></i>
-                            <span>⚡ Batch Auto Draw</span>
-                        </button>
-
-                        <!-- Reset Kategori Ini (Sesuai Permintaan User: Masukkan di Titik 3) -->
+                        <!-- 1. Reset Kategori Ini -->
                         <button type="button" 
                                 @click="openMenu = false; resetActivePool()"
                                 :disabled="activeDrawnParticipants.length === 0 || isSpinning"
                                 class="w-full text-left flex items-center gap-2.5 px-3.5 py-2.5 text-amber-400 hover:bg-amber-500/10 transition font-bold cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed">
-                            <i data-lucide="rotate-ccw" class="w-4 h-4 text-amber-400"></i>
-                            <span>Reset Kategori Aktif</span>
-                        </button>
-
-                        <!-- Mode Hacker Link -->
-                        <a href="{{ route('pic.hacker.draw', $competition->id) }}" 
-                           class="flex items-center gap-2.5 px-3.5 py-2.5 text-cyan-400 hover:bg-slate-800/80 transition font-bold">
-                            <i data-lucide="terminal" class="w-4 h-4"></i>
-                            <span>Mode Hacker</span>
-                        </a>
-
-                        <!-- Switch Theme -->
-                        <div class="px-3.5 py-2 flex items-center justify-between border-t border-slate-800/80">
-                            <span class="text-slate-300 font-bold">Tema Roda:</span>
-                            <div class="inline-flex rounded-lg bg-slate-950 p-0.5 border border-slate-800 text-[10px]">
-                                <button type="button" @click="setTheme('badminton')" :class="theme === 'badminton' ? 'bg-emerald-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white'" class="px-2 py-0.5 rounded transition cursor-pointer">
-                                    🏸 Arena
-                                </button>
-                                <button type="button" @click="setTheme('standard')" :class="theme === 'standard' ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white'" class="px-2 py-0.5 rounded transition cursor-pointer">
-                                    Standar
-                                </button>
+                            <i data-lucide="rotate-ccw" class="w-4 h-4 text-amber-400 shrink-0"></i>
+                            <div>
+                                <span class="block">Reset Kategori Ini</span>
+                                <span class="text-[10px] text-slate-500 font-normal block">Hapus undian kategori aktif</span>
                             </div>
-                        </div>
+                        </button>
 
                         <div class="my-1 border-t border-slate-800"></div>
 
-                        <!-- Reset All Undian -->
+                        <!-- 2. Reset Semua Undian -->
                         <form action="{{ route('pic.spin.wheel.reset', $competition->id) }}" method="POST" onsubmit="return confirm('PERINGATAN: Apakah Anda yakin ingin me-reset SEMUA nomor undian untuk semua kategori di cabang {{ addslashes($competition->name) }}?')">
                             @csrf
-                            <button type="submit" class="w-full text-left flex items-center gap-2 px-3.5 py-2 text-rose-400 hover:bg-rose-500/10 transition font-bold cursor-pointer">
-                                <i data-lucide="alert-triangle" class="w-4 h-4"></i>
-                                <span>Reset Semua Undian</span>
+                            <button type="submit" class="w-full text-left flex items-center gap-2.5 px-3.5 py-2.5 text-rose-400 hover:bg-rose-500/10 transition font-bold cursor-pointer">
+                                <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-400 shrink-0"></i>
+                                <div>
+                                    <span class="block">Reset Semua Undian</span>
+                                    <span class="text-[10px] text-slate-500 font-normal block">Hapus seluruh undian cabor ini</span>
+                                </div>
                             </button>
                         </form>
                     </div>

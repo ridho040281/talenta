@@ -203,14 +203,41 @@
                 </svg>
             </div>
 
-            <!-- Active Pool Title Banner (Clean & Focused) -->
-            <div class="w-full max-w-md mb-2 bg-slate-900/80 rounded-2xl py-2 px-4 border border-slate-800 flex items-center justify-between gap-3 text-left shadow-lg">
-                <div class="flex items-center gap-2.5 overflow-hidden">
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
-                    <h4 class="text-xs sm:text-sm font-black text-white truncate" x-text="activePool?.title || '{{ $competition->name }}'"></h4>
+            <!-- Top Controls Bar: Tema Roda (Kiri) | Kategori Aktif (Tengah) | Mode Hacker (Kanan) -->
+            <div class="w-full flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5 mb-4 relative z-20">
+                <!-- Pojok Kiri Atas: Switcher Tema Roda (Sesuai Panah Merah 1) -->
+                <div class="inline-flex items-center p-1 bg-slate-900/90 backdrop-blur-md rounded-xl border border-slate-800 shadow-md shrink-0">
+                    <span class="text-[10px] text-slate-400 font-bold px-2 hidden sm:inline">Tema:</span>
+                    <button type="button" @click="setTheme('badminton')" 
+                            :class="theme === 'badminton' ? 'bg-emerald-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-white'" 
+                            class="px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1">
+                        <span>🏸</span>
+                        <span>Arena</span>
+                    </button>
+                    <button type="button" @click="setTheme('standard')" 
+                            :class="theme === 'standard' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-white'" 
+                            class="px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer">
+                        Standar
+                    </button>
                 </div>
-                <span class="text-[11px] font-mono font-bold text-amber-400 shrink-0 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20" 
-                      x-text="activeUndrawnParticipants.length + ' Belum Diundi'"></span>
+
+                <!-- Bagian Tengah: Banner Info Kategori Aktif & Sisa Belum Diundi -->
+                <div class="flex-1 max-w-sm mx-auto bg-slate-900/80 backdrop-blur-md rounded-2xl py-1.5 px-3.5 border border-slate-800 flex items-center justify-between gap-2 text-left shadow-lg order-last sm:order-none w-full sm:w-auto">
+                    <div class="flex items-center gap-2 overflow-hidden">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+                        <h4 class="text-xs font-black text-white truncate" x-text="activePool?.title || '{{ $competition->name }}'"></h4>
+                    </div>
+                    <span class="text-[10px] font-mono font-bold text-amber-400 shrink-0 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20" 
+                          x-text="activeUndrawnParticipants.length + ' Belum Diundi'"></span>
+                </div>
+
+                <!-- Pojok Kanan Atas: Tombol Mode Hacker (Sesuai Panah Merah 2) -->
+                <a href="{{ route('pic.hacker.draw', $competition->id) }}" 
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-xs font-bold transition cursor-pointer shadow-md shrink-0"
+                   title="Beralih ke Terminal Mode Hacker">
+                    <i data-lucide="terminal" class="w-3.5 h-3.5 text-cyan-400"></i>
+                    <span class="hidden sm:inline">Mode Hacker</span>
+                </a>
             </div>
 
             <div class="relative z-10 w-full flex flex-col items-center">
