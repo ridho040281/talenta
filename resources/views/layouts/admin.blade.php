@@ -564,8 +564,8 @@
                     </a>
                 </div>
 
-                @if(auth()->user()->managesBadminton())
-                <!-- Fase 2: Turnamen & Wasit Bulu Tangkis -->
+                @if(auth()->user()->managesTournamentBracket())
+                <!-- Fase 2: Turnamen & Wasit (Bulu Tangkis & Tenis Meja) -->
                 <div class="space-y-1 pt-1">
                     <div class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Turnamen & Wasit</div>
                     <a href="{{ route('badminton.bracket') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('badminton.bracket*') || request()->routeIs('pic.bracket*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
@@ -574,7 +574,7 @@
                     </a>
                     <a href="{{ route('badminton.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('badminton.index*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
                         <i data-lucide="activity" class="w-4 h-4 text-emerald-400"></i>
-                        <span>Scoring Bulu Tangkis</span>
+                        <span>Scoring Wasit (Umpire)</span>
                     </a>
                     <a href="{{ route('badminton.scoreboard') }}" target="_blank" class="flex items-center justify-between px-3 py-2.5 rounded-2xl transition hover:bg-white/[0.04] text-slate-400 hover:text-slate-200">
                         <div class="flex items-center gap-3">
@@ -615,7 +615,7 @@
                     $judgedComps = auth()->user()->judgedCompetitions()->with('category')->get();
                     $hasSports = $judgedComps->contains(fn($c) => $c->isSports());
                     $hasNonSports = $judgedComps->contains(fn($c) => !$c->isSports());
-                    $hasBlt = auth()->user()->managesBadminton() || $judgedComps->contains(fn($c) => $c->code === 'BLT' || str_contains(strtolower($c->name ?? ''), 'bulu tangkis'));
+                    $hasTournament = auth()->user()->managesTournamentBracket() || $judgedComps->contains(fn($c) => in_array($c->code, ['BLT', 'TMJ']) || str_contains(strtolower($c->name ?? ''), 'bulu tangkis') || str_contains(strtolower($c->name ?? ''), 'tenis meja'));
 
                     $menuTitle = ($hasSports && !$hasNonSports) ? 'Menu Wasit Olahraga' : ((!$hasSports && $hasNonSports) ? 'Menu Dewan Juri' : 'Menu Dewan Juri & Wasit');
                     $dashboardLabel = ($hasSports && !$hasNonSports) ? 'Dashboard Wasit' : ((!$hasSports && $hasNonSports) ? 'Dashboard Juri' : 'Dashboard Juri & Wasit');
@@ -662,8 +662,12 @@
                         @endforeach
                     @endif
 
-                    @if($hasBlt)
-                    <div class="pt-2 pb-1 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Live Skor Bulu Tangkis</div>
+                    @if($hasTournament)
+                    <div class="pt-2 pb-1 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Turnamen & Wasit</div>
+                    <a href="{{ route('badminton.bracket') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('badminton.bracket*') || request()->routeIs('pic.bracket*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
+                        <i data-lucide="git-branch" class="w-4 h-4 text-indigo-400"></i>
+                        <span>Bagan Pertandingan</span>
+                    </a>
                     <a href="{{ route('badminton.scoreboard') }}" target="_blank" class="flex items-center justify-between px-3 py-2.5 rounded-2xl transition hover:bg-white/[0.04] text-slate-400 hover:text-slate-200">
                         <div class="flex items-center gap-3">
                             <i data-lucide="tv" class="w-4 h-4 text-rose-400"></i>

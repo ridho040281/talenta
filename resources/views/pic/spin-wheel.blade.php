@@ -6,13 +6,15 @@
 @section('content')
 <div class="space-y-6 font-sans" x-data="spinWheelApp()">
 
-    <!-- Tournament 5-Step Workflow Stepper -->
-    @include('partials.tournament-stepper', [
-        'competition' => $competition,
-        'activeStep' => 'undian',
-        'activePoolKey' => request('pool', $pools[0]['key'] ?? ''),
-        'pools' => $pools
-    ])
+    <!-- Tournament 5-Step Workflow Stepper (Hanya untuk Cabang Turnamen: Bulu Tangkis & Tenis Meja) -->
+    @if($competition->isTournamentBracket())
+        @include('partials.tournament-stepper', [
+            'competition' => $competition,
+            'activeStep' => 'undian',
+            'activePoolKey' => request('pool', $pools[0]['key'] ?? ''),
+            'pools' => $pools
+        ])
+    @endif
     
     <!-- Top Action Bar (Clean & Focused) -->
     <div class="bg-slate-900 rounded-3xl p-4 sm:p-6 border border-slate-800 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-white">

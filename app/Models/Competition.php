@@ -1006,6 +1006,17 @@ class Competition extends Model
             || str_contains($compName, 'tenis meja');
     }
 
+    public function isTournamentBracket(): bool
+    {
+        $code = strtoupper($this->code ?? '');
+        $compName = strtolower($this->name ?? '');
+
+        return in_array($code, ['BLT', 'TMJ'])
+            || str_contains($compName, 'bulu tangkis')
+            || str_contains($compName, 'badminton')
+            || str_contains($compName, 'tenis meja');
+    }
+
     public function getJudgeRoleTitleAttribute(): string
     {
         return $this->isSports() ? 'Wasit' : 'Dewan Juri';

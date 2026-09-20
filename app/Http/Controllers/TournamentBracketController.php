@@ -20,16 +20,32 @@ class TournamentBracketController extends Controller
     public function badmintonShow(Request $request, $competition_id = null)
     {
         if (! $competition_id) {
-            $competition = Competition::where('code', 'BLT')
-                ->orWhere('name', 'like', '%Bulu Tangkis%')
-                ->orWhere('name', 'like', '%Badminton%')
-                ->first();
-
-            if (! $competition) {
-                return redirect()->route('badminton.index')->with('error', 'Cabang lomba Bulu Tangkis belum terdaftar dalam sistem.');
+            $user = Auth::user();
+            if ($user && $user->role === 'pic_lomba') {
+                $comp = $user->managedCompetitions()
+                    ->where(function ($q) {
+                        $q->whereIn('code', ['BLT', 'TMJ'])
+                            ->orWhere('name', 'like', '%Bulu Tangkis%')
+                            ->orWhere('name', 'like', '%Tenis Meja%');
+                    })
+                    ->first();
+                if ($comp) {
+                    $competition_id = $comp->id;
+                }
             }
 
-            $competition_id = $competition->id;
+            if (! $competition_id) {
+                $competition = Competition::whereIn('code', ['BLT', 'TMJ'])
+                    ->orWhere('name', 'like', '%Bulu Tangkis%')
+                    ->orWhere('name', 'like', '%Tenis Meja%')
+                    ->first();
+
+                if (! $competition) {
+                    return redirect()->route('admin.dashboard')->with('error', 'Cabang lomba turnamen belum terdaftar dalam sistem.');
+                }
+
+                $competition_id = $competition->id;
+            }
         }
 
         return $this->show($request, $competition_id);
@@ -47,13 +63,14 @@ class TournamentBracketController extends Controller
         // Check authorization
         if (! in_array($user->role, ['superadmin', 'panitia'])) {
             $managedIds = PicController::getManagedCompetitionIds($user);
-            $isAuthorizedBadminton = $user->managesBadminton() && (
-                strtoupper($competition->code ?? '') === 'BLT' ||
+            $isAuthorizedSport = $user->managesTournamentBracket() && (
+                in_array(strtoupper($competition->code ?? ''), ['BLT', 'TMJ']) ||
                 str_contains(strtolower($competition->name ?? ''), 'bulu tangkis') ||
-                str_contains(strtolower($competition->name ?? ''), 'badminton')
+                str_contains(strtolower($competition->name ?? ''), 'badminton') ||
+                str_contains(strtolower($competition->name ?? ''), 'tenis meja')
             );
 
-            if (! in_array($competition->id, $managedIds) && ! $isAuthorizedBadminton) {
+            if (! in_array($competition->id, $managedIds) && ! $isAuthorizedSport) {
                 abort(403, 'Anda tidak memiliki hak akses untuk mengelola bagan lomba ini.');
             }
         }
@@ -1477,16 +1494,20 @@ class TournamentBracketController extends Controller
     }
 
     /**
-     * Pastikan lomba adalah cabang Bulu Tangkis
+     * Pastikan lomba adalah cabang turnamen sistem gugur (Bulu Tangkis atau Tenis Meja)
      */
     private function ensureIsBadminton(Competition $competition): void
     {
-        $isBadminton = (strtoupper($competition->code ?? '') === 'BLT')
-            || str_contains(strtolower($competition->name ?? ''), 'bulu tangkis')
-            || str_contains(strtolower($competition->name ?? ''), 'badminton');
+        $code = strtoupper($competition->code ?? '');
+        $name = strtolower($competition->name ?? '');
 
-        if (! $isBadminton) {
-            abort(404, 'Bagan turnamen sistem gugur hanya tersedia khusus untuk cabang Bulu Tangkis.');
+        $isTournamentSport = in_array($code, ['BLT', 'TMJ'])
+            || str_contains($name, 'bulu tangkis')
+            || str_contains($name, 'badminton')
+            || str_contains($name, 'tenis meja');
+
+        if (! $isTournamentSport) {
+            abort(404, 'Bagan turnamen sistem gugur hanya tersedia khusus untuk cabang Bulu Tangkis dan Tenis Meja.');
         }
     }
 }

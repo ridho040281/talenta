@@ -187,4 +187,66 @@ class User extends Authenticatable
 
         return false;
     }
+
+    /**
+     * Check if user manages Tenis Meja
+     */
+    public function managesTenisMeja(): bool
+    {
+        if (in_array($this->role, ['superadmin', 'panitia'])) {
+            return true;
+        }
+
+        if ($this->role === 'pic_lomba') {
+            return Competition::where('code', 'TMJ')
+                ->orWhere('name', 'like', '%Tenis Meja%')
+                ->where('pic_id', $this->id)
+                ->exists();
+        }
+
+        if ($this->role === 'juri') {
+            return $this->judgedCompetitions()
+                ->where('code', 'TMJ')
+                ->orWhere('name', 'like', '%Tenis Meja%')
+                ->exists();
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if user is authorized to manage or umpire tournament sports (Bulu Tangkis & Tenis Meja)
+     */
+    public function managesTournamentBracket(): bool
+    {
+        if (in_array($this->role, ['superadmin', 'panitia'])) {
+            return true;
+        }
+
+        if ($this->role === 'pic_lomba') {
+            if ($this->managesBadminton() || $this->managesTenisMeja()) {
+                return true;
+            }
+
+            return $this->managedCompetitions()
+                ->where(function ($q) {
+                    $q->whereIn('code', ['BLT', 'TMJ'])
+                        ->orWhere('name', 'like', '%Bulu Tangkis%')
+                        ->orWhere('name', 'like', '%Tenis Meja%');
+                })
+                ->exists();
+        }
+
+        if ($this->role === 'juri') {
+            return $this->judgedCompetitions()
+                ->where(function ($q) {
+                    $q->whereIn('code', ['BLT', 'TMJ'])
+                        ->orWhere('name', 'like', '%Bulu Tangkis%')
+                        ->orWhere('name', 'like', '%Tenis Meja%');
+                })
+                ->exists();
+        }
+
+        return false;
+    }
 }

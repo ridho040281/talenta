@@ -91,7 +91,7 @@
             <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-600 shrink-0"></i>
 
             <!-- Step 5: Wasit & Arena -->
-            <a href="{{ route('badminton.index') }}" 
+            <a href="{{ $isBadminton ? route('badminton.index') : route('juri.scoring', $competition->id) }}" 
                class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap {{ ($activeStep ?? '') === 'wasit' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'bg-white/[0.04] text-slate-400 hover:text-slate-200 hover:bg-white/[0.08] border border-white/[0.06]' }}"
                title="Langkah 5: Pelaksanaan pertandingan, scoring wasit digital & siaran arena">
                 <i data-lucide="activity" class="w-3.5 h-3.5 {{ ($activeStep ?? '') === 'wasit' ? 'text-white' : 'text-cyan-400' }}"></i>
@@ -109,6 +109,7 @@
                 <span class="hidden sm:inline">TV Bagan</span>
             </a>
 
+            @if($isBadminton)
             <a href="{{ route('badminton.arena') }}" 
                target="_blank"
                class="px-2.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-cyan-300 border border-cyan-500/30 text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer"
@@ -116,6 +117,7 @@
                 <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-cyan-400"></i>
                 <span class="hidden sm:inline">Arena TV</span>
             </a>
+            @endif
         </div>
 
     </div>
