@@ -1,0 +1,122 @@
+{{-- 
+  Tournament Stepper Navigation Component
+  5-Step Sequential Pipeline:
+  1. Data Peserta
+  2. Unggulan (Seeded)
+  3. Undian Slot (Draw)
+  4. Bagan & Jadwal (Knockout Tree)
+  5. Wasit & Arena (Match Day)
+--}}
+@php
+    $poolParam = !empty($activePoolKey) ? ['pool' => $activePoolKey] : [];
+    $isBadminton = (strtoupper($competition->code ?? '') === 'BLT') 
+        || str_contains(strtolower($competition->name ?? ''), 'bulu tangkis') 
+        || str_contains(strtolower($competition->name ?? ''), 'badminton');
+@endphp
+
+<div class="ai-card bg-[#090D17]/95 border border-white/[0.12] rounded-3xl p-3 sm:p-4 mb-6 shadow-2xl backdrop-blur-xl">
+    <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+        
+        <!-- Left: Competition Context & Title -->
+        <div class="flex items-center gap-3 shrink-0">
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#7A5AF8] to-[#4E6EFF] text-white flex items-center justify-center font-bold shadow-lg shadow-[#7A5AF8]/30 shrink-0">
+                <i data-lucide="git-branch" class="w-5 h-5"></i>
+            </div>
+            <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="px-2 py-0.5 rounded-md bg-[#7A5AF8]/20 text-[#A594FD] border border-[#7A5AF8]/40 text-[10px] font-mono font-bold uppercase tracking-wider">
+                        {{ $competition->code ?? 'BLT' }}
+                    </span>
+                    <h2 class="text-sm sm:text-base font-black text-white truncate font-display">
+                        {{ $competition->name }}
+                    </h2>
+                </div>
+                <p class="text-[11px] text-slate-400 font-medium truncate mt-0.5">
+                    Alur Kerja Turnamen: 5 Langkah Terarah Sistem Gugur
+                </p>
+            </div>
+        </div>
+
+        <!-- Center: 5-Step Pipeline -->
+        <div class="flex items-center gap-1 sm:gap-2 overflow-x-auto pb-1 xl:pb-0 scrollbar-none">
+            
+            <!-- Step 1: Peserta -->
+            <a href="{{ route('pic.dashboard') }}?competition_id={{ $competition->id }}" 
+               class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap {{ ($activeStep ?? '') === 'peserta' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'bg-white/[0.04] text-slate-400 hover:text-slate-200 hover:bg-white/[0.08] border border-white/[0.06]' }}"
+               title="Langkah 1: Verifikasi data peserta & pembagian pool kategori">
+                <i data-lucide="users" class="w-3.5 h-3.5 {{ ($activeStep ?? '') === 'peserta' ? 'text-white' : 'text-[#4E6EFF]' }}"></i>
+                <span>1. Peserta</span>
+            </a>
+
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-600 shrink-0"></i>
+
+            <!-- Step 2: Seeded (Unggulan) -->
+            @if(($activeStep ?? '') === 'undian')
+                <button type="button" 
+                        @click="openSeededModal()"
+                        class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer {{ ($activeStep ?? '') === 'seeded' ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md shadow-amber-500/30 font-black' : 'bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/30' }}"
+                        title="Langkah 2: Tentukan pemain unggulan (Seeded 1-8 BWF)">
+                    <i data-lucide="star" class="w-3.5 h-3.5 text-amber-400"></i>
+                    <span>2. Seeded</span>
+                </button>
+            @else
+                <a href="{{ route('pic.spin.wheel', $competition->id) }}?{{ http_build_query(array_merge($poolParam, ['open_seeded' => 1])) }}"
+                   class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap {{ ($activeStep ?? '') === 'seeded' ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md shadow-amber-500/30 font-black' : 'bg-white/[0.04] text-slate-400 hover:text-amber-300 hover:bg-amber-500/10 border border-white/[0.06]' }}"
+                   title="Langkah 2: Tentukan pemain unggulan (Seeded 1-8 BWF)">
+                    <i data-lucide="star" class="w-3.5 h-3.5 {{ ($activeStep ?? '') === 'seeded' ? 'text-slate-950' : 'text-amber-400' }}"></i>
+                    <span>2. Seeded</span>
+                </a>
+            @endif
+
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-600 shrink-0"></i>
+
+            <!-- Step 3: Undian Slot -->
+            <a href="{{ route('pic.spin.wheel', $competition->id) }}?{{ http_build_query($poolParam) }}" 
+               class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap {{ ($activeStep ?? '') === 'undian' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'bg-white/[0.04] text-slate-400 hover:text-slate-200 hover:bg-white/[0.08] border border-white/[0.06]' }}"
+               title="Langkah 3: Pengundian nomor bagan (Spin Wheel & Auto Draw)">
+                <i data-lucide="disc" class="w-3.5 h-3.5 {{ ($activeStep ?? '') === 'undian' ? 'text-white' : 'text-[#FF58D5]' }}"></i>
+                <span>3. Undian Slot</span>
+            </a>
+
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-600 shrink-0"></i>
+
+            <!-- Step 4: Bagan & Jadwal -->
+            <a href="{{ route('pic.bracket', $competition->id) }}?{{ http_build_query($poolParam) }}" 
+               class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap {{ ($activeStep ?? '') === 'bagan' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'bg-white/[0.04] text-slate-400 hover:text-slate-200 hover:bg-white/[0.08] border border-white/[0.06]' }}"
+               title="Langkah 4: Bagan sistem gugur BWF, format padat/play-off, dan jadwal 4 hari">
+                <i data-lucide="calendar-clock" class="w-3.5 h-3.5 {{ ($activeStep ?? '') === 'bagan' ? 'text-white' : 'text-emerald-400' }}"></i>
+                <span>4. Bagan & Jadwal</span>
+            </a>
+
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-600 shrink-0"></i>
+
+            <!-- Step 5: Wasit & Arena -->
+            <a href="{{ route('badminton.index') }}" 
+               class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap {{ ($activeStep ?? '') === 'wasit' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'bg-white/[0.04] text-slate-400 hover:text-slate-200 hover:bg-white/[0.08] border border-white/[0.06]' }}"
+               title="Langkah 5: Pelaksanaan pertandingan, scoring wasit digital & siaran arena">
+                <i data-lucide="activity" class="w-3.5 h-3.5 {{ ($activeStep ?? '') === 'wasit' ? 'text-white' : 'text-cyan-400' }}"></i>
+                <span>5. Wasit & Arena</span>
+            </a>
+        </div>
+
+        <!-- Right Quick Actions: Layar TV & Cetak -->
+        <div class="flex items-center gap-2 shrink-0 border-t xl:border-t-0 pt-2 xl:pt-0 border-white/[0.08]">
+            <a href="{{ route('public.bracket', $competition->slug) }}?{{ http_build_query($poolParam) }}" 
+               target="_blank"
+               class="px-2.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-amber-300 border border-amber-500/30 text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer"
+               title="Buka Layar TV Bagan untuk Penonton & Pemain">
+                <i data-lucide="tv" class="w-3.5 h-3.5 text-amber-400"></i>
+                <span class="hidden sm:inline">TV Bagan</span>
+            </a>
+
+            <a href="{{ route('badminton.arena') }}" 
+               target="_blank"
+               class="px-2.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-cyan-300 border border-cyan-500/30 text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer"
+               title="Buka Monitor Arena Multi-Lapangan (3 Court Monitor)">
+                <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-cyan-400"></i>
+                <span class="hidden sm:inline">Arena TV</span>
+            </a>
+        </div>
+
+    </div>
+</div>

@@ -254,11 +254,26 @@
                             || str_contains(strtolower($comp['name'] ?? ''), 'badminton');
                     @endphp
                     @if($isBadminton)
-                    <!-- Bagan Pertandingan Button -->
-                    <a href="{{ route('pic.bracket', $comp['id']) }}" class="w-full py-2 px-3 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 hover:border-indigo-400/60 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer">
-                        <i data-lucide="git-branch" class="w-3.5 h-3.5 text-indigo-400"></i>
-                        <span>Bagan Pertandingan (Knockout Tree)</span>
-                    </a>
+                    <!-- Tournament Dedicated Hub Actions -->
+                    <div class="p-2.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 space-y-2">
+                        <div class="flex items-center justify-between text-[11px] font-bold text-indigo-300">
+                            <span class="flex items-center gap-1.5">
+                                <i data-lucide="git-branch" class="w-3.5 h-3.5 text-indigo-400"></i>
+                                <span>Turnamen Sistem Gugur:</span>
+                            </span>
+                            <span class="text-[10px] text-amber-300 font-mono">BWF Standard</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-1.5">
+                            <a href="{{ route('pic.bracket', $comp['id']) }}" class="py-1.5 px-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-[11px] flex items-center justify-center gap-1.5 transition shadow-sm cursor-pointer" title="Kelola Bagan Pertandingan & Jadwal 4 Hari">
+                                <i data-lucide="git-branch" class="w-3.5 h-3.5"></i>
+                                <span>Bagan & Jadwal</span>
+                            </a>
+                            <a href="{{ route('badminton.index') }}" class="py-1.5 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-[11px] flex items-center justify-center gap-1.5 transition cursor-pointer" title="Modul Wasit & Arena Lapangan">
+                                <i data-lucide="activity" class="w-3.5 h-3.5 text-emerald-400"></i>
+                                <span>Wasit Scoring</span>
+                            </a>
+                        </div>
+                    </div>
                     @endif
                 </div>
 

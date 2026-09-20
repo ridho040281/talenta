@@ -491,10 +491,16 @@
                             Multi
                         </span>
                     </a>
-                    <a href="{{ route('admin.juri.wasit') }}" class="flex items-center justify-between px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('admin.juri.wasit*') || request()->routeIs('admin.undian*') || request()->routeIs('badminton.index*') || request()->routeIs('juri.*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
+                    <a href="{{ route('admin.juri.wasit') }}" class="flex items-center justify-between px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('admin.juri.wasit*') || request()->routeIs('admin.undian*') || request()->routeIs('juri.*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
                         <div class="flex items-center gap-3">
-                            <i data-lucide="scale" class="w-4 h-4 {{ request()->routeIs('admin.juri.wasit*') || request()->routeIs('admin.undian*') || request()->routeIs('badminton.index*') || request()->routeIs('juri.*') ? 'text-white' : 'text-[#A594FD]' }}"></i>
+                            <i data-lucide="scale" class="w-4 h-4 {{ request()->routeIs('admin.juri.wasit*') || request()->routeIs('admin.undian*') || request()->routeIs('juri.*') ? 'text-white' : 'text-[#A594FD]' }}"></i>
                             <span>Juri, Wasit & Undian</span>
+                        </div>
+                    </a>
+                    <a href="{{ route('badminton.bracket') }}" class="flex items-center justify-between px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('badminton.bracket*') || request()->routeIs('pic.bracket*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}" title="Bagan Turnamen Sistem Gugur BWF">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="git-branch" class="w-4 h-4 {{ request()->routeIs('badminton.bracket*') || request()->routeIs('pic.bracket*') ? 'text-white' : 'text-indigo-400' }}"></i>
+                            <span>Bagan Pertandingan</span>
                         </div>
                     </a>
                 </div>
@@ -545,26 +551,28 @@
             @endif
 
             @if(auth()->user()->role === 'pic_lomba')
+                <!-- Fase 1: Persiapan Lomba -->
                 <div class="space-y-1">
-                    <div class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Menu Peserta</div>
+                    <div class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Persiapan Lomba</div>
                     <a href="{{ route('pic.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('pic.dashboard') || request()->routeIs('pic.participants*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
                         <i data-lucide="users" class="w-4 h-4"></i>
                         <span>Data Peserta</span>
                     </a>
-                    <a href="{{ route('pic.undian') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('pic.undian*') || request()->routeIs('pic.hacker.draw*') || request()->routeIs('pic.spin.wheel*') || request()->routeIs('pic.bracket*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
+                    <a href="{{ route('pic.undian') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('pic.undian*') || request()->routeIs('pic.hacker.draw*') || request()->routeIs('pic.spin.wheel*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
                         <i data-lucide="disc" class="w-4 h-4 text-[#FF58D5]"></i>
                         <span>Undi Peserta</span>
                     </a>
-                    <a href="{{ route('pic.berita-acara.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('pic.berita-acara*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
-                        <i data-lucide="file-text" class="w-4 h-4 text-emerald-400"></i>
-                        <span>Berita Acara</span>
+                </div>
+
+                @if(auth()->user()->managesBadminton())
+                <!-- Fase 2: Turnamen & Wasit Bulu Tangkis -->
+                <div class="space-y-1 pt-1">
+                    <div class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Turnamen & Wasit</div>
+                    <a href="{{ route('badminton.bracket') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('badminton.bracket*') || request()->routeIs('pic.bracket*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
+                        <i data-lucide="git-branch" class="w-4 h-4 text-indigo-400"></i>
+                        <span>Bagan Pertandingan</span>
                     </a>
-                    <a href="{{ route('admin.certificates.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('admin.certificates*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
-                        <i data-lucide="award" class="w-4 h-4 {{ request()->routeIs('admin.certificates*') ? 'text-white' : 'text-purple-400' }}"></i>
-                        <span>Sertifikat & Piagam</span>
-                    </a>
-                    @if(auth()->user()->managesBadminton())
-                    <a href="{{ route('badminton.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('badminton.*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
+                    <a href="{{ route('badminton.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('badminton.index*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
                         <i data-lucide="activity" class="w-4 h-4 text-emerald-400"></i>
                         <span>Scoring Bulu Tangkis</span>
                     </a>
@@ -579,12 +587,25 @@
                         <i data-lucide="layout-grid" class="w-4 h-4 text-[#4E6EFF]"></i>
                         <span>Arena Multi-Lapangan</span>
                     </a>
-                    @endif
+                </div>
+                @endif
+
+                <!-- Fase 3: Pasca Lomba & Hasil -->
+                <div class="space-y-1 pt-1">
+                    <div class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Pasca Lomba</div>
                     <a href="{{ route('live.scoreboard') }}" target="_blank" class="flex items-center justify-between px-3 py-2.5 rounded-2xl transition hover:bg-white/[0.04] text-slate-400 hover:text-slate-200">
                         <div class="flex items-center gap-3">
                             <i data-lucide="trophy" class="w-4 h-4 text-amber-400"></i>
                             <span>Live Leaderboard</span>
                         </div>
+                    </a>
+                    <a href="{{ route('pic.berita-acara.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('pic.berita-acara*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
+                        <i data-lucide="file-text" class="w-4 h-4 text-emerald-400"></i>
+                        <span>Berita Acara</span>
+                    </a>
+                    <a href="{{ route('admin.certificates.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition {{ request()->routeIs('admin.certificates*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}">
+                        <i data-lucide="award" class="w-4 h-4 {{ request()->routeIs('admin.certificates*') ? 'text-white' : 'text-purple-400' }}"></i>
+                        <span>Sertifikat & Piagam</span>
                     </a>
                 </div>
             @endif

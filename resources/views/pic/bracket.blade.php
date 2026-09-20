@@ -6,6 +6,14 @@
 @section('content')
 <div class="space-y-6 font-sans" x-data="bracketApp()">
 
+    <!-- Tournament 5-Step Workflow Stepper -->
+    @include('partials.tournament-stepper', [
+        'competition' => $competition,
+        'activeStep' => 'bagan',
+        'activePoolKey' => $activePoolKey,
+        'pools' => $pools
+    ])
+
     <!-- Top Header Card -->
     <div class="bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-800 shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-5 text-white">
         <div class="space-y-1.5">
