@@ -326,32 +326,59 @@
         <!-- Bottom Section: Official Signatures Block -->
         <div class="shrink-0 print-signatures pt-1 border-t border-slate-300 text-[9px]">
             <div class="grid grid-cols-3 text-center gap-2">
-                <div>
-                    <div class="text-[8.5px] text-slate-500">Mengetahui,</div>
-                    <div class="text-[8.5px] font-bold text-slate-900 uppercase">Ketua Panitia Pelaksana</div>
-                    <div class="h-8"></div>
+                <!-- Ketua Panitia -->
+                <div class="flex flex-col items-center">
+                    <div class="text-[8px] text-slate-500 leading-tight">Mengetahui,</div>
+                    <div class="text-[8px] font-bold text-slate-900 uppercase leading-tight">Ketua Panitia Pelaksana</div>
+                    <div class="py-0.5 flex flex-col items-center justify-center">
+                        @php
+                            $chairmanSignData = url('/cek-status?signer=ketua_panitia&nip=' . urlencode($appSettings['committee_chairman_nip'] ?? '197506172024211004'));
+                        @endphp
+                        <div class="p-0.5 bg-white border border-slate-300 rounded shadow-2xs inline-block">
+                            {!! \App\Services\QrSignatureService::generateSvg($chairmanSignData, 32) !!}
+                        </div>
+                        <span class="text-[6.5px] font-mono text-slate-400">TTD Digital</span>
+                    </div>
                     <div class="text-[8.5px] font-black text-slate-900 border-b border-slate-600 inline-block px-3 pb-0.5">
-                        {{ $appSettings['committee_chairman_name'] ?? '( .................................................... )' }}
+                        {{ $appSettings['committee_chairman_name'] ?? 'KHOIRUL ANAM, S.Pd' }}
                     </div>
                 </div>
 
-                <div>
-                    <div class="text-[8.5px] text-slate-500">Diverifikasi Oleh,</div>
-                    <div class="text-[8.5px] font-bold text-slate-900 uppercase">Koordinator Lomba / PIC</div>
-                    <div class="h-8"></div>
+                <!-- Koordinator Lomba / PIC -->
+                <div class="flex flex-col items-center">
+                    <div class="text-[8px] text-slate-500 leading-tight">Diverifikasi Oleh,</div>
+                    <div class="text-[8px] font-bold text-slate-900 uppercase leading-tight">Koordinator Lomba / PIC</div>
+                    <div class="py-0.5 flex flex-col items-center justify-center">
+                        @php
+                            $picSignData = url('/cek-status?signer=pic&comp=' . urlencode($competition->code ?? 'BLT'));
+                        @endphp
+                        <div class="p-0.5 bg-white border border-slate-300 rounded shadow-2xs inline-block">
+                            {!! \App\Services\QrSignatureService::generateSvg($picSignData, 32) !!}
+                        </div>
+                        <span class="text-[6.5px] font-mono text-slate-400">TTD Digital</span>
+                    </div>
                     <div class="text-[8.5px] font-black text-slate-900 border-b border-slate-600 inline-block px-3 pb-0.5">
-                        {{ $competition->pic?->name ?? (Auth::user()->name ?: '( .................................................... )') }}
+                        {{ $competition->pic?->name ?? (Auth::user()->name ?: 'PANITIA PELAKSANA') }}
                     </div>
                 </div>
 
-                <div>
-                    <div class="text-[8.5px] text-slate-500">
+                <!-- Wasit Utama / Referee -->
+                <div class="flex flex-col items-center">
+                    <div class="text-[8px] text-slate-500 leading-tight">
                         {{ $appSettings['city'] ?? 'Blitar' }}, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}
                     </div>
-                    <div class="text-[8.5px] font-bold text-slate-900 uppercase">Wasit Utama / Referee</div>
-                    <div class="h-8"></div>
+                    <div class="text-[8px] font-bold text-slate-900 uppercase leading-tight">Wasit Utama / Referee</div>
+                    <div class="py-0.5 flex flex-col items-center justify-center">
+                        @php
+                            $refSignData = url('/cek-status?signer=referee&comp=' . urlencode($competition->code ?? 'BLT'));
+                        @endphp
+                        <div class="p-0.5 bg-white border border-slate-300 rounded shadow-2xs inline-block">
+                            {!! \App\Services\QrSignatureService::generateSvg($refSignData, 32) !!}
+                        </div>
+                        <span class="text-[6.5px] font-mono text-slate-400">TTD Digital</span>
+                    </div>
                     <div class="text-[8.5px] font-black text-slate-900 border-b border-slate-600 inline-block px-3 pb-0.5">
-                        ( .................................................... )
+                        ( WASIT UTAMA / REFEREE )
                     </div>
                 </div>
             </div>

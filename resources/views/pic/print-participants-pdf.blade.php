@@ -283,20 +283,39 @@
                     @if($page['has_signatures'] ?? true)
                         <div class="mt-3 pt-1" style="page-break-inside: avoid; break-inside: avoid;">
                             <div class="flex justify-between items-start text-xs text-slate-800">
-                                <div class="text-center w-56">
-                                    <div>Mengetahui,</div>
-                                    <div class="font-bold">Ketua Panitia</div>
-                                    <div class="signature-space" style="height: 40px;"></div>
+                                
+                                <!-- TTD Ketua Panitia -->
+                                <div class="text-center w-56 flex flex-col items-center">
+                                    <div class="leading-tight">Mengetahui,</div>
+                                    <div class="font-bold leading-tight">Ketua Panitia</div>
+                                    <div class="py-1 flex flex-col items-center justify-center">
+                                        @php
+                                            $chairmanSignData = url('/cek-status?signer=ketua_panitia&nip=' . urlencode($appSettings['committee_chairman_nip'] ?? '197506172024211004'));
+                                        @endphp
+                                        <div class="p-1 bg-white border border-slate-300 rounded-lg shadow-2xs inline-block">
+                                            {!! \App\Services\QrSignatureService::generateSvg($chairmanSignData, 48) !!}
+                                        </div>
+                                        <span class="text-[7.5px] font-mono text-slate-400 mt-0.5">TTD Digital Terverifikasi</span>
+                                    </div>
                                     <div>
                                         <div class="font-black text-slate-950 underline underline-offset-2">{{ $appSettings['committee_chairman_name'] ?? 'KHOIRUL ANAM, S.Pd' }}</div>
                                         <div class="text-[10px] text-slate-500">{{ !empty($appSettings['committee_chairman_nip']) ? 'NIP. ' . $appSettings['committee_chairman_nip'] : 'Ketua Panitia Pelaksana' }}</div>
                                     </div>
                                 </div>
 
-                                <div class="text-center w-60">
-                                    <div>Blitar, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</div>
-                                    <div class="font-bold">Koordinator Cabang {{ $page['competition_name'] }}</div>
-                                    <div class="signature-space" style="height: 40px;"></div>
+                                <!-- TTD Koordinator Lomba -->
+                                <div class="text-center w-60 flex flex-col items-center">
+                                    <div class="leading-tight">Blitar, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</div>
+                                    <div class="font-bold leading-tight">Koordinator Cabang {{ $page['competition_name'] }}</div>
+                                    <div class="py-1 flex flex-col items-center justify-center">
+                                        @php
+                                            $picSignData = url('/cek-status?signer=pic&comp=' . urlencode($page['competition']->code ?? 'LOMBA'));
+                                        @endphp
+                                        <div class="p-1 bg-white border border-slate-300 rounded-lg shadow-2xs inline-block">
+                                            {!! \App\Services\QrSignatureService::generateSvg($picSignData, 48) !!}
+                                        </div>
+                                        <span class="text-[7.5px] font-mono text-slate-400 mt-0.5">TTD Digital Terverifikasi</span>
+                                    </div>
                                     <div>
                                         <div class="font-black text-slate-950 underline underline-offset-2">
                                             {{ $page['pic_name'] ?? (Auth::user()->name ?: 'PANITIA PELAKSANA') }}
@@ -304,6 +323,7 @@
                                         <div class="text-[10px] text-slate-500">{{ $page['pic_position'] ?? 'Panitia Pelaksana' }}</div>
                                     </div>
                                 </div>
+
                             </div>
                         </div>
                     @else
