@@ -23,18 +23,18 @@
     <!-- Lucide Icons -->
     <script src="{{ asset('vendor/lucide/lucide.min.js') }}"></script>
 
+    <!-- Alpine.js (Local) -->
+    <script defer src="{{ asset('vendor/alpine/alpine.min.js') }}"></script>
+
     <style>
-        @page {
-            size: A4 landscape;
-            margin: 4mm 6mm;
-        }
+        [x-cloak] { display: none !important; }
 
         *, *::before, *::after {
             box-sizing: border-box;
         }
 
         body {
-            background-color: #f1f5f9;
+            background-color: #0f172a;
             color: #0f172a;
             font-family: 'Plus Jakarta Sans', sans-serif;
             -webkit-print-color-adjust: exact !important;
@@ -44,10 +44,6 @@
         }
 
         .print-sheet {
-            width: 297mm;
-            max-width: 100%;
-            height: 200mm;
-            max-height: 202mm;
             margin: 0 auto;
             background: #ffffff;
             box-sizing: border-box;
@@ -81,13 +77,29 @@
         @media screen {
             body {
                 padding: 1.25rem 0.75rem;
+                min-height: 100vh;
             }
-            .print-sheet {
-                box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.15), 0 4px 10px -2px rgba(0, 0, 0, 0.08);
-                border: 1px solid #cbd5e1;
-                border-radius: 8px;
+            .print-sheet.orientation-landscape {
+                width: 297mm;
+                max-width: 100%;
+                height: 200mm;
+                max-height: 202mm;
                 padding: 4mm 7mm 3mm 7mm;
                 margin-bottom: 24px;
+                box-shadow: 0 12px 35px -4px rgba(0, 0, 0, 0.4), 0 4px 12px -2px rgba(0, 0, 0, 0.2);
+                border: 1px solid #334155;
+                border-radius: 8px;
+            }
+            .print-sheet.orientation-portrait {
+                width: 210mm;
+                max-width: 100%;
+                height: 285mm;
+                max-height: 287mm;
+                padding: 5mm 6mm 4mm 6mm;
+                margin-bottom: 24px;
+                box-shadow: 0 12px 35px -4px rgba(0, 0, 0, 0.4), 0 4px 12px -2px rgba(0, 0, 0, 0.2);
+                border: 1px solid #334155;
+                border-radius: 8px;
             }
         }
 
@@ -149,40 +161,102 @@
             }
         }
     </style>
+
+    <!-- Dynamic @page Orientation Style Injection -->
+    <style id="dynamic-print-page-style">
+        @page {
+            size: A4 landscape;
+            margin: 4mm 6mm;
+        }
+    </style>
 </head>
-<body class="antialiased">
+<body class="antialiased" 
+      x-data="{
+          orientation: (new URLSearchParams(window.location.search).get('orientation') || localStorage.getItem('talenta_bracket_print_orientation') || 'landscape'),
+          setOrientation(mode) {
+              this.orientation = mode;
+              localStorage.setItem('talenta_bracket_print_orientation', mode);
+              this.updatePrintStyle();
+              if (window.lucide) { 
+                  this.$nextTick(() => window.lucide.createIcons()); 
+              }
+          },
+          updatePrintStyle() {
+              const styleEl = document.getElementById('dynamic-print-page-style');
+              if (styleEl) {
+                  if (this.orientation === 'portrait') {
+                      styleEl.innerHTML = `@page { size: A4 portrait !important; margin: 6mm 6mm !important; }`;
+                  } else {
+                      styleEl.innerHTML = `@page { size: A4 landscape !important; margin: 4mm 6mm !important; }`;
+                  }
+              }
+          }
+      }"
+      x-init="updatePrintStyle()">
 
     <!-- Screen Action Control Bar (No Print) -->
     <div class="no-print max-w-[297mm] mx-auto mb-4 px-2">
-        <div class="bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-xl flex flex-col md:flex-row items-center justify-between border border-slate-800 gap-3">
-            <div class="flex items-center gap-3">
+        <div class="bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-xl flex flex-col lg:flex-row items-center justify-between border border-slate-800 gap-4">
+            
+            <!-- Left Info -->
+            <div class="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-start">
                 <button type="button" onclick="smartGoBack('{{ route('pic.bracket', $competition->id) }}')" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition cursor-pointer" title="Kembali ke Bagan PIC">
                     <i data-lucide="arrow-left" class="w-4 h-4"></i>
                 </button>
                 <div>
                     <h2 class="text-sm font-black flex items-center gap-2">
                         <i data-lucide="printer" class="w-4 h-4 text-emerald-400"></i>
-                        <span>Pratinjau Cetak Bagan Pertandingan (A4 Landscape)</span>
+                        <span>Pratinjau Cetak Bagan Pertandingan</span>
                     </h2>
                     <p class="text-xs text-slate-400">{{ $competition->name }} • {{ $activePool['title'] ?? 'Bagan Resmi' }}</p>
                 </div>
             </div>
 
-            <div class="flex items-center gap-3 flex-wrap">
+            <!-- Center Menu: Orientation Switcher (Landscape / Portrait) -->
+            <div class="flex items-center gap-2 w-full lg:w-auto justify-center">
+                <span class="text-xs font-bold text-slate-400 mr-1 flex items-center gap-1.5">
+                    <i data-lucide="sliders" class="w-3.5 h-3.5 text-slate-400"></i>
+                    <span>Orientasi Kertas:</span>
+                </span>
+                <div class="inline-flex p-1 bg-slate-950 rounded-xl border border-slate-800 text-xs font-bold shadow-inner">
+                    <!-- Landscape Button -->
+                    <button type="button" 
+                            @click="setOrientation('landscape')"
+                            :class="orientation === 'landscape' ? 'bg-emerald-500 text-slate-950 shadow-md font-black' : 'text-slate-400 hover:text-white'"
+                            class="px-3 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1.5">
+                        <i data-lucide="layout-template" class="w-3.5 h-3.5"></i>
+                        <span>Landscape (Mendatar)</span>
+                    </button>
+
+                    <!-- Portrait Button -->
+                    <button type="button" 
+                            @click="setOrientation('portrait')"
+                            :class="orientation === 'portrait' ? 'bg-emerald-500 text-slate-950 shadow-md font-black' : 'text-slate-400 hover:text-white'"
+                            class="px-3 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1.5">
+                        <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                        <span>Portrait (Tegak)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Actions -->
+            <div class="flex items-center gap-3 w-full lg:w-auto justify-end flex-wrap">
                 <div class="bg-amber-500/15 text-amber-300 border border-amber-500/30 px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 font-medium">
                     <i data-lucide="info" class="w-3.5 h-3.5 text-amber-400 shrink-0"></i>
-                    <span>Format 1 Halaman A4 Landscape (Mendatar)</span>
+                    <span x-text="orientation === 'portrait' ? 'Format 1 Halaman A4 Portrait' : 'Format 1 Halaman A4 Landscape'">Format 1 Halaman A4</span>
                 </div>
                 <button type="button" onclick="window.print()" class="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 transition flex items-center gap-2 cursor-pointer">
                     <i data-lucide="printer" class="w-4 h-4"></i>
-                    <span>Cetak Sekarang (A4 Landscape)</span>
+                    <span x-text="orientation === 'portrait' ? 'Cetak Sekarang (A4 Portrait)' : 'Cetak Sekarang (A4 Landscape)'">Cetak Sekarang</span>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Printable Sheet (Strictly 1 Sheet A4 Landscape) -->
-    <div class="print-sheet">
+    <!-- Printable Sheet (Strictly 1 Sheet A4 Landscape or Portrait) -->
+    <div id="printable-sheet" 
+         class="print-sheet transition-all duration-300"
+         :class="orientation === 'portrait' ? 'orientation-portrait' : 'orientation-landscape'">
 
         <!-- Top Header & Kop Surat -->
         <div class="shrink-0">
@@ -285,7 +359,7 @@
             <!-- Footer page info -->
             <div class="mt-0.5 text-[7px] text-slate-400 flex items-center justify-between font-mono">
                 <span>Dokumen Bagan Resmi Dicetak Melalui Sistem Talenta • {{ date('d/m/Y H:i:s') }}</span>
-                <span>Halaman 1 / 1 (A4 Landscape)</span>
+                <span x-text="orientation === 'portrait' ? 'Halaman 1 / 1 (A4 Portrait)' : 'Halaman 1 / 1 (A4 Landscape)'">Halaman 1 / 1 (A4 Landscape)</span>
             </div>
         </div>
 
