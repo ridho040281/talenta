@@ -1224,7 +1224,7 @@ class TournamentBracketController extends Controller
         $hasPlayoffs = ! empty($playoffs['has_playoffs']) && ! empty($playoffs['matches']);
 
         $isDark = $options['isDark'] ?? false;
-        $slotHeight = $options['slotHeight'] ?? ($bracketSize > 16 ? 38 : ($bracketSize > 8 ? 46 : 56));
+        $slotHeight = $options['slotHeight'] ?? ($bracketSize > 16 ? 32 : ($bracketSize > 8 ? 38 : 48));
         $slotWidth = $options['slotWidth'] ?? 240;
         $branchWidth = $options['branchWidth'] ?? 115;
 
@@ -1249,7 +1249,7 @@ class TournamentBracketController extends Controller
         $totalWidth = $leftMargin + $slotWidth + ($totalRounds * $branchWidth) + $champLineLength + $champBoxWidth + $rightPadding;
 
         $svg = [];
-        $svg[] = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 {$totalWidth} {$totalHeight}' width='100%' height='auto' style='max-width: {$totalWidth}px; font-family: system-ui, -apple-system, sans-serif;'>";
+        $svg[] = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 {$totalWidth} {$totalHeight}' preserveAspectRatio='xMidYMid meet' width='100%' height='100%' style='display: block; width: 100%; height: 100%; max-width: 100%; max-height: 100%; object-fit: contain; font-family: system-ui, -apple-system, sans-serif;'>";
 
         // 0. Play-off Column Header (if active)
         if ($hasPlayoffs) {

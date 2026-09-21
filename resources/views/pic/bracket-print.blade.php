@@ -25,8 +25,12 @@
 
     <style>
         @page {
-            size: A4 landscape !important;
-            margin: 6mm 10mm;
+            size: A4 landscape;
+            margin: 4mm 6mm;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
         }
 
         body {
@@ -35,123 +39,190 @@
             font-family: 'Plus Jakarta Sans', sans-serif;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
+            margin: 0;
+            padding: 0;
         }
 
         .print-sheet {
-            width: 285mm;
-            min-height: 195mm;
+            width: 297mm;
+            max-width: 100%;
+            height: 200mm;
+            max-height: 202mm;
             margin: 0 auto;
-            background: white;
+            background: #ffffff;
             box-sizing: border-box;
             position: relative;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            overflow: hidden;
+        }
+
+        .bracket-svg-container {
+            flex: 1 1 0%;
+            min-height: 0;
+            height: 100%;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .bracket-svg-container svg {
+            width: 100%;
+            height: 100%;
+            max-height: 100%;
+            max-width: 100%;
+            object-fit: contain;
+            display: block;
         }
 
         @media screen {
+            body {
+                padding: 1.25rem 0.75rem;
+            }
             .print-sheet {
-                box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.1), 0 2px 6px -1px rgba(0, 0, 0, 0.06);
+                box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.15), 0 4px 10px -2px rgba(0, 0, 0, 0.08);
                 border: 1px solid #cbd5e1;
-                border-radius: 6px;
-                padding: 8mm 10mm;
+                border-radius: 8px;
+                padding: 4mm 7mm 3mm 7mm;
                 margin-bottom: 24px;
             }
         }
 
         @media print {
-            body {
-                background: white !important;
+            html, body {
+                width: 100% !important;
+                height: 100% !important;
+                min-height: 100% !important;
+                max-height: 100% !important;
+                margin: 0 !important;
                 padding: 0 !important;
+                background: #ffffff !important;
+                overflow: hidden !important;
             }
             .no-print {
                 display: none !important;
             }
             .print-sheet {
                 width: 100% !important;
-                min-height: auto !important;
-                box-shadow: none !important;
-                border: none !important;
+                height: 100% !important;
+                max-height: 100% !important;
                 padding: 0 !important;
                 margin: 0 !important;
+                box-shadow: none !important;
+                border: none !important;
+                border-radius: 0 !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                page-break-before: avoid !important;
+                break-before: avoid !important;
+                page-break-after: avoid !important;
+                break-after: avoid !important;
+                overflow: hidden !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
             }
-        }
-
-        .bracket-slot-box {
-            border: 1.5px solid #334155;
-            background: #ffffff;
-        }
-        .bracket-slot-bye {
-            border: 1.5px dashed #94a3b8;
-            background: #f8fafc;
+            .bracket-svg-container {
+                flex: 1 1 0% !important;
+                min-height: 0 !important;
+                height: 100% !important;
+                width: 100% !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                overflow: hidden !important;
+            }
+            .bracket-svg-container svg {
+                width: 100% !important;
+                height: 100% !important;
+                max-height: 100% !important;
+                max-width: 100% !important;
+                object-fit: contain !important;
+                display: block !important;
+            }
+            .print-signatures {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
         }
     </style>
 </head>
-<body class="py-6 sm:py-8 antialiased">
+<body class="antialiased">
 
     <!-- Screen Action Control Bar (No Print) -->
-    <div class="no-print max-w-[285mm] mx-auto mb-5 px-4">
-        <div class="bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-xl flex items-center justify-between border border-slate-800 flex-wrap gap-4">
+    <div class="no-print max-w-[297mm] mx-auto mb-4 px-2">
+        <div class="bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-xl flex flex-col md:flex-row items-center justify-between border border-slate-800 gap-3">
             <div class="flex items-center gap-3">
-                <button type="button" onclick="smartGoBack('{{ route('pic.bracket', $competition->id) }}')" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition cursor-pointer">
+                <button type="button" onclick="smartGoBack('{{ route('pic.bracket', $competition->id) }}')" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition cursor-pointer" title="Kembali ke Bagan PIC">
                     <i data-lucide="arrow-left" class="w-4 h-4"></i>
                 </button>
                 <div>
-                    <h2 class="text-sm font-black">Pratinjau Cetak Bagan Pertandingan (A4 Landscape)</h2>
+                    <h2 class="text-sm font-black flex items-center gap-2">
+                        <i data-lucide="printer" class="w-4 h-4 text-emerald-400"></i>
+                        <span>Pratinjau Cetak Bagan Pertandingan (A4 Landscape)</span>
+                    </h2>
                     <p class="text-xs text-slate-400">{{ $competition->name }} • {{ $activePool['title'] ?? 'Bagan Resmi' }}</p>
                 </div>
             </div>
-            <div class="flex items-center gap-3">
-                <button type="button" onclick="window.print()" class="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 transition flex items-center gap-2 cursor-pointer">
+
+            <div class="flex items-center gap-3 flex-wrap">
+                <div class="bg-amber-500/15 text-amber-300 border border-amber-500/30 px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 font-medium">
+                    <i data-lucide="info" class="w-3.5 h-3.5 text-amber-400 shrink-0"></i>
+                    <span>Format 1 Halaman A4 Landscape (Mendatar)</span>
+                </div>
+                <button type="button" onclick="window.print()" class="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 transition flex items-center gap-2 cursor-pointer">
                     <i data-lucide="printer" class="w-4 h-4"></i>
-                    <span>Cetak Sekarang (Print / PDF)</span>
+                    <span>Cetak Sekarang (A4 Landscape)</span>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Printable Sheet (A4 Landscape) -->
+    <!-- Printable Sheet (Strictly 1 Sheet A4 Landscape) -->
     <div class="print-sheet">
 
         <!-- Top Header & Kop Surat -->
-        <div>
+        <div class="shrink-0">
             @php
                 $kopImage = $appSettings['kop_kegiatan'] ?? ($appSettings['kop_lembaga'] ?? ($appSettings['letterhead_image'] ?? null));
             @endphp
             @if(!empty($kopImage))
-                <div class="mb-3 w-full flex justify-center">
-                    <img src="{{ asset('storage/' . $kopImage) }}" alt="Kop Surat" class="w-full h-auto max-h-[110px] object-contain block">
+                <div class="mb-1 w-full flex justify-center">
+                    <img src="{{ asset('storage/' . $kopImage) }}" alt="Kop Surat" class="w-full h-auto max-h-[42px] object-contain block mx-auto">
                 </div>
             @else
-                <div class="border-b-2 border-slate-800 pb-2 mb-3 flex items-center justify-between gap-4">
-                    <div class="w-14 h-14 shrink-0 flex items-center justify-center">
+                <div class="border-b-2 border-slate-800 pb-1 mb-1 flex items-center justify-between gap-3">
+                    <div class="w-10 h-10 shrink-0 flex items-center justify-center">
                         @if(!empty($appSettings['app_logo']))
-                            <img src="{{ asset('storage/' . $appSettings['app_logo']) }}" alt="Logo" class="max-h-14 max-w-14 object-contain">
+                            <img src="{{ asset('storage/' . $appSettings['app_logo']) }}" alt="Logo" class="max-h-9 max-w-9 object-contain">
                         @else
-                            <div class="w-12 h-12 rounded-xl bg-slate-900 text-white font-black flex items-center justify-center text-xs">
+                            <div class="w-8 h-8 rounded-lg bg-slate-900 text-white font-black flex items-center justify-center text-[9px]">
                                 TALENTA
                             </div>
                         @endif
                     </div>
                     <div class="flex-1 text-center">
-                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-600">PANITIA PELAKSANA {{ $appSettings['event_name'] ?? 'TURNAMEN OLAHRAGA & SENI' }}</div>
-                        <div class="text-base font-black uppercase text-slate-900 leading-tight">{{ $appSettings['institution_name'] ?? 'LEMBAGA PENYELENGGARA TALENTA' }}</div>
-                        <div class="text-[9px] text-slate-500 mt-0.5">{{ $appSettings['address'] ?? 'Blitar, Jawa Timur' }} • Telp: {{ $appSettings['contact_phone'] ?? '-' }}</div>
+                        <div class="text-[8.5px] font-bold uppercase tracking-wider text-slate-600 leading-tight">PANITIA PELAKSANA {{ $appSettings['event_name'] ?? 'TURNAMEN OLAHRAGA & SENI' }}</div>
+                        <div class="text-xs font-black uppercase text-slate-900 leading-tight">{{ $appSettings['institution_name'] ?? 'LEMBAGA PENYELENGGARA TALENTA' }}</div>
+                        <div class="text-[7.5px] text-slate-500">{{ $appSettings['address'] ?? 'Blitar, Jawa Timur' }} • Telp: {{ $appSettings['contact_phone'] ?? '-' }}</div>
                     </div>
-                    <div class="w-14 h-14 shrink-0 flex items-center justify-center">
+                    <div class="w-10 h-10 shrink-0 flex items-center justify-center">
                         @if(!empty($appSettings['event_logo']))
-                            <img src="{{ asset('storage/' . $appSettings['event_logo']) }}" alt="Event Logo" class="max-h-14 max-w-14 object-contain">
+                            <img src="{{ asset('storage/' . $appSettings['event_logo']) }}" alt="Event Logo" class="max-h-9 max-w-9 object-contain">
                         @endif
                     </div>
                 </div>
             @endif
 
             <!-- Document Title Bar -->
-            <div class="text-center mb-3">
-                <h1 class="text-sm font-black uppercase tracking-wider text-slate-900">
+            <div class="text-center mb-0.5">
+                <h1 class="text-[11px] font-black uppercase tracking-wider text-slate-900 leading-tight">
                     BAGAN RESMI PERTANDINGAN SISTEM GUGUR TUNGGAL
                 </h1>
-                <div class="text-xs font-bold text-slate-700 flex items-center justify-center gap-3 mt-0.5">
+                <div class="text-[9px] font-bold text-slate-700 flex items-center justify-center gap-2 mt-0.5">
                     <span>Cabang: <strong>{{ $competition->name }}</strong></span>
                     <span>•</span>
                     <span>Kategori: <strong>{{ $activePool['title'] ?? 'Semua' }}</strong></span>
@@ -165,57 +236,56 @@
                     @endif
                 </div>
             </div>
+        </div>
 
-            <!-- Classic Vector Bracket Tree (Persis Standar BWF GOR) -->
+        <!-- Middle Section: Classic Vector Bracket Tree SVG -->
+        <div class="bracket-svg-container flex-1 min-h-0 w-full flex items-center justify-center my-0.5 overflow-hidden">
             @if(!$bracketData || empty($bracketData['rounds']))
-                <div class="py-16 text-center text-xs text-slate-500 italic">
+                <div class="py-8 text-center text-xs text-slate-500 italic">
                     Data bagan belum tersedia untuk dicetak.
                 </div>
             @else
-                <div class="my-2 w-full flex justify-center items-center overflow-hidden">
-                    {!! $bracketData['classic_svg_light'] !!}
-                </div>
+                {!! $bracketData['classic_svg_light'] !!}
             @endif
-
         </div>
 
-        <!-- Official Signatures Block -->
-        <div class="pt-3 border-t border-slate-300 text-xs">
-            <div class="grid grid-cols-3 text-center gap-4">
+        <!-- Bottom Section: Official Signatures Block -->
+        <div class="shrink-0 print-signatures pt-1 border-t border-slate-300 text-[9px]">
+            <div class="grid grid-cols-3 text-center gap-2">
                 <div>
-                    <div class="text-[10px] text-slate-500">Mengetahui,</div>
-                    <div class="text-[10px] font-bold text-slate-900 uppercase">Ketua Panitia Pelaksana</div>
-                    <div class="h-14"></div>
-                    <div class="text-[10px] font-bold text-slate-900 border-b border-slate-400 inline-block px-8 pb-0.5">
-                        ( .................................................... )
+                    <div class="text-[8.5px] text-slate-500">Mengetahui,</div>
+                    <div class="text-[8.5px] font-bold text-slate-900 uppercase">Ketua Panitia Pelaksana</div>
+                    <div class="h-8"></div>
+                    <div class="text-[8.5px] font-black text-slate-900 border-b border-slate-600 inline-block px-3 pb-0.5">
+                        {{ $appSettings['committee_chairman_name'] ?? '( .................................................... )' }}
                     </div>
                 </div>
 
                 <div>
-                    <div class="text-[10px] text-slate-500">Diverifikasi Oleh,</div>
-                    <div class="text-[10px] font-bold text-slate-900 uppercase">Koordinator Lomba / PIC</div>
-                    <div class="h-14"></div>
-                    <div class="text-[10px] font-bold text-slate-900 border-b border-slate-400 inline-block px-8 pb-0.5">
-                        ( .................................................... )
+                    <div class="text-[8.5px] text-slate-500">Diverifikasi Oleh,</div>
+                    <div class="text-[8.5px] font-bold text-slate-900 uppercase">Koordinator Lomba / PIC</div>
+                    <div class="h-8"></div>
+                    <div class="text-[8.5px] font-black text-slate-900 border-b border-slate-600 inline-block px-3 pb-0.5">
+                        {{ $competition->pic?->name ?? (Auth::user()->name ?: '( .................................................... )') }}
                     </div>
                 </div>
 
                 <div>
-                    <div class="text-[10px] text-slate-500">
+                    <div class="text-[8.5px] text-slate-500">
                         {{ $appSettings['city'] ?? 'Blitar' }}, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}
                     </div>
-                    <div class="text-[10px] font-bold text-slate-900 uppercase">Wasit Utama / Referee</div>
-                    <div class="h-14"></div>
-                    <div class="text-[10px] font-bold text-slate-900 border-b border-slate-400 inline-block px-8 pb-0.5">
+                    <div class="text-[8.5px] font-bold text-slate-900 uppercase">Wasit Utama / Referee</div>
+                    <div class="h-8"></div>
+                    <div class="text-[8.5px] font-black text-slate-900 border-b border-slate-600 inline-block px-3 pb-0.5">
                         ( .................................................... )
                     </div>
                 </div>
             </div>
 
             <!-- Footer page info -->
-            <div class="mt-2 text-[8px] text-slate-400 flex items-center justify-between font-mono">
+            <div class="mt-0.5 text-[7px] text-slate-400 flex items-center justify-between font-mono">
                 <span>Dokumen Bagan Resmi Dicetak Melalui Sistem Talenta • {{ date('d/m/Y H:i:s') }}</span>
-                <span>Halaman 1 / 1</span>
+                <span>Halaman 1 / 1 (A4 Landscape)</span>
             </div>
         </div>
 
