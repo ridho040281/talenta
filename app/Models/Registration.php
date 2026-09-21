@@ -502,6 +502,29 @@ class Registration extends Model
     }
 
     /**
+     * Helper to get tournament pool classification key (kat_a_pa, kat_a_pi, etc.)
+     * Strictly separates class category and sector (PA vs PI vs MIX).
+     */
+    public function getPoolClassificationKey(): string
+    {
+        $compCode = strtoupper($this->competition?->code ?? '');
+        $gen = $this->primary_gender;
+        $isMix = ($gen === 'M' || stripos($this->match_type ?? '', 'campuran') !== false);
+        $isPi = ($gen === 'P' || stripos($this->match_type ?? '', 'putri') !== false || stripos($this->match_type ?? '', 'pi') !== false);
+        $genderSuffix = $isMix ? 'mix' : ($isPi ? 'pi' : 'pa');
+
+        if ($compCode === 'TMJ') {
+            if ($this->isKatB()) {
+                return 'kat_b_'.$genderSuffix;
+            }
+
+            return 'kat_a_'.$genderSuffix;
+        }
+
+        return $this->getBadmintonPoolKey();
+    }
+
+    /**
      * Helper to get badminton pool classification key (kat_a_pa, kat_a_pi, etc.)
      */
     public function getBadmintonPoolKey(): string

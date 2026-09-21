@@ -177,7 +177,7 @@ trait CompetitionPoolTrait
             return [
                 'id' => $reg->id,
                 'name' => $pureName,
-                'institution' => $reg->institution_name,
+                'institution' => $reg->display_school ?: $reg->institution_name,
                 'participant_number' => $reg->participant_number,
                 'registration_code' => $reg->registration_code,
                 'target_class' => $reg->target_class,

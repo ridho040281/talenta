@@ -701,7 +701,6 @@ class PicController extends Controller
             ->get(['id', 'competition_id', 'target_class', 'match_type', 'institution_name', 'sub_category', 'team_name', 'registration_code', 'participant_number']);
 
         $poolSchoolMembers = [];
-        $compSchoolMembers = [];
 
         foreach ($allCompRegs as $cr) {
             $cId = $cr->competition_id;
@@ -710,9 +709,9 @@ class PicController extends Controller
                 continue;
             }
 
-            $poolKey = $cr->getBadmintonPoolKey();
+            // Pool Key memisahkan kelas (Kat A/B/C/Ganda) dan Sektor (PA vs PI vs MIX)
+            $poolKey = $cr->getPoolClassificationKey();
             $poolLookup = "{$cId}_{$poolKey}_{$s1}";
-            $compLookup = "{$cId}_{$s1}";
 
             $pName = $cr->pure_name;
             $poolSchoolMembers[$poolLookup][] = [
@@ -721,35 +720,24 @@ class PicController extends Controller
                 'code' => $cr->registration_code,
                 'pool_key' => $poolKey,
             ];
-            $compSchoolMembers[$compLookup][] = [
-                'id' => $cr->id,
-                'name' => $pName,
-                'code' => $cr->registration_code,
-                'pool_key' => $poolKey,
-            ];
         }
 
-        $items = $paginated->getCollection()->map(function ($r) use ($poolSchoolMembers, $compSchoolMembers) {
+        $items = $paginated->getCollection()->map(function ($r) use ($poolSchoolMembers) {
             $firstMember = $r->members->first();
             $schoolNorm = trim(mb_strtolower($r->display_school ?: $r->institution_name ?: ''));
-            $poolLookup = "{$r->competition_id}_{$r->getBadmintonPoolKey()}_{$schoolNorm}";
-            $compLookup = "{$r->competition_id}_{$schoolNorm}";
+            $poolLookup = "{$r->competition_id}_{$r->getPoolClassificationKey()}_{$schoolNorm}";
 
+            // Satu Delegasi HANYA untuk peserta dari sekolah sama dalam pool yang sama (kelas sama & gender sama)
             $poolTeammates = collect($poolSchoolMembers[$poolLookup] ?? [])->where('id', '!=', $r->id)->values()->all();
-            $compTeammates = collect($compSchoolMembers[$compLookup] ?? [])->where('id', '!=', $r->id)->values()->all();
 
             $inPoolCount = count($poolTeammates) > 0 ? (count($poolTeammates) + 1) : 0;
-            $inCompCount = count($compTeammates) > 0 ? (count($compTeammates) + 1) : 0;
-
             $hasSamePoolTeammates = count($poolTeammates) > 0;
-            $hasTeammates = ($inPoolCount > 1) || ($inCompCount > 1);
+            $hasTeammates = $hasSamePoolTeammates;
 
             $poolTeammateNames = array_column($poolTeammates, 'name');
-            $compTeammateNames = array_column($compTeammates, 'name');
-
             $teammateDetails = $hasSamePoolTeammates
-                ? ('Rekan 1 Kategori: '.implode(', ', $poolTeammateNames))
-                : (count($compTeammateNames) > 0 ? ('Rekan Sekolah di Cabor ini: '.implode(', ', $compTeammateNames)) : '');
+                ? ('Rekan 1 Kategori & Sektor: '.implode(', ', $poolTeammateNames).' (Proteksi Undian BWF Aktif)')
+                : '';
 
             return [
                 'id' => $r->id,
@@ -763,10 +751,10 @@ class PicController extends Controller
                 'display_school' => $r->display_school,
                 'has_teammates' => $hasTeammates,
                 'is_same_pool_teammate' => $hasSamePoolTeammates,
-                'same_school_count' => max($inPoolCount, $inCompCount),
+                'same_school_count' => $inPoolCount,
                 'same_pool_count' => $inPoolCount,
-                'same_comp_count' => $inCompCount,
-                'teammate_names' => $hasSamePoolTeammates ? implode(', ', $poolTeammateNames) : implode(', ', $compTeammateNames),
+                'same_comp_count' => $inPoolCount,
+                'teammate_names' => implode(', ', $poolTeammateNames),
                 'teammate_details' => $teammateDetails,
                 'official_name' => $r->official_name,
                 'document_file' => $r->document_file,
@@ -1333,22 +1321,17 @@ class PicController extends Controller
         foreach ($allRegs as $ar) {
             $s1 = trim(mb_strtolower($ar->display_school ?: $ar->institution_name ?: ''));
             if ($s1 !== '' && $s1 !== '-') {
-                $schoolCounts[$s1] = ($schoolCounts[$s1] ?? 0) + 1;
-                $poolKey = $ar->getBadmintonPoolKey();
+                $poolKey = $ar->getPoolClassificationKey();
                 $poolLookup = "{$poolKey}_{$s1}";
                 $pName = $ar->pure_name;
                 $poolSchoolMembers[$poolLookup][] = [
                     'id' => $ar->id,
                     'name' => $pName,
                 ];
-                $compSchoolMembers[$s1][] = [
-                    'id' => $ar->id,
-                    'name' => $pName,
-                ];
             }
         }
 
-        return view('pic.participants', compact('competition', 'registrations', 'statusFilter', 'schoolCounts', 'poolSchoolMembers', 'compSchoolMembers'));
+        return view('pic.participants', compact('competition', 'registrations', 'statusFilter', 'poolSchoolMembers'));
     }
 
     public function verifyParticipant(Request $request, $registration_id)

@@ -154,31 +154,20 @@
                                         $sNorm1 = trim(mb_strtolower($reg->display_school ?? ''));
                                         $sNorm2 = trim(mb_strtolower($reg->institution_name ?? ''));
                                         $sKey = $sNorm1 ?: $sNorm2;
-                                        $pKey = $reg->getBadmintonPoolKey();
+                                        $pKey = method_exists($reg, 'getPoolClassificationKey') ? $reg->getPoolClassificationKey() : $reg->getBadmintonPoolKey();
                                         $poolLookup = "{$pKey}_{$sKey}";
                                         
                                         $poolTeammates = collect($poolSchoolMembers[$poolLookup] ?? [])->where('id', '!=', $reg->id)->values();
-                                        $compTeammates = collect($compSchoolMembers[$sKey] ?? [])->where('id', '!=', $reg->id)->values();
-                                        
                                         $isSamePool = $poolTeammates->count() > 0;
-                                        $isSameComp = $compTeammates->count() > 0;
-                                        
                                         $pNames = $poolTeammates->pluck('name')->implode(', ');
-                                        $cNames = $compTeammates->pluck('name')->implode(', ');
-                                        
                                         $tipText = $isSamePool 
-                                            ? ('Rekan 1 Kategori: ' . $pNames . ' (Proteksi Undian BWF Aktif)')
-                                            : ($isSameComp ? ('Rekan Sekolah di Cabor ini: ' . $cNames) : '');
+                                            ? ('Rekan 1 Kategori & Sektor: ' . $pNames . ' (Proteksi Undian BWF Aktif)')
+                                            : '';
                                     @endphp
                                     @if($isSamePool)
                                         <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 shrink-0 inline-flex items-center gap-1 shadow-xs cursor-help" title="{{ $tipText }}">
                                             <span>🛡️</span>
                                             <span>Satu Delegasi ({{ $poolTeammates->count() + 1 }})</span>
-                                        </span>
-                                    @elseif($isSameComp)
-                                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 shrink-0 inline-flex items-center gap-1 shadow-xs cursor-help" title="{{ $tipText }}">
-                                            <span>🏫</span>
-                                            <span>{{ $compTeammates->count() + 1 }} Delegasi</span>
                                         </span>
                                     @endif
                                 </div>
