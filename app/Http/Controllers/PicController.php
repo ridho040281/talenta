@@ -697,11 +697,11 @@ class PicController extends Controller
 
         $compIds = $paginated->getCollection()->pluck('competition_id')->unique()->filter()->values()->all();
         $allCompRegs = Registration::whereIn('competition_id', $compIds)
-            ->with('members:id,registration_id,school_name')
-            ->get(['id', 'competition_id', 'target_class', 'match_type', 'institution_name', 'sub_category']);
+            ->with('members:id,registration_id,school_name,gender,full_name')
+            ->get(['id', 'competition_id', 'target_class', 'match_type', 'institution_name', 'sub_category', 'team_name', 'registration_code', 'participant_number']);
 
-        $poolSchoolCounts = [];
-        $compSchoolCounts = [];
+        $poolSchoolMembers = [];
+        $compSchoolMembers = [];
 
         foreach ($allCompRegs as $cr) {
             $cId = $cr->competition_id;
@@ -714,19 +714,42 @@ class PicController extends Controller
             $poolLookup = "{$cId}_{$poolKey}_{$s1}";
             $compLookup = "{$cId}_{$s1}";
 
-            $poolSchoolCounts[$poolLookup] = ($poolSchoolCounts[$poolLookup] ?? 0) + 1;
-            $compSchoolCounts[$compLookup] = ($compSchoolCounts[$compLookup] ?? 0) + 1;
+            $pName = $cr->pure_name;
+            $poolSchoolMembers[$poolLookup][] = [
+                'id' => $cr->id,
+                'name' => $pName,
+                'code' => $cr->registration_code,
+                'pool_key' => $poolKey,
+            ];
+            $compSchoolMembers[$compLookup][] = [
+                'id' => $cr->id,
+                'name' => $pName,
+                'code' => $cr->registration_code,
+                'pool_key' => $poolKey,
+            ];
         }
 
-        $items = $paginated->getCollection()->map(function ($r) use ($poolSchoolCounts, $compSchoolCounts) {
+        $items = $paginated->getCollection()->map(function ($r) use ($poolSchoolMembers, $compSchoolMembers) {
             $firstMember = $r->members->first();
             $schoolNorm = trim(mb_strtolower($r->display_school ?: $r->institution_name ?: ''));
             $poolLookup = "{$r->competition_id}_{$r->getBadmintonPoolKey()}_{$schoolNorm}";
             $compLookup = "{$r->competition_id}_{$schoolNorm}";
 
-            $inPoolCount = ($schoolNorm !== '' && $schoolNorm !== '-') ? ($poolSchoolCounts[$poolLookup] ?? 0) : 0;
-            $inCompCount = ($schoolNorm !== '' && $schoolNorm !== '-') ? ($compSchoolCounts[$compLookup] ?? 0) : 0;
+            $poolTeammates = collect($poolSchoolMembers[$poolLookup] ?? [])->where('id', '!=', $r->id)->values()->all();
+            $compTeammates = collect($compSchoolMembers[$compLookup] ?? [])->where('id', '!=', $r->id)->values()->all();
+
+            $inPoolCount = count($poolTeammates) > 0 ? (count($poolTeammates) + 1) : 0;
+            $inCompCount = count($compTeammates) > 0 ? (count($compTeammates) + 1) : 0;
+
+            $hasSamePoolTeammates = count($poolTeammates) > 0;
             $hasTeammates = ($inPoolCount > 1) || ($inCompCount > 1);
+
+            $poolTeammateNames = array_column($poolTeammates, 'name');
+            $compTeammateNames = array_column($compTeammates, 'name');
+
+            $teammateDetails = $hasSamePoolTeammates
+                ? ('Rekan 1 Kategori: '.implode(', ', $poolTeammateNames))
+                : (count($compTeammateNames) > 0 ? ('Rekan Sekolah di Cabor ini: '.implode(', ', $compTeammateNames)) : '');
 
             return [
                 'id' => $r->id,
@@ -739,7 +762,12 @@ class PicController extends Controller
                 'team_name' => $r->team_name,
                 'display_school' => $r->display_school,
                 'has_teammates' => $hasTeammates,
+                'is_same_pool_teammate' => $hasSamePoolTeammates,
                 'same_school_count' => max($inPoolCount, $inCompCount),
+                'same_pool_count' => $inPoolCount,
+                'same_comp_count' => $inCompCount,
+                'teammate_names' => $hasSamePoolTeammates ? implode(', ', $poolTeammateNames) : implode(', ', $compTeammateNames),
+                'teammate_details' => $teammateDetails,
                 'official_name' => $r->official_name,
                 'document_file' => $r->document_file,
                 'has_payment_proof' => (bool) ($r->payment_proof || ($r->invoice && $r->invoice->payment_proof)),
@@ -1296,21 +1324,31 @@ class PicController extends Controller
             ->withQueryString();
 
         $allRegs = Registration::where('competition_id', $competition->id)
-            ->with('members:id,registration_id,school_name')
-            ->get(['id', 'competition_id', 'target_class', 'match_type', 'institution_name', 'sub_category']);
+            ->with('members:id,registration_id,school_name,gender,full_name')
+            ->get(['id', 'competition_id', 'target_class', 'match_type', 'institution_name', 'sub_category', 'team_name', 'registration_code']);
         $schoolCounts = [];
+        $poolSchoolMembers = [];
+        $compSchoolMembers = [];
+
         foreach ($allRegs as $ar) {
-            $s1 = trim(mb_strtolower($ar->display_school ?: ''));
-            $s2 = trim(mb_strtolower($ar->institution_name ?: ''));
+            $s1 = trim(mb_strtolower($ar->display_school ?: $ar->institution_name ?: ''));
             if ($s1 !== '' && $s1 !== '-') {
                 $schoolCounts[$s1] = ($schoolCounts[$s1] ?? 0) + 1;
-            }
-            if ($s2 !== '' && $s2 !== '-' && $s2 !== $s1) {
-                $schoolCounts[$s2] = ($schoolCounts[$s2] ?? 0) + 1;
+                $poolKey = $ar->getBadmintonPoolKey();
+                $poolLookup = "{$poolKey}_{$s1}";
+                $pName = $ar->pure_name;
+                $poolSchoolMembers[$poolLookup][] = [
+                    'id' => $ar->id,
+                    'name' => $pName,
+                ];
+                $compSchoolMembers[$s1][] = [
+                    'id' => $ar->id,
+                    'name' => $pName,
+                ];
             }
         }
 
-        return view('pic.participants', compact('competition', 'registrations', 'statusFilter', 'schoolCounts'));
+        return view('pic.participants', compact('competition', 'registrations', 'statusFilter', 'schoolCounts', 'poolSchoolMembers', 'compSchoolMembers'));
     }
 
     public function verifyParticipant(Request $request, $registration_id)

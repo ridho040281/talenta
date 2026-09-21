@@ -1108,10 +1108,11 @@
                                 <div class="flex items-center gap-1.5 flex-wrap">
                                     <span class="text-xs font-bold text-slate-200" x-text="item.display_school"></span>
                                     <template x-if="item.has_teammates">
-                                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0 inline-flex items-center gap-1 shadow-xs"
-                                              :title="'Sekolah ini memiliki ' + (item.same_school_count > 1 ? item.same_school_count : 'beberapa') + ' peserta delegasi di cabang lomba ini (Proteksi BWF Aktif)'">
-                                            <span>🛡️</span>
-                                            <span>Satu Delegasi</span>
+                                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 inline-flex items-center gap-1 shadow-xs cursor-help"
+                                              :class="item.is_same_pool_teammate ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 ring-1 ring-indigo-500/20' : 'bg-slate-800 text-slate-300 border border-slate-700'"
+                                              :title="(item.teammate_details ? item.teammate_details : 'Sekolah ini memiliki rekan delegasi') + (item.is_same_pool_teammate ? ' (Proteksi Undian BWF Aktif)' : '')">
+                                            <span x-text="item.is_same_pool_teammate ? '🛡️' : '🏫'"></span>
+                                            <span x-text="item.is_same_pool_teammate ? 'Satu Delegasi (' + item.same_pool_count + ')' : item.same_comp_count + ' Delegasi'"></span>
                                         </span>
                                     </template>
                                 </div>
@@ -1480,9 +1481,11 @@
                                                 <div class="flex items-center gap-1.5 flex-wrap">
                                                     <div class="font-bold text-slate-200" x-text="m.school_name || (selectedReg ? (selectedReg.display_school || selectedReg.institution_name) : '-')"></div>
                                                     <template x-if="selectedReg && selectedReg.has_teammates">
-                                                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0 inline-flex items-center gap-1">
-                                                            <span>🛡️</span>
-                                                            <span>Satu Delegasi</span>
+                                                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 inline-flex items-center gap-1 shadow-xs cursor-help"
+                                                              :class="selectedReg.is_same_pool_teammate ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40' : 'bg-slate-800 text-slate-300 border border-slate-700'"
+                                                              :title="(selectedReg.teammate_details ? selectedReg.teammate_details : 'Sekolah ini memiliki rekan delegasi') + (selectedReg.is_same_pool_teammate ? ' (Proteksi Undian BWF Aktif)' : '')">
+                                                            <span x-text="selectedReg.is_same_pool_teammate ? '🛡️' : '🏫'"></span>
+                                                            <span x-text="selectedReg.is_same_pool_teammate ? 'Satu Delegasi (' + selectedReg.same_pool_count + ')' : selectedReg.same_comp_count + ' Delegasi'"></span>
                                                         </span>
                                                     </template>
                                                 </div>
