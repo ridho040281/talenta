@@ -126,11 +126,32 @@
     <div class="bg-slate-900/60 border-b border-slate-800/80 px-6 py-3 flex items-center gap-2 overflow-x-auto scrollbar-thin">
         <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-2 shrink-0">Kategori:</span>
         @foreach($pools as $p)
-            @php $isActive = ($p['key'] === $activePoolKey); @endphp
+            @php 
+                $isActive = ($p['key'] === $activePoolKey); 
+                $isPi = ($p['sector'] ?? '') === 'PI' || str_contains($p['key'], '_pi') || stripos($p['title'], 'putri') !== false;
+                $isGanda = str_contains($p['key'], 'ganda');
+                $isMix = ($p['sector'] ?? '') === 'MIX' || str_contains($p['key'], 'mix');
+
+                $sectorBadge = $isMix ? 'MIX' : ($isPi ? 'PI' : 'PA');
+                $icon = $isGanda ? '👥' : ($isPi ? '👧' : '👦');
+                
+                $cLabel = $p['class_label'] ?? $p['category_label'] ?? '';
+                if ($isGanda) {
+                    $tabName = $isMix ? 'Ganda Campuran' : ($isPi ? 'Ganda Putri (PI)' : 'Ganda Putra (PA)');
+                } elseif (!empty($cLabel)) {
+                    $tabName = $cLabel . ' - ' . ($isPi ? 'Putri (PI)' : 'Putra (PA)');
+                } else {
+                    $tabName = $p['title'];
+                }
+            @endphp
             <a href="{{ route('public.bracket', $competition->slug) }}?pool={{ urlencode($p['key']) }}"
-               class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap {{ $isActive ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700' }}">
-                <span>{{ $p['title'] }}</span>
-                <span class="px-1.5 py-0.5 rounded-md text-[10px] {{ $isActive ? 'bg-white/20 text-white' : 'bg-slate-900 text-slate-400' }}">
+               class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap {{ $isActive ? ($isPi ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-lg shadow-rose-600/30 font-black' : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-indigo-600/30 font-black') : 'bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700' }}">
+                <span>{{ $icon }}</span>
+                <span>{{ $tabName }}</span>
+                <span class="px-1.5 py-0.2 rounded font-mono font-black text-[10px] {{ $isActive ? 'bg-white/20 text-white' : ($isPi ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-blue-500/20 text-blue-300 border border-blue-500/30') }}">
+                    {{ $sectorBadge }}
+                </span>
+                <span class="px-1.5 py-0.5 rounded-md text-[10px] {{ $isActive ? 'bg-white/25 text-white font-mono font-bold' : 'bg-slate-900 text-slate-400 font-mono' }}">
                     {{ count($p['participants']) }}
                 </span>
             </a>
