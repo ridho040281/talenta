@@ -29,12 +29,12 @@
                         $actIsPi = ($activePool['sector'] ?? '') === 'PI' || str_contains($activePool['key'], '_pi') || stripos($activePool['title'], 'putri') !== false;
                         $actIsGanda = str_contains($activePool['key'], 'ganda');
                         $actIsMix = ($activePool['sector'] ?? '') === 'MIX' || str_contains($activePool['key'], 'mix');
+                        $actSec = $actIsMix ? '(MIX)' : ($actIsPi ? '(PI)' : '(PA)');
+                        $actClass = $activePool['class_label'] ?? $activePool['category_label'] ?? $activePool['title'];
                     @endphp
                     <span class="px-2.5 py-0.5 text-[10px] font-mono font-black rounded uppercase flex items-center gap-1.5 shadow-sm {{ $actIsPi ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' : ($actIsGanda ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-blue-500/20 text-blue-300 border border-blue-500/40') }}">
                         <span>{{ $actIsGanda ? '👥' : ($actIsPi ? '👧' : '👦') }}</span>
-                        <span>{{ $actIsMix ? 'GANDA MIX' : ($actIsGanda ? ($actIsPi ? 'GANDA PUTRI (PI)' : 'GANDA PUTRA (PA)') : ($actIsPi ? 'TUNGGAL PUTRI (PI)' : 'TUNGGAL PUTRA (PA)')) }}</span>
-                        <span>•</span>
-                        <span>{{ $activePool['class_label'] ?? $activePool['title'] }}</span>
+                        <span>{{ $actClass }} {{ $actSec }}</span>
                     </span>
                 @endif
                 @if($bracketData)
@@ -138,25 +138,21 @@
                 $isGanda = str_contains($p['key'], 'ganda');
                 $isMix = ($p['sector'] ?? '') === 'MIX' || str_contains($p['key'], 'mix');
 
-                $sectorBadge = $isMix ? 'MIX' : ($isPi ? 'PI' : 'PA');
                 $icon = $isGanda ? '👥' : ($isPi ? '👧' : '👦');
                 
                 $cLabel = $p['class_label'] ?? $p['category_label'] ?? '';
                 if ($isGanda) {
-                    $tabName = $isMix ? 'Ganda Campuran' : ($isPi ? 'Ganda Putri (PI)' : 'Ganda Putra (PA)');
+                    $tabName = $isMix ? 'Ganda (MIX)' : ($isPi ? 'Ganda (PI)' : 'Ganda (PA)');
                 } elseif (!empty($cLabel)) {
-                    $tabName = $cLabel . ' - ' . ($isPi ? 'Putri (PI)' : 'Putra (PA)');
+                    $tabName = $cLabel . ' (' . ($isPi ? 'PI' : 'PA') . ')';
                 } else {
                     $tabName = $p['title'];
                 }
             @endphp
             <a href="{{ route('pic.bracket', $competition->id) }}?pool={{ urlencode($p['key']) }}"
-               class="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-bold transition whitespace-nowrap {{ $isActive ? ($isPi ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-lg shadow-rose-500/25 border border-rose-400/40 ring-1 ring-rose-400/30 font-black' : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 border border-blue-400/40 ring-1 ring-blue-400/30 font-black') : 'bg-slate-900/80 text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-800' }}">
+               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-bold transition whitespace-nowrap {{ $isActive ? ($isPi ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-lg shadow-rose-500/25 border border-rose-400/40 ring-1 ring-rose-400/30 font-black' : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 border border-blue-400/40 ring-1 ring-blue-400/30 font-black') : 'bg-slate-900/80 text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-800' }}">
                 <span>{{ $icon }}</span>
                 <span>{{ $tabName }}</span>
-                <span class="px-1.5 py-0.2 rounded font-mono font-black text-[10px] {{ $isActive ? 'bg-white/20 text-white' : ($isPi ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-blue-500/20 text-blue-300 border border-blue-500/30') }}">
-                    {{ $sectorBadge }}
-                </span>
                 <span class="px-2 py-0.5 rounded-full text-[10px] {{ $isActive ? 'bg-white/25 text-white font-mono font-bold' : 'bg-slate-800 text-slate-400 font-mono' }}">
                     {{ count($p['participants']) }}
                 </span>

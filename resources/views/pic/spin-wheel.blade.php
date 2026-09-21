@@ -1258,7 +1258,7 @@
                 if (paPool || this.pools.some(p => this.getSector(p) === 'PA')) {
                     list.push({
                         key: 'PA',
-                        label: 'PUTRA (PA)',
+                        label: '(PA)',
                         icon: '👦',
                         pool: paPool,
                         count: paPool ? paPool.participants.length : 0,
@@ -1269,7 +1269,7 @@
                 if (piPool || this.pools.some(p => this.getSector(p) === 'PI')) {
                     list.push({
                         key: 'PI',
-                        label: 'PUTRI (PI)',
+                        label: '(PI)',
                         icon: '👧',
                         pool: piPool,
                         count: piPool ? piPool.participants.length : 0,
