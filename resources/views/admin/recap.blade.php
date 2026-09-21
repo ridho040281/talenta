@@ -38,10 +38,54 @@
     }
 </style>
 <div class="space-y-4" x-data="{ 
-    activeTab: '{{ in_array(request('tab'), ['lomba', 'buku_kas', 'peserta', 'pendaftar', 'juara', 'juara-umum']) ? request('tab') : 'lomba' }}',
+    activeTab: '{{ in_array(request('tab'), ['lomba', 'buku_kas', 'peserta', 'pendaftar', 'lembaga', 'juara', 'juara-umum']) ? request('tab') : 'lomba' }}',
     cashflowFilterType: 'all',
     cashflowFilterStatus: 'all',
     cashflowSearch: '',
+    // ── Lembaga State ──
+    instSearch: '',
+    instFilterComp: 'all',
+    instFilterStatus: 'all',
+    expandedInstitutions: {},
+    toggleInstitution(idx) {
+        this.expandedInstitutions[idx] = !this.expandedInstitutions[idx];
+    },
+    expandAllInstitutions() {
+        this.expandedInstitutions = {};
+        @foreach($institutionRecap as $idx => $inst)
+            this.expandedInstitutions[{{ $idx }}] = true;
+        @endforeach
+    },
+    collapseAllInstitutions() {
+        this.expandedInstitutions = {};
+    },
+    areAllInstitutionsExpanded() {
+        return Object.keys(this.expandedInstitutions).length >= {{ count($institutionRecap) }} && Object.values(this.expandedInstitutions).every(Boolean);
+    },
+    toggleAllInstitutions() {
+        if (this.areAllInstitutionsExpanded()) {
+            this.collapseAllInstitutions();
+        } else {
+            this.expandAllInstitutions();
+        }
+    },
+    matchesInst(name, compIds, statusType, allStudentsText) {
+        const q = this.instSearch.trim().toLowerCase();
+        if (q) {
+            const matchName = name.toLowerCase().includes(q);
+            const matchStudents = (allStudentsText || '').toLowerCase().includes(q);
+            if (!matchName && !matchStudents) return false;
+        }
+        if (this.instFilterComp !== 'all') {
+            const targetId = parseInt(this.instFilterComp);
+            if (!compIds.includes(targetId)) return false;
+        }
+        if (this.instFilterStatus !== 'all') {
+            if (this.instFilterStatus === 'verified' && statusType !== 'verified') return false;
+            if (this.instFilterStatus === 'pending' && statusType === 'verified') return false;
+        }
+        return true;
+    },
     // ── Buku Kas AJAX state ──
     kasItems: [],
     kasTotal: {{ $cashflowSummary['total_count'] ?? ($cashflowSummary['count_collective'] + $cashflowSummary['count_individual']) }},
@@ -576,14 +620,20 @@
             <span class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="activeTab === 'pendaftar' ? 'bg-white text-slate-950' : 'bg-cyan-500/20 text-cyan-300'">Infografis</span>
         </button>
 
+        <button @click="activeTab = 'lembaga'" :class="activeTab === 'lembaga' ? 'bg-gradient-to-r from-sky-600 to-indigo-600 text-white shadow-md shadow-sky-600/30 font-black' : 'text-slate-400 hover:text-white'" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
+            <i data-lucide="building-2" class="w-4 h-4 text-sky-300"></i>
+            <span>5. Rekap Asal Lembaga</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="activeTab === 'lembaga' ? 'bg-white text-slate-900' : 'bg-sky-500/20 text-sky-300'">{{ $totalInstitutionsCount }} SD/MI</span>
+        </button>
+
         <button @click="activeTab = 'juara'" :class="activeTab === 'juara' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white'" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
             <i data-lucide="medal" class="w-4 h-4 text-[#FF58D5]"></i>
-            <span>5. Rekap Semua Peraih Juara</span>
+            <span>6. Rekap Semua Peraih Juara</span>
         </button>
 
         <button @click="activeTab = 'juara-umum'" :class="activeTab === 'juara-umum' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white'" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
             <i data-lucide="trophy" class="w-4 h-4 text-amber-400"></i>
-            <span>6. Rekap Juara Umum</span>
+            <span>7. Rekap Juara Umum</span>
         </button>
     </div>
 
@@ -1841,7 +1891,322 @@
 
     </div>
 
-    <!-- ==================== TAB 4: REKAP SEMUA PERAIH JUARA ==================== -->
+    <!-- ==================== TAB 5: REKAP ASAL LEMBAGA & PARTISIPASI SEKOLAH ==================== -->
+    <div x-show="activeTab === 'lembaga'" x-transition class="space-y-6">
+        <!-- Overview Stats Grid for Lembaga -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <!-- Card 1: Total Lembaga Terdaftar -->
+            <div class="ai-card rounded-2xl p-3 border border-white/[0.08] shadow-md flex items-center justify-between hover:border-sky-500/50 transition">
+                <div class="space-y-0.5">
+                    <span class="text-[10px] font-bold text-sky-400 uppercase tracking-wider block">Total Lembaga SD/MI</span>
+                    <div class="flex items-baseline gap-1.5">
+                        <span class="text-sm sm:text-base font-black text-white font-mono">{{ $totalInstitutionsCount }}</span>
+                        <span class="text-[10px] text-slate-400 font-medium">Sekolah / Madrasah</span>
+                    </div>
+                    <div class="text-[10px] text-slate-400 font-medium pt-0.5">
+                        Berpartisipasi di TALENTA
+                    </div>
+                </div>
+                <div class="w-8 h-8 rounded-xl bg-sky-500/15 text-sky-400 border border-sky-500/30 flex items-center justify-center shrink-0">
+                    <i data-lucide="building-2" class="w-4 h-4"></i>
+                </div>
+            </div>
+
+            <!-- Card 2: Total Delegasi Siswa -->
+            <div class="ai-card rounded-2xl p-3 border border-white/[0.08] shadow-md flex items-center justify-between hover:border-indigo-500/50 transition">
+                <div class="space-y-0.5">
+                    <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider block">Total Delegasi Siswa</span>
+                    <div class="flex items-baseline gap-1.5">
+                        <span class="text-sm sm:text-base font-black text-indigo-400 font-mono">{{ $totalInstitutionStudents }}</span>
+                        <span class="text-[10px] text-slate-400 font-medium">Peserta Terdaftar</span>
+                    </div>
+                    <div class="text-[10px] text-slate-400 font-medium pt-0.5">
+                        Akumulasi seluruh kontingen
+                    </div>
+                </div>
+                <div class="w-8 h-8 rounded-xl bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 flex items-center justify-center shrink-0">
+                    <i data-lucide="users" class="w-4 h-4"></i>
+                </div>
+            </div>
+
+            <!-- Card 3: Rata-Rata Delegasi per Lembaga -->
+            <div class="ai-card rounded-2xl p-3 border border-white/[0.08] shadow-md flex items-center justify-between hover:border-teal-500/50 transition">
+                <div class="space-y-0.5">
+                    <span class="text-[10px] font-bold text-teal-400 uppercase tracking-wider block">Rata-Rata Delegasi</span>
+                    <div class="flex items-baseline gap-1.5">
+                        <span class="text-sm sm:text-base font-black text-teal-300 font-mono">{{ $totalInstitutionsCount > 0 ? number_format($totalInstitutionStudents / $totalInstitutionsCount, 1, ',', '.') : 0 }}</span>
+                        <span class="text-[10px] text-slate-400 font-medium">Siswa / Sekolah</span>
+                    </div>
+                    <div class="text-[10px] text-slate-400 font-medium pt-0.5">
+                        Rasio partisipasi lembaga
+                    </div>
+                </div>
+                <div class="w-8 h-8 rounded-xl bg-teal-500/15 text-teal-400 border border-teal-500/30 flex items-center justify-center shrink-0">
+                    <i data-lucide="pie-chart" class="w-4 h-4"></i>
+                </div>
+            </div>
+
+            <!-- Card 4: Kontingen Terbesar -->
+            <div class="ai-card rounded-2xl p-3 border border-white/[0.08] shadow-md flex items-center justify-between hover:border-amber-500/50 transition">
+                <div class="space-y-0.5">
+                    <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">Kontingen Terbanyak</span>
+                    <div class="truncate max-w-[150px] sm:max-w-[190px]">
+                        <span class="text-xs sm:text-sm font-black text-white truncate block" title="{{ $topInstitution['name'] ?? '-' }}">{{ $topInstitution['name'] ?? '-' }}</span>
+                    </div>
+                    <div class="text-[10px] text-amber-300/90 font-medium pt-0.5">
+                        <span class="font-bold font-mono text-amber-400">{{ $topInstitution['total_students'] ?? 0 }}</span> Siswa ({{ count($topInstitution['competitions'] ?? []) }} Cabang Lomba)
+                    </div>
+                </div>
+                <div class="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0">
+                    <i data-lucide="crown" class="w-4 h-4"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Card: Table Asal Lembaga -->
+        <div class="ai-card rounded-3xl border border-white/[0.08] shadow-xl p-5 sm:p-7 lg:p-8 space-y-6">
+            <!-- Header & Action Bar -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.08] pb-5">
+                <div>
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-sky-500/15 text-sky-400 border border-sky-500/30 flex items-center justify-center shrink-0">
+                            <i data-lucide="building-2" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base sm:text-lg font-black text-white">Rekapitulasi Partisipasi Asal Lembaga (SD/MI)</h3>
+                            <p class="text-xs text-slate-400">Data lengkap persebaran sekolah/madrasah, cabang lomba yang diikuti, dan jumlah delegasi siswa.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
+                    <button type="button" @click="toggleAllInstitutions()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 hover:text-white text-xs font-bold border border-white/[0.08] transition cursor-pointer">
+                        <i data-lucide="list-tree" class="w-3.5 h-3.5 text-sky-400"></i>
+                        <span x-text="areAllInstitutionsExpanded() ? 'Tutup Semua Rincian Siswa' : 'Buka Semua Rincian Siswa'"></span>
+                    </button>
+                    <button type="button" onclick="window.print()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 text-xs font-bold border border-sky-500/30 transition cursor-pointer">
+                        <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                        <span>Cetak Rekap</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter Controls -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-3 p-4 rounded-2xl bg-[#080D18]/80 border border-white/[0.06]">
+                <!-- Search Input -->
+                <div class="sm:col-span-2 relative">
+                    <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                    <input type="text" x-model="instSearch" placeholder="Cari nama SD/MI, nama siswa, cabang lomba..." class="w-full pl-10 pr-9 py-2.5 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-medium text-white placeholder-slate-500 focus:border-sky-500 focus:ring-1 focus:ring-sky-500/30 outline-none">
+                    <button type="button" x-show="instSearch" @click="instSearch = ''" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
+                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+
+                <!-- Filter Cabang Lomba -->
+                <div>
+                    <select x-model="instFilterComp" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-medium text-slate-200 focus:border-sky-500 outline-none cursor-pointer">
+                        <option value="all">Semua Cabang Lomba</option>
+                        @foreach($competitions as $c)
+                            <option value="{{ $c->id }}">{{ $c->code }} - {{ $c->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Filter Status Pembayaran -->
+                <div>
+                    <select x-model="instFilterStatus" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-medium text-slate-200 focus:border-sky-500 outline-none cursor-pointer">
+                        <option value="all">Semua Status Bayar</option>
+                        <option value="verified">100% Lunas (Terverifikasi)</option>
+                        <option value="pending">Ada Siswa Pending / Belum Verif</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Table Container -->
+            <div class="overflow-x-auto rounded-2xl border border-white/[0.08] bg-[#0A0E1A]/40 shadow-inner">
+                <table class="w-full min-w-[950px] text-left text-xs text-slate-300 border-collapse">
+                    <thead class="text-[10px] font-bold uppercase tracking-wider bg-[#0C111D]/90 text-slate-400 border-b border-white/[0.08]">
+                        <tr>
+                            <th class="py-3.5 px-4 text-center w-12 whitespace-nowrap">NO</th>
+                            <th class="py-3.5 px-4 min-w-[220px] whitespace-nowrap">NAMA ASAL SD/MI / LEMBAGA</th>
+                            <th class="py-3.5 px-4 min-w-[340px]">CABANG LOMBA YANG DIIKUTI & JUMLAH PESERTA</th>
+                            <th class="py-3.5 px-4 text-center whitespace-nowrap w-[130px]">STATUS PESERTA</th>
+                            <th class="py-3.5 px-4 text-center whitespace-nowrap w-[130px]">TOTAL DELEGASI</th>
+                            <th class="py-3.5 px-4 text-center whitespace-nowrap w-[110px]">RINCIAN</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/[0.04] font-medium">
+                        @forelse($institutionRecap as $idx => $inst)
+                            @php
+                                $compIdsJson = json_encode(array_column($inst['competitions'], 'id'));
+                                $allStudentsSearchText = implode(' ', array_map(function($s) {
+                                    return $s['student_names'] . ' ' . $s['competition_name'] . ' ' . $s['reg_code'] . ' ' . $s['participant_number'];
+                                }, $inst['all_students']));
+                                $statusType = ($inst['pending_registrations'] > 0) ? ($inst['verified_registrations'] > 0 ? 'mixed' : 'pending') : 'verified';
+                            @endphp
+                            <!-- Main Row -->
+                            <tr class="hover:bg-white/[0.025] transition cursor-pointer"
+                                x-show="matchesInst('{{ addslashes($inst['name']) }}', {{ $compIdsJson }}, '{{ $statusType }}', '{{ addslashes($allStudentsSearchText) }}')"
+                                @click="toggleInstitution({{ $idx }})">
+                                <td class="py-4 px-4 text-center font-mono font-bold text-slate-400 whitespace-nowrap">
+                                    <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-white/[0.06] text-slate-300 text-xs">
+                                        {{ $idx + 1 }}
+                                    </span>
+                                </td>
+                                <td class="py-4 px-4 min-w-[220px]">
+                                    <div class="flex items-start gap-2.5">
+                                        <div class="w-8 h-8 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                                            <i data-lucide="graduation-cap" class="w-4 h-4"></i>
+                                        </div>
+                                        <div>
+                                            <span class="font-bold text-white text-sm block hover:text-sky-300 transition">{{ $inst['name'] }}</span>
+                                            <div class="flex items-center gap-2 mt-1">
+                                                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-sky-500/15 text-sky-300 border border-sky-500/25">
+                                                    {{ $inst['competitions_count'] }} Cabang Lomba
+                                                </span>
+                                                <span class="text-[11px] text-slate-400">
+                                                    {{ $inst['total_registrations'] }} No. Pendaftaran
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4 min-w-[340px]">
+                                    <div class="flex flex-wrap items-center gap-1.5">
+                                        @foreach($inst['competitions'] as $cItem)
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:border-sky-500/40 transition text-xs font-semibold text-slate-200">
+                                                <span class="w-1.5 h-1.5 rounded-full {{ $cItem['pending_count'] > 0 ? 'bg-amber-400' : 'bg-emerald-400' }}"></span>
+                                                <span class="font-bold text-white">{{ $cItem['name'] }}</span>
+                                                <span class="px-1.5 py-0.2 rounded-md bg-white/[0.1] font-mono font-black text-[11px] text-sky-300">
+                                                    {{ $cItem['count'] }}
+                                                </span>
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4 text-center whitespace-nowrap">
+                                    <div class="flex flex-col items-center gap-1">
+                                        @if($inst['verified_registrations'] > 0)
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-black">
+                                                <i data-lucide="check" class="w-3 h-3"></i>
+                                                <span>{{ $inst['verified_registrations'] }} Lunas</span>
+                                            </span>
+                                        @endif
+                                        @if($inst['pending_registrations'] > 0)
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-black">
+                                                <i data-lucide="clock" class="w-3 h-3"></i>
+                                                <span>{{ $inst['pending_registrations'] }} Pending</span>
+                                            </span>
+                                        @endif
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4 text-center whitespace-nowrap">
+                                    <div class="inline-flex flex-col items-center">
+                                        <span class="text-base sm:text-lg font-black text-white font-mono">{{ $inst['total_students'] }}</span>
+                                        <span class="text-[10px] text-slate-400 font-medium uppercase">Siswa</span>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4 text-center whitespace-nowrap">
+                                    <button type="button" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-sky-500/20 text-slate-300 hover:text-sky-300 text-xs font-bold border border-white/[0.08] transition cursor-pointer"
+                                        :class="expandedInstitutions[{{ $idx }}] ? 'bg-sky-500/20 text-sky-300 border-sky-500/30' : ''">
+                                        <span x-text="expandedInstitutions[{{ $idx }}] ? 'Tutup' : 'Rincian'"></span>
+                                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform duration-200" :class="expandedInstitutions[{{ $idx }}] ? 'rotate-180' : ''"></i>
+                                    </button>
+                                </td>
+                            </tr>
+
+                            <!-- Expandable Sub-Row (Student Details List) -->
+                            <tr x-show="expandedInstitutions[{{ $idx }}] && matchesInst('{{ addslashes($inst['name']) }}', {{ $compIdsJson }}, '{{ $statusType }}', '{{ addslashes($allStudentsSearchText) }}')"
+                                x-transition
+                                class="bg-[#080C16] border-y border-sky-500/20">
+                                <td colspan="6" class="p-4 sm:p-6 space-y-4">
+                                    <!-- Inner Sub-Header -->
+                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.06] pb-3">
+                                        <div class="flex items-center gap-2">
+                                            <i data-lucide="folder-tree" class="w-4 h-4 text-sky-400"></i>
+                                            <h4 class="font-bold text-white text-xs sm:text-sm">
+                                                Rincian Delegasi Siswa: <span class="text-sky-300">{{ $inst['name'] }}</span>
+                                            </h4>
+                                        </div>
+                                        <div class="flex items-center gap-2 text-xs">
+                                            <span class="text-slate-400">Total Delegasi:</span>
+                                            <span class="font-mono font-bold text-white">{{ $inst['total_students'] }} Siswa</span>
+                                            <span class="text-slate-500">•</span>
+                                            <span class="text-slate-400">Mengikuti:</span>
+                                            <span class="font-mono font-bold text-sky-300">{{ count($inst['competitions']) }} Cabang Lomba</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Inner Sub-Table -->
+                                    <div class="overflow-x-auto rounded-xl border border-white/[0.06] bg-[#060911]">
+                                        <table class="w-full text-left text-xs text-slate-300 border-collapse">
+                                            <thead class="text-[10px] font-bold uppercase tracking-wider bg-white/[0.03] text-slate-400 border-b border-white/[0.06]">
+                                                <tr>
+                                                    <th class="py-2.5 px-3 text-center w-10">NO</th>
+                                                    <th class="py-2.5 px-3 whitespace-nowrap">NO. PESERTA / KODE</th>
+                                                    <th class="py-2.5 px-3 min-w-[180px]">NAMA SISWA / TIM</th>
+                                                    <th class="py-2.5 px-3 whitespace-nowrap">CABANG LOMBA</th>
+                                                    <th class="py-2.5 px-3 whitespace-nowrap">KELAS / KATEGORI</th>
+                                                    <th class="py-2.5 px-3 text-center whitespace-nowrap">STATUS BAYAR</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-white/[0.03] text-[11px]">
+                                                @foreach($inst['all_students'] as $sIdx => $student)
+                                                    <tr class="hover:bg-white/[0.02] transition">
+                                                        <td class="py-2.5 px-3 text-center font-mono text-slate-500">{{ $sIdx + 1 }}</td>
+                                                        <td class="py-2.5 px-3 font-mono font-bold text-sky-300 whitespace-nowrap">
+                                                            <div>{{ $student['participant_number'] ?: '-' }}</div>
+                                                            <div class="text-[10px] text-slate-500 font-normal">{{ $student['reg_code'] }}</div>
+                                                        </td>
+                                                        <td class="py-2.5 px-3 font-bold text-white min-w-[180px]">
+                                                            {{ $student['student_names'] }}
+                                                        </td>
+                                                        <td class="py-2.5 px-3 whitespace-nowrap">
+                                                            <span class="font-semibold text-slate-200">{{ $student['competition_name'] }}</span>
+                                                            <span class="text-[10px] text-slate-400 block">{{ $student['category_name'] }}</span>
+                                                        </td>
+                                                        <td class="py-2.5 px-3 whitespace-nowrap text-slate-300 font-mono">
+                                                            {{ $student['target_class'] }}
+                                                        </td>
+                                                        <td class="py-2.5 px-3 text-center whitespace-nowrap">
+                                                            @if(in_array($student['status'], ['verified', 'paid']))
+                                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                                                    LUNAS
+                                                                </span>
+                                                            @elseif($student['status'] === 'pending')
+                                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                                                                    MENUNGGU
+                                                                </span>
+                                                            @elseif($student['status'] === 'revision')
+                                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                                                                    REVISI
+                                                                </span>
+                                                            @else
+                                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-500/15 text-slate-400 border border-slate-500/30 uppercase">
+                                                                    {{ $student['status'] }}
+                                                                </span>
+                                                            @endif
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="py-12 text-center text-slate-500">
+                                    Belum ada data pendaftar sekolah/lembaga yang tercatat.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== TAB 6: REKAP SEMUA PERAIH JUARA ==================== -->
     <div x-show="activeTab === 'juara'" x-transition class="space-y-6">
         <div class="ai-card rounded-3xl border border-white/[0.08] shadow-xl p-5 sm:p-7 lg:p-8 space-y-6">
             <div class="flex items-center justify-between border-b border-white/[0.08] pb-4">
