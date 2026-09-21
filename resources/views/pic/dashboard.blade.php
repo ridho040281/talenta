@@ -1105,8 +1105,17 @@
 
                             <!-- Asal Sekolah -->
                             <td class="py-3 px-3.5 sm:px-4">
-                                <span class="text-xs font-bold text-slate-200 block" x-text="item.display_school"></span>
-                                <span class="text-[10px] text-slate-400" x-text="item.official_name ? 'Official: ' + item.official_name : ''"></span>
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="text-xs font-bold text-slate-200" x-text="item.display_school"></span>
+                                    <template x-if="item.has_teammates">
+                                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0 inline-flex items-center gap-1 shadow-xs"
+                                              :title="'Sekolah ini memiliki ' + (item.same_school_count > 1 ? item.same_school_count : 'beberapa') + ' peserta delegasi di cabang lomba ini (Proteksi BWF Aktif)'">
+                                            <span>🛡️</span>
+                                            <span>Satu Delegasi</span>
+                                        </span>
+                                    </template>
+                                </div>
+                                <span class="text-[10px] text-slate-400 block" x-text="item.official_name ? 'Official: ' + item.official_name : ''"></span>
                             </td>
 
                             <!-- Berkas & Slip -->
@@ -1468,7 +1477,15 @@
                                             <!-- Asal Sekolah -->
                                             <div>
                                                 <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Asal Sekolah :</span>
-                                                <div class="font-bold text-slate-200" x-text="m.school_name || (selectedReg ? (selectedReg.display_school || selectedReg.institution_name) : '-')"></div>
+                                                <div class="flex items-center gap-1.5 flex-wrap">
+                                                    <div class="font-bold text-slate-200" x-text="m.school_name || (selectedReg ? (selectedReg.display_school || selectedReg.institution_name) : '-')"></div>
+                                                    <template x-if="selectedReg && selectedReg.has_teammates">
+                                                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0 inline-flex items-center gap-1">
+                                                            <span>🛡️</span>
+                                                            <span>Satu Delegasi</span>
+                                                        </span>
+                                                    </template>
+                                                </div>
                                             </div>
 
                                             <!-- NISN -->

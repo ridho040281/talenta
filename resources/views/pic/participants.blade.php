@@ -148,7 +148,20 @@
                                 @endif
                             </td>
                             <td class="py-4 px-6 text-xs font-semibold text-slate-800">
-                                {{ $reg->display_school }}
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span>{{ $reg->display_school }}</span>
+                                    @php
+                                        $sNorm1 = trim(mb_strtolower($reg->display_school ?? ''));
+                                        $sNorm2 = trim(mb_strtolower($reg->institution_name ?? ''));
+                                        $isSameSchool = (!empty($schoolCounts) && ((($schoolCounts[$sNorm1] ?? 0) > 1) || (($schoolCounts[$sNorm2] ?? 0) > 1)));
+                                    @endphp
+                                    @if($isSameSchool)
+                                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 shrink-0 inline-flex items-center gap-1 shadow-xs" title="Sekolah ini memiliki rekan satu delegasi di cabang lomba ini (Proteksi BWF Aktif)">
+                                            <span>🛡️</span>
+                                            <span>Satu Delegasi</span>
+                                        </span>
+                                    @endif
+                                </div>
                             </td>
                             <td class="py-4 px-6 text-xs">
                                 <div class="flex items-center gap-1.5">

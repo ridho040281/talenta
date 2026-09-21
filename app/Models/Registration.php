@@ -500,4 +500,32 @@ class Registration extends Model
 
         return stripos($targetStr, 'kategori c') !== false || stripos($targetStr, 'kat c') !== false || stripos($targetStr, 'kelas 5') !== false || stripos($targetStr, 'kelas 6') !== false || stripos($targetStr, '-c-') !== false || stripos($targetStr, 'kat_c') !== false;
     }
+
+    /**
+     * Helper to get badminton pool classification key (kat_a_pa, kat_a_pi, etc.)
+     */
+    public function getBadmintonPoolKey(): string
+    {
+        $isGanda = $this->isGanda() || stripos($this->target_class ?? '', 'ganda') !== false;
+        $gen = $this->primary_gender;
+        $isMix = ($gen === 'M' || stripos($this->match_type ?? '', 'campuran') !== false);
+        $isPi = ($gen === 'P' || stripos($this->match_type ?? '', 'putri') !== false || stripos($this->match_type ?? '', 'pi') !== false);
+        $genderSuffix = $isMix ? 'mix' : ($isPi ? 'pi' : 'pa');
+
+        if ($isGanda) {
+            return 'ganda_'.$genderSuffix;
+        }
+
+        if ($this->isKatA()) {
+            return 'kat_a_'.$genderSuffix;
+        }
+        if ($this->isKatB()) {
+            return 'kat_b_'.$genderSuffix;
+        }
+        if ($this->isKatC()) {
+            return 'kat_c_'.$genderSuffix;
+        }
+
+        return 'single_'.$genderSuffix;
+    }
 }

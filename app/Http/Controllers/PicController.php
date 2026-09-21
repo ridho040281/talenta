@@ -695,8 +695,38 @@ class PicController extends Controller
         $perPage = min((int) $request->get('per_page', 15), 100);
         $paginated = $query->paginate($perPage);
 
-        $items = $paginated->getCollection()->map(function ($r) {
+        $compIds = $paginated->getCollection()->pluck('competition_id')->unique()->filter()->values()->all();
+        $allCompRegs = Registration::whereIn('competition_id', $compIds)
+            ->with('members:id,registration_id,school_name')
+            ->get(['id', 'competition_id', 'target_class', 'match_type', 'institution_name', 'sub_category']);
+
+        $poolSchoolCounts = [];
+        $compSchoolCounts = [];
+
+        foreach ($allCompRegs as $cr) {
+            $cId = $cr->competition_id;
+            $s1 = trim(mb_strtolower($cr->display_school ?: $cr->institution_name ?: ''));
+            if ($s1 === '' || $s1 === '-') {
+                continue;
+            }
+
+            $poolKey = $cr->getBadmintonPoolKey();
+            $poolLookup = "{$cId}_{$poolKey}_{$s1}";
+            $compLookup = "{$cId}_{$s1}";
+
+            $poolSchoolCounts[$poolLookup] = ($poolSchoolCounts[$poolLookup] ?? 0) + 1;
+            $compSchoolCounts[$compLookup] = ($compSchoolCounts[$compLookup] ?? 0) + 1;
+        }
+
+        $items = $paginated->getCollection()->map(function ($r) use ($poolSchoolCounts, $compSchoolCounts) {
             $firstMember = $r->members->first();
+            $schoolNorm = trim(mb_strtolower($r->display_school ?: $r->institution_name ?: ''));
+            $poolLookup = "{$r->competition_id}_{$r->getBadmintonPoolKey()}_{$schoolNorm}";
+            $compLookup = "{$r->competition_id}_{$schoolNorm}";
+
+            $inPoolCount = ($schoolNorm !== '' && $schoolNorm !== '-') ? ($poolSchoolCounts[$poolLookup] ?? 0) : 0;
+            $inCompCount = ($schoolNorm !== '' && $schoolNorm !== '-') ? ($compSchoolCounts[$compLookup] ?? 0) : 0;
+            $hasTeammates = ($inPoolCount > 1) || ($inCompCount > 1);
 
             return [
                 'id' => $r->id,
@@ -708,6 +738,8 @@ class PicController extends Controller
                 'display_name' => $r->display_name,
                 'team_name' => $r->team_name,
                 'display_school' => $r->display_school,
+                'has_teammates' => $hasTeammates,
+                'same_school_count' => max($inPoolCount, $inCompCount),
                 'official_name' => $r->official_name,
                 'document_file' => $r->document_file,
                 'has_payment_proof' => (bool) ($r->payment_proof || ($r->invoice && $r->invoice->payment_proof)),
@@ -824,16 +856,20 @@ class PicController extends Controller
                 return;
             }
 
-            // If > 16, split into multiple pages:
-            // Intermediate pages have NO signatures (capacity up to 20).
-            // Final page HAS signatures (capacity up to 16).
+            // Detect if this dataset contains multi-member (ganda/team) rows which take double height
+            $isMultiMember = $regs->contains(fn ($r) => $r->members->count() > 1);
+            $maxFinalWithSignatures = $isMultiMember ? 9 : 14;
+            $maxIntermediate = $isMultiMember ? 12 : 20;
+
             $remaining = $regs;
             $startNum = 1;
             $chunks = [];
 
-            while ($remaining->count() > 16) {
-                // If remaining <= 32, split evenly between current and next so both pages are balanced
-                $take = ($remaining->count() <= 32) ? (int) ceil($remaining->count() / 2) : 20;
+            while ($remaining->count() > $maxFinalWithSignatures) {
+                // If remaining <= (2 * maxFinalWithSignatures), split evenly so both pages are balanced
+                $take = ($remaining->count() <= ($maxFinalWithSignatures * 2))
+                    ? (int) ceil($remaining->count() / 2)
+                    : $maxIntermediate;
                 $chunks[] = [
                     'items' => $remaining->slice(0, $take)->values(),
                     'has_signatures' => false,
@@ -1259,7 +1295,22 @@ class PicController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return view('pic.participants', compact('competition', 'registrations', 'statusFilter'));
+        $allRegs = Registration::where('competition_id', $competition->id)
+            ->with('members:id,registration_id,school_name')
+            ->get(['id', 'competition_id', 'target_class', 'match_type', 'institution_name', 'sub_category']);
+        $schoolCounts = [];
+        foreach ($allRegs as $ar) {
+            $s1 = trim(mb_strtolower($ar->display_school ?: ''));
+            $s2 = trim(mb_strtolower($ar->institution_name ?: ''));
+            if ($s1 !== '' && $s1 !== '-') {
+                $schoolCounts[$s1] = ($schoolCounts[$s1] ?? 0) + 1;
+            }
+            if ($s2 !== '' && $s2 !== '-' && $s2 !== $s1) {
+                $schoolCounts[$s2] = ($schoolCounts[$s2] ?? 0) + 1;
+            }
+        }
+
+        return view('pic.participants', compact('competition', 'registrations', 'statusFilter', 'schoolCounts'));
     }
 
     public function verifyParticipant(Request $request, $registration_id)

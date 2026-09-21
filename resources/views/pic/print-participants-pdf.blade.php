@@ -31,8 +31,6 @@
 
         .print-page {
             width: 210mm;
-            height: 297mm;
-            max-height: 297mm;
             min-height: 297mm;
             margin: 0 auto;
             background: white;
@@ -41,7 +39,6 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            overflow: hidden;
         }
 
         @media screen {
@@ -49,7 +46,7 @@
                 box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.1), 0 2px 6px -1px rgba(0, 0, 0, 0.06);
                 border: 1px solid #cbd5e1;
                 border-radius: 6px;
-                padding: 12mm 18mm 10mm 18mm;
+                padding: 10mm 15mm 10mm 15mm;
                 margin-bottom: 24px;
             }
         }
@@ -57,7 +54,6 @@
         @media print {
             html, body { 
                 width: 210mm !important;
-                height: 297mm !important;
                 background: white !important; 
                 -webkit-print-color-adjust: exact; 
                 print-color-adjust: exact; 
@@ -72,19 +68,16 @@
                 border: none !important; 
                 border-radius: 0 !important; 
                 margin: 0 !important; 
-                padding: 12mm 18mm 10mm 18mm !important;
+                padding: 10mm 15mm 10mm 15mm !important;
                 page-break-after: always !important;
                 break-after: page !important;
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
                 width: 210mm !important;
-                height: 297mm !important;
-                max-height: 297mm !important;
                 min-height: 297mm !important;
                 display: flex !important;
                 flex-direction: column !important;
                 justify-content: space-between !important;
-                overflow: hidden !important;
             }
             .print-page:last-child {
                 page-break-after: auto !important;
@@ -97,8 +90,8 @@
         }
 
         .signature-space {
-            height: 65px !important;
-            min-height: 65px !important;
+            height: 40px !important;
+            min-height: 40px !important;
             display: block !important;
         }
     </style>
@@ -146,44 +139,44 @@
                         $kopImage = $appSettings['kop_kegiatan'] ?? ($appSettings['kop_lembaga'] ?? ($appSettings['letterhead_image'] ?? null));
                     @endphp
                     @if(!empty($kopImage))
-                        <div class="mb-2 w-full flex justify-center">
-                            <img src="{{ asset('storage/' . $kopImage) }}" alt="Kop Surat" class="w-full h-auto max-h-[145px] object-contain block">
+                        <div class="mb-1.5 w-full flex justify-center">
+                            <img src="{{ asset('storage/' . $kopImage) }}" alt="Kop Surat" class="w-full h-auto max-h-[115px] object-contain block">
                         </div>
                     @else
-                        <div class="kop-header pb-3 mb-4 kop-double-line">
+                        <div class="kop-header pb-2 mb-2.5 kop-double-line">
                             <div class="flex items-center justify-between gap-4">
-                                <div class="w-16 h-16 shrink-0 flex items-center justify-center">
+                                <div class="w-14 h-14 shrink-0 flex items-center justify-center">
                                     @if(!empty($appSettings['app_logo']))
-                                        <img src="{{ asset('storage/' . $appSettings['app_logo']) }}" alt="Logo" class="max-h-16 max-w-16 object-contain">
+                                        <img src="{{ asset('storage/' . $appSettings['app_logo']) }}" alt="Logo" class="max-h-14 max-w-14 object-contain">
                                     @elseif(!empty($appSettings['favicon']))
-                                        <img src="{{ asset('storage/' . $appSettings['favicon']) }}" alt="Logo" class="max-h-16 max-w-16 object-contain">
+                                        <img src="{{ asset('storage/' . $appSettings['favicon']) }}" alt="Logo" class="max-h-14 max-w-14 object-contain">
                                     @else
-                                        <div class="w-14 h-14 rounded-2xl bg-emerald-700 text-white font-black flex flex-col items-center justify-center shadow-xs">
-                                            <span class="text-[10px] tracking-wider leading-none">MTsN 1</span>
-                                            <span class="text-sm font-black tracking-widest leading-none mt-0.5">BLITAR</span>
+                                        <div class="w-12 h-12 rounded-xl bg-emerald-700 text-white font-black flex flex-col items-center justify-center shadow-xs">
+                                            <span class="text-[9px] tracking-wider leading-none">MTsN 1</span>
+                                            <span class="text-xs font-black tracking-widest leading-none mt-0.5">BLITAR</span>
                                         </div>
                                     @endif
                                 </div>
 
                                 <div class="flex-1 text-center space-y-0.5">
-                                    <div class="text-[11px] font-bold tracking-wider text-slate-600 uppercase">KEMENTERIAN AGAMA REPUBLIK INDONESIA</div>
-                                    <div class="text-[11px] font-bold tracking-wider text-slate-700 uppercase">KANTOR KEMENTERIAN AGAMA KABUPATEN BLITAR</div>
-                                    <div class="text-base sm:text-lg font-black tracking-wide text-slate-900 uppercase">{{ $appSettings['institution_name'] ?? 'MADRASAH TSANAWIYAH NEGERI 1 BLITAR' }}</div>
+                                    <div class="text-[10px] font-bold tracking-wider text-slate-600 uppercase">KEMENTERIAN AGAMA REPUBLIK INDONESIA</div>
+                                    <div class="text-[10px] font-bold tracking-wider text-slate-700 uppercase">KANTOR KEMENTERIAN AGAMA KABUPATEN BLITAR</div>
+                                    <div class="text-sm sm:text-base font-black tracking-wide text-slate-900 uppercase">{{ $appSettings['institution_name'] ?? 'MADRASAH TSANAWIYAH NEGERI 1 BLITAR' }}</div>
                                     <div class="text-xs font-black text-emerald-800 tracking-wider uppercase">PANITIA PELAKSANA {{ $appSettings['event_name'] ?? 'MILAD KE-57' }}</div>
-                                    <div class="text-[10px] text-slate-500">
+                                    <div class="text-[9px] text-slate-500">
                                         {{ $appSettings['address'] ?? 'Jl. Raya Dandong No. 01 Srengat, Blitar, Jawa Timur 66152' }} | Telp: {{ $appSettings['contact_phone'] ?? '(0342) 551234' }} | Website: {{ $appSettings['school_website'] ?? 'mtsn1blitar.sch.id' }}
                                     </div>
                                 </div>
 
-                                <div class="w-16 h-16 shrink-0 flex items-center justify-center">
+                                <div class="w-14 h-14 shrink-0 flex items-center justify-center">
                                     @if(!empty($appSettings['event_logo']))
-                                        <img src="{{ asset('storage/' . $appSettings['event_logo']) }}" alt="Event Logo" class="max-h-16 max-w-16 object-contain">
+                                        <img src="{{ asset('storage/' . $appSettings['event_logo']) }}" alt="Event Logo" class="max-h-14 max-w-14 object-contain">
                                     @elseif(!empty($appSettings['app_logo']))
-                                        <img src="{{ asset('storage/' . $appSettings['app_logo']) }}" alt="Logo" class="max-h-16 max-w-16 object-contain">
+                                        <img src="{{ asset('storage/' . $appSettings['app_logo']) }}" alt="Logo" class="max-h-14 max-w-14 object-contain">
                                     @else
-                                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 text-slate-950 font-black flex flex-col items-center justify-center shadow-xs">
-                                            <i data-lucide="trophy" class="w-6 h-6"></i>
-                                            <span class="text-[8px] font-mono tracking-wider">TALENTA</span>
+                                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 text-slate-950 font-black flex flex-col items-center justify-center shadow-xs">
+                                            <i data-lucide="trophy" class="w-5 h-5"></i>
+                                            <span class="text-[7px] font-mono tracking-wider">TALENTA</span>
                                         </div>
                                     @endif
                                 </div>
@@ -192,11 +185,11 @@
                     @endif
 
                     <!-- ==================== JUDUL DOKUMEN & KATEGORI ==================== -->
-                    <div class="text-center my-3">
+                    <div class="text-center my-2">
                         <h2 class="text-sm sm:text-base font-black uppercase tracking-wider text-slate-900 underline decoration-2 underline-offset-4">
                             DAFTAR NOMINATIF PESERTA RESMI
                         </h2>
-                        <div class="mt-1.5 flex items-center justify-center gap-2 flex-wrap text-xs font-bold">
+                        <div class="mt-1 flex items-center justify-center gap-1.5 flex-wrap text-xs font-bold">
                             <span class="px-2.5 py-0.5 rounded bg-slate-100 text-slate-800">
                                 Cabang: <strong class="text-slate-950">{{ $page['competition_name'] }}</strong>
                             </span>
@@ -217,21 +210,21 @@
                     @endphp
 
                     <!-- ==================== TABEL PESERTA (A4 PORTRAIT) ==================== -->
-                    <div class="mt-3 overflow-x-auto">
+                    <div class="mt-2 overflow-x-auto">
                         <table class="w-full text-left text-xs border-collapse border border-slate-900">
                             <thead>
                                 <tr class="bg-slate-200/90 text-slate-900 font-bold uppercase text-[10px] tracking-wider text-center border-b border-slate-900">
-                                    <th class="py-1.5 px-1.5 border border-slate-900 w-8">No</th>
-                                    <th class="py-1.5 px-2 border border-slate-900 {{ $hideDrawNumber ? 'w-28' : 'w-24' }}">No. Peserta</th>
+                                    <th class="py-1 px-1.5 border border-slate-900 w-8">No</th>
+                                    <th class="py-1 px-2 border border-slate-900 {{ $hideDrawNumber ? 'w-28' : 'w-24' }}">No. Peserta</th>
                                     @if(!$hideDrawNumber)
-                                        <th class="py-1.5 px-1.5 border border-slate-900 w-20">No. Undian</th>
+                                        <th class="py-1 px-1.5 border border-slate-900 w-20">No. Undian</th>
                                     @endif
-                                    <th class="py-1.5 px-3 border border-slate-900 text-left">Nama Atlet / Peserta</th>
-                                    <th class="py-1.5 px-3 border border-slate-900 text-left">Asal Sekolah / Madrasah</th>
-                                    <th class="py-1.5 px-2 border border-slate-900 w-24 text-center">Paraf</th>
+                                    <th class="py-1 px-2.5 border border-slate-900 text-left">Nama Atlet / Peserta</th>
+                                    <th class="py-1 px-2.5 border border-slate-900 text-left">Asal Sekolah / Madrasah</th>
+                                    <th class="py-1 px-2 border border-slate-900 w-24 text-center">Paraf</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-800 text-[11px]">
+                            <tbody class="divide-y divide-slate-800 text-[10.5px]">
                                 @forelse($page['registrations'] as $idx => $reg)
                                     @php
                                         $firstMember = $reg->members->first();
@@ -239,19 +232,19 @@
                                         $rowNum = ($page['start_number'] ?? 1) + $idx;
                                     @endphp
                                     <tr class="border-b border-slate-900">
-                                        <td class="py-1.5 px-1.5 border border-slate-900 text-center font-bold">{{ $rowNum }}</td>
-                                        <td class="py-1.5 px-2 border border-slate-900 font-mono font-bold text-center text-xs">
+                                        <td class="py-1 px-1.5 border border-slate-900 text-center font-bold">{{ $rowNum }}</td>
+                                        <td class="py-1 px-2 border border-slate-900 font-mono font-bold text-center text-[11px]">
                                             {{ $reg->participant_number ?: '-' }}
                                         </td>
                                         @if(!$hideDrawNumber)
-                                            <td class="py-1.5 px-1.5 border border-slate-900 text-center font-black text-sm font-mono text-slate-950">
+                                            <td class="py-1 px-1.5 border border-slate-900 text-center font-black text-xs font-mono text-slate-950">
                                                 {{ $reg->draw_number ? '#' . $reg->draw_number : '-' }}
                                             </td>
                                         @endif
-                                        <td class="py-1.5 px-3 border border-slate-900 font-bold">
+                                        <td class="py-1 px-2.5 border border-slate-900 font-bold">
                                             @if($isGanda)
-                                                <div class="text-slate-950 font-black text-xs">{{ $reg->team_name ?: $reg->pure_name }}</div>
-                                                <div class="text-[10px] text-slate-600 font-medium mt-0.5 leading-tight">
+                                                <div class="text-slate-950 font-black text-[11px]">{{ $reg->team_name ?: $reg->pure_name }}</div>
+                                                <div class="text-[9.5px] text-slate-600 font-medium leading-tight mt-0.5">
                                                     @foreach($reg->members as $m)
                                                         <span>• {{ $m->full_name }} ({{ $m->gender === 'L' ? 'PA' : 'PI' }})</span><br>
                                                     @endforeach
@@ -260,9 +253,9 @@
                                                 <div class="text-slate-950 font-bold">{{ $firstMember?->full_name ?: $reg->pure_name }}</div>
                                             @endif
                                         </td>
-                                        <td class="py-1.5 px-3 border border-slate-900 font-medium">
+                                        <td class="py-1 px-2.5 border border-slate-900 font-medium text-[10.5px]">
                                             @if($isGanda && $reg->members->pluck('school_name')->filter()->unique()->count() > 1)
-                                                <div class="text-[10px] text-slate-800 leading-tight">
+                                                <div class="text-[9.5px] text-slate-800 leading-tight">
                                                     @foreach($reg->members as $m)
                                                         <span>• {{ $m->school_name ?: ($reg->display_school ?: $reg->institution_name) }}</span><br>
                                                     @endforeach
@@ -271,7 +264,7 @@
                                                 <span>{{ $reg->display_school ?: $reg->institution_name }}</span>
                                             @endif
                                         </td>
-                                        <td class="py-1.5 px-2 border border-slate-900 text-center text-slate-400 text-[10px]">
+                                        <td class="py-1 px-2 border border-slate-900 text-center text-slate-400 text-[9.5px]">
                                             {{ $rowNum }}. ........
                                         </td>
                                     </tr>
@@ -288,12 +281,12 @@
 
                     <!-- ==================== TANDA TANGAN RESMI / BERSAMBUNG ==================== -->
                     @if($page['has_signatures'] ?? true)
-                        <div class="mt-6 pt-1" style="page-break-inside: avoid; break-inside: avoid;">
+                        <div class="mt-3 pt-1" style="page-break-inside: avoid; break-inside: avoid;">
                             <div class="flex justify-between items-start text-xs text-slate-800">
                                 <div class="text-center w-56">
                                     <div>Mengetahui,</div>
                                     <div class="font-bold">Ketua Panitia</div>
-                                    <div class="signature-space" style="height: 65px;"></div>
+                                    <div class="signature-space" style="height: 40px;"></div>
                                     <div>
                                         <div class="font-black text-slate-950 underline underline-offset-2">{{ $appSettings['committee_chairman_name'] ?? 'KHOIRUL ANAM, S.Pd' }}</div>
                                         <div class="text-[10px] text-slate-500">{{ !empty($appSettings['committee_chairman_nip']) ? 'NIP. ' . $appSettings['committee_chairman_nip'] : 'Ketua Panitia Pelaksana' }}</div>
@@ -303,7 +296,7 @@
                                 <div class="text-center w-60">
                                     <div>Blitar, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</div>
                                     <div class="font-bold">Koordinator Cabang {{ $page['competition_name'] }}</div>
-                                    <div class="signature-space" style="height: 65px;"></div>
+                                    <div class="signature-space" style="height: 40px;"></div>
                                     <div>
                                         <div class="font-black text-slate-950 underline underline-offset-2">
                                             {{ $page['pic_name'] ?? (Auth::user()->name ?: 'PANITIA PELAKSANA') }}
@@ -314,7 +307,7 @@
                             </div>
                         </div>
                     @else
-                        <div class="mt-3 text-right">
+                        <div class="mt-2.5 text-right">
                             <span class="inline-block text-[10px] font-mono italic text-slate-500 bg-slate-100 px-3 py-1 rounded border border-slate-200">
                                 [ Bersambung ke Halaman Berikutnya... ]
                             </span>
