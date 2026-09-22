@@ -560,7 +560,7 @@ function recapManagerApp() {
     };
 }
 </script>
-<div class="space-y-4" x-data="recapManagerApp()" x-cloak>
+<div class="space-y-4" x-data="recapManagerApp()">
 
     <!-- Flash Notification Alerts -->
     @if(session('success'))
