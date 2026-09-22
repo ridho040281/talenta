@@ -1002,7 +1002,7 @@
                 <tbody class="divide-y divide-white/[0.04] font-medium">
                     <!-- High-Performance Dynamic Template Rows (Only active page rows rendered in DOM) -->
                     <template x-for="(item, index) in paginatedList" :key="item.id">
-                        <tr @click="openVerifyModal(item.id)" class="hover:bg-white/[0.04] transition cursor-pointer group">
+                        <tr class="hover:bg-white/[0.025] transition">
                             <!-- No. Urut -->
                             <td class="py-3 px-3 sm:px-4 text-center font-mono font-bold text-slate-400 text-xs whitespace-nowrap">
                                 <span x-text="(fromItem || ((currentPage - 1) * perPage + 1)) + index"></span>
@@ -1018,7 +1018,7 @@
                             <td class="py-3 px-3.5 sm:px-4">
                                 <template x-if="item.is_ganda">
                                     <div>
-                                        <div class="font-bold text-white text-xs sm:text-sm group-hover:text-[#84D0FF] transition" x-text="item.team_name || item.display_name"></div>
+                                        <div class="font-bold text-white text-xs sm:text-sm" x-text="item.team_name || item.display_name"></div>
                                         <div class="text-[11px] text-slate-400 space-y-0.5 pt-0.5">
                                             <template x-for="(m, mIdx) in (item.members || [])" :key="mIdx">
                                                 <div class="flex items-center gap-1.5">
@@ -1034,7 +1034,7 @@
                                 </template>
                                 <template x-if="!item.is_ganda">
                                     <div>
-                                        <div class="font-bold text-white text-xs sm:text-sm group-hover:text-[#84D0FF] transition" x-text="item.members && item.members[0] ? item.members[0].full_name : item.display_name"></div>
+                                        <div class="font-bold text-white text-xs sm:text-sm" x-text="item.members && item.members[0] ? item.members[0].full_name : item.display_name"></div>
                                         <div class="text-[11px] text-slate-400 pt-0.5">
                                             <span x-text="'NISN: ' + (item.first_member_nisn || '-')"></span>
                                         </div>
@@ -1198,22 +1198,22 @@
                             <td class="py-3 px-3.5 sm:px-4 text-center">
                                 <div class="flex items-center justify-center gap-1.5">
                                     <!-- 1. Icon Mata: Tinjau & Verifikasi Lengkap -->
-                                    <button type="button" @click.stop="openVerifyModal(item.id)" class="w-8 h-8 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 flex items-center justify-center transition cursor-pointer" title="Tinjau Seluruh Data & Verifikasi">
+                                    <button type="button" @click="openVerifyModal(item.id)" class="w-8 h-8 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 flex items-center justify-center transition cursor-pointer" title="Tinjau Seluruh Data & Verifikasi">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                     </button>
 
                                     <!-- 2. Icon Edit: Edit Data Peserta -->
-                                    <button type="button" @click.stop="openEditModal(item.id)" class="w-8 h-8 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] flex items-center justify-center transition cursor-pointer" title="Edit Data Peserta">
+                                    <button type="button" @click="openEditModal(item.id)" class="w-8 h-8 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] flex items-center justify-center transition cursor-pointer" title="Edit Data Peserta">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                     </button>
 
                                     <!-- 3. Icon Cetak: Cetak ID Card / Bukti Satuan -->
-                                    <button type="button" @click.stop="openSinglePrintModal(item.id)" class="w-8 h-8 rounded-xl bg-[#4E6EFF]/15 hover:bg-[#4E6EFF]/25 text-[#84D0FF] border border-[#4E6EFF]/30 flex items-center justify-center transition cursor-pointer" title="Cetak Kartu Peserta / Formulir">
+                                    <button type="button" @click="openSinglePrintModal(item.id)" class="w-8 h-8 rounded-xl bg-[#4E6EFF]/15 hover:bg-[#4E6EFF]/25 text-[#84D0FF] border border-[#4E6EFF]/30 flex items-center justify-center transition cursor-pointer" title="Cetak Kartu Peserta / Formulir">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                                     </button>
 
                                     <!-- 4. Icon Sampah: Hapus Peserta -->
-                                    <form @click.stop :action="'{{ url('pic/peserta') }}/' + item.id + '/hapus'" method="POST" :onsubmit="'return confirm(\'Hapus permanen pendaftaran peserta ' + (item.team_name || (item.members && item.members[0] ? item.members[0].full_name : '') || 'ini').replace(/'/g, '\\\'') + '? Seluruh berkas dan data anggota akan terhapus.\');'" class="inline">
+                                    <form :action="'{{ url('pic/peserta') }}/' + item.id + '/hapus'" method="POST" :onsubmit="'return confirm(\'Hapus permanen pendaftaran peserta ' + (item.team_name || (item.members && item.members[0] ? item.members[0].full_name : '') || 'ini').replace(/'/g, '\\\'') + '? Seluruh berkas dan data anggota akan terhapus.\');'" class="inline">
                                         <input type="hidden" name="_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="w-8 h-8 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 flex items-center justify-center transition cursor-pointer" title="Hapus Data Peserta">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
