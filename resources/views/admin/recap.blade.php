@@ -221,20 +221,20 @@
         let container = null;
         try {
             const targetExportWidth = 1100;
+            const activeCat = (this.recapCategory || 'all').trim().toLowerCase();
 
-            // Buat container staging off-screen dengan lebar pasti 1100px
-            // Bebas dari kendala lebar layar HP, laptop kecil, zoom browser, sidebar, dan overflow parent
+            // Buat container staging off-screen dengan fixed position di luar viewport
             container = document.createElement('div');
             container.setAttribute('x-ignore', '');
             container.id = 'rekapPendaftarExportStaging';
-            container.style.position = 'absolute';
-            container.style.top = '0';
+            container.style.position = 'fixed';
+            container.style.top = '-99999px';
             container.style.left = '0';
             container.style.width = targetExportWidth + 'px';
             container.style.minWidth = targetExportWidth + 'px';
             container.style.maxWidth = targetExportWidth + 'px';
             container.style.zIndex = '-99999';
-            container.style.opacity = '0.01';
+            container.style.opacity = '1';
             container.style.pointerEvents = 'none';
             container.style.overflow = 'visible';
 
@@ -254,11 +254,17 @@
             clone.style.borderRadius = '24px';
             clone.style.overflow = 'visible';
 
-            // Sembunyikan elemen petunjuk mobile di hasil export
-            const mobileSwipeHints = clone.querySelectorAll('.mobile-swipe-hint');
-            mobileSwipeHints.forEach(el => el.style.display = 'none');
+            // Hapus elemen petunjuk mobile dan animasi yang berpotensi membebani render
+            clone.querySelectorAll('.mobile-swipe-hint').forEach(el => el.remove());
+            clone.querySelectorAll('.animate-pulse').forEach(el => el.classList.remove('animate-pulse'));
 
-            // Bersihkan semua atribut Alpine (x-show, x-data, dll) dari klon agar MutationObserver Alpine tidak menyembunyikan baris
+            // Hapus atribut crossorigin dan lazy loading pada seluruh tag img di dalam kloning
+            clone.querySelectorAll('img').forEach(img => {
+                img.removeAttribute('crossorigin');
+                img.removeAttribute('loading');
+            });
+
+            // Bersihkan semua atribut Alpine (x-show, x-data, dll) dari klon
             clone.removeAttribute('x-data');
             clone.querySelectorAll('*').forEach(el => {
                 Array.from(el.attributes).forEach(attr => {
@@ -268,20 +274,32 @@
                 });
             });
 
-            // Pastikan seluruh baris data tabel yang sesuai filter aktif tampil 100% utuh
-            const activeCat = this.recapCategory || 'all';
-            const allRows = clone.querySelectorAll('tbody tr');
+            // Filter baris data tabel: jika kategori tertentu dipilih, hapus baris yang bukan kategorinya
+            let activeCatName = '';
+            const allRows = clone.querySelectorAll('tbody tr[data-category]');
             allRows.forEach(row => {
-                const rowCat = row.getAttribute('data-category') || '';
+                const rowCat = (row.getAttribute('data-category') || '').trim().toLowerCase();
                 if (activeCat === 'all' || rowCat === activeCat) {
                     row.style.setProperty('display', 'table-row', 'important');
                     row.style.setProperty('visibility', 'visible', 'important');
                     row.style.setProperty('opacity', '1', 'important');
                     row.removeAttribute('hidden');
                 } else {
-                    row.style.setProperty('display', 'none', 'important');
+                    row.remove(); // Hapus dari DOM klon agar tinggi dan layout presisi instan
                 }
             });
+
+            // Jika filter kategori aktif, cari nama label kategori dan sesuaikan judul subheader
+            if (activeCat !== 'all') {
+                const activeBtn = document.querySelector(`button[\\@click*="recapCategory = '${this.recapCategory}'"]`);
+                if (activeBtn) {
+                    activeCatName = activeBtn.textContent.trim();
+                }
+                const titleSub = clone.querySelector('.export-title-sub');
+                if (titleSub && activeCatName) {
+                    titleSub.textContent = 'PENDAFTAR - KATEGORI ' + activeCatName.toUpperCase();
+                }
+            }
 
             // Pastikan kontainer tabel di dalam klon tidak memiliki scrollbar atau pemotongan overflow & reset scroll
             const tableContainers = clone.querySelectorAll('.rekap-table-container');
@@ -310,7 +328,7 @@
                 if (el.scrollTop) el.scrollTop = 0;
             });
 
-            // Pastikan seluruh baris judul header tidak pernah wrapping pada hasil ekspor PNG dan memiliki ukuran font proporsional 1100px
+            // Pastikan seluruh baris judul header tidak pernah wrapping pada hasil ekspor PNG
             const headerTitles = clone.querySelectorAll('.export-header-title');
             headerTitles.forEach(el => {
                 el.style.whiteSpace = 'nowrap';
@@ -354,15 +372,17 @@
             container.appendChild(clone);
             document.body.appendChild(container);
 
-            // Berikan waktu 250ms untuk layout reflow, webfonts, dan aset gambar ter-render sempurna
-            await new Promise(resolve => setTimeout(resolve, 250));
+            // Jeda singkat 100ms untuk layout reflow browser
+            await new Promise(resolve => setTimeout(resolve, 100));
 
             // Ukur dimensi elemen sesungguhnya secara akurat
-            const exportHeight = Math.max(600, (clone.scrollHeight || clone.offsetHeight) + 16);
+            const exportHeight = Math.max(350, Math.ceil(clone.scrollHeight || clone.offsetHeight) + 16);
 
-            // Generate gambar beresolusi tinggi dengan htmlToImage
+            // Generate gambar beresolusi tinggi dengan htmlToImage (super cepat & tanpa CORS/font network delays)
             const dataUrl = await htmlToImage.toPng(clone, {
                 pixelRatio: 2,
+                skipFonts: true,
+                cacheBust: false,
                 width: targetExportWidth,
                 height: exportHeight,
                 canvasWidth: targetExportWidth * 2,
@@ -375,7 +395,6 @@
                     transform: 'none',
                 },
                 backgroundColor: '#0C111D',
-                cacheBust: true,
                 imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
             });
 
@@ -384,7 +403,9 @@
             const now = new Date();
             const pad = (n) => String(n).padStart(2, '0');
             const timeTag = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`;
-            link.download = `REKAP-PENDAFTAR-TALENTA-2026-${timeTag}.png`;
+            const catSuffix = (activeCatName || (activeCat !== 'all' ? activeCat : '')).toUpperCase().replace(/[^A-Z0-9]/g, '_');
+            const filenamePrefix = catSuffix ? `REKAP-PENDAFTAR-${catSuffix}-TALENTA-2026` : `REKAP-PENDAFTAR-TALENTA-2026`;
+            link.download = `${filenamePrefix}-${timeTag}.png`;
             link.href = dataUrl;
             link.click();
 
@@ -393,7 +414,15 @@
             }
         } catch (err) {
             console.error('Error saat mengekspor gambar via htmlToImage:', err);
-            alert('Gagal membuat file gambar: ' + (err.message || err));
+            let errMsg = 'Gagal membuat file gambar.';
+            if (err instanceof Error && err.message) {
+                errMsg += ' ' + err.message;
+            } else if (typeof err === 'string') {
+                errMsg += ' ' + err;
+            } else if (err && err.type) {
+                errMsg += ' Terjadi kendala pemuatan aset browser (' + err.type + ').';
+            }
+            alert(errMsg + ' Silakan coba kembali.');
         } finally {
             if (container && container.parentNode) {
                 container.parentNode.removeChild(container);
@@ -1364,12 +1393,24 @@
             <div class="text-center relative z-10 space-y-1 sm:space-y-1.5 px-1">
                 @php
                     $recapHeaderLogo = !empty($appSettings['event_logo']) ? $appSettings['event_logo'] : (!empty($appSettings['app_logo']) ? $appSettings['app_logo'] : null);
+                    $recapHeaderLogoBase64 = null;
+                    if (!empty($recapHeaderLogo)) {
+                        $cleanLogoPath = ltrim(str_replace(['public/', 'storage/'], '', $recapHeaderLogo), '/');
+                        $storagePath = storage_path('app/public/' . $cleanLogoPath);
+                        $publicPath = public_path('storage/' . $cleanLogoPath);
+                        if (file_exists($storagePath)) {
+                            $mime = mime_content_type($storagePath) ?: 'image/png';
+                            $recapHeaderLogoBase64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($storagePath));
+                        } elseif (file_exists($publicPath)) {
+                            $mime = mime_content_type($publicPath) ?: 'image/png';
+                            $recapHeaderLogoBase64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($publicPath));
+                        }
+                    }
                 @endphp
                 @if(!empty($recapHeaderLogo))
                     <div class="flex items-center justify-center mb-2">
-                        <img src="{{ asset('storage/' . $recapHeaderLogo) }}" 
+                        <img src="{{ $recapHeaderLogoBase64 ?? asset('storage/' . $recapHeaderLogo) }}" 
                              alt="Logo" 
-                             crossorigin="anonymous"
                              class="h-20 sm:h-36 md:h-40 w-auto max-w-[280px] sm:max-w-[400px] object-contain drop-shadow-2xl">
                     </div>
                 @endif
@@ -1867,12 +1908,22 @@
                         @foreach($sponsorLogos as $logo)
                             @php
                                 $cleanLogo = ltrim(str_replace(['public/', 'storage/'], '', $logo), '/');
-                                $logoUrl = \Illuminate\Support\Str::startsWith($logo, ['http://', 'https://']) ? $logo : asset('storage/' . $cleanLogo);
+                                $logoDataUrl = null;
+                                $storagePath = storage_path('app/public/' . $cleanLogo);
+                                $publicPath = public_path('storage/' . $cleanLogo);
+                                if (file_exists($storagePath)) {
+                                    $mime = mime_content_type($storagePath) ?: 'image/png';
+                                    $logoDataUrl = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($storagePath));
+                                } elseif (file_exists($publicPath)) {
+                                    $mime = mime_content_type($publicPath) ?: 'image/png';
+                                    $logoDataUrl = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($publicPath));
+                                } else {
+                                    $logoDataUrl = \Illuminate\Support\Str::startsWith($logo, ['http://', 'https://']) ? $logo : asset('storage/' . $cleanLogo);
+                                }
                             @endphp
                             <div class="sponsor-item p-3 sm:p-4 rounded-2xl bg-[#090D17]/90 border border-white/[0.08] shadow-md flex items-center justify-center">
-                                <img src="{{ $logoUrl }}" 
+                                <img src="{{ $logoDataUrl }}" 
                                      alt="Logo Sponsor" 
-                                     crossorigin="anonymous"
                                      class="h-10 sm:h-12 w-auto max-w-[140px] sm:max-w-[170px] object-contain drop-shadow-md"
                                      onerror="this.closest('.sponsor-item')?.remove();">
                             </div>
