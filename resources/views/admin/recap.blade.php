@@ -560,7 +560,7 @@ function recapManagerApp() {
     };
 }
 </script>
-<div class="space-y-4" x-data="recapManagerApp()">
+<div class="space-y-4" x-data="recapManagerApp()" x-cloak>
 
     <!-- Flash Notification Alerts -->
     @if(session('success'))
@@ -687,10 +687,10 @@ function recapManagerApp() {
             <span class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="activeTab === 'pendaftar' ? 'bg-white text-slate-950' : 'bg-cyan-500/20 text-cyan-300'">Infografis</span>
         </button>
 
-        <button @click="activeTab = 'lembaga'" :class="activeTab === 'lembaga' ? 'bg-gradient-to-r from-sky-600 to-indigo-600 text-white shadow-md shadow-sky-600/30 font-black' : 'text-slate-400 hover:text-white'" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
+        <button @click="activeTab = 'lembaga'; fetchInstitutions();" :class="activeTab === 'lembaga' ? 'bg-gradient-to-r from-sky-600 to-indigo-600 text-white shadow-md shadow-sky-600/30 font-black' : 'text-slate-400 hover:text-white'" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
             <i data-lucide="building-2" class="w-4 h-4 text-sky-300"></i>
             <span>5. Rekap Asal Lembaga</span>
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="activeTab === 'lembaga' ? 'bg-white text-slate-900' : 'bg-sky-500/20 text-sky-300'">{{ $totalInstitutionsCount }} SD/MI</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="activeTab === 'lembaga' ? 'bg-white text-slate-900' : 'bg-sky-500/20 text-sky-300'" x-text="instTotalCount + ' SD/MI'"></span>
         </button>
 
         <button @click="activeTab = 'juara'" :class="activeTab === 'juara' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white'" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
