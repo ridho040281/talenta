@@ -27,7 +27,11 @@ class PicController extends Controller
      */
     public static function getManagedCompetitionIds($user): array
     {
-        if (in_array($user->role, ['superadmin', 'panitia'])) {
+        if (! $user) {
+            return [];
+        }
+
+        if (in_array($user->role, ['superadmin', 'panitia', 'admin'])) {
             return Competition::pluck('id')->toArray();
         }
 
@@ -815,8 +819,6 @@ class PicController extends Controller
             return response()->json(['message' => 'Sesi login telah berakhir. Silakan muat ulang halaman.'], 401);
         }
 
-        $competitionIds = self::getManagedCompetitionIds($user);
-
         $reg = Registration::with([
             'competition.category',
             'members',
@@ -826,14 +828,6 @@ class PicController extends Controller
 
         if (! $reg) {
             return response()->json(['message' => 'Data pendaftaran dengan ID #'.$id.' tidak ditemukan.'], 404);
-        }
-
-        if ($user->role === 'pic_lomba' && ! in_array($reg->competition_id, $competitionIds)) {
-            $compName = $reg->competition?->name ?? 'cabang lomba ini';
-
-            return response()->json([
-                'message' => "Anda login sebagai PIC dan tidak memiliki hak akses untuk data peserta cabang {$compName}.",
-            ], 403);
         }
 
         return response()->json($reg);
