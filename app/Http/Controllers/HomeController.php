@@ -17,16 +17,24 @@ class HomeController extends Controller
             $q->withCount('registrations');
         }])->orderBy('order')->get();
 
-        $competitions = Competition::with('category')->withCount('registrations')->get();
+        // Ambil semua kompetisi sekali — dipakai untuk daftar lengkap & featured
+        $competitions = Competition::with('category')->withCount('registrations')->orderBy('order')->get();
+        $featuredCompetitions = $competitions->take(6);
+
+        // Gabungkan 4 count query menjadi satu
+        $statsRaw = Registration::selectRaw('
+            COUNT(*) as total_participants,
+            SUM(CASE WHEN status = "verified" THEN 1 ELSE 0 END) as verified_participants,
+            COUNT(DISTINCT institution_name) as total_schools
+        ')->first();
 
         $stats = [
-            'total_competitions' => Competition::count(),
-            'total_participants' => Registration::count(),
-            'verified_participants' => Registration::where('status', 'verified')->count(),
-            'total_schools' => Registration::distinct('institution_name')->count('institution_name'),
+            'total_competitions' => $competitions->count(),
+            'total_participants' => (int) $statsRaw->total_participants,
+            'verified_participants' => (int) $statsRaw->verified_participants,
+            'total_schools' => (int) $statsRaw->total_schools,
         ];
 
-        $featuredCompetitions = Competition::with('category')->take(6)->get();
         $timelines = Timeline::where('is_active', true)->orderBy('order', 'asc')->get();
 
         return view('public.home', compact('categories', 'competitions', 'stats', 'featuredCompetitions', 'timelines'));

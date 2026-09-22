@@ -29,7 +29,9 @@ class PesertaController extends Controller
             ->latest()
             ->get();
 
+        // Hanya kompetisi yang masih buka — tidak perlu load semua
         $openCompetitions = Competition::with('category')
+            ->where('status', 'buka')
             ->orderBy('order', 'asc')
             ->get();
 
