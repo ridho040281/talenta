@@ -37,492 +37,499 @@
         table-layout: auto !important;
     }
 </style>
-<div class="space-y-4" x-data="{ 
-    activeTab: '{{ in_array(request('tab'), ['lomba', 'buku_kas', 'peserta', 'pendaftar', 'lembaga', 'juara', 'juara-umum']) ? request('tab') : 'lomba' }}',
-    cashflowFilterType: 'all',
-    cashflowFilterStatus: 'all',
-    cashflowSearch: '',
-    // ── Lembaga State ──
-    instSearch: '',
-    instFilterComp: 'all',
-    instFilterStatus: 'all',
-    expandedInstitutions: {},
-    toggleInstitution(idx) {
-        this.expandedInstitutions[idx] = !this.expandedInstitutions[idx];
-    },
-    expandAllInstitutions() {
-        this.expandedInstitutions = {};
-        @foreach($institutionRecap as $idx => $inst)
-            this.expandedInstitutions[{{ $idx }}] = true;
-        @endforeach
-    },
-    collapseAllInstitutions() {
-        this.expandedInstitutions = {};
-    },
-    areAllInstitutionsExpanded() {
-        return Object.keys(this.expandedInstitutions).length >= {{ count($institutionRecap) }} && Object.values(this.expandedInstitutions).every(Boolean);
-    },
-    toggleAllInstitutions() {
-        if (this.areAllInstitutionsExpanded()) {
-            this.collapseAllInstitutions();
-        } else {
-            this.expandAllInstitutions();
-        }
-    },
-    matchesInst(name, compIds, statusType, allStudentsText) {
-        const q = this.instSearch.trim().toLowerCase();
-        if (q) {
-            const matchName = name.toLowerCase().includes(q);
-            const matchStudents = (allStudentsText || '').toLowerCase().includes(q);
-            if (!matchName && !matchStudents) return false;
-        }
-        if (this.instFilterComp !== 'all') {
-            const targetId = parseInt(this.instFilterComp);
-            if (!compIds.includes(targetId)) return false;
-        }
-        if (this.instFilterStatus !== 'all') {
-            if (this.instFilterStatus === 'verified' && statusType !== 'verified') return false;
-            if (this.instFilterStatus === 'pending' && statusType === 'verified') return false;
-        }
-        return true;
-    },
-    // ── Buku Kas AJAX state ──
-    kasItems: [],
-    kasTotal: {{ $cashflowSummary['total_count'] ?? ($cashflowSummary['count_collective'] + $cashflowSummary['count_individual']) }},
-    kasPage: 1,
-    kasLastPage: 1,
-    kasLoading: false,
-    kasLoaded: false,
-    kasPerPage: 25,
-    kasDebounceTimer: null,
-    selectedAdjustmentItem: null,
-    showAdjustmentModal: false,
-    adjustmentForm: {
-        reference_type: 'registration',
-        reference_id: '',
-        ref_no: '',
-        title: '',
-        contact_name: '',
-        institution: '',
-        gross_amount: 0,
-        adjustment_type: 'refund_overpayment',
-        amount: '',
-        bank_account: '',
-        reason: ''
-    },
-    openAdjustmentModal(item) {
-        this.selectedAdjustmentItem = item;
-        this.adjustmentForm.reference_type = item.reference_type;
-        this.adjustmentForm.reference_id = item.id;
-        this.adjustmentForm.ref_no = item.ref_no;
-        this.adjustmentForm.title = item.title;
-        this.adjustmentForm.contact_name = item.contact_name;
-        this.adjustmentForm.institution = item.institution;
-        this.adjustmentForm.gross_amount = item.gross_amount;
-        this.adjustmentForm.adjustment_type = 'refund_overpayment';
-        this.adjustmentForm.amount = '';
-        this.adjustmentForm.bank_account = '';
-        this.adjustmentForm.reason = '';
-        this.showAdjustmentModal = true;
-    },
-    setFullRefund() {
-        if (this.selectedAdjustmentItem) {
-            this.adjustmentForm.amount = this.selectedAdjustmentItem.gross_amount;
-        }
-    },
-    showProofModal: false,
-    proofModalUrl: '',
-    proofModalTitle: '',
-    openProofModal(url, title) {
-        this.proofModalUrl = url;
-        this.proofModalTitle = title;
-        this.showProofModal = true;
-    },
-    showAdjustmentsListModal: false,
-    activeAdjustmentsList: [],
-    activeAdjustmentsTitle: '',
-    openAdjustmentsListModal(item) {
-        this.activeAdjustmentsList = item.adjustments || [];
-        this.activeAdjustmentsTitle = item.ref_no + ' - ' + item.title;
-        this.showAdjustmentsListModal = true;
-    },
-    async fetchKas(page = 1) {
-        if (this.kasLoading) return;
-        this.kasLoading = true;
-        this.kasPage = page;
-        const params = new URLSearchParams({
-            page: page,
-            per_page: this.kasPerPage,
-            type: this.cashflowFilterType,
-            status: this.cashflowFilterStatus,
-            search: this.cashflowSearch,
-        });
-        try {
-            const res = await fetch(`{{ $cashflowApiUrl }}?` + params.toString(), {
-                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+<script>
+function recapManagerApp() {
+    return {
+        activeTab: '{{ in_array(request('tab'), ['lomba', 'buku_kas', 'peserta', 'pendaftar', 'lembaga', 'juara', 'juara-umum']) ? request('tab') : 'lomba' }}',
+        cashflowFilterType: 'all',
+        cashflowFilterStatus: 'all',
+        cashflowSearch: '',
+
+        // ── Lembaga State ──
+        instSearch: '',
+        instFilterComp: 'all',
+        instFilterStatus: 'all',
+        expandedInstitutions: {},
+        toggleInstitution(idx) {
+            this.expandedInstitutions[idx] = !this.expandedInstitutions[idx];
+        },
+        expandAllInstitutions() {
+            this.expandedInstitutions = {};
+            @foreach($institutionRecap as $idx => $inst)
+                this.expandedInstitutions[{{ $idx }}] = true;
+            @endforeach
+        },
+        collapseAllInstitutions() {
+            this.expandedInstitutions = {};
+        },
+        areAllInstitutionsExpanded() {
+            return Object.keys(this.expandedInstitutions).length >= {{ count($institutionRecap) }} && Object.values(this.expandedInstitutions).every(Boolean);
+        },
+        toggleAllInstitutions() {
+            if (this.areAllInstitutionsExpanded()) {
+                this.collapseAllInstitutions();
+            } else {
+                this.expandAllInstitutions();
+            }
+        },
+        matchesInst(name, compIds, statusType, allStudentsText) {
+            const q = this.instSearch.trim().toLowerCase();
+            if (q) {
+                const matchName = name.toLowerCase().includes(q);
+                const matchStudents = (allStudentsText || '').toLowerCase().includes(q);
+                if (!matchName && !matchStudents) return false;
+            }
+            if (this.instFilterComp !== 'all') {
+                const targetId = parseInt(this.instFilterComp);
+                if (!compIds.includes(targetId)) return false;
+            }
+            if (this.instFilterStatus !== 'all') {
+                if (this.instFilterStatus === 'verified' && statusType !== 'verified') return false;
+                if (this.instFilterStatus === 'pending' && statusType === 'verified') return false;
+            }
+            return true;
+        },
+
+        // ── Buku Kas AJAX state ──
+        kasItems: [],
+        kasTotal: {{ $cashflowSummary['total_count'] ?? ($cashflowSummary['count_collective'] + $cashflowSummary['count_individual']) }},
+        kasPage: 1,
+        kasLastPage: 1,
+        kasLoading: false,
+        kasLoaded: false,
+        kasPerPage: 25,
+        kasDebounceTimer: null,
+        selectedAdjustmentItem: null,
+        showAdjustmentModal: false,
+        adjustmentForm: {
+            reference_type: 'registration',
+            reference_id: '',
+            ref_no: '',
+            title: '',
+            contact_name: '',
+            institution: '',
+            gross_amount: 0,
+            adjustment_type: 'refund_overpayment',
+            amount: '',
+            bank_account: '',
+            reason: ''
+        },
+        openAdjustmentModal(item) {
+            this.selectedAdjustmentItem = item;
+            this.adjustmentForm.reference_type = item.reference_type;
+            this.adjustmentForm.reference_id = item.id;
+            this.adjustmentForm.ref_no = item.ref_no;
+            this.adjustmentForm.title = item.title;
+            this.adjustmentForm.contact_name = item.contact_name;
+            this.adjustmentForm.institution = item.institution;
+            this.adjustmentForm.gross_amount = item.gross_amount;
+            this.adjustmentForm.adjustment_type = 'refund_overpayment';
+            this.adjustmentForm.amount = '';
+            this.adjustmentForm.bank_account = '';
+            this.adjustmentForm.reason = '';
+            this.showAdjustmentModal = true;
+        },
+        setFullRefund() {
+            if (this.selectedAdjustmentItem) {
+                this.adjustmentForm.amount = this.selectedAdjustmentItem.gross_amount;
+            }
+        },
+        showProofModal: false,
+        proofModalUrl: '',
+        proofModalTitle: '',
+        openProofModal(url, title) {
+            this.proofModalUrl = url;
+            this.proofModalTitle = title;
+            this.showProofModal = true;
+        },
+        showAdjustmentsListModal: false,
+        activeAdjustmentsList: [],
+        activeAdjustmentsTitle: '',
+        openAdjustmentsListModal(item) {
+            this.activeAdjustmentsList = item.adjustments || [];
+            this.activeAdjustmentsTitle = item.ref_no + ' - ' + item.title;
+            this.showAdjustmentsListModal = true;
+        },
+        async fetchKas(page = 1) {
+            if (this.kasLoading) return;
+            this.kasLoading = true;
+            this.kasPage = page;
+            const params = new URLSearchParams({
+                page: page,
+                per_page: this.kasPerPage,
+                type: this.cashflowFilterType,
+                status: this.cashflowFilterStatus,
+                search: this.cashflowSearch,
             });
-            const json = await res.json();
-            this.kasItems    = json.data;
-            this.kasTotal    = json.total;
-            this.kasPage     = json.current_page;
-            this.kasLastPage = json.last_page;
-            this.kasLoaded   = true;
-        } catch (e) {
-            console.error('Gagal memuat Buku Kas:', e);
-        } finally {
-            this.kasLoading = false;
-        }
-    },
-    onKasFilterChange() {
-        clearTimeout(this.kasDebounceTimer);
-        this.kasDebounceTimer = setTimeout(() => this.fetchKas(1), 400);
-    },
-    downloadingPng: false,
-    recapCategory: 'all',
-    searchQuery: '',
-    selectedCategory: 'all',
-    selectedStatus: 'all',
-    expandedBranches: { 'BLT': true, 'TMJ': true },
-    toggleBranch(code) {
-        this.expandedBranches[code] = !this.expandedBranches[code];
-    },
-    expandAllBranches() {
-        this.expandedBranches = { 'BLT': true, 'TMJ': true };
-    },
-    collapseAllBranches() {
-        this.expandedBranches = {};
-    },
-    areAllBranchesExpanded() {
-        return !!(this.expandedBranches['BLT'] && this.expandedBranches['TMJ']);
-    },
-    toggleAllBranches() {
-        if (this.areAllBranchesExpanded()) {
-            this.collapseAllBranches();
-        } else {
-            this.expandAllBranches();
-        }
-    },
-    async downloadPNG() {
-        if (this.downloadingPng) return;
-        this.downloadingPng = true;
-        
-        const originalCard = document.getElementById('rekapPendaftarCard');
-        if (!originalCard) {
-            this.downloadingPng = false;
-            return;
-        }
-
-        if (typeof htmlToImage === 'undefined') {
-            alert('Pustaka htmlToImage belum selesai dimuat. Silakan muat ulang halaman (Ctrl+F5).');
-            this.downloadingPng = false;
-            return;
-        }
-
-        let container = null;
-        try {
-            const targetExportWidth = 1100;
-            const activeCat = (this.recapCategory || 'all').trim().toLowerCase();
-
-            // Buat container staging off-screen dengan fixed position di luar viewport
-            container = document.createElement('div');
-            container.setAttribute('x-ignore', '');
-            container.id = 'rekapPendaftarExportStaging';
-            container.style.position = 'fixed';
-            container.style.top = '-99999px';
-            container.style.left = '0';
-            container.style.width = targetExportWidth + 'px';
-            container.style.minWidth = targetExportWidth + 'px';
-            container.style.maxWidth = targetExportWidth + 'px';
-            container.style.zIndex = '-99999';
-            container.style.opacity = '1';
-            container.style.pointerEvents = 'none';
-            container.style.overflow = 'visible';
-
-            // Kloning kartu infografis
-            const clone = originalCard.cloneNode(true);
-            clone.setAttribute('x-ignore', '');
-            clone.id = 'rekapPendaftarCard_exportClone';
+            try {
+                const res = await fetch(`{{ $cashflowApiUrl }}?` + params.toString(), {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                });
+                const json = await res.json();
+                this.kasItems    = json.data;
+                this.kasTotal    = json.total;
+                this.kasPage     = json.current_page;
+                this.kasLastPage = json.last_page;
+                this.kasLoaded   = true;
+            } catch (e) {
+                console.error('Gagal memuat Buku Kas:', e);
+            } finally {
+                this.kasLoading = false;
+            }
+        },
+        onKasFilterChange() {
+            clearTimeout(this.kasDebounceTimer);
+            this.kasDebounceTimer = setTimeout(() => this.fetchKas(1), 400);
+        },
+        downloadingPng: false,
+        recapCategory: 'all',
+        searchQuery: '',
+        selectedCategory: 'all',
+        selectedStatus: 'all',
+        expandedBranches: { 'BLT': true, 'TMJ': true },
+        toggleBranch(code) {
+            this.expandedBranches[code] = !this.expandedBranches[code];
+        },
+        expandAllBranches() {
+            this.expandedBranches = { 'BLT': true, 'TMJ': true };
+        },
+        collapseAllBranches() {
+            this.expandedBranches = {};
+        },
+        areAllBranchesExpanded() {
+            return !!(this.expandedBranches['BLT'] && this.expandedBranches['TMJ']);
+        },
+        toggleAllBranches() {
+            if (this.areAllBranchesExpanded()) {
+                this.collapseAllBranches();
+            } else {
+                this.expandAllBranches();
+            }
+        },
+        async downloadPNG() {
+            if (this.downloadingPng) return;
+            this.downloadingPng = true;
             
-            // Format styling kloning agar tidak terpotong sama sekali
-            clone.style.width = targetExportWidth + 'px';
-            clone.style.minWidth = targetExportWidth + 'px';
-            clone.style.maxWidth = targetExportWidth + 'px';
-            clone.style.margin = '0 auto';
-            clone.style.padding = '40px 44px 48px 44px';
-            clone.style.boxSizing = 'border-box';
-            clone.style.backgroundColor = '#0C111D';
-            clone.style.borderRadius = '24px';
-            clone.style.overflow = 'visible';
+            const originalCard = document.getElementById('rekapPendaftarCard');
+            if (!originalCard) {
+                this.downloadingPng = false;
+                return;
+            }
 
-            // Hapus elemen petunjuk mobile dan animasi yang berpotensi membebani render
-            clone.querySelectorAll('.mobile-swipe-hint').forEach(el => el.remove());
-            clone.querySelectorAll('.animate-pulse').forEach(el => el.classList.remove('animate-pulse'));
+            if (typeof htmlToImage === 'undefined') {
+                alert('Pustaka htmlToImage belum selesai dimuat. Silakan muat ulang halaman (Ctrl+F5).');
+                this.downloadingPng = false;
+                return;
+            }
 
-            // Hapus atribut crossorigin dan lazy loading pada seluruh tag img di dalam kloning
-            clone.querySelectorAll('img').forEach(img => {
-                img.removeAttribute('crossorigin');
-                img.removeAttribute('loading');
-            });
+            let container = null;
+            try {
+                const targetExportWidth = 1100;
+                const activeCat = (this.recapCategory || 'all').trim().toLowerCase();
 
-            // Bersihkan semua atribut Alpine (x-show, x-data, dll) dari klon
-            clone.removeAttribute('x-data');
-            clone.querySelectorAll('*').forEach(el => {
-                Array.from(el.attributes).forEach(attr => {
-                    if (attr.name.startsWith('x-')) {
-                        el.removeAttribute(attr.name);
+                // Buat container staging off-screen dengan fixed position di luar viewport
+                container = document.createElement('div');
+                container.setAttribute('x-ignore', '');
+                container.id = 'rekapPendaftarExportStaging';
+                container.style.position = 'fixed';
+                container.style.top = '-99999px';
+                container.style.left = '0';
+                container.style.width = targetExportWidth + 'px';
+                container.style.minWidth = targetExportWidth + 'px';
+                container.style.maxWidth = targetExportWidth + 'px';
+                container.style.zIndex = '-99999';
+                container.style.opacity = '1';
+                container.style.pointerEvents = 'none';
+                container.style.overflow = 'visible';
+
+                // Kloning kartu infografis
+                const clone = originalCard.cloneNode(true);
+                clone.setAttribute('x-ignore', '');
+                clone.id = 'rekapPendaftarCard_exportClone';
+                
+                // Format styling kloning agar tidak terpotong sama sekali
+                clone.style.width = targetExportWidth + 'px';
+                clone.style.minWidth = targetExportWidth + 'px';
+                clone.style.maxWidth = targetExportWidth + 'px';
+                clone.style.margin = '0 auto';
+                clone.style.padding = '40px 44px 48px 44px';
+                clone.style.boxSizing = 'border-box';
+                clone.style.backgroundColor = '#0C111D';
+                clone.style.borderRadius = '24px';
+                clone.style.overflow = 'visible';
+
+                // Hapus elemen petunjuk mobile dan animasi yang berpotensi membebani render
+                clone.querySelectorAll('.mobile-swipe-hint').forEach(el => el.remove());
+                clone.querySelectorAll('.animate-pulse').forEach(el => el.classList.remove('animate-pulse'));
+
+                // Hapus atribut crossorigin dan lazy loading pada seluruh tag img di dalam kloning
+                clone.querySelectorAll('img').forEach(img => {
+                    img.removeAttribute('crossorigin');
+                    img.removeAttribute('loading');
+                });
+
+                // Bersihkan semua atribut Alpine (x-show, x-data, dll) dari klon
+                clone.removeAttribute('x-data');
+                clone.querySelectorAll('*').forEach(el => {
+                    Array.from(el.attributes).forEach(attr => {
+                        if (attr.name.startsWith('x-')) {
+                            el.removeAttribute(attr.name);
+                        }
+                    });
+                });
+
+                // Filter baris data tabel: jika kategori tertentu dipilih, hapus baris yang bukan kategorinya
+                let activeCatName = '';
+                const allRows = clone.querySelectorAll('tbody tr[data-category]');
+                allRows.forEach(row => {
+                    const rowCat = (row.getAttribute('data-category') || '').trim().toLowerCase();
+                    if (activeCat === 'all' || rowCat === activeCat) {
+                        row.style.setProperty('display', 'table-row', 'important');
+                        row.style.setProperty('visibility', 'visible', 'important');
+                        row.style.setProperty('opacity', '1', 'important');
+                        row.removeAttribute('hidden');
+                    } else {
+                        row.remove(); // Hapus dari DOM klon agar tinggi dan layout presisi instan
                     }
                 });
-            });
 
-            // Filter baris data tabel: jika kategori tertentu dipilih, hapus baris yang bukan kategorinya
-            let activeCatName = '';
-            const allRows = clone.querySelectorAll('tbody tr[data-category]');
-            allRows.forEach(row => {
-                const rowCat = (row.getAttribute('data-category') || '').trim().toLowerCase();
-                if (activeCat === 'all' || rowCat === activeCat) {
-                    row.style.setProperty('display', 'table-row', 'important');
-                    row.style.setProperty('visibility', 'visible', 'important');
-                    row.style.setProperty('opacity', '1', 'important');
-                    row.removeAttribute('hidden');
-                } else {
-                    row.remove(); // Hapus dari DOM klon agar tinggi dan layout presisi instan
+                // Jika filter kategori aktif, cari nama label kategori dan sesuaikan judul subheader
+                if (activeCat !== 'all') {
+                    const activeBtn = document.querySelector(`button[\\@click*="recapCategory = '${this.recapCategory}'"]`);
+                    if (activeBtn) {
+                        activeCatName = activeBtn.textContent.trim();
+                    }
+                    const titleSub = clone.querySelector('.export-title-sub');
+                    if (titleSub && activeCatName) {
+                        titleSub.textContent = 'PENDAFTAR - KATEGORI ' + activeCatName.toUpperCase();
+                    }
                 }
-            });
 
-            // Jika filter kategori aktif, cari nama label kategori dan sesuaikan judul subheader
-            if (activeCat !== 'all') {
-                const activeBtn = document.querySelector(`button[\\@click*="recapCategory = '${this.recapCategory}'"]`);
-                if (activeBtn) {
-                    activeCatName = activeBtn.textContent.trim();
+                // Pastikan kontainer tabel di dalam klon tidak memiliki scrollbar atau pemotongan overflow & reset scroll
+                const tableContainers = clone.querySelectorAll('.rekap-table-container');
+                tableContainers.forEach(el => {
+                    el.scrollLeft = 0;
+                    el.style.overflow = 'visible';
+                    el.style.overflowX = 'visible';
+                    el.style.width = '100%';
+                    el.style.maxWidth = '100%';
+                    el.style.minWidth = '1000px';
+                });
+
+                // Pastikan elemen tabel di dalam klon menggunakan lebar penuh 100%
+                const tables = clone.querySelectorAll('table');
+                tables.forEach(t => {
+                    t.style.width = '100%';
+                    t.style.minWidth = '1000px';
+                    t.style.tableLayout = 'auto';
+                });
+
+                // Reset scrollLeft pada seluruh elemen turunan
+                clone.scrollLeft = 0;
+                clone.scrollTop = 0;
+                clone.querySelectorAll('*').forEach(el => {
+                    if (el.scrollLeft) el.scrollLeft = 0;
+                    if (el.scrollTop) el.scrollTop = 0;
+                });
+
+                // Pastikan seluruh baris judul header tidak pernah wrapping pada hasil ekspor PNG
+                const headerTitles = clone.querySelectorAll('.export-header-title');
+                headerTitles.forEach(el => {
+                    el.style.whiteSpace = 'nowrap';
+                    el.style.wordBreak = 'keep-all';
+                    el.style.overflowWrap = 'normal';
+                    el.style.display = 'block';
+                    el.style.width = '100%';
+                    el.style.textAlign = 'center';
+                });
+
+                const titleMain = clone.querySelector('.export-title-main');
+                if (titleMain) {
+                    titleMain.style.fontSize = '34px';
+                    titleMain.style.lineHeight = '1.2';
                 }
                 const titleSub = clone.querySelector('.export-title-sub');
-                if (titleSub && activeCatName) {
-                    titleSub.textContent = 'PENDAFTAR - KATEGORI ' + activeCatName.toUpperCase();
+                if (titleSub) {
+                    titleSub.style.fontSize = '20px';
+                    titleSub.style.lineHeight = '1.2';
                 }
-            }
+                const titleEvent = clone.querySelector('.export-title-event');
+                if (titleEvent) {
+                    titleEvent.style.fontSize = '28px';
+                    titleEvent.style.lineHeight = '1.2';
+                    titleEvent.style.whiteSpace = 'nowrap';
+                }
+                const titleSchool = clone.querySelector('.export-title-school');
+                if (titleSchool) {
+                    titleSchool.style.fontSize = '16px';
+                    titleSchool.style.lineHeight = '1.2';
+                }
 
-            // Pastikan kontainer tabel di dalam klon tidak memiliki scrollbar atau pemotongan overflow & reset scroll
-            const tableContainers = clone.querySelectorAll('.rekap-table-container');
-            tableContainers.forEach(el => {
-                el.scrollLeft = 0;
-                el.style.overflow = 'visible';
-                el.style.overflowX = 'visible';
-                el.style.width = '100%';
-                el.style.maxWidth = '100%';
-                el.style.minWidth = '1000px';
+                // Pastikan badge update timestamp tidak wrapping
+                const timestampBadge = clone.querySelector('.export-timestamp-badge');
+                if (timestampBadge) {
+                    timestampBadge.style.whiteSpace = 'nowrap';
+                    timestampBadge.style.flexWrap = 'nowrap';
+                    timestampBadge.style.display = 'inline-flex';
+                }
+
+                container.appendChild(clone);
+                document.body.appendChild(container);
+
+                // Jeda singkat 100ms untuk layout reflow browser
+                await new Promise(resolve => setTimeout(resolve, 100));
+
+                // Ukur dimensi elemen sesungguhnya secara akurat
+                const exportHeight = Math.max(350, Math.ceil(clone.scrollHeight || clone.offsetHeight) + 16);
+
+                // Generate gambar beresolusi tinggi dengan htmlToImage (super cepat & tanpa CORS/font network delays)
+                const dataUrl = await htmlToImage.toPng(clone, {
+                    pixelRatio: 2,
+                    skipFonts: true,
+                    cacheBust: false,
+                    width: targetExportWidth,
+                    height: exportHeight,
+                    canvasWidth: targetExportWidth * 2,
+                    canvasHeight: exportHeight * 2,
+                    style: {
+                        width: targetExportWidth + 'px',
+                        minWidth: targetExportWidth + 'px',
+                        maxWidth: targetExportWidth + 'px',
+                        margin: '0',
+                        transform: 'none',
+                    },
+                    backgroundColor: '#0C111D',
+                    imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+                });
+
+                // Eksekusi download file PNG
+                const link = document.createElement('a');
+                const now = new Date();
+                const pad = (n) => String(n).padStart(2, '0');
+                const timeTag = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`;
+                const catSuffix = (activeCatName || (activeCat !== 'all' ? activeCat : '')).toUpperCase().replace(/[^A-Z0-9]/g, '_');
+                const filenamePrefix = catSuffix ? `REKAP-PENDAFTAR-${catSuffix}-TALENTA-2026` : `REKAP-PENDAFTAR-TALENTA-2026`;
+                link.download = `${filenamePrefix}-${timeTag}.png`;
+                link.href = dataUrl;
+                link.click();
+
+                if (typeof confetti === 'function') {
+                    confetti({ particleCount: 60, spread: 70, origin: { y: 0.7 } });
+                }
+            } catch (err) {
+                console.error('Error saat mengekspor gambar via htmlToImage:', err);
+                let errMsg = 'Gagal membuat file gambar.';
+                if (err instanceof Error && err.message) {
+                    errMsg += ' ' + err.message;
+                } else if (typeof err === 'string') {
+                    errMsg += ' ' + err;
+                } else if (err && err.type) {
+                    errMsg += ' Terjadi kendala pemuatan aset browser (' + err.type + ').';
+                }
+                alert(errMsg + ' Silakan coba kembali.');
+            } finally {
+                if (container && container.parentNode) {
+                    container.parentNode.removeChild(container);
+                }
+                this.downloadingPng = false;
+            }
+        },
+        pesertaItems: [],
+        isPesertaLoading: true,
+        pesertaCurrentPage: 1,
+        pesertaPerPage: 10,
+        pesertaLastPage: 1,
+        pesertaTotal: 0,
+        pesertaFrom: 0,
+        pesertaTo: 0,
+        _searchDebounceTimer: null,
+        pesertaApiUrl: (function() {
+            try {
+                const u = new URL('{{ route("admin.api.recap_participants") }}', window.location.origin);
+                return u.pathname;
+            } catch(e) {
+                return '/admin/api/recap-participants';
+            }
+        })(),
+
+        init() {
+            this.fetchPeserta(true);
+            this.$watch('searchQuery', () => {
+                clearTimeout(this._searchDebounceTimer);
+                this._searchDebounceTimer = setTimeout(() => {
+                    this.pesertaCurrentPage = 1;
+                    this.fetchPeserta(false);
+                }, 350);
+            });
+            this.$watch('selectedCategory', () => { this.pesertaCurrentPage = 1; this.fetchPeserta(true); });
+            this.$watch('selectedStatus', () => { this.pesertaCurrentPage = 1; this.fetchPeserta(true); });
+            this.$watch('pesertaPerPage', () => { this.pesertaCurrentPage = 1; this.fetchPeserta(true); });
+        },
+
+        async fetchPeserta(immediate = false) {
+            this.isPesertaLoading = true;
+            const params = new URLSearchParams({
+                page: this.pesertaCurrentPage,
+                per_page: this.pesertaPerPage,
+                competition_id: this.selectedCategory,
+                status: this.selectedStatus,
+                search: this.searchQuery || ''
             });
 
-            // Pastikan elemen tabel di dalam klon menggunakan lebar penuh 100%
-            const tables = clone.querySelectorAll('table');
-            tables.forEach(t => {
-                t.style.width = '100%';
-                t.style.minWidth = '1000px';
-                t.style.tableLayout = 'auto';
-            });
-
-            // Reset scrollLeft pada seluruh elemen turunan
-            clone.scrollLeft = 0;
-            clone.scrollTop = 0;
-            clone.querySelectorAll('*').forEach(el => {
-                if (el.scrollLeft) el.scrollLeft = 0;
-                if (el.scrollTop) el.scrollTop = 0;
-            });
-
-            // Pastikan seluruh baris judul header tidak pernah wrapping pada hasil ekspor PNG
-            const headerTitles = clone.querySelectorAll('.export-header-title');
-            headerTitles.forEach(el => {
-                el.style.whiteSpace = 'nowrap';
-                el.style.wordBreak = 'keep-all';
-                el.style.overflowWrap = 'normal';
-                el.style.display = 'block';
-                el.style.width = '100%';
-                el.style.textAlign = 'center';
-            });
-
-            const titleMain = clone.querySelector('.export-title-main');
-            if (titleMain) {
-                titleMain.style.fontSize = '34px';
-                titleMain.style.lineHeight = '1.2';
+            try {
+                const res = await fetch(`${this.pesertaApiUrl}?${params.toString()}`, {
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    this.pesertaItems = data.data || [];
+                    this.pesertaCurrentPage = data.current_page || 1;
+                    this.pesertaLastPage = data.last_page || 1;
+                    this.pesertaTotal = data.total || 0;
+                    this.pesertaFrom = data.from || 0;
+                    this.pesertaTo = data.to || 0;
+                }
+            } catch (e) {
+                console.error('Failed to fetch peserta:', e);
+            } finally {
+                this.isPesertaLoading = false;
             }
-            const titleSub = clone.querySelector('.export-title-sub');
-            if (titleSub) {
-                titleSub.style.fontSize = '20px';
-                titleSub.style.lineHeight = '1.2';
-            }
-            const titleEvent = clone.querySelector('.export-title-event');
-            if (titleEvent) {
-                titleEvent.style.fontSize = '28px';
-                titleEvent.style.lineHeight = '1.2';
-                titleEvent.style.whiteSpace = 'nowrap';
-            }
-            const titleSchool = clone.querySelector('.export-title-school');
-            if (titleSchool) {
-                titleSchool.style.fontSize = '16px';
-                titleSchool.style.lineHeight = '1.2';
-            }
+        },
 
-            // Pastikan badge update timestamp tidak wrapping
-            const timestampBadge = clone.querySelector('.export-timestamp-badge');
-            if (timestampBadge) {
-                timestampBadge.style.whiteSpace = 'nowrap';
-                timestampBadge.style.flexWrap = 'nowrap';
-                timestampBadge.style.display = 'inline-flex';
-            }
-
-            container.appendChild(clone);
-            document.body.appendChild(container);
-
-            // Jeda singkat 100ms untuk layout reflow browser
-            await new Promise(resolve => setTimeout(resolve, 100));
-
-            // Ukur dimensi elemen sesungguhnya secara akurat
-            const exportHeight = Math.max(350, Math.ceil(clone.scrollHeight || clone.offsetHeight) + 16);
-
-            // Generate gambar beresolusi tinggi dengan htmlToImage (super cepat & tanpa CORS/font network delays)
-            const dataUrl = await htmlToImage.toPng(clone, {
-                pixelRatio: 2,
-                skipFonts: true,
-                cacheBust: false,
-                width: targetExportWidth,
-                height: exportHeight,
-                canvasWidth: targetExportWidth * 2,
-                canvasHeight: exportHeight * 2,
-                style: {
-                    width: targetExportWidth + 'px',
-                    minWidth: targetExportWidth + 'px',
-                    maxWidth: targetExportWidth + 'px',
-                    margin: '0',
-                    transform: 'none',
-                },
-                backgroundColor: '#0C111D',
-                imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
-            });
-
-            // Eksekusi download file PNG
-            const link = document.createElement('a');
-            const now = new Date();
-            const pad = (n) => String(n).padStart(2, '0');
-            const timeTag = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`;
-            const catSuffix = (activeCatName || (activeCat !== 'all' ? activeCat : '')).toUpperCase().replace(/[^A-Z0-9]/g, '_');
-            const filenamePrefix = catSuffix ? `REKAP-PENDAFTAR-${catSuffix}-TALENTA-2026` : `REKAP-PENDAFTAR-TALENTA-2026`;
-            link.download = `${filenamePrefix}-${timeTag}.png`;
-            link.href = dataUrl;
-            link.click();
-
-            if (typeof confetti === 'function') {
-                confetti({ particleCount: 60, spread: 70, origin: { y: 0.7 } });
-            }
-        } catch (err) {
-            console.error('Error saat mengekspor gambar via htmlToImage:', err);
-            let errMsg = 'Gagal membuat file gambar.';
-            if (err instanceof Error && err.message) {
-                errMsg += ' ' + err.message;
-            } else if (typeof err === 'string') {
-                errMsg += ' ' + err;
-            } else if (err && err.type) {
-                errMsg += ' Terjadi kendala pemuatan aset browser (' + err.type + ').';
-            }
-            alert(errMsg + ' Silakan coba kembali.');
-        } finally {
-            if (container && container.parentNode) {
-                container.parentNode.removeChild(container);
-            }
-            this.downloadingPng = false;
+        goToPesertaPage(p) {
+            if (typeof p !== 'number') return;
+            if (p < 1) p = 1;
+            if (p > this.pesertaLastPage) p = this.pesertaLastPage;
+            this.pesertaCurrentPage = p;
+            this.fetchPeserta(true);
+            const el = document.getElementById('recapPesertaTableCard');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        },
+        prevPesertaPage() {
+            if (this.pesertaCurrentPage > 1) this.goToPesertaPage(this.pesertaCurrentPage - 1);
+        },
+        nextPesertaPage() {
+            if (this.pesertaCurrentPage < this.pesertaLastPage) this.goToPesertaPage(this.pesertaCurrentPage + 1);
+        },
+        get pesertaPaginationPages() {
+            const total = this.pesertaLastPage;
+            const current = Math.min(Math.max(1, this.pesertaCurrentPage), total);
+            if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+            if (current <= 4) return [1, 2, 3, 4, 5, '...', total];
+            if (current >= total - 3) return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+            return [1, '...', current - 1, current, current + 1, '...', total];
+        },
+        resetFilters() {
+            this.searchQuery = '';
+            this.selectedCategory = 'all';
+            this.selectedStatus = 'all';
+            this.pesertaCurrentPage = 1;
+            this.fetchPeserta(true);
         }
-    },
-    pesertaItems: [],
-    isPesertaLoading: true,
-    pesertaCurrentPage: 1,
-    pesertaPerPage: 10,
-    pesertaLastPage: 1,
-    pesertaTotal: 0,
-    pesertaFrom: 0,
-    pesertaTo: 0,
-    _searchDebounceTimer: null,
-    pesertaApiUrl: (function() {
-        try {
-            const u = new URL('{{ route("admin.api.recap_participants") }}', window.location.origin);
-            return u.pathname;
-        } catch(e) {
-            return '/admin/api/recap-participants';
-        }
-    })(),
-
-    init() {
-        this.fetchPeserta(true);
-        this.$watch('searchQuery', () => {
-            clearTimeout(this._searchDebounceTimer);
-            this._searchDebounceTimer = setTimeout(() => {
-                this.pesertaCurrentPage = 1;
-                this.fetchPeserta(false);
-            }, 350);
-        });
-        this.$watch('selectedCategory', () => { this.pesertaCurrentPage = 1; this.fetchPeserta(true); });
-        this.$watch('selectedStatus', () => { this.pesertaCurrentPage = 1; this.fetchPeserta(true); });
-        this.$watch('pesertaPerPage', () => { this.pesertaCurrentPage = 1; this.fetchPeserta(true); });
-    },
-
-    async fetchPeserta(immediate = false) {
-        this.isPesertaLoading = true;
-        const params = new URLSearchParams({
-            page: this.pesertaCurrentPage,
-            per_page: this.pesertaPerPage,
-            competition_id: this.selectedCategory,
-            status: this.selectedStatus,
-            search: this.searchQuery || ''
-        });
-
-        try {
-            const res = await fetch(`${this.pesertaApiUrl}?${params.toString()}`, {
-                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                this.pesertaItems = data.data || [];
-                this.pesertaCurrentPage = data.current_page || 1;
-                this.pesertaLastPage = data.last_page || 1;
-                this.pesertaTotal = data.total || 0;
-                this.pesertaFrom = data.from || 0;
-                this.pesertaTo = data.to || 0;
-            }
-        } catch (e) {
-            console.error('Failed to fetch peserta:', e);
-        } finally {
-            this.isPesertaLoading = false;
-        }
-    },
-
-    goToPesertaPage(p) {
-        if (typeof p !== 'number') return;
-        if (p < 1) p = 1;
-        if (p > this.pesertaLastPage) p = this.pesertaLastPage;
-        this.pesertaCurrentPage = p;
-        this.fetchPeserta(true);
-        const el = document.getElementById('recapPesertaTableCard');
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    },
-    prevPesertaPage() {
-        if (this.pesertaCurrentPage > 1) this.goToPesertaPage(this.pesertaCurrentPage - 1);
-    },
-    nextPesertaPage() {
-        if (this.pesertaCurrentPage < this.pesertaLastPage) this.goToPesertaPage(this.pesertaCurrentPage + 1);
-    },
-    get pesertaPaginationPages() {
-        const total = this.pesertaLastPage;
-        const current = Math.min(Math.max(1, this.pesertaCurrentPage), total);
-        if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-        if (current <= 4) return [1, 2, 3, 4, 5, '...', total];
-        if (current >= total - 3) return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
-        return [1, '...', current - 1, current, current + 1, '...', total];
-    },
-    resetFilters() {
-        this.searchQuery = '';
-        this.selectedCategory = 'all';
-        this.selectedStatus = 'all';
-        this.pesertaCurrentPage = 1;
-        this.fetchPeserta(true);
-    }
-}">
+    };
+}
+</script>
+<div class="space-y-4" x-data="recapManagerApp()">
 
     <!-- Flash Notification Alerts -->
     @if(session('success'))
