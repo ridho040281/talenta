@@ -114,7 +114,7 @@ Route::middleware(['auth'])->prefix('dokumen')->name('document.')->group(functio
 | PIC Cabang Lomba Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'role:pic_lomba,superadmin,panitia'])->prefix('pic')->name('pic.')->group(function () {
+Route::middleware(['auth', 'role:pic_lomba,superadmin,panitia,admin'])->prefix('pic')->name('pic.')->group(function () {
     Route::get('/dashboard', [PicController::class, 'dashboard'])->name('dashboard');
     Route::get('/lomba/{competition_id}/peserta', [PicController::class, 'participants'])->name('participants');
     Route::get('/peserta/cetak-pdf', [PicController::class, 'printParticipantsPdf'])->name('participants.print.pdf');
