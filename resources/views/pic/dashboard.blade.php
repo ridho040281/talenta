@@ -348,8 +348,12 @@
                 'X-Requested-With': 'XMLHttpRequest'
             }
         })
-            .then(r => {
-                if (!r.ok) throw new Error('HTTP ' + r.status);
+            .then(async r => {
+                if (!r.ok) {
+                    const errJson = await r.json().catch(() => null);
+                    const msg = errJson && errJson.message ? errJson.message : ('HTTP ' + r.status);
+                    throw new Error(msg);
+                }
                 return r.json();
             })
             .then(data => { 
@@ -369,7 +373,7 @@
             .catch(err => {
                 console.error('Verify modal fetch error:', err);
                 this.verifyModal = false;
-                alert('Gagal memuat data verifikasi. Silakan coba lagi.');
+                alert('Gagal memuat data verifikasi: ' + (err.message || 'Silakan coba lagi.'));
             })
             .finally(() => { this.modalLoading = false; });
     },
@@ -383,8 +387,12 @@
                 'X-Requested-With': 'XMLHttpRequest'
             }
         })
-            .then(r => {
-                if (!r.ok) throw new Error('HTTP ' + r.status);
+            .then(async r => {
+                if (!r.ok) {
+                    const errJson = await r.json().catch(() => null);
+                    const msg = errJson && errJson.message ? errJson.message : ('HTTP ' + r.status);
+                    throw new Error(msg);
+                }
                 return r.json();
             })
             .then(raw => {
@@ -425,7 +433,7 @@
             .catch(err => {
                 console.error('Edit modal fetch error:', err);
                 this.editModal = false;
-                alert('Gagal memuat data edit peserta. Silakan coba lagi.');
+                alert('Gagal memuat data edit peserta: ' + (err.message || 'Silakan coba lagi.'));
             })
             .finally(() => { this.modalLoading = false; });
     },
@@ -439,15 +447,19 @@
                 'X-Requested-With': 'XMLHttpRequest'
             }
         })
-            .then(r => {
-                if (!r.ok) throw new Error('HTTP ' + r.status);
+            .then(async r => {
+                if (!r.ok) {
+                    const errJson = await r.json().catch(() => null);
+                    const msg = errJson && errJson.message ? errJson.message : ('HTTP ' + r.status);
+                    throw new Error(msg);
+                }
                 return r.json();
             })
             .then(data => { this.selectedSingleReg = data; })
             .catch(err => {
                 console.error('Print modal fetch error:', err);
                 this.singlePrintModal = false;
-                alert('Gagal memuat berkas cetak. Silakan coba lagi.');
+                alert('Gagal memuat berkas cetak: ' + (err.message || 'Silakan coba lagi.'));
             })
             .finally(() => { this.modalLoading = false; });
     },

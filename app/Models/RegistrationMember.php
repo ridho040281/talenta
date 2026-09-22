@@ -26,27 +26,37 @@ class RegistrationMember extends Model
 
     protected function casts(): array
     {
-        return [
-            'birth_date' => 'date:Y-m-d',
-        ];
+        return [];
     }
 
     protected $appends = [
         'formatted_birth_date',
     ];
 
-    public function getFormattedBirthDateAttribute(): ?string
+    public function getBirthDateAttribute($value): ?string
     {
-        if (! $this->birth_date) {
+        if (empty($value) || $value === '0000-00-00' || $value === '0000-00-00 00:00:00') {
             return null;
         }
 
         try {
-            return $this->birth_date instanceof Carbon
-                ? $this->birth_date->translatedFormat('d F Y')
-                : Carbon::parse($this->birth_date)->translatedFormat('d F Y');
+            return Carbon::parse($value)->format('Y-m-d');
         } catch (\Throwable $e) {
-            return (string) $this->birth_date;
+            return (string) $value;
+        }
+    }
+
+    public function getFormattedBirthDateAttribute(): ?string
+    {
+        $raw = $this->attributes['birth_date'] ?? null;
+        if (empty($raw) || $raw === '0000-00-00' || $raw === '0000-00-00 00:00:00') {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($raw)->translatedFormat('d F Y');
+        } catch (\Throwable $e) {
+            return (string) $raw;
         }
     }
 

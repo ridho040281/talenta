@@ -811,6 +811,10 @@ class PicController extends Controller
     public function apiParticipantDetail($id)
     {
         $user = Auth::user();
+        if (! $user) {
+            return response()->json(['message' => 'Sesi login telah berakhir. Silakan muat ulang halaman.'], 401);
+        }
+
         $competitionIds = self::getManagedCompetitionIds($user);
 
         $reg = Registration::with([
@@ -818,9 +822,19 @@ class PicController extends Controller
             'members',
             'user:id,name,phone,institution_name',
             'invoice:id,invoice_number,status,payment_proof,final_amount',
-        ])
-            ->whereIn('competition_id', $competitionIds)
-            ->findOrFail($id);
+        ])->find($id);
+
+        if (! $reg) {
+            return response()->json(['message' => 'Data pendaftaran dengan ID #'.$id.' tidak ditemukan.'], 404);
+        }
+
+        if ($user->role === 'pic_lomba' && ! in_array($reg->competition_id, $competitionIds)) {
+            $compName = $reg->competition?->name ?? 'cabang lomba ini';
+
+            return response()->json([
+                'message' => "Anda login sebagai PIC dan tidak memiliki hak akses untuk data peserta cabang {$compName}.",
+            ], 403);
+        }
 
         return response()->json($reg);
     }
