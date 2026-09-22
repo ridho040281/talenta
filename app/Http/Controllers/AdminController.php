@@ -1245,106 +1245,36 @@ class AdminController extends Controller
             ];
         })->sortByDesc('total_poin')->values();
 
-        // 7. Tab 7: Rekap Asal Lembaga (Partisipasi SD/MI & Sekolah)
-        $institutionGroups = [];
+        // 7. Tab Rekap Lembaga — Data berat dihitung AJAX saat tab diklik
+        // Hitung summary ringan saja (total lembaga, total siswa, top institution)
+        // agar kartu overview di tab lembaga tetap tampil tanpa menunggu data penuh
+        $instSummaryRaw = Registration::selectRaw('
+            COUNT(DISTINCT institution_name) as total_institutions,
+            COUNT(*) as total_registrations
+        ')->first();
 
-        foreach ($competitions as $comp) {
-            foreach ($comp->registrations as $reg) {
-                // Tentukan nama sekolah/madrasah asal
-                $rawSchool = trim($reg->institution_name ?: '');
-                if (empty($rawSchool) || $rawSchool === '-') {
-                    $rawSchool = trim($reg->display_school ?: '');
-                }
-                if (empty($rawSchool) || $rawSchool === '-') {
-                    $firstMember = $reg->members->first();
-                    $rawSchool = trim($firstMember->school_name ?? '');
-                }
-                if (empty($rawSchool) || $rawSchool === '-') {
-                    $rawSchool = 'Mandiri / Umum';
-                }
+        $totalInstitutionsCount = (int) $instSummaryRaw->total_institutions;
+        $totalInstitutionStudents = (int) $instSummaryRaw->total_registrations;
 
-                // Normalisasi key agar tidak terpecah karena spasi ganda / beda kapitalisasi
-                $cleanKey = mb_strtoupper(preg_replace('/\s+/', ' ', $rawSchool));
+        // Top institution — satu query agregat ringan
+        $topInstRaw = Registration::selectRaw('institution_name, COUNT(*) as cnt')
+            ->whereNotNull('institution_name')
+            ->where('institution_name', '!=', '')
+            ->groupBy('institution_name')
+            ->orderByDesc('cnt')
+            ->first();
 
-                if (! isset($institutionGroups[$cleanKey])) {
-                    $institutionGroups[$cleanKey] = [
-                        'name' => $rawSchool,
-                        'total_students' => 0,
-                        'total_registrations' => 0,
-                        'verified_registrations' => 0,
-                        'pending_registrations' => 0,
-                        'competitions' => [],
-                        'all_students' => [],
-                    ];
-                }
-
-                // Hitung jumlah siswa di pendaftaran ini (jika ganda/tim hitung seluruh anggota)
-                $studentCount = $reg->members->isNotEmpty() ? $reg->members->count() : 1;
-                $institutionGroups[$cleanKey]['total_students'] += $studentCount;
-                $institutionGroups[$cleanKey]['total_registrations']++;
-
-                if (in_array($reg->status, ['verified', 'paid'])) {
-                    $institutionGroups[$cleanKey]['verified_registrations'] += $studentCount;
-                } elseif ($reg->status === 'pending') {
-                    $institutionGroups[$cleanKey]['pending_registrations'] += $studentCount;
-                }
-
-                // Breakdown per cabang lomba
-                $cId = $comp->id;
-                if (! isset($institutionGroups[$cleanKey]['competitions'][$cId])) {
-                    $institutionGroups[$cleanKey]['competitions'][$cId] = [
-                        'id' => $comp->id,
-                        'name' => $comp->name,
-                        'code' => $comp->code,
-                        'category' => $comp->category->name ?? 'Lomba',
-                        'count' => 0,
-                        'verified_count' => 0,
-                        'pending_count' => 0,
-                    ];
-                }
-
-                $institutionGroups[$cleanKey]['competitions'][$cId]['count'] += $studentCount;
-                if (in_array($reg->status, ['verified', 'paid'])) {
-                    $institutionGroups[$cleanKey]['competitions'][$cId]['verified_count'] += $studentCount;
-                } elseif ($reg->status === 'pending') {
-                    $institutionGroups[$cleanKey]['competitions'][$cId]['pending_count'] += $studentCount;
-                }
-
-                // Simpan data siswa untuk rincian delegasi
-                $studentNames = $reg->members->isNotEmpty()
-                    ? $reg->members->pluck('full_name')->filter()->implode(', ')
-                    : ($reg->pure_name ?: '-');
-
-                $institutionGroups[$cleanKey]['all_students'][] = [
-                    'reg_code' => $reg->registration_code ?? '-',
-                    'participant_number' => $reg->participant_number ?? '-',
-                    'student_names' => $studentNames,
-                    'competition_name' => $comp->name,
-                    'competition_code' => $comp->code,
-                    'category_name' => $comp->category->name ?? 'Lomba',
-                    'target_class' => $reg->target_class ?: ($reg->sub_category ?: '-'),
-                    'status' => $reg->status,
-                    'fee' => (float) ($reg->fee ?? 0),
-                ];
-            }
-        }
-
-        // Urutkan berdasarkan total delegasi terbanyak (descending)
-        $institutionRecap = collect($institutionGroups)->values()->map(function ($item) {
-            $item['competitions'] = array_values($item['competitions']);
-            $item['competitions_count'] = count($item['competitions']);
-
-            return $item;
-        })->sortByDesc('total_students')->values();
-
-        $totalInstitutionsCount = $institutionRecap->count();
-        $totalInstitutionStudents = $institutionRecap->sum('total_students');
-        $topInstitution = $institutionRecap->first();
+        $topInstitution = $topInstRaw ? [
+            'name' => $topInstRaw->institution_name,
+            'total_students' => (int) $topInstRaw->cnt,
+            'competitions' => [], // placeholder — detail via AJAX
+        ] : null;
 
         // 8. Categories for Dynamic Filtering
         $categories = Category::orderBy('order', 'asc')->get();
 
         $cashflowApiUrl = route('admin.api.recap_cashflow');
+        $institutionsApiUrl = route('admin.api.recap_institutions');
 
         return view('admin.recap', compact(
             'competitions',
@@ -1356,7 +1286,7 @@ class AdminController extends Controller
             'standings',
             'cashflowSummary',
             'cashflowApiUrl',
-            'institutionRecap',
+            'institutionsApiUrl',
             'totalInstitutionsCount',
             'totalInstitutionStudents',
             'topInstitution'
@@ -1528,6 +1458,119 @@ class AdminController extends Controller
             'from' => $paginated->firstItem() ?? 0,
             'to' => $paginated->lastItem() ?? 0,
         ]);
+    }
+
+    /**
+     * AJAX endpoint untuk Tab Rekap Asal Lembaga — dihitung on-demand saat tab diklik.
+     * GET /admin/api/recap-institutions
+     */
+    public function apiRecapInstitutions()
+    {
+        $competitions = Competition::with([
+            'category:id,name',
+            'registrations' => function ($q) {
+                $q->select('id', 'competition_id', 'status', 'institution_name', 'team_name',
+                    'registration_code', 'participant_number', 'target_class', 'sub_category',
+                    'invoice_id', 'registration_fee', 'user_id')
+                    ->with('members:id,registration_id,full_name,school_name,gender');
+            },
+        ])->select('id', 'name', 'code', 'category_id')->get();
+
+        $institutionGroups = [];
+
+        foreach ($competitions as $comp) {
+            $categoryName = $comp->category->name ?? 'Lomba';
+
+            foreach ($comp->registrations as $reg) {
+                $rawSchool = trim($reg->institution_name ?: '');
+                if (empty($rawSchool) || $rawSchool === '-') {
+                    $firstMember = $reg->members->first();
+                    $rawSchool = trim($firstMember?->school_name ?? '');
+                }
+                if (empty($rawSchool) || $rawSchool === '-') {
+                    $rawSchool = 'Mandiri / Umum';
+                }
+
+                $cleanKey = mb_strtoupper(preg_replace('/\s+/', ' ', $rawSchool));
+
+                if (! isset($institutionGroups[$cleanKey])) {
+                    $institutionGroups[$cleanKey] = [
+                        'name' => $rawSchool,
+                        'total_students' => 0,
+                        'total_registrations' => 0,
+                        'verified_registrations' => 0,
+                        'pending_registrations' => 0,
+                        'competitions' => [],
+                        'all_students' => [],
+                    ];
+                }
+
+                $studentCount = $reg->members->isNotEmpty() ? $reg->members->count() : 1;
+                $institutionGroups[$cleanKey]['total_students'] += $studentCount;
+                $institutionGroups[$cleanKey]['total_registrations'] += 1;
+
+                $isVerified = in_array($reg->status, ['verified', 'paid']);
+                $isPending = $reg->status === 'pending';
+
+                if ($isVerified) {
+                    $institutionGroups[$cleanKey]['verified_registrations'] += $studentCount;
+                } elseif ($isPending) {
+                    $institutionGroups[$cleanKey]['pending_registrations'] += $studentCount;
+                }
+
+                $cId = $comp->id;
+                if (! isset($institutionGroups[$cleanKey]['competitions'][$cId])) {
+                    $institutionGroups[$cleanKey]['competitions'][$cId] = [
+                        'id' => $cId,
+                        'name' => $comp->name,
+                        'code' => $comp->code,
+                        'category' => $categoryName,
+                        'count' => 0,
+                        'verified_count' => 0,
+                        'pending_count' => 0,
+                    ];
+                }
+
+                $institutionGroups[$cleanKey]['competitions'][$cId]['count'] += $studentCount;
+                if ($isVerified) {
+                    $institutionGroups[$cleanKey]['competitions'][$cId]['verified_count'] += $studentCount;
+                } elseif ($isPending) {
+                    $institutionGroups[$cleanKey]['competitions'][$cId]['pending_count'] += $studentCount;
+                }
+
+                $studentNames = $reg->members->isNotEmpty()
+                    ? $reg->members->pluck('full_name')->filter()->implode(', ')
+                    : ($reg->team_name ?: '-');
+
+                $institutionGroups[$cleanKey]['all_students'][] = [
+                    'reg_code' => $reg->registration_code ?? '-',
+                    'participant_number' => $reg->participant_number ?? '-',
+                    'student_names' => $studentNames,
+                    'competition_name' => $comp->name,
+                    'competition_code' => $comp->code,
+                    'category_name' => $categoryName,
+                    'target_class' => $reg->target_class ?: ($reg->sub_category ?: '-'),
+                    'status' => $reg->status,
+                ];
+            }
+        }
+
+        $institutionRecap = collect($institutionGroups)
+            ->values()
+            ->map(function ($item) {
+                $item['competitions'] = array_values($item['competitions']);
+                $item['competitions_count'] = count($item['competitions']);
+
+                return $item;
+            })
+            ->sortByDesc('total_students')
+            ->values();
+
+        return response()->json([
+            'institutions' => $institutionRecap,
+            'total_institutions_count' => $institutionRecap->count(),
+            'total_institution_students' => $institutionRecap->sum('total_students'),
+        ])->header('Cache-Control', 'private, max-age=120');
     }
 
     /**
