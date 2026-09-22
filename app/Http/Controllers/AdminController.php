@@ -1471,7 +1471,7 @@ class AdminController extends Controller
             'registrations' => function ($q) {
                 $q->select('id', 'competition_id', 'status', 'institution_name', 'team_name',
                     'registration_code', 'participant_number', 'target_class', 'sub_category',
-                    'invoice_id', 'registration_fee', 'user_id')
+                    'invoice_id', 'user_id')
                     ->with('members:id,registration_id,full_name,school_name,gender');
             },
         ])->select('id', 'name', 'code', 'category_id')->get();

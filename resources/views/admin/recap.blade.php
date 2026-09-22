@@ -84,11 +84,20 @@ function recapManagerApp() {
                 const res = await fetch('{{ $institutionsApiUrl }}', {
                     headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
                 });
+                if (!res.ok) {
+                    throw new Error('HTTP ' + res.status);
+                }
                 const json = await res.json();
-                this.institutions         = json.institutions;
-                this.instTotalCount       = json.total_institutions_count;
-                this.instTotalStudents    = json.total_institution_students;
-                this.instLoaded           = true;
+                if (json && Array.isArray(json.institutions)) {
+                    this.institutions         = json.institutions;
+                    if (json.total_institutions_count !== undefined) {
+                        this.instTotalCount = json.total_institutions_count;
+                    }
+                    if (json.total_institution_students !== undefined) {
+                        this.instTotalStudents = json.total_institution_students;
+                    }
+                    this.instLoaded = true;
+                }
             } catch (e) {
                 console.error('Gagal memuat Rekap Lembaga:', e);
             } finally {
@@ -691,7 +700,7 @@ function recapManagerApp() {
         <button @click="activeTab = 'lembaga'; fetchInstitutions();" :class="activeTab === 'lembaga' ? 'bg-gradient-to-r from-sky-600 to-indigo-600 text-white shadow-md shadow-sky-600/30 font-black' : 'text-slate-400 hover:text-white'" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
             <i data-lucide="building-2" class="w-4 h-4 text-sky-300"></i>
             <span>5. Rekap Asal Lembaga</span>
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="activeTab === 'lembaga' ? 'bg-white text-slate-900' : 'bg-sky-500/20 text-sky-300'" x-text="instTotalCount + ' SD/MI'"></span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="activeTab === 'lembaga' ? 'bg-white text-slate-900' : 'bg-sky-500/20 text-sky-300'" x-text="(instTotalCount || 0) + ' SD/MI'"></span>
         </button>
 
         <button @click="activeTab = 'juara'" :class="activeTab === 'juara' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white'" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
@@ -1991,7 +2000,7 @@ function recapManagerApp() {
                 <div class="space-y-0.5">
                     <span class="text-[10px] font-bold text-sky-400 uppercase tracking-wider block">Total Lembaga SD/MI</span>
                     <div class="flex items-baseline gap-1.5">
-                        <span class="text-sm sm:text-base font-black text-white font-mono" x-text="instTotalCount"></span>
+                        <span class="text-sm sm:text-base font-black text-white font-mono" x-text="instTotalCount || 0"></span>
                         <span class="text-[10px] text-slate-400 font-medium">Sekolah / Madrasah</span>
                     </div>
                     <div class="text-[10px] text-slate-400 font-medium pt-0.5">
@@ -2008,7 +2017,7 @@ function recapManagerApp() {
                 <div class="space-y-0.5">
                     <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider block">Total Delegasi Siswa</span>
                     <div class="flex items-baseline gap-1.5">
-                        <span class="text-sm sm:text-base font-black text-indigo-400 font-mono" x-text="instTotalStudents"></span>
+                        <span class="text-sm sm:text-base font-black text-indigo-400 font-mono" x-text="instTotalStudents || 0"></span>
                         <span class="text-[10px] text-slate-400 font-medium">Peserta Terdaftar</span>
                     </div>
                     <div class="text-[10px] text-slate-400 font-medium pt-0.5">
