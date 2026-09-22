@@ -19,6 +19,7 @@ use App\Services\WablasNotificationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -929,368 +930,376 @@ class AdminController extends Controller
         return redirect()->route('admin.users')->with('success', 'Akun pengguna "'.$name.'" berhasil dihapus.');
     }
 
-    public function recap()
+    public function recap(Request $request)
     {
-        // 1. Fetch all competitions with lean relations (members & locked scores only, no heavy details/criterion/user/invoice)
-        $competitions = Competition::with([
-            'category',
-            'pic',
-            'registrations' => function ($q) {
-                $q->with([
-                    'members:id,registration_id,gender,full_name,school_name,nisn',
-                    'scores' => function ($sq) {
-                        $sq->select('id', 'registration_id', 'total_score', 'is_locked')
-                            ->where('is_locked', true);
-                    },
-                ]);
-            },
-        ])->withCount('registrations')->get();
-
-        // 2. Cashflow Summary — hanya agregat ringan, data tabel di-load AJAX via apiRecapCashflow()
-        $totalAdjustments = (float) PaymentAdjustment::sum('amount');
-        $countAdjustments = (int) PaymentAdjustment::count();
-        $countCollective = (int) Invoice::count();
-
-        // Pemasukan verifikasi dari invoice kolektif
-        $verifiedInvoiceGross = (float) Invoice::whereIn('status', ['verified', 'paid'])->sum('final_amount');
-        $pendingInvoiceGross = (float) Invoice::where('status', 'pending')->sum('final_amount');
-
-        // Pemasukan dari registrasi mandiri (non-invoice) dihitung in-memory dari $competitions yang sudah dimuat di atas
-        $verifiedMandiriGross = 0.0;
-        $pendingMandiriGross = 0.0;
-        $countIndividual = 0;
-        $countPendingMandiri = 0;
-        $countVerifiedMandiri = 0;
-
-        foreach ($competitions as $comp) {
-            foreach ($comp->registrations as $reg) {
-                $reg->setRelation('competition', $comp);
-                if (is_null($reg->invoice_id)) {
-                    if ($reg->payment_proof || in_array($reg->status, ['verified', 'pending', 'cancelled'])) {
-                        $countIndividual++;
-                    }
-                    if (in_array($reg->status, ['verified', 'paid'])) {
-                        $verifiedMandiriGross += (float) $reg->fee;
-                        $countVerifiedMandiri++;
-                    } elseif ($reg->status === 'pending') {
-                        $pendingMandiriGross += (float) $reg->fee;
-                        $countPendingMandiri++;
-                    }
-                }
-            }
+        if ($request->has('refresh')) {
+            Cache::forget('talenta_admin_recap_summary_data');
         }
 
-        $countPending = (int) Invoice::where('status', 'pending')->count() + $countPendingMandiri;
-        $countVerified = (int) Invoice::whereIn('status', ['verified', 'paid'])->count() + $countVerifiedMandiri;
+        $appSettings = AppSetting::allKeyValues();
 
-        $grossVerified = $verifiedInvoiceGross + $verifiedMandiriGross;
-        $grossPending = $pendingInvoiceGross + $pendingMandiriGross;
+        $data = Cache::remember('talenta_admin_recap_summary_data', 60, function () use ($appSettings) {
+            // 1. Fetch all competitions with lean relations (members & locked scores only, no heavy details/criterion/user/invoice)
+            $competitions = Competition::with([
+                'category',
+                'pic',
+                'registrations' => function ($q) {
+                    $q->with([
+                        'members:id,registration_id,gender,full_name,school_name,nisn',
+                        'scores' => function ($sq) {
+                            $sq->select('id', 'registration_id', 'total_score', 'is_locked')
+                                ->where('is_locked', true);
+                        },
+                    ]);
+                },
+            ])->withCount('registrations')->get();
 
-        $cashflowSummary = [
-            'gross_verified' => $grossVerified,
-            'gross_pending' => $grossPending,
-            'total_refunds' => $totalAdjustments,
-            'net_real_cash' => max(0, $grossVerified - $totalAdjustments),
-            'count_collective' => $countCollective,
-            'count_individual' => $countIndividual,
-            'count_adjustments' => $countAdjustments,
-            'count_pending' => $countPending,
-            'pending_students_count' => 0, // tidak diperlukan lagi di kartu atas
-            'count_verified' => $countVerified,
-            'verified_students_count' => 0, // tidak diperlukan lagi di kartu atas
-            'total_count' => $countCollective + $countIndividual,
-        ];
+            // 2. Cashflow Summary — hanya agregat ringan, data tabel di-load AJAX via apiRecapCashflow()
+            $totalAdjustments = (float) PaymentAdjustment::sum('amount');
+            $countAdjustments = (int) PaymentAdjustment::count();
+            $countCollective = (int) Invoice::count();
 
-        // Bonus diskon per-kompetisi untuk sinkronisasi Tab Rekap Keuangan
-        // Hanya load invoice yang punya bonus_discount > 0 (subset kecil)
-        $compBonusVerified = [];
-        $compBonusPending = [];
-        $bonusInvoices = Invoice::whereColumn('total_amount', '>', 'final_amount')
-            ->with(['registrations.competition'])
-            ->get();
-        foreach ($bonusInvoices as $inv) {
-            foreach ($inv->registrations->groupBy('competition_id') as $cId => $cRegs) {
-                $cObj = $cRegs->first()->competition ?? null;
-                if ($cObj) {
-                    $code = $cObj->code;
-                    $isBonusActive = ($code === 'MIPA') || (AppSetting::get('bonus_active_'.strtolower($code), '0') === '1');
-                    $minQuota = (int) AppSetting::get('bonus_min_'.strtolower($code), 10);
-                    $freeCountPerBatch = (int) AppSetting::get('bonus_free_'.strtolower($code), 1);
-                    $count = $cRegs->count();
-                    if ($isBonusActive && $minQuota > 0 && $count >= $minQuota) {
-                        $freeCount = (int) (floor($count / $minQuota) * $freeCountPerBatch);
-                        $discount = $freeCount * (float) $cObj->registration_fee;
-                        if (in_array($inv->status, ['verified', 'paid'])) {
-                            $compBonusVerified[$cId] = ($compBonusVerified[$cId] ?? 0) + $discount;
-                        } elseif ($inv->status === 'pending') {
-                            $compBonusPending[$cId] = ($compBonusPending[$cId] ?? 0) + $discount;
+            // Pemasukan verifikasi dari invoice kolektif
+            $verifiedInvoiceGross = (float) Invoice::whereIn('status', ['verified', 'paid'])->sum('final_amount');
+            $pendingInvoiceGross = (float) Invoice::where('status', 'pending')->sum('final_amount');
+
+            // Pemasukan dari registrasi mandiri (non-invoice) dihitung in-memory dari $competitions yang sudah dimuat di atas
+            $verifiedMandiriGross = 0.0;
+            $pendingMandiriGross = 0.0;
+            $countIndividual = 0;
+            $countPendingMandiri = 0;
+            $countVerifiedMandiri = 0;
+
+            foreach ($competitions as $comp) {
+                foreach ($comp->registrations as $reg) {
+                    $reg->setRelation('competition', $comp);
+                    if (is_null($reg->invoice_id)) {
+                        if ($reg->payment_proof || in_array($reg->status, ['verified', 'pending', 'cancelled'])) {
+                            $countIndividual++;
+                        }
+                        if (in_array($reg->status, ['verified', 'paid'])) {
+                            $verifiedMandiriGross += (float) $reg->fee;
+                            $countVerifiedMandiri++;
+                        } elseif ($reg->status === 'pending') {
+                            $pendingMandiriGross += (float) $reg->fee;
+                            $countPendingMandiri++;
                         }
                     }
                 }
             }
-        }
 
-        // 3. Tab 1: Financial & Quota Recap per Competition
-        $financeRecap = [];
-        $grandTotals = [
-            'total_quota' => 0,
-            'total_registrations' => 0,
-            'verified_registrations' => 0,
-            'pending_registrations' => 0,
-            'revision_registrations' => 0,
-            'rejected_registrations' => 0,
-            'verified_income' => 0,
-            'pending_income' => 0,
-            'total_potential_income' => 0,
-            'total_max_quota_income' => 0,
-            'total_adjustments' => $totalAdjustments,
-            'net_verified_income' => 0,
-        ];
+            $countPending = (int) Invoice::where('status', 'pending')->count() + $countPendingMandiri;
+            $countVerified = (int) Invoice::whereIn('status', ['verified', 'paid'])->count() + $countVerifiedMandiri;
 
-        foreach ($competitions as $comp) {
-            $regs = $comp->registrations;
-            $totalRegs = $regs->count();
-            $verifiedRegs = $regs->where('status', 'verified');
-            $pendingRegs = $regs->where('status', 'pending');
-            $revisionRegs = $regs->where('status', 'revision');
-            $rejectedRegs = $regs->where('status', 'rejected');
+            $grossVerified = $verifiedInvoiceGross + $verifiedMandiriGross;
+            $grossPending = $pendingInvoiceGross + $pendingMandiriGross;
 
-            $verifiedIncome = max(0, $verifiedRegs->sum(fn ($r) => $r->fee) - ($compBonusVerified[$comp->id] ?? 0));
-            $pendingIncome = max(0, $pendingRegs->sum(fn ($r) => $r->fee) - ($compBonusPending[$comp->id] ?? 0));
-            $totalIncome = $verifiedIncome + $pendingIncome;
-
-            $breakdown = [];
-
-            if ($comp->code === 'BLT') {
-                $katA = $regs->filter(fn ($r) => ! $r->isGanda() && $r->isKatA());
-                $katB = $regs->filter(fn ($r) => ! $r->isGanda() && $r->isKatB());
-                $katC = $regs->filter(fn ($r) => ! $r->isGanda() && $r->isKatC());
-                $ganda = $regs->filter(fn ($r) => $r->isGanda());
-
-                $breakdown = [
-                    [
-                        'name' => '🏸 Kategori A (Kelas 1 – 2 SD/MI)',
-                        'total_regs' => $katA->count(),
-                        'verified_count' => $katA->where('status', 'verified')->count(),
-                        'pending_count' => $katA->where('status', 'pending')->count(),
-                        'verified_income' => $katA->where('status', 'verified')->sum(fn ($r) => $r->fee),
-                        'total_income' => $katA->sum(fn ($r) => $r->fee),
-                    ],
-                    [
-                        'name' => '🏸 Kategori B (Kelas 3 – 4 SD/MI)',
-                        'total_regs' => $katB->count(),
-                        'verified_count' => $katB->where('status', 'verified')->count(),
-                        'pending_count' => $katB->where('status', 'pending')->count(),
-                        'verified_income' => $katB->where('status', 'verified')->sum(fn ($r) => $r->fee),
-                        'total_income' => $katB->sum(fn ($r) => $r->fee),
-                    ],
-                    [
-                        'name' => '🏸 Kategori C (Kelas 5 – 6 SD/MI)',
-                        'total_regs' => $katC->count(),
-                        'verified_count' => $katC->where('status', 'verified')->count(),
-                        'pending_count' => $katC->where('status', 'pending')->count(),
-                        'verified_income' => $katC->where('status', 'verified')->sum(fn ($r) => $r->fee),
-                        'total_income' => $katC->sum(fn ($r) => $r->fee),
-                    ],
-                    [
-                        'name' => '🏸 Sektor Ganda (Semua Kelas)',
-                        'total_regs' => $ganda->count(),
-                        'verified_count' => $ganda->where('status', 'verified')->count(),
-                        'pending_count' => $ganda->where('status', 'pending')->count(),
-                        'verified_income' => $ganda->where('status', 'verified')->sum(fn ($r) => $r->fee),
-                        'total_income' => $ganda->sum(fn ($r) => $r->fee),
-                    ],
-                ];
-            } elseif ($comp->code === 'TMJ') {
-                $katA = $regs->filter(fn ($r) => ! $r->isGanda() && $r->isKatA());
-                $katB = $regs->filter(fn ($r) => ! $r->isGanda() && $r->isKatB());
-
-                $breakdown = [
-                    [
-                        'name' => '🏓 Kategori A (Kelas 1 – 3 SD/MI)',
-                        'total_regs' => $katA->count(),
-                        'verified_count' => $katA->where('status', 'verified')->count(),
-                        'pending_count' => $katA->where('status', 'pending')->count(),
-                        'verified_income' => $katA->where('status', 'verified')->sum(fn ($r) => $r->fee),
-                        'total_income' => $katA->sum(fn ($r) => $r->fee),
-                    ],
-                    [
-                        'name' => '🏓 Kategori B (Kelas 4 – 6 SD/MI)',
-                        'total_regs' => $katB->count(),
-                        'verified_count' => $katB->where('status', 'verified')->count(),
-                        'pending_count' => $katB->where('status', 'pending')->count(),
-                        'verified_income' => $katB->where('status', 'verified')->sum(fn ($r) => $r->fee),
-                        'total_income' => $katB->sum(fn ($r) => $r->fee),
-                    ],
-                ];
-            }
-
-            $financeRecap[] = [
-                'competition' => $comp,
-                'quota' => $comp->quota,
-                'total_regs' => $totalRegs,
-                'verified_count' => $verifiedRegs->count(),
-                'pending_count' => $pendingRegs->count(),
-                'revision_count' => $revisionRegs->count(),
-                'rejected_count' => $rejectedRegs->count(),
-                'verified_income' => $verifiedIncome,
-                'pending_income' => $pendingIncome,
-                'total_income' => $totalIncome,
-                'breakdown' => $breakdown,
+            $cashflowSummary = [
+                'gross_verified' => $grossVerified,
+                'gross_pending' => $grossPending,
+                'total_refunds' => $totalAdjustments,
+                'net_real_cash' => max(0, $grossVerified - $totalAdjustments),
+                'count_collective' => $countCollective,
+                'count_individual' => $countIndividual,
+                'count_adjustments' => $countAdjustments,
+                'count_pending' => $countPending,
+                'pending_students_count' => 0, // tidak diperlukan lagi di kartu atas
+                'count_verified' => $countVerified,
+                'verified_students_count' => 0, // tidak diperlukan lagi di kartu atas
+                'total_count' => $countCollective + $countIndividual,
             ];
 
-            $maxQuotaIncome = 0;
-            if ($comp->code === 'BLT') {
-                $tQuotas = $comp->tier_quotas;
-                $tFees = $comp->tier_fees;
-                $maxQuotaIncome =
-                    (($tQuotas['A_tunggal_pa'] ?? 16) * ($tFees['A_tunggal_pa'] ?? 130000)) +
-                    (($tQuotas['A_tunggal_pi'] ?? 16) * ($tFees['A_tunggal_pi'] ?? 130000)) +
-                    (($tQuotas['B_tunggal_pa'] ?? 16) * ($tFees['B_tunggal_pa'] ?? 150000)) +
-                    (($tQuotas['B_tunggal_pi'] ?? 16) * ($tFees['B_tunggal_pi'] ?? 150000)) +
-                    (($tQuotas['C_tunggal_pa'] ?? 16) * ($tFees['C_tunggal_pa'] ?? 150000)) +
-                    (($tQuotas['C_tunggal_pi'] ?? 16) * ($tFees['C_tunggal_pi'] ?? 150000)) +
-                    (($tQuotas['ganda_pa'] ?? 10) * ($tFees['ganda_pa'] ?? 200000)) +
-                    (($tQuotas['ganda_pi'] ?? 10) * ($tFees['ganda_pi'] ?? 200000));
-            } elseif ($comp->code === 'TMJ') {
-                $tQuotas = $comp->tier_quotas;
-                $tFees = $comp->tier_fees;
-                $maxQuotaIncome =
-                    (($tQuotas['A_tunggal_pa'] ?? 16) * ($tFees['A_tunggal_pa'] ?? 35000)) +
-                    (($tQuotas['A_tunggal_pi'] ?? 16) * ($tFees['A_tunggal_pi'] ?? 35000)) +
-                    (($tQuotas['B_tunggal_pa'] ?? 16) * ($tFees['B_tunggal_pa'] ?? 35000)) +
-                    (($tQuotas['B_tunggal_pi'] ?? 16) * ($tFees['B_tunggal_pi'] ?? 35000));
-            } elseif (in_array($comp->code, ['MTQ', 'POP'])) {
-                $tQuotas = $comp->tier_quotas;
-                $tFees = $comp->tier_fees;
-                $maxQuotaIncome =
-                    (($tQuotas['pa'] ?? ceil($comp->quota / 2)) * ($tFees['pa'] ?? $comp->registration_fee)) +
-                    (($tQuotas['pi'] ?? floor($comp->quota / 2)) * ($tFees['pi'] ?? $comp->registration_fee));
-            } else {
-                $maxQuotaIncome = $comp->quota > 0 ? ($comp->quota * (float) $comp->registration_fee) : 0;
+            // Bonus diskon per-kompetisi untuk sinkronisasi Tab Rekap Keuangan
+            // Hanya load invoice yang punya bonus_discount > 0 (subset kecil)
+            $compBonusVerified = [];
+            $compBonusPending = [];
+            $bonusInvoices = Invoice::whereColumn('total_amount', '>', 'final_amount')
+                ->with(['registrations.competition'])
+                ->get();
+            foreach ($bonusInvoices as $inv) {
+                foreach ($inv->registrations->groupBy('competition_id') as $cId => $cRegs) {
+                    $cObj = $cRegs->first()->competition ?? null;
+                    if ($cObj) {
+                        $code = $cObj->code;
+                        $isBonusActive = ($code === 'MIPA') || (($appSettings['bonus_active_'.strtolower($code)] ?? '0') === '1');
+                        $minQuota = (int) ($appSettings['bonus_min_'.strtolower($code)] ?? 10);
+                        $freeCountPerBatch = (int) ($appSettings['bonus_free_'.strtolower($code)] ?? 1);
+                        $count = $cRegs->count();
+                        if ($isBonusActive && $minQuota > 0 && $count >= $minQuota) {
+                            $freeCount = (int) (floor($count / $minQuota) * $freeCountPerBatch);
+                            $discount = $freeCount * (float) $cObj->registration_fee;
+                            if (in_array($inv->status, ['verified', 'paid'])) {
+                                $compBonusVerified[$cId] = ($compBonusVerified[$cId] ?? 0) + $discount;
+                            } elseif ($inv->status === 'pending') {
+                                $compBonusPending[$cId] = ($compBonusPending[$cId] ?? 0) + $discount;
+                            }
+                        }
+                    }
+                }
             }
 
-            $grandTotals['total_quota'] += $comp->quota;
-            $grandTotals['total_registrations'] += $totalRegs;
-            $grandTotals['verified_registrations'] += $verifiedRegs->count();
-            $grandTotals['pending_registrations'] += $pendingRegs->count();
-            $grandTotals['revision_registrations'] += $revisionRegs->count();
-            $grandTotals['rejected_registrations'] += $rejectedRegs->count();
-            $grandTotals['total_max_quota_income'] += $maxQuotaIncome;
-        }
+            // 3. Tab 1: Financial & Quota Recap per Competition
+            $financeRecap = [];
+            $grandTotals = [
+                'total_quota' => 0,
+                'total_registrations' => 0,
+                'verified_registrations' => 0,
+                'pending_registrations' => 0,
+                'revision_registrations' => 0,
+                'rejected_registrations' => 0,
+                'verified_income' => 0,
+                'pending_income' => 0,
+                'total_potential_income' => 0,
+                'total_max_quota_income' => 0,
+                'total_adjustments' => $totalAdjustments,
+                'net_verified_income' => 0,
+            ];
 
-        // 100% SINKRONISASI KEUANGAN: Grand Totals persis mengikuti Buku Kas Riil
-        $grandTotals['verified_income'] = $cashflowSummary['gross_verified'];
-        $grandTotals['net_verified_income'] = $cashflowSummary['net_real_cash'];
-        $grandTotals['pending_income'] = $cashflowSummary['gross_pending'];
-        $grandTotals['total_potential_income'] = $cashflowSummary['gross_verified'] + $cashflowSummary['gross_pending'];
+            foreach ($competitions as $comp) {
+                $regs = $comp->registrations;
+                $totalRegs = $regs->count();
+                $verifiedRegs = $regs->where('status', 'verified');
+                $pendingRegs = $regs->where('status', 'pending');
+                $revisionRegs = $regs->where('status', 'revision');
+                $rejectedRegs = $regs->where('status', 'rejected');
 
-        // 4. Tab Master Peserta Total Count (Lean count)
-        $totalRegistrationsCount = Registration::count();
+                $verifiedIncome = max(0, $verifiedRegs->sum(fn ($r) => $r->fee) - ($compBonusVerified[$comp->id] ?? 0));
+                $pendingIncome = max(0, $pendingRegs->sum(fn ($r) => $r->fee) - ($compBonusPending[$comp->id] ?? 0));
+                $totalIncome = $verifiedIncome + $pendingIncome;
 
-        // 5. Tab 3: Winners Recap per Competition
-        $winnersByCompetition = [];
-        $institutionScores = [];
+                $breakdown = [];
 
-        foreach ($competitions as $comp) {
-            $ranked = $comp->registrations->where('status', 'verified')->map(function ($reg) {
-                $lockedScores = $reg->scores->where('is_locked', true);
-                $avg = $lockedScores->isNotEmpty() ? $lockedScores->avg('total_score') : 0;
+                if ($comp->code === 'BLT') {
+                    $katA = $regs->filter(fn ($r) => ! $r->isGanda() && $r->isKatA());
+                    $katB = $regs->filter(fn ($r) => ! $r->isGanda() && $r->isKatB());
+                    $katC = $regs->filter(fn ($r) => ! $r->isGanda() && $r->isKatC());
+                    $ganda = $regs->filter(fn ($r) => $r->isGanda());
 
+                    $breakdown = [
+                        [
+                            'name' => '🏸 Kategori A (Kelas 1 – 2 SD/MI)',
+                            'total_regs' => $katA->count(),
+                            'verified_count' => $katA->where('status', 'verified')->count(),
+                            'pending_count' => $katA->where('status', 'pending')->count(),
+                            'verified_income' => $katA->where('status', 'verified')->sum(fn ($r) => $r->fee),
+                            'total_income' => $katA->sum(fn ($r) => $r->fee),
+                        ],
+                        [
+                            'name' => '🏸 Kategori B (Kelas 3 – 4 SD/MI)',
+                            'total_regs' => $katB->count(),
+                            'verified_count' => $katB->where('status', 'verified')->count(),
+                            'pending_count' => $katB->where('status', 'pending')->count(),
+                            'verified_income' => $katB->where('status', 'verified')->sum(fn ($r) => $r->fee),
+                            'total_income' => $katB->sum(fn ($r) => $r->fee),
+                        ],
+                        [
+                            'name' => '🏸 Kategori C (Kelas 5 – 6 SD/MI)',
+                            'total_regs' => $katC->count(),
+                            'verified_count' => $katC->where('status', 'verified')->count(),
+                            'pending_count' => $katC->where('status', 'pending')->count(),
+                            'verified_income' => $katC->where('status', 'verified')->sum(fn ($r) => $r->fee),
+                            'total_income' => $katC->sum(fn ($r) => $r->fee),
+                        ],
+                        [
+                            'name' => '🏸 Sektor Ganda (Semua Kelas)',
+                            'total_regs' => $ganda->count(),
+                            'verified_count' => $ganda->where('status', 'verified')->count(),
+                            'pending_count' => $ganda->where('status', 'pending')->count(),
+                            'verified_income' => $ganda->where('status', 'verified')->sum(fn ($r) => $r->fee),
+                            'total_income' => $ganda->sum(fn ($r) => $r->fee),
+                        ],
+                    ];
+                } elseif ($comp->code === 'TMJ') {
+                    $katA = $regs->filter(fn ($r) => ! $r->isGanda() && $r->isKatA());
+                    $katB = $regs->filter(fn ($r) => ! $r->isGanda() && $r->isKatB());
+
+                    $breakdown = [
+                        [
+                            'name' => '🏓 Kategori A (Kelas 1 – 3 SD/MI)',
+                            'total_regs' => $katA->count(),
+                            'verified_count' => $katA->where('status', 'verified')->count(),
+                            'pending_count' => $katA->where('status', 'pending')->count(),
+                            'verified_income' => $katA->where('status', 'verified')->sum(fn ($r) => $r->fee),
+                            'total_income' => $katA->sum(fn ($r) => $r->fee),
+                        ],
+                        [
+                            'name' => '🏓 Kategori B (Kelas 4 – 6 SD/MI)',
+                            'total_regs' => $katB->count(),
+                            'verified_count' => $katB->where('status', 'verified')->count(),
+                            'pending_count' => $katB->where('status', 'pending')->count(),
+                            'verified_income' => $katB->where('status', 'verified')->sum(fn ($r) => $r->fee),
+                            'total_income' => $katB->sum(fn ($r) => $r->fee),
+                        ],
+                    ];
+                }
+
+                $financeRecap[] = [
+                    'competition' => $comp,
+                    'quota' => $comp->quota,
+                    'total_regs' => $totalRegs,
+                    'verified_count' => $verifiedRegs->count(),
+                    'pending_count' => $pendingRegs->count(),
+                    'revision_count' => $revisionRegs->count(),
+                    'rejected_count' => $rejectedRegs->count(),
+                    'verified_income' => $verifiedIncome,
+                    'pending_income' => $pendingIncome,
+                    'total_income' => $totalIncome,
+                    'breakdown' => $breakdown,
+                ];
+
+                $maxQuotaIncome = 0;
+                if ($comp->code === 'BLT') {
+                    $tQuotas = $comp->tier_quotas;
+                    $tFees = $comp->tier_fees;
+                    $maxQuotaIncome =
+                        (($tQuotas['A_tunggal_pa'] ?? 16) * ($tFees['A_tunggal_pa'] ?? 130000)) +
+                        (($tQuotas['A_tunggal_pi'] ?? 16) * ($tFees['A_tunggal_pi'] ?? 130000)) +
+                        (($tQuotas['B_tunggal_pa'] ?? 16) * ($tFees['B_tunggal_pa'] ?? 150000)) +
+                        (($tQuotas['B_tunggal_pi'] ?? 16) * ($tFees['B_tunggal_pi'] ?? 150000)) +
+                        (($tQuotas['C_tunggal_pa'] ?? 16) * ($tFees['C_tunggal_pa'] ?? 150000)) +
+                        (($tQuotas['C_tunggal_pi'] ?? 16) * ($tFees['C_tunggal_pi'] ?? 150000)) +
+                        (($tQuotas['ganda_pa'] ?? 10) * ($tFees['ganda_pa'] ?? 200000)) +
+                        (($tQuotas['ganda_pi'] ?? 10) * ($tFees['ganda_pi'] ?? 200000));
+                } elseif ($comp->code === 'TMJ') {
+                    $tQuotas = $comp->tier_quotas;
+                    $tFees = $comp->tier_fees;
+                    $maxQuotaIncome =
+                        (($tQuotas['A_tunggal_pa'] ?? 16) * ($tFees['A_tunggal_pa'] ?? 35000)) +
+                        (($tQuotas['A_tunggal_pi'] ?? 16) * ($tFees['A_tunggal_pi'] ?? 35000)) +
+                        (($tQuotas['B_tunggal_pa'] ?? 16) * ($tFees['B_tunggal_pa'] ?? 35000)) +
+                        (($tQuotas['B_tunggal_pi'] ?? 16) * ($tFees['B_tunggal_pi'] ?? 35000));
+                } elseif (in_array($comp->code, ['MTQ', 'POP'])) {
+                    $tQuotas = $comp->tier_quotas;
+                    $tFees = $comp->tier_fees;
+                    $maxQuotaIncome =
+                        (($tQuotas['pa'] ?? ceil($comp->quota / 2)) * ($tFees['pa'] ?? $comp->registration_fee)) +
+                        (($tQuotas['pi'] ?? floor($comp->quota / 2)) * ($tFees['pi'] ?? $comp->registration_fee));
+                } else {
+                    $maxQuotaIncome = $comp->quota > 0 ? ($comp->quota * (float) $comp->registration_fee) : 0;
+                }
+
+                $grandTotals['total_quota'] += $comp->quota;
+                $grandTotals['total_registrations'] += $totalRegs;
+                $grandTotals['verified_registrations'] += $verifiedRegs->count();
+                $grandTotals['pending_registrations'] += $pendingRegs->count();
+                $grandTotals['revision_registrations'] += $revisionRegs->count();
+                $grandTotals['rejected_registrations'] += $rejectedRegs->count();
+                $grandTotals['total_max_quota_income'] += $maxQuotaIncome;
+            }
+
+            // 100% SINKRONISASI KEUANGAN: Grand Totals persis mengikuti Buku Kas Riil
+            $grandTotals['verified_income'] = $cashflowSummary['gross_verified'];
+            $grandTotals['net_verified_income'] = $cashflowSummary['net_real_cash'];
+            $grandTotals['pending_income'] = $cashflowSummary['gross_pending'];
+            $grandTotals['total_potential_income'] = $cashflowSummary['gross_verified'] + $cashflowSummary['gross_pending'];
+
+            // 4. Tab Master Peserta Total Count (Lean count)
+            $totalRegistrationsCount = Registration::count();
+
+            // 5. Tab 3: Winners Recap per Competition
+            $winnersByCompetition = [];
+            $institutionScores = [];
+
+            foreach ($competitions as $comp) {
+                $ranked = $comp->registrations->where('status', 'verified')->map(function ($reg) {
+                    $lockedScores = $reg->scores->where('is_locked', true);
+                    $avg = $lockedScores->isNotEmpty() ? $lockedScores->avg('total_score') : 0;
+
+                    return [
+                        'registration' => $reg,
+                        'institution' => $reg->institution_name,
+                        'avg' => $avg,
+                    ];
+                })->where('avg', '>', 0)->sortByDesc('avg')->values();
+
+                $winnersByCompetition[] = [
+                    'competition' => $comp,
+                    'juara_1' => $ranked[0] ?? null,
+                    'juara_2' => $ranked[1] ?? null,
+                    'juara_3' => $ranked[2] ?? null,
+                    'harapan_1' => $ranked[3] ?? null,
+                    'total_participants' => $comp->registrations->where('status', 'verified')->count(),
+                    'has_results' => isset($ranked[0]),
+                ];
+
+                // Tab 4: Standings Points Calculation
+                if (isset($ranked[0])) {
+                    $inst = $ranked[0]['institution'];
+                    $institutionScores[$inst]['emas'] = ($institutionScores[$inst]['emas'] ?? 0) + 1;
+                    $institutionScores[$inst]['poin'] = ($institutionScores[$inst]['poin'] ?? 0) + 5;
+                }
+                if (isset($ranked[1])) {
+                    $inst = $ranked[1]['institution'];
+                    $institutionScores[$inst]['perak'] = ($institutionScores[$inst]['perak'] ?? 0) + 1;
+                    $institutionScores[$inst]['poin'] = ($institutionScores[$inst]['poin'] ?? 0) + 3;
+                }
+                if (isset($ranked[2])) {
+                    $inst = $ranked[2]['institution'];
+                    $institutionScores[$inst]['perak'] = ($institutionScores[$inst]['perak'] ?? 0) + 0;
+                    $institutionScores[$inst]['perunggu'] = ($institutionScores[$inst]['perunggu'] ?? 0) + 1;
+                    $institutionScores[$inst]['poin'] = ($institutionScores[$inst]['poin'] ?? 0) + 1;
+                }
+            }
+
+            // 6. Tab 4: Standings Juara Umum
+            $standings = collect($institutionScores)->map(function ($val, $key) {
                 return [
-                    'registration' => $reg,
-                    'institution' => $reg->institution_name,
-                    'avg' => $avg,
+                    'institution' => $key,
+                    'emas' => $val['emas'] ?? 0,
+                    'perak' => $val['perak'] ?? 0,
+                    'perunggu' => $val['perunggu'] ?? 0,
+                    'total_medali' => ($val['emas'] ?? 0) + ($val['perak'] ?? 0) + ($val['perunggu'] ?? 0),
+                    'total_poin' => $val['poin'] ?? 0,
                 ];
-            })->where('avg', '>', 0)->sortByDesc('avg')->values();
+            })->sortByDesc('total_poin')->values();
 
-            $winnersByCompetition[] = [
-                'competition' => $comp,
-                'juara_1' => $ranked[0] ?? null,
-                'juara_2' => $ranked[1] ?? null,
-                'juara_3' => $ranked[2] ?? null,
-                'harapan_1' => $ranked[3] ?? null,
-                'total_participants' => $comp->registrations->where('status', 'verified')->count(),
-                'has_results' => isset($ranked[0]),
-            ];
+            // 7. Tab Rekap Lembaga — Data berat dihitung AJAX saat tab diklik
+            // Hitung summary ringan saja (total lembaga, total siswa, top institution)
+            // agar kartu overview di tab lembaga tetap tampil tanpa menunggu data penuh
+            $instSummaryRaw = Registration::selectRaw('
+                COUNT(DISTINCT institution_name) as total_institutions,
+                COUNT(*) as total_registrations
+            ')->first();
 
-            // Tab 4: Standings Points Calculation
-            if (isset($ranked[0])) {
-                $inst = $ranked[0]['institution'];
-                $institutionScores[$inst]['emas'] = ($institutionScores[$inst]['emas'] ?? 0) + 1;
-                $institutionScores[$inst]['poin'] = ($institutionScores[$inst]['poin'] ?? 0) + 5;
-            }
-            if (isset($ranked[1])) {
-                $inst = $ranked[1]['institution'];
-                $institutionScores[$inst]['perak'] = ($institutionScores[$inst]['perak'] ?? 0) + 1;
-                $institutionScores[$inst]['poin'] = ($institutionScores[$inst]['poin'] ?? 0) + 3;
-            }
-            if (isset($ranked[2])) {
-                $inst = $ranked[2]['institution'];
-                $institutionScores[$inst]['perak'] = ($institutionScores[$inst]['perak'] ?? 0) + 0;
-                $institutionScores[$inst]['perunggu'] = ($institutionScores[$inst]['perunggu'] ?? 0) + 1;
-                $institutionScores[$inst]['poin'] = ($institutionScores[$inst]['poin'] ?? 0) + 1;
-            }
-        }
+            $totalInstitutionsCount = (int) $instSummaryRaw->total_institutions;
+            $totalInstitutionStudents = (int) $instSummaryRaw->total_registrations;
 
-        // 6. Tab 4: Standings Juara Umum
-        $standings = collect($institutionScores)->map(function ($val, $key) {
-            return [
-                'institution' => $key,
-                'emas' => $val['emas'] ?? 0,
-                'perak' => $val['perak'] ?? 0,
-                'perunggu' => $val['perunggu'] ?? 0,
-                'total_medali' => ($val['emas'] ?? 0) + ($val['perak'] ?? 0) + ($val['perunggu'] ?? 0),
-                'total_poin' => $val['poin'] ?? 0,
-            ];
-        })->sortByDesc('total_poin')->values();
+            // Top institution — satu query agregat ringan
+            $topInstRaw = Registration::selectRaw('institution_name, COUNT(*) as cnt')
+                ->whereNotNull('institution_name')
+                ->where('institution_name', '!=', '')
+                ->groupBy('institution_name')
+                ->orderByDesc('cnt')
+                ->first();
 
-        // 7. Tab Rekap Lembaga — Data berat dihitung AJAX saat tab diklik
-        // Hitung summary ringan saja (total lembaga, total siswa, top institution)
-        // agar kartu overview di tab lembaga tetap tampil tanpa menunggu data penuh
-        $instSummaryRaw = Registration::selectRaw('
-            COUNT(DISTINCT institution_name) as total_institutions,
-            COUNT(*) as total_registrations
-        ')->first();
+            $topInstitution = $topInstRaw ? [
+                'name' => $topInstRaw->institution_name,
+                'total_students' => (int) $topInstRaw->cnt,
+                'competitions' => [], // placeholder — detail via AJAX
+            ] : null;
 
-        $totalInstitutionsCount = (int) $instSummaryRaw->total_institutions;
-        $totalInstitutionStudents = (int) $instSummaryRaw->total_registrations;
+            // 8. Categories for Dynamic Filtering
+            $categories = Category::orderBy('order', 'asc')->get();
 
-        // Top institution — satu query agregat ringan
-        $topInstRaw = Registration::selectRaw('institution_name, COUNT(*) as cnt')
-            ->whereNotNull('institution_name')
-            ->where('institution_name', '!=', '')
-            ->groupBy('institution_name')
-            ->orderByDesc('cnt')
-            ->first();
-
-        $topInstitution = $topInstRaw ? [
-            'name' => $topInstRaw->institution_name,
-            'total_students' => (int) $topInstRaw->cnt,
-            'competitions' => [], // placeholder — detail via AJAX
-        ] : null;
-
-        // 8. Categories for Dynamic Filtering
-        $categories = Category::orderBy('order', 'asc')->get();
+            return compact(
+                'competitions',
+                'categories',
+                'financeRecap',
+                'grandTotals',
+                'totalRegistrationsCount',
+                'winnersByCompetition',
+                'standings',
+                'cashflowSummary',
+                'totalInstitutionsCount',
+                'totalInstitutionStudents',
+                'topInstitution'
+            );
+        });
 
         $cashflowApiUrl = route('admin.api.recap_cashflow');
         $institutionsApiUrl = route('admin.api.recap_institutions');
 
-        return view('admin.recap', compact(
-            'competitions',
-            'categories',
-            'financeRecap',
-            'grandTotals',
-            'totalRegistrationsCount',
-            'winnersByCompetition',
-            'standings',
-            'cashflowSummary',
-            'cashflowApiUrl',
-            'institutionsApiUrl',
-            'totalInstitutionsCount',
-            'totalInstitutionStudents',
-            'topInstitution'
-        ));
+        return view('admin.recap', array_merge($data, compact('cashflowApiUrl', 'institutionsApiUrl')));
     }
 
     /**
@@ -1359,6 +1368,8 @@ class AdminController extends Controller
             }
         }
 
+        Cache::forget('talenta_admin_recap_summary_data');
+
         return redirect()->back()->with('success', 'Penyesuaian kas / refund sebesar Rp '.number_format($validated['amount'], 0, ',', '.').' berhasil dicatat.');
     }
 
@@ -1382,6 +1393,8 @@ class AdminController extends Controller
         }
 
         $adjustment->delete();
+
+        Cache::forget('talenta_admin_recap_summary_data');
 
         return redirect()->back()->with('success', 'Catatan penyesuaian kas berhasil dihapus.');
     }

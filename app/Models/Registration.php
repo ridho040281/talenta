@@ -183,10 +183,18 @@ class Registration extends Model
         return $this->user?->name ?? ('Peserta #'.$this->id);
     }
 
+    protected ?float $memoizedFee = null;
+
+    protected ?string $memoizedPrimaryGender = null;
+
     public function getFeeAttribute(): float
     {
+        if ($this->memoizedFee !== null) {
+            return $this->memoizedFee;
+        }
+
         if (! $this->competition) {
-            return 0;
+            return $this->memoizedFee = 0.0;
         }
 
         if ($this->competition->code === 'BLT') {
@@ -194,7 +202,7 @@ class Registration extends Model
             $isPutri = stripos($this->match_type ?? '', 'Putri') !== false || stripos($this->match_type ?? '', '(PI)') !== false || $this->primary_gender === 'P';
 
             if ($isGanda) {
-                return (float) AppSetting::get($isPutri ? 'blt_fee_ganda_pi' : 'blt_fee_ganda_pa', 200000);
+                return $this->memoizedFee = (float) AppSetting::get($isPutri ? 'blt_fee_ganda_pi' : 'blt_fee_ganda_pa', 200000);
             }
 
             $feeA = (float) AppSetting::get($isPutri ? 'blt_fee_a_tunggal_pi' : 'blt_fee_a_tunggal_pa', 130000);
@@ -202,54 +210,58 @@ class Registration extends Model
             $feeC = (float) AppSetting::get($isPutri ? 'blt_fee_c_tunggal_pi' : 'blt_fee_c_tunggal_pa', 150000);
 
             if ($this->isKatA()) {
-                return $feeA;
+                return $this->memoizedFee = $feeA;
             } elseif ($this->isKatB()) {
-                return $feeB;
+                return $this->memoizedFee = $feeB;
             } elseif ($this->isKatC()) {
-                return $feeC;
+                return $this->memoizedFee = $feeC;
             }
 
-            return $feeA;
+            return $this->memoizedFee = $feeA;
         }
 
         if ($this->competition->code === 'TMJ') {
             $isPutri = stripos($this->match_type ?? '', 'Putri') !== false || stripos($this->match_type ?? '', '(PI)') !== false || $this->primary_gender === 'P';
             if ($this->isKatB()) {
-                return (float) AppSetting::get($isPutri ? 'tmj_fee_b_tunggal_pi' : 'tmj_fee_b_tunggal_pa', $this->competition->registration_fee ?: 35000);
+                return $this->memoizedFee = (float) AppSetting::get($isPutri ? 'tmj_fee_b_tunggal_pi' : 'tmj_fee_b_tunggal_pa', $this->competition->registration_fee ?: 35000);
             }
 
-            return (float) AppSetting::get($isPutri ? 'tmj_fee_a_tunggal_pi' : 'tmj_fee_a_tunggal_pa', $this->competition->registration_fee ?: 35000);
+            return $this->memoizedFee = (float) AppSetting::get($isPutri ? 'tmj_fee_a_tunggal_pi' : 'tmj_fee_a_tunggal_pa', $this->competition->registration_fee ?: 35000);
         }
 
         if ($this->competition->code === 'MTQ') {
             $isPutri = $this->primary_gender === 'P' || stripos($this->match_type ?? '', 'Putri') !== false || stripos($this->match_type ?? '', 'PI') !== false;
 
-            return (float) AppSetting::get($isPutri ? 'mtq_fee_pi' : 'mtq_fee_pa', $this->competition->registration_fee);
+            return $this->memoizedFee = (float) AppSetting::get($isPutri ? 'mtq_fee_pi' : 'mtq_fee_pa', $this->competition->registration_fee);
         }
 
         if ($this->competition->code === 'POP') {
             $isPutri = $this->primary_gender === 'P' || stripos($this->match_type ?? '', 'Putri') !== false || stripos($this->match_type ?? '', 'PI') !== false;
 
-            return (float) AppSetting::get($isPutri ? 'pop_fee_pi' : 'pop_fee_pa', $this->competition->registration_fee);
+            return $this->memoizedFee = (float) AppSetting::get($isPutri ? 'pop_fee_pi' : 'pop_fee_pa', $this->competition->registration_fee);
         }
 
-        return (float) $this->competition->registration_fee;
+        return $this->memoizedFee = (float) $this->competition->registration_fee;
     }
 
     public function getPrimaryGenderAttribute(): string
     {
-        $genders = $this->members->pluck('gender')->filter();
-        if ($genders->isEmpty()) {
-            return 'U';
-        }
-        if ($genders->every(fn ($g) => $g === 'L')) {
-            return 'L';
-        }
-        if ($genders->every(fn ($g) => $g === 'P')) {
-            return 'P';
+        if ($this->memoizedPrimaryGender !== null) {
+            return $this->memoizedPrimaryGender;
         }
 
-        return 'M';
+        $genders = $this->members->pluck('gender')->filter();
+        if ($genders->isEmpty()) {
+            return $this->memoizedPrimaryGender = 'U';
+        }
+        if ($genders->every(fn ($g) => $g === 'L')) {
+            return $this->memoizedPrimaryGender = 'L';
+        }
+        if ($genders->every(fn ($g) => $g === 'P')) {
+            return $this->memoizedPrimaryGender = 'P';
+        }
+
+        return $this->memoizedPrimaryGender = 'MIX';
     }
 
     public function getGenderLabelAttribute(): string

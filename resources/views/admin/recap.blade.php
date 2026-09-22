@@ -669,49 +669,75 @@ function recapManagerApp() {
         </div>
     </div>
 
+    @php
+        $activeTabReq = in_array(request('tab'), ['lomba', 'buku_kas', 'peserta', 'pendaftar', 'lembaga', 'juara', 'juara-umum']) ? request('tab') : 'lomba';
+    @endphp
     <!-- Navigation Tabs Bar (AIStarterKit Pill Nav) -->
-    <div class="ai-card rounded-3xl p-2 border border-white/[0.08] shadow-lg flex flex-wrap items-center gap-2">
-        <button @click="activeTab = 'lomba'" :class="(activeTab === 'lomba' || activeTab === 'keuangan') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white'" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
-            <i data-lucide="trophy" class="w-4 h-4 text-amber-300"></i>
-            <span>1. Rekap Cabang Lomba</span>
-        </button>
+    <div class="ai-card rounded-3xl p-2 border border-white/[0.08] shadow-lg flex flex-wrap items-center justify-between gap-2">
+        <div class="flex flex-wrap items-center gap-2">
+            <button @click="activeTab = 'lomba'" 
+                    :class="(activeTab === 'lomba' || activeTab === 'keuangan') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white'" 
+                    class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer {{ ($activeTabReq === 'lomba' || $activeTabReq === 'keuangan') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white' }}">
+                <i data-lucide="trophy" class="w-4 h-4 text-amber-300"></i>
+                <span>1. Rekap Cabang Lomba</span>
+            </button>
 
-        <button @click="activeTab = 'buku_kas'; if (!kasLoaded) fetchKas(1);" :class="activeTab === 'buku_kas' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/30 font-black' : 'text-slate-400 hover:text-white'" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
-            <i data-lucide="book-open" class="w-4 h-4 text-emerald-300"></i>
-            <span>2. Buku Kas & Mutasi</span>
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold" :class="activeTab === 'buku_kas' ? 'bg-white text-slate-900' : 'bg-white/[0.1] text-slate-300'" x-text="kasTotal"></span>
-            @if($cashflowSummary['total_refunds'] > 0)
-                <span class="px-2 py-0.5 rounded-full text-[10px] bg-rose-500 text-white font-bold">{{ $cashflowSummary['count_adjustments'] }} Refund</span>
-            @endif
-        </button>
+            <button @click="activeTab = 'buku_kas'; if (!kasLoaded) fetchKas(1);" 
+                    :class="activeTab === 'buku_kas' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/30 font-black' : 'text-slate-400 hover:text-white'" 
+                    class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer {{ $activeTabReq === 'buku_kas' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/30 font-black' : 'text-slate-400 hover:text-white' }}">
+                <i data-lucide="book-open" class="w-4 h-4 text-emerald-300"></i>
+                <span>2. Buku Kas & Mutasi</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold" :class="activeTab === 'buku_kas' ? 'bg-white text-slate-900' : 'bg-white/[0.1] text-slate-300'" x-text="kasTotal">{{ $cashflowSummary['total_count'] ?? 0 }}</span>
+                @if($cashflowSummary['total_refunds'] > 0)
+                    <span class="px-2 py-0.5 rounded-full text-[10px] bg-rose-500 text-white font-bold">{{ $cashflowSummary['count_adjustments'] }} Refund</span>
+                @endif
+            </button>
 
-        <button @click="activeTab = 'peserta'" :class="activeTab === 'peserta' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white'" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
-            <i data-lucide="users" class="w-4 h-4"></i>
-            <span>3. Master Seluruh Peserta</span>
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="activeTab === 'peserta' ? 'bg-white text-slate-900' : 'bg-white/[0.1] text-slate-300'">{{ $totalRegistrationsCount }}</span>
-        </button>
+            <button @click="activeTab = 'peserta'" 
+                    :class="activeTab === 'peserta' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white'" 
+                    class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer {{ $activeTabReq === 'peserta' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white' }}">
+                <i data-lucide="users" class="w-4 h-4"></i>
+                <span>3. Master Seluruh Peserta</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="activeTab === 'peserta' ? 'bg-white text-slate-900' : 'bg-white/[0.1] text-slate-300'">{{ $totalRegistrationsCount }}</span>
+            </button>
 
-        <button @click="activeTab = 'pendaftar'" :class="activeTab === 'pendaftar' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white'" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
-            <i data-lucide="layout-grid" class="w-4 h-4 text-cyan-400"></i>
-            <span>4. Rekap Pendaftar</span>
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="activeTab === 'pendaftar' ? 'bg-white text-slate-950' : 'bg-cyan-500/20 text-cyan-300'">Infografis</span>
-        </button>
+            <button @click="activeTab = 'pendaftar'" 
+                    :class="activeTab === 'pendaftar' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white'" 
+                    class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer {{ $activeTabReq === 'pendaftar' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white' }}">
+                <i data-lucide="layout-grid" class="w-4 h-4 text-cyan-400"></i>
+                <span>4. Rekap Pendaftar</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="activeTab === 'pendaftar' ? 'bg-white text-slate-950' : 'bg-cyan-500/20 text-cyan-300'">Infografis</span>
+            </button>
 
-        <button @click="activeTab = 'lembaga'; fetchInstitutions();" :class="activeTab === 'lembaga' ? 'bg-gradient-to-r from-sky-600 to-indigo-600 text-white shadow-md shadow-sky-600/30 font-black' : 'text-slate-400 hover:text-white'" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
-            <i data-lucide="building-2" class="w-4 h-4 text-sky-300"></i>
-            <span>5. Rekap Asal Lembaga</span>
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="activeTab === 'lembaga' ? 'bg-white text-slate-900' : 'bg-sky-500/20 text-sky-300'" x-text="(instTotalCount || 0) + ' SD/MI'"></span>
-        </button>
+            <button @click="activeTab = 'lembaga'; fetchInstitutions();" 
+                    :class="activeTab === 'lembaga' ? 'bg-gradient-to-r from-sky-600 to-indigo-600 text-white shadow-md shadow-sky-600/30 font-black' : 'text-slate-400 hover:text-white'" 
+                    class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer {{ $activeTabReq === 'lembaga' ? 'bg-gradient-to-r from-sky-600 to-indigo-600 text-white shadow-md shadow-sky-600/30 font-black' : 'text-slate-400 hover:text-white' }}">
+                <i data-lucide="building-2" class="w-4 h-4 text-sky-300"></i>
+                <span>5. Rekap Asal Lembaga</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="activeTab === 'lembaga' ? 'bg-white text-slate-900' : 'bg-sky-500/20 text-sky-300'" x-text="(instTotalCount || 0) + ' SD/MI'">{{ $totalInstitutionsCount }} SD/MI</span>
+            </button>
 
-        <button @click="activeTab = 'juara'" :class="activeTab === 'juara' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white'" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
-            <i data-lucide="medal" class="w-4 h-4 text-[#FF58D5]"></i>
-            <span>6. Rekap Semua Peraih Juara</span>
-        </button>
+            <button @click="activeTab = 'juara'" 
+                    :class="activeTab === 'juara' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white'" 
+                    class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer {{ $activeTabReq === 'juara' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white' }}">
+                <i data-lucide="medal" class="w-4 h-4 text-[#FF58D5]"></i>
+                <span>6. Rekap Semua Peraih Juara</span>
+            </button>
 
-        <button @click="activeTab = 'juara-umum'" :class="activeTab === 'juara-umum' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white'" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer">
-            <i data-lucide="trophy" class="w-4 h-4 text-amber-400"></i>
-            <span>7. Rekap Juara Umum</span>
-        </button>
+            <button @click="activeTab = 'juara-umum'" 
+                    :class="activeTab === 'juara-umum' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white'" 
+                    class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm transition cursor-pointer {{ $activeTabReq === 'juara-umum' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-md shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white' }}">
+                <i data-lucide="trophy" class="w-4 h-4 text-amber-400"></i>
+                <span>7. Rekap Juara Umum</span>
+            </button>
+        </div>
+
+        <a href="{{ route('admin.recap', ['refresh' => 1, 'tab' => request('tab', 'lomba')]) }}" 
+           class="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 hover:text-white text-xs font-bold border border-white/[0.08] transition shadow-sm ml-auto mr-1" 
+           title="Segarkan data rekapan dari database terbaru">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-sky-400"></i>
+            <span class="hidden xl:inline">Segarkan Data</span>
+        </a>
     </div>
 
     <!-- ==================== TAB 1: REKAP CABANG LOMBA & KUOTA ==================== -->
