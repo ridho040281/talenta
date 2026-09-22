@@ -435,7 +435,7 @@
 
     <!-- Sidebar Navigation (AIStarterKit Dark Glass Structure) -->
     <aside :class="sidebarOpen ? 'w-72 max-w-[85vw] sm:w-64 translate-x-0' : '-translate-x-full md:translate-x-0 md:w-20'" 
-           class="fixed inset-y-0 left-0 z-50 bg-[#090D17]/98 backdrop-blur-2xl text-slate-300 flex flex-col transition-all duration-300 ease-in-out border-r border-white/[0.12] shadow-[4px_0_25px_rgba(0,0,0,0.6)]">
+           class="fixed inset-y-0 left-0 z-50 bg-[#090D17]/98 backdrop-blur-2xl text-slate-300 flex flex-col transition-all duration-300 ease-in-out border-r border-white/[0.12] shadow-[4px_0_25px_rgba(0,0,0,0.6)] w-72 max-w-[85vw] sm:w-64">
         
         <!-- Sidebar Brand Header -->
         <div class="h-16 flex items-center border-b border-white/[0.08] transition-all duration-300"
@@ -949,7 +949,7 @@
     <!-- Main Content Area with AIStarterKit Ambient Glow Effects -->
     <div :class="sidebarOpen ? 'md:pl-64' : 'md:pl-20'" 
          :style="!isMobile ? (sidebarOpen ? 'padding-left: 16rem;' : 'padding-left: 5rem;') : ''"
-         class="flex-1 flex flex-col min-w-0 relative w-full max-w-full transition-all duration-300 ease-in-out">
+         class="flex-1 flex flex-col min-w-0 relative w-full max-w-full transition-all duration-300 ease-in-out md:pl-64">
         
         <!-- Ambient AI Glow Orbs in Dashboard -->
         <div class="fixed inset-0 overflow-hidden pointer-events-none z-0 w-full h-full max-w-[100vw]">

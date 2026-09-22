@@ -96,9 +96,10 @@ function recapManagerApp() {
             }
         },
         matchesInst(inst) {
+            if (!inst) return false;
             const q = this.instSearch.trim().toLowerCase();
             if (q) {
-                const matchName = inst.name.toLowerCase().includes(q);
+                const matchName = (inst.name || '').toLowerCase().includes(q);
                 const matchStudents = (inst.all_students || []).some(s =>
                     (s.student_names || '').toLowerCase().includes(q) ||
                     (s.competition_name || '').toLowerCase().includes(q) ||
@@ -109,16 +110,16 @@ function recapManagerApp() {
             }
             if (this.instFilterComp !== 'all') {
                 const targetId = parseInt(this.instFilterComp);
-                if (!inst.competitions.some(c => c.id === targetId)) return false;
+                if (!(inst.competitions || []).some(c => c.id === targetId)) return false;
             }
             if (this.instFilterStatus !== 'all') {
-                if (this.instFilterStatus === 'verified' && inst.pending_registrations > 0) return false;
-                if (this.instFilterStatus === 'pending' && inst.pending_registrations === 0) return false;
+                if (this.instFilterStatus === 'verified' && (inst.pending_registrations || 0) > 0) return false;
+                if (this.instFilterStatus === 'pending' && (inst.pending_registrations || 0) === 0) return false;
             }
             return true;
         },
         get filteredInstitutions() {
-            return this.institutions.filter(inst => this.matchesInst(inst));
+            return (this.institutions || []).filter(inst => this.matchesInst(inst));
         },
 
         // ── Buku Kas AJAX state ──
@@ -2137,159 +2138,155 @@ function recapManagerApp() {
                             <th class="py-3.5 px-4 text-center whitespace-nowrap w-[110px]">RINCIAN</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-white/[0.04] font-medium">
-                        <template x-if="instLoaded && filteredInstitutions.length === 0">
-                            <tr>
-                                <td colspan="6" class="py-12 text-center text-slate-500">
-                                    Belum ada data pendaftar sekolah/lembaga yang tercatat.
-                                </td>
-                            </tr>
-                        </template>
-                        <template x-if="!instLoaded && !instLoading">
-                            <tr>
-                                <td colspan="6" class="py-12 text-center text-slate-500">
-                                    <span class="text-sky-400 font-semibold">Data dimuat saat tab ini diklik.</span>
-                                </td>
-                            </tr>
-                        </template>
-                        <template x-for="(inst, idx) in filteredInstitutions" :key="idx">
-                            <template x-if="true">
-                                <tbody class="contents">
-                                    <!-- Main Row -->
-                                    <tr class="hover:bg-white/[0.025] transition cursor-pointer"
-                                        @click="toggleInstitution(idx)">
-                                        <td class="py-4 px-4 text-center font-mono font-bold text-slate-400 whitespace-nowrap">
-                                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-white/[0.06] text-slate-300 text-xs" x-text="idx + 1"></span>
-                                        </td>
-                                        <td class="py-4 px-4 min-w-[220px]">
-                                            <div class="flex items-start gap-2.5">
-                                                <div class="w-8 h-8 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                                                    <i data-lucide="graduation-cap" class="w-4 h-4"></i>
-                                                </div>
-                                                <div>
-                                                    <span class="font-bold text-white text-sm block hover:text-sky-300 transition" x-text="inst.name"></span>
-                                                    <div class="flex items-center gap-2 mt-1">
-                                                        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-sky-500/15 text-sky-300 border border-sky-500/25"
-                                                              x-text="inst.competitions_count + ' Cabang Lomba'"></span>
-                                                        <span class="text-[11px] text-slate-400"
-                                                              x-text="inst.total_registrations + ' No. Pendaftaran'"></span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="py-4 px-4 min-w-[340px]">
-                                            <div class="flex flex-wrap items-center gap-1.5">
-                                                <template x-for="cItem in inst.competitions" :key="cItem.id">
-                                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:border-sky-500/40 transition text-xs font-semibold text-slate-200">
-                                                        <span class="w-1.5 h-1.5 rounded-full" :class="cItem.pending_count > 0 ? 'bg-amber-400' : 'bg-emerald-400'"></span>
-                                                        <span class="font-bold text-white" x-text="cItem.name"></span>
-                                                        <span class="px-1.5 rounded-md bg-white/[0.1] font-mono font-black text-[11px] text-sky-300" x-text="cItem.count"></span>
-                                                    </span>
-                                                </template>
-                                            </div>
-                                        </td>
-                                        <td class="py-4 px-4 text-center whitespace-nowrap">
-                                            <div class="flex flex-col items-center gap-1">
-                                                <template x-if="inst.verified_registrations > 0">
-                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-black">
-                                                        <i data-lucide="check" class="w-3 h-3"></i>
-                                                        <span x-text="inst.verified_registrations + ' Lunas'"></span>
-                                                    </span>
-                                                </template>
-                                                <template x-if="inst.pending_registrations > 0">
-                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-black">
-                                                        <i data-lucide="clock" class="w-3 h-3"></i>
-                                                        <span x-text="inst.pending_registrations + ' Pending'"></span>
-                                                    </span>
-                                                </template>
-                                            </div>
-                                        </td>
-                                        <td class="py-4 px-4 text-center whitespace-nowrap">
-                                            <div class="inline-flex flex-col items-center">
-                                                <span class="text-base sm:text-lg font-black text-white font-mono" x-text="inst.total_students"></span>
-                                                <span class="text-[10px] text-slate-400 font-medium uppercase">Siswa</span>
-                                            </div>
-                                        </td>
-                                        <td class="py-4 px-4 text-center whitespace-nowrap">
-                                            <button type="button" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-sky-500/20 text-slate-300 hover:text-sky-300 text-xs font-bold border border-white/[0.08] transition cursor-pointer"
-                                                :class="expandedInstitutions[idx] ? 'bg-sky-500/20 text-sky-300 border-sky-500/30' : ''">
-                                                <span x-text="expandedInstitutions[idx] ? 'Tutup' : 'Rincian'"></span>
-                                                <i data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform duration-200" :class="expandedInstitutions[idx] ? 'rotate-180' : ''"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-
-                                    <!-- Expandable Sub-Row -->
-                                    <tr x-show="expandedInstitutions[idx]" x-transition class="bg-[#080C16] border-y border-sky-500/20">
-                                        <td colspan="6" class="p-4 sm:p-6 space-y-4">
-                                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.06] pb-3">
-                                                <div class="flex items-center gap-2">
-                                                    <i data-lucide="folder-tree" class="w-4 h-4 text-sky-400"></i>
-                                                    <h4 class="font-bold text-white text-xs sm:text-sm">
-                                                        Rincian Delegasi Siswa: <span class="text-sky-300" x-text="inst.name"></span>
-                                                    </h4>
-                                                </div>
-                                                <div class="flex items-center gap-2 text-xs">
-                                                    <span class="text-slate-400">Total Delegasi:</span>
-                                                    <span class="font-mono font-bold text-white" x-text="inst.total_students + ' Siswa'"></span>
-                                                    <span class="text-slate-500">•</span>
-                                                    <span class="text-slate-400">Mengikuti:</span>
-                                                    <span class="font-mono font-bold text-sky-300" x-text="inst.competitions_count + ' Cabang Lomba'"></span>
-                                                </div>
-                                            </div>
-
-                                            <!-- Inner Sub-Table -->
-                                            <div class="overflow-x-auto rounded-xl border border-white/[0.06] bg-[#060911]">
-                                                <table class="w-full text-left text-xs text-slate-300 border-collapse">
-                                                    <thead class="text-[10px] font-bold uppercase tracking-wider bg-white/[0.03] text-slate-400 border-b border-white/[0.06]">
-                                                        <tr>
-                                                            <th class="py-2.5 px-3 text-center w-10">NO</th>
-                                                            <th class="py-2.5 px-3 whitespace-nowrap">NO. PESERTA / KODE</th>
-                                                            <th class="py-2.5 px-3 min-w-[180px]">NAMA SISWA / TIM</th>
-                                                            <th class="py-2.5 px-3 whitespace-nowrap">CABANG LOMBA</th>
-                                                            <th class="py-2.5 px-3 whitespace-nowrap">KELAS / KATEGORI</th>
-                                                            <th class="py-2.5 px-3 text-center whitespace-nowrap">STATUS BAYAR</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody class="divide-y divide-white/[0.03] text-[11px]">
-                                                        <template x-for="(student, sIdx) in inst.all_students" :key="sIdx">
-                                                            <tr class="hover:bg-white/[0.02] transition">
-                                                                <td class="py-2.5 px-3 text-center font-mono text-slate-500" x-text="sIdx + 1"></td>
-                                                                <td class="py-2.5 px-3 font-mono font-bold text-sky-300 whitespace-nowrap">
-                                                                    <div x-text="student.participant_number || '-'"></div>
-                                                                    <div class="text-[10px] text-slate-500 font-normal" x-text="student.reg_code"></div>
-                                                                </td>
-                                                                <td class="py-2.5 px-3 font-bold text-white min-w-[180px]" x-text="student.student_names"></td>
-                                                                <td class="py-2.5 px-3 whitespace-nowrap">
-                                                                    <span class="font-semibold text-slate-200" x-text="student.competition_name"></span>
-                                                                    <span class="text-[10px] text-slate-400 block" x-text="student.category_name"></span>
-                                                                </td>
-                                                                <td class="py-2.5 px-3 whitespace-nowrap text-slate-300 font-mono" x-text="student.target_class"></td>
-                                                                <td class="py-2.5 px-3 text-center whitespace-nowrap">
-                                                                    <template x-if="student.status === 'verified' || student.status === 'paid'">
-                                                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">LUNAS</span>
-                                                                    </template>
-                                                                    <template x-if="student.status === 'pending'">
-                                                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/15 text-amber-400 border border-amber-500/30">MENUNGGU</span>
-                                                                    </template>
-                                                                    <template x-if="student.status === 'revision'">
-                                                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/15 text-rose-400 border border-rose-500/30">REVISI</span>
-                                                                    </template>
-                                                                    <template x-if="student.status !== 'verified' && student.status !== 'paid' && student.status !== 'pending' && student.status !== 'revision'">
-                                                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-500/15 text-slate-400 border border-slate-500/30 uppercase" x-text="student.status"></span>
-                                                                    </template>
-                                                                </td>
-                                                            </tr>
-                                                        </template>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </template>
-                        </template>
+                    <tbody x-show="instLoaded && filteredInstitutions.length === 0">
+                        <tr>
+                            <td colspan="6" class="py-12 text-center text-slate-500">
+                                Belum ada data pendaftar sekolah/lembaga yang tercatat.
+                            </td>
+                        </tr>
                     </tbody>
+                    <tbody x-show="!instLoaded && !instLoading">
+                        <tr>
+                            <td colspan="6" class="py-12 text-center text-slate-500">
+                                <span class="text-sky-400 font-semibold">Data dimuat saat tab ini diklik.</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                    <template x-for="(inst, idx) in filteredInstitutions" :key="idx">
+                        <tbody class="divide-y divide-white/[0.04] font-medium border-b border-white/[0.06]">
+                            <!-- Main Row -->
+                            <tr class="hover:bg-white/[0.025] transition cursor-pointer"
+                                @click="toggleInstitution(idx)">
+                                <td class="py-4 px-4 text-center font-mono font-bold text-slate-400 whitespace-nowrap">
+                                    <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-white/[0.06] text-slate-300 text-xs" x-text="idx + 1"></span>
+                                </td>
+                                <td class="py-4 px-4 min-w-[220px]">
+                                    <div class="flex items-start gap-2.5">
+                                        <div class="w-8 h-8 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                                            <i data-lucide="graduation-cap" class="w-4 h-4"></i>
+                                        </div>
+                                        <div>
+                                            <span class="font-bold text-white text-sm block hover:text-sky-300 transition" x-text="inst.name"></span>
+                                            <div class="flex items-center gap-2 mt-1">
+                                                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-sky-500/15 text-sky-300 border border-sky-500/25"
+                                                      x-text="inst.competitions_count + ' Cabang Lomba'"></span>
+                                                <span class="text-[11px] text-slate-400"
+                                                      x-text="inst.total_registrations + ' No. Pendaftaran'"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4 min-w-[340px]">
+                                    <div class="flex flex-wrap items-center gap-1.5">
+                                        <template x-for="cItem in inst.competitions" :key="cItem.id">
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:border-sky-500/40 transition text-xs font-semibold text-slate-200">
+                                                <span class="w-1.5 h-1.5 rounded-full" :class="cItem.pending_count > 0 ? 'bg-amber-400' : 'bg-emerald-400'"></span>
+                                                <span class="font-bold text-white" x-text="cItem.name"></span>
+                                                <span class="px-1.5 rounded-md bg-white/[0.1] font-mono font-black text-[11px] text-sky-300" x-text="cItem.count"></span>
+                                            </span>
+                                        </template>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4 text-center whitespace-nowrap">
+                                    <div class="flex flex-col items-center gap-1">
+                                        <template x-if="inst.verified_registrations > 0">
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-black">
+                                                <i data-lucide="check" class="w-3 h-3"></i>
+                                                <span x-text="inst.verified_registrations + ' Lunas'"></span>
+                                            </span>
+                                        </template>
+                                        <template x-if="inst.pending_registrations > 0">
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-black">
+                                                <i data-lucide="clock" class="w-3 h-3"></i>
+                                                <span x-text="inst.pending_registrations + ' Pending'"></span>
+                                            </span>
+                                        </template>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4 text-center whitespace-nowrap">
+                                    <div class="inline-flex flex-col items-center">
+                                        <span class="text-base sm:text-lg font-black text-white font-mono" x-text="inst.total_students"></span>
+                                        <span class="text-[10px] text-slate-400 font-medium uppercase">Siswa</span>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4 text-center whitespace-nowrap">
+                                    <button type="button" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-sky-500/20 text-slate-300 hover:text-sky-300 text-xs font-bold border border-white/[0.08] transition cursor-pointer"
+                                        :class="expandedInstitutions[idx] ? 'bg-sky-500/20 text-sky-300 border-sky-500/30' : ''">
+                                        <span x-text="expandedInstitutions[idx] ? 'Tutup' : 'Rincian'"></span>
+                                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform duration-200" :class="expandedInstitutions[idx] ? 'rotate-180' : ''"></i>
+                                    </button>
+                                </td>
+                            </tr>
+
+                            <!-- Expandable Sub-Row -->
+                            <tr x-show="expandedInstitutions[idx]" x-transition class="bg-[#080C16] border-y border-sky-500/20">
+                                <td colspan="6" class="p-4 sm:p-6 space-y-4">
+                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.06] pb-3">
+                                        <div class="flex items-center gap-2">
+                                            <i data-lucide="folder-tree" class="w-4 h-4 text-sky-400"></i>
+                                            <h4 class="font-bold text-white text-xs sm:text-sm">
+                                                Rincian Delegasi Siswa: <span class="text-sky-300" x-text="inst.name"></span>
+                                            </h4>
+                                        </div>
+                                        <div class="flex items-center gap-2 text-xs">
+                                            <span class="text-slate-400">Total Delegasi:</span>
+                                            <span class="font-mono font-bold text-white" x-text="inst.total_students + ' Siswa'"></span>
+                                            <span class="text-slate-500">•</span>
+                                            <span class="text-slate-400">Mengikuti:</span>
+                                            <span class="font-mono font-bold text-sky-300" x-text="inst.competitions_count + ' Cabang Lomba'"></span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Inner Sub-Table -->
+                                    <div class="overflow-x-auto rounded-xl border border-white/[0.06] bg-[#060911]">
+                                        <table class="w-full text-left text-xs text-slate-300 border-collapse">
+                                            <thead class="text-[10px] font-bold uppercase tracking-wider bg-white/[0.03] text-slate-400 border-b border-white/[0.06]">
+                                                <tr>
+                                                    <th class="py-2.5 px-3 text-center w-10">NO</th>
+                                                    <th class="py-2.5 px-3 whitespace-nowrap">NO. PESERTA / KODE</th>
+                                                    <th class="py-2.5 px-3 min-w-[180px]">NAMA SISWA / TIM</th>
+                                                    <th class="py-2.5 px-3 whitespace-nowrap">CABANG LOMBA</th>
+                                                    <th class="py-2.5 px-3 whitespace-nowrap">KELAS / KATEGORI</th>
+                                                    <th class="py-2.5 px-3 text-center whitespace-nowrap">STATUS BAYAR</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-white/[0.03] text-[11px]">
+                                                <template x-for="(student, sIdx) in inst.all_students" :key="sIdx">
+                                                    <tr class="hover:bg-white/[0.02] transition">
+                                                        <td class="py-2.5 px-3 text-center font-mono text-slate-500" x-text="sIdx + 1"></td>
+                                                        <td class="py-2.5 px-3 font-mono font-bold text-sky-300 whitespace-nowrap">
+                                                            <div x-text="student.participant_number || '-'"></div>
+                                                            <div class="text-[10px] text-slate-500 font-normal" x-text="student.reg_code"></div>
+                                                        </td>
+                                                        <td class="py-2.5 px-3 font-bold text-white min-w-[180px]" x-text="student.student_names"></td>
+                                                        <td class="py-2.5 px-3 whitespace-nowrap">
+                                                            <span class="font-semibold text-slate-200" x-text="student.competition_name"></span>
+                                                            <span class="text-[10px] text-slate-400 block" x-text="student.category_name"></span>
+                                                        </td>
+                                                        <td class="py-2.5 px-3 whitespace-nowrap text-slate-300 font-mono" x-text="student.target_class"></td>
+                                                        <td class="py-2.5 px-3 text-center whitespace-nowrap">
+                                                            <template x-if="student.status === 'verified' || student.status === 'paid'">
+                                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">LUNAS</span>
+                                                            </template>
+                                                            <template x-if="student.status === 'pending'">
+                                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/15 text-amber-400 border border-amber-500/30">MENUNGGU</span>
+                                                            </template>
+                                                            <template x-if="student.status === 'revision'">
+                                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/15 text-rose-400 border border-rose-500/30">REVISI</span>
+                                                            </template>
+                                                            <template x-if="student.status !== 'verified' && student.status !== 'paid' && student.status !== 'pending' && student.status !== 'revision'">
+                                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-500/15 text-slate-400 border border-slate-500/30 uppercase" x-text="student.status"></span>
+                                                            </template>
+                                                        </td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </template>
                 </table>
             </div>
         </div>
