@@ -19,20 +19,18 @@
     },
     get currentDocUrl() {
         if (!this.selectedReg) return '';
+        let path = '';
         if (this.activeDocTab === 'surat') {
-            if (this.selectedReg.document_file) {
-                return '{{ url("storage") }}/' + String(this.selectedReg.document_file).replace(/^(public\/|storage\/)+/, '');
-            }
-            return '';
+            path = this.selectedReg.document_file || '';
+        } else if (this.activeDocTab === 'payment') {
+            path = this.selectedReg.payment_proof || (this.selectedReg.invoice && this.selectedReg.invoice.payment_proof) || '';
         }
-        if (this.activeDocTab === 'payment') {
-            const p = this.selectedReg.payment_proof || (this.selectedReg.invoice && this.selectedReg.invoice.payment_proof);
-            if (p) {
-                return '{{ url("storage") }}/' + String(p).replace(/^(public\/|storage\/)+/, '');
-            }
-            return '';
+        if (!path) return '';
+        if (typeof path === 'string' && (path.startsWith('http://') || path.startsWith('https://'))) {
+            return path;
         }
-        return '';
+        const cleanPath = String(path).replace(/^\/+/, '').replace(/^(public\/|storage\/)+/, '');
+        return '{{ url("storage") }}/' + cleanPath;
     },
     get isCurrentDocPdf() {
         const url = this.currentDocUrl;

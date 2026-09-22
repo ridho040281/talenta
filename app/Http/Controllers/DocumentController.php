@@ -25,11 +25,12 @@ class DocumentController extends Controller
                     ->with('error', 'Peringatan: Pendaftaran Anda belum terverifikasi! Anda tidak bisa mencetak berkas ini sebelum status pendaftaran diverifikasi oleh panitia.');
             }
         } elseif ($user->role === 'pic_lomba') {
-            if ($registration->competition && $registration->competition->pic_id !== $user->id) {
+            $managedCompIds = PicController::getManagedCompetitionIds($user);
+            if (! in_array($registration->competition_id, $managedCompIds)) {
                 abort(403, 'Anda tidak memiliki akses sebagai PIC untuk pendaftaran ini.');
             }
         }
-        // Superadmin has full access
+        // Superadmin and Panitia have full access
 
         return null;
     }
