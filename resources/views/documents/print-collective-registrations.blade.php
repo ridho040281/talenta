@@ -172,15 +172,31 @@
                         </h2>
                     </div>
 
-                    <!-- ==================== NOMOR ADMINISTRASI HIGHLIGHT CARD ==================== -->
-                    <div class="grid grid-cols-2 gap-2.5 text-center">
-                        <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-300">
-                            <span class="text-[10px] uppercase font-bold text-slate-500 block">Kode Registrasi</span>
-                            <span class="font-mono font-black text-slate-900 text-xs sm:text-sm">{{ $registration->registration_code }}</span>
+                    <!-- ==================== NOMOR ADMINISTRASI & QR PRESENSI HIGHLIGHT CARD ==================== -->
+                    <div class="p-2.5 rounded-xl bg-slate-50 border-2 border-slate-300 flex items-center justify-between gap-3">
+                        <div class="flex-1 grid grid-cols-2 gap-2 text-center">
+                            <div class="p-2 rounded-lg bg-white border border-slate-200">
+                                <span class="text-[9px] uppercase font-bold text-slate-500 block">Kode Registrasi</span>
+                                <span class="font-mono font-black text-slate-900 text-xs sm:text-sm block">{{ $registration->registration_code }}</span>
+                            </div>
+                            <div class="p-2 rounded-lg bg-emerald-50 border border-emerald-300">
+                                <span class="text-[9px] uppercase font-black text-emerald-800 block">No. Peserta</span>
+                                <span class="font-mono font-black text-emerald-950 text-sm sm:text-base block">{{ $registration->official_participant_number }}</span>
+                            </div>
+                            <div class="col-span-2 text-left px-1">
+                                <p class="text-[9.5px] text-slate-600 leading-snug">
+                                    <strong class="text-emerald-700">📌 Verifikasi Hari-H:</strong> Tunjukkan QR Code di samping kepada Panitia/PIC lomba saat registrasi ulang untuk <strong>absensi kehadiran</strong> & aktivasi unduhan sertifikat peserta.
+                                </p>
+                            </div>
                         </div>
-                        <div class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-300">
-                            <span class="text-[10px] uppercase font-black text-emerald-800 block">No. Peserta</span>
-                            <span class="font-mono font-black text-emerald-950 text-sm sm:text-base">{{ $registration->official_participant_number }}</span>
+                        <div class="shrink-0 flex flex-col items-center justify-center p-1.5 bg-white border border-slate-200 rounded-lg shadow-xs text-center">
+                            @php
+                                $attendQrUrl = \App\Services\QrSignatureService::attendanceQrUrl($registration);
+                            @endphp
+                            <div class="p-0.5">
+                                {!! \App\Services\QrSignatureService::generateSvg($attendQrUrl, 68) !!}
+                            </div>
+                            <span class="text-[7.5px] font-black uppercase tracking-wider text-slate-700 mt-0.5">SCAN PRESENSI</span>
                         </div>
                     </div>
 
@@ -435,7 +451,7 @@
                         <div class="text-center w-56 flex flex-col justify-between">
                             <div>
                                 <div class="invisible select-none leading-tight">Tanggal</div>
-                                <div>Guru Official / Atlet,</div>
+                                <div>Guru / Official / Atlet / Peserta,</div>
                             </div>
                             <div class="pt-10">
                                 <div class="font-black text-slate-950 underline underline-offset-2">

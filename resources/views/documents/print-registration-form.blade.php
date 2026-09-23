@@ -435,7 +435,7 @@
                     <div class="text-center w-56 flex flex-col justify-between">
                         <div>
                             <div class="invisible select-none leading-tight">Tanggal</div>
-                            <div>Guru Official / Atlet,</div>
+                            <div>Guru / Official / Atlet / Peserta,</div>
                         </div>
                         <div class="pt-10">
                             <div class="font-black text-slate-950 underline underline-offset-2">
