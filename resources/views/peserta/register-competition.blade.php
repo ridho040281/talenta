@@ -59,12 +59,20 @@
                         </label>
                         <select name="match_type" x-model="matchType" @change="onMatchTypeChange()" required class="block w-full px-4 py-3 rounded-2xl bg-slate-950 border border-slate-700 text-white text-sm font-bold focus:border-emerald-500 outline-none">
                             <optgroup label="Nomor Tunggal (Perorangan - Ada Kelas A, B, C)">
-                                <option value="Tunggal Putra (PA)">👤 Tunggal Putra (PA)</option>
-                                <option value="Tunggal Putri (PI)">👤 Tunggal Putri (PI)</option>
+                                <option value="Tunggal Putra (PA)" :disabled="isSectorOptionFull('Tunggal Putra (PA)')">
+                                    👤 Tunggal Putra (PA)
+                                </option>
+                                <option value="Tunggal Putri (PI)" :disabled="isSectorOptionFull('Tunggal Putri (PI)')">
+                                    👤 Tunggal Putri (PI)
+                                </option>
                             </optgroup>
                             <optgroup label="Nomor Ganda (Pasangan - 2 Pemain)">
-                                <option value="Ganda Putra (PA)">👥 Ganda Putra (PA)</option>
-                                <option value="Ganda Putri (PI)">👥 Ganda Putri (PI)</option>
+                                <option value="Ganda Putra (PA)" :disabled="isSectorOptionFull('Ganda Putra (PA)')">
+                                    👥 Ganda Putra (PA)
+                                </option>
+                                <option value="Ganda Putri (PI)" :disabled="isSectorOptionFull('Ganda Putri (PI)')">
+                                    👥 Ganda Putri (PI)
+                                </option>
                             </optgroup>
                         </select>
                         <p class="text-[11px] text-slate-400">Pilih sektor Putra (PA) atau Putri (PI).</p>
@@ -78,14 +86,14 @@
 
                         <div x-show="!matchType.includes('Ganda')">
                             <select name="target_class" x-model="targetClass" :disabled="matchType.includes('Ganda')" :required="!matchType.includes('Ganda')" class="block w-full px-4 py-3 rounded-2xl bg-slate-950 border border-slate-700 text-white text-sm font-bold focus:border-emerald-500 outline-none">
-                                <option value="Kategori A (Kelas 1 - 2)">
-                                    🏸 Kategori A (Kelas 1 – 2 SD/MI) — <span x-text="matchType.includes('(PI)') ? 'Rp {{ number_format($competition->tier_fees['A_tunggal_pi'] ?? 130000, 0, ',', '.') }}' : 'Rp {{ number_format($competition->tier_fees['A_tunggal_pa'] ?? 130000, 0, ',', '.') }}'"></span>
+                                <option value="Kategori A (Kelas 1 - 2)" :disabled="isClassOptionFull('A')">
+                                    🏸 Kategori A (Kelas 1 – 2 SD/MI)
                                 </option>
-                                <option value="Kategori B (Kelas 3 - 4)">
-                                    🏸 Kategori B (Kelas 3 – 4 SD/MI) — <span x-text="matchType.includes('(PI)') ? 'Rp {{ number_format($competition->tier_fees['B_tunggal_pi'] ?? 150000, 0, ',', '.') }}' : 'Rp {{ number_format($competition->tier_fees['B_tunggal_pa'] ?? 150000, 0, ',', '.') }}'"></span>
+                                <option value="Kategori B (Kelas 3 - 4)" :disabled="isClassOptionFull('B')">
+                                    🏸 Kategori B (Kelas 3 – 4 SD/MI)
                                 </option>
-                                <option value="Kategori C (Kelas 5 - 6)">
-                                    🏸 Kategori C (Kelas 5 – 6 SD/MI) — <span x-text="matchType.includes('(PI)') ? 'Rp {{ number_format($competition->tier_fees['C_tunggal_pi'] ?? 150000, 0, ',', '.') }}' : 'Rp {{ number_format($competition->tier_fees['C_tunggal_pa'] ?? 150000, 0, ',', '.') }}'"></span>
+                                <option value="Kategori C (Kelas 5 - 6)" :disabled="isClassOptionFull('C')">
+                                    🏸 Kategori C (Kelas 5 – 6 SD/MI)
                                 </option>
                             </select>
                             <p class="text-[11px] text-slate-400 mt-1.5">Sesuai jenjang kelas siswa saat ini di SD/MI.</p>
@@ -105,6 +113,19 @@
 
                 </div>
 
+                <!-- Real-time Quota Alert Pill for Bulu Tangkis -->
+                <div x-show="isCurrentTierFull" x-cloak class="p-3.5 rounded-2xl bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs flex items-center gap-2.5 font-bold">
+                    <i data-lucide="alert-circle" class="w-4 h-4 text-rose-400 shrink-0"></i>
+                    <span>Mohon maaf, kuota pendaftaran untuk kategori/kelas ini telah <strong>PENUH</strong>. Silakan pilih kelas atau sektor lain yang masih tersedia di bawah ini.</span>
+                </div>
+                <div x-show="!isCurrentTierFull && currentTierInfo" x-cloak class="text-xs flex items-center justify-between text-slate-300 bg-slate-950 px-4 py-2.5 rounded-2xl border border-slate-800">
+                    <span class="text-slate-400">Status Kuota Kategori Pilihan Anda:</span>
+                    <span class="font-bold text-emerald-400 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                        <span x-text="'Tersedia (Sisa ' + (currentTierInfo?.remaining_quota ?? 0) + ' slot dari kuota ' + (currentTierInfo?.max_quota ?? 0) + ')'"></span>
+                    </span>
+                </div>
+
                 <!-- Tabel Informasi Kuota & Biaya Resmi -->
                 <div class="pt-4 border-t border-slate-800 space-y-2">
                     <span class="text-[11px] font-bold text-slate-300 uppercase tracking-wider block">
@@ -120,69 +141,134 @@
                                     <th class="py-2.5 px-4 text-center">JENJANG KELAS</th>
                                     <th class="py-2.5 px-4 text-center text-cyan-400">KUOTA MAKSIMAL</th>
                                     <th class="py-2.5 px-4 text-center text-amber-400">BIAYA REGISTRASI</th>
+                                    <th class="py-2.5 px-4 text-center">STATUS KUOTA</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-800 text-slate-300 font-medium">
                                 <!-- Tunggal PA -->
+                                @php $stA_pa = $competition->tier_statuses['a_tunggal_pa'] ?? null; @endphp
                                 <tr :class="targetClass.includes('Kategori A') && matchType === 'Tunggal Putra (PA)' ? 'bg-emerald-950/80 font-bold text-white ring-1 ring-emerald-500' : ''">
                                     <td class="py-2 px-4 font-bold text-slate-200">👤 Tunggal Putra (PA)</td>
                                     <td class="py-2 px-4 text-center font-black text-emerald-400">Kat A</td>
                                     <td class="py-2 px-4 text-center">Kelas 1 – 2 SD/MI</td>
-                                    <td class="py-2 px-4 text-center font-bold text-cyan-300">{{ $competition->tier_quotas['A_tunggal_pa'] ?? 16 }} Peserta</td>
+                                    <td class="py-2 px-4 text-center font-bold text-cyan-300">{{ $stA_pa['max_quota'] ?? 16 }} Peserta</td>
                                     <td class="py-2 px-4 text-center font-mono font-bold text-emerald-400">Rp {{ number_format($competition->tier_fees['A_tunggal_pa'] ?? 130000, 0, ',', '.') }}</td>
+                                    <td class="py-2 px-4 text-center">
+                                        @if(!empty($stA_pa['is_full']))
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/40">KUOTA PENUH</span>
+                                        @else
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">Sisa {{ $stA_pa['remaining_quota'] ?? 16 }} Slot</span>
+                                        @endif
+                                    </td>
                                 </tr>
+                                @php $stB_pa = $competition->tier_statuses['b_tunggal_pa'] ?? null; @endphp
                                 <tr :class="targetClass.includes('Kategori B') && matchType === 'Tunggal Putra (PA)' ? 'bg-emerald-950/80 font-bold text-white ring-1 ring-emerald-500' : ''">
                                     <td class="py-2 px-4 font-bold text-slate-200">👤 Tunggal Putra (PA)</td>
                                     <td class="py-2 px-4 text-center font-black text-emerald-400">Kat B</td>
                                     <td class="py-2 px-4 text-center">Kelas 3 – 4 SD/MI</td>
-                                    <td class="py-2 px-4 text-center font-bold text-cyan-300">{{ $competition->tier_quotas['B_tunggal_pa'] ?? 16 }} Peserta</td>
+                                    <td class="py-2 px-4 text-center font-bold text-cyan-300">{{ $stB_pa['max_quota'] ?? 16 }} Peserta</td>
                                     <td class="py-2 px-4 text-center font-mono font-bold text-emerald-400">Rp {{ number_format($competition->tier_fees['B_tunggal_pa'] ?? 150000, 0, ',', '.') }}</td>
+                                    <td class="py-2 px-4 text-center">
+                                        @if(!empty($stB_pa['is_full']))
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/40">KUOTA PENUH</span>
+                                        @else
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">Sisa {{ $stB_pa['remaining_quota'] ?? 16 }} Slot</span>
+                                        @endif
+                                    </td>
                                 </tr>
+                                @php $stC_pa = $competition->tier_statuses['c_tunggal_pa'] ?? null; @endphp
                                 <tr :class="targetClass.includes('Kategori C') && matchType === 'Tunggal Putra (PA)' ? 'bg-emerald-950/80 font-bold text-white ring-1 ring-emerald-500' : ''">
                                     <td class="py-2 px-4 font-bold text-slate-200">👤 Tunggal Putra (PA)</td>
                                     <td class="py-2 px-4 text-center font-black text-emerald-400">Kat C</td>
                                     <td class="py-2 px-4 text-center">Kelas 5 – 6 SD/MI</td>
-                                    <td class="py-2 px-4 text-center font-bold text-cyan-300">{{ $competition->tier_quotas['C_tunggal_pa'] ?? 16 }} Peserta</td>
+                                    <td class="py-2 px-4 text-center font-bold text-cyan-300">{{ $stC_pa['max_quota'] ?? 16 }} Peserta</td>
                                     <td class="py-2 px-4 text-center font-mono font-bold text-emerald-400">Rp {{ number_format($competition->tier_fees['C_tunggal_pa'] ?? 150000, 0, ',', '.') }}</td>
+                                    <td class="py-2 px-4 text-center">
+                                        @if(!empty($stC_pa['is_full']))
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/40">KUOTA PENUH</span>
+                                        @else
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">Sisa {{ $stC_pa['remaining_quota'] ?? 16 }} Slot</span>
+                                        @endif
+                                    </td>
                                 </tr>
 
                                 <!-- Tunggal PI -->
+                                @php $stA_pi = $competition->tier_statuses['a_tunggal_pi'] ?? null; @endphp
                                 <tr :class="targetClass.includes('Kategori A') && matchType === 'Tunggal Putri (PI)' ? 'bg-pink-950/80 font-bold text-white ring-1 ring-pink-500' : ''">
                                     <td class="py-2 px-4 font-bold text-slate-200">👤 Tunggal Putri (PI)</td>
                                     <td class="py-2 px-4 text-center font-black text-pink-400">Kat A</td>
                                     <td class="py-2 px-4 text-center">Kelas 1 – 2 SD/MI</td>
-                                    <td class="py-2 px-4 text-center font-bold text-cyan-300">{{ $competition->tier_quotas['A_tunggal_pi'] ?? 16 }} Peserta</td>
+                                    <td class="py-2 px-4 text-center font-bold text-cyan-300">{{ $stA_pi['max_quota'] ?? 16 }} Peserta</td>
                                     <td class="py-2 px-4 text-center font-mono font-bold text-pink-400">Rp {{ number_format($competition->tier_fees['A_tunggal_pi'] ?? 130000, 0, ',', '.') }}</td>
+                                    <td class="py-2 px-4 text-center">
+                                        @if(!empty($stA_pi['is_full']))
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/40">KUOTA PENUH</span>
+                                        @else
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-pink-500/20 text-pink-300 border border-pink-500/40">Sisa {{ $stA_pi['remaining_quota'] ?? 16 }} Slot</span>
+                                        @endif
+                                    </td>
                                 </tr>
+                                @php $stB_pi = $competition->tier_statuses['b_tunggal_pi'] ?? null; @endphp
                                 <tr :class="targetClass.includes('Kategori B') && matchType === 'Tunggal Putri (PI)' ? 'bg-pink-950/80 font-bold text-white ring-1 ring-pink-500' : ''">
                                     <td class="py-2 px-4 font-bold text-slate-200">👤 Tunggal Putri (PI)</td>
                                     <td class="py-2 px-4 text-center font-black text-pink-400">Kat B</td>
                                     <td class="py-2 px-4 text-center">Kelas 3 – 4 SD/MI</td>
-                                    <td class="py-2 px-4 text-center font-bold text-cyan-300">{{ $competition->tier_quotas['B_tunggal_pi'] ?? 16 }} Peserta</td>
+                                    <td class="py-2 px-4 text-center font-bold text-cyan-300">{{ $stB_pi['max_quota'] ?? 16 }} Peserta</td>
                                     <td class="py-2 px-4 text-center font-mono font-bold text-pink-400">Rp {{ number_format($competition->tier_fees['B_tunggal_pi'] ?? 150000, 0, ',', '.') }}</td>
+                                    <td class="py-2 px-4 text-center">
+                                        @if(!empty($stB_pi['is_full']))
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/40">KUOTA PENUH</span>
+                                        @else
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-pink-500/20 text-pink-300 border border-pink-500/40">Sisa {{ $stB_pi['remaining_quota'] ?? 16 }} Slot</span>
+                                        @endif
+                                    </td>
                                 </tr>
+                                @php $stC_pi = $competition->tier_statuses['c_tunggal_pi'] ?? null; @endphp
                                 <tr :class="targetClass.includes('Kategori C') && matchType === 'Tunggal Putri (PI)' ? 'bg-pink-950/80 font-bold text-white ring-1 ring-pink-500' : ''">
                                     <td class="py-2 px-4 font-bold text-slate-200">👤 Tunggal Putri (PI)</td>
                                     <td class="py-2 px-4 text-center font-black text-pink-400">Kat C</td>
                                     <td class="py-2 px-4 text-center">Kelas 5 – 6 SD/MI</td>
-                                    <td class="py-2 px-4 text-center font-bold text-cyan-300">{{ $competition->tier_quotas['C_tunggal_pi'] ?? 16 }} Peserta</td>
+                                    <td class="py-2 px-4 text-center font-bold text-cyan-300">{{ $stC_pi['max_quota'] ?? 16 }} Peserta</td>
                                     <td class="py-2 px-4 text-center font-mono font-bold text-pink-400">Rp {{ number_format($competition->tier_fees['C_tunggal_pi'] ?? 150000, 0, ',', '.') }}</td>
+                                    <td class="py-2 px-4 text-center">
+                                        @if(!empty($stC_pi['is_full']))
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/40">KUOTA PENUH</span>
+                                        @else
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-pink-500/20 text-pink-300 border border-pink-500/40">Sisa {{ $stC_pi['remaining_quota'] ?? 16 }} Slot</span>
+                                        @endif
+                                    </td>
                                 </tr>
 
                                 <!-- Ganda PA & PI -->
+                                @php $stG_pa = $competition->tier_statuses['ganda_pa'] ?? null; @endphp
                                 <tr :class="matchType === 'Ganda Putra (PA)' ? 'bg-blue-950/80 font-bold text-white ring-1 ring-blue-500' : ''">
                                     <td class="py-2 px-4 font-bold text-blue-300">👥 Ganda Putra (PA)</td>
                                     <td class="py-2 px-4 text-center font-black text-blue-400">Ganda</td>
                                     <td class="py-2 px-4 text-center text-slate-300">Semua Kelas SD/MI</td>
-                                    <td class="py-2 px-4 text-center font-bold text-blue-300">{{ $competition->tier_quotas['ganda_pa'] ?? 10 }} Pasang</td>
+                                    <td class="py-2 px-4 text-center font-bold text-blue-300">{{ $stG_pa['max_quota'] ?? 10 }} Pasang</td>
                                     <td class="py-2 px-4 text-center font-mono font-bold text-blue-400">Rp {{ number_format($competition->tier_fees['ganda_pa'] ?? 200000, 0, ',', '.') }}</td>
+                                    <td class="py-2 px-4 text-center">
+                                        @if(!empty($stG_pa['is_full']))
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/40">KUOTA PENUH</span>
+                                        @else
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/40">Sisa {{ $stG_pa['remaining_quota'] ?? 10 }} Slot</span>
+                                        @endif
+                                    </td>
                                 </tr>
+                                @php $stG_pi = $competition->tier_statuses['ganda_pi'] ?? null; @endphp
                                 <tr :class="matchType === 'Ganda Putri (PI)' ? 'bg-amber-950/80 font-bold text-white ring-1 ring-amber-500' : ''">
                                     <td class="py-2 px-4 font-bold text-amber-300">👥 Ganda Putri (PI)</td>
                                     <td class="py-2 px-4 text-center font-black text-amber-400">Ganda</td>
                                     <td class="py-2 px-4 text-center text-slate-300">Semua Kelas SD/MI</td>
-                                    <td class="py-2 px-4 text-center font-bold text-amber-300">{{ $competition->tier_quotas['ganda_pi'] ?? 10 }} Pasang</td>
+                                    <td class="py-2 px-4 text-center font-bold text-amber-300">{{ $stG_pi['max_quota'] ?? 10 }} Pasang</td>
                                     <td class="py-2 px-4 text-center font-mono font-bold text-amber-400">Rp {{ number_format($competition->tier_fees['ganda_pi'] ?? 200000, 0, ',', '.') }}</td>
+                                    <td class="py-2 px-4 text-center">
+                                        @if(!empty($stG_pi['is_full']))
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/40">KUOTA PENUH</span>
+                                        @else
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">Sisa {{ $stG_pi['remaining_quota'] ?? 10 }} Slot</span>
+                                        @endif
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -217,8 +303,12 @@
                             1. Kategori Sektor Tanding <span class="text-rose-400">*</span>
                         </label>
                         <select name="match_type" x-model="matchType" @change="onMatchTypeChange()" required class="block w-full px-4 py-3 rounded-2xl bg-slate-950 border border-slate-700 text-white text-sm font-bold focus:border-emerald-500 outline-none">
-                            <option value="Tunggal Putra (PA)">👤 Tunggal Putra (PA)</option>
-                            <option value="Tunggal Putri (PI)">👤 Tunggal Putri (PI)</option>
+                            <option value="Tunggal Putra (PA)" :disabled="isSectorOptionFull('Tunggal Putra (PA)')">
+                                👤 Tunggal Putra (PA)
+                            </option>
+                            <option value="Tunggal Putri (PI)" :disabled="isSectorOptionFull('Tunggal Putri (PI)')">
+                                👤 Tunggal Putri (PI)
+                            </option>
                         </select>
                         <p class="text-[11px] text-slate-400">Pilih sektor Putra (PA) atau Putri (PI).</p>
                     </div>
@@ -229,15 +319,28 @@
                             2. Tingkatan / Kategori Kelas <span class="text-rose-400">*</span>
                         </label>
                         <select name="target_class" x-model="targetClass" required class="block w-full px-4 py-3 rounded-2xl bg-slate-950 border border-slate-700 text-white text-sm font-bold focus:border-emerald-500 outline-none">
-                            <option value="Kategori A (Kelas 1 - 3)">
-                                🏓 Kategori A (Kelas 1 – 3 SD/MI) — <span x-text="matchType.includes('(PI)') ? 'Rp {{ number_format($competition->tier_fees['A_tunggal_pi'] ?? 35000, 0, ',', '.') }}' : 'Rp {{ number_format($competition->tier_fees['A_tunggal_pa'] ?? 35000, 0, ',', '.') }}'"></span>
+                            <option value="Kategori A (Kelas 1 - 3)" :disabled="isClassOptionFull('A')">
+                                🏓 Kategori A (Kelas 1 – 3 SD/MI)
                             </option>
-                            <option value="Kategori B (Kelas 4 - 6)">
-                                🏓 Kategori B (Kelas 4 – 6 SD/MI) — <span x-text="matchType.includes('(PI)') ? 'Rp {{ number_format($competition->tier_fees['B_tunggal_pi'] ?? 35000, 0, ',', '.') }}' : 'Rp {{ number_format($competition->tier_fees['B_tunggal_pa'] ?? 35000, 0, ',', '.') }}'"></span>
+                            <option value="Kategori B (Kelas 4 - 6)" :disabled="isClassOptionFull('B')">
+                                🏓 Kategori B (Kelas 4 – 6 SD/MI)
                             </option>
                         </select>
                         <p class="text-[11px] text-slate-400">Sesuai jenjang kelas siswa saat ini di SD/MI.</p>
                     </div>
+                </div>
+
+                <!-- Real-time Quota Alert Pill for Tenis Meja -->
+                <div x-show="isCurrentTierFull" x-cloak class="p-3.5 rounded-2xl bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs flex items-center gap-2.5 font-bold">
+                    <i data-lucide="alert-circle" class="w-4 h-4 text-rose-400 shrink-0"></i>
+                    <span>Mohon maaf, kuota pendaftaran untuk kategori/kelas ini telah <strong>PENUH</strong>. Silakan pilih kelas atau sektor lain yang masih tersedia di bawah ini.</span>
+                </div>
+                <div x-show="!isCurrentTierFull && currentTierInfo" x-cloak class="text-xs flex items-center justify-between text-slate-300 bg-slate-950 px-4 py-2.5 rounded-2xl border border-slate-800">
+                    <span class="text-slate-400">Status Kuota Kategori Pilihan Anda:</span>
+                    <span class="font-bold text-emerald-400 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                        <span x-text="'Tersedia (Sisa ' + (currentTierInfo?.remaining_quota ?? 0) + ' slot dari kuota ' + (currentTierInfo?.max_quota ?? 0) + ')'"></span>
+                    </span>
                 </div>
 
                 <!-- Tabel Informasi Kuota & Biaya Resmi -->
@@ -255,39 +358,72 @@
                                     <th class="py-2.5 px-4 text-center">JENJANG KELAS</th>
                                     <th class="py-2.5 px-4 text-center text-cyan-400">KUOTA MAKSIMAL</th>
                                     <th class="py-2.5 px-4 text-center text-amber-400">BIAYA REGISTRASI</th>
+                                    <th class="py-2.5 px-4 text-center">STATUS KUOTA</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-800 text-slate-300 font-medium">
                                 <!-- Tunggal PA -->
+                                @php $stTmjA_pa = $competition->tier_statuses['a_tunggal_pa'] ?? null; @endphp
                                 <tr :class="targetClass.includes('Kategori A') && matchType === 'Tunggal Putra (PA)' ? 'bg-emerald-950/80 font-bold text-white ring-1 ring-emerald-500' : ''">
                                     <td class="py-2 px-4 font-bold text-slate-200">👤 Tunggal Putra (PA)</td>
                                     <td class="py-2 px-4 text-center font-black text-emerald-400">Kat A</td>
                                     <td class="py-2 px-4 text-center">Kelas 1 – 3 SD/MI</td>
-                                    <td class="py-2 px-4 text-center font-bold text-cyan-300">{{ $competition->tier_quotas['A_tunggal_pa'] ?? 10 }} Peserta</td>
+                                    <td class="py-2 px-4 text-center font-bold text-cyan-300">{{ $stTmjA_pa['max_quota'] ?? 10 }} Peserta</td>
                                     <td class="py-2 px-4 text-center font-mono font-bold text-emerald-400">Rp {{ number_format($competition->tier_fees['A_tunggal_pa'] ?? 35000, 0, ',', '.') }}</td>
+                                    <td class="py-2 px-4 text-center">
+                                        @if(!empty($stTmjA_pa['is_full']))
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/40">KUOTA PENUH</span>
+                                        @else
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">Sisa {{ $stTmjA_pa['remaining_quota'] ?? 10 }} Slot</span>
+                                        @endif
+                                    </td>
                                 </tr>
+                                @php $stTmjB_pa = $competition->tier_statuses['b_tunggal_pa'] ?? null; @endphp
                                 <tr :class="targetClass.includes('Kategori B') && matchType === 'Tunggal Putra (PA)' ? 'bg-emerald-950/80 font-bold text-white ring-1 ring-emerald-500' : ''">
                                     <td class="py-2 px-4 font-bold text-slate-200">👤 Tunggal Putra (PA)</td>
                                     <td class="py-2 px-4 text-center font-black text-emerald-400">Kat B</td>
                                     <td class="py-2 px-4 text-center">Kelas 4 – 6 SD/MI</td>
-                                    <td class="py-2 px-4 text-center font-bold text-cyan-300">{{ $competition->tier_quotas['B_tunggal_pa'] ?? 10 }} Peserta</td>
+                                    <td class="py-2 px-4 text-center font-bold text-cyan-300">{{ $stTmjB_pa['max_quota'] ?? 10 }} Peserta</td>
                                     <td class="py-2 px-4 text-center font-mono font-bold text-emerald-400">Rp {{ number_format($competition->tier_fees['B_tunggal_pa'] ?? 35000, 0, ',', '.') }}</td>
+                                    <td class="py-2 px-4 text-center">
+                                        @if(!empty($stTmjB_pa['is_full']))
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/40">KUOTA PENUH</span>
+                                        @else
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">Sisa {{ $stTmjB_pa['remaining_quota'] ?? 10 }} Slot</span>
+                                        @endif
+                                    </td>
                                 </tr>
 
                                 <!-- Tunggal PI -->
+                                @php $stTmjA_pi = $competition->tier_statuses['a_tunggal_pi'] ?? null; @endphp
                                 <tr :class="targetClass.includes('Kategori A') && matchType === 'Tunggal Putri (PI)' ? 'bg-pink-950/80 font-bold text-white ring-1 ring-pink-500' : ''">
                                     <td class="py-2 px-4 font-bold text-slate-200">👤 Tunggal Putri (PI)</td>
                                     <td class="py-2 px-4 text-center font-black text-pink-400">Kat A</td>
                                     <td class="py-2 px-4 text-center">Kelas 1 – 3 SD/MI</td>
-                                    <td class="py-2 px-4 text-center font-bold text-cyan-300">{{ $competition->tier_quotas['A_tunggal_pi'] ?? 10 }} Peserta</td>
+                                    <td class="py-2 px-4 text-center font-bold text-cyan-300">{{ $stTmjA_pi['max_quota'] ?? 10 }} Peserta</td>
                                     <td class="py-2 px-4 text-center font-mono font-bold text-pink-400">Rp {{ number_format($competition->tier_fees['A_tunggal_pi'] ?? 35000, 0, ',', '.') }}</td>
+                                    <td class="py-2 px-4 text-center">
+                                        @if(!empty($stTmjA_pi['is_full']))
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/40">KUOTA PENUH</span>
+                                        @else
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-pink-500/20 text-pink-300 border border-pink-500/40">Sisa {{ $stTmjA_pi['remaining_quota'] ?? 10 }} Slot</span>
+                                        @endif
+                                    </td>
                                 </tr>
+                                @php $stTmjB_pi = $competition->tier_statuses['b_tunggal_pi'] ?? null; @endphp
                                 <tr :class="targetClass.includes('Kategori B') && matchType === 'Tunggal Putri (PI)' ? 'bg-pink-950/80 font-bold text-white ring-1 ring-pink-500' : ''">
                                     <td class="py-2 px-4 font-bold text-slate-200">👤 Tunggal Putri (PI)</td>
                                     <td class="py-2 px-4 text-center font-black text-pink-400">Kat B</td>
                                     <td class="py-2 px-4 text-center">Kelas 4 – 6 SD/MI</td>
-                                    <td class="py-2 px-4 text-center font-bold text-cyan-300">{{ $competition->tier_quotas['B_tunggal_pi'] ?? 10 }} Peserta</td>
+                                    <td class="py-2 px-4 text-center font-bold text-cyan-300">{{ $stTmjB_pi['max_quota'] ?? 10 }} Peserta</td>
                                     <td class="py-2 px-4 text-center font-mono font-bold text-pink-400">Rp {{ number_format($competition->tier_fees['B_tunggal_pi'] ?? 35000, 0, ',', '.') }}</td>
+                                    <td class="py-2 px-4 text-center">
+                                        @if(!empty($stTmjB_pi['is_full']))
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/40">KUOTA PENUH</span>
+                                        @else
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-pink-500/20 text-pink-300 border border-pink-500/40">Sisa {{ $stTmjB_pi['remaining_quota'] ?? 10 }} Slot</span>
+                                        @endif
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -624,10 +760,14 @@
             <a href="{{ route('peserta.dashboard') }}" class="px-6 py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-sm transition border border-slate-700">
                 Batal
             </a>
-            <button type="submit" :disabled="isSubmitting" class="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 hover:from-emerald-300 hover:to-cyan-300 text-slate-950 font-black text-sm shadow-xl shadow-emerald-500/30 hover:scale-[1.02] transition duration-200 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
-                <span x-show="!isSubmitting" class="inline-flex items-center gap-2">
+            <button type="submit" :disabled="isSubmitting || isCurrentTierFull" class="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 hover:from-emerald-300 hover:to-cyan-300 text-slate-950 font-black text-sm shadow-xl shadow-emerald-500/30 hover:scale-[1.02] transition duration-200 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+                <span x-show="!isSubmitting && !isCurrentTierFull" class="inline-flex items-center gap-2">
                     <i data-lucide="send" class="w-4 h-4 text-slate-950"></i>
                     <span>Kirim Formulir Pendaftaran</span>
+                </span>
+                <span x-show="!isSubmitting && isCurrentTierFull" class="inline-flex items-center gap-2">
+                    <i data-lucide="lock" class="w-4 h-4 text-slate-950"></i>
+                    <span>Kuota Kategori Ini Penuh</span>
                 </span>
                 <span x-show="isSubmitting" class="inline-flex items-center gap-2">
                     <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-slate-950" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -731,6 +871,7 @@
             isCollective: isColl,
             baseFee: baseFeeVal,
             tierFees: @json($competition->tier_fees),
+            tierStatuses: @json($competition->tier_statuses),
             targetClass: isTmj ? 'Kategori A (Kelas 1 - 3)' : 'Kategori A (Kelas 1 - 2)',
             matchType: 'Tunggal Putra (PA)',
             isSubmitting: false,
@@ -740,6 +881,116 @@
             members: [
                 { full_name: '', nisn: '', gender: 'L', birth_place: '', birth_date: '', role_in_team: 'Peserta Utama' }
             ],
+            getCurrentTierKey() {
+                const isPutri = this.matchType.includes('(PI)') || this.matchType.includes('Putri');
+                const genderSuffix = isPutri ? 'pi' : 'pa';
+
+                if (this.isBuluTangkis) {
+                    if (this.matchType.includes('Ganda')) {
+                        return 'ganda_' + genderSuffix;
+                    }
+                    let kat = 'a';
+                    if (this.targetClass.includes('Kategori B')) kat = 'b';
+                    else if (this.targetClass.includes('Kategori C')) kat = 'c';
+                    return kat + '_tunggal_' + genderSuffix;
+                }
+
+                if (this.isTenisMeja) {
+                    let kat = 'a';
+                    if (this.targetClass.includes('Kategori B')) kat = 'b';
+                    return kat + '_tunggal_' + genderSuffix;
+                }
+
+                return null;
+            },
+            get isCurrentTierFull() {
+                const key = this.getCurrentTierKey();
+                if (!key || !this.tierStatuses || !this.tierStatuses[key]) return false;
+                return !!this.tierStatuses[key].is_full;
+            },
+            get currentTierInfo() {
+                const key = this.getCurrentTierKey();
+                if (!key || !this.tierStatuses || !this.tierStatuses[key]) return null;
+                return this.tierStatuses[key];
+            },
+            isClassOptionFull(katLetter) {
+                if (!this.tierStatuses) return false;
+                const isPutri = this.matchType.includes('(PI)') || this.matchType.includes('Putri');
+                const genderSuffix = isPutri ? 'pi' : 'pa';
+                const key = katLetter.toLowerCase() + '_tunggal_' + genderSuffix;
+                return !!(this.tierStatuses[key] && this.tierStatuses[key].is_full);
+            },
+            isSectorOptionFull(sectorVal) {
+                if (!this.tierStatuses) return false;
+                const isPutri = sectorVal.includes('(PI)') || sectorVal.includes('Putri');
+                const genderSuffix = isPutri ? 'pi' : 'pa';
+
+                if (sectorVal.includes('Ganda')) {
+                    const key = 'ganda_' + genderSuffix;
+                    return !!(this.tierStatuses[key] && this.tierStatuses[key].is_full);
+                }
+
+                if (this.isBuluTangkis) {
+                    const katA = !!this.tierStatuses['a_tunggal_' + genderSuffix]?.is_full;
+                    const katB = !!this.tierStatuses['b_tunggal_' + genderSuffix]?.is_full;
+                    const katC = !!this.tierStatuses['c_tunggal_' + genderSuffix]?.is_full;
+                    return katA && katB && katC;
+                }
+
+                if (this.isTenisMeja) {
+                    const katA = !!this.tierStatuses['a_tunggal_' + genderSuffix]?.is_full;
+                    const katB = !!this.tierStatuses['b_tunggal_' + genderSuffix]?.is_full;
+                    return katA && katB;
+                }
+
+                return false;
+            },
+            autoSelectAvailableSector() {
+                if (!this.isBuluTangkis && !this.isTenisMeja) return;
+                if (!this.isSectorOptionFull(this.matchType)) return;
+
+                const sectors = this.isBuluTangkis
+                    ? ['Tunggal Putra (PA)', 'Tunggal Putri (PI)', 'Ganda Putra (PA)', 'Ganda Putri (PI)']
+                    : ['Tunggal Putra (PA)', 'Tunggal Putri (PI)'];
+
+                for (const sec of sectors) {
+                    if (!this.isSectorOptionFull(sec)) {
+                        this.matchType = sec;
+                        return;
+                    }
+                }
+            },
+            autoSelectAvailableClass() {
+                if (!this.isCurrentTierFull) return;
+
+                if (this.isBuluTangkis) {
+                    if (this.matchType.includes('Ganda')) return;
+                    const options = [
+                        { letter: 'A', val: 'Kategori A (Kelas 1 - 2)' },
+                        { letter: 'B', val: 'Kategori B (Kelas 3 - 4)' },
+                        { letter: 'C', val: 'Kategori C (Kelas 5 - 6)' }
+                    ];
+                    for (const opt of options) {
+                        if (!this.isClassOptionFull(opt.letter)) {
+                            this.targetClass = opt.val;
+                            return;
+                        }
+                    }
+                }
+
+                if (this.isTenisMeja) {
+                    const options = [
+                        { letter: 'A', val: 'Kategori A (Kelas 1 - 3)' },
+                        { letter: 'B', val: 'Kategori B (Kelas 4 - 6)' }
+                    ];
+                    for (const opt of options) {
+                        if (!this.isClassOptionFull(opt.letter)) {
+                            this.targetClass = opt.val;
+                            return;
+                        }
+                    }
+                }
+            },
             get calculatedFee() {
                 if (this.isBuluTangkis && this.tierFees) {
                     const isPutri = this.matchType.includes('(PI)') || this.matchType.includes('Putri');
@@ -781,7 +1032,9 @@
             },
             init() {
                 if (this.isBuluTangkis || this.isTenisMeja) {
+                    this.autoSelectAvailableSector();
                     this.onMatchTypeChange();
+                    this.autoSelectAvailableClass();
                 } else {
                     while(this.members.length < this.minMembers) {
                         this.members.push({ full_name: '', nisn: '', gender: 'L', birth_place: '', birth_date: '', role_in_team: 'Anggota ' + (this.members.length + 1) });
@@ -797,6 +1050,7 @@
                     this.members = [this.members[0]];
                     this.members[0].role_in_team = 'Peserta Tunggal';
                     this.members[0].gender = defaultGender;
+                    this.autoSelectAvailableClass();
                     this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
                     return;
                 }
@@ -821,6 +1075,7 @@
                     this.members = [this.members[0]];
                     this.members[0].role_in_team = 'Peserta Tunggal';
                     this.members[0].gender = defaultGender;
+                    this.autoSelectAvailableClass();
                 }
                 this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
             },
@@ -837,6 +1092,13 @@
             },
             handleSubmit(e) {
                 if (window.hideAppLoading) window.hideAppLoading();
+
+                if (this.isCurrentTierFull) {
+                    this.isSubmitting = false;
+                    alert('Mohon maaf, kuota pendaftaran untuk kategori/kelas ini telah penuh. Silakan pilih kategori atau sektor lain yang masih tersedia.');
+                    return;
+                }
+
                 const tfInput = document.querySelector('input[name="payment_proof"]');
                 const docInput = document.querySelector('input[name="document_file"]');
                 

@@ -96,6 +96,7 @@ class Competition extends Model
         'status_pi',
         'guidelines_embed_url',
         'guidelines_download_url',
+        'tier_statuses',
     ];
 
     protected function casts(): array
@@ -478,79 +479,94 @@ class Competition extends Model
         return $this->effective_registration_end;
     }
 
-    public function isTierQuotaFull(string $tierKey): bool
+    public function hasTierCategories(): bool
+    {
+        return in_array($this->code, ['BLT', 'TMJ']);
+    }
+
+    public function getTierKeys(): array
+    {
+        if ($this->code === 'BLT') {
+            return [
+                'a_tunggal_pa',
+                'b_tunggal_pa',
+                'c_tunggal_pa',
+                'a_tunggal_pi',
+                'b_tunggal_pi',
+                'c_tunggal_pi',
+                'ganda_pa',
+                'ganda_pi',
+            ];
+        }
+
+        if ($this->code === 'TMJ') {
+            return [
+                'a_tunggal_pa',
+                'b_tunggal_pa',
+                'a_tunggal_pi',
+                'b_tunggal_pi',
+            ];
+        }
+
+        return [];
+    }
+
+    public function getTierQuota(string $tierKey): int
     {
         $prefix = strtolower($this->code);
         $tierQuotas = $this->tier_quotas;
 
+        $mappedQuotaKey = match ($tierKey) {
+            'a_tunggal_pa' => 'A_tunggal_pa',
+            'b_tunggal_pa' => 'B_tunggal_pa',
+            'c_tunggal_pa' => 'C_tunggal_pa',
+            'a_tunggal_pi' => 'A_tunggal_pi',
+            'b_tunggal_pi' => 'B_tunggal_pi',
+            'c_tunggal_pi' => 'C_tunggal_pi',
+            'ganda_pa' => 'ganda_pa',
+            'ganda_pi' => 'ganda_pi',
+            default => $tierKey,
+        };
+
+        return (int) ($tierQuotas[$mappedQuotaKey] ?? 0);
+    }
+
+    public function getTierParticipantCount(string $tierKey): int
+    {
+        $prefix = strtolower($this->code);
+
+        $regs = $this->relationLoaded('registrations')
+            ? $this->registrations->filter(fn ($r) => in_array($r->status, ['pending', 'verified']))
+            : $this->registrations()->with('members')->whereIn('status', ['pending', 'verified'])->get();
+
+        $isPa = str_contains($tierKey, 'pa');
+        $isGanda = str_contains($tierKey, 'ganda');
+
         if ($prefix === 'blt') {
-            $mappedQuotaKey = match ($tierKey) {
-                'a_tunggal_pa' => 'A_tunggal_pa',
-                'b_tunggal_pa' => 'B_tunggal_pa',
-                'c_tunggal_pa' => 'C_tunggal_pa',
-                'a_tunggal_pi' => 'A_tunggal_pi',
-                'b_tunggal_pi' => 'B_tunggal_pi',
-                'c_tunggal_pi' => 'C_tunggal_pi',
-                'ganda_pa' => 'ganda_pa',
-                'ganda_pi' => 'ganda_pi',
-                default => $tierKey,
-            };
-
-            $maxQuota = (int) ($tierQuotas[$mappedQuotaKey] ?? 0);
-            if ($maxQuota <= 0) {
-                return false;
-            }
-
-            $regs = $this->relationLoaded('registrations')
-                ? $this->registrations->filter(fn ($r) => in_array($r->status, ['pending', 'verified']))
-                : $this->registrations()->with('members')->whereIn('status', ['pending', 'verified'])->get();
-
-            $isPa = str_contains($tierKey, 'pa');
-            $isGanda = str_contains($tierKey, 'ganda');
-
             if ($isGanda) {
-                $count = $regs->filter(fn ($r) => $r->isGanda() && $r->primary_gender === ($isPa ? 'L' : 'P'))->count();
-            } else {
-                $kat = strtoupper(substr($tierKey, 0, 1)); // 'A', 'B', or 'C'
-                $count = $regs->filter(function ($r) use ($isPa, $kat) {
-                    if ($r->isGanda() || $r->primary_gender !== ($isPa ? 'L' : 'P')) {
-                        return false;
-                    }
-
-                    return match ($kat) {
-                        'A' => $r->isKatA(),
-                        'B' => $r->isKatB(),
-                        'C' => $r->isKatC(),
-                        default => false,
-                    };
-                })->count();
+                return $regs->filter(fn ($r) => $r->isGanda() && $r->primary_gender === ($isPa ? 'L' : 'P'))->count();
             }
 
-            return $count >= $maxQuota;
+            $kat = strtoupper(substr($tierKey, 0, 1)); // 'A', 'B', or 'C'
+
+            return $regs->filter(function ($r) use ($isPa, $kat) {
+                if ($r->isGanda() || $r->primary_gender !== ($isPa ? 'L' : 'P')) {
+                    return false;
+                }
+
+                return match ($kat) {
+                    'A' => $r->isKatA(),
+                    'B' => $r->isKatB(),
+                    'C' => $r->isKatC(),
+                    default => false,
+                };
+            })->count();
         }
 
         if ($prefix === 'tmj') {
-            $mappedQuotaKey = match ($tierKey) {
-                'a_tunggal_pa' => 'A_tunggal_pa',
-                'b_tunggal_pa' => 'B_tunggal_pa',
-                'a_tunggal_pi' => 'A_tunggal_pi',
-                'b_tunggal_pi' => 'B_tunggal_pi',
-                default => $tierKey,
-            };
-
-            $maxQuota = (int) ($tierQuotas[$mappedQuotaKey] ?? 0);
-            if ($maxQuota <= 0) {
-                return false;
-            }
-
-            $regs = $this->relationLoaded('registrations')
-                ? $this->registrations->filter(fn ($r) => in_array($r->status, ['pending', 'verified']))
-                : $this->registrations()->with('members')->whereIn('status', ['pending', 'verified'])->get();
-
-            $isPa = str_contains($tierKey, 'pa');
             $kat = strtoupper(substr($tierKey, 0, 1)); // 'A' or 'B'
 
-            $count = $regs->filter(function ($r) use ($isPa, $kat) {
+            return $regs->filter(function ($r) use ($isPa, $kat) {
                 if ($r->primary_gender !== ($isPa ? 'L' : 'P')) {
                     return false;
                 }
@@ -561,11 +577,70 @@ class Competition extends Model
                     default => false,
                 };
             })->count();
+        }
 
-            return $count >= $maxQuota;
+        return 0;
+    }
+
+    public function isTierQuotaFull(string $tierKey): bool
+    {
+        $maxQuota = $this->getTierQuota($tierKey);
+        if ($maxQuota <= 0) {
+            return false;
+        }
+
+        $count = $this->getTierParticipantCount($tierKey);
+
+        return $count >= $maxQuota;
+    }
+
+    public function hasAvailableTierQuota(): bool
+    {
+        if (! $this->hasTierCategories()) {
+            return ! $this->is_quota_full;
+        }
+
+        $tierKeys = $this->getTierKeys();
+        foreach ($tierKeys as $tierKey) {
+            $quota = $this->getTierQuota($tierKey);
+            if ($quota > 0) {
+                $isFull = $this->isTierQuotaFull($tierKey);
+                $tierStatus = $this->getTierRegistrationStatusInfo($tierKey);
+                if (! $isFull && $tierStatus['is_open']) {
+                    return true;
+                }
+            }
         }
 
         return false;
+    }
+
+    public function getTierStatusesAttribute(): array
+    {
+        if (! $this->hasTierCategories()) {
+            return [];
+        }
+
+        $result = [];
+        foreach ($this->getTierKeys() as $key) {
+            $maxQuota = $this->getTierQuota($key);
+            $currentCount = $this->getTierParticipantCount($key);
+            $isFull = ($maxQuota > 0) && ($currentCount >= $maxQuota);
+            $statusInfo = $this->getTierRegistrationStatusInfo($key);
+
+            $result[$key] = [
+                'key' => $key,
+                'max_quota' => $maxQuota,
+                'current_count' => $currentCount,
+                'remaining_quota' => max(0, $maxQuota - $currentCount),
+                'is_full' => $isFull,
+                'is_open' => $statusInfo['is_open'] && ! $isFull,
+                'status_code' => $isFull ? 'closed_quota' : $statusInfo['status_code'],
+                'status_label' => $isFull ? 'Kuota Penuh' : $statusInfo['status_label'],
+            ];
+        }
+
+        return $result;
     }
 
     public function getTierRegistrationStatusInfo(string $tierKey): array
@@ -1191,6 +1266,12 @@ class Competition extends Model
             return false;
         }
 
+        // Khusus cabang dengan kategori kelas/nomor bertingkat (Bulu Tangkis & Tenis Meja):
+        // Penuh hanya jika SEMUA kategori/kelas yang memiliki kuota telah habis
+        if ($this->hasTierCategories()) {
+            return ! $this->hasAvailableTierQuota();
+        }
+
         $activeCount = $this->relationLoaded('registrations')
             ? $this->registrations->whereIn('status', ['pending', 'verified'])->count()
             : $this->registrations()->whereIn('status', ['pending', 'verified'])->count();
@@ -1309,6 +1390,10 @@ class Competition extends Model
 
         // 4. Quota Check
         if ($this->is_quota_full) {
+            $quotaMsg = $this->hasTierCategories()
+                ? 'Mohon maaf, seluruh kuota pendaftaran untuk semua kategori pada cabang lomba '.$this->name.' telah terpenuhi.'
+                : 'Mohon maaf, kuota pendaftaran untuk cabang lomba '.$this->name.' telah terpenuhi ('.$this->quota.' peserta).';
+
             return [
                 'is_open' => false,
                 'status_code' => 'closed_quota',
@@ -1317,7 +1402,7 @@ class Competition extends Model
                 'badge_class' => 'bg-purple-500/15 text-purple-400 border border-purple-500/30',
                 'button_text' => 'Kuota Terpenuhi',
                 'button_icon' => 'users',
-                'message' => 'Mohon maaf, kuota pendaftaran untuk cabang lomba '.$this->name.' telah terpenuhi ('.$this->quota.' peserta).',
+                'message' => $quotaMsg,
                 'deadline_formatted' => $this->deadline_display,
                 'start_date_formatted' => $formattedStart,
             ];

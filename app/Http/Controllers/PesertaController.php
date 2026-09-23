@@ -128,17 +128,21 @@ class PesertaController extends Controller
                 $tierKey = $kat.'_tunggal_'.$gender;
             }
 
+            if ($competition->isTierQuotaFull($tierKey) && ! $user->isTester()) {
+                return back()->withInput()->with('error', 'Mohon maaf, kuota pendaftaran untuk kategori/kelas yang Anda pilih telah penuh. Silakan pilih kelas atau sektor lain yang masih tersedia.');
+            }
+
             $tierStatusInfo = $competition->getTierRegistrationStatusInfo($tierKey);
             if (! $tierStatusInfo['is_open'] && ! $user->isTester()) {
                 $msg = match ($tierStatusInfo['status_code']) {
-                    'not_started' => 'Pendaftaran untuk kategori ini belum dibuka. Pendaftaran dibuka pada '.($tierStatusInfo['start_time'] ? $tierStatusInfo['start_time']->translatedFormat('d F Y H:i').' WIB' : 'jadwal yang ditentukan').'.',
-                    'deadline_passed' => 'Pendaftaran untuk kategori ini telah ditutup karena batas akhir pendaftaran telah berakhir ('.($tierStatusInfo['deadline'] ? $tierStatusInfo['deadline']->translatedFormat('d F Y H:i').' WIB' : '').').',
-                    'quota_full' => 'Mohon maaf, kuota pendaftaran untuk kategori ini telah penuh.',
+                    'not_started' => 'Pendaftaran untuk kategori ini belum dibuka.',
+                    'deadline_passed', 'closed_expired' => 'Pendaftaran untuk kategori ini telah ditutup karena batas akhir pendaftaran telah berakhir.',
+                    'closed_quota', 'quota_full' => 'Mohon maaf, kuota pendaftaran untuk kategori ini telah penuh. Silakan pilih kelas lain yang masih tersedia.',
                     'finished' => 'Pendaftaran untuk kategori ini telah selesai.',
                     default => 'Mohon maaf, pendaftaran untuk kategori ini sedang ditutup.',
                 };
 
-                return back()->with('error', $msg);
+                return back()->withInput()->with('error', $msg);
             }
         }
 
