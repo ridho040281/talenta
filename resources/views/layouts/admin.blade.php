@@ -577,6 +577,15 @@
                             <span>Berita Acara</span>
                         </div>
                     </a>
+                    <a href="{{ route('admin.attendance.index') }}" 
+                       class="relative group flex items-center rounded-2xl transition {{ request()->routeIs('admin.attendance*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}"
+                       :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
+                        <i data-lucide="clipboard-check" class="w-4 h-4 shrink-0 {{ request()->routeIs('admin.attendance*') ? 'text-white' : 'text-cyan-400' }}"></i>
+                        <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Daftar Hadir & QR</span>
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                            <span>Daftar Hadir & QR</span>
+                        </div>
+                    </a>
                     <a href="{{ route('admin.certificates.index') }}" 
                        class="relative group flex items-center rounded-2xl transition {{ request()->routeIs('admin.certificates*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}"
                        :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
@@ -663,6 +672,15 @@
                         <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Undi Peserta</span>
                         <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
                             <span>Undi Peserta</span>
+                        </div>
+                    </a>
+                    <a href="{{ route('admin.attendance.index') }}" 
+                       class="relative group flex items-center rounded-2xl transition {{ request()->routeIs('admin.attendance*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}"
+                       :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
+                        <i data-lucide="clipboard-check" class="w-4 h-4 shrink-0 {{ request()->routeIs('admin.attendance*') ? 'text-white' : 'text-cyan-400' }}"></i>
+                        <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Daftar Hadir & QR</span>
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                            <span>Daftar Hadir & QR</span>
                         </div>
                     </a>
                 </div>

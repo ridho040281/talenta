@@ -39,12 +39,18 @@ class Registration extends Model
         'verification_notes',
         'verified_at',
         'verified_by',
+        'is_attended',
+        'attended_at',
+        'attended_by',
+        'attendance_notes',
     ];
 
     protected function casts(): array
     {
         return [
             'verified_at' => 'datetime',
+            'is_attended' => 'boolean',
+            'attended_at' => 'datetime',
             'draw_number' => 'integer',
             'stage_duration_seconds' => 'integer',
             'is_collective' => 'boolean',
@@ -97,6 +103,11 @@ class Registration extends Model
     public function verifier(): BelongsTo
     {
         return $this->belongsTo(User::class, 'verified_by');
+    }
+
+    public function attendedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'attended_by');
     }
 
     public function members(): HasMany

@@ -39,6 +39,14 @@ class QrSignatureService
     }
 
     /**
+     * Generate QR Code URL for Participant Attendance (Scan Presensi di Meja Registrasi)
+     */
+    public static function attendanceQrUrl($registration): string
+    {
+        return url('/admin/daftar-hadir?scan='.urlencode($registration->registration_code));
+    }
+
+    /**
      * Generate QR Code URL for Receipt (Bendahara)
      */
     public static function receiptUrl($registration): string

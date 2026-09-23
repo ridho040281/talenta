@@ -51,10 +51,17 @@
                     $isCertReleased = \App\Models\AppSetting::where('key', 'certificate_release_' . $registration->competition_id)->value('value') === '1';
                 @endphp
                 @if($isCertReleased)
-                    <a href="{{ route('peserta.certificate.download', $registration->id) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30 font-bold text-xs transition">
-                        <i data-lucide="award" class="w-4 h-4"></i>
-                        <span>Cetak Sertifikat</span>
-                    </a>
+                    @if($registration->is_attended)
+                        <a href="{{ route('peserta.certificate.download', $registration->id) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30 font-bold text-xs transition">
+                            <i data-lucide="award" class="w-4 h-4"></i>
+                            <span>Cetak Sertifikat</span>
+                        </a>
+                    @else
+                        <span class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800/80 text-slate-400 border border-slate-700/60 font-bold text-xs cursor-not-allowed" title="Sertifikat terkunci: Anda belum melakukan scan kehadiran di lokasi lomba oleh panitia/PIC">
+                            <i data-lucide="lock" class="w-3.5 h-3.5 text-amber-400"></i>
+                            <span>Sertifikat Terkunci</span>
+                        </span>
+                    @endif
                 @endif
             @endif
             <a href="{{ route('peserta.registrations') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs transition">
@@ -71,13 +78,32 @@
                 <i data-lucide="check-circle" class="w-5 h-5"></i>
             </div>
             <div class="space-y-1">
-                <h4 class="text-xs sm:text-sm font-bold text-emerald-300">Pendaftaran Telah Diverifikasi & Sah</h4>
+                <div class="flex items-center justify-between gap-2">
+                    <h4 class="text-xs sm:text-sm font-bold text-emerald-300">Pendaftaran Telah Diverifikasi & Sah</h4>
+                    @if($registration->is_attended)
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                            <i data-lucide="check" class="w-3 h-3"></i>
+                            <span>Hadir di Lokasi</span>
+                        </span>
+                    @else
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">
+                            <i data-lucide="clock" class="w-3 h-3 text-amber-400"></i>
+                            <span>Wajib Presensi di Hari-H</span>
+                        </span>
+                    @endif
+                </div>
                 <p class="text-xs text-slate-300 leading-relaxed">
                     Berkas pendaftaran Anda telah disetujui. Nomor Peserta resmi: <strong class="font-mono text-emerald-300 bg-emerald-500/20 px-1.5 py-0.5 rounded border border-emerald-500/30">{{ $registration->participant_number }}</strong>
                     @if($registration->draw_number)
                         &nbsp;•&nbsp; No. Undian Tampil: <strong class="font-mono text-amber-300 bg-amber-500/20 px-1.5 py-0.5 rounded border border-amber-500/30">#{{ $registration->draw_number }}</strong>
                     @endif
                 </p>
+                @if(!$registration->is_attended)
+                    <p class="text-[11px] text-amber-300/90 pt-1 flex items-center gap-1.5">
+                        <i data-lucide="info" class="w-3.5 h-3.5 shrink-0"></i>
+                        <span>Cetak Bukti Pendaftaran di atas dan tunjukkan QR Code kepada panitia saat registrasi ulang di lokasi lomba untuk membuka sertifikat digital.</span>
+                    </p>
+                @endif
             </div>
         </div>
     @elseif($registration->status === 'revision')

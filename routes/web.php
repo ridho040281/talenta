@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminSettingsController;
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BadmintonMatchController;
 use App\Http\Controllers\CertificateController;
@@ -182,6 +183,19 @@ Route::middleware(['auth', 'role:superadmin,panitia,pic_lomba,juri'])->prefix('b
     Route::post('/matches', [BadmintonMatchController::class, 'store'])->name('store');
     Route::post('/matches/{id}/update', [BadmintonMatchController::class, 'update'])->name('update');
     Route::post('/matches/{id}/delete', [BadmintonMatchController::class, 'destroy'])->name('destroy');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Presensi / Daftar Hadir & QR Scanner Routes
+| Akses Terpadu untuk Superadmin, Panitia, dan PIC Lomba
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'role:superadmin,panitia,pic_lomba,admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/daftar-hadir', [AttendanceController::class, 'index'])->name('attendance.index');
+    Route::post('/daftar-hadir/scan', [AttendanceController::class, 'scan'])->name('attendance.scan');
+    Route::post('/daftar-hadir/{id}/toggle', [AttendanceController::class, 'toggle'])->name('attendance.toggle');
+    Route::get('/daftar-hadir/cetak', [AttendanceController::class, 'printReport'])->name('attendance.print');
 });
 
 /*

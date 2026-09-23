@@ -757,6 +757,12 @@ class CertificateController extends Controller
                 ->with('error', 'Sertifikat untuk cabang lomba ini belum dirilis oleh panitia pelaksana.');
         }
 
+        // Check if participant attendance has been scanned by PIC/committee
+        if (! $registration->is_attended) {
+            return redirect()->route('peserta.registration.detail', $registration->id)
+                ->with('error', 'Sertifikat belum dapat diunduh. Bukti pendaftaran Anda belum diverifikasi/discan kehadirannya oleh panitia di lokasi lomba.');
+        }
+
         // Determine if participant is winner or participant
         $competition = $registration->competition;
         $type = 'peserta';
