@@ -48,6 +48,14 @@ class OfficialReportController extends Controller
             ];
         }
 
+        if ($code === 'ROB' || (method_exists($comp, 'isRobotik') && $comp->isRobotik()) || stripos($comp->name, 'robot') !== false) {
+            return [
+                'rob_sumo' => ['title' => 'Robotik - Kategori Sumo', 'group' => 'Robotik Sumo', 'gender' => 'all', 'is_ganda' => false, 'kat' => 'all', 'rob_cat' => 'Sumo'],
+                'rob_soccer' => ['title' => 'Robotik - Kategori Soccer', 'group' => 'Robotik Soccer', 'gender' => 'all', 'is_ganda' => false, 'kat' => 'all', 'rob_cat' => 'Soccer'],
+                'rob_kreatif' => ['title' => 'Robotik - Kategori Kreatif', 'group' => 'Robotik Kreatif', 'gender' => 'all', 'is_ganda' => false, 'kat' => 'all', 'rob_cat' => 'Kreatif'],
+            ];
+        }
+
         if (in_array($code, ['MTQ', 'POP'])) {
             return [
                 'pa' => ['title' => 'Kategori Putra (PA)', 'group' => 'Putra', 'gender' => 'L', 'is_ganda' => false, 'kat' => 'all'],
@@ -149,6 +157,15 @@ class OfficialReportController extends Controller
                     }
                     if (! $secDef['is_ganda'] && $isGanda && in_array($selectedComp->code, ['BLT', 'TMJ'])) {
                         return false;
+                    }
+
+                    // Match Robotik Category
+                    if (! empty($secDef['rob_cat'])) {
+                        $cat = $secDef['rob_cat'];
+
+                        return stripos($r->match_type ?? '', $cat) !== false
+                            || stripos($r->sub_category ?? '', $cat) !== false
+                            || stripos($r->target_class ?? '', $cat) !== false;
                     }
 
                     // Match Gender
@@ -316,6 +333,14 @@ class OfficialReportController extends Controller
                         }
                         if (! $secDef['is_ganda'] && $isGanda && in_array($competition->code, ['BLT', 'TMJ'])) {
                             return false;
+                        }
+
+                        if (! empty($secDef['rob_cat'])) {
+                            $cat = $secDef['rob_cat'];
+
+                            return stripos($r->match_type ?? '', $cat) !== false
+                                || stripos($r->sub_category ?? '', $cat) !== false
+                                || stripos($r->target_class ?? '', $cat) !== false;
                         }
                         if ($secDef['gender'] !== 'all' && $gender !== $secDef['gender']) {
                             return false;

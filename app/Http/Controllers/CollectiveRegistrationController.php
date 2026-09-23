@@ -115,6 +115,10 @@ class CollectiveRegistrationController extends Controller
                 $dropdownList[] = 'Tenis Meja (Kat A: Kls 1-3 • Tunggal PI)';
                 $dropdownList[] = 'Tenis Meja (Kat B: Kls 4-6 • Tunggal PA)';
                 $dropdownList[] = 'Tenis Meja (Kat B: Kls 4-6 • Tunggal PI)';
+            } elseif ($c->code === 'ROB' || stripos($c->name, 'robot') !== false) {
+                $dropdownList[] = 'Robotik (Sumo)';
+                $dropdownList[] = 'Robotik (Soccer)';
+                $dropdownList[] = 'Robotik (Kreatif)';
             } else {
                 $dropdownList[] = $c->name;
             }
@@ -280,6 +284,8 @@ class CollectiveRegistrationController extends Controller
                     $code = 'BLT';
                 } elseif (stripos($rawComp, 'Tenis Meja') !== false || stripos($rawComp, 'TMJ') !== false) {
                     $code = 'TMJ';
+                } elseif (stripos($rawComp, 'Robotik') !== false || stripos($rawComp, 'ROB') !== false) {
+                    $code = 'ROB';
                 } elseif (preg_match('/^([A-Za-z0-9]+)\s*[-:]/i', $rawComp, $matches) && isset($competitions[strtoupper(trim($matches[1]))])) {
                     $code = strtoupper(trim($matches[1]));
                 } elseif (isset($competitions[strtoupper($rawComp)])) {
@@ -353,6 +359,24 @@ class CollectiveRegistrationController extends Controller
             } elseif (in_array($code, ['MTQ', 'POP'])) {
                 $matchType = ($gender === 'P') ? 'Putri (PI)' : 'Putra (PA)';
                 $subCategory = $matchType;
+            } elseif (str_starts_with($code, 'ROB') || str_contains(strtoupper($rawComp), 'ROBOTIK')) {
+                $code = 'ROB';
+
+                if (stripos($rawComp, 'Sumo') !== false) {
+                    $matchType = 'Sumo';
+                    $subCategory = 'Robotik Sumo';
+                } elseif (stripos($rawComp, 'Soccer') !== false) {
+                    $matchType = 'Soccer';
+                    $subCategory = 'Robotik Soccer';
+                } elseif (stripos($rawComp, 'Kreatif') !== false) {
+                    $matchType = 'Kreatif';
+                    $subCategory = 'Robotik Kreatif';
+                } else {
+                    $matchType = 'Kreatif';
+                    $subCategory = 'Robotik Kreatif';
+                }
+
+                $targetClass = $matchType;
             }
 
             $teamName = trim($row['I'] ?? '');

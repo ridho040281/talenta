@@ -429,6 +429,118 @@
                         </table>
                     </div>
                 </div>
+        @elseif($competition->isRobotik())
+            <!-- KHUSUS ROBOTIK: Pilihan Kategori Tanding (Sumo, Soccer, Kreatif) -->
+            <div class="bg-gradient-to-br from-[#150F28] via-[#1E1438] to-[#0D081B] rounded-3xl p-6 sm:p-8 text-white border border-purple-500/40 shadow-2xl space-y-6">
+                <div class="flex items-center justify-between border-b border-purple-500/20 pb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-purple-500/20 border border-purple-500/40 text-purple-400 flex items-center justify-center font-bold">
+                            <i data-lucide="bot" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-black text-white tracking-wide font-display">Pilihan Kategori Lomba Robotik</h3>
+                            <p class="text-xs text-purple-200/70">Pilih salah satu dari 3 kategori robotika yang akan diikuti oleh tim Anda:</p>
+                        </div>
+                    </div>
+                    <div class="text-right hidden sm:block">
+                        <span class="text-[10px] text-purple-300/80 block uppercase font-bold">Format Tim</span>
+                        <span class="text-sm font-black text-amber-400 font-mono">{{ $competition->min_members }}–{{ $competition->max_members }} Siswa / Tim</span>
+                    </div>
+                </div>
+
+                <!-- 3 Pilihan Kategori Robotik (Interactive Cards / Radio) -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-purple-300">
+                            Pilih Kategori Robotik <span class="text-rose-400">*</span>
+                        </label>
+                        <span class="text-xs text-slate-300">
+                            Kategori Terpilih: <strong class="text-purple-300 font-mono" x-text="'Robotik ' + robotikCategory"></strong>
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- 1. Robotik Sumo -->
+                        <div @click="selectRobotikCategory('Sumo')" 
+                             :class="robotikCategory === 'Sumo' ? 'border-purple-400 bg-purple-950/80 shadow-lg shadow-purple-500/25 ring-2 ring-purple-400/50' : 'border-slate-800 bg-slate-950/60 hover:border-purple-500/50'" 
+                             class="relative p-5 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div class="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-500/40 text-purple-300 flex items-center justify-center font-bold">
+                                    <span class="text-base">🤖</span>
+                                </div>
+                                <span :class="robotikCategory === 'Sumo' ? 'bg-purple-500 text-white' : 'bg-slate-800 text-slate-400'" class="px-2 py-0.5 rounded-full text-[10px] font-bold">
+                                    <span x-show="robotikCategory === 'Sumo'">✓ Dipilih</span>
+                                    <span x-show="robotikCategory !== 'Sumo'">Pilih</span>
+                                </span>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-white text-sm">Robotik Sumo</h4>
+                                <p class="text-[11px] text-slate-300 mt-1 leading-relaxed">
+                                    Pertandingan adu dorong robot (RC Sumo / Autonomous) saling menjatuhkan lawan dari arena dohyo.
+                                </p>
+                            </div>
+                            <div class="pt-2 border-t border-white/[0.08] flex items-center justify-between text-[11px]">
+                                <span class="text-purple-300 font-semibold">Tipe: Battle Arena</span>
+                                <span class="text-emerald-400 font-bold font-mono">{{ $competition->min_members }}–{{ $competition->max_members }} Anggota</span>
+                            </div>
+                        </div>
+
+                        <!-- 2. Robotik Soccer -->
+                        <div @click="selectRobotikCategory('Soccer')" 
+                             :class="robotikCategory === 'Soccer' ? 'border-cyan-400 bg-cyan-950/80 shadow-lg shadow-cyan-500/25 ring-2 ring-cyan-400/50' : 'border-slate-800 bg-slate-950/60 hover:border-cyan-500/50'" 
+                             class="relative p-5 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div class="w-9 h-9 rounded-xl bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 flex items-center justify-center font-bold">
+                                    <span class="text-base">⚽</span>
+                                </div>
+                                <span :class="robotikCategory === 'Soccer' ? 'bg-cyan-500 text-slate-950 font-black' : 'bg-slate-800 text-slate-400'" class="px-2 py-0.5 rounded-full text-[10px] font-bold">
+                                    <span x-show="robotikCategory === 'Soccer'">✓ Dipilih</span>
+                                    <span x-show="robotikCategory !== 'Soccer'">Pilih</span>
+                                </span>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-white text-sm">Robotik Soccer</h4>
+                                <p class="text-[11px] text-slate-300 mt-1 leading-relaxed">
+                                    Pertandingan robot sepak bola antar tim dengan mengendalikan robot untuk mencetak gol ke gawang lawan.
+                                </p>
+                            </div>
+                            <div class="pt-2 border-t border-white/[0.08] flex items-center justify-between text-[11px]">
+                                <span class="text-cyan-300 font-semibold">Tipe: Mini Match</span>
+                                <span class="text-emerald-400 font-bold font-mono">{{ $competition->min_members }}–{{ $competition->max_members }} Anggota</span>
+                            </div>
+                        </div>
+
+                        <!-- 3. Robotik Kreatif -->
+                        <div @click="selectRobotikCategory('Kreatif')" 
+                             :class="robotikCategory === 'Kreatif' ? 'border-amber-400 bg-amber-950/80 shadow-lg shadow-amber-500/25 ring-2 ring-amber-400/50' : 'border-slate-800 bg-slate-950/60 hover:border-amber-500/50'" 
+                             class="relative p-5 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div class="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 flex items-center justify-center font-bold">
+                                    <span class="text-base">💡</span>
+                                </div>
+                                <span :class="robotikCategory === 'Kreatif' ? 'bg-amber-500 text-slate-950 font-black' : 'bg-slate-800 text-slate-400'" class="px-2 py-0.5 rounded-full text-[10px] font-bold">
+                                    <span x-show="robotikCategory === 'Kreatif'">✓ Dipilih</span>
+                                    <span x-show="robotikCategory !== 'Kreatif'">Pilih</span>
+                                </span>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-white text-sm">Robotik Kreatif</h4>
+                                <p class="text-[11px] text-slate-300 mt-1 leading-relaxed">
+                                    Rancang bangun inovasi teknologi otomatisasi, IoT cerdas, dan presentasi karya robotika aplikatif.
+                                </p>
+                            </div>
+                            <div class="pt-2 border-t border-white/[0.08] flex items-center justify-between text-[11px]">
+                                <span class="text-amber-300 font-semibold">Tipe: Rancang Bangun</span>
+                                <span class="text-emerald-400 font-bold font-mono">{{ $competition->min_members }}–{{ $competition->max_members }} Anggota</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hidden inputs to submit selected category reliably -->
+                    <input type="hidden" name="match_type" :value="robotikCategory">
+                    <input type="hidden" name="sub_category" :value="'Robotik ' + robotikCategory">
+                    <input type="hidden" name="target_class" :value="robotikCategory">
+                </div>
             </div>
         @endif
 
@@ -860,6 +972,7 @@
     function registrationForm(min, max) {
         const isBlt = "{{ $competition->code }}" === "BLT";
         const isTmj = "{{ $competition->code }}" === "TMJ";
+        const isRob = "{{ $competition->isRobotik() ? 'true' : 'false' }}" === "true";
         const isColl = "{{ $competition->isCollective() ? 'true' : 'false' }}" === "true";
         const baseFeeVal = {{ $competition->registration_fee ?? 0 }};
 
@@ -868,6 +981,13 @@
             maxMembers: max,
             isBuluTangkis: isBlt,
             isTenisMeja: isTmj,
+            isRobotik: isRob,
+            robotikCategory: 'Sumo',
+            selectRobotikCategory(cat) {
+                this.robotikCategory = cat;
+                this.matchType = cat;
+                this.targetClass = cat;
+            },
             isCollective: isColl,
             baseFee: baseFeeVal,
             tierFees: @json($competition->tier_fees),
@@ -1035,6 +1155,12 @@
                     this.autoSelectAvailableSector();
                     this.onMatchTypeChange();
                     this.autoSelectAvailableClass();
+                } else if (this.isRobotik) {
+                    this.matchType = this.robotikCategory;
+                    this.targetClass = this.robotikCategory;
+                    while(this.members.length < this.minMembers) {
+                        this.members.push({ full_name: '', nisn: '', gender: 'L', birth_place: '', birth_date: '', role_in_team: 'Anggota ' + (this.members.length + 1) });
+                    }
                 } else {
                     while(this.members.length < this.minMembers) {
                         this.members.push({ full_name: '', nisn: '', gender: 'L', birth_place: '', birth_date: '', role_in_team: 'Anggota ' + (this.members.length + 1) });

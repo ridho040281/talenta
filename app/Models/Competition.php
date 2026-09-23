@@ -1112,6 +1112,47 @@ class Competition extends Model
         return in_array($this->type, ['kolektif', 'tim', 'kelompok', 'regu']);
     }
 
+    public function isRobotik(): bool
+    {
+        $code = strtoupper($this->code ?? '');
+        $slug = strtolower($this->slug ?? '');
+        $name = strtolower($this->name ?? '');
+
+        return $code === 'ROB'
+            || str_contains($slug, 'robot')
+            || str_contains($name, 'robot');
+    }
+
+    public static function getRobotikCategories(): array
+    {
+        return [
+            'sumo' => [
+                'name' => 'Robotik Sumo',
+                'match_type' => 'Sumo',
+                'sub_category' => 'Robotik Sumo',
+                'short' => '🤖 Sumo',
+                'icon' => 'bot',
+                'description' => 'Pertandingan adu dorong robot (RC Sumo / Autonomous) dalam arena lingkaran dohyo.',
+            ],
+            'soccer' => [
+                'name' => 'Robotik Soccer',
+                'match_type' => 'Soccer',
+                'sub_category' => 'Robotik Soccer',
+                'short' => '⚽ Soccer',
+                'icon' => 'trophy',
+                'description' => 'Pertandingan robot sepak bola antar tim dengan mencetak gol ke gawang lawan.',
+            ],
+            'kreatif' => [
+                'name' => 'Robotik Kreatif',
+                'match_type' => 'Kreatif',
+                'sub_category' => 'Robotik Kreatif',
+                'short' => '💡 Kreatif',
+                'icon' => 'lightbulb',
+                'description' => 'Eksplorasi rancang bangun, inovasi teknologi otomatisasi, dan algoritma cerdas.',
+            ],
+        ];
+    }
+
     public function isUnlimitedQuota(): bool
     {
         return empty($this->quota) || $this->quota <= 0;

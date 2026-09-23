@@ -76,7 +76,7 @@
         return false;
     },
     get createCompCode() {
-        const c = this.competitionsData.find(x => x.id === this.createCompId);
+        const c = this.competitionsData.find(x => String(x.id) === String(this.createCompId));
         return c ? c.code : '';
     },
     get editCompCode() {
@@ -204,6 +204,13 @@
                 { value: 'tmj_a_all', label: '🏷️ Kategori A (Kelas 1–3 SD/MI)' },
                 { value: 'tmj_b_all', label: '🏷️ Kategori B (Kelas 4–6 SD/MI)' },
             ];
+        } else if (this.currentCompCode === 'ROB') {
+            return [
+                { value: 'all', label: '🤖 Semua Kategori Robotik' },
+                { value: 'rob_sumo', label: '🤖 Robotik Sumo' },
+                { value: 'rob_soccer', label: '⚽ Robotik Soccer' },
+                { value: 'rob_kreatif', label: '💡 Robotik Kreatif' },
+            ];
         } else if (this.currentCompCode === 'MTQ') {
             return [
                 { value: 'all', label: '📖 Semua Peserta MTQ' },
@@ -229,6 +236,13 @@
                 list.push(
                     { value: 'tmj_a_all', label: '🏓 Tenis Meja: Kategori A (Kelas 1–3)' },
                     { value: 'tmj_b_all', label: '🏓 Tenis Meja: Kategori B (Kelas 4–6)' }
+                );
+            }
+            if (codes.includes('ROB')) {
+                list.push(
+                    { value: 'rob_sumo', label: '🤖 Robotik: Sumo' },
+                    { value: 'rob_soccer', label: '⚽ Robotik: Soccer' },
+                    { value: 'rob_kreatif', label: '💡 Robotik: Kreatif' }
                 );
             }
             return list;
@@ -427,6 +441,15 @@
                         this.selectedEditReg.target_class = 'Kategori C (Kelas 5 - 6)';
                     } else {
                         this.selectedEditReg.target_class = 'Kategori A (Kelas 1 - 2)';
+                    }
+                } else if (cCode === 'ROB') {
+                    let cat = this.selectedEditReg.match_type || this.selectedEditReg.sub_category || this.selectedEditReg.target_class || '';
+                    if (cat.toLowerCase().includes('sumo')) {
+                        this.selectedEditReg.match_type = 'Sumo';
+                    } else if (cat.toLowerCase().includes('soccer')) {
+                        this.selectedEditReg.match_type = 'Soccer';
+                    } else {
+                        this.selectedEditReg.match_type = 'Kreatif';
                     }
                 }
             })
@@ -871,7 +894,7 @@
 
             <!-- Filter 3: Sektor / Kategori Tanding -->
             <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 truncate" x-text="currentCompCode === 'BLT' ? 'Kategori / Kelas Bulu Tangkis:' : (currentCompCode === 'TMJ' ? 'Kategori Kelas Tenis Meja:' : 'Kategori / Kelas Lomba:')"></label>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 truncate" x-text="currentCompCode === 'BLT' ? 'Kategori / Kelas Bulu Tangkis:' : (currentCompCode === 'TMJ' ? 'Kategori Kelas Tenis Meja:' : (currentCompCode === 'ROB' ? 'Kategori Robotik:' : 'Kategori / Kelas Lomba:'))"></label>
                 <select x-model="selectedSector" :disabled="sectorOptions.length <= 1" :class="sectorOptions.length <= 1 ? 'opacity-70 bg-[#0C111D]/60' : 'cursor-pointer'" class="w-full px-3 py-2.5 h-[42px] rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8]">
                     <template x-for="opt in sectorOptions" :key="opt.value">
                         <option :value="opt.value" x-text="opt.label"></option>
@@ -1866,9 +1889,19 @@
                             </div>
 
                             <!-- 2. Sektor / Nomor Tanding -->
-                            <div x-show="['BLT', 'TMJ', 'MTQ', 'POP'].includes(editCompCode)">
-                                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Nomor / Sektor Tanding</label>
+                            <div x-show="['BLT', 'TMJ', 'MTQ', 'POP', 'ROB'].includes(editCompCode)">
+                                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Nomor / Sektor / Kategori Tanding</label>
                                 
+                                <!-- Opsi Sektor Robotik (ROB) -->
+                                <div x-show="editCompCode === 'ROB'">
+                                    <select name="match_type" :disabled="editCompCode !== 'ROB'" x-model="selectedEditReg.match_type" 
+                                        class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-white outline-none focus:border-[#7A5AF8]">
+                                        <option value="Sumo">🤖 Robotik Sumo</option>
+                                        <option value="Soccer">⚽ Robotik Soccer</option>
+                                        <option value="Kreatif">💡 Robotik Kreatif</option>
+                                    </select>
+                                </div>
+
                                 <!-- Opsi Sektor Tenis Meja (TMJ) -->
                                 <div x-show="editCompCode === 'TMJ'">
                                     <select name="match_type" :disabled="editCompCode !== 'TMJ'" x-model="selectedEditReg.match_type" 
@@ -2060,6 +2093,20 @@
                             <option value="kat_b">Kategori B (Kelas 3–4 SD/MI)</option>
                             <option value="kat_c">Kategori C (Kelas 5–6 SD/MI)</option>
                             <option value="ganda">Kategori Ganda (Semua Kelas)</option>
+                        </select>
+                    </div>
+
+                    <!-- Filter Kategori Khusus Robotik (ROB) -->
+                    <div x-show="selectedPrintCompCode === 'ROB'" x-cloak class="pt-2 border-t border-white/[0.08]">
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-purple-400 mb-1 flex items-center gap-1.5">
+                            <span>🤖</span>
+                            <span>Kategori Robotik:</span>
+                        </label>
+                        <select x-model="selectedPrintCategory" class="w-full px-3 py-2.5 rounded-xl bg-[#161F30] border border-purple-500/30 text-xs font-bold text-purple-200 outline-none focus:border-purple-400 cursor-pointer">
+                            <option value="all">Semua Kategori (Pisah Halaman Sumo, Soccer, Kreatif)</option>
+                            <option value="sumo">Robotik Sumo</option>
+                            <option value="soccer">Robotik Soccer</option>
+                            <option value="kreatif">Robotik Kreatif</option>
                         </select>
                     </div>
                 </div>
@@ -2281,6 +2328,19 @@
                                         <option value="Kategori B (Kelas 4 - 6)">Kategori B (Kelas 4–6 SD/MI)</option>
                                     </select>
                                 </div>
+                            </div>
+                        </template>
+
+                        <!-- Kategori Robotik (ROB) -->
+                        <template x-if="createCompCode === 'ROB'">
+                            <div class="pt-2 border-t border-white/[0.06]">
+                                <label class="block text-[10px] font-bold text-purple-400 uppercase tracking-wider mb-1">Kategori Robotik <span class="text-rose-400">*</span></label>
+                                <select name="match_type" x-model="createMatchType" required class="w-full px-3 py-2 rounded-xl bg-[#161F30] border border-purple-500/30 text-xs font-bold text-purple-200 outline-none focus:border-purple-400">
+                                    <option value="">-- Pilih Kategori Robotik --</option>
+                                    <option value="Sumo">Robotik Sumo</option>
+                                    <option value="Soccer">Robotik Soccer</option>
+                                    <option value="Kreatif">Robotik Kreatif</option>
+                                </select>
                             </div>
                         </template>
                     </div>

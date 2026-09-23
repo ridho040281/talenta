@@ -564,6 +564,30 @@ class PicController extends Controller
                             ->orWhere('registration_code', 'LIKE', '%-B-%');
                     });
                     break;
+                case 'rob_sumo':
+                case 'sumo':
+                    $query->where(function ($q) {
+                        $q->where('sub_category', 'LIKE', '%Sumo%')
+                            ->orWhere('match_type', 'LIKE', '%Sumo%')
+                            ->orWhere('target_class', 'LIKE', '%Sumo%');
+                    });
+                    break;
+                case 'rob_soccer':
+                case 'soccer':
+                    $query->where(function ($q) {
+                        $q->where('sub_category', 'LIKE', '%Soccer%')
+                            ->orWhere('match_type', 'LIKE', '%Soccer%')
+                            ->orWhere('target_class', 'LIKE', '%Soccer%');
+                    });
+                    break;
+                case 'rob_kreatif':
+                case 'kreatif':
+                    $query->where(function ($q) {
+                        $q->where('sub_category', 'LIKE', '%Kreatif%')
+                            ->orWhere('match_type', 'LIKE', '%Kreatif%')
+                            ->orWhere('target_class', 'LIKE', '%Kreatif%');
+                    });
+                    break;
             }
         }
 
@@ -938,6 +962,7 @@ class PicController extends Controller
             $picPosition = ! empty($comp->pic?->position) ? $comp->pic->position : 'Panitia Pelaksana';
             $isBuluTangkis = ($comp->code === 'BLT' || stripos($comp->name, 'bulu tangkis') !== false || stripos($comp->name, 'badminton') !== false);
             $isTenisMeja = ($comp->code === 'TMJ' || stripos($comp->name, 'tenis meja') !== false || stripos($comp->name, 'pingpong') !== false);
+            $isRobotik = method_exists($comp, 'isRobotik') ? $comp->isRobotik() : ($comp->code === 'ROB' || stripos($comp->name, 'robot') !== false);
 
             if ($isBuluTangkis) {
                 // 1. Tunggal Categories (Kat A, Kat B, Kat C)
@@ -1035,6 +1060,28 @@ class PicController extends Controller
                         if ($piRegs->isNotEmpty() && ($genderFilter === 'all' || $genderFilter === 'P')) {
                             $addPaginatedSector($pages, $comp, '👧 KELOMPOK PUTRI (PI)', $catLabel.' - TUNGGAL PUTRI', 'bg-rose-100 text-rose-900', $piRegs, $picName, $picPosition);
                         }
+                    }
+                }
+            } elseif ($isRobotik) {
+                $robCategories = [
+                    'sumo' => 'Robotik Sumo',
+                    'soccer' => 'Robotik Soccer',
+                    'kreatif' => 'Robotik Kreatif',
+                ];
+
+                foreach ($robCategories as $catKey => $catLabel) {
+                    if ($categoryClassFilter !== 'all' && $categoryClassFilter !== $catKey && $categoryClassFilter !== 'rob_'.$catKey) {
+                        continue;
+                    }
+
+                    $catRegs = $compRegs->filter(function ($r) use ($catKey) {
+                        return stripos($r->match_type ?? '', $catKey) !== false
+                            || stripos($r->sub_category ?? '', $catKey) !== false
+                            || stripos($r->target_class ?? '', $catKey) !== false;
+                    })->sortBy(fn ($r) => $r->draw_number ?: 9999)->values();
+
+                    if ($catRegs->isNotEmpty()) {
+                        $addPaginatedSector($pages, $comp, '🤖 '.strtoupper($catLabel), $catLabel.' - SEMUA PESERTA', 'bg-purple-100 text-purple-900', $catRegs, $picName, $picPosition);
                     }
                 }
             } else {
@@ -1553,6 +1600,19 @@ class PicController extends Controller
             if (! empty($registration->match_type)) {
                 $registration->sub_category = $registration->match_type;
             }
+        } elseif ($compCode === 'ROB' || stripos($registration->competition?->name ?? '', 'robot') !== false) {
+            $cat = $validated['match_type'] ?? ($validated['target_class'] ?? ($registration->match_type ?: 'Kreatif'));
+            if (stripos($cat, 'Sumo') !== false) {
+                $registration->match_type = 'Sumo';
+                $registration->sub_category = 'Robotik Sumo';
+            } elseif (stripos($cat, 'Soccer') !== false) {
+                $registration->match_type = 'Soccer';
+                $registration->sub_category = 'Robotik Soccer';
+            } else {
+                $registration->match_type = 'Kreatif';
+                $registration->sub_category = 'Robotik Kreatif';
+            }
+            $registration->target_class = $registration->match_type;
         }
 
         if ($request->hasFile('document_file')) {
@@ -1743,6 +1803,23 @@ class PicController extends Controller
         } elseif (in_array($competition->code, ['MTQ', 'POP'])) {
             $subCategory = ($gender === 'P') ? 'Putri (PI)' : 'Putra (PA)';
             $matchType = $subCategory;
+        } elseif ($competition->isRobotik()) {
+            if (! empty($matchType)) {
+                if (stripos($matchType, 'Sumo') !== false) {
+                    $subCategory = 'Robotik Sumo';
+                    $matchType = 'Sumo';
+                } elseif (stripos($matchType, 'Soccer') !== false) {
+                    $subCategory = 'Robotik Soccer';
+                    $matchType = 'Soccer';
+                } elseif (stripos($matchType, 'Kreatif') !== false) {
+                    $subCategory = 'Robotik Kreatif';
+                    $matchType = 'Kreatif';
+                }
+            } else {
+                $matchType = 'Kreatif';
+                $subCategory = 'Robotik Kreatif';
+            }
+            $targetClass = $matchType;
         } elseif (! empty($targetClass) && ! empty($matchType)) {
             $subCategory = $targetClass.' - '.$matchType;
         } elseif (! empty($matchType)) {
@@ -2054,6 +2131,7 @@ class PicController extends Controller
         $compCode = strtoupper($competition->code ?? '');
         $isBuluTangkis = ($compCode === 'BLT' || stripos($competition->name, 'bulu tangkis') !== false || stripos($competition->name, 'badminton') !== false);
         $isTenisMeja = ($compCode === 'TMJ' || stripos($competition->name, 'tenis meja') !== false || stripos($competition->name, 'pingpong') !== false);
+        $isRobotik = method_exists($competition, 'isRobotik') ? $competition->isRobotik() : ($compCode === 'ROB' || stripos($competition->name, 'robot') !== false);
 
         $registrations = $competition->registrations;
         $classified = [];
@@ -2152,6 +2230,36 @@ class PicController extends Controller
                         'short_title' => $def['short'],
                         'gender' => $def['gender'] ?? 'L',
                         'sector' => $def['sector'] ?? (($def['gender'] ?? 'L') === 'P' ? 'PI' : 'PA'),
+                        'participants' => $this->formatParticipantList($poolRegs),
+                    ];
+                }
+            }
+        } elseif ($isRobotik) {
+            $poolDefs = [
+                'rob_sumo' => ['name' => 'Robotik - Sumo', 'label' => 'Robotik Sumo', 'short' => '🤖 Sumo', 'category' => 'Sumo'],
+                'rob_soccer' => ['name' => 'Robotik - Soccer', 'label' => 'Robotik Soccer', 'short' => '⚽ Soccer', 'category' => 'Soccer'],
+                'rob_kreatif' => ['name' => 'Robotik - Kreatif', 'label' => 'Robotik Kreatif', 'short' => '💡 Kreatif', 'category' => 'Kreatif'],
+            ];
+
+            foreach ($poolDefs as $key => $def) {
+                $poolRegs = $registrations->filter(function ($reg) use ($def) {
+                    $cat = $def['category'];
+
+                    return stripos($reg->match_type ?? '', $cat) !== false
+                        || stripos($reg->sub_category ?? '', $cat) !== false
+                        || stripos($reg->target_class ?? '', $cat) !== false;
+                });
+
+                if ($poolRegs->isNotEmpty()) {
+                    $classified[$key] = [
+                        'key' => $key,
+                        'title' => $def['name'],
+                        'class_key' => $key,
+                        'class_label' => $def['label'],
+                        'category_label' => $def['label'],
+                        'short_title' => $def['short'],
+                        'gender' => 'ALL',
+                        'sector' => strtoupper($def['category']),
                         'participants' => $this->formatParticipantList($poolRegs),
                     ];
                 }

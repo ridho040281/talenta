@@ -272,7 +272,7 @@ class PesertaController extends Controller
 
         $validated = $request->validate([
             'target_class' => [($isBuluTangkis && ! $isGandaBlt) || $isTenisMeja ? 'required' : 'nullable', 'string', 'max:50'],
-            'match_type' => [$isBuluTangkis || $isTenisMeja ? 'required' : 'nullable', 'string', 'max:50'],
+            'match_type' => [$isBuluTangkis || $isTenisMeja || $competition->isRobotik() ? 'required' : 'nullable', 'string', 'max:50'],
             'team_name' => [($competition->isCollective() && ! $isBuluTangkis && ! $isTenisMeja) ? 'required' : 'nullable', 'string', 'max:255'],
             'institution_name' => [$isGandaBlt ? 'nullable' : 'required', 'string', 'max:255'],
             'official_name' => ['nullable', 'string', 'max:255'],
@@ -395,6 +395,19 @@ class PesertaController extends Controller
             $firstGender = $validated['members'][0]['gender'] ?? 'L';
             $subCategory = ($firstGender === 'P') ? 'Putri (PI)' : 'Putra (PA)';
             $validated['match_type'] = $subCategory;
+        } elseif ($competition->isRobotik()) {
+            $cat = $request->input('match_type') ?: ($request->input('sub_category') ?: 'Kreatif');
+            if (stripos($cat, 'Sumo') !== false) {
+                $subCategory = 'Robotik Sumo';
+                $validated['match_type'] = 'Sumo';
+            } elseif (stripos($cat, 'Soccer') !== false) {
+                $subCategory = 'Robotik Soccer';
+                $validated['match_type'] = 'Soccer';
+            } else {
+                $subCategory = 'Robotik Kreatif';
+                $validated['match_type'] = 'Kreatif';
+            }
+            $targetClass = $validated['match_type'];
         }
 
         $teamName = $validated['team_name'] ?? null;
