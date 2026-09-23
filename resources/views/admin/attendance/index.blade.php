@@ -125,6 +125,35 @@
         </div>
     </div>
 
+    <style>
+        #qr-reader {
+            width: 100% !important;
+            max-width: 100% !important;
+            border: none !important;
+            background: transparent !important;
+        }
+        #qr-reader video {
+            width: 100% !important;
+            height: 100% !important;
+            max-height: 380px !important;
+            object-fit: cover !important;
+            border-radius: 1rem !important;
+        }
+        #qr-reader__scan_region {
+            background: transparent !important;
+            border: none !important;
+        }
+        #qr-reader__scan_region video {
+            border-radius: 0.75rem !important;
+        }
+        #qr-reader__dashboard, #qr-reader__status_span, #qr-reader__header_message {
+            display: none !important;
+        }
+        #qr-reader img {
+            display: none !important;
+        }
+    </style>
+
     <!-- Live Scanner & Barcode Gun Section -->
     <div x-show="scannerOpen" 
          x-transition:enter="transition ease-out duration-300"
@@ -133,17 +162,18 @@
          x-transition:leave="transition ease-in duration-200"
          x-transition:leave-start="opacity-100 translate-y-0"
          x-transition:leave-end="opacity-0 -translate-y-4"
-         class="grid grid-cols-1 lg:grid-cols-12 gap-5 p-5 rounded-3xl bg-[#0C111D]/90 border border-cyan-500/30 shadow-2xl relative">
+         class="flex flex-col lg:flex-row items-stretch gap-6 p-5 sm:p-6 rounded-3xl bg-[#0C111D] border border-cyan-500/30 shadow-2xl relative w-full"
+         style="width: 100%;">
         
-        <!-- Left: Camera Viewport -->
-        <div class="lg:col-span-6 flex flex-col items-center">
-            <div class="w-full flex items-center justify-between mb-3">
+        <!-- Left: Camera Viewport (50% Width) -->
+        <div class="w-full lg:w-1/2 flex flex-col items-center justify-between" style="flex: 1 1 350px; min-width: 0;">
+            <div class="w-full flex items-center justify-between gap-3 mb-3">
                 <div class="flex items-center gap-2">
                     <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping"></span>
                     <h3 class="text-xs font-black uppercase tracking-wider text-white">Scanner Kamera Web/HP</h3>
                 </div>
-                <div class="flex items-center gap-2">
-                    <select x-model="selectedCameraId" @change="switchCamera()" class="px-2.5 py-1 rounded-xl bg-slate-900 border border-white/[0.1] text-xs text-slate-300 outline-none focus:border-cyan-400">
+                <div class="flex items-center gap-2 max-w-[200px] sm:max-w-xs">
+                    <select x-model="selectedCameraId" @change="switchCamera()" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-900 border border-white/[0.1] text-xs text-slate-300 outline-none focus:border-cyan-400 truncate">
                         <template x-for="cam in cameras" :key="cam.id">
                             <option :value="cam.id" x-text="cam.label || 'Kamera ' + cam.id"></option>
                         </template>
@@ -152,13 +182,13 @@
             </div>
 
             <!-- Scanner Box Container -->
-            <div class="w-full max-w-md aspect-square bg-slate-950 rounded-2xl overflow-hidden border border-white/[0.15] relative flex items-center justify-center shadow-inner">
+            <div class="w-full h-[320px] sm:h-[380px] bg-slate-950 rounded-2xl overflow-hidden border border-white/[0.15] relative flex items-center justify-center shadow-inner">
                 <!-- Video stream container used by html5-qrcode -->
-                <div id="qr-reader" class="w-full h-full object-cover"></div>
+                <div id="qr-reader" class="w-full h-full flex items-center justify-center"></div>
 
                 <!-- Laser scanning animation overlay -->
                 <div class="pointer-events-none absolute inset-0 flex items-center justify-center">
-                    <div class="w-64 h-64 border-2 border-cyan-400/80 rounded-2xl relative">
+                    <div class="w-56 sm:w-64 h-56 sm:h-64 border-2 border-cyan-400/80 rounded-2xl relative">
                         <div class="absolute -top-1 -left-1 w-4 h-4 border-t-4 border-l-4 border-cyan-400"></div>
                         <div class="absolute -top-1 -right-1 w-4 h-4 border-t-4 border-r-4 border-cyan-400"></div>
                         <div class="absolute -bottom-1 -left-1 w-4 h-4 border-b-4 border-l-4 border-cyan-400"></div>
@@ -175,7 +205,7 @@
                 </div>
             </div>
 
-            <div class="mt-3 flex items-center gap-2">
+            <div class="w-full mt-3 flex items-center justify-between gap-2 text-xs">
                 <button type="button" @click="toggleCameraStream()" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-white/[0.1] transition cursor-pointer">
                     <span x-text="cameraRunning ? 'Jeda Kamera' : 'Aktifkan Kamera'"></span>
                 </button>
@@ -183,10 +213,10 @@
             </div>
         </div>
 
-        <!-- Right: Barcode Gun / Manual Input & Recent Scan Feedback -->
-        <div class="lg:col-span-6 flex flex-col justify-between space-y-4">
+        <!-- Right: Barcode Gun / Manual Input & Recent Scan Feedback (50% Width) -->
+        <div class="w-full lg:w-1/2 flex flex-col justify-between space-y-4" style="flex: 1 1 350px; min-width: 0;">
             <!-- Manual / Barcode Gun Form -->
-            <div class="p-4 rounded-2xl bg-slate-900/80 border border-white/[0.08] space-y-3">
+            <div class="p-4 sm:p-5 rounded-2xl bg-slate-900/80 border border-white/[0.08] space-y-3">
                 <div class="flex items-center justify-between">
                     <label for="manual-code-input" class="text-xs font-black uppercase tracking-wider text-slate-300 flex items-center gap-2">
                         <i data-lucide="barcode" class="w-4 h-4 text-cyan-400"></i>
