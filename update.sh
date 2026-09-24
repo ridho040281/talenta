@@ -13,6 +13,9 @@ git pull origin main
 echo "🗄️ Menjalankan migrasi database..."
 php artisan migrate --force
 
+echo "🖼️ Sinkronisasi & ekstraksi ZIP foto Pramuka..."
+php artisan talenta:sync-pramuka-photos || true
+
 echo "🧹 Membersihkan view & cache..."
 php artisan view:clear
 php artisan cache:clear
