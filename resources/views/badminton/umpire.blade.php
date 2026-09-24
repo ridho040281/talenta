@@ -33,78 +33,83 @@
 <body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen select-none flex flex-col justify-between" x-data="badmintonUmpireApp()">
 
     <!-- TOP APP HEADER -->
-    <header class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-            <a href="{{ route('badminton.index') }}" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
-                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+    <header class="bg-slate-900 border-b border-slate-800 px-3 py-2 sm:px-4 sm:py-3 flex items-center justify-between gap-2 shrink-0">
+        <!-- Left: Back Button + Match Court & Category Info -->
+        <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+            <a href="{{ route('badminton.index') }}" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 transition shrink-0" title="Kembali ke Daftar Pertandingan">
+                <i data-lucide="arrow-left" class="w-4 h-4 sm:w-5 sm:h-5"></i>
             </a>
-            <div>
-                <div class="flex items-center gap-2">
-                    <span class="px-2 py-0.5 rounded font-mono font-bold bg-amber-400 text-black text-xs">{{ $match->category }}</span>
-                    <h1 class="text-sm sm:text-base font-extrabold text-white flex items-center gap-1.5 flex-wrap">
+            <div class="min-w-0">
+                <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                    <span class="px-1.5 py-0.5 rounded font-mono font-black bg-amber-400 text-black text-[10px] sm:text-xs shrink-0 shadow-xs">{{ $match->category }}</span>
+                    <h1 class="text-xs sm:text-base font-extrabold text-white truncate flex items-center gap-1">
                         <span>{{ $match->court_number }}</span>
                         @if($match->match_order)
-                            <span class="text-amber-400 font-mono text-xs font-bold">(Partai #{{ $match->match_order }})</span>
+                            <span class="text-amber-400 font-mono text-[11px] sm:text-xs font-bold">(#{{ $match->match_order }})</span>
                         @endif
-                        @if($match->scheduled_time)
-                            <span class="text-emerald-400 font-mono text-xs font-bold">• {{ $match->scheduled_time }}</span>
-                        @endif
-                        <span class="text-slate-400">• {{ $match->round_name }}</span>
                     </h1>
                 </div>
-                <p class="text-[11px] text-slate-400 font-medium">{{ $match->match_type === 'double' ? 'Ganda (Double)' : 'Tunggal (Single)' }}</p>
+                <p class="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate">
+                    @if($match->scheduled_time)
+                        <span class="text-emerald-400 font-mono font-bold">{{ $match->scheduled_time }} • </span>
+                    @endif
+                    <span>{{ $match->round_name }}</span>
+                    <span class="hidden xs:inline">• {{ $match->match_type === 'double' ? 'Ganda' : 'Tunggal' }}</span>
+                </p>
             </div>
         </div>
 
-        <div class="flex items-center gap-2">
-            <button @click="editInfoModal = true" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold border border-slate-700 flex items-center gap-1.5 transition">
+        <!-- Right: Action Buttons + Live Badge -->
+        <div class="flex items-center gap-1 sm:gap-2 shrink-0">
+            <button type="button" @click="editInfoModal = true" class="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 text-xs font-bold border border-slate-700 flex items-center gap-1.5 transition cursor-pointer" title="Edit Info & Nama Pemain">
                 <i data-lucide="edit-3" class="w-4 h-4 text-amber-400"></i>
-                <span class="hidden sm:inline">Edit Info</span>
+                <span class="hidden md:inline">Edit</span>
             </button>
-            <a href="{{ route('badminton.scoreboard', $match->id) }}" target="_blank" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold border border-slate-700 flex items-center gap-1.5">
+            <a href="{{ route('badminton.scoreboard', $match->id) }}" target="_blank" class="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-amber-300 text-xs font-bold border border-slate-700 flex items-center gap-1.5 cursor-pointer" title="Buka Layar LED Proyektor">
                 <i data-lucide="tv" class="w-4 h-4 text-rose-500"></i>
-                <span class="hidden sm:inline">Layar LED</span>
+                <span class="hidden md:inline">LED</span>
             </a>
-            <a href="{{ route('badminton.bracket') }}" target="_blank" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-indigo-300 hover:text-white text-xs font-bold border border-slate-700 flex items-center gap-1.5" title="Lihat Bagan Pertandingan">
+            <a href="{{ route('badminton.bracket') }}" target="_blank" class="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-indigo-300 hover:text-white text-xs font-bold border border-slate-700 flex items-center gap-1.5 cursor-pointer" title="Lihat Bagan Pertandingan">
                 <i data-lucide="git-branch" class="w-4 h-4 text-indigo-400"></i>
-                <span class="hidden sm:inline">Bagan</span>
+                <span class="hidden md:inline">Bagan</span>
             </a>
-            <div class="px-3 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold flex items-center gap-2">
+            <div class="px-2 py-1 sm:px-3 sm:py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] sm:text-xs font-mono font-bold flex items-center gap-1.5 shrink-0">
                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                <span>WASIT AKTIF</span>
+                <span class="hidden sm:inline">WASIT AKTIF</span>
+                <span class="sm:hidden">LIVE</span>
             </div>
         </div>
     </header>
 
     <!-- MAIN TOUCH INTERFACE -->
-    <main class="flex-1 p-3 sm:p-5 max-w-5xl mx-auto w-full space-y-4">
+    <main class="flex-1 p-2 sm:p-5 max-w-5xl mx-auto w-full space-y-2.5 sm:space-y-4">
         
         <!-- SCORE OVERVIEW BANNER (MINI SCOREBOARD) -->
-        <div class="bg-slate-900/90 border-2 border-slate-800 rounded-2xl p-3 sm:p-4 shadow-xl">
+        <div class="bg-slate-900/90 border-2 border-slate-800 rounded-2xl p-2.5 sm:p-4 shadow-xl">
             <div class="grid grid-cols-12 gap-2 sm:gap-3 items-center">
                 
                 <!-- TIM 1 (ATAS) -->
-                <div class="col-span-7 sm:col-span-8 space-y-1">
-                    <span class="text-[10px] font-bold text-amber-400 tracking-wider block truncate">🏫 <span x-text="match.team1_school"></span></span>
+                <div class="col-span-7 sm:col-span-8 space-y-1 min-w-0">
+                    <span class="text-[10px] sm:text-xs font-extrabold text-amber-400 tracking-wider block truncate">🏫 <span x-text="match.team1_school"></span></span>
                     <div class="flex items-center gap-2">
-                        <div :class="isServing(1, 1) ? 'bg-amber-400 text-black shadow-md' : 'bg-slate-800 text-slate-200'" class="px-2.5 py-1 rounded-lg font-badminton font-bold text-xs sm:text-sm uppercase flex-1 truncate transition-colors flex items-center justify-between">
+                        <div :class="isServing(1, 1) ? 'bg-amber-400 text-black shadow-md font-black' : 'bg-slate-800 text-slate-200 font-bold'" class="px-2 sm:px-2.5 py-1 rounded-lg font-badminton text-xs sm:text-sm uppercase flex-1 truncate transition-colors flex items-center justify-between gap-1">
                             <span class="truncate" x-text="match.team1_player1"></span>
                             <template x-if="isServing(1, 1)">
-                                <div class="flex items-center gap-1 shrink-0 bg-black/20 px-1.5 py-0.5 rounded animate-pulse ml-1">
+                                <div class="flex items-center gap-1 shrink-0 bg-black/20 px-1.5 py-0.5 rounded animate-pulse">
                                     <span class="text-xs">🏸</span>
-                                    <span class="font-bold text-[9px] text-neutral-900">SERVE</span>
+                                    <span class="font-bold text-[9px] text-neutral-900 hidden xs:inline">SERVE</span>
                                 </div>
                             </template>
                         </div>
                     </div>
                     <template x-if="match.match_type === 'double' && match.team1_player2">
                         <div class="flex items-center gap-2 pt-0.5">
-                            <div :class="isServing(1, 2) ? 'bg-amber-400 text-black shadow-md' : 'bg-slate-800 text-slate-200'" class="px-2.5 py-1 rounded-lg font-badminton font-bold text-xs sm:text-sm uppercase flex-1 truncate transition-colors flex items-center justify-between">
+                            <div :class="isServing(1, 2) ? 'bg-amber-400 text-black shadow-md font-black' : 'bg-slate-800 text-slate-200 font-bold'" class="px-2 sm:px-2.5 py-1 rounded-lg font-badminton text-xs sm:text-sm uppercase flex-1 truncate transition-colors flex items-center justify-between gap-1">
                                 <span class="truncate" x-text="match.team1_player2"></span>
                                 <template x-if="isServing(1, 2)">
-                                    <div class="flex items-center gap-1 shrink-0 bg-black/20 px-1.5 py-0.5 rounded animate-pulse ml-1">
+                                    <div class="flex items-center gap-1 shrink-0 bg-black/20 px-1.5 py-0.5 rounded animate-pulse">
                                         <span class="text-xs">🏸</span>
-                                        <span class="font-bold text-[9px] text-neutral-900">SERVE</span>
+                                        <span class="font-bold text-[9px] text-neutral-900 hidden xs:inline">SERVE</span>
                                     </div>
                                 </template>
                             </div>
@@ -114,49 +119,49 @@
 
                 <!-- SKOR TIM 1 -->
                 <div class="col-span-5 sm:col-span-4 grid grid-cols-3 gap-1 text-center font-score">
-                    <div class="bg-slate-950 border border-slate-800 rounded-lg py-1.5">
-                        <span class="text-xs text-slate-500 block">SET 1</span>
-                        <span class="text-base sm:text-xl font-bold text-lime-400" x-text="match.team1_set1"></span>
+                    <div class="bg-slate-950 border border-slate-800 rounded-lg py-1 sm:py-1.5 px-0.5">
+                        <span class="text-[9px] sm:text-xs text-slate-500 block leading-tight">SET 1</span>
+                        <span class="text-sm sm:text-xl font-bold text-lime-400" x-text="match.team1_set1"></span>
                     </div>
-                    <div class="bg-slate-950 border border-slate-800 rounded-lg py-1.5" :class="match.current_set == 2 ? 'ring-2 ring-amber-400' : ''">
-                        <span class="text-xs text-slate-500 block">SET 2</span>
-                        <span class="text-base sm:text-xl font-bold" :class="match.server_team == 1 && match.current_set == 2 ? 'text-amber-400' : 'text-cyan-400'" x-text="match.team1_set2"></span>
+                    <div class="bg-slate-950 border border-slate-800 rounded-lg py-1 sm:py-1.5 px-0.5" :class="match.current_set == 2 ? 'ring-2 ring-amber-400' : ''">
+                        <span class="text-[9px] sm:text-xs text-slate-500 block leading-tight">SET 2</span>
+                        <span class="text-sm sm:text-xl font-bold" :class="match.server_team == 1 && match.current_set == 2 ? 'text-amber-400' : 'text-cyan-400'" x-text="match.team1_set2"></span>
                     </div>
-                    <div class="bg-slate-950 border border-slate-800 rounded-lg py-1.5" :class="match.current_set == 3 ? 'ring-2 ring-amber-400' : ''">
-                        <span class="text-xs text-slate-500 block">SET 3</span>
-                        <span class="text-base sm:text-xl font-bold" :class="match.current_set >= 3 ? 'text-cyan-400' : 'text-slate-600'" x-text="match.current_set >= 3 ? match.team1_set3 : '-'"></span>
+                    <div class="bg-slate-950 border border-slate-800 rounded-lg py-1 sm:py-1.5 px-0.5" :class="match.current_set == 3 ? 'ring-2 ring-amber-400' : ''">
+                        <span class="text-[9px] sm:text-xs text-slate-500 block leading-tight">SET 3</span>
+                        <span class="text-sm sm:text-xl font-bold" :class="match.current_set >= 3 ? 'text-cyan-400' : 'text-slate-600'" x-text="match.current_set >= 3 ? match.team1_set3 : '-'"></span>
                     </div>
                 </div>
 
                 <!-- DIVIDER & STATUS BADGE -->
                 <div class="col-span-12 flex items-center justify-between gap-2 py-0.5">
                     <div class="h-[1px] bg-slate-800 flex-1"></div>
-                    <span class="text-[10px] font-score tracking-widest font-bold px-3 py-0.5 rounded-full border uppercase" :class="isDeuce() ? 'bg-rose-950/80 text-rose-400 border-rose-600/60 animate-pulse' : 'text-amber-400 bg-slate-950 border-slate-800'" x-text="getStatusBadgeText()"></span>
+                    <span class="text-[9px] sm:text-[10px] font-score tracking-wider font-bold px-2.5 py-0.5 rounded-full border uppercase truncate max-w-full text-center" :class="isDeuce() ? 'bg-rose-950/80 text-rose-400 border-rose-600/60 animate-pulse' : 'text-amber-400 bg-slate-950 border-slate-800'" x-text="getStatusBadgeText()"></span>
                     <div class="h-[1px] bg-slate-800 flex-1"></div>
                 </div>
 
                 <!-- TIM 2 (BAWAH) -->
-                <div class="col-span-7 sm:col-span-8 space-y-1">
-                    <span class="text-[10px] font-bold text-cyan-400 tracking-wider block truncate">🏫 <span x-text="match.team2_school"></span></span>
+                <div class="col-span-7 sm:col-span-8 space-y-1 min-w-0">
+                    <span class="text-[10px] sm:text-xs font-extrabold text-cyan-400 tracking-wider block truncate">🏫 <span x-text="match.team2_school"></span></span>
                     <div class="flex items-center gap-2">
-                        <div :class="isServing(2, 1) ? 'bg-amber-400 text-black shadow-md' : 'bg-slate-800 text-slate-200'" class="px-2.5 py-1 rounded-lg font-badminton font-bold text-xs sm:text-sm uppercase flex-1 truncate transition-colors flex items-center justify-between">
+                        <div :class="isServing(2, 1) ? 'bg-cyan-400 text-black shadow-md font-black' : 'bg-slate-800 text-slate-200 font-bold'" class="px-2 sm:px-2.5 py-1 rounded-lg font-badminton text-xs sm:text-sm uppercase flex-1 truncate transition-colors flex items-center justify-between gap-1">
                             <span class="truncate" x-text="match.team2_player1"></span>
                             <template x-if="isServing(2, 1)">
-                                <div class="flex items-center gap-1 shrink-0 bg-black/20 px-1.5 py-0.5 rounded animate-pulse ml-1">
+                                <div class="flex items-center gap-1 shrink-0 bg-black/20 px-1.5 py-0.5 rounded animate-pulse">
                                     <span class="text-xs">🏸</span>
-                                    <span class="font-bold text-[9px] text-neutral-900">SERVE</span>
+                                    <span class="font-bold text-[9px] text-neutral-900 hidden xs:inline">SERVE</span>
                                 </div>
                             </template>
                         </div>
                     </div>
                     <template x-if="match.match_type === 'double' && match.team2_player2">
                         <div class="flex items-center gap-2 pt-0.5">
-                            <div :class="isServing(2, 2) ? 'bg-amber-400 text-black shadow-md' : 'bg-slate-800 text-slate-200'" class="px-2.5 py-1 rounded-lg font-badminton font-bold text-xs sm:text-sm uppercase flex-1 truncate transition-colors flex items-center justify-between">
+                            <div :class="isServing(2, 2) ? 'bg-cyan-400 text-black shadow-md font-black' : 'bg-slate-800 text-slate-200 font-bold'" class="px-2 sm:px-2.5 py-1 rounded-lg font-badminton text-xs sm:text-sm uppercase flex-1 truncate transition-colors flex items-center justify-between gap-1">
                                 <span class="truncate" x-text="match.team2_player2"></span>
                                 <template x-if="isServing(2, 2)">
-                                    <div class="flex items-center gap-1 shrink-0 bg-black/20 px-1.5 py-0.5 rounded animate-pulse ml-1">
+                                    <div class="flex items-center gap-1 shrink-0 bg-black/20 px-1.5 py-0.5 rounded animate-pulse">
                                         <span class="text-xs">🏸</span>
-                                        <span class="font-bold text-[9px] text-neutral-900">SERVE</span>
+                                        <span class="font-bold text-[9px] text-neutral-900 hidden xs:inline">SERVE</span>
                                     </div>
                                 </template>
                             </div>
@@ -166,17 +171,17 @@
 
                 <!-- SKOR TIM 2 -->
                 <div class="col-span-5 sm:col-span-4 grid grid-cols-3 gap-1 text-center font-score">
-                    <div class="bg-slate-950 border border-slate-800 rounded-lg py-1.5">
-                        <span class="text-xs text-slate-500 block">SET 1</span>
-                        <span class="text-base sm:text-xl font-bold text-lime-400" x-text="match.team2_set1"></span>
+                    <div class="bg-slate-950 border border-slate-800 rounded-lg py-1 sm:py-1.5 px-0.5">
+                        <span class="text-[9px] sm:text-xs text-slate-500 block leading-tight">SET 1</span>
+                        <span class="text-sm sm:text-xl font-bold text-lime-400" x-text="match.team2_set1"></span>
                     </div>
-                    <div class="bg-slate-950 border border-slate-800 rounded-lg py-1.5" :class="match.current_set == 2 ? 'ring-2 ring-cyan-400' : ''">
-                        <span class="text-xs text-slate-500 block">SET 2</span>
-                        <span class="text-base sm:text-xl font-bold" :class="match.server_team == 2 && match.current_set == 2 ? 'text-amber-400' : 'text-cyan-400'" x-text="match.team2_set2"></span>
+                    <div class="bg-slate-950 border border-slate-800 rounded-lg py-1 sm:py-1.5 px-0.5" :class="match.current_set == 2 ? 'ring-2 ring-cyan-400' : ''">
+                        <span class="text-[9px] sm:text-xs text-slate-500 block leading-tight">SET 2</span>
+                        <span class="text-sm sm:text-xl font-bold" :class="match.server_team == 2 && match.current_set == 2 ? 'text-amber-400' : 'text-cyan-400'" x-text="match.team2_set2"></span>
                     </div>
-                    <div class="bg-slate-950 border border-slate-800 rounded-lg py-1.5" :class="match.current_set == 3 ? 'ring-2 ring-cyan-400' : ''">
-                        <span class="text-xs text-slate-500 block">SET 3</span>
-                        <span class="text-base sm:text-xl font-bold" :class="match.current_set >= 3 ? 'text-cyan-400' : 'text-slate-600'" x-text="match.current_set >= 3 ? match.team2_set3 : '-'"></span>
+                    <div class="bg-slate-950 border border-slate-800 rounded-lg py-1 sm:py-1.5 px-0.5" :class="match.current_set == 3 ? 'ring-2 ring-cyan-400' : ''">
+                        <span class="text-[9px] sm:text-xs text-slate-500 block leading-tight">SET 3</span>
+                        <span class="text-sm sm:text-xl font-bold" :class="match.current_set >= 3 ? 'text-cyan-400' : 'text-slate-600'" x-text="match.current_set >= 3 ? match.team2_set3 : '-'"></span>
                     </div>
                 </div>
 
@@ -185,75 +190,123 @@
 
         <!-- SET FINISHED / MATCH FINISHED NOTICE -->
         <template x-if="isCurrentSetFinished() && match.match_status !== 'finished'">
-            <div class="bg-purple-950/90 border-2 border-purple-400 p-3 sm:p-4 rounded-2xl text-center shadow-xl animate-pulse">
-                <span class="text-xs sm:text-sm font-black text-purple-200 uppercase tracking-wider block">
-                    🏆 SET <span x-text="match.current_set"></span> TELAH SELESAI!
-                </span>
-                <span class="text-[11px] sm:text-xs text-purple-300 font-semibold block mt-1">
-                    Silakan tekan tombol <strong>"Set Selanjutnya"</strong> di bawah untuk memulai set berikutnya.
-                </span>
+            <div class="bg-gradient-to-r from-purple-950/90 via-purple-900/90 to-purple-950/90 border-2 border-purple-400 p-2.5 sm:p-3.5 rounded-2xl shadow-xl flex items-center justify-between gap-3 animate-pulse">
+                <div class="min-w-0">
+                    <span class="text-xs sm:text-sm font-black text-purple-200 uppercase tracking-wider block">
+                        🏆 SET <span x-text="match.current_set"></span> TELAH SELESAI!
+                    </span>
+                    <span class="text-[10px] sm:text-xs text-purple-300 font-semibold block truncate">
+                        Klik tombol di samping untuk lanjut ke Set <span x-text="parseInt(match.current_set) + 1"></span>.
+                    </span>
+                </div>
+                <button type="button" 
+                        @click="sendAction('next_set')" 
+                        class="px-3.5 py-2 rounded-xl bg-purple-500 hover:bg-purple-400 text-white font-black text-xs shadow-lg shadow-purple-500/30 flex items-center gap-1.5 shrink-0 cursor-pointer active:scale-95 transition">
+                    <i data-lucide="fast-forward" class="w-4 h-4"></i>
+                    <span>Set Selanjutnya</span>
+                </button>
             </div>
         </template>
 
         <template x-if="match.match_status === 'finished'">
-            <div class="bg-emerald-950/90 border-2 border-emerald-400 p-3 sm:p-4 rounded-2xl text-center shadow-xl">
+            <div class="bg-gradient-to-r from-emerald-950/90 via-emerald-900/90 to-emerald-950/90 border-2 border-emerald-400 p-2.5 sm:p-3.5 rounded-2xl text-center shadow-xl">
                 <span class="text-xs sm:text-sm font-black text-emerald-200 uppercase tracking-wider block">
                     🎉 PERTANDINGAN SELESAI!
                 </span>
-                <span class="text-xs text-emerald-300 font-bold block mt-1" x-text="'Pemenang: ' + (match.winner_team == 1 ? match.team1_school : match.team2_school)"></span>
+                <span class="text-xs text-emerald-300 font-bold block mt-0.5" x-text="'Pemenang: ' + (match.winner_team == 1 ? match.team1_school : match.team2_school)"></span>
             </div>
         </template>
 
-        <!-- BIG TOUCH SCORING PADS (PRIMARY CONTROLS) -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <!-- BIG TOUCH SCORING PADS (PRIMARY CONTROLS: 2 COLUMNS ON ALL SCREENS) -->
+        <div class="grid grid-cols-2 gap-2 sm:gap-4">
             
-            <!-- TEAM 1 TOUCH PAD -->
-            <div class="bg-slate-900 border-2 border-amber-500/30 rounded-2xl p-4 flex flex-col justify-between space-y-3" :class="isCurrentSetFinished() ? 'opacity-60 grayscale-[40%]' : ''">
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-extrabold text-amber-400 truncate" x-text="match.team1_school"></span>
-                    <span class="text-xs font-mono font-bold bg-slate-800 px-2 py-0.5 rounded text-amber-300">Set <span x-text="match.current_set"></span></span>
+            <!-- TEAM 1 TOUCH PAD (KIRI) -->
+            <div class="bg-slate-900/95 border-2 border-amber-500/40 rounded-2xl p-2.5 sm:p-4 flex flex-col justify-between space-y-2 sm:space-y-3 shadow-xl" :class="isCurrentSetFinished() ? 'opacity-60 grayscale-[30%]' : ''">
+                <!-- Header: School & Set badge -->
+                <div class="flex items-center justify-between gap-1 min-w-0">
+                    <span class="text-[11px] sm:text-xs font-black text-amber-400 truncate flex-1" x-text="match.team1_school"></span>
+                    <span class="text-[9px] sm:text-xs font-mono font-bold bg-slate-800 px-1.5 py-0.5 rounded text-amber-300 shrink-0">Set <span x-text="match.current_set"></span></span>
                 </div>
 
-                <!-- HUGE TAP BUTTON -->
-                <button @click="sendAction('add_point', { team: 1 })" :disabled="loading || isCurrentSetFinished() || match.match_status === 'finished'" class="w-full py-6 sm:py-8 bg-gradient-to-b from-amber-400 to-amber-500 active:from-amber-500 active:to-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 rounded-2xl shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-all flex flex-col items-center justify-center">
-                    <span class="text-4xl sm:text-5xl font-black font-score" x-text="getCurrentScore(1)"></span>
-                    <span class="text-xs sm:text-sm font-extrabold tracking-wider mt-1 uppercase" x-text="isCurrentSetFinished() ? 'SET SELESAI' : '+1 POIN TIM 1'"></span>
+                <!-- Players Name -->
+                <div class="text-[10px] sm:text-xs font-bold text-slate-200 truncate font-badminton">
+                    <span x-text="match.team1_player1"></span>
+                    <template x-if="match.match_type === 'double' && match.team1_player2">
+                        <span class="text-slate-400 block text-[9px] sm:text-[10px] truncate" x-text="'/ ' + match.team1_player2"></span>
+                    </template>
+                </div>
+
+                <!-- HUGE TAP BUTTON (+1 POIN) -->
+                <button type="button" 
+                        @click="sendAction('add_point', { team: 1 })" 
+                        :disabled="loading || isCurrentSetFinished() || match.match_status === 'finished'" 
+                        class="w-full py-4 sm:py-7 bg-gradient-to-b from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-500 active:from-amber-500 active:to-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 rounded-2xl shadow-lg shadow-amber-500/20 active:scale-[0.97] transition-all flex flex-col items-center justify-center cursor-pointer select-none">
+                    <span class="text-4xl sm:text-6xl font-black font-score tracking-tighter" x-text="getCurrentScore(1)"></span>
+                    <span class="text-[10px] sm:text-xs font-black tracking-wider mt-1 uppercase" x-text="isCurrentSetFinished() ? 'SET SELESAI' : '+1 POIN'"></span>
                 </button>
 
                 <!-- SERVER SELECTOR -->
-                <div class="flex gap-2 pt-1">
-                    <button @click="sendAction('set_server', { team: 1, player: 1 })" :class="isServing(1, 1) ? 'bg-amber-400 text-black font-extrabold' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'" class="flex-1 py-2 px-2 rounded-xl text-xs font-bold transition truncate">
-                        🎾 Servis: <span x-text="match.team1_player1"></span>
+                <div class="space-y-1 pt-0.5">
+                    <button type="button" 
+                            @click="sendAction('set_server', { team: 1, player: 1 })" 
+                            :class="isServing(1, 1) ? 'bg-amber-400 text-black font-black shadow-md ring-1 ring-amber-300' : 'bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold'" 
+                            class="w-full py-1.5 px-2 rounded-xl text-[10px] sm:text-xs transition truncate cursor-pointer flex items-center justify-center gap-1">
+                        <span>🏸 Servis:</span>
+                        <span class="truncate" x-text="match.team1_player1"></span>
                     </button>
                     <template x-if="match.match_type === 'double' && match.team1_player2">
-                        <button @click="sendAction('set_server', { team: 1, player: 2 })" :class="isServing(1, 2) ? 'bg-amber-400 text-black font-extrabold' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'" class="flex-1 py-2 px-2 rounded-xl text-xs font-bold transition truncate">
-                            🎾 Servis: <span x-text="match.team1_player2"></span>
+                        <button type="button" 
+                                @click="sendAction('set_server', { team: 1, player: 2 })" 
+                                :class="isServing(1, 2) ? 'bg-amber-400 text-black font-black shadow-md ring-1 ring-amber-300' : 'bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold'" 
+                                class="w-full py-1.5 px-2 rounded-xl text-[10px] sm:text-xs transition truncate cursor-pointer flex items-center justify-center gap-1">
+                            <span>🏸 Servis:</span>
+                            <span class="truncate" x-text="match.team1_player2"></span>
                         </button>
                     </template>
                 </div>
             </div>
 
-            <!-- TEAM 2 TOUCH PAD -->
-            <div class="bg-slate-900 border-2 border-emerald-500/30 rounded-2xl p-4 flex flex-col justify-between space-y-3" :class="isCurrentSetFinished() ? 'opacity-60 grayscale-[40%]' : ''">
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-extrabold text-cyan-400 truncate" x-text="match.team2_school"></span>
-                    <span class="text-xs font-mono font-bold bg-slate-800 px-2 py-0.5 rounded text-cyan-300">Set <span x-text="match.current_set"></span></span>
+            <!-- TEAM 2 TOUCH PAD (KANAN) -->
+            <div class="bg-slate-900/95 border-2 border-cyan-500/40 rounded-2xl p-2.5 sm:p-4 flex flex-col justify-between space-y-2 sm:space-y-3 shadow-xl" :class="isCurrentSetFinished() ? 'opacity-60 grayscale-[30%]' : ''">
+                <!-- Header: School & Set badge -->
+                <div class="flex items-center justify-between gap-1 min-w-0">
+                    <span class="text-[11px] sm:text-xs font-black text-cyan-400 truncate flex-1" x-text="match.team2_school"></span>
+                    <span class="text-[9px] sm:text-xs font-mono font-bold bg-slate-800 px-1.5 py-0.5 rounded text-cyan-300 shrink-0">Set <span x-text="match.current_set"></span></span>
                 </div>
 
-                <!-- HUGE TAP BUTTON -->
-                <button @click="sendAction('add_point', { team: 2 })" :disabled="loading || isCurrentSetFinished() || match.match_status === 'finished'" class="w-full py-6 sm:py-8 bg-gradient-to-b from-emerald-500 to-teal-600 active:from-emerald-600 active:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-all flex flex-col items-center justify-center">
-                    <span class="text-4xl sm:text-5xl font-black font-score" x-text="getCurrentScore(2)"></span>
-                    <span class="text-xs sm:text-sm font-extrabold tracking-wider mt-1 uppercase" x-text="isCurrentSetFinished() ? 'SET SELESAI' : '+1 POIN TIM 2'"></span>
+                <!-- Players Name -->
+                <div class="text-[10px] sm:text-xs font-bold text-slate-200 truncate font-badminton">
+                    <span x-text="match.team2_player1"></span>
+                    <template x-if="match.match_type === 'double' && match.team2_player2">
+                        <span class="text-slate-400 block text-[9px] sm:text-[10px] truncate" x-text="'/ ' + match.team2_player2"></span>
+                    </template>
+                </div>
+
+                <!-- HUGE TAP BUTTON (+1 POIN) -->
+                <button type="button" 
+                        @click="sendAction('add_point', { team: 2 })" 
+                        :disabled="loading || isCurrentSetFinished() || match.match_status === 'finished'" 
+                        class="w-full py-4 sm:py-7 bg-gradient-to-b from-cyan-500 to-teal-600 hover:from-cyan-400 hover:to-teal-500 active:from-cyan-600 active:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl shadow-lg shadow-cyan-500/20 active:scale-[0.97] transition-all flex flex-col items-center justify-center cursor-pointer select-none">
+                    <span class="text-4xl sm:text-6xl font-black font-score tracking-tighter" x-text="getCurrentScore(2)"></span>
+                    <span class="text-[10px] sm:text-xs font-black tracking-wider mt-1 uppercase" x-text="isCurrentSetFinished() ? 'SET SELESAI' : '+1 POIN'"></span>
                 </button>
 
                 <!-- SERVER SELECTOR -->
-                <div class="flex gap-2 pt-1">
-                    <button @click="sendAction('set_server', { team: 2, player: 1 })" :class="isServing(2, 1) ? 'bg-amber-400 text-black font-extrabold' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'" class="flex-1 py-2 px-2 rounded-xl text-xs font-bold transition truncate">
-                        🎾 Servis: <span x-text="match.team2_player1"></span>
+                <div class="space-y-1 pt-0.5">
+                    <button type="button" 
+                            @click="sendAction('set_server', { team: 2, player: 1 })" 
+                            :class="isServing(2, 1) ? 'bg-cyan-400 text-black font-black shadow-md ring-1 ring-cyan-300' : 'bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold'" 
+                            class="w-full py-1.5 px-2 rounded-xl text-[10px] sm:text-xs transition truncate cursor-pointer flex items-center justify-center gap-1">
+                        <span>🏸 Servis:</span>
+                        <span class="truncate" x-text="match.team2_player1"></span>
                     </button>
                     <template x-if="match.match_type === 'double' && match.team2_player2">
-                        <button @click="sendAction('set_server', { team: 2, player: 2 })" :class="isServing(2, 2) ? 'bg-amber-400 text-black font-extrabold' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'" class="flex-1 py-2 px-2 rounded-xl text-xs font-bold transition truncate">
-                            🎾 Servis: <span x-text="match.team2_player2"></span>
+                        <button type="button" 
+                                @click="sendAction('set_server', { team: 2, player: 2 })" 
+                                :class="isServing(2, 2) ? 'bg-cyan-400 text-black font-black shadow-md ring-1 ring-cyan-300' : 'bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold'" 
+                                class="w-full py-1.5 px-2 rounded-xl text-[10px] sm:text-xs transition truncate cursor-pointer flex items-center justify-center gap-1">
+                            <span>🏸 Servis:</span>
+                            <span class="truncate" x-text="match.team2_player2"></span>
                         </button>
                     </template>
                 </div>
@@ -262,25 +315,40 @@
         </div>
 
         <!-- UTILITY CONTROLS (UNDO, INTERVAL, NEXT SET, RESET) -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            <button @click="sendAction('undo')" :disabled="loading" class="py-3 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-rose-400 font-bold text-xs border border-slate-700 flex items-center justify-center gap-2 transition shadow">
-                <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-                <span>UNDO (-1)</span>
+        <div class="grid grid-cols-4 gap-1.5 sm:gap-2.5">
+            <!-- UNDO (-1) -->
+            <button type="button" 
+                    @click="sendAction('undo')" 
+                    :disabled="loading" 
+                    class="py-2.5 px-2 sm:py-3 sm:px-3 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-rose-400 hover:text-rose-300 font-black text-[11px] sm:text-xs border border-rose-500/30 hover:border-rose-400/60 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 transition shadow cursor-pointer">
+                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-400"></i>
+                <span>UNDO</span>
             </button>
 
-            <button @click="startIntervalTimer(60)" class="py-3 px-3 rounded-xl bg-blue-950/60 hover:bg-blue-900/60 active:scale-95 text-blue-400 font-bold text-xs border border-blue-800/60 flex items-center justify-center gap-2 transition shadow">
-                <i data-lucide="timer" class="w-4 h-4"></i>
-                <span>Interval 60s</span>
+            <!-- INTERVAL 60S -->
+            <button type="button" 
+                    @click="startIntervalTimer(60)" 
+                    class="py-2.5 px-2 sm:py-3 sm:px-3 rounded-xl bg-blue-950/70 hover:bg-blue-900/70 active:scale-95 text-blue-300 font-bold text-[11px] sm:text-xs border border-blue-700/50 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 transition shadow cursor-pointer">
+                <i data-lucide="timer" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-400"></i>
+                <span>Jeda 60s</span>
             </button>
 
-            <button @click="sendAction('next_set')" :disabled="match.current_set >= 3 || match.match_status === 'finished'" :class="isCurrentSetFinished() && match.match_status !== 'finished' ? 'bg-purple-600 hover:bg-purple-500 text-white font-black animate-pulse ring-4 ring-purple-400/80 shadow-lg shadow-purple-500/50' : 'bg-purple-950/60 hover:bg-purple-900/60 text-purple-300 font-bold'" class="py-3 px-3 rounded-xl active:scale-95 text-xs border border-purple-800/60 flex items-center justify-center gap-2 transition shadow">
-                <i data-lucide="fast-forward" class="w-4 h-4"></i>
-                <span>Set Selanjutnya</span>
+            <!-- SET SELANJUTNYA -->
+            <button type="button" 
+                    @click="sendAction('next_set')" 
+                    :disabled="match.current_set >= 3 || match.match_status === 'finished'" 
+                    :class="isCurrentSetFinished() && match.match_status !== 'finished' ? 'bg-purple-600 hover:bg-purple-500 text-white font-black animate-pulse ring-2 ring-purple-400 shadow-lg shadow-purple-500/50' : 'bg-purple-950/70 hover:bg-purple-900/70 text-purple-300 font-bold border border-purple-700/50 disabled:opacity-40 disabled:cursor-not-allowed'" 
+                    class="py-2.5 px-2 sm:py-3 sm:px-3 rounded-xl active:scale-95 text-[11px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 transition shadow cursor-pointer">
+                <i data-lucide="fast-forward" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-300"></i>
+                <span class="truncate">Next Set</span>
             </button>
 
-            <button @click="confirmReset()" class="py-3 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-400 hover:text-white font-bold text-xs border border-slate-700 flex items-center justify-center gap-2 transition shadow">
-                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                <span>Reset Skor</span>
+            <!-- RESET SKOR -->
+            <button type="button" 
+                    @click="confirmReset()" 
+                    class="py-2.5 px-2 sm:py-3 sm:px-3 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-400 hover:text-white font-bold text-[11px] sm:text-xs border border-slate-700 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 transition shadow cursor-pointer">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400"></i>
+                <span>Reset</span>
             </button>
         </div>
 
