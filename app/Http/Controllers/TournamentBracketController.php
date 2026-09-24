@@ -1054,8 +1054,11 @@ class TournamentBracketController extends Controller
         $finalMatch = $finalRound['matches'][0] ?? null;
         $champion = $finalMatch['winner'] ?? null;
 
+        $isDoublesPool = str_contains(strtolower($poolKey), 'ganda') || collect($poolParticipants)->contains(fn ($p) => str_contains($p['name'] ?? '', ' / '));
+
         $bracketData = [
             'bracket_size' => $bracketSize,
+            'is_doubles' => $isDoublesPool,
             'total_participants' => $total,
             'total_byes' => $totalByes,
             'total_rounds' => $totalRounds,
@@ -1223,12 +1226,49 @@ class TournamentBracketController extends Controller
         $playoffs = $bracketData['playoffs'] ?? null;
         $hasPlayoffs = ! empty($playoffs['has_playoffs']) && ! empty($playoffs['matches']);
 
-        $isDark = $options['isDark'] ?? false;
-        $slotHeight = $options['slotHeight'] ?? ($bracketSize > 16 ? 34 : ($bracketSize > 8 ? 40 : 50));
-        $slotWidth = $options['slotWidth'] ?? ($bracketSize > 16 ? 300 : 330);
-        $branchWidth = $options['branchWidth'] ?? ($bracketSize > 16 ? 140 : 160);
+        // Extract slots from Round 1 early to detect if doubles
+        $r1Matches = $rounds[1]['matches'] ?? [];
+        $slots = [];
+        $isDoublesBracket = ! empty($bracketData['is_doubles']);
 
-        $poWidth = $hasPlayoffs ? 230 : 0;
+        foreach ($r1Matches as $mIdx => $m) {
+            $s1 = ($mIdx * 2) + 1;
+            $s2 = ($mIdx * 2) + 2;
+            $slots[$s1] = $m['team1'] ?? ['name' => '', 'slot_number' => $s1];
+            $slots[$s2] = $m['team2'] ?? ['name' => '', 'slot_number' => $s2];
+
+            if (! $isDoublesBracket) {
+                if ((! empty($slots[$s1]['name']) && str_contains($slots[$s1]['name'], ' / ')) ||
+                    (! empty($slots[$s2]['name']) && str_contains($slots[$s2]['name'], ' / '))) {
+                    $isDoublesBracket = true;
+                }
+            }
+        }
+
+        $isDark = $options['isDark'] ?? false;
+
+        // Dynamic geometry based on whether category is doubles and bracket size
+        if ($isDoublesBracket) {
+            // Doubles: 2 player lines + 1 school line per slot
+            $defaultSlotHeight = ($bracketSize > 16 ? 44 : ($bracketSize > 8 ? 50 : 58));
+            $defaultSlotWidth = ($bracketSize > 16 ? 380 : 420);
+            $defaultBranchWidth = ($bracketSize > 16 ? 180 : 210);
+            $champBoxWidth = 220;
+            $champBoxHeight = 52;
+        } else {
+            // Singles: 1 player line + 1 school line per slot
+            $defaultSlotHeight = ($bracketSize > 16 ? 36 : ($bracketSize > 8 ? 44 : 52));
+            $defaultSlotWidth = ($bracketSize > 16 ? 340 : 380);
+            $defaultBranchWidth = ($bracketSize > 16 ? 160 : 185);
+            $champBoxWidth = 180;
+            $champBoxHeight = 42;
+        }
+
+        $slotHeight = $options['slotHeight'] ?? $defaultSlotHeight;
+        $slotWidth = $options['slotWidth'] ?? $defaultSlotWidth;
+        $branchWidth = $options['branchWidth'] ?? $defaultBranchWidth;
+
+        $poWidth = $hasPlayoffs ? ($isDoublesBracket ? 270 : 230) : 0;
         $leftMargin = ($options['leftMargin'] ?? 48) + $poWidth;
         $topMargin = $options['topMargin'] ?? 52;
 
@@ -1241,8 +1281,6 @@ class TournamentBracketController extends Controller
         $accentColor = '#d97706';
 
         $champLineLength = 40;
-        $champBoxWidth = 165;
-        $champBoxHeight = 38;
         $rightPadding = 40;
 
         $totalHeight = ($bracketSize * $slotHeight) + $topMargin + 40;
@@ -1274,16 +1312,6 @@ class TournamentBracketController extends Controller
         // Juara 1 Header (tepat di atas kotak Juara 1)
         $champHeaderX = $leftMargin + $slotWidth + ($totalRounds * $branchWidth) + $champLineLength + ($champBoxWidth / 2);
         $svg[] = "<text x='{$champHeaderX}' y='26' text-anchor='middle' font-size='13' font-weight='800' fill='{$accentColor}'>Juara 1</text>";
-
-        // Extract slots from Round 1
-        $r1Matches = $rounds[1]['matches'] ?? [];
-        $slots = [];
-        foreach ($r1Matches as $mIdx => $m) {
-            $s1 = ($mIdx * 2) + 1;
-            $s2 = ($mIdx * 2) + 2;
-            $slots[$s1] = $m['team1'] ?? ['name' => '', 'slot_number' => $s1];
-            $slots[$s2] = $m['team2'] ?? ['name' => '', 'slot_number' => $s2];
-        }
 
         // 2. Draw Slot Numbers and Boxes for Round 1
         $slotX = $leftMargin;
@@ -1329,60 +1357,100 @@ class TournamentBracketController extends Controller
             }
             $svg[] = "<rect x='{$slotX}' y='{$boxY}' width='{$slotWidth}' height='{$boxH}' fill='{$currentBoxBg}' stroke='{$currentBorder}' stroke-width='1.5' rx='4' {$dashAttr}/>";
 
-            // Player Text & Institution (2-Line Clear Layout)
+            // Player Text & Institution (Clean multi-line layout without truncation)
             if ($isPlayoffSlot) {
                 $displayText = htmlspecialchars($slotData['name'] ?? '[Pemenang Play-off]', ENT_QUOTES);
                 $nameColor = '#d97706';
-                $svg[] = "<text x='".($slotX + 10)."' y='".($yCenter + 4.5)."' font-size='11' font-weight='800' fill='{$nameColor}'>{$displayText}</text>";
+                $svg[] = "<text x='".($slotX + 12)."' y='".($yCenter + 4.5)."' font-size='11.5' font-weight='800' fill='{$nameColor}'>{$displayText}</text>";
             } elseif ($isPending) {
                 $displayText = '[Menunggu Undian]';
                 $nameColor = $isDark ? '#475569' : '#94a3b8';
-                $svg[] = "<text x='".($slotX + 10)."' y='".($yCenter + 4.5)."' font-size='11' font-style='italic' font-weight='600' fill='{$nameColor}'>{$displayText}</text>";
+                $svg[] = "<text x='".($slotX + 12)."' y='".($yCenter + 4.5)."' font-size='11.5' font-style='italic' font-weight='600' fill='{$nameColor}'>{$displayText}</text>";
             } elseif ($isBye) {
                 $displayText = '[BYE] Bebas Babak 1';
-                $byeSize = ($bracketSize > 16) ? '11' : '12.5';
+                $byeSize = ($bracketSize > 16) ? '11.5' : '13';
                 $byeColor = $isDark ? '#94a3b8' : '#334155';
-                $svg[] = "<text x='".($slotX + 10)."' y='".($yCenter + 4.5)."' font-size='{$byeSize}' font-weight='800' fill='{$byeColor}'>{$displayText}</text>";
+                $svg[] = "<text x='".($slotX + 12)."' y='".($yCenter + 4.5)."' font-size='{$byeSize}' font-weight='800' fill='{$byeColor}'>{$displayText}</text>";
             } else {
                 $nameText = $slotData['name'] ?? '';
                 $seedText = ! empty($slotData['seed_number']) ? "(S{$slotData['seed_number']}) " : '';
                 $poBadge = $isPlayoffWinner ? '[PO] ' : '';
-                $fullPlayerName = $poBadge.$seedText.$nameText;
-
-                $nameLen = mb_strlen($fullPlayerName);
-                if ($nameLen > 42) {
-                    $fullPlayerName = mb_substr($fullPlayerName, 0, 40).'..';
-                }
-
-                $instText = trim($slotData['institution'] ?? '');
-                $instLen = mb_strlen($instText);
-                if ($instLen > 48) {
-                    $instText = mb_substr($instText, 0, 46).'..';
-                }
-
-                $displayName = htmlspecialchars($fullPlayerName, ENT_QUOTES);
-                $displayInst = htmlspecialchars($instText, ENT_QUOTES);
                 $nameColor = $isPlayoffWinner ? '#059669' : $textColor;
+                $instText = trim($slotData['institution'] ?? '');
 
-                if (! empty($instText)) {
-                    // Two lines: Line 1 Player Name, Line 2 Institution / School
-                    $nameY = $yCenter - 3;
-                    $instY = $yCenter + 10;
+                $isSlotPair = str_contains($nameText, ' / ');
 
-                    if ($bracketSize > 16) {
-                        $nameSize = ($nameLen > 30) ? '9.5' : '10.5';
-                        $instSize = ($instLen > 32) ? '8' : '9';
+                if ($isSlotPair) {
+                    // GANDA (Doubles): Split into Player 1 & Player 2
+                    $pairNames = explode(' / ', $nameText, 2);
+                    $p1Raw = trim($pairNames[0] ?? '');
+                    $p2Raw = trim($pairNames[1] ?? '');
+
+                    $p1Full = $poBadge.$seedText.$p1Raw;
+                    $p2Full = $p2Raw;
+
+                    $p1Display = htmlspecialchars($p1Full, ENT_QUOTES);
+                    $p2Display = htmlspecialchars($p2Full, ENT_QUOTES);
+                    $displayInst = htmlspecialchars($instText, ENT_QUOTES);
+
+                    $maxPNameLen = max(mb_strlen($p1Full), mb_strlen($p2Full));
+
+                    if (! empty($instText)) {
+                        // 3 Lines: Line 1 = Player 1, Line 2 = Player 2, Line 3 = School
+                        if ($bracketSize > 16) {
+                            $nameSize = ($maxPNameLen > 30) ? '8.5' : '9.5';
+                            $instSize = (mb_strlen($instText) > 36) ? '7.5' : '8';
+                            $line1Y = $yCenter - 9;
+                            $line2Y = $yCenter + 1.5;
+                            $line3Y = $yCenter + 11.5;
+                        } else {
+                            $nameSize = ($maxPNameLen > 30) ? '9.5' : ($maxPNameLen > 22 ? '10.5' : '11.5');
+                            $instSize = (mb_strlen($instText) > 38) ? '8' : '9';
+                            $line1Y = $yCenter - 10;
+                            $line2Y = $yCenter + 2;
+                            $line3Y = $yCenter + 13;
+                        }
+
+                        $svg[] = "<text x='".($slotX + 12)."' y='{$line1Y}' font-size='{$nameSize}' font-weight='800' fill='{$nameColor}'>{$p1Display}</text>";
+                        $svg[] = "<text x='".($slotX + 12)."' y='{$line2Y}' font-size='{$nameSize}' font-weight='800' fill='{$nameColor}'>{$p2Display}</text>";
+                        $svg[] = "<text x='".($slotX + 12)."' y='{$line3Y}' font-size='{$instSize}' font-weight='600' fill='{$subTextColor}'>{$displayInst}</text>";
                     } else {
-                        $nameSize = ($nameLen > 32) ? '10' : ($nameLen > 24 ? '11' : '12');
-                        $instSize = ($instLen > 34) ? '8.5' : '9.5';
-                    }
+                        // 2 Lines: Line 1 = Player 1, Line 2 = Player 2
+                        $nameSize = ($bracketSize > 16) ? '10' : '11.5';
+                        $line1Y = $yCenter - 4;
+                        $line2Y = $yCenter + 9;
 
-                    $svg[] = "<text x='".($slotX + 10)."' y='{$nameY}' font-size='{$nameSize}' font-weight='800' fill='{$nameColor}'>{$displayName}</text>";
-                    $svg[] = "<text x='".($slotX + 10)."' y='{$instY}' font-size='{$instSize}' font-weight='600' fill='{$subTextColor}'>{$displayInst}</text>";
+                        $svg[] = "<text x='".($slotX + 12)."' y='{$line1Y}' font-size='{$nameSize}' font-weight='800' fill='{$nameColor}'>{$p1Display}</text>";
+                        $svg[] = "<text x='".($slotX + 12)."' y='{$line2Y}' font-size='{$nameSize}' font-weight='800' fill='{$nameColor}'>{$p2Display}</text>";
+                    }
                 } else {
-                    // Single line
-                    $nameSize = ($bracketSize > 16) ? '11' : '12.5';
-                    $svg[] = "<text x='".($slotX + 10)."' y='".($yCenter + 4.5)."' font-size='{$nameSize}' font-weight='800' fill='{$nameColor}'>{$displayName}</text>";
+                    // TUNGGAL (Singles): 1 Player
+                    $fullPlayerName = $poBadge.$seedText.$nameText;
+                    $displayName = htmlspecialchars($fullPlayerName, ENT_QUOTES);
+                    $displayInst = htmlspecialchars($instText, ENT_QUOTES);
+                    $nameLen = mb_strlen($fullPlayerName);
+                    $instLen = mb_strlen($instText);
+
+                    if (! empty($instText)) {
+                        // Two lines: Line 1 Player Name, Line 2 Institution / School
+                        $nameY = $yCenter - 3;
+                        $instY = $yCenter + 10;
+
+                        if ($bracketSize > 16) {
+                            $nameSize = ($nameLen > 32) ? '9.5' : '11';
+                            $instSize = ($instLen > 34) ? '8' : '9';
+                        } else {
+                            $nameSize = ($nameLen > 32) ? '10.5' : ($nameLen > 22 ? '11.5' : '12.5');
+                            $instSize = ($instLen > 36) ? '8.5' : '9.5';
+                        }
+
+                        $svg[] = "<text x='".($slotX + 12)."' y='{$nameY}' font-size='{$nameSize}' font-weight='800' fill='{$nameColor}'>{$displayName}</text>";
+                        $svg[] = "<text x='".($slotX + 12)."' y='{$instY}' font-size='{$instSize}' font-weight='600' fill='{$subTextColor}'>{$displayInst}</text>";
+                    } else {
+                        // Single line
+                        $nameSize = ($bracketSize > 16) ? '11.5' : '13';
+                        $svg[] = "<text x='".($slotX + 12)."' y='".($yCenter + 4.5)."' font-size='{$nameSize}' font-weight='800' fill='{$nameColor}'>{$displayName}</text>";
+                    }
                 }
             }
         }
@@ -1393,8 +1461,8 @@ class TournamentBracketController extends Controller
                 $targetSlot = $po['target_slot'] ?? $bracketSize;
                 $targetY = $slotYPositions[$targetSlot] ?? ($topMargin + ($targetSlot - 0.5) * $slotHeight);
 
-                $poBoxW = 165;
-                $poBoxH = max(26, $slotHeight * 0.85);
+                $poBoxW = $isDoublesBracket ? 210 : 175;
+                $poBoxH = max(30, $slotHeight * 0.88);
                 $poX = $leftMargin - $poWidth + 8;
                 $poY1 = $targetY - ($slotHeight * 0.75);
                 $poY2 = $targetY + ($slotHeight * 0.75);
@@ -1417,42 +1485,48 @@ class TournamentBracketController extends Controller
                 // Box 1
                 $svg[] = "<rect x='{$poX}' y='{$box1Y}' width='{$poBoxW}' height='{$poBoxH}' fill='{$fill1}' stroke='{$border1}' stroke-width='1.4' rx='3'/>";
                 if ($isPendingT1) {
-                    $svg[] = "<text x='".($poX + 6)."' y='".($poY1 + 4)."' font-size='9' font-style='italic' fill='".($isDark ? '#475569' : '#94a3b8')."'>[Menunggu Undian]</text>";
+                    $svg[] = "<text x='".($poX + 8)."' y='".($poY1 + 4)."' font-size='9' font-style='italic' fill='".($isDark ? '#475569' : '#94a3b8')."'>[Menunggu Undian]</text>";
                 } else {
                     $t1Name = $team1['name'] ?? '';
-                    if (mb_strlen($t1Name) > 25) {
-                        $t1Name = mb_substr($t1Name, 0, 23).'..';
-                    }
                     $t1Inst = trim($team1['institution'] ?? '');
-                    if (mb_strlen($t1Inst) > 26) {
-                        $t1Inst = mb_substr($t1Inst, 0, 24).'..';
-                    }
-                    if (! empty($t1Inst)) {
-                        $svg[] = "<text x='".($poX + 6)."' y='".($poY1 - 2)."' font-size='9.5' font-weight='700' fill='{$textColor}'>".htmlspecialchars($t1Name, ENT_QUOTES).'</text>';
-                        $svg[] = "<text x='".($poX + 6)."' y='".($poY1 + 9)."' font-size='8' font-weight='500' fill='{$subTextColor}'>".htmlspecialchars($t1Inst, ENT_QUOTES).'</text>';
+                    if (str_contains($t1Name, ' / ')) {
+                        $pNames = explode(' / ', $t1Name, 2);
+                        $svg[] = "<text x='".($poX + 8)."' y='".($poY1 - 7)."' font-size='8.5' font-weight='700' fill='{$textColor}'>".htmlspecialchars(trim($pNames[0]), ENT_QUOTES).'</text>';
+                        $svg[] = "<text x='".($poX + 8)."' y='".($poY1 + 2)."' font-size='8.5' font-weight='700' fill='{$textColor}'>".htmlspecialchars(trim($pNames[1]), ENT_QUOTES).'</text>';
+                        if (! empty($t1Inst)) {
+                            $svg[] = "<text x='".($poX + 8)."' y='".($poY1 + 11)."' font-size='7.5' font-weight='500' fill='{$subTextColor}'>".htmlspecialchars($t1Inst, ENT_QUOTES).'</text>';
+                        }
                     } else {
-                        $svg[] = "<text x='".($poX + 6)."' y='".($poY1 + 4)."' font-size='9.5' font-weight='700' fill='{$textColor}'>".htmlspecialchars($t1Name, ENT_QUOTES).'</text>';
+                        if (! empty($t1Inst)) {
+                            $svg[] = "<text x='".($poX + 8)."' y='".($poY1 - 2)."' font-size='9.5' font-weight='700' fill='{$textColor}'>".htmlspecialchars($t1Name, ENT_QUOTES).'</text>';
+                            $svg[] = "<text x='".($poX + 8)."' y='".($poY1 + 9)."' font-size='8' font-weight='500' fill='{$subTextColor}'>".htmlspecialchars($t1Inst, ENT_QUOTES).'</text>';
+                        } else {
+                            $svg[] = "<text x='".($poX + 8)."' y='".($poY1 + 4)."' font-size='9.5' font-weight='700' fill='{$textColor}'>".htmlspecialchars($t1Name, ENT_QUOTES).'</text>';
+                        }
                     }
                 }
 
                 // Box 2
                 $svg[] = "<rect x='{$poX}' y='{$box2Y}' width='{$poBoxW}' height='{$poBoxH}' fill='{$fill2}' stroke='{$border2}' stroke-width='1.4' rx='3'/>";
                 if ($isPendingT2) {
-                    $svg[] = "<text x='".($poX + 6)."' y='".($poY2 + 4)."' font-size='9' font-style='italic' fill='".($isDark ? '#475569' : '#94a3b8')."'>[Menunggu Undian]</text>";
+                    $svg[] = "<text x='".($poX + 8)."' y='".($poY2 + 4)."' font-size='9' font-style='italic' fill='".($isDark ? '#475569' : '#94a3b8')."'>[Menunggu Undian]</text>";
                 } else {
                     $t2Name = $team2['name'] ?? '';
-                    if (mb_strlen($t2Name) > 25) {
-                        $t2Name = mb_substr($t2Name, 0, 23).'..';
-                    }
                     $t2Inst = trim($team2['institution'] ?? '');
-                    if (mb_strlen($t2Inst) > 26) {
-                        $t2Inst = mb_substr($t2Inst, 0, 24).'..';
-                    }
-                    if (! empty($t2Inst)) {
-                        $svg[] = "<text x='".($poX + 6)."' y='".($poY2 - 2)."' font-size='9.5' font-weight='700' fill='{$textColor}'>".htmlspecialchars($t2Name, ENT_QUOTES).'</text>';
-                        $svg[] = "<text x='".($poX + 6)."' y='".($poY2 + 9)."' font-size='8' font-weight='500' fill='{$subTextColor}'>".htmlspecialchars($t2Inst, ENT_QUOTES).'</text>';
+                    if (str_contains($t2Name, ' / ')) {
+                        $pNames2 = explode(' / ', $t2Name, 2);
+                        $svg[] = "<text x='".($poX + 8)."' y='".($poY2 - 7)."' font-size='8.5' font-weight='700' fill='{$textColor}'>".htmlspecialchars(trim($pNames2[0]), ENT_QUOTES).'</text>';
+                        $svg[] = "<text x='".($poX + 8)."' y='".($poY2 + 2)."' font-size='8.5' font-weight='700' fill='{$textColor}'>".htmlspecialchars(trim($pNames2[1]), ENT_QUOTES).'</text>';
+                        if (! empty($t2Inst)) {
+                            $svg[] = "<text x='".($poX + 8)."' y='".($poY2 + 11)."' font-size='7.5' font-weight='500' fill='{$subTextColor}'>".htmlspecialchars($t2Inst, ENT_QUOTES).'</text>';
+                        }
                     } else {
-                        $svg[] = "<text x='".($poX + 6)."' y='".($poY2 + 4)."' font-size='9.5' font-weight='700' fill='{$textColor}'>".htmlspecialchars($t2Name, ENT_QUOTES).'</text>';
+                        if (! empty($t2Inst)) {
+                            $svg[] = "<text x='".($poX + 8)."' y='".($poY2 - 2)."' font-size='9.5' font-weight='700' fill='{$textColor}'>".htmlspecialchars($t2Name, ENT_QUOTES).'</text>';
+                            $svg[] = "<text x='".($poX + 8)."' y='".($poY2 + 9)."' font-size='8' font-weight='500' fill='{$subTextColor}'>".htmlspecialchars($t2Inst, ENT_QUOTES).'</text>';
+                        } else {
+                            $svg[] = "<text x='".($poX + 8)."' y='".($poY2 + 4)."' font-size='9.5' font-weight='700' fill='{$textColor}'>".htmlspecialchars($t2Name, ENT_QUOTES).'</text>';
+                        }
                     }
                 }
 
@@ -1511,17 +1585,29 @@ class TournamentBracketController extends Controller
                 // Horizontal stem to right
                 $svg[] = "<line x1='{$bracketVLineX}' y1='{$yMid}' x2='{$stemEndX}' y2='{$yMid}' stroke='{$strokeColor}' stroke-width='{$strokeWidth}'/>";
 
-                // Winner text on line
                 // Winner text on line (Peserta yang Lolos ke Babak Berikutnya)
                 if (! empty($match['winner'])) {
                     $rawWinnerName = $match['winner']['name'] ?? '';
-                    if (mb_strlen($rawWinnerName) > 28) {
-                        $rawWinnerName = mb_substr($rawWinnerName, 0, 26).'..';
-                    }
-                    $wName = htmlspecialchars($rawWinnerName, ENT_QUOTES);
-                    $wFontSize = ($bracketSize > 16) ? '10.5' : '12';
                     $wColor = $isDark ? '#34d399' : '#047857';
-                    $svg[] = "<text x='".($bracketVLineX + 6)."' y='".($yMid - 6)."' font-size='{$wFontSize}' font-weight='800' fill='{$wColor}'>{$wName}</text>";
+
+                    if (str_contains($rawWinnerName, ' / ')) {
+                        // Doubles pair advancing
+                        $wNames = explode(' / ', $rawWinnerName, 2);
+                        $w1 = htmlspecialchars(trim($wNames[0] ?? ''), ENT_QUOTES);
+                        $w2 = htmlspecialchars(trim($wNames[1] ?? ''), ENT_QUOTES);
+                        $wMaxLen = max(mb_strlen($w1), mb_strlen($w2));
+                        $wSize = ($wMaxLen > 24) ? '8.5' : (($bracketSize > 16) ? '9.5' : '10.5');
+
+                        // 2 lines above the horizontal branch stem line
+                        $svg[] = "<text x='".($bracketVLineX + 8)."' y='".($yMid - 13)."' font-size='{$wSize}' font-weight='800' fill='{$wColor}'>{$w1}</text>";
+                        $svg[] = "<text x='".($bracketVLineX + 8)."' y='".($yMid - 3)."' font-size='{$wSize}' font-weight='800' fill='{$wColor}'>{$w2}</text>";
+                    } else {
+                        // Single player advancing
+                        $wName = htmlspecialchars($rawWinnerName, ENT_QUOTES);
+                        $wLen = mb_strlen($rawWinnerName);
+                        $wFontSize = ($wLen > 26) ? '10' : (($bracketSize > 16) ? '11' : '12.5');
+                        $svg[] = "<text x='".($bracketVLineX + 8)."' y='".($yMid - 6)."' font-size='{$wFontSize}' font-weight='800' fill='{$wColor}'>{$wName}</text>";
+                    }
                 }
 
                 // Match score or Court Schedule if available
@@ -1529,7 +1615,7 @@ class TournamentBracketController extends Controller
                     $em = $match['existing_match'];
                     if ($em->team1_set1 > 0 || $em->team2_set1 > 0) {
                         $scoreStr = "{$em->team1_set1}-{$em->team2_set1}";
-                        $svg[] = "<text x='".($bracketVLineX + 6)."' y='".($yMid + 12)."' font-size='8.5' font-mono font-weight='bold' fill='{$subTextColor}'>{$scoreStr}</text>";
+                        $svg[] = "<text x='".($bracketVLineX + 8)."' y='".($yMid + 12)."' font-size='8.5' font-mono font-weight='bold' fill='{$subTextColor}'>{$scoreStr}</text>";
                     } elseif (! empty($em->court_number) || ! empty($em->scheduled_time)) {
                         $schedParts = [];
                         if (! empty($em->match_day)) {
@@ -1546,7 +1632,7 @@ class TournamentBracketController extends Controller
                         }
                         if (! empty($schedParts)) {
                             $schedStr = htmlspecialchars(implode(' • ', $schedParts), ENT_QUOTES);
-                            $svg[] = "<text x='".($bracketVLineX + 6)."' y='".($yMid + 11)."' font-size='7.5' font-mono font-weight='700' fill='{$accentColor}'>{$schedStr}</text>";
+                            $svg[] = "<text x='".($bracketVLineX + 8)."' y='".($yMid + 11)."' font-size='7.5' font-mono font-weight='700' fill='{$accentColor}'>{$schedStr}</text>";
                         }
                     }
                 }
@@ -1574,13 +1660,26 @@ class TournamentBracketController extends Controller
         $champion = $bracketData['champion'] ?? null;
         if ($champion) {
             $rawChampName = $champion['name'] ?? '';
-            if (mb_strlen($rawChampName) > 24) {
-                $rawChampName = mb_substr($rawChampName, 0, 22).'..';
-            }
-            $champName = htmlspecialchars($rawChampName, ENT_QUOTES);
             $svg[] = "<rect x='{$champX2}' y='{$champBoxY}' width='{$champBoxWidth}' height='{$champBoxHeight}' fill='#fef3c7' stroke='{$accentColor}' stroke-width='2' rx='6'/>";
-            $svg[] = "<text x='{$champCenterX}' y='".($champY - 3)."' text-anchor='middle' font-size='9.5' font-weight='800' fill='#b45309'>🏆 JUARA 1</text>";
-            $svg[] = "<text x='{$champCenterX}' y='".($champY + 12)."' text-anchor='middle' font-size='11.5' font-weight='800' fill='#0f172a'>{$champName}</text>";
+
+            if (str_contains($rawChampName, ' / ')) {
+                // Doubles Champion
+                $cNames = explode(' / ', $rawChampName, 2);
+                $c1 = htmlspecialchars(trim($cNames[0] ?? ''), ENT_QUOTES);
+                $c2 = htmlspecialchars(trim($cNames[1] ?? ''), ENT_QUOTES);
+                $maxCLen = max(mb_strlen($c1), mb_strlen($c2));
+                $cSize = ($maxCLen > 24) ? '9.5' : '10.5';
+
+                $svg[] = "<text x='{$champCenterX}' y='".($champY - 10)."' text-anchor='middle' font-size='9.5' font-weight='800' fill='#b45309'>🏆 JUARA 1</text>";
+                $svg[] = "<text x='{$champCenterX}' y='".($champY + 2)."' text-anchor='middle' font-size='{$cSize}' font-weight='800' fill='#0f172a'>{$c1}</text>";
+                $svg[] = "<text x='{$champCenterX}' y='".($champY + 14)."' text-anchor='middle' font-size='{$cSize}' font-weight='800' fill='#0f172a'>{$c2}</text>";
+            } else {
+                // Singles Champion
+                $champName = htmlspecialchars($rawChampName, ENT_QUOTES);
+                $cSize = (mb_strlen($rawChampName) > 22) ? '10.5' : '12';
+                $svg[] = "<text x='{$champCenterX}' y='".($champY - 4)."' text-anchor='middle' font-size='9.5' font-weight='800' fill='#b45309'>🏆 JUARA 1</text>";
+                $svg[] = "<text x='{$champCenterX}' y='".($champY + 11)."' text-anchor='middle' font-size='{$cSize}' font-weight='800' fill='#0f172a'>{$champName}</text>";
+            }
         } else {
             $svg[] = "<rect x='{$champX2}' y='{$champBoxY}' width='{$champBoxWidth}' height='{$champBoxHeight}' fill='{$boxBg}' stroke='{$strokeColor}' stroke-width='1.5' stroke-dasharray='4 3' rx='6'/>";
             $svg[] = "<text x='{$champCenterX}' y='".($champY + 4.5)."' text-anchor='middle' font-size='11' font-weight='800' fill='{$subTextColor}'>Pemenang Final</text>";

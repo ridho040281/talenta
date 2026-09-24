@@ -171,8 +171,7 @@ trait CompetitionPoolTrait
     public function formatParticipantList($regs): array
     {
         return $regs->map(function ($reg) {
-            $firstMember = $reg->members->first();
-            $pureName = $reg->team_name ?: ($firstMember?->full_name ?: 'Peserta #'.$reg->id);
+            $pureName = $reg->pure_name;
 
             return [
                 'id' => $reg->id,

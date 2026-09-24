@@ -280,7 +280,7 @@
 
         <!-- Classic Line Tree (Persis Bagan GOR Standar BWF) -->
         <div x-show="viewMode === 'classic'" class="overflow-x-auto pb-8 pt-2 scrollbar-thin">
-            <div class="p-6 rounded-3xl border shadow-2xl overflow-auto min-w-[950px] lg:min-w-[1150px] flex justify-center transition-colors duration-300"
+            <div class="p-6 rounded-3xl border shadow-2xl overflow-auto min-w-[1050px] lg:min-w-[1300px] flex justify-center transition-colors duration-300"
                  :class="classicTheme === 'white' ? 'bg-white border-slate-200 shadow-slate-950/30' : 'bg-slate-950 border-slate-800 shadow-indigo-950/30'">
                 <div x-show="classicTheme === 'white'" class="w-full flex justify-center">
                     {!! $bracketData['classic_svg_light'] !!}
