@@ -370,6 +370,9 @@
 
         </div>
 
+        <!-- Confetti Canvas for Grand Champion Celebration -->
+        <canvas id="champion-confetti-canvas" class="fixed inset-0 pointer-events-none z-[60] w-full h-full" style="display: none;"></canvas>
+
     </main>
     @endif
 
@@ -600,10 +603,16 @@
 
                 getWinnerInfo() {
                     if (!this.match || this.match.match_status !== 'finished') return null;
-                    const isT1 = (this.match.winner_team == 1);
+                    let isT1 = (this.match.winner_team == 1);
+                    if (!this.match.winner_team || this.match.winner_team == 0) {
+                        const t1s1 = (this.match.team1_set1 >= 21 && (this.match.team1_set1 - this.match.team2_set1 >= 2 || this.match.team1_set1 >= 30)) ? 1 : 0;
+                        const t1s2 = (this.match.team1_set2 >= 21 && (this.match.team1_set2 - this.match.team2_set2 >= 2 || this.match.team1_set2 >= 30)) ? 1 : 0;
+                        const t1s3 = (this.match.team1_set3 >= 21 && (this.match.team1_set3 - this.match.team2_set3 >= 2 || this.match.team1_set3 >= 30)) ? 1 : 0;
+                        isT1 = (t1s1 + t1s2 + t1s3) >= 1;
+                    }
                     const athlete = isT1 
-                        ? (this.match.match_type === 'double' && this.match.team1_player2 ? `${this.match.team1_player1} / ${this.match.team1_player2}` : this.match.team1_player1)
-                        : (this.match.match_type === 'double' && this.match.team2_player2 ? `${this.match.team2_player1} / ${this.match.team2_player2}` : this.match.team2_player1);
+                        ? (this.match.match_type === 'double' && this.match.team1_player2 ? `${this.match.team1_player1} / ${this.match.team1_player2}` : (this.match.team1_player1 || this.match.team1_school))
+                        : (this.match.match_type === 'double' && this.match.team2_player2 ? `${this.match.team2_player1} / ${this.match.team2_player2}` : (this.match.team2_player1 || this.match.team2_school));
                     const school = isT1 ? this.match.team1_school : this.match.team2_school;
                     return { athlete, school, isTeam1: isT1 };
                 },
