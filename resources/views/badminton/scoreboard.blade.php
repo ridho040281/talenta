@@ -65,9 +65,6 @@
 </head>
 <body class="h-screen w-screen overflow-hidden text-slate-100 font-sans antialiased flex flex-col justify-between select-none relative" x-data="liveScoreboardApp()">
 
-    <!-- CHAMPION CELEBRATION CONFETTI CANVAS -->
-    <canvas id="champion-confetti-canvas" class="fixed inset-0 pointer-events-none z-40 w-full h-full" style="display: none;"></canvas>
-
     <!-- TOP CONTROL BAR (COMPACT HEADER) -->
     <header class="h-10 sm:h-12 shrink-0 bg-slate-950/80 border-b border-white/[0.08] px-4 flex items-center justify-between text-xs backdrop-blur-xl z-20">
         <div class="flex items-center gap-3">
@@ -315,7 +312,7 @@
 
             <!-- GRAND CHAMPION CELEBRATION OVERLAY ON TV SCOREBOARD -->
             <template x-if="match && match.match_status === 'finished' && showWinnerModal">
-                <div class="absolute inset-0 bg-[#060A14]/94 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-center animate-fade-in border-4 border-amber-400/90 rounded-2xl sm:rounded-3xl shadow-[0_0_80px_rgba(251,191,36,0.4)]">
+                <div class="absolute inset-0 bg-[#060A14]/96 z-50 flex flex-col items-center justify-center p-6 text-center animate-fade-in border-4 border-amber-400/90 rounded-2xl sm:rounded-3xl shadow-[0_0_80px_rgba(251,191,36,0.4)]">
                     <!-- Grand Trophy Icon & Champion Title -->
                     <div class="inline-flex items-center gap-2 sm:gap-3 px-6 py-2 rounded-full bg-gradient-to-r from-amber-500/30 via-yellow-400/40 to-amber-500/30 text-amber-300 border-2 border-amber-400 text-sm sm:text-2xl font-black uppercase tracking-widest mb-3 sm:mb-4 animate-pulse shadow-lg">
                         <span class="text-xl sm:text-3xl">🏆</span>
@@ -369,10 +366,6 @@
             </div>
 
         </div>
-
-        <!-- Confetti Canvas for Grand Champion Celebration -->
-        <canvas id="champion-confetti-canvas" class="fixed inset-0 pointer-events-none z-[60] w-full h-full" style="display: none;"></canvas>
-
     </main>
     @endif
 
@@ -385,14 +378,24 @@
                 this.particles = [];
                 this.animationId = null;
                 this.isRunning = false;
+                this.width = window.innerWidth;
+                this.height = window.innerHeight;
                 this.resize = this.resize.bind(this);
                 window.addEventListener('resize', this.resize);
             }
 
             resize() {
                 if (!this.canvas) return;
-                this.canvas.width = window.innerWidth;
-                this.canvas.height = window.innerHeight;
+                const dpr = window.devicePixelRatio || 1;
+                this.width = window.innerWidth;
+                this.height = window.innerHeight;
+                this.canvas.width = Math.round(this.width * dpr);
+                this.canvas.height = Math.round(this.height * dpr);
+                this.canvas.style.width = this.width + 'px';
+                this.canvas.style.height = this.height + 'px';
+                if (this.ctx) {
+                    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                }
             }
 
             start() {
@@ -403,11 +406,11 @@
                 this.particles = [];
                 const colors = ['#f59e0b', '#10b981', '#06b6d4', '#ec4899', '#8b5cf6', '#eab308', '#ffffff', '#3b82f6'];
 
-                for (let i = 0; i < 180; i++) {
+                for (let i = 0; i < 220; i++) {
                     this.particles.push({
-                        x: Math.random() * this.canvas.width,
-                        y: Math.random() * -this.canvas.height,
-                        size: Math.random() * 9 + 4,
+                        x: Math.random() * this.width,
+                        y: Math.random() * -this.height,
+                        size: Math.random() * 10 + 6,
                         color: colors[Math.floor(Math.random() * colors.length)],
                         speedY: Math.random() * 3.5 + 2,
                         speedX: Math.random() * 2.5 - 1.25,
@@ -419,7 +422,7 @@
 
                 const render = () => {
                     if (!this.isRunning) return;
-                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    this.ctx.clearRect(0, 0, this.width, this.height);
 
                     this.particles.forEach(p => {
                         p.y += p.speedY;
@@ -427,9 +430,9 @@
                         p.x += Math.sin(p.wobble) * 1.5 + p.speedX;
                         p.rotation += p.rotationSpeed;
 
-                        if (p.y > this.canvas.height + 20) {
+                        if (p.y > this.height + 20) {
                             p.y = -20;
-                            p.x = Math.random() * this.canvas.width;
+                            p.x = Math.random() * this.width;
                         }
 
                         this.ctx.save();
@@ -453,7 +456,7 @@
                     this.animationId = null;
                 }
                 if (this.canvas && this.ctx) {
-                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    this.ctx.clearRect(0, 0, this.width, this.height);
                     this.canvas.style.display = 'none';
                 }
             }
@@ -471,7 +474,11 @@
                 confettiEngine: null,
 
                 init() {
-                    lucide.createIcons();
+                    try {
+                        if (window.lucide) {
+                            lucide.createIcons();
+                        }
+                    } catch (_) {}
                     this.confettiEngine = new ChampionConfetti('champion-confetti-canvas');
                     if (this.match) {
                         this.syncIntervalTimer(this.match);
