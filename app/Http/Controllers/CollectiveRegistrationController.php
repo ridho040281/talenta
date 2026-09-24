@@ -264,6 +264,7 @@ class CollectiveRegistrationController extends Controller
         $competitionCounts = [];
         $registeredNisnsInBatch = []; // Keyed by [competition_code][nisn] => row_number
         $teamsInBatch = []; // Keyed by [team_group_key] => array of row indices in $parsedRows
+        $lastTeamContext = null;
 
         $invalidPatterns = [
             '0000000000', '1111111111', '2222222222', '3333333333', '4444444444',
@@ -414,6 +415,46 @@ class CollectiveRegistrationController extends Controller
             $isCollective = ($compObj && $compObj->isCollective()) || $isRobotik || $isPramuka;
             $isTeamComp = $isCollective || $isGandaBlt;
 
+            $teamMaxMembers = 10;
+            if ($isRobotik) {
+                $teamMaxMembers = 3;
+            } elseif ($isPramuka) {
+                $teamMaxMembers = 6;
+            } elseif ($isGandaBlt) {
+                $teamMaxMembers = 2;
+            } elseif ($compObj && $compObj->max_members > 0) {
+                $teamMaxMembers = $compObj->max_members;
+            }
+
+            $cleanCat = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $subCategory ?? $matchType ?? 'REGULAR'));
+
+            // Auto-inherit nama tim untuk baris berturutan jika dikosongkan pembina (kebiasaan umum di Excel)
+            if ($isTeamComp) {
+                if (! empty($teamName)) {
+                    $lastTeamContext = [
+                        'code' => $code,
+                        'cat' => $cleanCat,
+                        'school' => strtolower(trim($institution)),
+                        'team_name' => $teamName,
+                        'count' => 1,
+                        'max' => $teamMaxMembers,
+                    ];
+                } elseif (
+                    $lastTeamContext
+                    && $lastTeamContext['code'] === $code
+                    && $lastTeamContext['cat'] === $cleanCat
+                    && $lastTeamContext['school'] === strtolower(trim($institution))
+                    && $lastTeamContext['count'] < $lastTeamContext['max']
+                ) {
+                    $teamName = $lastTeamContext['team_name'];
+                    $lastTeamContext['count']++;
+                } else {
+                    $lastTeamContext = null;
+                }
+            } else {
+                $lastTeamContext = null;
+            }
+
             $teamGroupKey = null;
             $isFirstMemberOfTeam = false;
             if ($isTeamComp) {
@@ -422,7 +463,6 @@ class CollectiveRegistrationController extends Controller
                     $errors[] = "Nama Tim / Regu wajib diisi pada kolom I untuk cabang {$compDisplayName} agar anggota dalam satu tim dapat digabungkan.";
                 } else {
                     $cleanTeam = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $teamName));
-                    $cleanCat = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $subCategory ?? $matchType ?? 'REGULAR'));
                     $teamGroupKey = $code.'_'.$cleanCat.'_'.$cleanTeam;
 
                     if (! isset($teamsInBatch[$teamGroupKey])) {
