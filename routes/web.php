@@ -126,6 +126,7 @@ Route::middleware(['auth', 'role:pic_lomba,superadmin,panitia,admin'])->prefix('
     Route::post('/peserta/{registration_id}/update', [PicController::class, 'updateParticipantData'])->name('update.participant');
     Route::post('/peserta/{registration_id}/batalkan-verifikasi', [PicController::class, 'unverifyParticipant'])->name('unverify.participant');
     Route::post('/peserta/{registration_id}/hapus', [PicController::class, 'deleteParticipant'])->name('delete.participant');
+    Route::get('/peserta/{id}/download-photos', [PicController::class, 'downloadPhotos'])->name('participants.download_photos');
     Route::get('/undi-peserta', [PicController::class, 'drawIndex'])->name('undian');
     Route::get('/lomba/{competition_id}/undi', [PicController::class, 'hackerDraw'])->name('hacker.draw');
     Route::get('/lomba/{competition_id}/spin-wheel', [PicController::class, 'spinWheel'])->name('spin.wheel');
@@ -227,6 +228,7 @@ Route::middleware(['auth', 'role:superadmin,panitia'])->prefix('admin')->name('a
     // Operational & Competition Routes (Data Peserta, Juri, Wasit & Undian)
     Route::get('/verifikasi', [PicController::class, 'dashboard'])->name('verifications');
     Route::get('/peserta', [PicController::class, 'dashboard'])->name('participants.index');
+    Route::get('/peserta/{id}/download-photos', [PicController::class, 'downloadPhotos'])->name('participants.download_photos');
     Route::get('/peserta-multi-lomba', [AdminController::class, 'multiParticipants'])->name('participants.multi');
     Route::get('/juri-wasit', [AdminController::class, 'juriWasitUndian'])->name('juri.wasit');
     Route::get('/undi-peserta', [PicController::class, 'drawIndex'])->name('undian');

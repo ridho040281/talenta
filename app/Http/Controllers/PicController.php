@@ -861,6 +861,51 @@ class PicController extends Controller
         return response()->json($reg);
     }
 
+    /**
+     * Download photo(s) of participant / team members
+     * Single photo for individual, ZIP for teams with multiple members
+     */
+    public function downloadPhotos($id)
+    {
+        $reg = Registration::with(['competition', 'members'])->findOrFail($id);
+
+        $membersWithPhotos = $reg->members->filter(function ($m) {
+            return ! empty($m->photo) && Storage::disk('public')->exists($m->photo);
+        });
+
+        if ($membersWithPhotos->isEmpty()) {
+            return back()->with('error', 'Belum ada file foto yang terunggah untuk pendaftaran ini.');
+        }
+
+        // Single participant / 1 member with photo -> download langsung
+        if ($membersWithPhotos->count() === 1) {
+            $m = $membersWithPhotos->first();
+            $path = Storage::disk('public')->path($m->photo);
+            $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION)) ?: 'jpg';
+            $safeName = Str::slug(($m->nisn ?: 'peserta').'_'.$m->full_name).'.'.$ext;
+
+            return response()->download($path, $safeName);
+        }
+
+        // Multiple members (Regu / Tim) -> Download ZIP
+        $teamTitle = $reg->team_name ?: ($reg->display_name ?: $reg->registration_code);
+        $zipFileName = 'Foto_Tim_'.Str::slug($teamTitle).'_'.$reg->registration_code.'.zip';
+        $tempZipPath = tempnam(sys_get_temp_dir(), 'talenta_team_photos_');
+
+        $zip = new \ZipArchive;
+        if ($zip->open($tempZipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
+            foreach ($membersWithPhotos as $idx => $m) {
+                $filePath = Storage::disk('public')->path($m->photo);
+                $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION)) ?: 'jpg';
+                $entryName = ($m->nisn ?: ('anggota_'.($idx + 1))).'_'.Str::slug($m->full_name).'.'.$ext;
+                $zip->addFile($filePath, $entryName);
+            }
+            $zip->close();
+        }
+
+        return response()->download($tempZipPath, $zipFileName)->deleteFileAfterSend(true);
+    }
+
     public function printParticipantsPdf(Request $request)
     {
         $user = Auth::user();

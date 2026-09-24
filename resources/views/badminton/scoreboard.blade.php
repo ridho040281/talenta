@@ -316,13 +316,17 @@
                     if (data && data.match_status === 'interval') {
                         let sec = 0;
                         if (data.interval_until) {
-                            const diff = Math.ceil((new Date(data.interval_until).getTime() - Date.now()) / 1000);
+                            const diff = Math.round((new Date(data.interval_until).getTime() - Date.now()) / 1000);
                             sec = Math.max(0, diff);
                         } else if (data.interval_remaining) {
                             sec = Math.max(0, data.interval_remaining);
                         } else {
                             sec = 60;
                         }
+
+                        // Prevent clock skew between server and client from showing 61s instead of 60s
+                        if (sec === 61 || sec === 62) sec = 60;
+                        if (sec === 121 || sec === 122) sec = 120;
 
                         // Resync if timer not running or drifted by more than 1s
                         if (!this.intervalTimerId || Math.abs(this.intervalRemaining - sec) > 1) {

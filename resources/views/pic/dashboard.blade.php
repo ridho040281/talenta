@@ -1042,13 +1042,18 @@
                                 <template x-if="item.is_ganda">
                                     <div>
                                         <div class="font-bold text-white text-xs sm:text-sm" x-text="item.team_name || item.display_name"></div>
-                                        <div class="text-[11px] text-slate-400 space-y-0.5 pt-0.5">
+                                        <div class="text-[11px] text-slate-400 space-y-1 pt-0.5">
                                             <template x-for="(m, mIdx) in (item.members || [])" :key="mIdx">
                                                 <div class="flex items-center gap-1.5">
                                                     <span class="text-[10px] px-1.5 py-0.2 rounded font-bold"
                                                         :class="m.gender === 'L' ? 'bg-[#4E6EFF]/15 text-[#84D0FF] border border-[#4E6EFF]/30' : 'bg-[#FF58D5]/15 text-[#FFA0E7] border border-[#FF58D5]/30'"
                                                         x-text="m.gender === 'L' ? 'PA' : 'PI'">
                                                     </span>
+                                                    <template x-if="m.photo">
+                                                        <a :href="m.photo" target="_blank" class="shrink-0" :title="'Lihat foto ' + m.full_name">
+                                                            <img :src="m.photo" :alt="m.full_name" class="w-4 h-4 rounded-full object-cover border border-white/20 inline-block shadow-xs hover:scale-125 transition">
+                                                        </a>
+                                                    </template>
                                                     <span x-text="m.full_name"></span>
                                                 </div>
                                             </template>
@@ -1056,10 +1061,17 @@
                                     </div>
                                 </template>
                                 <template x-if="!item.is_ganda">
-                                    <div>
-                                        <div class="font-bold text-white text-xs sm:text-sm" x-text="item.members && item.members[0] ? item.members[0].full_name : item.display_name"></div>
-                                        <div class="text-[11px] text-slate-400 pt-0.5">
-                                            <span x-text="'NISN: ' + (item.first_member_nisn || '-')"></span>
+                                    <div class="flex items-center gap-2.5">
+                                        <template x-if="item.members && item.members[0] && item.members[0].photo">
+                                            <a :href="item.members[0].photo" target="_blank" class="shrink-0 group relative" :title="'Lihat foto ' + item.display_name">
+                                                <img :src="item.members[0].photo" :alt="item.display_name" class="w-8 h-8 rounded-xl object-cover border border-white/20 shadow-sm group-hover:scale-105 transition">
+                                            </a>
+                                        </template>
+                                        <div class="min-w-0">
+                                            <div class="font-bold text-white text-xs sm:text-sm truncate" x-text="item.members && item.members[0] ? item.members[0].full_name : item.display_name"></div>
+                                            <div class="text-[11px] text-slate-400 pt-0.5">
+                                                <span x-text="'NISN: ' + (item.first_member_nisn || '-')"></span>
+                                            </div>
                                         </div>
                                     </div>
                                 </template>
@@ -1224,6 +1236,26 @@
                                     <button type="button" @click="openVerifyModal(item.id)" class="w-8 h-8 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 flex items-center justify-center transition cursor-pointer" title="Tinjau Seluruh Data & Verifikasi">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                     </button>
+
+                                    <!-- 1.5. Icon Unduh Foto: Download Foto Peserta / Tim -->
+                                    <template x-if="item.has_photo">
+                                        <a :href="'{{ url('pic/peserta') }}/' + item.id + '/download-photos'"
+                                           class="w-8 h-8 rounded-xl bg-violet-500/15 hover:bg-violet-500/25 text-violet-400 border border-violet-500/30 flex items-center justify-center transition cursor-pointer"
+                                           :title="item.is_ganda ? ('Unduh Foto Semua Anggota Tim (' + (item.photo_count || '') + ' Foto)') : 'Unduh Foto Peserta'">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                            </svg>
+                                        </a>
+                                    </template>
+                                    <template x-if="!item.has_photo">
+                                        <button type="button" disabled
+                                                class="w-8 h-8 rounded-xl bg-white/[0.03] text-slate-600 border border-white/[0.05] flex items-center justify-center cursor-not-allowed opacity-40"
+                                                title="Foto belum diunggah untuk peserta/tim ini">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                            </svg>
+                                        </button>
+                                    </template>
 
                                     <!-- 2. Icon Edit: Edit Data Peserta -->
                                     <button type="button" @click="openEditModal(item.id)" class="w-8 h-8 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] flex items-center justify-center transition cursor-pointer" title="Edit Data Peserta">
@@ -1507,37 +1539,58 @@
                                                 </span>
                                             </div>
 
-                                            <!-- Asal Sekolah -->
-                                            <div>
-                                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Asal Sekolah :</span>
-                                                <div class="flex items-center gap-1.5 flex-wrap">
-                                                    <div class="font-bold text-slate-200" x-text="m.school_name || (selectedReg ? (selectedReg.display_school || selectedReg.institution_name) : '-')"></div>
-                                                    <template x-if="selectedReg && selectedReg.has_teammates">
-                                                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 ring-1 ring-indigo-500/20 shrink-0 inline-flex items-center gap-1 shadow-xs cursor-help"
-                                                              :title="selectedReg.teammate_details">
-                                                            <span>🛡️</span>
-                                                            <span x-text="'Satu Delegasi (' + selectedReg.same_pool_count + ')'"></span>
-                                                        </span>
+                                            <div class="flex items-start gap-3 pt-1">
+                                                <!-- Foto Atlet / Siswa (Thumbnail) -->
+                                                <div class="shrink-0">
+                                                    <template x-if="m.photo">
+                                                        <a :href="m.photo.startsWith('http') ? m.photo : ('{{ asset('storage') }}/' + m.photo.replace(/^\/?storage\//, ''))" target="_blank" class="block group relative" title="Klik untuk membuka foto ukuran asli">
+                                                            <img :src="m.photo.startsWith('http') ? m.photo : ('{{ asset('storage') }}/' + m.photo.replace(/^\/?storage\//, ''))" :alt="m.full_name" class="w-16 h-20 sm:w-20 sm:h-24 object-cover rounded-xl border border-white/[0.15] shadow-md group-hover:opacity-90 group-hover:scale-[1.02] transition duration-200">
+                                                            <span class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-xl transition text-[10px] text-white font-bold">🔍 Lihat</span>
+                                                        </a>
+                                                    </template>
+                                                    <template x-if="!m.photo">
+                                                        <div class="w-16 h-20 sm:w-20 sm:h-24 rounded-xl bg-[#0C111D] border border-dashed border-white/[0.1] flex flex-col items-center justify-center text-slate-500 text-[9px] gap-1 text-center p-1">
+                                                            <svg class="w-5 h-5 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                                            <span>Tanpa Foto</span>
+                                                        </div>
                                                     </template>
                                                 </div>
-                                            </div>
 
-                                            <!-- NISN -->
-                                            <div class="flex items-center justify-between py-1 border-t border-white/[0.04]">
-                                                <span class="text-[11px] font-bold text-slate-400">NISN :</span>
-                                                <span class="font-mono font-bold text-[#84D0FF]" x-text="m.nisn || '-'"></span>
-                                            </div>
+                                                <!-- Detail Info Atlet (Asal Sekolah, NISN, TTL, NO HP) -->
+                                                <div class="flex-1 min-w-0 space-y-1.5">
+                                                    <!-- Asal Sekolah -->
+                                                    <div>
+                                                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Asal Sekolah :</span>
+                                                        <div class="flex items-center gap-1.5 flex-wrap">
+                                                            <div class="font-bold text-slate-200 text-xs" x-text="m.school_name || (selectedReg ? (selectedReg.display_school || selectedReg.institution_name) : '-')"></div>
+                                                            <template x-if="selectedReg && selectedReg.has_teammates">
+                                                                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 ring-1 ring-indigo-500/20 shrink-0 inline-flex items-center gap-1 shadow-xs cursor-help"
+                                                                      :title="selectedReg.teammate_details">
+                                                                    <span>🛡️</span>
+                                                                    <span x-text="'Satu Delegasi (' + selectedReg.same_pool_count + ')'"></span>
+                                                                </span>
+                                                            </template>
+                                                        </div>
+                                                    </div>
 
-                                            <!-- TTL -->
-                                            <div class="flex items-start justify-between py-1 border-t border-white/[0.04] gap-2">
-                                                <span class="text-[11px] font-bold text-slate-400 shrink-0">TTL :</span>
-                                                <span class="font-medium text-slate-200 text-right" x-text="formatTTL(m.birth_place, m.formatted_birth_date || m.birth_date)"></span>
-                                            </div>
+                                                    <!-- NISN -->
+                                                    <div class="flex items-center justify-between py-0.5 border-t border-white/[0.04]">
+                                                        <span class="text-[11px] font-bold text-slate-400">NISN :</span>
+                                                        <span class="font-mono font-bold text-[#84D0FF]" x-text="m.nisn || '-'"></span>
+                                                    </div>
 
-                                            <!-- NO HP -->
-                                            <div class="flex items-center justify-between pt-1 border-t border-white/[0.04]">
-                                                <span class="text-[11px] font-bold text-slate-400">NO HP :</span>
-                                                <span class="font-medium text-slate-300" x-text="m.phone || '-'"></span>
+                                                    <!-- TTL -->
+                                                    <div class="flex items-start justify-between py-0.5 border-t border-white/[0.04] gap-2">
+                                                        <span class="text-[11px] font-bold text-slate-400 shrink-0">TTL :</span>
+                                                        <span class="font-medium text-slate-200 text-right" x-text="formatTTL(m.birth_place, m.formatted_birth_date || m.birth_date)"></span>
+                                                    </div>
+
+                                                    <!-- NO HP -->
+                                                    <div class="flex items-center justify-between pt-0.5 border-t border-white/[0.04]">
+                                                        <span class="text-[11px] font-bold text-slate-400">NO HP :</span>
+                                                        <span class="font-medium text-slate-300" x-text="m.phone || '-'"></span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </template>
