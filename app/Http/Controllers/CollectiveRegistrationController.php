@@ -711,6 +711,11 @@ class CollectiveRegistrationController extends Controller
 
         $teamCount = count(array_filter($parsedRows, fn ($r) => ! empty($r['is_valid']) && ! empty($r['is_team']) && ! empty($r['is_team_primary'])));
 
+        // Deteksi apakah ada peserta Pramuka agar form upload ZIP foto ditampilkan
+        $hasPramuka = collect($parsedRows)->contains(
+            fn ($r) => ! empty($r['is_valid']) && ($r['competition_code'] === 'PRM' || stripos($r['competition_name'] ?? '', 'pramuka') !== false)
+        );
+
         $bankInfo = [
             'bank_name' => AppSetting::get('bank_name', 'Bank Syariah Indonesia (BSI)'),
             'bank_account_number' => AppSetting::get('bank_account_number', '7199242042'),
@@ -728,7 +733,8 @@ class CollectiveRegistrationController extends Controller
             'bonusSummaryList',
             'uniqueCode',
             'finalAmount',
-            'bankInfo'
+            'bankInfo',
+            'hasPramuka'
         ));
     }
 
@@ -802,10 +808,19 @@ class CollectiveRegistrationController extends Controller
             return redirect()->route('peserta.collective.wizard');
         }
 
+        // Decode payload dulu untuk cek apakah ada Pramuka sebelum validasi
+        $payloadData = json_decode($request->input('payload', '[]'), true) ?? [];
+        $hasPramukaInPayload = collect($payloadData)->contains(
+            fn ($r) => ! empty($r['is_valid']) && ($r['competition_code'] === 'PRM' || stripos($r['competition_name'] ?? '', 'pramuka') !== false)
+        );
+
         $request->validate([
             'payload' => ['required', 'string'],
             'payment_proof' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
             'document_file' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'photo_zip' => $hasPramukaInPayload
+                ? ['required', 'file', 'mimes:zip,application/zip,application/x-zip-compressed', 'max:51200']
+                : ['nullable', 'file', 'mimes:zip,application/zip,application/x-zip-compressed', 'max:51200'],
         ], [
             'payment_proof.required' => 'Bukti pembayaran / slip transfer wajib diunggah dalam satu kali pengiriman.',
             'payment_proof.mimes' => 'Format file bukti transfer harus berupa JPG, PNG, atau PDF.',
@@ -813,6 +828,9 @@ class CollectiveRegistrationController extends Controller
             'document_file.required' => 'Surat keterangan / rekomendasi kolektif wajib diunggah dalam satu kali pengiriman.',
             'document_file.mimes' => 'Format file surat keterangan / rekomendasi kolektif harus berupa JPG, PNG, atau PDF.',
             'document_file.max' => 'Ukuran file surat keterangan / rekomendasi kolektif maksimal 5MB.',
+            'photo_zip.required' => 'File ZIP foto peserta Pramuka wajib diunggah. Beri nama file sesuai NISN peserta (contoh: 3153448853.jpg).',
+            'photo_zip.mimes' => 'Format file foto harus berupa ZIP (.zip).',
+            'photo_zip.max' => 'Ukuran file ZIP maksimal 50MB.',
         ]);
 
         $data = json_decode($request->payload, true);
@@ -900,6 +918,13 @@ class CollectiveRegistrationController extends Controller
         $documentFilePath = $request->file('document_file')->store('documents', 'public');
         AdminSettingsController::ensurePublicStorageSync($documentFilePath);
 
+        // Store Pramuka photo ZIP (required jika ada Pramuka, opsional jika tidak)
+        $photoZipPath = null;
+        if ($request->hasFile('photo_zip') && $request->file('photo_zip')->isValid()) {
+            $photoZipPath = $request->file('photo_zip')->store('pramuka-photos', 'public');
+            AdminSettingsController::ensurePublicStorageSync($photoZipPath);
+        }
+
         DB::beginTransaction();
         try {
             // 1. Create Master Invoice with attached payment proof
@@ -912,7 +937,7 @@ class CollectiveRegistrationController extends Controller
                 'final_amount' => $finalAmount,
                 'payment_proof' => $paymentProofPath,
                 'status' => 'pending',
-                'notes' => $notes,
+                'notes' => $notes.($photoZipPath ? ' • ZIP Foto Pramuka: '.$photoZipPath : ''),
             ]);
 
             // 2. Create Registrations & Registration Members

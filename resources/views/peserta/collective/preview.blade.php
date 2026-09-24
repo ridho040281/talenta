@@ -203,6 +203,38 @@
                 @csrf
                 <input type="hidden" name="payload" value="{{ json_encode($parsedRows) }}">
 
+                {{-- Upload ZIP Foto Pramuka (hanya muncul jika ada peserta Pramuka) --}}
+                @if(!empty($hasPramuka))
+                <div class="p-6 rounded-3xl border-2 border-dashed border-violet-500/50 hover:border-violet-400 bg-violet-950/20 transition space-y-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-violet-500/20 text-violet-400 flex items-center justify-center shadow-sm border border-violet-500/30 shrink-0">
+                            <i data-lucide="image" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <label for="photo_zip" class="block text-sm font-black text-white">
+                                Unggah ZIP Foto Peserta Pramuka <span class="text-rose-400">* (Wajib untuk Pramuka)</span>
+                            </label>
+                            <p class="text-xs text-slate-400">File .zip berisi foto peserta, dinamai sesuai NISN masing-masing (contoh: <span class="font-mono text-violet-300">3153448853.jpg</span>). Maks 50 MB.</p>
+                        </div>
+                    </div>
+
+                    <input type="file" id="photo_zip" name="photo_zip" required accept=".zip,application/zip,application/x-zip-compressed" class="block w-full text-xs text-slate-300 file:mr-4 file:py-3 file:px-5 file:rounded-2xl file:border-0 file:text-xs file:font-black file:bg-violet-600 file:text-white hover:file:bg-violet-500 cursor-pointer bg-slate-900 p-2 rounded-2xl border border-slate-700">
+                    @error('photo_zip')
+                        <p class="text-xs text-rose-400 font-bold mt-1">{{ $message }}</p>
+                    @enderror
+
+                    <div class="p-3.5 rounded-2xl bg-violet-500/10 border border-violet-500/30 text-xs text-violet-300 flex items-start gap-2.5">
+                        <i data-lucide="info" class="w-4 h-4 text-violet-400 shrink-0 mt-0.5"></i>
+                        <span>
+                            <strong>Penamaan File dalam ZIP:</strong> Beri nama setiap foto sesuai NISN peserta. Contoh:
+                            <span class="font-mono text-violet-200">3134232958.jpg</span>,
+                            <span class="font-mono text-violet-200">3175693342.jpg</span>, dst.
+                            Format foto yang diterima: JPG, PNG, JPEG.
+                        </span>
+                    </div>
+                </div>
+                @endif
+
                 <!-- Bank Info & Amount Reminder Box (Dark) -->
                 <div class="p-6 rounded-3xl bg-slate-950 border border-slate-800 text-white space-y-4 shadow-xl">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
