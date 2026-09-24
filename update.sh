@@ -8,7 +8,8 @@
 # ==============================================================================
 
 echo "📥 Menarik pembaruan terbaru dari Git..."
-git pull origin main
+git fetch origin
+git reset --hard origin/main
 
 echo "🗄️ Menjalankan migrasi database..."
 php artisan migrate --force

@@ -1249,7 +1249,7 @@
                                     </template>
                                     <template x-if="!item.has_photo">
                                         <button type="button" disabled
-                                                class="w-8 h-8 rounded-xl bg-white/[0.03] text-slate-600 border border-white/[0.05] flex items-center justify-center cursor-not-allowed opacity-40"
+                                                class="w-8 h-8 rounded-xl bg-white/[0.04] text-slate-500 border border-white/[0.08] flex items-center justify-center cursor-not-allowed"
                                                 title="Foto belum diunggah untuk peserta/tim ini">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
