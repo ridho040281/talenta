@@ -91,8 +91,8 @@ Route::middleware(['auth', 'role:peserta,superadmin'])->prefix('peserta')->name(
     // Collective Registration (Excel) & Invoices
     Route::get('/collective', [CollectiveRegistrationController::class, 'wizard'])->name('collective.wizard');
     Route::get('/collective/template', [CollectiveRegistrationController::class, 'downloadTemplate'])->name('collective.template');
-    Route::post('/collective/parse', [CollectiveRegistrationController::class, 'parseExcel'])->name('collective.parse');
-    Route::post('/collective/confirm', [CollectiveRegistrationController::class, 'confirmBatch'])->name('collective.confirm');
+    Route::match(['get', 'post'], '/collective/parse', [CollectiveRegistrationController::class, 'parseExcel'])->name('collective.parse');
+    Route::match(['get', 'post'], '/collective/confirm', [CollectiveRegistrationController::class, 'confirmBatch'])->name('collective.confirm');
     Route::get('/invoices/{id}', [CollectiveRegistrationController::class, 'showInvoice'])->name('invoices.show');
     Route::post('/invoices/{id}/upload-proof', [CollectiveRegistrationController::class, 'uploadPaymentProof'])->name('invoices.upload');
     Route::post('/invoices/{id}/upload-document', [CollectiveRegistrationController::class, 'uploadCollectiveDocument'])->name('invoices.upload_document');

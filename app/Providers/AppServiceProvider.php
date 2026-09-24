@@ -28,8 +28,8 @@ class AppServiceProvider extends ServiceProvider
         date_default_timezone_set($timezone);
         Carbon::setLocale(config('app.locale', 'id'));
 
-        // Force HTTPS when running on HTTPS / behind proxy (prevents Mixed Content errors)
-        if (request()->isSecure() || request()->header('x-forwarded-proto') === 'https' || str_starts_with(config('app.url'), 'https://')) {
+        // Force HTTPS in production / non-local environments (prevents 301 redirects dropping POST payload)
+        if (! $this->app->environment('local') || request()->isSecure() || request()->header('x-forwarded-proto') === 'https' || str_starts_with(config('app.url'), 'https://')) {
             URL::forceScheme('https');
         }
 

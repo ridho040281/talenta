@@ -226,6 +226,11 @@ class CollectiveRegistrationController extends Controller
      */
     public function parseExcel(Request $request)
     {
+        if ($request->isMethod('get')) {
+            return redirect()->route('peserta.collective.wizard')
+                ->with('info', 'Sesi pratinjau telah berakhir atau halaman dimuat ulang. Silakan pilih dan unggah kembali file Excel Anda.');
+        }
+
         $request->validate([
             'excel_file' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:10240'],
         ], [
@@ -286,6 +291,8 @@ class CollectiveRegistrationController extends Controller
                     $code = 'TMJ';
                 } elseif (stripos($rawComp, 'Robotik') !== false || stripos($rawComp, 'ROB') !== false) {
                     $code = 'ROB';
+                } elseif (stripos($rawComp, 'Pramuka') !== false || stripos($rawComp, 'PRM') !== false) {
+                    $code = 'PRM';
                 } elseif (preg_match('/^([A-Za-z0-9]+)\s*[-:]/i', $rawComp, $matches) && isset($competitions[strtoupper(trim($matches[1]))])) {
                     $code = strtoupper(trim($matches[1]));
                 } elseif (isset($competitions[strtoupper($rawComp)])) {
@@ -661,6 +668,10 @@ class CollectiveRegistrationController extends Controller
      */
     public function confirmBatch(Request $request)
     {
+        if ($request->isMethod('get')) {
+            return redirect()->route('peserta.collective.wizard');
+        }
+
         $request->validate([
             'payload' => ['required', 'string'],
             'payment_proof' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
