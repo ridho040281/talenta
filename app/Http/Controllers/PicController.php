@@ -867,43 +867,88 @@ class PicController extends Controller
      */
     public function downloadPhotos($id)
     {
-        $reg = Registration::with(['competition', 'members'])->findOrFail($id);
+        try {
+            $reg = Registration::with(['competition', 'members'])->findOrFail($id);
 
-        $membersWithPhotos = $reg->members->filter(function ($m) {
-            return ! empty($m->photo) && Storage::disk('public')->exists($m->photo);
-        });
+            // Cari foto fisik yang benar-benar ada di storage
+            $validMembers = [];
+            foreach ($reg->members as $m) {
+                if (empty($m->photo)) {
+                    continue;
+                }
 
-        if ($membersWithPhotos->isEmpty()) {
-            return back()->with('error', 'Belum ada file foto yang terunggah untuk pendaftaran ini.');
-        }
+                // Normalisasi path: bersihkan awalan 'storage/' jika ada
+                $cleanPath = ltrim(preg_replace('#^/?storage/#', '', $m->photo), '/');
 
-        // Single participant / 1 member with photo -> download langsung
-        if ($membersWithPhotos->count() === 1) {
-            $m = $membersWithPhotos->first();
-            $path = Storage::disk('public')->path($m->photo);
-            $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION)) ?: 'jpg';
-            $safeName = Str::slug(($m->nisn ?: 'peserta').'_'.$m->full_name).'.'.$ext;
-
-            return response()->download($path, $safeName);
-        }
-
-        // Multiple members (Regu / Tim) -> Download ZIP
-        $teamTitle = $reg->team_name ?: ($reg->display_name ?: $reg->registration_code);
-        $zipFileName = 'Foto_Tim_'.Str::slug($teamTitle).'_'.$reg->registration_code.'.zip';
-        $tempZipPath = tempnam(sys_get_temp_dir(), 'talenta_team_photos_');
-
-        $zip = new \ZipArchive;
-        if ($zip->open($tempZipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
-            foreach ($membersWithPhotos as $idx => $m) {
-                $filePath = Storage::disk('public')->path($m->photo);
-                $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION)) ?: 'jpg';
-                $entryName = ($m->nisn ?: ('anggota_'.($idx + 1))).'_'.Str::slug($m->full_name).'.'.$ext;
-                $zip->addFile($filePath, $entryName);
+                if (Storage::disk('public')->exists($cleanPath)) {
+                    $validMembers[] = [
+                        'member' => $m,
+                        'full_path' => Storage::disk('public')->path($cleanPath),
+                    ];
+                } elseif (file_exists(public_path($m->photo))) {
+                    $validMembers[] = [
+                        'member' => $m,
+                        'full_path' => public_path($m->photo),
+                    ];
+                }
             }
-            $zip->close();
-        }
 
-        return response()->download($tempZipPath, $zipFileName)->deleteFileAfterSend(true);
+            if (empty($validMembers)) {
+                return redirect()->route('pic.dashboard')->with('error', 'Belum ada file foto yang terunggah untuk pendaftaran ini (ID #'.$id.').');
+            }
+
+            // Jika hanya 1 siswa dengan foto -> download langsung file foto tersebut
+            if (count($validMembers) === 1) {
+                $item = $validMembers[0];
+                $m = $item['member'];
+                $fullPath = $item['full_path'];
+                $ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION)) ?: 'jpg';
+                $safeName = Str::slug(($m->nisn ?: 'peserta').'_'.$m->full_name).'.'.$ext;
+
+                return response()->download($fullPath, $safeName);
+            }
+
+            // Jika beregu / banyak anggota -> buat file ZIP baru yang bersih
+            $teamTitle = $reg->team_name ?: ($reg->display_name ?: $reg->registration_code);
+            $zipFileName = 'Foto_Tim_'.Str::slug($teamTitle).'_'.$reg->registration_code.'.zip';
+
+            // Buat nama file temp baru berakhiran .zip dan pastikan belum ada file 0-byte
+            $tempZipPath = sys_get_temp_dir().DIRECTORY_SEPARATOR.'foto_tim_'.uniqid().'.zip';
+            if (file_exists($tempZipPath)) {
+                @unlink($tempZipPath);
+            }
+
+            $zip = new \ZipArchive;
+            $openResult = $zip->open($tempZipPath, \ZipArchive::CREATE);
+            if ($openResult !== true) {
+                Log::error("Gagal membuka ZipArchive pada path {$tempZipPath}, error code: {$openResult}");
+
+                return redirect()->route('pic.dashboard')->with('error', 'Gagal membuat arsip ZIP foto (Error: '.$openResult.').');
+            }
+
+            foreach ($validMembers as $idx => $item) {
+                $m = $item['member'];
+                $fullPath = $item['full_path'];
+                $ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION)) ?: 'jpg';
+                $entryName = ($m->nisn ?: ('anggota_'.($idx + 1))).'_'.Str::slug($m->full_name).'.'.$ext;
+                $zip->addFile($fullPath, $entryName);
+            }
+
+            $zip->close();
+
+            if (! file_exists($tempZipPath) || filesize($tempZipPath) === 0) {
+                return redirect()->route('pic.dashboard')->with('error', 'Arsip ZIP foto kosong atau gagal dibuat.');
+            }
+
+            return response()->download($tempZipPath, $zipFileName, [
+                'Content-Type' => 'application/zip',
+            ])->deleteFileAfterSend(true);
+
+        } catch (\Throwable $e) {
+            Log::error('Error pada downloadPhotos ID '.$id.': '.$e->getMessage()."\n".$e->getTraceAsString());
+
+            return redirect()->route('pic.dashboard')->with('error', 'Terjadi kesalahan saat memproses unduhan foto: '.$e->getMessage());
+        }
     }
 
     public function printParticipantsPdf(Request $request)
