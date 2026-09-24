@@ -282,6 +282,7 @@ class CollectiveRegistrationController extends Controller
             $birthPlace = trim($row['E'] ?? '');
             $birthDate = trim($row['F'] ?? '');
             $institution = trim($row['G'] ?? '') ?: (Auth::user()->institution_name ?? 'Mandiri');
+            $isGanda = false; // Reset per baris agar tidak bocor ke baris berikutnya
 
             // Extract raw competition from Column H (e.g. "Bulu Tangkis (Kat C: Kls 5-6 • Tunggal PA)", "Bulu Tangkis (Ganda PA)", "Olimpiade MIPA", "Catur", "MTQ")
             $rawComp = trim($row['H'] ?? '');
