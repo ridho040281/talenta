@@ -1109,7 +1109,10 @@ class Competition extends Model
 
     public function isCollective(): bool
     {
-        return in_array($this->type, ['kolektif', 'tim', 'kelompok', 'regu']);
+        return in_array($this->type, ['kolektif', 'tim', 'kelompok', 'regu'])
+            || $this->isRobotik()
+            || strtoupper($this->code ?? '') === 'PRM'
+            || str_contains(strtolower($this->name ?? ''), 'pramuka');
     }
 
     public function isRobotik(): bool

@@ -408,8 +408,11 @@ class CollectiveRegistrationController extends Controller
 
             // Identify whether competition is a team/collective competition
             $compObj = $competitions[$code] ?? null;
-            $isCollective = $compObj ? $compObj->isCollective() : in_array($code, ['ROB', 'PRM']);
-            $isTeamComp = $isCollective || ($code === 'BLT' && ! empty($isGanda));
+            $isRobotik = ($code === 'ROB') || ($compObj && $compObj->isRobotik()) || stripos($rawComp, 'robot') !== false;
+            $isPramuka = ($code === 'PRM') || stripos($rawComp, 'pramuka') !== false || ($compObj && str_contains(strtolower($compObj->name), 'pramuka'));
+            $isGandaBlt = ($code === 'BLT' && ! empty($isGanda));
+            $isCollective = ($compObj && $compObj->isCollective()) || $isRobotik || $isPramuka;
+            $isTeamComp = $isCollective || $isGandaBlt;
 
             $teamGroupKey = null;
             $isFirstMemberOfTeam = false;
@@ -419,7 +422,8 @@ class CollectiveRegistrationController extends Controller
                     $errors[] = "Nama Tim / Regu wajib diisi pada kolom I untuk cabang {$compDisplayName} agar anggota dalam satu tim dapat digabungkan.";
                 } else {
                     $cleanTeam = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $teamName));
-                    $teamGroupKey = $code.'_'.($subCategory ?? $matchType ?? 'REGULAR').'_'.strtolower(trim($institution)).'_'.$cleanTeam;
+                    $cleanCat = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $subCategory ?? $matchType ?? 'REGULAR'));
+                    $teamGroupKey = $code.'_'.$cleanCat.'_'.$cleanTeam;
 
                     if (! isset($teamsInBatch[$teamGroupKey])) {
                         $teamsInBatch[$teamGroupKey] = [];
@@ -608,8 +612,19 @@ class CollectiveRegistrationController extends Controller
             $tComp = $competitions[$tCompCode] ?? null;
             $tTeamName = $parsedRows[$firstIdx]['team_name'] ?? 'Tim';
 
-            $minMembers = ($tComp && $tComp->min_members > 0) ? $tComp->min_members : ($tCompCode === 'BLT' ? 2 : 1);
-            $maxMembers = ($tComp && $tComp->max_members > 0) ? $tComp->max_members : ($tCompCode === 'BLT' ? 2 : 10);
+            if ($tCompCode === 'ROB' || ($tComp && $tComp->isRobotik())) {
+                $minMembers = ($tComp && $tComp->min_members >= 2) ? $tComp->min_members : 2;
+                $maxMembers = ($tComp && $tComp->max_members >= 2) ? $tComp->max_members : 3;
+            } elseif ($tCompCode === 'PRM' || str_contains(strtolower($tComp?->name ?? ''), 'pramuka')) {
+                $minMembers = ($tComp && $tComp->min_members >= 2) ? $tComp->min_members : 4;
+                $maxMembers = ($tComp && $tComp->max_members >= 2) ? $tComp->max_members : 6;
+            } elseif ($tCompCode === 'BLT') {
+                $minMembers = 2;
+                $maxMembers = 2;
+            } else {
+                $minMembers = ($tComp && $tComp->min_members > 0) ? $tComp->min_members : 1;
+                $maxMembers = ($tComp && $tComp->max_members > 0) ? $tComp->max_members : 10;
+            }
 
             if ($minMembers > 0 && $memberCount < $minMembers) {
                 foreach ($indices as $idx) {
