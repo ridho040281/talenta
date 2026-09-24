@@ -60,6 +60,26 @@
             border: 2px solid rgba(255, 255, 255, 0.14);
         }
 
+        /* Solid Full-Coverage Overlay for Grand Champion & Interval */
+        .champion-overlay {
+            background-color: #060A14 !important;
+            background-image: 
+                radial-gradient(circle at 50% 35%, rgba(245, 158, 11, 0.18) 0%, transparent 65%),
+                radial-gradient(rgba(255, 255, 255, 0.08) 1.5px, transparent 0),
+                linear-gradient(180deg, #0d1322 0%, #03060d 100%) !important;
+            background-size: 100% 100%, 6px 6px, 100% 100% !important;
+            opacity: 1 !important;
+        }
+
+        .interval-overlay {
+            background-color: #060A14 !important;
+            background-image: 
+                radial-gradient(rgba(255, 255, 255, 0.08) 1.5px, transparent 0),
+                linear-gradient(180deg, #090e1c 0%, #03050a 100%) !important;
+            background-size: 6px 6px, 100% 100% !important;
+            opacity: 1 !important;
+        }
+
         [x-cloak] { display: none !important; }
     </style>
 </head>
@@ -292,7 +312,7 @@
 
             <!-- INTERVAL COUNTDOWN OVERLAY ON TV SCOREBOARD -->
             <template x-if="isIntervalActive()">
-                <div class="absolute inset-0 bg-[#060A14]/95 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-center animate-fade-in border-4 border-amber-400/80 rounded-2xl sm:rounded-3xl">
+                <div class="absolute inset-0 interval-overlay z-50 flex flex-col items-center justify-center p-6 text-center animate-fade-in border-4 border-amber-400/80 rounded-2xl sm:rounded-3xl" style="background-color: #060A14;">
                     <div class="inline-flex items-center gap-2 px-4 sm:px-6 py-1.5 sm:py-2 rounded-full bg-amber-400/20 text-amber-400 border border-amber-400/50 text-sm sm:text-xl font-black uppercase tracking-widest mb-2 sm:mb-4 animate-pulse shadow-lg">
                         <span>⏱️</span>
                         <span>JEDA INTERVAL (11 POIN / ANTAR-GAME)</span>
@@ -312,7 +332,7 @@
 
             <!-- GRAND CHAMPION CELEBRATION OVERLAY ON TV SCOREBOARD -->
             <template x-if="match && match.match_status === 'finished' && showWinnerModal">
-                <div class="absolute inset-0 bg-[#060A14]/96 z-50 flex flex-col items-center justify-center p-6 text-center animate-fade-in border-4 border-amber-400/90 rounded-2xl sm:rounded-3xl shadow-[0_0_80px_rgba(251,191,36,0.4)]">
+                <div class="absolute inset-0 champion-overlay z-50 flex flex-col items-center justify-center p-6 text-center animate-fade-in border-4 border-amber-400/90 rounded-2xl sm:rounded-3xl shadow-[0_0_80px_rgba(251,191,36,0.6)]" style="background-color: #060A14;">
                     <!-- Grand Trophy Icon & Champion Title -->
                     <div class="inline-flex items-center gap-2 sm:gap-3 px-6 py-2 rounded-full bg-gradient-to-r from-amber-500/30 via-yellow-400/40 to-amber-500/30 text-amber-300 border-2 border-amber-400 text-sm sm:text-2xl font-black uppercase tracking-widest mb-3 sm:mb-4 animate-pulse shadow-lg">
                         <span class="text-xl sm:text-3xl">🏆</span>
