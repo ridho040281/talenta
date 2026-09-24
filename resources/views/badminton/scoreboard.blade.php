@@ -293,10 +293,13 @@
                 matchTimer: 18,
                 isSyncing: false,
                 lastDataHash: '',
+                intervalRemaining: 0,
+                intervalTimerId: null,
 
                 init() {
                     lucide.createIcons();
                     if (this.match) {
+                        this.syncIntervalTimer(this.match);
                         this.startFastSync();
                     }
                 },
@@ -309,6 +312,44 @@
                     }, 300);
                 },
 
+                syncIntervalTimer(data) {
+                    if (data && data.match_status === 'interval') {
+                        let sec = 0;
+                        if (data.interval_until) {
+                            const diff = Math.ceil((new Date(data.interval_until).getTime() - Date.now()) / 1000);
+                            sec = Math.max(0, diff);
+                        } else if (data.interval_remaining) {
+                            sec = Math.max(0, data.interval_remaining);
+                        } else {
+                            sec = 60;
+                        }
+
+                        // Resync if timer not running or drifted by more than 1s
+                        if (!this.intervalTimerId || Math.abs(this.intervalRemaining - sec) > 1) {
+                            this.intervalRemaining = sec;
+                        }
+
+                        // Start 1-second live ticker if not yet ticking
+                        if (!this.intervalTimerId && this.intervalRemaining > 0) {
+                            this.intervalTimerId = setInterval(() => {
+                                if (this.intervalRemaining > 0) {
+                                    this.intervalRemaining--;
+                                } else {
+                                    clearInterval(this.intervalTimerId);
+                                    this.intervalTimerId = null;
+                                }
+                            }, 1000);
+                        }
+                    } else {
+                        // Interval has ended, stop ticker
+                        if (this.intervalTimerId) {
+                            clearInterval(this.intervalTimerId);
+                            this.intervalTimerId = null;
+                        }
+                        this.intervalRemaining = 0;
+                    }
+                },
+
                 async fetchLatestScore() {
                     if (!this.match || this.isSyncing) return;
                     this.isSyncing = true;
@@ -318,7 +359,11 @@
                         });
                         if (res.ok) {
                             const data = await res.json();
-                            const hash = `${data.current_set}-${data.team1_set1}-${data.team2_set1}-${data.team1_set2}-${data.team2_set2}-${data.team1_set3}-${data.team2_set3}-${data.server_team}-${data.server_player}-${data.match_status}-${data.team1_player1}-${data.team2_player1}`;
+                            
+                            // Synchronize interval countdown on every state update
+                            this.syncIntervalTimer(data);
+
+                            const hash = `${data.current_set}-${data.team1_set1}-${data.team2_set1}-${data.team1_set2}-${data.team2_set2}-${data.team1_set3}-${data.team2_set3}-${data.server_team}-${data.server_player}-${data.match_status}-${data.team1_player1}-${data.team2_player1}-${data.interval_until}`;
                             if (this.lastDataHash !== hash) {
                                 this.lastDataHash = hash;
                                 this.match = data;
@@ -391,9 +436,7 @@
                 },
 
                 getIntervalSeconds() {
-                    if (!this.match || !this.match.interval_until) return 0;
-                    const diff = Math.ceil((new Date(this.match.interval_until).getTime() - Date.now()) / 1000);
-                    return Math.max(0, diff);
+                    return this.intervalRemaining;
                 },
 
                 toggleFullscreen() {

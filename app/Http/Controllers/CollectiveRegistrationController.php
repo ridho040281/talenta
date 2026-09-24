@@ -14,6 +14,8 @@ use App\Services\WablasNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -1009,6 +1011,16 @@ class CollectiveRegistrationController extends Controller
 
             DB::commit();
 
+            // Ekstrak ZIP Foto Pramuka dan sematkan ke data anggota masing-masing jika diunggah
+            if ($photoZipPath) {
+                try {
+                    $createdRegIds = Registration::where('invoice_id', $invoice->id)->pluck('id')->all();
+                    self::extractAndAssignZipPhotos($photoZipPath, $createdRegIds);
+                } catch (\Throwable $e) {
+                    Log::warning('Gagal mengekstrak ZIP foto Pramuka: '.$e->getMessage());
+                }
+            }
+
             // Trigger WhatsApp Notifications for Batch Registration
             try {
                 // 1. Notify User/Pendaftar
@@ -1300,5 +1312,85 @@ class CollectiveRegistrationController extends Controller
             return redirect()->route('admin.invoices.index')
                 ->with('info', 'Tagihan '.$invoice->invoice_number.' telah ditolak.');
         }
+    }
+
+    /**
+     * Ekstrak file ZIP foto peserta (Pramuka/Regu) dan sematkan ke tabel registration_members
+     */
+    public static function extractAndAssignZipPhotos(string $zipRelativePath, ?array $registrationIds = null): int
+    {
+        $zipFullPath = Storage::disk('public')->path($zipRelativePath);
+        if (! file_exists($zipFullPath)) {
+            return 0;
+        }
+
+        $zip = new \ZipArchive;
+        if ($zip->open($zipFullPath) !== true) {
+            return 0;
+        }
+
+        $assignedCount = 0;
+        $extractedDir = 'photos/pramuka/members';
+        Storage::disk('public')->makeDirectory($extractedDir);
+
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $stat = $zip->statIndex($i);
+            if (! $stat) {
+                continue;
+            }
+
+            $filename = $stat['name'];
+
+            // Lewati folder atau file sistem/metadata macOS
+            if (str_ends_with($filename, '/') || str_contains($filename, '__MACOSX') || str_starts_with(basename($filename), '._')) {
+                continue;
+            }
+
+            $baseName = basename($filename);
+            $ext = strtolower(pathinfo($baseName, PATHINFO_EXTENSION));
+            if (! in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'bmp'])) {
+                continue;
+            }
+
+            // Ekstrak NISN dari nama file: contoh "3153448853_Jaka Kelana.jpg" atau "3153448853.jpg"
+            if (! preg_match('/^([0-9]{8,12})/i', $baseName, $matches)) {
+                continue;
+            }
+
+            $nisn = $matches[1];
+
+            $stream = $zip->getStream($filename);
+            if (! $stream) {
+                continue;
+            }
+
+            $content = stream_get_contents($stream);
+            fclose($stream);
+
+            if (empty($content)) {
+                continue;
+            }
+
+            // Simpan foto permanen di storage public
+            $destRelativePath = $extractedDir.'/'.$nisn.'_'.time().'.'.$ext;
+            Storage::disk('public')->put($destRelativePath, $content);
+            AdminSettingsController::ensurePublicStorageSync($destRelativePath);
+
+            // Cocokkan ke anggota pendaftaran dengan NISN tersebut
+            $query = RegistrationMember::where('nisn', $nisn);
+            if (! empty($registrationIds)) {
+                $query->whereIn('registration_id', $registrationIds);
+            }
+
+            $members = $query->get();
+            foreach ($members as $member) {
+                $member->update(['photo' => $destRelativePath]);
+                $assignedCount++;
+            }
+        }
+
+        $zip->close();
+
+        return $assignedCount;
     }
 }
