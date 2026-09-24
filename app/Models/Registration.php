@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Helpers\NameStandardizer;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -192,6 +193,36 @@ class Registration extends Model
         }
 
         return $this->user?->name ?? ('Peserta #'.$this->id);
+    }
+
+    public function setOfficialNameAttribute($value): void
+    {
+        $this->attributes['official_name'] = ! empty($value) ? NameStandardizer::format($value) : null;
+    }
+
+    public function getOfficialNameAttribute($value): ?string
+    {
+        return ! empty($value) ? NameStandardizer::format($value) : null;
+    }
+
+    public function setTeamNameAttribute($value): void
+    {
+        $this->attributes['team_name'] = ! empty($value) ? NameStandardizer::format($value) : null;
+    }
+
+    public function getTeamNameAttribute($value): ?string
+    {
+        return ! empty($value) ? NameStandardizer::format($value) : null;
+    }
+
+    public function setInstitutionNameAttribute($value): void
+    {
+        $this->attributes['institution_name'] = ! empty($value) ? NameStandardizer::formatSchool($value) : null;
+    }
+
+    public function getInstitutionNameAttribute($value): ?string
+    {
+        return ! empty($value) ? NameStandardizer::formatSchool($value) : null;
     }
 
     protected ?float $memoizedFee = null;

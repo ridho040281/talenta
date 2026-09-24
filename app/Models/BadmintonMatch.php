@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Helpers\NameStandardizer;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -63,6 +64,66 @@ class BadmintonMatch extends Model
             'match_day' => 'integer',
             'match_date' => 'date',
         ];
+    }
+
+    public function setTeam1Player1Attribute($value): void
+    {
+        $this->attributes['team1_player1'] = ! empty($value) ? NameStandardizer::format($value) : null;
+    }
+
+    public function getTeam1Player1Attribute($value): ?string
+    {
+        return ! empty($value) ? NameStandardizer::format($value) : null;
+    }
+
+    public function setTeam1Player2Attribute($value): void
+    {
+        $this->attributes['team1_player2'] = ! empty($value) ? NameStandardizer::format($value) : null;
+    }
+
+    public function getTeam1Player2Attribute($value): ?string
+    {
+        return ! empty($value) ? NameStandardizer::format($value) : null;
+    }
+
+    public function setTeam2Player1Attribute($value): void
+    {
+        $this->attributes['team2_player1'] = ! empty($value) ? NameStandardizer::format($value) : null;
+    }
+
+    public function getTeam2Player1Attribute($value): ?string
+    {
+        return ! empty($value) ? NameStandardizer::format($value) : null;
+    }
+
+    public function setTeam2Player2Attribute($value): void
+    {
+        $this->attributes['team2_player2'] = ! empty($value) ? NameStandardizer::format($value) : null;
+    }
+
+    public function getTeam2Player2Attribute($value): ?string
+    {
+        return ! empty($value) ? NameStandardizer::format($value) : null;
+    }
+
+    public function setTeam1SchoolAttribute($value): void
+    {
+        $this->attributes['team1_school'] = ! empty($value) ? NameStandardizer::formatSchool($value) : null;
+    }
+
+    public function getTeam1SchoolAttribute($value): ?string
+    {
+        return ! empty($value) ? NameStandardizer::formatSchool($value) : null;
+    }
+
+    public function setTeam2SchoolAttribute($value): void
+    {
+        $this->attributes['team2_school'] = ! empty($value) ? NameStandardizer::formatSchool($value) : null;
+    }
+
+    public function getTeam2SchoolAttribute($value): ?string
+    {
+        return ! empty($value) ? NameStandardizer::formatSchool($value) : null;
     }
 
     public function competition(): BelongsTo

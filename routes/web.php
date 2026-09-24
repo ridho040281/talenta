@@ -59,7 +59,15 @@ Route::get('/verifikasi-sertifikat/{code}', [CertificateController::class, 'veri
 
 Route::get('/bersihkan-cache', function () {
     Artisan::call('optimize:clear');
+
     return response('<div style="font-family:sans-serif;text-align:center;padding:50px;"><h1>✅ Cache Server Berhasil Dibersihkan!</h1><p>Silakan buka kembali halaman papan skor / verifikasi, lalu tekan <b>Ctrl + F5</b> (atau <b>Ctrl + Shift + R</b>) untuk melihat perubahan terbaru.</p></div>');
+});
+
+Route::get('/rapikan-nama', function () {
+    Artisan::call('talenta:standardize-names');
+    $output = Artisan::output();
+
+    return response('<div style="font-family:sans-serif;max-width:600px;margin:50px auto;padding:30px;border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc;text-align:center;"><h2>✅ Standarisasi Nama Selesai!</h2><pre style="background:#1e293b;color:#38bdf8;padding:15px;border-radius:8px;white-space:pre-wrap;text-align:left;">'.e($output).'</pre><p style="margin-top:20px;"><a href="/" style="display:inline-block;padding:10px 20px;background:#4f46e5;color:white;text-decoration:none;border-radius:8px;font-weight:bold;">Kembali ke Beranda</a></p></div>');
 });
 
 /*

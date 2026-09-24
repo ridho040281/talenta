@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Helpers\NameStandardizer;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -58,6 +59,26 @@ class RegistrationMember extends Model
         } catch (\Throwable $e) {
             return (string) $raw;
         }
+    }
+
+    public function setFullNameAttribute($value): void
+    {
+        $this->attributes['full_name'] = NameStandardizer::format($value);
+    }
+
+    public function getFullNameAttribute($value): string
+    {
+        return NameStandardizer::format($value ?? '');
+    }
+
+    public function setSchoolNameAttribute($value): void
+    {
+        $this->attributes['school_name'] = ! empty($value) ? NameStandardizer::formatSchool($value) : null;
+    }
+
+    public function getSchoolNameAttribute($value): ?string
+    {
+        return ! empty($value) ? NameStandardizer::formatSchool($value) : null;
     }
 
     public function registration(): BelongsTo
