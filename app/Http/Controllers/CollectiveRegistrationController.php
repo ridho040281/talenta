@@ -263,6 +263,7 @@ class CollectiveRegistrationController extends Controller
         $errorRowCount = 0;
         $competitionCounts = [];
         $registeredNisnsInBatch = []; // Keyed by [competition_code][nisn] => row_number
+        $teamsInBatch = []; // Keyed by [team_group_key] => array of row indices in $parsedRows
 
         $invalidPatterns = [
             '0000000000', '1111111111', '2222222222', '3333333333', '4444444444',
@@ -405,6 +406,29 @@ class CollectiveRegistrationController extends Controller
                 $errors[] = 'Nama peserta kosong';
             }
 
+            // Identify whether competition is a team/collective competition
+            $compObj = $competitions[$code] ?? null;
+            $isCollective = $compObj ? $compObj->isCollective() : in_array($code, ['ROB', 'PRM']);
+            $isTeamComp = $isCollective || ($code === 'BLT' && ! empty($isGanda));
+
+            $teamGroupKey = null;
+            $isFirstMemberOfTeam = false;
+            if ($isTeamComp) {
+                if (empty($teamName)) {
+                    $compDisplayName = $compObj ? $compObj->name : $code;
+                    $errors[] = "Nama Tim / Regu wajib diisi pada kolom I untuk cabang {$compDisplayName} agar anggota dalam satu tim dapat digabungkan.";
+                } else {
+                    $cleanTeam = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $teamName));
+                    $teamGroupKey = $code.'_'.($subCategory ?? $matchType ?? 'REGULAR').'_'.strtolower(trim($institution)).'_'.$cleanTeam;
+
+                    if (! isset($teamsInBatch[$teamGroupKey])) {
+                        $teamsInBatch[$teamGroupKey] = [];
+                        $isFirstMemberOfTeam = true;
+                    }
+                    $teamsInBatch[$teamGroupKey][] = count($parsedRows);
+                }
+            }
+
             // Validate NISN format if given
             if (! empty($nisn)) {
                 if (! preg_match('/^[0-9]{8,12}$/', $nisn)) {
@@ -424,13 +448,15 @@ class CollectiveRegistrationController extends Controller
                 if (! $compStatus['is_open'] && ! $user->isTester()) {
                     $errors[] = "Lomba '{$comp->name}': {$compStatus['message']}";
                 } else {
-                    // Check quota
+                    // Check quota (for team competitions, only the first member increments quota count)
                     $currentRegistered = $comp->registrations_count ?? 0;
                     $batchCountForComp = $competitionCounts[$code] ?? 0;
                     if ($comp->quota > 0 && ($currentRegistered + $batchCountForComp) >= $comp->quota) {
                         $errors[] = "Kuota pendaftaran lomba {$comp->name} sudah penuh ({$comp->quota} peserta)";
                     } else {
-                        $competitionCounts[$code] = ($competitionCounts[$code] ?? 0) + 1;
+                        if (! $isTeamComp || $isFirstMemberOfTeam) {
+                            $competitionCounts[$code] = ($competitionCounts[$code] ?? 0) + 1;
+                        }
                     }
 
                     // Check duplicate registration in the SAME competition
@@ -498,7 +524,7 @@ class CollectiveRegistrationController extends Controller
             }
 
             $compObj = $competitions[$code] ?? null;
-            $fee = $compObj ? (float) $compObj->registration_fee : 0;
+            $baseFee = $compObj ? (float) $compObj->registration_fee : 0;
 
             if ($compObj) {
                 if ($compObj->code === 'BLT' || str_starts_with($code, 'BLT')) {
@@ -506,20 +532,20 @@ class CollectiveRegistrationController extends Controller
                     $isPutri = $gender === 'P' || stripos($rawComp, 'PI') !== false || stripos($rawComp, 'Putri') !== false || stripos($matchType ?? '', 'Putri') !== false || stripos($matchType ?? '', 'PI') !== false;
 
                     if ($isGanda) {
-                        $fee = (float) AppSetting::get($isPutri ? 'blt_fee_ganda_pi' : 'blt_fee_ganda_pa', AppSetting::get('blt_fee_ganda', 200000));
+                        $baseFee = (float) AppSetting::get($isPutri ? 'blt_fee_ganda_pi' : 'blt_fee_ganda_pa', AppSetting::get('blt_fee_ganda', 200000));
                     } else {
                         $feeA = (float) AppSetting::get($isPutri ? 'blt_fee_a_tunggal_pi' : 'blt_fee_a_tunggal_pa', 130000);
                         $feeB = (float) AppSetting::get($isPutri ? 'blt_fee_b_tunggal_pi' : 'blt_fee_b_tunggal_pa', 150000);
                         $feeC = (float) AppSetting::get($isPutri ? 'blt_fee_c_tunggal_pi' : 'blt_fee_c_tunggal_pa', 150000);
 
                         if (stripos($targetClass ?? '', 'Kategori A') !== false || stripos($rawComp, 'Kat A') !== false || stripos($rawComp, 'Kls 1') !== false) {
-                            $fee = $feeA;
+                            $baseFee = $feeA;
                         } elseif (stripos($targetClass ?? '', 'Kategori B') !== false || stripos($rawComp, 'Kat B') !== false || stripos($rawComp, 'Kls 3') !== false) {
-                            $fee = $feeB;
+                            $baseFee = $feeB;
                         } elseif (stripos($targetClass ?? '', 'Kategori C') !== false || stripos($rawComp, 'Kat C') !== false || stripos($rawComp, 'Kls 5') !== false) {
-                            $fee = $feeC;
+                            $baseFee = $feeC;
                         } else {
-                            $fee = $feeA;
+                            $baseFee = $feeA;
                         }
                     }
                 } elseif ($compObj->code === 'TMJ') {
@@ -527,23 +553,20 @@ class CollectiveRegistrationController extends Controller
                     $feeA = (float) AppSetting::get($isPutri ? 'tmj_fee_a_tunggal_pi' : 'tmj_fee_a_tunggal_pa', $compObj->registration_fee ?: 35000);
                     $feeB = (float) AppSetting::get($isPutri ? 'tmj_fee_b_tunggal_pi' : 'tmj_fee_b_tunggal_pa', $compObj->registration_fee ?: 35000);
                     $isKatB = stripos($targetClass ?? '', 'Kategori B') !== false || stripos($rawComp, 'Kat B') !== false || stripos($rawComp, 'Kelas 4') !== false || stripos($rawComp, 'Kls 4') !== false || stripos($rawComp, '4-6') !== false;
-                    $fee = $isKatB ? $feeB : $feeA;
+                    $baseFee = $isKatB ? $feeB : $feeA;
                 } elseif ($compObj->code === 'MTQ') {
                     $isPutri = $gender === 'P';
-                    $fee = (float) AppSetting::get($isPutri ? 'mtq_fee_pi' : 'mtq_fee_pa', $compObj->registration_fee);
+                    $baseFee = (float) AppSetting::get($isPutri ? 'mtq_fee_pi' : 'mtq_fee_pa', $compObj->registration_fee);
                 } elseif ($compObj->code === 'POP') {
                     $isPutri = $gender === 'P';
-                    $fee = (float) AppSetting::get($isPutri ? 'pop_fee_pi' : 'pop_fee_pa', $compObj->registration_fee);
+                    $baseFee = (float) AppSetting::get($isPutri ? 'pop_fee_pi' : 'pop_fee_pa', $compObj->registration_fee);
                 }
             }
 
+            // Fee: Individu membayar baseFee per orang. Tim/regu hanya dibebankan 1x untuk anggota pertama (anggota selanjutnya Rp 0)
+            $fee = (! $isTeamComp || $isFirstMemberOfTeam) ? $baseFee : 0;
+
             $isValid = empty($errors);
-            if ($isValid) {
-                $validRowCount++;
-                $totalFee += $fee;
-            } else {
-                $errorRowCount++;
-            }
 
             $parsedRows[] = [
                 'row_number' => $i,
@@ -561,6 +584,10 @@ class CollectiveRegistrationController extends Controller
                 'match_type' => $matchType,
                 'chosen_song' => $chosenSong ?: null,
                 'team_name' => $teamName,
+                'is_team' => $isTeamComp,
+                'is_team_primary' => $isFirstMemberOfTeam,
+                'team_group_key' => $teamGroupKey,
+                'team_members_count' => 1,
                 'official_name' => $officialName,
                 'official_phone' => $officialPhone,
                 'fee' => $fee,
@@ -573,6 +600,49 @@ class CollectiveRegistrationController extends Controller
             return back()->with('error', 'Tidak ada baris data peserta yang dapat dibaca pada file Excel.');
         }
 
+        // Post-validation: Validasi batas jumlah anggota tim (min & max anggota)
+        foreach ($teamsInBatch as $tKey => $indices) {
+            $memberCount = count($indices);
+            $firstIdx = $indices[0];
+            $tCompCode = $parsedRows[$firstIdx]['competition_code'] ?? '';
+            $tComp = $competitions[$tCompCode] ?? null;
+            $tTeamName = $parsedRows[$firstIdx]['team_name'] ?? 'Tim';
+
+            $minMembers = ($tComp && $tComp->min_members > 0) ? $tComp->min_members : ($tCompCode === 'BLT' ? 2 : 1);
+            $maxMembers = ($tComp && $tComp->max_members > 0) ? $tComp->max_members : ($tCompCode === 'BLT' ? 2 : 10);
+
+            if ($minMembers > 0 && $memberCount < $minMembers) {
+                foreach ($indices as $idx) {
+                    $compTitle = $tComp ? $tComp->name : $tCompCode;
+                    $parsedRows[$idx]['errors'][] = "Tim '{$tTeamName}' pada cabang {$compTitle} hanya memiliki {$memberCount} anggota (minimal {$minMembers} anggota).";
+                    $parsedRows[$idx]['is_valid'] = false;
+                }
+            } elseif ($maxMembers > 0 && $memberCount > $maxMembers) {
+                foreach ($indices as $idx) {
+                    $compTitle = $tComp ? $tComp->name : $tCompCode;
+                    $parsedRows[$idx]['errors'][] = "Tim '{$tTeamName}' pada cabang {$compTitle} memiliki {$memberCount} anggota (maksimal {$maxMembers} anggota).";
+                    $parsedRows[$idx]['is_valid'] = false;
+                }
+            }
+
+            foreach ($indices as $idx) {
+                $parsedRows[$idx]['team_members_count'] = $memberCount;
+            }
+        }
+
+        // Hitung ulang total data valid dan total biaya setelah validasi tim selesai
+        $validRowCount = 0;
+        $errorRowCount = 0;
+        $totalFee = 0;
+        foreach ($parsedRows as $pRow) {
+            if (! empty($pRow['is_valid'])) {
+                $validRowCount++;
+                $totalFee += (float) ($pRow['fee'] ?? 0);
+            } else {
+                $errorRowCount++;
+            }
+        }
+
         $validRows = array_filter($parsedRows, fn ($item) => ! empty($item['is_valid']) && ! empty($item['competition_id']));
         $bonusResult = self::calculateBonusDiscounts($validRows, $competitions);
         $totalBonusDiscount = $bonusResult['total_bonus_discount'];
@@ -582,6 +652,8 @@ class CollectiveRegistrationController extends Controller
         // Exact nominal amount without unique rupiah code
         $uniqueCode = 0;
         $finalAmount = max(0, $totalFee - $totalBonusDiscount);
+
+        $teamCount = count(array_filter($parsedRows, fn ($r) => ! empty($r['is_valid']) && ! empty($r['is_team']) && ! empty($r['is_team_primary'])));
 
         $bankInfo = [
             'bank_name' => AppSetting::get('bank_name', 'Bank Syariah Indonesia (BSI)'),
@@ -593,6 +665,7 @@ class CollectiveRegistrationController extends Controller
             'parsedRows',
             'validRowCount',
             'errorRowCount',
+            'teamCount',
             'totalFee',
             'totalBonusDiscount',
             'bonusDiscounts',
@@ -611,7 +684,8 @@ class CollectiveRegistrationController extends Controller
         $validRowsByComp = [];
         foreach ($validRows as $row) {
             $code = $row['competition_code'] ?? '';
-            if (! empty($code)) {
+            // Hanya baris berbayar (individu atau ketua/perwakilan tim) yang dihitung dalam kuota bonus
+            if (! empty($code) && (empty($row['is_team']) || ! empty($row['is_team_primary']))) {
                 $validRowsByComp[$code][] = $row;
             }
         }
@@ -713,7 +787,52 @@ class CollectiveRegistrationController extends Controller
         $finalAmount = max(0, $totalFee - $totalBonusDiscount);
         $invoiceNumber = 'INV-'.date('Ymd').'-'.strtoupper(Str::random(5));
 
-        $notes = 'Pendaftaran kolektif '.count($validRows).' peserta dari '.($user->institution_name ?? $user->name);
+        // Group valid rows into registrations (Individual: 1 baris = 1 registrasi, Tim: beberapa baris = 1 registrasi)
+        $groupedRegistrations = [];
+        foreach ($validRows as $row) {
+            if (! empty($row['is_team']) && ! empty($row['team_group_key'])) {
+                $groupKey = 'TEAM_'.$row['team_group_key'];
+                if (! isset($groupedRegistrations[$groupKey])) {
+                    $groupedRegistrations[$groupKey] = [
+                        'is_team' => true,
+                        'competition_id' => $row['competition_id'],
+                        'competition_code' => $row['competition_code'] ?? '',
+                        'team_name' => $row['team_name'],
+                        'sub_category' => $row['sub_category'],
+                        'target_class' => $row['target_class'],
+                        'match_type' => $row['match_type'],
+                        'chosen_song' => $row['chosen_song'] ?? null,
+                        'institution_name' => $row['institution_name'],
+                        'official_name' => $row['official_name'],
+                        'official_phone' => $row['official_phone'],
+                        'members' => [],
+                    ];
+                }
+                $groupedRegistrations[$groupKey]['members'][] = $row;
+            } else {
+                $groupedRegistrations[] = [
+                    'is_team' => false,
+                    'competition_id' => $row['competition_id'],
+                    'competition_code' => $row['competition_code'] ?? '',
+                    'team_name' => null,
+                    'sub_category' => $row['sub_category'],
+                    'target_class' => $row['target_class'],
+                    'match_type' => $row['match_type'],
+                    'chosen_song' => $row['chosen_song'] ?? null,
+                    'institution_name' => $row['institution_name'],
+                    'official_name' => $row['official_name'],
+                    'official_phone' => $row['official_phone'],
+                    'members' => [$row],
+                ];
+            }
+        }
+
+        $teamCount = count(array_filter($groupedRegistrations, fn ($g) => ! empty($g['is_team'])));
+        $notes = 'Pendaftaran kolektif '.count($validRows).' peserta';
+        if ($teamCount > 0) {
+            $notes .= " ({$teamCount} tim/regu)";
+        }
+        $notes .= ' dari '.($user->institution_name ?? $user->name);
         if (! empty($bonusSummaryList)) {
             $notes .= ' • '.implode(', ', $bonusSummaryList);
         }
@@ -741,21 +860,26 @@ class CollectiveRegistrationController extends Controller
             ]);
 
             // 2. Create Registrations & Registration Members
-            foreach ($validRows as $row) {
-                $comp = Competition::findOrFail($row['competition_id']);
+            foreach ($groupedRegistrations as $item) {
+                $comp = Competition::findOrFail($item['competition_id']);
 
                 $regCode = strtoupper($comp->code).'-'.strtoupper(Str::random(6));
                 while (Registration::where('registration_code', $regCode)->exists()) {
                     $regCode = strtoupper($comp->code).'-'.strtoupper(Str::random(6));
                 }
 
-                $matchType = $row['match_type'] ?? null;
-                $subCategory = $row['sub_category'] ?? null;
+                $matchType = $item['match_type'] ?? null;
+                $subCategory = $item['sub_category'] ?? null;
 
                 if (in_array($comp->code, ['MTQ', 'POP'])) {
-                    $rowGender = ! empty($row['gender']) ? $row['gender'] : 'L';
-                    $matchType = ($rowGender === 'P') ? 'Putri (PI)' : 'Putra (PA)';
+                    $firstRowGender = ! empty($item['members'][0]['gender']) ? $item['members'][0]['gender'] : 'L';
+                    $matchType = ($firstRowGender === 'P') ? 'Putri (PI)' : 'Putra (PA)';
                     $subCategory = $matchType;
+                }
+
+                $teamName = $item['team_name'];
+                if ($comp->code === 'TMJ' || (empty($item['is_team']) && (stripos($teamName ?? '', 'tunggal') !== false))) {
+                    $teamName = null;
                 }
 
                 $registration = Registration::create([
@@ -763,30 +887,43 @@ class CollectiveRegistrationController extends Controller
                     'user_id' => $user->id,
                     'invoice_id' => $invoice->id,
                     'registration_code' => $regCode,
-                    'team_name' => (! empty($row['team_name']) && $comp->code !== 'TMJ' && stripos($row['team_name'], 'tunggal') === false) ? $row['team_name'] : null,
+                    'team_name' => (! empty($teamName) && $comp->code !== 'TMJ' && stripos($teamName, 'tunggal') === false) ? $teamName : null,
                     'sub_category' => $subCategory,
-                    'target_class' => $row['target_class'] ?? null,
+                    'target_class' => $item['target_class'] ?? null,
                     'match_type' => $matchType,
-                    'chosen_song' => ! empty($row['chosen_song']) ? $row['chosen_song'] : null,
-                    'institution_name' => ! empty($row['institution_name']) ? $row['institution_name'] : ($user->institution_name ?? 'Mandiri'),
-                    'official_name' => ! empty($row['official_name']) ? $row['official_name'] : $user->name,
-                    'official_phone' => ! empty($row['official_phone']) ? $row['official_phone'] : $user->phone,
+                    'chosen_song' => ! empty($item['chosen_song']) ? $item['chosen_song'] : null,
+                    'institution_name' => ! empty($item['institution_name']) ? $item['institution_name'] : ($user->institution_name ?? 'Mandiri'),
+                    'official_name' => ! empty($item['official_name']) ? $item['official_name'] : $user->name,
+                    'official_phone' => ! empty($item['official_phone']) ? $item['official_phone'] : $user->phone,
                     'payment_proof' => $paymentProofPath,
                     'document_file' => $documentFilePath,
                     'status' => 'pending',
                     'is_collective' => true,
                 ]);
 
-                // Create Member
-                RegistrationMember::create([
-                    'registration_id' => $registration->id,
-                    'full_name' => $row['name'],
-                    'nisn' => ! empty($row['nisn']) ? $row['nisn'] : null,
-                    'gender' => ! empty($row['gender']) ? $row['gender'] : 'L',
-                    'birth_place' => ! empty($row['birth_place']) ? $row['birth_place'] : null,
-                    'birth_date' => ! empty($row['birth_date']) ? date('Y-m-d', strtotime($row['birth_date'])) : null,
-                    'role_in_team' => 'Peserta Utama',
-                ]);
+                // Create Member(s)
+                foreach ($item['members'] as $idx => $mRow) {
+                    if ($item['is_team']) {
+                        if ($comp->code === 'BLT') {
+                            $roleInTeam = 'Pemain '.($idx + 1);
+                        } else {
+                            $roleInTeam = ($idx === 0) ? 'Ketua Regu' : 'Anggota '.($idx + 1);
+                        }
+                    } else {
+                        $roleInTeam = 'Peserta Utama';
+                    }
+
+                    RegistrationMember::create([
+                        'registration_id' => $registration->id,
+                        'full_name' => $mRow['name'],
+                        'school_name' => ! empty($mRow['institution_name']) ? $mRow['institution_name'] : ($user->institution_name ?? null),
+                        'nisn' => ! empty($mRow['nisn']) ? $mRow['nisn'] : null,
+                        'gender' => ! empty($mRow['gender']) ? $mRow['gender'] : 'L',
+                        'birth_place' => ! empty($mRow['birth_place']) ? $mRow['birth_place'] : null,
+                        'birth_date' => ! empty($mRow['birth_date']) ? date('Y-m-d', strtotime($mRow['birth_date'])) : null,
+                        'role_in_team' => $roleInTeam,
+                    ]);
+                }
             }
 
             DB::commit();

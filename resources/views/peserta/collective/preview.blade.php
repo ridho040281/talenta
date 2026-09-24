@@ -33,7 +33,12 @@
 
             <div class="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-1">
                 <span class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">Data Valid & Siap</span>
-                <p class="text-2xl font-black text-emerald-300 font-display">{{ $validRowCount }}</p>
+                <p class="text-2xl font-black text-emerald-300 font-display">
+                    {{ $validRowCount }}
+                    @if(!empty($teamCount))
+                        <span class="text-xs font-semibold text-emerald-400/90 font-sans block">({{ $teamCount }} Tim/Regu)</span>
+                    @endif
+                </p>
             </div>
 
             @if(!empty($totalBonusDiscount) && $totalBonusDiscount > 0)
@@ -157,11 +162,32 @@
                                     </span>
                                 @endif
                             </td>
-                            <td class="py-3 px-4 text-slate-400">
-                                {{ $row['team_name'] ?: '-' }}
+                            <td class="py-3 px-4">
+                                @if(!empty($row['team_name']))
+                                    <div class="space-y-1">
+                                        <span class="font-bold text-white block">{{ $row['team_name'] }}</span>
+                                        @if(!empty($row['is_team']))
+                                            <span class="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold {{ !empty($row['is_team_primary']) ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-800 text-slate-400 border border-slate-700' }}">
+                                                {{ !empty($row['is_team_primary']) ? 'Perwakilan / Ketua' : 'Anggota Tim' }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                @else
+                                    <span class="text-slate-500">-</span>
+                                @endif
                             </td>
-                            <td class="py-3 px-4 font-black text-emerald-400 whitespace-nowrap font-mono">
-                                Rp {{ number_format($row['fee'], 0, ',', '.') }}
+                            <td class="py-3 px-4 whitespace-nowrap font-mono">
+                                @if(!empty($row['is_team']) && empty($row['is_team_primary']))
+                                    <div class="space-y-0.5">
+                                        <span class="text-slate-400 font-bold text-[11px] block">Termasuk di Tim</span>
+                                        <span class="text-emerald-400/60 text-[10px] block font-sans">(Rp 0)</span>
+                                    </div>
+                                @else
+                                    <span class="font-black text-emerald-400 text-sm">Rp {{ number_format($row['fee'], 0, ',', '.') }}</span>
+                                    @if(!empty($row['is_team']))
+                                        <span class="text-emerald-400/80 block text-[10px] font-sans font-bold">/ Tim ({{ $row['team_members_count'] ?? 1 }} Siswa)</span>
+                                    @endif
+                                @endif
                             </td>
                             <td class="py-3 px-4 text-slate-300">
                                 {{ $row['institution_name'] }}
@@ -278,7 +304,7 @@
 
                     <button type="submit" class="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 hover:from-emerald-300 hover:to-cyan-300 text-slate-950 font-black text-xs uppercase tracking-wider shadow-xl shadow-emerald-500/25 hover:scale-[1.02] active:scale-[0.98] transition duration-200 cursor-pointer">
                         <i data-lucide="send" class="w-4 h-4"></i>
-                        <span>Kirim Pendaftaran Kolektif & Berkas ({{ $validRowCount }} Peserta)</span>
+                        <span>Kirim Pendaftaran Kolektif & Berkas ({{ $validRowCount }} Siswa{{ !empty($teamCount) ? ' • '.$teamCount.' Tim' : '' }})</span>
                     </button>
                 </div>
             </form>
