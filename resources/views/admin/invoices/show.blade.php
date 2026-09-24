@@ -119,6 +119,43 @@
                 @endif
             </div>
 
+            @php
+                // Ekstrak path ZIP Pramuka dari kolom notes invoice
+                preg_match('/ZIP Foto Pramuka:\s*([^\s•]+)/u', $invoice->notes ?? '', $zipMatch);
+                $pramukaZipPath = $zipMatch[1] ?? null;
+            @endphp
+            @if($pramukaZipPath)
+            {{-- ZIP Foto Pramuka Download Card --}}
+            <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+                        <i data-lucide="archive" class="w-4 h-4 text-violet-600"></i>
+                        <span>ZIP Foto Peserta Pramuka</span>
+                    </h3>
+                    <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-violet-50 text-violet-700 border border-violet-200">
+                        Terlampir
+                    </span>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div class="w-10 h-10 rounded-xl bg-violet-100 text-violet-600 flex items-center justify-center shrink-0">
+                            <i data-lucide="archive" class="w-5 h-5"></i>
+                        </div>
+                        <div class="truncate">
+                            <span class="block text-xs font-bold text-slate-800">ZIP Foto Peserta (penamaan: NISN_NamaPeserta.jpg)</span>
+                            <span class="text-[11px] text-slate-500 font-mono truncate block">{{ basename($pramukaZipPath) }}</span>
+                        </div>
+                    </div>
+                    <a href="{{ asset('storage/' . $pramukaZipPath) }}" download
+                       class="px-3.5 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs inline-flex items-center gap-1.5 transition shrink-0">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                        <span>Unduh ZIP</span>
+                    </a>
+                </div>
+            </div>
+            @endif
+
             <!-- Verification Action Box -->
             <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-sm space-y-4">
                 <h4 class="text-sm font-black text-slate-900">Keputusan Verifikasi Pembayaran</h4>
