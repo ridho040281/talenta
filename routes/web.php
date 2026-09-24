@@ -57,6 +57,11 @@ Route::get('/badminton/api/active-courts', [BadmintonMatchController::class, 'ap
 Route::get('/badminton/api/arena-stream', [BadmintonMatchController::class, 'arenaStream'])->name('badminton.api.arena_stream');
 Route::get('/verifikasi-sertifikat/{code}', [CertificateController::class, 'verifyPublic'])->name('certificate.verify');
 
+Route::get('/bersihkan-cache', function () {
+    Artisan::call('optimize:clear');
+    return response('<div style="font-family:sans-serif;text-align:center;padding:50px;"><h1>✅ Cache Server Berhasil Dibersihkan!</h1><p>Silakan buka kembali halaman papan skor / verifikasi, lalu tekan <b>Ctrl + F5</b> (atau <b>Ctrl + Shift + R</b>) untuk melihat perubahan terbaru.</p></div>');
+});
+
 /*
 |--------------------------------------------------------------------------
 | Authentication Routes
