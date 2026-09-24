@@ -671,5 +671,8 @@
             }
         }
     </script>
+
+    <!-- CHAMPION CELEBRATION CONFETTI CANVAS (ULTRA CRISP HIGH-DPI ON TOP LAYER) -->
+    <canvas id="champion-confetti-canvas" class="fixed inset-0 pointer-events-none z-[9999] w-screen h-screen" style="display: none;"></canvas>
 </body>
 </html>
