@@ -214,7 +214,7 @@
                             <label for="photo_zip" class="block text-sm font-black text-white">
                                 Unggah ZIP Foto Peserta Pramuka <span class="text-rose-400">* (Wajib untuk Pramuka)</span>
                             </label>
-                            <p class="text-xs text-slate-400">File .zip berisi foto peserta, dinamai sesuai NISN masing-masing (contoh: <span class="font-mono text-violet-300">3153448853.jpg</span>). Maks 50 MB.</p>
+                            <p class="text-xs text-slate-400">File .zip berisi foto peserta, dinamai dengan format <span class="font-mono text-violet-300">NISN_NamaPeserta.jpg</span> (contoh: <span class="font-mono text-violet-300">3153448853_Jaka Kelana.jpg</span>). Maks 50 MB.</p>
                         </div>
                     </div>
 
@@ -226,9 +226,9 @@
                     <div class="p-3.5 rounded-2xl bg-violet-500/10 border border-violet-500/30 text-xs text-violet-300 flex items-start gap-2.5">
                         <i data-lucide="info" class="w-4 h-4 text-violet-400 shrink-0 mt-0.5"></i>
                         <span>
-                            <strong>Penamaan File dalam ZIP:</strong> Beri nama setiap foto sesuai NISN peserta. Contoh:
-                            <span class="font-mono text-violet-200">3134232958.jpg</span>,
-                            <span class="font-mono text-violet-200">3175693342.jpg</span>, dst.
+                            <strong>Format Penamaan File dalam ZIP:</strong> <span class="font-mono text-violet-200">NISN_NamaPeserta.jpg</span> — gabungkan NISN dan nama peserta dengan garis bawah. Contoh:
+                            <span class="font-mono text-violet-200">3134232958_Ahmad Gibran.jpg</span>,
+                            <span class="font-mono text-violet-200">3175693342_Muhammad Farel.jpg</span>, dst.
                             Format foto yang diterima: JPG, PNG, JPEG.
                         </span>
                     </div>
