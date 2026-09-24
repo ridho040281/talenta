@@ -63,7 +63,10 @@
         [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="h-screen w-screen overflow-hidden text-slate-100 font-sans antialiased flex flex-col justify-between select-none" x-data="liveScoreboardApp()">
+<body class="h-screen w-screen overflow-hidden text-slate-100 font-sans antialiased flex flex-col justify-between select-none relative" x-data="liveScoreboardApp()">
+
+    <!-- CHAMPION CELEBRATION CONFETTI CANVAS -->
+    <canvas id="champion-confetti-canvas" class="fixed inset-0 pointer-events-none z-40 w-full h-full" style="display: none;"></canvas>
 
     <!-- TOP CONTROL BAR (COMPACT HEADER) -->
     <header class="h-10 sm:h-12 shrink-0 bg-slate-950/80 border-b border-white/[0.08] px-4 flex items-center justify-between text-xs backdrop-blur-xl z-20">
@@ -80,6 +83,12 @@
         </div>
 
         <div class="flex items-center gap-2">
+            <!-- Winner Celebration Toggle Button -->
+            <button type="button" @click="showWinnerModal = !showWinnerModal" class="px-2.5 py-1 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-400/50 flex items-center gap-1.5 transition text-xs font-bold cursor-pointer shadow-sm" x-show="match && match.match_status === 'finished'">
+                <span>🏆</span>
+                <span class="hidden sm:inline">Pemenang</span>
+            </button>
+
             <!-- Court Selector -->
             @if(isset($allMatches) && $allMatches->isNotEmpty())
             <select onchange="window.location.href='/badminton/scoreboard/' + this.value" class="bg-[#0C111D] text-amber-300 font-bold border border-white/[0.12] rounded-xl px-2.5 py-1 text-xs focus:ring-2 focus:ring-amber-400 outline-none">
@@ -144,28 +153,38 @@
 
                     <!-- Pemain 1 -->
                     <div class="flex items-center gap-2">
-                        <div :class="isServing(1, 1) ? 'bg-amber-400 text-black shadow-xl ring-2 sm:ring-4 ring-amber-300/80 font-black' : 'text-neutral-100'" class="px-3 sm:px-4 py-1.5 sm:py-2.5 rounded-xl transition-all duration-200 flex-1 truncate font-player font-black tracking-wide uppercase text-lg sm:text-2xl md:text-3xl lg:text-4xl shadow-inner flex items-center justify-between">
+                        <div :class="isServing(1, 1) ? 'bg-amber-400 text-black shadow-xl ring-2 sm:ring-4 ring-amber-300/80 font-black' : (match.match_status === 'finished' && match.winner_team == 1 ? 'bg-amber-400/20 text-amber-200 ring-2 ring-amber-400/70 shadow-[0_0_20px_rgba(251,191,36,0.3)]' : 'text-neutral-100')" class="px-3 sm:px-4 py-1.5 sm:py-2.5 rounded-xl transition-all duration-200 flex-1 truncate font-player font-black tracking-wide uppercase text-lg sm:text-2xl md:text-3xl lg:text-4xl shadow-inner flex items-center justify-between">
                             <span class="truncate" x-text="match.team1_player1"></span>
-                            <template x-if="isServing(1, 1)">
-                                <div class="flex items-center gap-1 shrink-0 bg-black/20 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg border border-black/30 animate-pulse ml-2">
-                                    <span class="text-sm sm:text-lg">🏸</span>
-                                    <span class="font-led font-black text-[10px] sm:text-xs lg:text-sm text-neutral-900 tracking-wider hidden md:inline">SERVE</span>
-                                </div>
-                            </template>
+                            <div class="flex items-center gap-1.5 shrink-0 ml-2">
+                                <template x-if="match.match_status === 'finished' && match.winner_team == 1">
+                                    <span class="px-2.5 py-0.5 rounded-full bg-amber-400 text-black text-[10px] sm:text-xs font-black tracking-wider uppercase shadow-md animate-pulse">👑 WINNER</span>
+                                </template>
+                                <template x-if="isServing(1, 1)">
+                                    <div class="flex items-center gap-1 bg-black/20 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg border border-black/30 animate-pulse">
+                                        <span class="text-sm sm:text-lg">🏸</span>
+                                        <span class="font-led font-black text-[10px] sm:text-xs lg:text-sm text-neutral-900 tracking-wider hidden md:inline">SERVE</span>
+                                    </div>
+                                </template>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Pemain 2 (Jika Ganda) -->
                     <template x-if="match.match_type === 'double' && match.team1_player2">
                         <div class="flex items-center gap-2 pt-0.5">
-                            <div :class="isServing(1, 2) ? 'bg-amber-400 text-black shadow-xl ring-2 sm:ring-4 ring-amber-300/80 font-black' : 'text-neutral-100'" class="px-3 sm:px-4 py-1.5 sm:py-2.5 rounded-xl transition-all duration-200 flex-1 truncate font-player font-black tracking-wide uppercase text-lg sm:text-2xl md:text-3xl lg:text-4xl shadow-inner flex items-center justify-between">
+                            <div :class="isServing(1, 2) ? 'bg-amber-400 text-black shadow-xl ring-2 sm:ring-4 ring-amber-300/80 font-black' : (match.match_status === 'finished' && match.winner_team == 1 ? 'bg-amber-400/20 text-amber-200 ring-2 ring-amber-400/70 shadow-[0_0_20px_rgba(251,191,36,0.3)]' : 'text-neutral-100')" class="px-3 sm:px-4 py-1.5 sm:py-2.5 rounded-xl transition-all duration-200 flex-1 truncate font-player font-black tracking-wide uppercase text-lg sm:text-2xl md:text-3xl lg:text-4xl shadow-inner flex items-center justify-between">
                                 <span class="truncate" x-text="match.team1_player2"></span>
-                                <template x-if="isServing(1, 2)">
-                                    <div class="flex items-center gap-1 shrink-0 bg-black/20 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg border border-black/30 animate-pulse ml-2">
-                                        <span class="text-sm sm:text-lg">🏸</span>
-                                        <span class="font-led font-black text-[10px] sm:text-xs lg:text-sm text-neutral-900 tracking-wider hidden md:inline">SERVE</span>
-                                    </div>
-                                </template>
+                                <div class="flex items-center gap-1.5 shrink-0 ml-2">
+                                    <template x-if="match.match_status === 'finished' && match.winner_team == 1">
+                                        <span class="px-2.5 py-0.5 rounded-full bg-amber-400 text-black text-[10px] sm:text-xs font-black tracking-wider uppercase shadow-md animate-pulse">👑 WINNER</span>
+                                    </template>
+                                    <template x-if="isServing(1, 2)">
+                                        <div class="flex items-center gap-1 bg-black/20 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg border border-black/30 animate-pulse">
+                                            <span class="text-sm sm:text-lg">🏸</span>
+                                            <span class="font-led font-black text-[10px] sm:text-xs lg:text-sm text-neutral-900 tracking-wider hidden md:inline">SERVE</span>
+                                        </div>
+                                    </template>
+                                </div>
                             </div>
                         </div>
                     </template>
@@ -190,7 +209,22 @@
                 <!-- PEMBATAS TENGAH & STATUS GAME -->
                 <div class="col-span-12 flex items-center gap-3 my-1 sm:my-2 shrink-0">
                     <div class="h-[1.5px] bg-gradient-to-r from-transparent via-white/[0.15] to-transparent flex-1"></div>
-                    <span class="text-[10px] sm:text-xs lg:text-sm font-led tracking-widest uppercase font-bold px-4 py-1 rounded-full border shadow-lg transition-all" :class="match.match_status == 'interval' ? 'bg-cyan-950/90 text-cyan-400 border-cyan-500 animate-pulse shadow-cyan-500/20' : (match.match_status == 'finished' ? 'bg-emerald-950/90 text-emerald-400 border-emerald-500 shadow-emerald-500/20' : 'bg-[#0C111D] text-amber-400 border-amber-400/40 shadow-amber-400/10')" x-text="getMatchStatusLabel()"></span>
+                    <template x-if="match.match_status !== 'finished'">
+                        <span class="text-[10px] sm:text-xs lg:text-sm font-led tracking-widest uppercase font-bold px-4 py-1 rounded-full border shadow-lg transition-all" :class="match.match_status == 'interval' ? 'bg-cyan-950/90 text-cyan-400 border-cyan-500 animate-pulse shadow-cyan-500/20' : 'bg-[#0C111D] text-amber-400 border-amber-400/40 shadow-amber-400/10'" x-text="getMatchStatusLabel()"></span>
+                    </template>
+                    <template x-if="match.match_status === 'finished'">
+                        <div class="px-4 py-1.5 sm:px-6 sm:py-2 rounded-2xl bg-gradient-to-r from-amber-500/25 via-emerald-500/30 to-amber-500/25 border-2 border-amber-400/90 shadow-[0_0_35px_rgba(251,191,36,0.5)] flex items-center gap-2 sm:gap-3 cursor-pointer select-none transition hover:scale-105" @click="showWinnerModal = true" title="Klik untuk menampilkan popup perayaan pemenang">
+                            <span class="text-lg sm:text-2xl animate-bounce">🏆</span>
+                            <div class="text-center min-w-0">
+                                <span class="text-[9px] sm:text-[10px] font-black tracking-widest uppercase text-amber-300 block">PERTANDINGAN SELESAI • WINNER</span>
+                                <div class="text-xs sm:text-base lg:text-lg font-black font-player tracking-wide text-white uppercase glow-amber truncate">
+                                    <span x-text="getWinnerInfo() ? getWinnerInfo().athlete : ''"></span>
+                                    <span class="text-amber-300 font-extrabold text-[11px] sm:text-sm ml-1" x-text="getWinnerInfo() ? '(' + getWinnerInfo().school + ')' : ''"></span>
+                                </div>
+                            </div>
+                            <span class="text-lg sm:text-2xl animate-bounce">🏆</span>
+                        </div>
+                    </template>
                     <div class="h-[1.5px] bg-gradient-to-r from-transparent via-white/[0.15] to-transparent flex-1"></div>
                 </div>
 
@@ -204,28 +238,38 @@
 
                     <!-- Pemain 1 -->
                     <div class="flex items-center gap-2">
-                        <div :class="isServing(2, 1) ? 'bg-amber-400 text-black shadow-xl ring-2 sm:ring-4 ring-amber-300/80 font-black' : 'text-neutral-100'" class="px-3 sm:px-4 py-1.5 sm:py-2.5 rounded-xl transition-all duration-200 flex-1 truncate font-player font-black tracking-wide uppercase text-lg sm:text-2xl md:text-3xl lg:text-4xl shadow-inner flex items-center justify-between">
+                        <div :class="isServing(2, 1) ? 'bg-amber-400 text-black shadow-xl ring-2 sm:ring-4 ring-amber-300/80 font-black' : (match.match_status === 'finished' && match.winner_team == 2 ? 'bg-cyan-500/20 text-cyan-200 ring-2 ring-cyan-400/70 shadow-[0_0_20px_rgba(6,182,212,0.3)]' : 'text-neutral-100')" class="px-3 sm:px-4 py-1.5 sm:py-2.5 rounded-xl transition-all duration-200 flex-1 truncate font-player font-black tracking-wide uppercase text-lg sm:text-2xl md:text-3xl lg:text-4xl shadow-inner flex items-center justify-between">
                             <span class="truncate" x-text="match.team2_player1"></span>
-                            <template x-if="isServing(2, 1)">
-                                <div class="flex items-center gap-1 shrink-0 bg-black/20 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg border border-black/30 animate-pulse ml-2">
-                                    <span class="text-sm sm:text-lg">🏸</span>
-                                    <span class="font-led font-black text-[10px] sm:text-xs lg:text-sm text-neutral-900 tracking-wider hidden md:inline">SERVE</span>
-                                </div>
-                            </template>
+                            <div class="flex items-center gap-1.5 shrink-0 ml-2">
+                                <template x-if="match.match_status === 'finished' && match.winner_team == 2">
+                                    <span class="px-2.5 py-0.5 rounded-full bg-cyan-400 text-black text-[10px] sm:text-xs font-black tracking-wider uppercase shadow-md animate-pulse">👑 WINNER</span>
+                                </template>
+                                <template x-if="isServing(2, 1)">
+                                    <div class="flex items-center gap-1 bg-black/20 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg border border-black/30 animate-pulse">
+                                        <span class="text-sm sm:text-lg">🏸</span>
+                                        <span class="font-led font-black text-[10px] sm:text-xs lg:text-sm text-neutral-900 tracking-wider hidden md:inline">SERVE</span>
+                                    </div>
+                                </template>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Pemain 2 (Jika Ganda) -->
                     <template x-if="match.match_type === 'double' && match.team2_player2">
                         <div class="flex items-center gap-2 pt-0.5">
-                            <div :class="isServing(2, 2) ? 'bg-amber-400 text-black shadow-xl ring-2 sm:ring-4 ring-amber-300/80 font-black' : 'text-neutral-100'" class="px-3 sm:px-4 py-1.5 sm:py-2.5 rounded-xl transition-all duration-200 flex-1 truncate font-player font-black tracking-wide uppercase text-lg sm:text-2xl md:text-3xl lg:text-4xl shadow-inner flex items-center justify-between">
+                            <div :class="isServing(2, 2) ? 'bg-amber-400 text-black shadow-xl ring-2 sm:ring-4 ring-amber-300/80 font-black' : (match.match_status === 'finished' && match.winner_team == 2 ? 'bg-cyan-500/20 text-cyan-200 ring-2 ring-cyan-400/70 shadow-[0_0_20px_rgba(6,182,212,0.3)]' : 'text-neutral-100')" class="px-3 sm:px-4 py-1.5 sm:py-2.5 rounded-xl transition-all duration-200 flex-1 truncate font-player font-black tracking-wide uppercase text-lg sm:text-2xl md:text-3xl lg:text-4xl shadow-inner flex items-center justify-between">
                                 <span class="truncate" x-text="match.team2_player2"></span>
-                                <template x-if="isServing(2, 2)">
-                                    <div class="flex items-center gap-1 shrink-0 bg-black/20 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg border border-black/30 animate-pulse ml-2">
-                                        <span class="text-sm sm:text-lg">🏸</span>
-                                        <span class="font-led font-black text-[10px] sm:text-xs lg:text-sm text-neutral-900 tracking-wider hidden md:inline">SERVE</span>
-                                    </div>
-                                </template>
+                                <div class="flex items-center gap-1.5 shrink-0 ml-2">
+                                    <template x-if="match.match_status === 'finished' && match.winner_team == 2">
+                                        <span class="px-2.5 py-0.5 rounded-full bg-cyan-400 text-black text-[10px] sm:text-xs font-black tracking-wider uppercase shadow-md animate-pulse">👑 WINNER</span>
+                                    </template>
+                                    <template x-if="isServing(2, 2)">
+                                        <div class="flex items-center gap-1 bg-black/20 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg border border-black/30 animate-pulse">
+                                            <span class="text-sm sm:text-lg">🏸</span>
+                                            <span class="font-led font-black text-[10px] sm:text-xs lg:text-sm text-neutral-900 tracking-wider hidden md:inline">SERVE</span>
+                                        </div>
+                                    </template>
+                                </div>
                             </div>
                         </div>
                     </template>
@@ -269,6 +313,50 @@
                 </div>
             </template>
 
+            <!-- GRAND CHAMPION CELEBRATION OVERLAY ON TV SCOREBOARD -->
+            <template x-if="match && match.match_status === 'finished' && showWinnerModal">
+                <div class="absolute inset-0 bg-[#060A14]/94 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-center animate-fade-in border-4 border-amber-400/90 rounded-2xl sm:rounded-3xl shadow-[0_0_80px_rgba(251,191,36,0.4)]">
+                    <!-- Grand Trophy Icon & Champion Title -->
+                    <div class="inline-flex items-center gap-2 sm:gap-3 px-6 py-2 rounded-full bg-gradient-to-r from-amber-500/30 via-yellow-400/40 to-amber-500/30 text-amber-300 border-2 border-amber-400 text-sm sm:text-2xl font-black uppercase tracking-widest mb-3 sm:mb-4 animate-pulse shadow-lg">
+                        <span class="text-xl sm:text-3xl">🏆</span>
+                        <span>PERTANDINGAN SELESAI • CHAMPION!</span>
+                        <span class="text-xl sm:text-3xl">🏆</span>
+                    </div>
+
+                    <!-- Nama Atlet Pemenang (Dahulukan Nama Atlet - Besar & Megah) -->
+                    <div class="my-2 max-w-4xl px-4">
+                        <span class="text-xs sm:text-sm font-bold text-amber-400 uppercase tracking-widest block">PEMENANG (WINNER)</span>
+                        <h1 class="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black font-player tracking-wider text-white uppercase glow-amber mt-1" x-text="getWinnerInfo() ? getWinnerInfo().athlete : ''"></h1>
+                    </div>
+
+                    <!-- Asal Sekolah (Di Bawah Nama Atlet) -->
+                    <div class="mt-2 sm:mt-3 inline-flex items-center gap-2 px-6 py-2 rounded-2xl bg-slate-900/90 border border-amber-400/50 text-amber-300 text-sm sm:text-2xl font-extrabold uppercase tracking-wider shadow-lg">
+                        <span>🏫</span>
+                        <span x-text="getWinnerInfo() ? getWinnerInfo().school : ''"></span>
+                    </div>
+
+                    <!-- Skor Akhir Pertandingan -->
+                    <div class="mt-4 sm:mt-5 flex items-center justify-center gap-3 sm:gap-5 text-sm sm:text-xl text-neutral-300 font-mono bg-black/60 px-6 py-2.5 rounded-xl border border-white/10 shadow-inner">
+                        <span class="text-neutral-400 font-bold">SKOR AKHIR:</span>
+                        <span class="font-black text-lime-400" x-text="`${match.team1_set1} - ${match.team2_set1}`"></span>
+                        <span class="text-neutral-600">|</span>
+                        <span class="font-black text-cyan-400" x-text="`${match.team1_set2} - ${match.team2_set2}`"></span>
+                        <template x-if="match.current_set >= 3">
+                            <span class="flex items-center gap-3 sm:gap-5">
+                                <span class="text-neutral-600">|</span>
+                                <span class="font-black text-amber-400" x-text="`${match.team1_set3} - ${match.team2_set3}`"></span>
+                            </span>
+                        </template>
+                    </div>
+
+                    <!-- Tombol Tutup / Lihat Papan Skor Lengkap -->
+                    <button type="button" @click="showWinnerModal = false" class="mt-6 px-6 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 active:scale-95 text-neutral-300 hover:text-white text-xs sm:text-sm font-bold border border-slate-600 transition flex items-center gap-2 cursor-pointer shadow-lg">
+                        <i data-lucide="layout-grid" class="w-4 h-4 text-amber-400"></i>
+                        <span>Tampilkan Papan Skor Lengkap</span>
+                    </button>
+                </div>
+            </template>
+
             <!-- FOOTER LED -->
             <div class="pt-2 border-t border-white/[0.08] flex justify-between items-center text-[10px] sm:text-xs text-neutral-400 shrink-0">
                 <div class="flex items-center gap-2">
@@ -285,8 +373,89 @@
     </main>
     @endif
 
-    <!-- JAVASCRIPT LIVE STATE & AUTO SYNC -->
+    <!-- CHAMPION CONFETTI ENGINE (PURE JAVASCRIPT - ZERO DEPENDENCIES - 100% OFFLINE) -->
     <script>
+        class ChampionConfetti {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas ? this.canvas.getContext('2d') : null;
+                this.particles = [];
+                this.animationId = null;
+                this.isRunning = false;
+                this.resize = this.resize.bind(this);
+                window.addEventListener('resize', this.resize);
+            }
+
+            resize() {
+                if (!this.canvas) return;
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+
+            start() {
+                if (!this.canvas || !this.ctx || this.isRunning) return;
+                this.resize();
+                this.canvas.style.display = 'block';
+                this.isRunning = true;
+                this.particles = [];
+                const colors = ['#f59e0b', '#10b981', '#06b6d4', '#ec4899', '#8b5cf6', '#eab308', '#ffffff', '#3b82f6'];
+
+                for (let i = 0; i < 180; i++) {
+                    this.particles.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * -this.canvas.height,
+                        size: Math.random() * 9 + 4,
+                        color: colors[Math.floor(Math.random() * colors.length)],
+                        speedY: Math.random() * 3.5 + 2,
+                        speedX: Math.random() * 2.5 - 1.25,
+                        rotation: Math.random() * 360,
+                        rotationSpeed: Math.random() * 8 - 4,
+                        wobble: Math.random() * 10
+                    });
+                }
+
+                const render = () => {
+                    if (!this.isRunning) return;
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                    this.particles.forEach(p => {
+                        p.y += p.speedY;
+                        p.wobble += 0.05;
+                        p.x += Math.sin(p.wobble) * 1.5 + p.speedX;
+                        p.rotation += p.rotationSpeed;
+
+                        if (p.y > this.canvas.height + 20) {
+                            p.y = -20;
+                            p.x = Math.random() * this.canvas.width;
+                        }
+
+                        this.ctx.save();
+                        this.ctx.translate(p.x, p.y);
+                        this.ctx.rotate((p.rotation * Math.PI) / 180);
+                        this.ctx.fillStyle = p.color;
+                        this.ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size * 0.6);
+                        this.ctx.restore();
+                    });
+
+                    this.animationId = requestAnimationFrame(render);
+                };
+
+                render();
+            }
+
+            stop() {
+                this.isRunning = false;
+                if (this.animationId) {
+                    cancelAnimationFrame(this.animationId);
+                    this.animationId = null;
+                }
+                if (this.canvas && this.ctx) {
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    this.canvas.style.display = 'none';
+                }
+            }
+        }
+
         function liveScoreboardApp() {
             return {
                 match: @json($match),
@@ -295,11 +464,17 @@
                 lastDataHash: '',
                 intervalRemaining: 0,
                 intervalTimerId: null,
+                showWinnerModal: true,
+                confettiEngine: null,
 
                 init() {
                     lucide.createIcons();
+                    this.confettiEngine = new ChampionConfetti('champion-confetti-canvas');
                     if (this.match) {
                         this.syncIntervalTimer(this.match);
+                        if (this.match.match_status === 'finished') {
+                            this.confettiEngine.start();
+                        }
                         this.startFastSync();
                     }
                 },
@@ -367,6 +542,18 @@
                             // Synchronize interval countdown on every state update
                             this.syncIntervalTimer(data);
 
+                            // Trigger / stop confetti based on match status
+                            if (data.match_status === 'finished') {
+                                if (this.confettiEngine && !this.confettiEngine.isRunning) {
+                                    this.confettiEngine.start();
+                                }
+                            } else {
+                                if (this.confettiEngine && this.confettiEngine.isRunning) {
+                                    this.confettiEngine.stop();
+                                    this.showWinnerModal = true;
+                                }
+                            }
+
                             const hash = `${data.current_set}-${data.team1_set1}-${data.team2_set1}-${data.team1_set2}-${data.team2_set2}-${data.team1_set3}-${data.team2_set3}-${data.server_team}-${data.server_player}-${data.match_status}-${data.team1_player1}-${data.team2_player1}-${data.interval_until}`;
                             if (this.lastDataHash !== hash) {
                                 this.lastDataHash = hash;
@@ -411,12 +598,25 @@
                     return ((s1 >= 21 || s2 >= 21) && Math.abs(s1 - s2) >= 2) || Math.max(s1, s2) >= 30;
                 },
 
+                getWinnerInfo() {
+                    if (!this.match || this.match.match_status !== 'finished') return null;
+                    const isT1 = (this.match.winner_team == 1);
+                    const athlete = isT1 
+                        ? (this.match.match_type === 'double' && this.match.team1_player2 ? `${this.match.team1_player1} / ${this.match.team1_player2}` : this.match.team1_player1)
+                        : (this.match.match_type === 'double' && this.match.team2_player2 ? `${this.match.team2_player1} / ${this.match.team2_player2}` : this.match.team2_player1);
+                    const school = isT1 ? this.match.team1_school : this.match.team2_school;
+                    return { athlete, school, isTeam1: isT1 };
+                },
+
                 getMatchStatusLabel() {
                     if (!this.match) return '';
                     if (this.match.match_status === 'interval') return 'INTERVAL (11 POIN)';
                     if (this.match.match_status === 'finished') {
-                        const winner = this.match.winner_team == 1 ? this.match.team1_school : this.match.team2_school;
-                        return 'MATCH FINISHED • WINNER: ' + winner;
+                        const winner = this.getWinnerInfo();
+                        if (winner) {
+                            return `🏆 WINNER: ${winner.athlete} (${winner.school})`;
+                        }
+                        return 'MATCH FINISHED';
                     }
                     const s1 = this.getCurrentScore(1);
                     const s2 = this.getCurrentScore(2);

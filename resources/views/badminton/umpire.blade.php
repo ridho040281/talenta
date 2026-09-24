@@ -213,7 +213,7 @@
                 <span class="text-xs sm:text-sm font-black text-emerald-200 uppercase tracking-wider block">
                     🎉 PERTANDINGAN SELESAI!
                 </span>
-                <span class="text-xs text-emerald-300 font-bold block mt-0.5" x-text="'Pemenang: ' + (match.winner_team == 1 ? match.team1_school : match.team2_school)"></span>
+                <span class="text-xs sm:text-sm text-white font-extrabold block mt-0.5" x-text="'Pemenang: ' + getWinnerDisplayName()"></span>
             </div>
         </template>
 
@@ -477,10 +477,19 @@
                     return ((s1 >= 21 || s2 >= 21) && Math.abs(s1 - s2) >= 2) || Math.max(s1, s2) >= 30;
                 },
 
+                getWinnerDisplayName() {
+                    if (!this.match || this.match.match_status !== 'finished') return '';
+                    const isT1 = (this.match.winner_team == 1);
+                    const athlete = isT1 
+                        ? (this.match.match_type === 'double' && this.match.team1_player2 ? `${this.match.team1_player1} / ${this.match.team1_player2}` : this.match.team1_player1)
+                        : (this.match.match_type === 'double' && this.match.team2_player2 ? `${this.match.team2_player1} / ${this.match.team2_player2}` : this.match.team2_player1);
+                    const school = isT1 ? this.match.team1_school : this.match.team2_school;
+                    return `${athlete} (${school})`;
+                },
+
                 getStatusBadgeText() {
                     if (this.match.match_status === 'finished') {
-                        const winner = this.match.winner_team == 1 ? this.match.team1_school : this.match.team2_school;
-                        return 'MATCH FINISHED • WINNER: ' + winner;
+                        return 'MATCH FINISHED • WINNER: ' + this.getWinnerDisplayName();
                     }
                     if (this.isCurrentSetFinished()) {
                         return `🏆 SET ${this.match.current_set} SELESAI • SILAKAN KLIK SET SELANJUTNYA`;
