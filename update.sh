@@ -21,12 +21,18 @@ php artisan route:clear
 php artisan optimize:clear
 
 echo "🔄 Me-reload PHP-FPM / OPcache..."
-if systemctl is-active --quiet php8.3-fpm; then
-    sudo systemctl reload php8.3-fpm || true
+if systemctl is-active --quiet ea-php83-php-fpm; then
+    systemctl reload ea-php83-php-fpm || true
+elif systemctl is-active --quiet ea-php82-php-fpm; then
+    systemctl reload ea-php82-php-fpm || true
+elif systemctl is-active --quiet php8.3-fpm; then
+    systemctl reload php8.3-fpm || true
 elif systemctl is-active --quiet php-fpm-83; then
-    sudo systemctl reload php-fpm-83 || true
+    systemctl reload php-fpm-83 || true
+elif systemctl is-active --quiet php-fpm; then
+    systemctl reload php-fpm || true
 elif systemctl is-active --quiet php8.2-fpm; then
-    sudo systemctl reload php8.2-fpm || true
+    systemctl reload php8.2-fpm || true
 fi
 
 echo "✅ Update server Talenta berhasil diterapkan!"
