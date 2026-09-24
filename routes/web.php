@@ -15,6 +15,7 @@ use App\Http\Controllers\PesertaController;
 use App\Http\Controllers\PicController;
 use App\Http\Controllers\StageController;
 use App\Http\Controllers\TournamentBracketController;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -339,3 +340,23 @@ Route::get('/storage/{folder}/{filename}', function ($folder, $filename) {
     }
     abort(404);
 })->where('filename', '[A-Za-z0-9_\-\.]+');
+
+// Quick Route to Clear Views & Caches (Bisa diakses dari browser)
+Route::get('/bersihkan-cache', function () {
+    Artisan::call('view:clear');
+    Artisan::call('cache:clear');
+    Artisan::call('config:clear');
+    Artisan::call('route:clear');
+
+    return response('
+        <div style="font-family:sans-serif;padding:40px;text-align:center;background:#0f172a;color:#f8fafc;min-height:100vh;">
+            <div style="background:#1e293b;max-width:500px;margin:50px auto;padding:30px;border-radius:16px;box-shadow:0 10px 25px rgba(0,0,0,0.5);border:1px solid #334155;">
+                <h2 style="color:#4ade80;margin-top:0;">✅ Cache Berhasil Dibersihkan!</h2>
+                <p style="color:#94a3b8;font-size:14px;line-height:1.6;">Cache View Blade, Route, dan Config Laravel telah di-refresh dengan sukses ke versi terbaru.</p>
+                <div style="margin-top:24px;">
+                    <a href="javascript:history.back()" style="display:inline-block;padding:10px 20px;background:#3b82f6;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;font-size:14px;">Kembali ke Halaman Sebelumnya</a>
+                </div>
+            </div>
+        </div>
+    ');
+})->name('system.clear-cache');
