@@ -1321,10 +1321,14 @@
             toastMessage: '',
             toastSuccess: true,
 
+
             // Publication & Standby Notice State
             showPublicationModal: false,
             isSavingPublication: false,
-            pubSettings: @json($tvPublication ?? ['is_published' => true, 'standby_title' => 'BAGAN PERTANDINGAN SEDANG DISIAPKAN', 'standby_message' => 'Bagan resmi akan segera dirilis oleh panitia setelah sesi pengundian dan technical meeting selesai.', 'standby_contact' => 'Meja Panitia / Sekretariat GOR']),
+            @php
+                $pubDefault = ['is_published' => true, 'standby_title' => 'BAGAN PERTANDINGAN SEDANG DISIAPKAN', 'standby_message' => 'Bagan resmi akan segera dirilis oleh panitia setelah sesi pengundian dan technical meeting selesai.', 'standby_contact' => 'Meja Panitia / Sekretariat GOR'];
+            @endphp
+            pubSettings: @json($tvPublication ?? $pubDefault),
 
             openPublicationModal() {
                 this.showPublicationModal = true;
