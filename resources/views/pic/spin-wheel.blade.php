@@ -319,13 +319,13 @@
                         </div>
 
                         <!-- Spin Trigger Button -->
-                        <button type="button" @click="spin()" :disabled="isSpinning || activeUndrawnParticipants.length === 0" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-black text-sm sm:text-base tracking-wider uppercase shadow-xl shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.99] transition duration-200 flex items-center justify-center gap-3 cursor-pointer">
+                        <button type="button" @click="spin()" :disabled="isSpinning || isBatchRunning || activeUndrawnParticipants.length === 0" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-black text-sm sm:text-base tracking-wider uppercase shadow-xl shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.99] transition duration-200 flex items-center justify-center gap-3 cursor-pointer">
                             <i data-lucide="disc" class="w-5 h-5" :class="{ 'animate-spin': isSpinning }"></i>
-                            <span x-text="isSpinning ? 'RODA SEDANG BERPUTAR...' : (activeUndrawnParticipants.length === 0 ? 'KATEGORI INI SELESAI DIUNDI' : 'PUTAR RODA UNDIAN (1-BY-1)')"></span>
+                            <span x-text="isSpinning ? 'RODA SEDANG BERPUTAR...' : (isBatchRunning ? 'UNDIAN MASSAL BERJALAN...' : (activeUndrawnParticipants.length === 0 ? 'KATEGORI INI SELESAI DIUNDI' : 'PUTAR RODA UNDIAN (1-BY-1)'))"></span>
                         </button>
 
                         <!-- Batch / Full-Shuffle Auto Draw Quick Trigger Button -->
-                        <button type="button" @click="openBatchModal()" :disabled="isSpinning || activeUndrawnParticipants.length === 0" class="w-full py-3 px-4 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-emerald-500/30 hover:border-emerald-400 text-emerald-300 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-md">
+                        <button type="button" @click="openBatchModal()" :disabled="isSpinning || isBatchRunning || activeUndrawnParticipants.length === 0" class="w-full py-3 px-4 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-emerald-500/30 hover:border-emerald-400 text-emerald-300 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-md">
                             <i data-lucide="zap" class="w-4 h-4 text-emerald-400"></i>
                             <span>⚡ Undi Sekaligus: Batch / Full-Shuffle Auto Draw (<span x-text="activeUndrawnParticipants.length"></span> Sisa)</span>
                         </button>
@@ -419,6 +419,29 @@
                         </div>
                     </div>
 
+                    <!-- Batch Active Cascade HUD Banner -->
+                    <div x-show="isBatchRunning" x-cloak class="p-3 rounded-2xl bg-emerald-950/90 border-2 border-emerald-500/60 shadow-xl shadow-emerald-500/20 flex flex-wrap items-center justify-between gap-3 font-sans">
+                        <div class="flex items-center gap-2.5">
+                            <span class="relative flex h-3 w-3">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                            </span>
+                            <div>
+                                <span class="text-[10px] font-mono uppercase tracking-wider text-emerald-400 block font-bold">⚡ PENGACAKAN MASSAL AKTIF (CASCADE DECODER)</span>
+                                <span class="text-xs font-black text-white font-mono" x-text="batchProgressText"></span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" @click="toggleBatchPause()" class="px-3 py-1.5 rounded-xl bg-slate-900 border border-amber-500/40 text-amber-300 hover:bg-slate-800 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm">
+                                <span x-text="isBatchPaused ? '▶️ Lanjutkan' : '⏸️ Jeda'"></span>
+                            </button>
+                            <button type="button" @click="skipBatchAnimation()" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 text-xs font-black transition flex items-center gap-1.5 cursor-pointer shadow-md shadow-emerald-500/30">
+                                <i data-lucide="fast-forward" class="w-3.5 h-3.5"></i>
+                                <span>Lewati Animasi</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Target Number / Slot Display Box -->
                     <div class="text-center py-1 space-y-1.5">
                         <span class="text-[10px] font-bold tracking-widest text-emerald-500/70 uppercase block"
@@ -493,13 +516,13 @@
                     <!-- Trigger Buttons (1-by-1 vs Batch All) -->
                     <div class="space-y-2.5 pt-1 font-sans">
                         <!-- Big Hacker 1-by-1 Trigger Button -->
-                        <button type="button" @click="startHackerDraw()" :disabled="isDecoding || activeUndrawnParticipants.length === 0" class="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500 hover:from-emerald-400 hover:to-teal-300 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-black text-sm tracking-wider uppercase shadow-xl shadow-emerald-500/25 hover:scale-[1.01] active:scale-[0.99] transition duration-200 flex items-center justify-center gap-2.5 cursor-pointer">
-                            <i data-lucide="terminal" class="w-5 h-5" :class="{ 'animate-spin': isDecoding }"></i>
-                            <span x-text="isDecoding ? 'SEDANG MENGACAK SELURUH KANDIDAT PESERTA...' : (activeUndrawnParticipants.length === 0 ? 'KATEGORI INI TELAH SELESAI DIUNDI' : (drawMode === 'draw_slot' ? 'UNDI 1-BY-1 UNTUK NO ' + displayNumber : 'UNDI 1-BY-1 NOMOR PESERTA'))"></span>
+                        <button type="button" @click="startHackerDraw()" :disabled="isDecoding || isBatchRunning || activeUndrawnParticipants.length === 0" class="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500 hover:from-emerald-400 hover:to-teal-300 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-black text-sm tracking-wider uppercase shadow-xl shadow-emerald-500/25 hover:scale-[1.01] active:scale-[0.99] transition duration-200 flex items-center justify-center gap-2.5 cursor-pointer">
+                            <i data-lucide="terminal" class="w-5 h-5" :class="{ 'animate-spin': isDecoding && !isBatchRunning }"></i>
+                            <span x-text="isBatchRunning ? 'UNDIAN MASSAL SEDANG BERJALAN...' : (isDecoding ? 'SEDANG MENGACAK SELURUH KANDIDAT PESERTA...' : (activeUndrawnParticipants.length === 0 ? 'KATEGORI INI TELAH SELESAI DIUNDI' : (drawMode === 'draw_slot' ? 'UNDI 1-BY-1 UNTUK NO ' + displayNumber : 'UNDI 1-BY-1 NOMOR PESERTA')))"></span>
                         </button>
 
                         <!-- Batch / Full-Shuffle Auto Draw Quick Trigger Button -->
-                        <button type="button" @click="openBatchModal()" :disabled="isDecoding || activeUndrawnParticipants.length === 0" class="w-full py-3 px-4 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-emerald-500/30 hover:border-emerald-400 text-emerald-300 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-md">
+                        <button type="button" @click="openBatchModal()" :disabled="isDecoding || isBatchRunning || activeUndrawnParticipants.length === 0" class="w-full py-3 px-4 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-emerald-500/30 hover:border-emerald-400 text-emerald-300 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-md">
                             <i data-lucide="zap" class="w-4 h-4 text-emerald-400"></i>
                             <span>⚡ Undi Sekaligus: Batch / Full-Shuffle Auto Draw (<span x-text="activeUndrawnParticipants.length"></span> Sisa)</span>
                         </button>
@@ -534,7 +557,8 @@
 
                 <div class="space-y-2.5 max-h-[320px] overflow-y-auto pr-1">
                     <template x-for="item in (drawnTab === 'pool' ? activeDrawnParticipants : allDrawnParticipants)" :key="item.id">
-                        <div class="p-3 rounded-2xl bg-slate-950/70 border border-slate-800 hover:border-slate-700 flex items-center justify-between gap-3 transition">
+                        <div class="p-3 rounded-2xl border flex items-center justify-between gap-3 transition duration-300"
+                             :class="recentlyDrawnId === item.id ? 'bg-emerald-500/20 border-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.35)] scale-[1.02]' : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'">
                             <div class="flex items-center gap-3 overflow-hidden">
                                 <div class="w-10 h-10 rounded-xl bg-amber-400 text-slate-950 font-mono font-black flex items-center justify-center text-sm shrink-0 shadow-sm shadow-amber-400/20" x-text="'#' + item.draw_number"></div>
                                 <div class="overflow-hidden">
@@ -816,6 +840,49 @@
                 </div>
                 @endif
 
+                <!-- Pilihan Mode & Kecepatan Pengacakan -->
+                <div class="space-y-2 pt-2 border-t border-slate-800 font-sans">
+                    <label class="block text-[10px] font-bold uppercase tracking-wider text-emerald-400">Metode Tampilan Pengacakan:</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <!-- Mode Hacker Beruntun -->
+                        <button type="button" 
+                                @click="batchMode = 'cascade'"
+                                class="p-3 rounded-2xl border text-left transition cursor-pointer flex flex-col justify-between"
+                                :class="batchMode === 'cascade' ? 'bg-emerald-500/15 border-emerald-400 text-white shadow-lg shadow-emerald-500/10' : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'">
+                            <div class="flex items-center gap-2 mb-1">
+                                <i data-lucide="terminal" class="w-4 h-4 text-emerald-400"></i>
+                                <span class="text-xs font-black text-emerald-300">Mode Hacker (1-by-1)</span>
+                            </div>
+                            <span class="text-[10px] text-slate-300 leading-snug">Mengacak beruntun tiap slot nomor dengan visual glitch matrix & suara hacker.</span>
+                        </button>
+
+                        <!-- Mode Instan -->
+                        <button type="button" 
+                                @click="batchMode = 'instant'"
+                                class="p-3 rounded-2xl border text-left transition cursor-pointer flex flex-col justify-between"
+                                :class="batchMode === 'instant' ? 'bg-emerald-500/15 border-emerald-400 text-white shadow-lg shadow-emerald-500/10' : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'">
+                            <div class="flex items-center gap-2 mb-1">
+                                <i data-lucide="fast-forward" class="w-4 h-4 text-amber-400"></i>
+                                <span class="text-xs font-black text-amber-300">Mode Instan (Langsung)</span>
+                            </div>
+                            <span class="text-[10px] text-slate-300 leading-snug">Mengunci seluruh peserta seketika dalam 1 kali simpan tanpa animasi beruntun.</span>
+                        </button>
+                    </div>
+
+                    <!-- Pilihan Kecepatan jika Mode Cascade dipilih -->
+                    <div x-show="batchMode === 'cascade'" x-transition class="pt-1.5 flex items-center justify-between bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+                        <span class="text-[11px] text-slate-300 font-bold">Kecepatan Animasi:</span>
+                        <div class="inline-flex items-center p-0.5 bg-slate-950 rounded-lg border border-slate-800 text-[10px]">
+                            <button type="button" @click="batchSpeed = 800" :class="batchSpeed === 800 ? 'bg-emerald-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white'" class="px-2.5 py-1 rounded-md transition font-bold cursor-pointer">
+                                ⚡ Kilat Turbo (~0.8s)
+                            </button>
+                            <button type="button" @click="batchSpeed = 1600" :class="batchSpeed === 1600 ? 'bg-emerald-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white'" class="px-2.5 py-1 rounded-md transition font-bold cursor-pointer">
+                                🎬 Dramatis (~1.6s)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="flex items-center justify-between text-[11px] font-mono bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
                     <span class="text-slate-400">Total Peserta yang Akan Diundi:</span>
                     <span class="text-amber-400 font-bold" x-text="(batchTargetScope === 'pool' ? activeUndrawnParticipants.length : allUndrawnParticipants.length) + ' Peserta'"></span>
@@ -994,7 +1061,7 @@
             soundEnabled: true,
 
             setVisualMode(mode) {
-                if (this.isSpinning || this.isDecoding) return;
+                if (this.isSpinning || this.isDecoding || this.isBatchRunning) return;
                 this.visualMode = mode;
                 if (mode === 'wheel') {
                     this.$nextTick(() => {
@@ -1029,38 +1096,34 @@
             batchCountdown: null,
             batchSuccessMessage: '',
             batchErrorMessage: '',
+            batchMode: 'cascade', // 'cascade' (Mode Hacker 1-by-1) or 'instant' (Semua Langsung)
+            batchSpeed: 800, // 800ms (Kilat Turbo), 1600ms (Dramatis)
+            isBatchRunning: false,
+            isBatchPaused: false,
+            batchStopRequested: false,
+            batchProgressText: '',
+            recentlyDrawnId: null,
 
             openBatchModal() {
+                if (this.isBatchRunning) return;
                 this.isBatchModalOpen = true;
                 this.batchSuccessMessage = '';
                 this.batchErrorMessage = '';
                 this.isProcessingBatch = false;
                 this.batchCountdown = null;
                 this.batchTargetScope = 'pool';
+                this.batchMode = 'cascade';
+                this.batchSpeed = 800;
                 this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
             },
 
             async executeBatchDraw() {
-                if (this.isProcessingBatch) return;
+                if (this.isProcessingBatch || this.isBatchRunning) return;
                 this.isProcessingBatch = true;
                 this.batchErrorMessage = '';
                 this.batchSuccessMessage = '';
 
                 try {
-                    // Countdown animation
-                    for (let i = 3; i >= 1; i--) {
-                        this.batchCountdown = i;
-                        if (typeof this.playBeep === 'function') {
-                            this.playBeep(420 + (4 - i) * 140, 0.08, 'triangle');
-                        }
-                        await new Promise(r => setTimeout(r, 600));
-                    }
-                    this.batchCountdown = 'SHUFFLING...';
-                    if (typeof this.playBeep === 'function') {
-                        this.playBeep(880, 0.15, 'sine');
-                    }
-                    await new Promise(r => setTimeout(r, 500));
-
                     const poolKey = this.batchTargetScope === 'pool' ? this.activePoolKey : 'all';
                     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
 
@@ -1075,28 +1138,37 @@
                     });
 
                     const data = await response.json();
-                    if (data.success) {
-                        this.batchSuccessMessage = data.message;
-                        
-                        // Apply results to reactive state
-                        if (data.results && Array.isArray(data.results)) {
-                            data.results.forEach(res => {
-                                this.pools.forEach(p => {
-                                    const participant = p.participants.find(item => item.id == res.id);
-                                    if (participant) {
-                                        participant.is_drawn = true;
-                                        participant.draw_number = res.draw_number;
-                                    }
-                                });
-                            });
-                        }
+                    if (!data.success) {
+                        this.batchErrorMessage = data.message || 'Gagal memproses Batch Auto Draw.';
+                        this.isProcessingBatch = false;
+                        return;
+                    }
 
-                        this.wonDrawNumber = 'ALL';
-                        this.wonParticipantName = '⚡ BATCH SHUFFLE SELESAI';
-                        this.wonParticipantSchool = `${data.drawn_count} peserta berhasil diundi secara serentak`;
+                    const results = data.results && Array.isArray(data.results) ? data.results : [];
+                    if (results.length === 0) {
+                        this.batchErrorMessage = 'Tidak ada peserta yang perlu diundi.';
+                        this.isProcessingBatch = false;
+                        return;
+                    }
+
+                    // Sort results ascending by draw_number so slots #1, #2, #3... are animated in sequence
+                    results.sort((a, b) => parseInt(a.draw_number) - parseInt(b.draw_number));
+
+                    if (this.batchMode === 'instant') {
+                        // Instant Mode: Commit all at once
+                        results.forEach(res => {
+                            this.commitParticipantDrawn(res);
+                        });
+
+                        this.batchSuccessMessage = data.message;
+                        this.displayName = '⚡ BATCH SHUFFLE COMPLETED';
+                        this.displaySchool = `${data.drawn_count} peserta berhasil diundi secara serentak`;
+                        this.radarTicker = 'BATCH_COMPLETED >> ' + data.drawn_count + ' SLOTS ALLOCATED';
 
                         if (typeof this.playWinnerSound === 'function') {
                             this.playWinnerSound();
+                        } else if (typeof this.playLockSound === 'function') {
+                            this.playLockSound();
                         }
 
                         if (typeof confetti === 'function') {
@@ -1106,20 +1178,218 @@
                         setTimeout(() => {
                             this.isBatchModalOpen = false;
                             this.isProcessingBatch = false;
-                            this.batchCountdown = null;
                             this.drawWheel();
-                        }, 1800);
-                    } else {
-                        this.batchErrorMessage = data.message || 'Gagal memproses Batch Auto Draw.';
-                        this.isProcessingBatch = false;
-                        this.batchCountdown = null;
+                        }, 1400);
+                        return;
                     }
+
+                    // Cascade Hacker Mode: Close modal and launch sequential hacker cipher decoder
+                    this.isBatchModalOpen = false;
+                    this.isProcessingBatch = false;
+
+                    // Auto-switch to Hacker Mode terminal so spectators see the full live decoder spectacle
+                    if (this.visualMode !== 'hacker') {
+                        this.setVisualMode('hacker');
+                    }
+
+                    // Run the animated sequential cascade
+                    await this.runBatchHackerCascade(results, this.batchSpeed);
+
                 } catch (err) {
                     console.error('Batch draw network error:', err);
                     this.batchErrorMessage = 'Terjadi gangguan saat memproses Batch Auto Draw: ' + (err.message || err);
                     this.isProcessingBatch = false;
-                    this.batchCountdown = null;
                 }
+            },
+
+            async runBatchHackerCascade(results, speed = 800) {
+                this.isBatchRunning = true;
+                this.isDecoding = true;
+                this.batchStopRequested = false;
+                this.isBatchPaused = false;
+                this.lockedWinner = null;
+                this.bwfNotification = '';
+
+                const totalItems = results.length;
+
+                for (let idx = 0; idx < totalItems; idx++) {
+                    if (this.batchStopRequested) {
+                        // Skip remaining: commit immediately
+                        for (let rem = idx; rem < totalItems; rem++) {
+                            this.commitParticipantDrawn(results[rem]);
+                        }
+                        break;
+                    }
+
+                    // Handle Pause
+                    while (this.isBatchPaused && !this.batchStopRequested) {
+                        await new Promise(r => setTimeout(r, 100));
+                    }
+
+                    const item = results[idx];
+                    this.batchProgressText = `${idx + 1} / ${totalItems} Peserta • Target Slot #${String(item.draw_number).padStart(2, '0')}`;
+
+                    // Run punchy single hacker cipher animation for this slot
+                    await this.animateSingleHackerSlot(item, speed);
+
+                    // Commit item to reactive state and highlight
+                    this.commitParticipantDrawn(item);
+                    this.recentlyDrawnId = item.id;
+
+                    if (idx < totalItems - 1 && !this.batchStopRequested) {
+                        await new Promise(r => setTimeout(r, 160));
+                    }
+                }
+
+                // Final celebration
+                this.isBatchRunning = false;
+                this.isDecoding = false;
+                this.isBatchPaused = false;
+                this.batchStopRequested = false;
+                this.batchProgressText = '';
+                this.displayName = '⚡ SELURUH SLOT SELESAI DIUNDI';
+                this.displaySchool = `${totalItems} peserta sukses dialokasikan secara berurutan`;
+                this.radarTicker = 'CASCADE_FINISHED >> ALL_TARGETS_LOCKED';
+                this.updateDisplayNumber();
+
+                if (typeof this.playLockSound === 'function') {
+                    this.playLockSound();
+                } else if (typeof this.playWinnerSound === 'function') {
+                    this.playWinnerSound();
+                }
+
+                if (typeof confetti === 'function') {
+                    confetti({ particleCount: 180, spread: 100, origin: { y: 0.6 } });
+                }
+
+                setTimeout(() => {
+                    this.recentlyDrawnId = null;
+                }, 3000);
+            },
+
+            animateSingleHackerSlot(item, duration = 800) {
+                return new Promise((resolve) => {
+                    const targetName = item.name || 'PESERTA';
+                    const targetSchool = item.institution || '';
+                    const targetNumStr = '#' + String(item.draw_number).padStart(2, '0');
+                    const glitchChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*<>/=[]{}?+~§µ";
+
+                    this.displayNumber = targetNumStr;
+                    this.lockedWinner = null;
+                    this.bwfNotification = '';
+
+                    const startTime = performance.now();
+                    let frameCount = 0;
+                    const candidatePool = this.activeParticipants.length > 0 ? this.activeParticipants : [item];
+
+                    const animateFrame = (currentTime) => {
+                        if (this.batchStopRequested) {
+                            this.displayName = targetName;
+                            this.displaySchool = targetSchool;
+                            this.displayNumber = targetNumStr;
+                            resolve();
+                            return;
+                        }
+
+                        const elapsed = currentTime - startTime;
+                        const progress = Math.min(elapsed / duration, 1);
+                        frameCount++;
+
+                        if (progress < 0.65) {
+                            const randCandidate = candidatePool[this.getCryptoRandomInt(candidatePool.length)];
+                            const baseName = randCandidate ? randCandidate.name : targetName;
+
+                            let scrambled = "";
+                            for (let i = 0; i < baseName.length; i++) {
+                                if (baseName[i] === ' ') {
+                                    scrambled += ' ';
+                                } else if (Math.random() > 0.4) {
+                                    scrambled += baseName[i];
+                                } else {
+                                    scrambled += glitchChars[this.getCryptoRandomInt(glitchChars.length)];
+                                }
+                            }
+                            this.displayName = scrambled;
+                            this.displaySchool = randCandidate ? randCandidate.institution : targetSchool;
+                            this.radarTicker = (randCandidate ? randCandidate.name : targetName) + ' [' + (randCandidate ? randCandidate.institution : targetSchool) + ']';
+
+                            if (frameCount % 2 === 0 && typeof this.playBeep === 'function') {
+                                this.playBeep(520 + (Math.sin(frameCount) * 320) + this.getCryptoRandomInt(160), 0.02, 'square');
+                            }
+                        } else {
+                            const resolveRatio = (progress - 0.65) / 0.35;
+                            const charsToLock = Math.floor(resolveRatio * targetName.length);
+
+                            let partial = "";
+                            for (let i = 0; i < targetName.length; i++) {
+                                if (i <= charsToLock) {
+                                    partial += targetName[i];
+                                } else if (targetName[i] === ' ') {
+                                    partial += ' ';
+                                } else {
+                                    partial += glitchChars[this.getCryptoRandomInt(glitchChars.length)];
+                                }
+                            }
+                            this.displayName = partial;
+                            this.displaySchool = targetSchool;
+                            this.radarTicker = 'LOCKING_ON >> ' + targetName + ' (' + Math.floor(resolveRatio * 100) + '%)';
+
+                            if (frameCount % 3 === 0 && typeof this.playBeep === 'function') {
+                                this.playBeep(650 + (resolveRatio * 500), 0.03, 'triangle');
+                            }
+                        }
+
+                        if (progress < 1) {
+                            requestAnimationFrame(animateFrame);
+                        } else {
+                            this.displayName = targetName;
+                            this.displaySchool = targetSchool;
+                            this.displayNumber = targetNumStr;
+                            this.radarTicker = 'TARGET_LOCKED >> ' + targetName;
+                            this.lockedWinner = {
+                                participant: item,
+                                drawNumber: item.draw_number
+                            };
+
+                            if (typeof this.playBeep === 'function') {
+                                this.playBeep(880, 0.08, 'triangle');
+                            }
+
+                            resolve();
+                        }
+                    };
+
+                    requestAnimationFrame(animateFrame);
+                });
+            },
+
+            commitParticipantDrawn(item) {
+                this.pools.forEach(p => {
+                    const participant = p.participants.find(pt => pt.id == item.id);
+                    if (participant) {
+                        participant.is_drawn = true;
+                        participant.draw_number = item.draw_number;
+                    }
+                });
+
+                if (this.activeUndrawnParticipants.length > 0) {
+                    this.selectedParticipantId = this.activeUndrawnParticipants[0].id;
+                } else {
+                    this.selectedParticipantId = null;
+                }
+
+                this.updateDisplayNumber();
+                if (typeof this.calculateAvailableSlots === 'function') {
+                    this.calculateAvailableSlots();
+                }
+            },
+
+            toggleBatchPause() {
+                this.isBatchPaused = !this.isBatchPaused;
+            },
+
+            skipBatchAnimation() {
+                this.batchStopRequested = true;
             },
             
             hasTeammatesInPool(participant) {
@@ -1565,7 +1835,7 @@
             },
 
             switchPool(key) {
-                if (this.isSpinning || this.isDecoding) return;
+                if (this.isSpinning || this.isDecoding || this.isBatchRunning) return;
                 this.activePoolKey = key;
                 const target = this.pools.find(p => p.key === key);
                 if (target) {
