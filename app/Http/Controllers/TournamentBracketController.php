@@ -741,6 +741,19 @@ class TournamentBracketController extends Controller
             8 => (int) ($bracketSize / 4),
         ];
 
+        if ($bracketSize >= 16) {
+            $seedSlots += [
+                9 => (int) ($bracketSize / 8) + 1,
+                10 => (int) (7 * $bracketSize / 8),
+                11 => (int) (5 * $bracketSize / 8) + 1,
+                12 => (int) (3 * $bracketSize / 8),
+                13 => (int) (3 * $bracketSize / 8) + 1,
+                14 => (int) (5 * $bracketSize / 8),
+                15 => (int) (7 * $bracketSize / 8) + 1,
+                16 => (int) ($bracketSize / 8),
+            ];
+        }
+
         $slots = array_fill(1, $bracketSize, null);
 
         // Priority slots for BYEs (paired with seeds 1..8) if not playoff
