@@ -30,15 +30,6 @@
         </div>
         
         <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
-            <a href="{{ route('badminton.scoreboard') }}" target="_blank" class="px-3 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 active:scale-95 text-amber-300 hover:text-amber-200 text-xs font-bold border border-slate-700 flex items-center justify-center gap-2 shadow-sm transition">
-                <i data-lucide="tv" class="w-4 h-4 text-rose-500 shrink-0"></i>
-                <span class="truncate">Layar TV</span>
-            </a>
-
-            <a href="{{ route('badminton.arena') }}" target="_blank" class="px-3 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 active:scale-95 text-emerald-400 hover:text-emerald-300 text-xs font-bold border border-slate-700 flex items-center justify-center gap-2 shadow-sm transition">
-                <i data-lucide="layout-grid" class="w-4 h-4 text-emerald-400 shrink-0"></i>
-                <span class="truncate">Arena Multi</span>
-            </a>
 
             <a href="{{ route('badminton.bracket') }}" class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2 transition" title="Buka Bagan Pertandingan Bulu Tangkis">
                 <i data-lucide="git-branch" class="w-4 h-4 shrink-0"></i>
