@@ -1667,9 +1667,18 @@ class TournamentBracketController extends Controller
                 $arrowX = $slotX - 18;
                 $svg[] = "<polygon points='{$arrowX},{$targetY} ".($arrowX - 6).','.($targetY - 4).' '.($arrowX - 6).','.($targetY + 4)."' fill='{$accentColor}'/>";
 
+                // Play-off badge on connector junction
+                $poBadgeBg = $isDark ? '#0b1329' : '#ffffff';
+                $poBadgeBorder = $isDark ? '#f59e0b' : '#d97706';
+                $poBadgeText = $isDark ? '#f59e0b' : '#d97706';
+                $svg[] = "<g class='match-node-badge' title='Play-off Kualifikasi'>";
+                $svg[] = "<rect x='".($poStemX - 12)."' y='".($targetY - 9)."' width='24' height='18' rx='4' fill='{$poBadgeBg}' stroke='{$poBadgeBorder}' stroke-width='1.6'/>";
+                $svg[] = "<text x='{$poStemX}' y='".($targetY + 4)."' text-anchor='middle' font-size='9.5' font-weight='900' font-family='monospace, system-ui, sans-serif' fill='{$poBadgeText}'>PO</text>";
+                $svg[] = '</g>';
+
                 // Play-off schedule text above the line
                 $poSched = $po['existing_match']?->scheduled_time ?? '07:30';
-                $svg[] = "<text x='".($poStemX + 3)."' y='".($targetY - 4)."' font-size='7.5' font-mono font-weight='700' fill='{$accentColor}'>{$poSched}</text>";
+                $svg[] = "<text x='".($poStemX + 15)."' y='".($targetY - 4)."' font-size='7.5' font-mono font-weight='700' fill='{$accentColor}'>{$poSched}</text>";
             }
         }
 
@@ -1683,6 +1692,7 @@ class TournamentBracketController extends Controller
         }
 
         $colStartX = $slotX + $slotWidth;
+        $sequentialMatchNum = 0;
 
         for ($r = 1; $r <= $totalRounds; $r++) {
             $rMatches = $rounds[$r]['matches'] ?? [];
@@ -1702,6 +1712,23 @@ class TournamentBracketController extends Controller
                 $y2 = $currentStems[$idx2]['y'] ?? $y1;
                 $yMid = ($y1 + $y2) / 2;
 
+                // Cek apakah pertandingan ini adalah BYE lolos otomatis di Babak 1 (tidak perlu nomor partai)
+                $isByeAdvance = ($r === 1) && (
+                    ($match['status'] ?? '') === 'bye_advance' ||
+                    ! empty($match['is_bye1']) ||
+                    ! empty($match['is_bye2']) ||
+                    (($match['team1']['name'] ?? '') === '[BYE]') ||
+                    (($match['team2']['name'] ?? '') === '[BYE]')
+                );
+
+                $matchNumber = null;
+                if (! $isByeAdvance) {
+                    $sequentialMatchNum++;
+                    $em = $match['existing_match'] ?? null;
+                    // Prioritaskan nomor partai resmi dari jadwal database jika ada, jika belum ada gunakan nomor urut bagan
+                    $matchNumber = (! empty($em?->match_order)) ? $em->match_order : $sequentialMatchNum;
+                }
+
                 // Horizontal arm from top
                 $svg[] = "<line x1='{$branchStartX}' y1='{$y1}' x2='{$bracketVLineX}' y2='{$y1}' stroke='{$strokeColor}' stroke-width='{$strokeWidth}'/>";
                 // Horizontal arm from bottom
@@ -1710,6 +1737,25 @@ class TournamentBracketController extends Controller
                 $svg[] = "<line x1='{$bracketVLineX}' y1='{$y1}' x2='{$bracketVLineX}' y2='{$y2}' stroke='{$strokeColor}' stroke-width='{$strokeWidth}'/>";
                 // Horizontal stem to right
                 $svg[] = "<line x1='{$bracketVLineX}' y1='{$yMid}' x2='{$stemEndX}' y2='{$yMid}' stroke='{$strokeColor}' stroke-width='{$strokeWidth}'/>";
+
+                // Badge Nomor Pertandingan / Nomor Partai (Agak Besar & Jelas seperti Standar Resmi BWF)
+                if ($matchNumber !== null) {
+                    $numStr = (string) $matchNumber;
+                    $badgeW = (strlen($numStr) >= 3) ? 32 : (strlen($numStr) >= 2 ? 26 : 22);
+                    $badgeH = 20;
+                    $badgeX = $bracketVLineX - ($badgeW / 2);
+                    $badgeY = $yMid - ($badgeH / 2);
+                    $badgeBg = $isDark ? '#0b1329' : '#ffffff';
+                    $badgeBorder = $isDark ? '#38bdf8' : '#0f172a';
+                    $badgeText = $isDark ? '#38bdf8' : '#0f172a';
+
+                    $svg[] = "<g class='match-node-badge' title='Partai #{$numStr}'>";
+                    $svg[] = "<rect x='{$badgeX}' y='{$badgeY}' width='{$badgeW}' height='{$badgeH}' rx='4' fill='{$badgeBg}' stroke='{$badgeBorder}' stroke-width='1.8'/>";
+                    $svg[] = "<text x='{$bracketVLineX}' y='".($yMid + 4.5)."' text-anchor='middle' font-size='12' font-weight='900' font-family='monospace, system-ui, sans-serif' fill='{$badgeText}'>{$numStr}</text>";
+                    $svg[] = '</g>';
+                }
+
+                $contentStartX = $bracketVLineX + ($matchNumber !== null ? 20 : 8);
 
                 // Winner text on line (Peserta yang Lolos ke Babak Berikutnya)
                 if (! empty($match['winner'])) {
@@ -1725,14 +1771,14 @@ class TournamentBracketController extends Controller
                         $wSize = ($wMaxLen > 24) ? '8.5' : (($bracketSize > 16) ? '9.5' : '10.5');
 
                         // 2 lines above the horizontal branch stem line
-                        $svg[] = "<text x='".($bracketVLineX + 8)."' y='".($yMid - 13)."' font-size='{$wSize}' font-weight='800' fill='{$wColor}'>{$w1}</text>";
-                        $svg[] = "<text x='".($bracketVLineX + 8)."' y='".($yMid - 3)."' font-size='{$wSize}' font-weight='800' fill='{$wColor}'>{$w2}</text>";
+                        $svg[] = "<text x='{$contentStartX}' y='".($yMid - 13)."' font-size='{$wSize}' font-weight='800' fill='{$wColor}'>{$w1}</text>";
+                        $svg[] = "<text x='{$contentStartX}' y='".($yMid - 3)."' font-size='{$wSize}' font-weight='800' fill='{$wColor}'>{$w2}</text>";
                     } else {
                         // Single player advancing
                         $wName = htmlspecialchars($rawWinnerName, ENT_QUOTES);
                         $wLen = mb_strlen($rawWinnerName);
                         $wFontSize = ($wLen > 26) ? '10' : (($bracketSize > 16) ? '11' : '12.5');
-                        $svg[] = "<text x='".($bracketVLineX + 8)."' y='".($yMid - 6)."' font-size='{$wFontSize}' font-weight='800' fill='{$wColor}'>{$wName}</text>";
+                        $svg[] = "<text x='{$contentStartX}' y='".($yMid - 6)."' font-size='{$wFontSize}' font-weight='800' fill='{$wColor}'>{$wName}</text>";
                     }
                 }
 
@@ -1741,14 +1787,11 @@ class TournamentBracketController extends Controller
                     $em = $match['existing_match'];
                     if ($em->team1_set1 > 0 || $em->team2_set1 > 0) {
                         $scoreStr = "{$em->team1_set1}-{$em->team2_set1}";
-                        $svg[] = "<text x='".($bracketVLineX + 8)."' y='".($yMid + 12)."' font-size='8.5' font-mono font-weight='bold' fill='{$subTextColor}'>{$scoreStr}</text>";
+                        $svg[] = "<text x='{$contentStartX}' y='".($yMid + 12)."' font-size='8.5' font-mono font-weight='bold' fill='{$subTextColor}'>{$scoreStr}</text>";
                     } elseif (! empty($em->court_number) || ! empty($em->scheduled_time)) {
                         $schedParts = [];
                         if (! empty($em->match_day)) {
                             $schedParts[] = "H{$em->match_day}";
-                        }
-                        if (! empty($em->match_order)) {
-                            $schedParts[] = "#{$em->match_order}";
                         }
                         if (! empty($em->court_number) && strtoupper($em->court_number) !== 'BYE') {
                             $schedParts[] = $em->court_number;
@@ -1758,7 +1801,7 @@ class TournamentBracketController extends Controller
                         }
                         if (! empty($schedParts)) {
                             $schedStr = htmlspecialchars(implode(' • ', $schedParts), ENT_QUOTES);
-                            $svg[] = "<text x='".($bracketVLineX + 8)."' y='".($yMid + 11)."' font-size='7.5' font-mono font-weight='700' fill='{$accentColor}'>{$schedStr}</text>";
+                            $svg[] = "<text x='{$contentStartX}' y='".($yMid + 11)."' font-size='7.5' font-mono font-weight='700' fill='{$accentColor}'>{$schedStr}</text>";
                         }
                     }
                 }
