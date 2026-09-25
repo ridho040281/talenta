@@ -107,20 +107,31 @@
                 @endif
             </div>
 
-            <!-- Right (Pojok Kanan Atas): Quick Actions (TV SKOR, Arena TV) & Titik 3 Opsi -->
-            <div class="flex items-center gap-2 shrink-0 self-end sm:self-center ml-auto">
+            <!-- Right (Pojok Kanan Atas): Pusat Layar Monitor TV & Quick Actions -->
+            <div class="flex items-center gap-1.5 sm:gap-2 shrink-0 self-end sm:self-center ml-auto">
+                <!-- TV Bagan (Siaran Publik) -->
+                <a href="{{ route('public.bracket', $competition->slug ?: $competition->id) }}?{{ http_build_query($poolParam) }}" 
+                   target="_blank"
+                   class="px-2.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+                   title="Buka Layar TV Bagan untuk Penonton & Pemain">
+                    <i data-lucide="tv" class="w-3.5 h-3.5 text-amber-400"></i>
+                    <span class="hidden sm:inline">TV Bagan</span>
+                </a>
+
+                <!-- TV SKOR (Papan Skor LED) -->
                 <a href="{{ $isBadminton ? route('badminton.scoreboard') : route('live.scoreboard', $competition->slug ?: $competition->id) }}" 
                    target="_blank"
-                   class="px-2.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-amber-300 border border-amber-500/30 text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer"
+                   class="px-2.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-amber-300 border border-amber-500/30 text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm"
                    title="Buka Layar TV Papan Skor LED">
-                    <i data-lucide="tv" class="w-3.5 h-3.5 text-amber-400"></i>
+                    <i data-lucide="activity" class="w-3.5 h-3.5 text-amber-400"></i>
                     <span class="hidden sm:inline">TV SKOR</span>
                 </a>
 
                 @if($isBadminton)
+                <!-- Arena TV (3 Court Monitor) -->
                 <a href="{{ route('badminton.arena') }}" 
                    target="_blank"
-                   class="px-2.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-cyan-300 border border-cyan-500/30 text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer"
+                   class="px-2.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-cyan-300 border border-cyan-500/30 text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm"
                    title="Buka Monitor Arena Multi-Lapangan (3 Court Monitor)">
                     <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-cyan-400"></i>
                     <span class="hidden sm:inline">Arena TV</span>

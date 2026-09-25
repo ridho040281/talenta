@@ -15,13 +15,10 @@
     ])
 
     <!-- Top Header Card -->
-    <div class="bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-800 shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-5 text-white">
-        <div class="space-y-1.5">
+    <div class="bg-slate-900/90 rounded-2xl p-4 sm:p-5 border border-slate-800 shadow-lg flex flex-col lg:flex-row lg:items-center justify-between gap-4 text-white">
+        <div class="space-y-1">
             <div class="flex items-center gap-2 flex-wrap">
-                <span class="px-2.5 py-0.5 text-[10px] font-mono font-bold rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 uppercase">
-                    SYS_MODULE: TOURNAMENT_BRACKET
-                </span>
-                <span class="px-2.5 py-0.5 text-[10px] font-mono font-bold rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 uppercase">
+                <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 uppercase">
                     {{ $competition->category?->name ?? 'Turnamen' }}
                 </span>
                 @if($activePool)
@@ -32,18 +29,18 @@
                         $actSec = $actIsMix ? '(MIX)' : ($actIsPi ? '(PI)' : '(PA)');
                         $actClass = $activePool['class_label'] ?? $activePool['category_label'] ?? $activePool['title'];
                     @endphp
-                    <span class="px-2.5 py-0.5 text-[10px] font-mono font-black rounded uppercase flex items-center gap-1.5 shadow-sm {{ $actIsPi ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' : ($actIsGanda ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-blue-500/20 text-blue-300 border border-blue-500/40') }}">
+                    <span class="px-2 py-0.5 text-[10px] font-mono font-black rounded uppercase flex items-center gap-1.5 shadow-sm {{ $actIsPi ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' : ($actIsGanda ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-blue-500/20 text-blue-300 border border-blue-500/40') }}">
                         <span>{{ $actIsGanda ? '👥' : ($actIsPi ? '👧' : '👦') }}</span>
                         <span>{{ $actClass }} {{ $actSec }}</span>
                     </span>
                 @endif
                 @if($bracketData)
                     @if(!empty($bracketData['playoffs']['has_playoffs']))
-                        <span class="px-2.5 py-0.5 text-[10px] font-mono font-bold rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase flex items-center gap-1">
+                        <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase flex items-center gap-1">
                             <span>BAGAN PADAT {{ $bracketData['bracket_size'] }} + {{ $bracketData['playoffs']['num_playoffs'] }} PLAY-OFF</span>
                         </span>
                     @else
-                        <span class="px-2.5 py-0.5 text-[10px] font-mono font-bold rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase">
+                        <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase">
                             SISTEM GUGUR BWF (BAGAN {{ $bracketData['bracket_size'] }})
                         </span>
                     @endif
@@ -71,11 +68,21 @@
             </p>
         </div>
 
-        <div class="flex items-center flex-wrap gap-2.5">
+        <div class="flex items-center flex-wrap gap-2">
+            <!-- Atur Jadwal & Wasit -->
+            <button type="button" 
+                    @click="openSyncModal()" 
+                    :disabled="isSyncing || !hasRounds"
+                    class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs shadow-md shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer"
+                    title="Atur lapangan, jam tanding, dan sinkronkan ke sistem wasit">
+                <i data-lucide="calendar-clock" class="w-4 h-4"></i>
+                <span>Atur Jadwal & Wasit</span>
+            </button>
+
             <!-- Format Bagan & Play-off Selector -->
             <button type="button" 
                     @click="openFormatModal()" 
-                    class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-200 border border-indigo-500/40 font-bold text-xs shadow-sm transition cursor-pointer"
+                    class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-200 border border-indigo-500/30 font-bold text-xs shadow-sm transition cursor-pointer"
                     title="Pilih format bagan: Bagan Otomatis BWF vs Bagan Padat + Play-off Kualifikasi">
                 <i data-lucide="sliders" class="w-4 h-4 text-indigo-400"></i>
                 <span>Format Bagan</span>
@@ -86,57 +93,26 @@
                 @endif
             </button>
 
-            <!-- Sync to Referee Match Schedule -->
-            <button type="button" 
-                    @click="openSyncModal()" 
-                    :disabled="isSyncing || !hasRounds"
-                    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer"
-                    title="Atur lapangan, jam tanding, dan sinkronkan ke sistem wasit">
-                <i data-lucide="calendar-clock" class="w-4 h-4"></i>
-                <span>Atur Jadwal & Wasit</span>
-            </button>
-
             <!-- Toggle / Settings Publikasi TV Bagan -->
             <button type="button" 
                     @click="openPublicationModal()" 
-                    class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl font-bold text-xs shadow-sm transition cursor-pointer border"
+                    class="inline-flex items-center gap-2 px-3 py-2 rounded-xl font-bold text-xs shadow-sm transition cursor-pointer border"
                     :class="pubSettings.is_published 
-                        ? 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border-emerald-500/40' 
-                        : 'bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border-rose-500/40'"
+                        ? 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border-emerald-500/30' 
+                        : 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border-rose-500/30'"
                     title="Atur status publikasi dan redaksi standby layar TV Bagan">
                 <span class="w-2 h-2 rounded-full" :class="pubSettings.is_published ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'"></span>
-                <span x-text="pubSettings.is_published ? 'Bagan TV: PUBLIK (ON)' : 'Bagan TV: STANDBY (OFF)'"></span>
-                <i data-lucide="sliders" class="w-3.5 h-3.5 opacity-70"></i>
+                <span x-text="pubSettings.is_published ? 'Bagan TV: ON' : 'Bagan TV: STANDBY'"></span>
+                <i data-lucide="settings-2" class="w-3.5 h-3.5 opacity-70"></i>
             </button>
-
-            <!-- Public TV View -->
-            <a href="{{ route('public.bracket', $competition->slug ?: $competition->id) }}?pool={{ urlencode($activePoolKey) }}" 
-               target="_blank" 
-               class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 font-bold text-xs shadow-sm transition"
-               title="Buka tampilan TV Bagan untuk penonton publik">
-                <i data-lucide="tv" class="w-4 h-4 text-amber-400"></i>
-                <span>TV Bagan</span>
-            </a>
 
             <!-- Print PDF Button -->
             <a href="{{ route('pic.bracket.print', $competition->id) }}?pool={{ urlencode($activePoolKey) }}" 
                target="_blank" 
-               class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-slate-200 border border-white/[0.12] font-bold text-xs shadow-sm transition"
+               class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.10] font-bold text-xs shadow-sm transition"
                title="Cetak format bagan resmi A4 Landscape">
                 <i data-lucide="printer" class="w-4 h-4 text-slate-300"></i>
                 <span>Cetak Bagan (A4)</span>
-            </a>
-
-            <!-- Draw / Spin Wheel Button -->
-            <a href="{{ route('pic.spin.wheel', $competition->id) }}?pool={{ urlencode($activePoolKey) }}" 
-               class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold text-xs transition">
-                <i data-lucide="disc" class="w-4 h-4 text-amber-400"></i>
-                <span>Undi Peserta</span>
-            </a>
-
-            <!-- Back Link -->
-            <a href="{{ route('pic.undian') }}" class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white font-bold text-xs transition">
-                Kembali
             </a>
         </div>
     </div>
