@@ -467,6 +467,22 @@
                         8 Seed
                     </button>
                     <button type="button" 
+                            @click="setPresetSeeds(12)" 
+                            :disabled="activeParticipants.length < 12" 
+                            class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                            :class="visibleSeeds.length === 12 ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'"
+                            :title="activeParticipants.length < 12 ? 'Minimal 12 peserta untuk 12 seed' : 'Tampilkan 12 Seed'">
+                        12 Seed
+                    </button>
+                    <button type="button" 
+                            @click="setPresetSeeds(16)" 
+                            :disabled="activeParticipants.length < 16" 
+                            class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                            :class="visibleSeeds.length === 16 ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'"
+                            :title="activeParticipants.length < 16 ? 'Minimal 16 peserta untuk 16 seed' : 'Tampilkan 16 Seed'">
+                        16 Seed
+                    </button>
+                    <button type="button" 
                             x-show="visibleSeeds.length < maxAvailableSeeds" 
                             @click="addNextSeed()" 
                             class="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm">
@@ -1016,14 +1032,15 @@
             // Seeded state
             isSeededModalOpen: false,
             visibleSeeds: [1, 2, 3, 4],
-            selectedSeeds: { 1: '', 2: '', 3: '', 4: '', 5: '', 6: '', 7: '', 8: '' },
+            selectedSeeds: { 1: '', 2: '', 3: '', 4: '', 5: '', 6: '', 7: '', 8: '', 9: '', 10: '', 11: '', 12: '', 13: '', 14: '', 15: '', 16: '' },
             isSavingSeeded: false,
 
             get maxAvailableSeeds() {
                 const total = this.activeParticipants.length;
                 if (total <= 2) return Math.max(total, 1);
                 if (total < 8) return 4;
-                return Math.min(8, total);
+                if (total < 12) return 8;
+                return Math.min(16, total);
             },
 
             get activePool() {
@@ -1398,7 +1415,7 @@
             },
 
             openSeededModal() {
-                this.selectedSeeds = { 1: '', 2: '', 3: '', 4: '', 5: '', 6: '', 7: '', 8: '' };
+                this.selectedSeeds = { 1: '', 2: '', 3: '', 4: '', 5: '', 6: '', 7: '', 8: '', 9: '', 10: '', 11: '', 12: '', 13: '', 14: '', 15: '', 16: '' };
                 const foundSeeds = [];
 
                 this.activeParticipants.forEach(p => {
@@ -1489,23 +1506,25 @@
                 let badgeColor = 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-sans';
 
                 if (seedNum === 1) {
-                    desc = 'Puncak Bagan Atas (QF 1)';
+                    desc = 'Puncak Bagan Atas (Finalis 1)';
                     badgeColor = 'bg-amber-500 text-slate-950 font-black font-sans';
                 } else if (seedNum === 2) {
-                    desc = 'Dasar Bagan Bawah (QF 4)';
+                    desc = 'Dasar Bagan Bawah (Finalis 2)';
                     badgeColor = 'bg-amber-500/25 text-amber-300 border border-amber-500/50 font-sans';
                 } else if (seedNum === 3) {
-                    desc = 'Bagan Bawah (QF 3)';
+                    desc = 'Bagan Bawah (Semifinalis 1)';
                 } else if (seedNum === 4) {
-                    desc = 'Bagan Atas (QF 2)';
+                    desc = 'Bagan Atas (Semifinalis 2)';
                 } else if (seedNum === 5) {
-                    desc = 'Bagan Atas (QF 2)';
+                    desc = 'Bagan Atas (Perempat Final 2)';
                 } else if (seedNum === 6) {
-                    desc = 'Bagan Bawah (QF 3)';
+                    desc = 'Bagan Bawah (Perempat Final 3)';
                 } else if (seedNum === 7) {
-                    desc = 'Bagan Bawah (QF 4)';
+                    desc = 'Bagan Bawah (Perempat Final 4)';
                 } else if (seedNum === 8) {
-                    desc = 'Bagan Atas (QF 1)';
+                    desc = 'Bagan Atas (Perempat Final 1)';
+                } else if (seedNum >= 9 && seedNum <= 16) {
+                    desc = 'Sektor Babak 16 Besar (Seed ' + seedNum + ')';
                 } else {
                     desc = 'Slot Bagan Turnamen';
                 }
@@ -1527,6 +1546,14 @@
                     case 6: baseSlot = Math.floor(3 * total / 4); break;
                     case 7: baseSlot = Math.floor(3 * total / 4) + 1; break;
                     case 8: baseSlot = Math.floor(total / 4); break;
+                    case 9: baseSlot = Math.floor(total / 8) + 1; break;
+                    case 10: baseSlot = Math.floor(7 * total / 8); break;
+                    case 11: baseSlot = Math.floor(5 * total / 8) + 1; break;
+                    case 12: baseSlot = Math.floor(3 * total / 8); break;
+                    case 13: baseSlot = Math.floor(3 * total / 8) + 1; break;
+                    case 14: baseSlot = Math.floor(5 * total / 8); break;
+                    case 15: baseSlot = Math.floor(7 * total / 8) + 1; break;
+                    case 16: baseSlot = Math.floor(total / 8); break;
                     default: baseSlot = Math.min(seed, total); break;
                 }
                 baseSlot = Math.max(1, Math.min(total, baseSlot));
@@ -1545,6 +1572,14 @@
                         case 6: sSlot = Math.floor(3 * total / 4); break;
                         case 7: sSlot = Math.floor(3 * total / 4) + 1; break;
                         case 8: sSlot = Math.floor(total / 4); break;
+                        case 9: sSlot = Math.floor(total / 8) + 1; break;
+                        case 10: sSlot = Math.floor(7 * total / 8); break;
+                        case 11: sSlot = Math.floor(5 * total / 8) + 1; break;
+                        case 12: sSlot = Math.floor(3 * total / 8); break;
+                        case 13: sSlot = Math.floor(3 * total / 8) + 1; break;
+                        case 14: sSlot = Math.floor(5 * total / 8); break;
+                        case 15: sSlot = Math.floor(7 * total / 8) + 1; break;
+                        case 16: sSlot = Math.floor(total / 8); break;
                         default: sSlot = Math.min(s, total); break;
                     }
                     sSlot = Math.max(1, Math.min(total, sSlot));

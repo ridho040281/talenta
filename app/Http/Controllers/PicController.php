@@ -2579,6 +2579,14 @@ class PicController extends Controller
             6 => (int) floor(3 * $totalParticipants / 4),
             7 => (int) floor(3 * $totalParticipants / 4) + 1,
             8 => (int) floor($totalParticipants / 4),
+            9 => (int) floor($totalParticipants / 8) + 1,
+            10 => (int) floor(7 * $totalParticipants / 8),
+            11 => (int) floor(5 * $totalParticipants / 8) + 1,
+            12 => (int) floor(3 * $totalParticipants / 8),
+            13 => (int) floor(3 * $totalParticipants / 8) + 1,
+            14 => (int) floor(5 * $totalParticipants / 8),
+            15 => (int) floor(7 * $totalParticipants / 8) + 1,
+            16 => (int) floor($totalParticipants / 8),
             default => min($seed, $totalParticipants),
         };
 
