@@ -15,7 +15,9 @@ use App\Http\Controllers\PesertaController;
 use App\Http\Controllers\PicController;
 use App\Http\Controllers\StageController;
 use App\Http\Controllers\TournamentBracketController;
+use App\Models\Competition;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -48,6 +50,25 @@ Route::get('/cek-status', [HomeController::class, 'checkStatus'])->name('check.s
 Route::get('/live-scoreboard/{slug?}', [HomeController::class, 'liveScoreboard'])->name('live.scoreboard');
 Route::get('/skor/{slug?}', [HomeController::class, 'liveScoreboard'])->name('live.scoreboard.short');
 Route::get('/api/leaderboard/{slug}', [HomeController::class, 'apiLeaderboard'])->name('api.leaderboard');
+Route::get('/badminton', function () {
+    if (Auth::check()) {
+        $user = Auth::user();
+        if (in_array($user->role, ['superadmin', 'panitia', 'pic_lomba', 'juri'])) {
+            return redirect()->route('badminton.bracket');
+        }
+    }
+
+    $comp = Competition::where('code', 'BLT')
+        ->orWhere('name', 'like', '%Bulu Tangkis%')
+        ->orWhere('name', 'like', '%Badminton%')
+        ->first();
+
+    if ($comp) {
+        return redirect()->route('public.bracket', $comp->slug ?: $comp->id);
+    }
+
+    return redirect()->route('badminton.arena');
+});
 Route::get('/badminton/scoreboard/{id?}', [BadmintonMatchController::class, 'scoreboard'])->name('badminton.scoreboard');
 Route::get('/badminton/arena', [BadmintonMatchController::class, 'arenaScoreboard'])->name('badminton.arena');
 Route::get('/badminton/umpire/{id}', [BadmintonMatchController::class, 'umpire'])->name('badminton.umpire');
