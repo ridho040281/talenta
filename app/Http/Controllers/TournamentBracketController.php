@@ -158,7 +158,15 @@ class TournamentBracketController extends Controller
         }
         $tournamentCompetitions = $tCompQuery->get();
 
-        return view('pic.bracket', compact('competition', 'pools', 'activePoolKey', 'activePool', 'bracketData', 'tournamentCompetitions'));
+        $settings = $competition->bracket_settings ?? [];
+        $tvPublication = $settings['tv_publication'] ?? [
+            'is_published' => true,
+            'standby_title' => 'BAGAN PERTANDINGAN SEDANG DISIAPKAN',
+            'standby_message' => 'Bagan resmi akan segera dirilis oleh panitia setelah sesi pengundian dan technical meeting selesai.',
+            'standby_contact' => 'Meja Panitia / Sekretariat GOR',
+        ];
+
+        return view('pic.bracket', compact('competition', 'pools', 'activePoolKey', 'activePool', 'bracketData', 'tournamentCompetitions', 'tvPublication'));
     }
 
     /**
@@ -183,7 +191,60 @@ class TournamentBracketController extends Controller
 
         $appSettings = AppSetting::pluck('value', 'key')->all();
 
-        return view('public.bracket-viewer', compact('competition', 'pools', 'activePoolKey', 'activePool', 'bracketData', 'appSettings'));
+        $settings = $competition->bracket_settings ?? [];
+        $publication = $settings['tv_publication'] ?? [
+            'is_published' => true,
+            'standby_title' => 'BAGAN PERTANDINGAN SEDANG DISIAPKAN',
+            'standby_message' => 'Bagan resmi akan segera dirilis oleh panitia setelah sesi pengundian dan technical meeting selesai.',
+            'standby_contact' => 'Meja Panitia / Sekretariat GOR',
+        ];
+
+        $isPublished = (bool) ($publication['is_published'] ?? true);
+
+        // Check if current visitor is an authorized staff member (Admin / PIC / Wasit)
+        $user = Auth::user();
+        $isAuthorizedStaff = false;
+        if ($user) {
+            if (in_array($user->role, ['superadmin', 'panitia'])) {
+                $isAuthorizedStaff = true;
+            } else {
+                $managedIds = PicController::getManagedCompetitionIds($user);
+                $isAuthorizedSport = $user->managesTournamentBracket() && (
+                    in_array(strtoupper($competition->code ?? ''), ['BLT', 'TMJ']) ||
+                    str_contains(strtolower($competition->name ?? ''), 'bulu tangkis') ||
+                    str_contains(strtolower($competition->name ?? ''), 'badminton') ||
+                    str_contains(strtolower($competition->name ?? ''), 'tenis meja')
+                );
+                $isAuthorizedStaff = in_array($competition->id, $managedIds) || $isAuthorizedSport;
+            }
+        }
+
+        $isPreviewMode = (! $isPublished && $isAuthorizedStaff);
+
+        // If bracket is locked and visitor is NOT a staff member, display standby screen
+        if (! $isPublished && ! $isAuthorizedStaff) {
+            return view('public.bracket-standby', compact('competition', 'appSettings', 'publication', 'pools', 'activePoolKey'));
+        }
+
+        return view('public.bracket-viewer', compact('competition', 'pools', 'activePoolKey', 'activePool', 'bracketData', 'appSettings', 'publication', 'isPreviewMode'));
+    }
+
+    /**
+     * API Cek Status Publikasi TV Bagan (untuk auto-refresh layar TV GOR)
+     */
+    public function publicationStatus($slug)
+    {
+        $competition = Competition::where('slug', $slug)->orWhere('id', $slug)->first();
+        if (! $competition) {
+            return response()->json(['is_published' => true]);
+        }
+
+        $settings = $competition->bracket_settings ?? [];
+        $publication = $settings['tv_publication'] ?? ['is_published' => true];
+
+        return response()->json([
+            'is_published' => (bool) ($publication['is_published'] ?? true),
+        ]);
     }
 
     /**
@@ -265,6 +326,58 @@ class TournamentBracketController extends Controller
             'success' => true,
             'message' => 'Format bagan untuk kategori ini berhasil diperbarui!',
             'settings' => $settings[$poolKey],
+        ]);
+    }
+
+    /**
+     * Simpan Pengaturan Publikasi & Redaksi Standby TV Bagan
+     */
+    public function updatePublicationSettings(Request $request, $competition_id)
+    {
+        $competition = Competition::findOrFail($competition_id);
+        $this->ensureIsBadminton($competition);
+        $user = Auth::user();
+
+        if (! in_array($user->role, ['superadmin', 'panitia'])) {
+            $managedIds = PicController::getManagedCompetitionIds($user);
+            $isAuthorizedSport = $user->managesTournamentBracket() && (
+                in_array(strtoupper($competition->code ?? ''), ['BLT', 'TMJ']) ||
+                str_contains(strtolower($competition->name ?? ''), 'bulu tangkis') ||
+                str_contains(strtolower($competition->name ?? ''), 'badminton') ||
+                str_contains(strtolower($competition->name ?? ''), 'tenis meja')
+            );
+
+            if (! in_array($competition->id, $managedIds) && ! $isAuthorizedSport) {
+                return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
+            }
+        }
+
+        $validated = $request->validate([
+            'is_published' => 'required|boolean',
+            'standby_title' => 'nullable|string|max:150',
+            'standby_message' => 'nullable|string|max:1000',
+            'standby_contact' => 'nullable|string|max:150',
+        ]);
+
+        $settings = $competition->bracket_settings ?? [];
+        $settings['tv_publication'] = [
+            'is_published' => (bool) $validated['is_published'],
+            'standby_title' => ! empty($validated['standby_title']) ? trim($validated['standby_title']) : 'BAGAN PERTANDINGAN SEDANG DISIAPKAN',
+            'standby_message' => ! empty($validated['standby_message']) ? trim($validated['standby_message']) : 'Bagan resmi akan segera dirilis oleh panitia setelah sesi pengundian dan technical meeting selesai.',
+            'standby_contact' => ! empty($validated['standby_contact']) ? trim($validated['standby_contact']) : 'Meja Panitia / Sekretariat GOR',
+            'updated_at' => now()->toIso8601String(),
+            'updated_by' => $user->name ?? 'Admin',
+        ];
+
+        $competition->bracket_settings = $settings;
+        $competition->save();
+
+        $statusLabel = $settings['tv_publication']['is_published'] ? 'PUBLIK (AKTIF)' : 'STANDBY / KUNCI (OFF)';
+
+        return response()->json([
+            'success' => true,
+            'message' => "Pengaturan TV Bagan berhasil disimpan! Status: {$statusLabel}",
+            'publication' => $settings['tv_publication'],
         ]);
     }
 

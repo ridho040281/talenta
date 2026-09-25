@@ -35,6 +35,7 @@ Route::get('/undi/{slug}', [HomeController::class, 'spinViewer'])->name('spin.vi
 Route::get('/bagan/{slug}', [TournamentBracketController::class, 'publicView'])->name('public.bracket');
 Route::get('/b/{slug}', [TournamentBracketController::class, 'publicView'])->name('public.bracket.short');
 Route::get('/tv-bagan/{slug}', [TournamentBracketController::class, 'publicView'])->name('public.bracket.tv');
+Route::get('/bagan/{slug}/status', [TournamentBracketController::class, 'publicationStatus'])->name('public.bracket.status');
 
 // Stage Display / Layar Panggung & Stage Timer (Smart TV / Proyektor View)
 Route::get('/stage/{slug}', [StageController::class, 'stageViewer'])->name('stage.viewer');
@@ -174,6 +175,7 @@ Route::middleware(['auth', 'role:pic_lomba,superadmin,panitia,juri'])->group(fun
     Route::post('/pic/lomba/{competition_id}/bagan/generate-matches', [TournamentBracketController::class, 'generateMatches'])->name('pic.bracket.generate_matches');
     Route::post('/pic/lomba/{competition_id}/bagan/update-schedule', [TournamentBracketController::class, 'updateMatchSchedule'])->name('pic.bracket.update_schedule');
     Route::post('/pic/lomba/{competition_id}/bagan/save-format', [TournamentBracketController::class, 'saveBracketFormat'])->name('pic.bracket.save_format');
+    Route::post('/pic/lomba/{competition_id}/bagan/publication', [TournamentBracketController::class, 'updatePublicationSettings'])->name('pic.bracket.publication');
 });
 
 /*

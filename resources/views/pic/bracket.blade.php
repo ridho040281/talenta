@@ -96,6 +96,19 @@
                 <span>Atur Jadwal & Wasit</span>
             </button>
 
+            <!-- Toggle / Settings Publikasi TV Bagan -->
+            <button type="button" 
+                    @click="openPublicationModal()" 
+                    class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl font-bold text-xs shadow-sm transition cursor-pointer border"
+                    :class="pubSettings.is_published 
+                        ? 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border-emerald-500/40' 
+                        : 'bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border-rose-500/40'"
+                    title="Atur status publikasi dan redaksi standby layar TV Bagan">
+                <span class="w-2 h-2 rounded-full" :class="pubSettings.is_published ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'"></span>
+                <span x-text="pubSettings.is_published ? 'Bagan TV: PUBLIK (ON)' : 'Bagan TV: STANDBY (OFF)'"></span>
+                <i data-lucide="sliders" class="w-3.5 h-3.5 opacity-70"></i>
+            </button>
+
             <!-- Public TV View -->
             <a href="{{ route('public.bracket', $competition->slug) }}?pool={{ urlencode($activePoolKey) }}" 
                target="_blank" 
@@ -1143,6 +1156,155 @@
         </div>
     </div>
 
+    <!-- Modal: Pengaturan Publikasi & Redaksi Standby TV Bagan -->
+    <div x-show="showPublicationModal" 
+         x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+        <div @click.away="if (!isSavingPublication) closePublicationModal()" 
+             class="bg-slate-900 border border-slate-700/80 w-full max-w-lg rounded-3xl p-6 sm:p-7 shadow-2xl space-y-5 text-white animate-in fade-in zoom-in-95 duration-200">
+            
+            <!-- Modal Header -->
+            <div class="flex items-start justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl flex items-center justify-center font-bold shadow-lg"
+                         :class="pubSettings.is_published 
+                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-emerald-500/20' 
+                            : 'bg-rose-500/20 text-rose-400 border border-rose-500/30 shadow-rose-500/20'">
+                        <i :data-lucide="pubSettings.is_published ? 'tv' : 'lock'" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">KONTROL PENYIARAN</span>
+                        <h3 class="font-black text-base text-white">Publikasi & Pengumuman TV Bagan</h3>
+                    </div>
+                </div>
+                <button type="button" @click="closePublicationModal()" :disabled="isSavingPublication" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body Form -->
+            <div class="space-y-4 text-xs">
+                
+                <!-- Status Switcher Radio/Pill Buttons -->
+                <div>
+                    <label class="block font-bold text-slate-300 mb-2">
+                        Pilih Status Layar Bagan untuk Penonton & Publik:
+                    </label>
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <!-- Option 1: PUBLIK (ON) -->
+                        <button type="button" 
+                                @click="pubSettings.is_published = true"
+                                class="p-3 rounded-2xl border text-left transition cursor-pointer flex flex-col justify-between gap-2"
+                                :class="pubSettings.is_published 
+                                    ? 'bg-emerald-500/15 border-emerald-500 text-white ring-2 ring-emerald-500/30' 
+                                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:bg-slate-900'">
+                            <div class="flex items-center justify-between">
+                                <span class="font-black text-xs text-emerald-400 flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                    <span>PUBLIK (ON)</span>
+                                </span>
+                                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400" x-show="pubSettings.is_published"></i>
+                            </div>
+                            <span class="text-[10.5px] leading-tight text-slate-300">
+                                Bagan pertandingan resmi dibuka & dapat dilihat langsung di TV/HP peserta.
+                            </span>
+                        </button>
+
+                        <!-- Option 2: STANDBY / KUNCI (OFF) -->
+                        <button type="button" 
+                                @click="pubSettings.is_published = false"
+                                class="p-3 rounded-2xl border text-left transition cursor-pointer flex flex-col justify-between gap-2"
+                                :class="!pubSettings.is_published 
+                                    ? 'bg-rose-500/15 border-rose-500 text-white ring-2 ring-rose-500/30' 
+                                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:bg-slate-900'">
+                            <div class="flex items-center justify-between">
+                                <span class="font-black text-xs text-rose-400 flex items-center gap-1.5">
+                                    <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+                                    <span>STANDBY (OFF)</span>
+                                </span>
+                                <i data-lucide="check-circle-2" class="w-4 h-4 text-rose-400" x-show="!pubSettings.is_published"></i>
+                            </div>
+                            <span class="text-[10.5px] leading-tight text-slate-300">
+                                Bagan disembunyikan. Layar TV penonton menampilkan pengumuman panitia.
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Custom Announcement Editor (Active when Standby) -->
+                <div x-show="!pubSettings.is_published" x-transition class="space-y-3.5 p-4 rounded-2xl bg-slate-950/80 border border-slate-800">
+                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+                        <span class="text-[11px] font-mono font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                            <span>Redaksi Pesan Pengumuman Standby</span>
+                        </span>
+                        <span class="text-[10px] text-slate-500">Tampil di Layar TV & Publik</span>
+                    </div>
+
+                    <!-- Judul Standby -->
+                    <div>
+                        <label class="block font-bold text-slate-300 mb-1">
+                            Judul Pengumuman: <span class="text-rose-400">*</span>
+                        </label>
+                        <input type="text" 
+                               x-model="pubSettings.standby_title"
+                               placeholder="Cth: BAGAN PERTANDINGAN SEDANG DISIAPKAN"
+                               class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-white font-bold text-xs focus:ring-1 focus:ring-amber-500 focus:outline-none">
+                    </div>
+
+                    <!-- Pesan Redaksi Kustom -->
+                    <div>
+                        <label class="block font-bold text-slate-300 mb-1">
+                            Isi Pesan Keterangan / Pengumuman: <span class="text-rose-400">*</span>
+                        </label>
+                        <textarea x-model="pubSettings.standby_message" 
+                                  rows="3"
+                                  placeholder="Tuliskan keterangan detail untuk penonton/atlet..."
+                                  class="w-full bg-slate-900 border border-slate-700/80 rounded-xl p-3 text-white text-xs leading-relaxed focus:ring-1 focus:ring-amber-500 focus:outline-none"></textarea>
+                        <p class="text-[10px] text-slate-400 mt-1">
+                            Tips: Anda bisa mencantumkan jam perkiraan rilis, jadwal technical meeting, atau info penting lainnya.
+                        </p>
+                    </div>
+
+                    <!-- Kontak / Info Tambahan -->
+                    <div>
+                        <label class="block font-bold text-slate-300 mb-1">
+                            Keterangan Meja Panitia / Kontak (Opsional):
+                        </label>
+                        <input type="text" 
+                               x-model="pubSettings.standby_contact"
+                               placeholder="Cth: Meja Panitia / Sekretariat GOR"
+                               class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2 text-white text-xs focus:ring-1 focus:ring-amber-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- Live Info Note -->
+                <div class="p-3 rounded-xl bg-indigo-950/30 border border-indigo-500/30 text-[11px] text-indigo-200 leading-relaxed flex items-start gap-2">
+                    <i data-lucide="info" class="w-4 h-4 text-indigo-400 shrink-0 mt-0.5"></i>
+                    <span>
+                        <strong>Catatan Panitia:</strong> Ketika status diatur ke <em>STANDBY (OFF)</em>, Anda dan panitia yang login tetap dapat melihat bagan secara normal untuk keperluan pengaturan. Penonton umum dan layar TV publik akan otomatis beralih menampilkan pesan pengumuman di atas.
+                    </span>
+                </div>
+            </div>
+
+            <!-- Modal Action Buttons -->
+            <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-800">
+                <button type="button" 
+                        @click="closePublicationModal()"
+                        class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition cursor-pointer">
+                    Batal
+                </button>
+                <button type="button" 
+                        @click="savePublicationSettings()"
+                        :disabled="isSavingPublication"
+                        class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-1.5 cursor-pointer">
+                    <i data-lucide="save" class="w-4 h-4" :class="isSavingPublication ? 'animate-spin' : ''"></i>
+                    <span x-text="isSavingPublication ? 'Menyimpan...' : 'Simpan Pengaturan TV'"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
 </div>
 @endsection
 
@@ -1158,6 +1320,66 @@
             isSyncing: false,
             toastMessage: '',
             toastSuccess: true,
+
+            // Publication & Standby Notice State
+            showPublicationModal: false,
+            isSavingPublication: false,
+            pubSettings: @json($tvPublication ?? [
+                'is_published' => true,
+                'standby_title' => 'BAGAN PERTANDINGAN SEDANG DISIAPKAN',
+                'standby_message' => 'Bagan resmi akan segera dirilis oleh panitia setelah sesi pengundian dan technical meeting selesai.',
+                'standby_contact' => 'Meja Panitia / Sekretariat GOR',
+            ]),
+
+            openPublicationModal() {
+                this.showPublicationModal = true;
+                this.$nextTick(() => {
+                    if (window.lucide) window.lucide.createIcons();
+                });
+            },
+
+            closePublicationModal() {
+                this.showPublicationModal = false;
+            },
+
+            async savePublicationSettings() {
+                if (this.isSavingPublication) return;
+                this.isSavingPublication = true;
+
+                try {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+                    const response = await fetch('{{ route("pic.bracket.publication", $competition->id) }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            is_published: Boolean(this.pubSettings.is_published),
+                            standby_title: this.pubSettings.standby_title,
+                            standby_message: this.pubSettings.standby_message,
+                            standby_contact: this.pubSettings.standby_contact,
+                        })
+                    });
+
+                    const res = await response.json();
+                    if (res.success) {
+                        this.toastSuccess = true;
+                        this.toastMessage = res.message;
+                        this.pubSettings = res.publication;
+                        this.closePublicationModal();
+                    } else {
+                        alert(res.message || 'Gagal menyimpan pengaturan publikasi.');
+                    }
+                } catch (err) {
+                    console.error('Save publication error:', err);
+                    alert('Terjadi kesalahan jaringan.');
+                } finally {
+                    this.isSavingPublication = false;
+                    if (window.lucide) window.lucide.createIcons();
+                }
+            },
 
             // Format & Play-off Modal State
             showFormatModal: false,

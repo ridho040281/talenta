@@ -45,6 +45,25 @@
           }
       }">
 
+    @if(!empty($isPreviewMode))
+    <!-- Preview Banner for Authorized Panitia/Admin -->
+    <div class="bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 text-slate-950 px-4 py-2.5 text-xs font-bold flex flex-col sm:flex-row items-center justify-between gap-2 shadow-lg sticky top-0 z-[60] border-b border-amber-600">
+        <div class="flex items-center gap-2 flex-wrap text-center sm:text-left">
+            <span class="px-2 py-0.5 rounded-md bg-slate-950 text-amber-300 font-mono text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shrink-0">
+                <i data-lucide="lock" class="w-3 h-3 text-amber-400"></i>
+                <span>MODE PRATINJAU PANITIA</span>
+            </span>
+            <span class="text-slate-950 font-medium">
+                Layar TV Bagan ini sedang <strong>DIKUNCI / STANDBY</strong> untuk penonton umum. Publik saat ini melihat poster: <em>"{{ $publication['standby_title'] ?? 'Bagan Sedang Disiapkan' }}"</em>.
+            </span>
+        </div>
+        <a href="{{ route('pic.bracket', $competition->id) }}" class="px-3 py-1 rounded-lg bg-slate-950 hover:bg-slate-900 text-white font-black text-[11px] shrink-0 transition flex items-center gap-1.5 shadow">
+            <i data-lucide="sliders" class="w-3.5 h-3.5 text-amber-400"></i>
+            <span>Kelola Status Publikasi</span>
+        </a>
+    </div>
+    @endif
+
     <!-- Top Header Bar -->
     <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 sticky top-0 z-50">
         <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
