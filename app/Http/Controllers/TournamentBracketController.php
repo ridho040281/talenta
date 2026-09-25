@@ -382,6 +382,38 @@ class TournamentBracketController extends Controller
     }
 
     /**
+     * Preview Jadwal Multi-Hari Terpadu sebelum disimpan ke database (AJAX)
+     */
+    public function previewSchedule(Request $request, $competition_id)
+    {
+        $competition = Competition::with(['category', 'registrations.members'])->findOrFail($competition_id);
+        $this->ensureIsBadminton($competition);
+        $user = Auth::user();
+
+        if (! in_array($user->role, ['superadmin', 'panitia'])) {
+            $managedIds = PicController::getManagedCompetitionIds($user);
+            $isAuthorizedBadminton = (method_exists($user, 'managesBadminton') && $user->managesBadminton()) && (
+                strtoupper($competition->code ?? '') === 'BLT' ||
+                str_contains(strtolower($competition->name ?? ''), 'bulu tangkis') ||
+                str_contains(strtolower($competition->name ?? ''), 'badminton')
+            );
+
+            if (! in_array($competition->id, $managedIds) && ! $isAuthorizedBadminton) {
+                return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
+            }
+        }
+
+        $plan = $this->buildMultiDaySchedulePlan($competition, $request->all());
+
+        return response()->json([
+            'success' => true,
+            'summary' => $plan['summary'],
+            'days' => $plan['days'],
+            'total_matches' => count($plan['matches']),
+        ]);
+    }
+
+    /**
      * Sinkronkan Pasangan Bagan ke Jadwal Pertandingan Wasit (badminton_matches)
      */
     public function generateMatches(Request $request, $competition_id)
@@ -403,21 +435,76 @@ class TournamentBracketController extends Controller
             }
         }
 
-        $poolKey = $request->input('pool_key');
-        $pools = $this->buildCompetitionPools($competition);
-        $targetPool = collect($pools)->firstWhere('key', $poolKey);
-
-        if (! $targetPool) {
-            return response()->json(['success' => false, 'message' => 'Kategori / Pool tidak ditemukan.'], 404);
+        $plan = $this->buildMultiDaySchedulePlan($competition, $request->all());
+        if (empty($plan['matches'])) {
+            return response()->json(['success' => false, 'message' => 'Tidak ada pertandingan yang dapat dijadwalkan.'], 422);
         }
 
-        $bracketData = $this->buildTournamentTree($targetPool['participants'], $competition, $poolKey);
-        if (empty($bracketData['rounds'])) {
-            return response()->json(['success' => false, 'message' => 'Peserta belum cukup untuk membuat jadwal.'], 422);
+        $syncedCount = 0;
+        foreach ($plan['matches'] as $m) {
+            $existingRecord = BadmintonMatch::where('competition_id', $competition->id)
+                ->where('match_code', $m['match_code'])
+                ->first();
+
+            $status = $m['status'];
+            $winnerTeam = $m['winner_team'];
+            if ($existingRecord && in_array($existingRecord->match_status, ['ongoing', 'finished'])) {
+                $status = $existingRecord->match_status;
+                $winnerTeam = $existingRecord->winner_team;
+            }
+
+            BadmintonMatch::updateOrCreate(
+                [
+                    'competition_id' => $competition->id,
+                    'match_code' => $m['match_code'],
+                ],
+                [
+                    'court_number' => $m['court_number'],
+                    'scheduled_time' => $m['scheduled_time'],
+                    'match_order' => $m['match_order'],
+                    'match_day' => $m['match_day'],
+                    'match_date' => $m['match_date'],
+                    'match_day_label' => $m['match_day_label'],
+                    'round_name' => $m['round_name'],
+                    'category' => $m['category'],
+                    'match_type' => $m['match_type'],
+                    'team1_registration_id' => $m['team1_id'] ?? null,
+                    'team1_school' => $m['team1_school'] ?? 'TBD',
+                    'team1_player1' => $m['team1_player'] ?? 'TBD',
+                    'team2_registration_id' => $m['team2_id'] ?? null,
+                    'team2_school' => $m['team2_school'] ?? 'TBD',
+                    'team2_player1' => $m['team2_player'] ?? 'TBD',
+                    'match_status' => $status,
+                    'winner_team' => $winnerTeam,
+                ]
+            );
+
+            $syncedCount++;
         }
 
-        // Auto-Schedule configuration parameters
-        $rawCourts = $request->input('courts', ['Lapangan 1', 'Lapangan 2']);
+        return response()->json([
+            'success' => true,
+            'message' => "Berhasil menyinkronkan {$syncedCount} pertandingan ke jadwal ({$plan['summary']})!",
+            'total_synced' => $syncedCount,
+        ]);
+    }
+
+    /**
+     * Membangun rencana jadwal multi-hari terpadu (dipakai Preview dan Generate)
+     */
+    protected function buildMultiDaySchedulePlan(Competition $competition, array $input): array
+    {
+        $scope = $input['scope'] ?? 'all';
+        $targetPoolKey = $input['pool_key'] ?? null;
+        $allPools = $this->buildCompetitionPools($competition);
+
+        if ($scope === 'pool' && $targetPoolKey) {
+            $poolsToProcess = collect($allPools)->where('key', $targetPoolKey)->values()->all();
+        } else {
+            $poolsToProcess = $allPools;
+        }
+
+        $rawCourts = $input['courts'] ?? ['Lapangan 1', 'Lapangan 2'];
         if (is_string($rawCourts)) {
             $courts = array_values(array_filter(array_map('trim', explode(',', $rawCourts))));
         } elseif (is_array($rawCourts)) {
@@ -429,8 +516,8 @@ class TournamentBracketController extends Controller
             $courts = ['Lapangan 1', 'Lapangan 2'];
         }
 
-        $tournamentDays = max(1, min(7, (int) $request->input('tournament_days', 4)));
-        $rawStartDate = $request->input('start_date');
+        $tournamentDays = max(1, min(7, (int) ($input['tournament_days'] ?? 4)));
+        $rawStartDate = $input['start_date'] ?? null;
         $startDate = null;
         if (! empty($rawStartDate)) {
             try {
@@ -446,90 +533,19 @@ class TournamentBracketController extends Controller
                 $startDate = null;
             }
         }
-
-        $startTime = $request->input('start_time', '08:30');
-        if (! preg_match('/^\d{1,2}:\d{2}$/', $startTime)) {
-            $startTime = '08:30';
+        if (! $startDate) {
+            $startDate = Carbon::parse('2026-09-29');
         }
-        $matchDuration = max(10, (int) $request->input('match_duration', 30));
 
-        $totalRounds = count($bracketData['rounds'] ?? []);
+        $startTime = $input['start_time'] ?? '08:00';
+        if (! preg_match('/^\d{1,2}:\d{2}$/', $startTime)) {
+            $startTime = '08:00';
+        }
 
-        // Helper closures: mapping round to day
-        $getDayForRound = function ($roundIndex) use ($totalRounds, $tournamentDays) {
-            if ($tournamentDays <= 1) {
-                return 1;
-            }
-            if ($tournamentDays === 2) {
-                if ($totalRounds <= 2) {
-                    return $roundIndex;
-                }
-
-                return ($roundIndex <= 2) ? 1 : 2;
-            }
-            if ($tournamentDays === 3) {
-                if ($totalRounds <= 3) {
-                    return min($roundIndex, 3);
-                }
-                if ($totalRounds === 4) {
-                    if ($roundIndex === 1) {
-                        return 1;
-                    }
-                    if ($roundIndex <= 3) {
-                        return 2;
-                    }
-
-                    return 3;
-                }
-                // 5 rounds (bracket 32): R1 -> D1, R2 & R3 -> D2, R4 & R5 -> D3
-                if ($roundIndex === 1) {
-                    return 1;
-                }
-                if ($roundIndex <= 3) {
-                    return 2;
-                }
-
-                return 3;
-            }
-            // 4 Days (default)
-            if ($totalRounds >= 5) {
-                // R1 (32 besar) -> D1, R2 (16 besar) -> D2, R3 (QF) -> D3, R4 (SF) & R5 (Final) -> D4
-                if ($roundIndex === 1) {
-                    return 1;
-                }
-                if ($roundIndex === 2) {
-                    return 2;
-                }
-                if ($roundIndex === 3) {
-                    return 3;
-                }
-
-                return 4;
-            } elseif ($totalRounds === 4) {
-                if ($roundIndex === 1) {
-                    return 1;
-                }
-                if ($roundIndex === 2) {
-                    return 2;
-                }
-                if ($roundIndex === 3) {
-                    return 3;
-                }
-
-                return 4;
-            } elseif ($totalRounds === 3) {
-                if ($roundIndex === 1) {
-                    return 2;
-                }
-                if ($roundIndex === 2) {
-                    return 3;
-                }
-
-                return 4;
-            }
-
-            return min($roundIndex, $tournamentDays);
-        };
+        $matchDuration = max(10, (int) ($input['match_duration'] ?? 20));
+        $semifinalDuration = max(10, (int) ($input['semifinal_duration'] ?? 30));
+        $distributionMode = $input['distribution_mode'] ?? 'category_based'; // 'category_based' | 'even'
+        $fridayBreak = ! empty($input['friday_break'] ?? true);
 
         $getDayDateAndLabel = function ($dayNum) use ($startDate) {
             $mDate = null;
@@ -543,178 +559,426 @@ class TournamentBracketController extends Controller
             return [$mDate, $mLabel];
         };
 
-        // Per-day court tracking counters (each day starts fresh from startTime)
-        $courtMatchCountsByDay = [];
-        $courtIndexByDay = [];
-        for ($d = 1; $d <= max($tournamentDays, 5); $d++) {
-            $courtIndexByDay[$d] = 0;
-            $courtMatchCountsByDay[$d] = [];
-            foreach ($courts as $c) {
-                $courtMatchCountsByDay[$d][$c] = 0;
+        $rawMatchesList = [];
+
+        foreach ($poolsToProcess as $pool) {
+            $poolKey = $pool['key'];
+            $poolTitle = $pool['title'];
+            $categoryCode = stripos($poolTitle, 'putri') !== false ? 'WS' : 'MS';
+            if (stripos($poolTitle, 'ganda') !== false) {
+                $categoryCode = stripos($poolTitle, 'putri') !== false ? 'WD' : 'MD';
+                if (stripos($poolTitle, 'campuran') !== false || stripos($poolTitle, 'mix') !== false) {
+                    $categoryCode = 'XD';
+                }
             }
-        }
+            $matchType = stripos($poolTitle, 'ganda') !== false ? 'double' : 'single';
 
-        $syncedCount = 0;
-        $categoryCode = stripos($targetPool['title'], 'putri') !== false ? 'WS' : 'MS';
-        if (stripos($targetPool['title'], 'ganda') !== false) {
-            $categoryCode = stripos($targetPool['title'], 'putri') !== false ? 'WD' : 'MD';
-        }
+            $bData = $this->buildTournamentTree($pool['participants'], $competition, $poolKey);
+            if (empty($bData['rounds'])) {
+                continue;
+            }
 
-        // 1. Sync Play-off matches if active (always on Day 1 early)
-        if (! empty($bracketData['playoffs']['has_playoffs']) && ! empty($bracketData['playoffs']['matches'])) {
-            $poCourt = $courts[0] ?? 'Lapangan 1';
-            $poEarlyTime = Carbon::createFromFormat('H:i', $startTime)->subMinutes(30)->format('H:i');
-            [$poDate, $poDayLabel] = $getDayDateAndLabel(1);
+            // Lapangan 1: Kelas 5-6 (kat_c) dan Ganda
+            // Lapangan 2: Kelas 1-2 (kat_a) dan Kelas 3-4 (kat_b)
+            $isUpper = str_contains($poolKey, 'kat_c') ||
+                       stripos($poolTitle, 'kelas 5') !== false ||
+                       stripos($poolTitle, 'ganda') !== false;
 
-            foreach ($bracketData['playoffs']['matches'] as $poIdx => $poMatch) {
-                $poTeam1 = $poMatch['team1'];
-                $poTeam2 = $poMatch['team2'];
+            $assignedCourt = $courts[0] ?? 'Lapangan 1';
+            if ($distributionMode === 'category_based') {
+                $assignedCourt = $isUpper ? ($courts[0] ?? 'Lapangan 1') : ($courts[1] ?? ($courts[0] ?? 'Lapangan 1'));
+            }
 
-                if (! $poTeam1 && ! $poTeam2) {
-                    continue;
-                }
-                if (! empty($poTeam1['is_pending_draw']) || ! empty($poTeam2['is_pending_draw'])) {
-                    continue;
-                }
+            // 1. Play-offs
+            if (! empty($bData['playoffs']['has_playoffs']) && ! empty($bData['playoffs']['matches'])) {
+                foreach ($bData['playoffs']['matches'] as $poIdx => $poMatch) {
+                    $t1 = $poMatch['team1'];
+                    $t2 = $poMatch['team2'];
+                    if (! $t1 && ! $t2) {
+                        continue;
+                    }
+                    if (! empty($t1['is_pending_draw']) || ! empty($t2['is_pending_draw'])) {
+                        continue;
+                    }
 
-                $poExisting = BadmintonMatch::where('competition_id', $competition->id)
-                    ->where('match_code', $poMatch['match_code'])
-                    ->first();
-
-                $poStatus = 'upcoming';
-                $poWinnerTeam = null;
-                if ($poExisting && in_array($poExisting->match_status, ['ongoing', 'finished'])) {
-                    $poStatus = $poExisting->match_status;
-                    $poWinnerTeam = $poExisting->winner_team;
-                }
-
-                BadmintonMatch::updateOrCreate(
-                    [
-                        'competition_id' => $competition->id,
-                        'match_code' => $poMatch['match_code'],
-                    ],
-                    [
-                        'court_number' => $poExisting?->court_number ?: $poCourt,
-                        'scheduled_time' => $poExisting?->scheduled_time ?: $poEarlyTime,
-                        'match_order' => $poExisting?->match_order ?? 0,
-                        'match_day' => $poExisting?->match_day ?: 1,
-                        'match_date' => $poExisting?->match_date ?: $poDate,
-                        'match_day_label' => $poExisting?->match_day_label ?: $poDayLabel,
-                        'round_name' => 'Play-off Kualifikasi',
+                    $rawMatchesList[] = [
+                        'pool_key' => $poolKey,
+                        'pool_title' => $poolTitle,
                         'category' => $categoryCode,
-                        'match_type' => stripos($targetPool['title'], 'ganda') !== false ? 'double' : 'single',
-                        'team1_registration_id' => $poTeam1['id'] ?? null,
-                        'team1_school' => $poTeam1['institution'] ?? 'TBD',
-                        'team1_player1' => $poTeam1['name'] ?? 'Peserta 1',
-                        'team2_registration_id' => $poTeam2['id'] ?? null,
-                        'team2_school' => $poTeam2['institution'] ?? 'TBD',
-                        'team2_player1' => $poTeam2['name'] ?? 'Peserta 2',
-                        'match_status' => $poStatus,
-                        'winner_team' => $poWinnerTeam,
-                    ]
-                );
+                        'match_type' => $matchType,
+                        'match_code' => $poMatch['match_code'],
+                        'round_name' => 'Play-off Kualifikasi',
+                        'round_type' => 'playoff',
+                        'round_index' => 0,
+                        'total_rounds' => count($bData['rounds']),
+                        'assigned_court' => $assignedCourt,
+                        'team1' => $t1,
+                        'team2' => $t2,
+                        'is_contested' => true,
+                        'status' => 'upcoming',
+                        'winner_team' => null,
+                    ];
+                }
+            }
 
-                $syncedCount++;
+            // 2. Bracket Rounds
+            $totalRounds = count($bData['rounds']);
+            foreach ($bData['rounds'] as $round) {
+                $rIdx = (int) ($round['round_index'] ?? 1);
+                $rName = $round['round_name'];
+
+                $isFinal = ($rIdx === $totalRounds);
+                $isSemi = ($rIdx === $totalRounds - 1);
+                $isQf = ($rIdx === $totalRounds - 2);
+                $is16B = ($rIdx === $totalRounds - 3);
+
+                $roundType = 'prelim';
+                if ($isFinal) {
+                    $roundType = 'final';
+                } elseif ($isSemi) {
+                    $roundType = 'semifinal';
+                } elseif ($isQf) {
+                    $roundType = 'qf';
+                } elseif ($is16B) {
+                    $roundType = '16b';
+                }
+
+                foreach ($round['matches'] as $m) {
+                    $t1 = $m['team1'];
+                    $t2 = $m['team2'];
+                    if (! $t1 && ! $t2) {
+                        continue;
+                    }
+                    if (! empty($t1['is_pending_draw']) || ! empty($t2['is_pending_draw'])) {
+                        continue;
+                    }
+
+                    $isBye1 = ! empty($m['is_bye1']);
+                    $isBye2 = ! empty($m['is_bye2']);
+                    $isContested = (! $isBye1 && ! $isBye2);
+
+                    $status = 'upcoming';
+                    $winnerTeam = null;
+                    if ($t1 && ! $isBye1 && $isBye2) {
+                        $status = 'finished';
+                        $winnerTeam = 1;
+                    } elseif ($t2 && ! $isBye2 && $isBye1) {
+                        $status = 'finished';
+                        $winnerTeam = 2;
+                    }
+
+                    $rawMatchesList[] = [
+                        'pool_key' => $poolKey,
+                        'pool_title' => $poolTitle,
+                        'category' => $categoryCode,
+                        'match_type' => $matchType,
+                        'match_code' => $m['match_code'],
+                        'round_name' => $rName,
+                        'round_type' => $roundType,
+                        'round_index' => $rIdx,
+                        'total_rounds' => $totalRounds,
+                        'assigned_court' => $assignedCourt,
+                        'team1' => $t1,
+                        'team2' => $t2,
+                        'is_bye1' => $isBye1,
+                        'is_bye2' => $isBye2,
+                        'is_contested' => $isContested,
+                        'status' => $status,
+                        'winner_team' => $winnerTeam,
+                    ];
+                }
             }
         }
 
-        foreach ($bracketData['rounds'] as $round) {
-            $roundIndex = (int) ($round['round_index'] ?? 1);
-            $roundName = $round['round_name'];
-            $mDay = $getDayForRound($roundIndex);
-            [$mDate, $mDayLabel] = $getDayDateAndLabel($mDay);
+        // Map Match to Day
+        $getDayForMatch = function ($m) use ($tournamentDays) {
+            if ($tournamentDays <= 1) {
+                return 1;
+            }
 
-            foreach ($round['matches'] as $match) {
-                $team1 = $match['team1'];
-                $team2 = $match['team2'];
+            $rType = $m['round_type'];
+            if ($rType === 'playoff') {
+                return 1;
+            }
 
-                // Skip if both are empty or any team is pending draw
-                if (! $team1 && ! $team2) {
-                    continue;
+            if ($tournamentDays === 2) {
+                return in_array($rType, ['semifinal', 'final']) ? 2 : 1;
+            }
+
+            if ($tournamentDays === 3) {
+                if ($rType === 'final' || $rType === 'semifinal') {
+                    return 3;
+                }
+                if ($rType === 'qf' || $rType === '16b') {
+                    return 2;
                 }
 
-                if (! empty($team1['is_pending_draw']) || ! empty($team2['is_pending_draw'])) {
-                    continue;
+                return 1;
+            }
+
+            // 4+ Hari
+            if ($rType === 'final') {
+                return min(4, $tournamentDays);
+            }
+            if ($rType === 'semifinal') {
+                return min(3, $tournamentDays);
+            }
+            if ($rType === 'qf' || $rType === '16b') {
+                return min(2, $tournamentDays);
+            }
+
+            return 1; // 32 Besar / Penyisihan Awal
+        };
+
+        // Priority comparator per day
+        $getPriority = function ($m, $day) {
+            $pk = $m['pool_key'];
+            $rt = $m['round_type'];
+
+            if ($day === 1) {
+                if (str_contains($pk, 'kat_c_pi')) {
+                    return 10;
+                }
+                if (str_contains($pk, 'kat_c_pa')) {
+                    return 20;
+                }
+                if (str_contains($pk, 'kat_a_pa')) {
+                    return 30;
+                }
+                if (str_contains($pk, 'kat_b_pi')) {
+                    return 40;
+                }
+                if (str_contains($pk, 'kat_b_pa')) {
+                    return 50;
+                }
+                if (str_contains($pk, 'kat_a_pi')) {
+                    return 60;
                 }
 
-                $isBye1 = ! empty($match['is_bye1']);
-                $isBye2 = ! empty($match['is_bye2']);
-                $isContested = (! $isBye1 && ! $isBye2);
+                return 70;
+            }
 
-                // If one team is BYE, mark as finished with winner
-                $status = 'upcoming';
-                $winnerTeam = null;
-
-                if ($team1 && ! $isBye1 && $isBye2) {
-                    $status = 'finished';
-                    $winnerTeam = 1;
-                } elseif ($team2 && ! $isBye2 && $isBye1) {
-                    $status = 'finished';
-                    $winnerTeam = 2;
+            if ($day === 2) {
+                if (str_contains($pk, 'kat_c_pi') && $rt === '16b') {
+                    return 10;
+                }
+                if (str_contains($pk, 'kat_c_pa') && $rt === '16b') {
+                    return 20;
+                }
+                if (str_contains($pk, 'kat_c_pi') && $rt === 'qf') {
+                    return 30;
+                }
+                if (str_contains($pk, 'kat_c_pa') && $rt === 'qf') {
+                    return 40;
+                }
+                if (str_contains($pk, 'ganda')) {
+                    return 50;
                 }
 
-                $assignedCourt = 'Lapangan 1';
+                if (str_contains($pk, 'kat_a_pi') && $rt !== 'qf') {
+                    return 60;
+                }
+                if (str_contains($pk, 'kat_a_pa')) {
+                    return 70;
+                }
+                if (str_contains($pk, 'kat_b_pa') && $rt === '16b') {
+                    return 80;
+                }
+                if (str_contains($pk, 'kat_b_pi')) {
+                    return 90;
+                }
+                if (str_contains($pk, 'kat_a_pi') && $rt === 'qf') {
+                    return 100;
+                }
+                if (str_contains($pk, 'kat_b_pa') && $rt === 'qf') {
+                    return 110;
+                }
+
+                return 120;
+            }
+
+            if ($day === 3) {
+                if (str_contains($pk, 'ganda') && $rt === 'qf') {
+                    return 10;
+                }
+                if (str_contains($pk, 'kat_c_pi')) {
+                    return 20;
+                }
+                if (str_contains($pk, 'kat_c_pa')) {
+                    return 30;
+                }
+                if (str_contains($pk, 'ganda')) {
+                    return 40;
+                }
+
+                if (str_contains($pk, 'kat_a_pi')) {
+                    return 50;
+                }
+                if (str_contains($pk, 'kat_a_pa')) {
+                    return 60;
+                }
+                if (str_contains($pk, 'kat_b_pi')) {
+                    return 70;
+                }
+                if (str_contains($pk, 'kat_b_pa')) {
+                    return 80;
+                }
+
+                return 90;
+            }
+
+            if ($day >= 4) {
+                if (str_contains($pk, 'kat_a_pi')) {
+                    return 10;
+                }
+                if (str_contains($pk, 'kat_a_pa')) {
+                    return 20;
+                }
+                if (str_contains($pk, 'kat_b_pi')) {
+                    return 30;
+                }
+                if (str_contains($pk, 'kat_b_pa')) {
+                    return 40;
+                }
+                if (str_contains($pk, 'kat_c_pi')) {
+                    return 50;
+                }
+                if (str_contains($pk, 'kat_c_pa')) {
+                    return 60;
+                }
+                if (str_contains($pk, 'ganda')) {
+                    return 70;
+                }
+
+                return 80;
+            }
+
+            return 100;
+        };
+
+        // Group matches into days
+        $matchesByDay = [];
+        for ($d = 1; $d <= $tournamentDays; $d++) {
+            $matchesByDay[$d] = [];
+        }
+
+        foreach ($rawMatchesList as $m) {
+            $mDay = $getDayForMatch($m);
+            $matchesByDay[$mDay][] = $m;
+        }
+
+        $scheduledMatches = [];
+        $daysSummary = [];
+
+        for ($d = 1; $d <= $tournamentDays; $d++) {
+            [$dayDate, $dayLabel] = $getDayDateAndLabel($d);
+            $dayMatches = $matchesByDay[$d] ?? [];
+
+            // Sort matches for this day
+            usort($dayMatches, function ($a, $b) use ($d, $getPriority) {
+                $pA = $getPriority($a, $d);
+                $pB = $getPriority($b, $d);
+                if ($pA !== $pB) {
+                    return $pA <=> $pB;
+                }
+
+                return strcmp($a['match_code'], $b['match_code']);
+            });
+
+            // Tracking court order & times
+            $courtCounters = [];
+            $courtCurrentTime = [];
+            $dayCourtIndex = 0;
+
+            foreach ($courts as $c) {
+                $courtCounters[$c] = 0;
+                $courtCurrentTime[$c] = Carbon::createFromFormat('H:i', $startTime);
+            }
+
+            $currentDuration = ($d >= 3) ? $semifinalDuration : $matchDuration;
+            $dayContestedCount = 0;
+            $dayPreviewList = [];
+
+            foreach ($dayMatches as $m) {
+                $isContested = $m['is_contested'];
+                $assignedCourt = $m['assigned_court'];
+
+                if ($distributionMode === 'even' && $isContested) {
+                    $assignedCourt = $courts[$dayCourtIndex % count($courts)];
+                    $dayCourtIndex++;
+                }
+
+                // Pada Hari 4 (Final), seluruh pertandingan dipusatkan di Lapangan 1 (Utama)
+                if ($d === 4 && count($courts) > 0) {
+                    $assignedCourt = $courts[0];
+                }
+
                 $assignedTime = null;
                 $assignedOrder = null;
 
                 if ($isContested) {
-                    $assignedCourt = $courts[$courtIndexByDay[$mDay] % count($courts)];
-                    $courtMatchCountsByDay[$mDay][$assignedCourt]++;
-                    $assignedOrder = $courtMatchCountsByDay[$mDay][$assignedCourt];
+                    $courtCounters[$assignedCourt]++;
+                    $assignedOrder = $courtCounters[$assignedCourt];
 
-                    $minutesToAdd = ($assignedOrder - 1) * $matchDuration;
-                    $assignedTime = Carbon::createFromFormat('H:i', $startTime)->addMinutes($minutesToAdd)->format('H:i');
+                    // Check for Friday break on Day 4:
+                    // Partai ke-6 (misal Putra 5-6 dan Ganda) dijadwalkan setelah sholat Jumat (13:00 WIB)
+                    if ($d === 4 && $fridayBreak && $assignedOrder === 6) {
+                        $courtCurrentTime[$assignedCourt] = Carbon::createFromFormat('H:i', '13:00');
+                    }
 
-                    $courtIndexByDay[$mDay]++;
+                    $assignedTime = $courtCurrentTime[$assignedCourt]->format('H:i');
+                    $courtCurrentTime[$assignedCourt]->addMinutes($currentDuration);
+                    $dayContestedCount++;
                 } else {
                     $assignedCourt = 'BYE';
                 }
 
-                $existingMatchRecord = BadmintonMatch::where('competition_id', $competition->id)
-                    ->where('match_code', $match['match_code'])
-                    ->first();
+                $matchItem = [
+                    'match_code' => $m['match_code'],
+                    'court_number' => $assignedCourt,
+                    'scheduled_time' => $assignedTime,
+                    'match_order' => $assignedOrder,
+                    'match_day' => $d,
+                    'match_date' => $dayDate,
+                    'match_day_label' => $dayLabel,
+                    'round_name' => $m['round_name'],
+                    'round_type' => $m['round_type'],
+                    'category' => $m['category'],
+                    'match_type' => $m['match_type'],
+                    'pool_key' => $m['pool_key'],
+                    'pool_title' => $m['pool_title'],
+                    'team1_id' => $m['team1']['id'] ?? null,
+                    'team1_school' => $m['team1']['institution'] ?? ($m['is_bye1'] ? 'BYE' : 'TBD'),
+                    'team1_player' => $m['team1']['name'] ?? ($m['is_bye1'] ? '[BYE]' : 'Menunggu Pemenang'),
+                    'team2_id' => $m['team2']['id'] ?? null,
+                    'team2_school' => $m['team2']['institution'] ?? ($m['is_bye2'] ? 'BYE' : 'TBD'),
+                    'team2_player' => $m['team2']['name'] ?? ($m['is_bye2'] ? '[BYE]' : 'Menunggu Pemenang'),
+                    'status' => $m['status'],
+                    'winner_team' => $m['winner_team'],
+                    'is_contested' => $isContested,
+                ];
 
-                if ($existingMatchRecord && in_array($existingMatchRecord->match_status, ['ongoing', 'finished'])) {
-                    $status = $existingMatchRecord->match_status;
-                    $winnerTeam = $existingMatchRecord->winner_team;
-                }
-
-                BadmintonMatch::updateOrCreate(
-                    [
-                        'competition_id' => $competition->id,
-                        'match_code' => $match['match_code'],
-                    ],
-                    [
-                        'court_number' => $assignedCourt,
-                        'scheduled_time' => $assignedTime,
-                        'match_order' => $assignedOrder,
-                        'match_day' => $mDay,
-                        'match_date' => $mDate,
-                        'match_day_label' => $mDayLabel,
-                        'round_name' => $roundName,
-                        'category' => $categoryCode,
-                        'match_type' => stripos($targetPool['title'], 'ganda') !== false ? 'double' : 'single',
-                        'team1_registration_id' => $team1['id'] ?? null,
-                        'team1_school' => $team1['institution'] ?? ($isBye1 ? 'BYE' : 'TBD'),
-                        'team1_player1' => $team1['name'] ?? ($isBye1 ? '[BYE]' : 'Menunggu Pemenang'),
-                        'team2_registration_id' => $team2['id'] ?? null,
-                        'team2_school' => $team2['institution'] ?? ($isBye2 ? 'BYE' : 'TBD'),
-                        'team2_player1' => $team2['name'] ?? ($isBye2 ? '[BYE]' : 'Menunggu Pemenang'),
-                        'match_status' => $status,
-                        'winner_team' => $winnerTeam,
-                    ]
-                );
-
-                $syncedCount++;
+                $scheduledMatches[] = $matchItem;
+                $dayPreviewList[] = $matchItem;
             }
+
+            $daysSummary[$d] = [
+                'day_num' => $d,
+                'date' => $dayDate,
+                'label' => $dayLabel,
+                'total_matches' => $dayContestedCount,
+                'matches' => $dayPreviewList,
+            ];
         }
 
         $courtListStr = implode(', ', $courts);
+        $summary = "{$tournamentDays} Hari ({$courtListStr}, mulai {$startTime} WIB)";
 
-        return response()->json([
-            'success' => true,
-            'message' => "Berhasil menyinkronkan {$syncedCount} pertandingan ke jadwal {$tournamentDays} Hari ({$courtListStr}, mulai {$startTime} WIB)!",
-        ]);
+        return [
+            'summary' => $summary,
+            'days' => $daysSummary,
+            'matches' => $scheduledMatches,
+        ];
     }
 
     /**
