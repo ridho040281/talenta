@@ -705,6 +705,163 @@
         </div>
     </div>
 
+    <!-- Modal Konfirmasi Reset Undian dengan Validasi Detail & Password Admin -->
+    <div x-show="isResetModalOpen" 
+         x-cloak 
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md font-sans"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95">
+        
+        <div class="bg-slate-900 border border-rose-500/50 rounded-3xl p-6 sm:p-7 max-w-lg w-full shadow-2xl space-y-5 relative text-white"
+             @click.outside="if (!isProcessingReset) closeResetModal()">
+            
+            <!-- Header Modal -->
+            <div class="flex items-start justify-between gap-4 border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/40 flex items-center justify-center shrink-0 shadow-lg shadow-rose-500/20">
+                        <i data-lucide="shield-alert" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+                            <span>OTORISASI KEAMANAN TINGKAT TINGGI</span>
+                        </span>
+                        <h3 class="text-base sm:text-lg font-black text-white font-display" x-text="resetScope === 'all' ? 'Reset Semua Undian Cabor' : 'Konfirmasi Reset Undian Kategori'"></h3>
+                    </div>
+                </div>
+                <button type="button" @click="closeResetModal()" :disabled="isProcessingReset" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Body Info & Validasi Target -->
+            <div class="space-y-4 text-xs">
+                
+                <!-- Card Validasi Konfirmasi Detail Target -->
+                <div class="p-4 rounded-2xl bg-slate-950/90 border border-rose-500/30 space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                        <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                            <i data-lucide="crosshair" class="w-3.5 h-3.5 text-rose-400"></i>
+                            <span x-text="resetScope === 'all' ? 'TARGET: SELURUH CABANG LOMBA' : 'TARGET YANG AKAN DI-RESET:'"></span>
+                        </span>
+                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider"
+                              :class="resetScope === 'all' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'"
+                              x-text="resetScope === 'all' ? 'SEMUA KATEGORI' : '1 KATEGORI AKTIF'">
+                        </span>
+                    </div>
+
+                    <!-- Jika Reset Pool Aktif -->
+                    <div x-show="resetScope === 'pool'" class="space-y-2.5">
+                        <div class="grid grid-cols-2 gap-2 text-left">
+                            <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                                <span class="text-[10px] text-slate-400 block mb-1 font-medium">Kategori / Kelas:</span>
+                                <span class="text-xs font-black text-amber-300 block truncate" x-text="activePool?.class_label || activePool?.category_label || activePool?.title || 'Kategori Aktif'"></span>
+                            </div>
+                            <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                                <span class="text-[10px] text-slate-400 block mb-1 font-medium">Sektor Gender:</span>
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-black"
+                                      :class="(activePool?.sector === 'PI' || (activePool?.gender === 'P') || (activePool?.key && activePool.key.includes('_pi'))) 
+                                          ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' 
+                                          : 'bg-blue-500/20 text-blue-300 border border-blue-500/40'">
+                                    <span x-text="(activePool?.sector === 'PI' || (activePool?.gender === 'P') || (activePool?.key && activePool.key.includes('_pi'))) ? '👧 Putri (PI)' : '👦 Putra (PA)'"></span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Info Peserta Terdampak -->
+                        <div class="bg-amber-500/10 border border-amber-500/30 p-2.5 rounded-xl flex items-center justify-between text-[11px]">
+                            <span class="text-amber-200/90 font-medium">Peserta Terkena Reset:</span>
+                            <span class="font-mono font-bold text-amber-300 flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                                <span x-text="activeDrawnParticipants.length + ' dari ' + activeParticipants.length + ' Peserta Terundi'"></span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Jika Reset All -->
+                    <div x-show="resetScope === 'all'" class="space-y-2">
+                        <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                            <span class="text-[10px] text-slate-400 block mb-1">Cabang Lomba:</span>
+                            <span class="text-xs font-black text-white">{{ $competition->name }}</span>
+                        </div>
+                        <div class="bg-rose-500/10 border border-rose-500/30 p-2.5 rounded-xl flex items-center justify-between text-[11px]">
+                            <span class="text-rose-200 font-medium">Total Seluruh Peserta Terundi:</span>
+                            <span class="font-mono font-bold text-rose-300" x-text="allDrawnParticipants.length + ' Peserta'"></span>
+                        </div>
+                    </div>
+
+                    <!-- Peringatan & Pertanyaan Validasi Tegas -->
+                    <div class="p-3.5 rounded-xl bg-rose-950/50 border border-rose-500/40 text-rose-200 space-y-1.5">
+                        <p class="font-black text-xs text-rose-300 flex items-center gap-1.5">
+                            <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-400 shrink-0"></i>
+                            <span x-text="resetScope === 'all' 
+                                ? 'Apakah Anda BENAR-BENAR YAKIN menghapus SEMUA nomor undian?' 
+                                : 'Apakah Anda BENAR-BENAR YAKIN mereset undian ' + (activePool?.class_label || 'kategori ini') + ' (' + (activePool?.sector || 'PA/PI') + ')?'">
+                            </span>
+                        </p>
+                        <p class="text-[11px] text-slate-300 leading-relaxed">
+                            Seluruh slot nomor urut undian peserta pada kategori ini akan dihapus dan dikosongkan. Pemain yang sudah diundi (termasuk pemain Seeded) akan kembali ke status <strong>"Belum Diundi"</strong>.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Input Password Admin -->
+                <div class="space-y-1.5">
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-300 flex items-center justify-between">
+                        <span>Masukkan Password Admin: <span class="text-rose-400">*</span></span>
+                        <span class="text-[10px] text-slate-400 font-normal">Otorisasi Wajib</span>
+                    </label>
+                    <div class="relative">
+                        <input :type="showResetPassword ? 'text' : 'password'" 
+                               x-model="resetAdminPassword"
+                               x-ref="resetPasswordInput"
+                               @keydown.enter.prevent="executeResetWithPassword()"
+                               placeholder="Ketik password akun Anda / Super Admin..."
+                               :disabled="isProcessingReset"
+                               class="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-slate-950 border border-slate-700 focus:border-rose-400 focus:ring-2 focus:ring-rose-500/30 text-white text-xs font-medium outline-none transition disabled:opacity-50">
+                        <button type="button" 
+                                @click="showResetPassword = !showResetPassword"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition cursor-pointer p-0.5">
+                            <span x-text="showResetPassword ? '🙈' : '👁️'"></span>
+                        </button>
+                    </div>
+                    <p class="text-[10px] text-slate-400">
+                        Sebagai perlindungan dari ketidaksengajaan, sistem memerlukan password akun panitia/admin Anda.
+                    </p>
+                </div>
+
+                <!-- Alert Error jika password salah / kosong -->
+                <div x-show="resetErrorMessage" x-transition class="p-3 rounded-xl bg-rose-500/20 border border-rose-500/50 text-rose-300 text-xs flex items-center gap-2">
+                    <i data-lucide="alert-circle" class="w-4 h-4 shrink-0 text-rose-400"></i>
+                    <span x-text="resetErrorMessage"></span>
+                </div>
+            </div>
+
+            <!-- Modal Footer Buttons -->
+            <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-800">
+                <button type="button" 
+                        @click="closeResetModal()" 
+                        :disabled="isProcessingReset"
+                        class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer">
+                    Batal
+                </button>
+                <button type="button" 
+                        @click="executeResetWithPassword()" 
+                        :disabled="isProcessingReset || !resetAdminPassword"
+                        class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white font-black text-xs shadow-lg shadow-rose-600/30 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-2 cursor-pointer">
+                    <span x-show="isProcessingReset" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    <i x-show="!isProcessingReset" data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                    <span x-text="isProcessingReset ? 'Memverifikasi...' : 'Konfirmasi & Reset Sekarang'"></span>
+                </button>
+            </div>
+
+        </div>
+    </div>
+
 </div>
 
 @push('scripts')
@@ -746,6 +903,95 @@
             batchStopRequested: false,
             batchProgressText: '',
             recentlyDrawnId: null,
+
+            // Reset with Password Modal States
+            isResetModalOpen: false,
+            resetScope: 'pool',
+            resetAdminPassword: '',
+            showResetPassword: false,
+            isProcessingReset: false,
+            resetErrorMessage: '',
+
+            promptResetWithPassword(scope = 'pool') {
+                if (this.isDecoding || this.isBatchRunning) return;
+                this.resetScope = scope;
+                this.resetAdminPassword = '';
+                this.showResetPassword = false;
+                this.resetErrorMessage = '';
+                this.isProcessingReset = false;
+                this.isResetModalOpen = true;
+                this.$nextTick(() => {
+                    if (window.lucide) window.lucide.createIcons();
+                    if (this.$refs.resetPasswordInput) {
+                        this.$refs.resetPasswordInput.focus();
+                    }
+                });
+            },
+
+            closeResetModal() {
+                if (this.isProcessingReset) return;
+                this.isResetModalOpen = false;
+                this.resetAdminPassword = '';
+                this.resetErrorMessage = '';
+            },
+
+            async executeResetWithPassword() {
+                if (this.isProcessingReset) return;
+                if (!this.resetAdminPassword) {
+                    this.resetErrorMessage = 'Silakan masukkan password admin terlebih dahulu.';
+                    return;
+                }
+
+                this.isProcessingReset = true;
+                this.resetErrorMessage = '';
+
+                try {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+                    const payload = {
+                        admin_password: this.resetAdminPassword
+                    };
+
+                    if (this.resetScope === 'pool') {
+                        if (!this.activePool || !this.activePool.participants) {
+                            this.resetErrorMessage = 'Kategori aktif tidak valid.';
+                            this.isProcessingReset = false;
+                            return;
+                        }
+                        payload.registration_ids = this.activePool.participants.map(p => p.id).join(',');
+                        payload.pool_key = this.activePoolKey;
+                    }
+
+                    const response = await fetch('{{ route("pic.spin.wheel.reset", $competition->id) }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        this.isResetModalOpen = false;
+                        window.location.reload();
+                    } else {
+                        this.resetErrorMessage = data.message || 'Password admin salah atau terjadi kesalahan.';
+                        this.isProcessingReset = false;
+                        this.$nextTick(() => {
+                            if (window.lucide) window.lucide.createIcons();
+                            if (this.$refs.resetPasswordInput) {
+                                this.$refs.resetPasswordInput.select();
+                            }
+                        });
+                    }
+                } catch (err) {
+                    console.error('Reset error:', err);
+                    this.resetErrorMessage = 'Terjadi kesalahan sistem saat memproses reset.';
+                    this.isProcessingReset = false;
+                }
+            },
 
             openBatchModal() {
                 if (this.isBatchRunning) return;

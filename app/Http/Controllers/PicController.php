@@ -2865,6 +2865,14 @@ class PicController extends Controller
             Registration::where('competition_id', $competition->id)->whereIn('id', $regIds)->update(['draw_number' => null, 'seed_number' => null]);
             DrawAllocation::where('competition_id', $competition->id)->whereIn('registration_id', $regIds)->delete();
 
+            $poolKey = $request->input('pool_key');
+            if (! empty($poolKey)) {
+                BadmintonMatch::where('competition_id', $competition->id)
+                    ->where('match_code', 'like', "{$poolKey}-%")
+                    ->where('match_status', 'upcoming')
+                    ->delete();
+            }
+
             $msg = 'Nomor undian untuk kategori terpilih pada '.$competition->name.' berhasil di-reset.';
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json(['success' => true, 'message' => $msg]);
@@ -2875,6 +2883,10 @@ class PicController extends Controller
 
         Registration::where('competition_id', $competition->id)->update(['draw_number' => null, 'seed_number' => null]);
         DrawAllocation::where('competition_id', $competition->id)->delete();
+
+        BadmintonMatch::where('competition_id', $competition->id)
+            ->where('match_status', 'upcoming')
+            ->delete();
 
         $msg = 'Semua nomor undian pada cabang '.$competition->name.' telah di-reset.';
         if ($request->expectsJson() || $request->ajax()) {
