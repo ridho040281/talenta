@@ -107,14 +107,14 @@
                 @endif
             </div>
 
-            <!-- Right (Pojok Kanan Atas): Quick Actions (TV Bagan, Arena TV) & Titik 3 Opsi -->
+            <!-- Right (Pojok Kanan Atas): Quick Actions (TV SKOR, Arena TV) & Titik 3 Opsi -->
             <div class="flex items-center gap-2 shrink-0 self-end sm:self-center ml-auto">
-                <a href="{{ route('public.bracket', $competition->slug ?: $competition->id) }}?{{ http_build_query($poolParam) }}" 
+                <a href="{{ $isBadminton ? route('badminton.scoreboard') : route('live.scoreboard', $competition->slug ?: $competition->id) }}" 
                    target="_blank"
                    class="px-2.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-amber-300 border border-amber-500/30 text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer"
-                   title="Buka Layar TV Bagan untuk Penonton & Pemain">
+                   title="Buka Layar TV Papan Skor LED">
                     <i data-lucide="tv" class="w-3.5 h-3.5 text-amber-400"></i>
-                    <span class="hidden sm:inline">TV Bagan</span>
+                    <span class="hidden sm:inline">TV SKOR</span>
                 </a>
 
                 @if($isBadminton)
