@@ -134,7 +134,7 @@
             </button>
 
             <!-- Link to Scoreboard -->
-            <a href="{{ route('live.scoreboard', $competition->slug) }}" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 transition">
+            <a href="{{ route('live.scoreboard', $competition->slug ?: $competition->id) }}" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 transition">
                 Papan Skor
             </a>
         </div>
@@ -162,7 +162,7 @@
                     $tabName = $p['title'];
                 }
             @endphp
-            <a href="{{ route('public.bracket', $competition->slug) }}?pool={{ urlencode($p['key']) }}"
+            <a href="{{ route('public.bracket', $competition->slug ?: $competition->id) }}?pool={{ urlencode($p['key']) }}"
                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap {{ $isActive ? ($isPi ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-lg shadow-rose-600/30 font-black' : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-indigo-600/30 font-black') : 'bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700' }}">
                 <span>{{ $icon }}</span>
                 <span>{{ $tabName }}</span>
@@ -357,7 +357,7 @@
                                                 <span>&rarr; Menuju Slot #{{ $poMatch['target_slot'] }} Babak 1</span>
                                             </span>
                                             @if($poExisting)
-                                                <a href="{{ route('live.scoreboard', $competition->slug) }}" target="_blank" class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">Live Skor</a>
+                                                <a href="{{ route('live.scoreboard', $competition->slug ?: $competition->id) }}" target="_blank" class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">Live Skor</a>
                                             @endif
                                         </div>
                                     </div>

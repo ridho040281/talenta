@@ -685,7 +685,7 @@
                     </a>
                 </div>
 
-                @if(auth()->user()->managesTournamentBracket())
+                @if(auth()->user() && method_exists(auth()->user(), 'managesTournamentBracket') && auth()->user()->managesTournamentBracket())
                 <!-- Fase 2: Turnamen & Wasit (Bulu Tangkis & Tenis Meja) -->
                 <div class="space-y-1 pt-1">
                     <div x-show="sidebarOpen" class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Turnamen & Wasit</div>
@@ -774,7 +774,7 @@
                     $judgedComps = auth()->user()->judgedCompetitions()->with('category')->get();
                     $hasSports = $judgedComps->contains(fn($c) => $c->isSports());
                     $hasNonSports = $judgedComps->contains(fn($c) => !$c->isSports());
-                    $hasTournament = auth()->user()->managesTournamentBracket() || $judgedComps->contains(fn($c) => in_array($c->code, ['BLT', 'TMJ']) || str_contains(strtolower($c->name ?? ''), 'bulu tangkis') || str_contains(strtolower($c->name ?? ''), 'tenis meja'));
+                    $hasTournament = (method_exists(auth()->user(), 'managesTournamentBracket') && auth()->user()->managesTournamentBracket()) || $judgedComps->contains(fn($c) => in_array($c->code, ['BLT', 'TMJ']) || str_contains(strtolower($c->name ?? ''), 'bulu tangkis') || str_contains(strtolower($c->name ?? ''), 'tenis meja'));
 
                     $menuTitle = ($hasSports && !$hasNonSports) ? 'Menu Wasit Olahraga' : ((!$hasSports && $hasNonSports) ? 'Menu Dewan Juri' : 'Menu Dewan Juri & Wasit');
                     $dashboardLabel = ($hasSports && !$hasNonSports) ? 'Dashboard Wasit' : ((!$hasSports && $hasNonSports) ? 'Dashboard Juri' : 'Dashboard Juri & Wasit');

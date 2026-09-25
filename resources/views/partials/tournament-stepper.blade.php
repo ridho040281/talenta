@@ -23,7 +23,7 @@
               ->orWhere('name', 'like', '%Tenis Meja%');
         })->orderByRaw("CASE WHEN code = 'BLT' OR name LIKE '%Bulu Tangkis%' OR name LIKE '%Badminton%' THEN 1 ELSE 2 END");
 
-        if ($user && !in_array($user->role, ['superadmin', 'panitia']) && !$user->managesTournamentBracket()) {
+        if ($user && !in_array($user->role, ['superadmin', 'panitia']) && !(method_exists($user, 'managesTournamentBracket') && $user->managesTournamentBracket())) {
             $tCompQuery->whereIn('id', \App\Http\Controllers\PicController::getManagedCompetitionIds($user));
         }
         $tournamentCompetitions = $tCompQuery->get();
@@ -109,7 +109,7 @@
 
             <!-- Right (Pojok Kanan Atas): Quick Actions (TV Bagan, Arena TV) & Titik 3 Opsi -->
             <div class="flex items-center gap-2 shrink-0 self-end sm:self-center ml-auto">
-                <a href="{{ route('public.bracket', $competition->slug) }}?{{ http_build_query($poolParam) }}" 
+                <a href="{{ route('public.bracket', $competition->slug ?: $competition->id) }}?{{ http_build_query($poolParam) }}" 
                    target="_blank"
                    class="px-2.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-amber-300 border border-amber-500/30 text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer"
                    title="Buka Layar TV Bagan untuk Penonton & Pemain">

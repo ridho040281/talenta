@@ -22,7 +22,7 @@
                     SYS_MODULE: TOURNAMENT_BRACKET
                 </span>
                 <span class="px-2.5 py-0.5 text-[10px] font-mono font-bold rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 uppercase">
-                    {{ $competition->category->name }}
+                    {{ $competition->category?->name ?? 'Turnamen' }}
                 </span>
                 @if($activePool)
                     @php

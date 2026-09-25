@@ -27,7 +27,7 @@ class TournamentBracketController extends Controller
                 $comp = null;
 
                 // Cek apakah mengelola Bulu Tangkis
-                if ($user->managesBadminton()) {
+                if (method_exists($user, 'managesBadminton') && $user->managesBadminton()) {
                     $comp = Competition::where(function ($q) {
                         $q->where('code', 'BLT')
                             ->orWhere('name', 'like', '%Bulu Tangkis%')
@@ -123,7 +123,7 @@ class TournamentBracketController extends Controller
         // Check authorization
         if (! in_array($user->role, ['superadmin', 'panitia'])) {
             $managedIds = PicController::getManagedCompetitionIds($user);
-            $isAuthorizedSport = $user->managesTournamentBracket() && (
+            $isAuthorizedSport = (method_exists($user, 'managesTournamentBracket') && $user->managesTournamentBracket()) && (
                 in_array(strtoupper($competition->code ?? ''), ['BLT', 'TMJ']) ||
                 str_contains(strtolower($competition->name ?? ''), 'bulu tangkis') ||
                 str_contains(strtolower($competition->name ?? ''), 'badminton') ||
@@ -153,7 +153,7 @@ class TournamentBracketController extends Controller
         })
             ->orderByRaw("CASE WHEN code = 'BLT' OR name LIKE '%Bulu Tangkis%' OR name LIKE '%Badminton%' THEN 1 ELSE 2 END");
 
-        if (! in_array($user->role, ['superadmin', 'panitia']) && ! $user->managesTournamentBracket()) {
+        if (! in_array($user->role, ['superadmin', 'panitia']) && ! (method_exists($user, 'managesTournamentBracket') && $user->managesTournamentBracket())) {
             $tCompQuery->whereIn('id', PicController::getManagedCompetitionIds($user));
         }
         $tournamentCompetitions = $tCompQuery->get();
@@ -258,7 +258,7 @@ class TournamentBracketController extends Controller
 
         if (! in_array($user->role, ['superadmin', 'panitia'])) {
             $managedIds = PicController::getManagedCompetitionIds($user);
-            $isAuthorizedBadminton = $user->managesBadminton() && (
+            $isAuthorizedBadminton = (method_exists($user, 'managesBadminton') && $user->managesBadminton()) && (
                 strtoupper($competition->code ?? '') === 'BLT' ||
                 str_contains(strtolower($competition->name ?? ''), 'bulu tangkis') ||
                 str_contains(strtolower($competition->name ?? ''), 'badminton')
@@ -294,7 +294,7 @@ class TournamentBracketController extends Controller
 
         if (! in_array($user->role, ['superadmin', 'panitia'])) {
             $managedIds = PicController::getManagedCompetitionIds($user);
-            $isAuthorizedBadminton = $user->managesBadminton() && (
+            $isAuthorizedBadminton = (method_exists($user, 'managesBadminton') && $user->managesBadminton()) && (
                 strtoupper($competition->code ?? '') === 'BLT' ||
                 str_contains(strtolower($competition->name ?? ''), 'bulu tangkis') ||
                 str_contains(strtolower($competition->name ?? ''), 'badminton')
@@ -392,7 +392,7 @@ class TournamentBracketController extends Controller
 
         if (! in_array($user->role, ['superadmin', 'panitia'])) {
             $managedIds = PicController::getManagedCompetitionIds($user);
-            $isAuthorizedBadminton = $user->managesBadminton() && (
+            $isAuthorizedBadminton = (method_exists($user, 'managesBadminton') && $user->managesBadminton()) && (
                 strtoupper($competition->code ?? '') === 'BLT' ||
                 str_contains(strtolower($competition->name ?? ''), 'bulu tangkis') ||
                 str_contains(strtolower($competition->name ?? ''), 'badminton')
@@ -728,7 +728,7 @@ class TournamentBracketController extends Controller
 
         if (! in_array($user->role, ['superadmin', 'panitia'])) {
             $managedIds = PicController::getManagedCompetitionIds($user);
-            $isAuthorizedBadminton = $user->managesBadminton() && (
+            $isAuthorizedBadminton = (method_exists($user, 'managesBadminton') && $user->managesBadminton()) && (
                 strtoupper($competition->code ?? '') === 'BLT' ||
                 str_contains(strtolower($competition->name ?? ''), 'bulu tangkis') ||
                 str_contains(strtolower($competition->name ?? ''), 'badminton')
