@@ -110,7 +110,7 @@
             </button>
 
             <!-- Public TV View -->
-            <a href="{{ route('public.bracket', $competition->slug) }}?pool={{ urlencode($activePoolKey) }}" 
+            <a href="{{ route('public.bracket', $competition->slug ?: $competition->id) }}?pool={{ urlencode($activePoolKey) }}" 
                target="_blank" 
                class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 font-bold text-xs shadow-sm transition"
                title="Buka tampilan TV & penonton publik">

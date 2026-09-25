@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
 use App\Models\AppSetting;
+use App\Models\BadmintonMatch;
 use App\Models\Category;
 use App\Models\Competition;
 use App\Models\DrawAllocation;

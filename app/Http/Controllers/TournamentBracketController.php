@@ -209,7 +209,7 @@ class TournamentBracketController extends Controller
                 $isAuthorizedStaff = true;
             } else {
                 $managedIds = PicController::getManagedCompetitionIds($user);
-                $isAuthorizedSport = $user->managesTournamentBracket() && (
+                $isAuthorizedSport = (method_exists($user, 'managesTournamentBracket') && $user->managesTournamentBracket()) && (
                     in_array(strtoupper($competition->code ?? ''), ['BLT', 'TMJ']) ||
                     str_contains(strtolower($competition->name ?? ''), 'bulu tangkis') ||
                     str_contains(strtolower($competition->name ?? ''), 'badminton') ||
@@ -340,7 +340,7 @@ class TournamentBracketController extends Controller
 
         if (! in_array($user->role, ['superadmin', 'panitia'])) {
             $managedIds = PicController::getManagedCompetitionIds($user);
-            $isAuthorizedSport = $user->managesTournamentBracket() && (
+            $isAuthorizedSport = (method_exists($user, 'managesTournamentBracket') && $user->managesTournamentBracket()) && (
                 in_array(strtoupper($competition->code ?? ''), ['BLT', 'TMJ']) ||
                 str_contains(strtolower($competition->name ?? ''), 'bulu tangkis') ||
                 str_contains(strtolower($competition->name ?? ''), 'badminton') ||

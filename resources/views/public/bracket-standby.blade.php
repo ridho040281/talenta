@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -67,7 +67,7 @@
                 <span class="hidden sm:inline">Layar Penuh TV</span>
             </button>
 
-            <a href="{{ route('live.scoreboard', $competition->slug) }}" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 transition flex items-center gap-1.5">
+            <a href="{{ route('live.scoreboard', $competition->slug ?: $competition->id) }}" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 transition flex items-center gap-1.5">
                 <i data-lucide="activity" class="w-3.5 h-3.5"></i>
                 <span>Papan Skor</span>
             </a>
@@ -162,7 +162,7 @@
                     this.isChecking = true;
 
                     try {
-                        const res = await fetch('{{ route("public.bracket.status", $competition->slug) }}');
+                        const res = await fetch('{{ route("public.bracket.status", $competition->slug ?: $competition->id) }}');
                         const data = await res.json();
                         if (data && data.is_published === true) {
                             window.location.reload();
