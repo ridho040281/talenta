@@ -709,6 +709,7 @@ class TournamentBracketController extends Controller
             'success' => true,
             'summary' => $plan['summary'],
             'days' => $plan['days'],
+            'matches' => $plan['matches'],
             'total_matches' => count($plan['matches']),
         ]);
     }
@@ -735,13 +736,24 @@ class TournamentBracketController extends Controller
             }
         }
 
-        $plan = $this->buildMultiDaySchedulePlan($competition, $request->all());
-        if (empty($plan['matches'])) {
-            return response()->json(['success' => false, 'message' => 'Tidak ada pertandingan yang dapat dijadwalkan.'], 422);
+        $incomingMatches = $request->input('matches');
+        $planMatches = [];
+        $planSummary = '';
+
+        if (! empty($incomingMatches) && is_array($incomingMatches)) {
+            $planMatches = $incomingMatches;
+            $planSummary = $request->input('summary', 'Jadwal Kustom Panitia');
+        } else {
+            $plan = $this->buildMultiDaySchedulePlan($competition, $request->all());
+            if (empty($plan['matches'])) {
+                return response()->json(['success' => false, 'message' => 'Tidak ada pertandingan yang dapat dijadwalkan.'], 422);
+            }
+            $planMatches = $plan['matches'];
+            $planSummary = $plan['summary'];
         }
 
         $syncedCount = 0;
-        foreach ($plan['matches'] as $m) {
+        foreach ($planMatches as $m) {
             $existingRecord = BadmintonMatch::where('competition_id', $competition->id)
                 ->where('match_code', $m['match_code'])
                 ->first();
@@ -918,7 +930,15 @@ class TournamentBracketController extends Controller
 
         $matchDuration = max(10, (int) ($input['match_duration'] ?? 20));
         $semifinalDuration = max(10, (int) ($input['semifinal_duration'] ?? 30));
-        $distributionMode = $input['distribution_mode'] ?? 'category_based'; // 'category_based' | 'even'
+        $distributionMode = $input['distribution_mode'] ?? 'category_based'; // 'category_based' | 'custom' | 'even'
+        $customRules = $input['custom_rules'] ?? [];
+        if (is_string($customRules)) {
+            try {
+                $customRules = json_decode($customRules, true) ?: [];
+            } catch (\Throwable $e) {
+                $customRules = [];
+            }
+        }
         $lunchBreak = ! empty($input['lunch_break'] ?? true);
         $lunchStart = $input['lunch_start'] ?? '12:00';
         $lunchEnd = $input['lunch_end'] ?? '13:00';
@@ -964,6 +984,11 @@ class TournamentBracketController extends Controller
             $assignedCourt = $courts[0] ?? 'Lapangan 1';
             if ($distributionMode === 'category_based') {
                 $assignedCourt = $isUpper ? ($courts[0] ?? 'Lapangan 1') : ($courts[1] ?? ($courts[0] ?? 'Lapangan 1'));
+            } elseif ($distributionMode === 'custom' && ! empty($customRules[$poolKey]['court'])) {
+                $assignedCourt = $customRules[$poolKey]['court'];
+                if (! in_array($assignedCourt, $courts)) {
+                    $assignedCourt = $courts[0] ?? 'Lapangan 1';
+                }
             }
 
             // 1. Play-offs
@@ -1105,14 +1130,38 @@ class TournamentBracketController extends Controller
         }
 
         // Map Match to Day
-        $getDayForMatch = function ($m) use ($tournamentDays) {
+        $poolContestedCounter = [];
+        $getDayForMatch = function ($m) use ($tournamentDays, $distributionMode, $customRules, &$poolContestedCounter) {
             if ($tournamentDays <= 1) {
                 return 1;
             }
 
             $rType = $m['round_type'];
+            $pk = $m['pool_key'];
+
             if ($rType === 'playoff') {
                 return 1;
+            }
+
+            // Mode Kustom Kuota Per Kategori untuk babak awal (Prelim / 16B Round 1)
+            if ($distributionMode === 'custom' && ! empty($customRules[$pk])) {
+                $rule = $customRules[$pk];
+                $cQuota = ! empty($rule['quota_day1']) ? (int) $rule['quota_day1'] : 0;
+                $cDay = ! empty($rule['day']) ? (int) $rule['day'] : 1;
+
+                $isFirstRound = ($rType === 'prelim' || ($rType === '16b' && (int) ($m['round_index'] ?? 1) === 1));
+                if ($isFirstRound) {
+                    if ($cQuota > 0 && ! empty($m['is_contested'])) {
+                        $poolContestedCounter[$pk] = ($poolContestedCounter[$pk] ?? 0) + 1;
+                        if ($poolContestedCounter[$pk] <= $cQuota) {
+                            return $cDay;
+                        }
+
+                        return min($tournamentDays, $cDay + 1);
+                    }
+
+                    return $cDay;
+                }
             }
 
             if ($tournamentDays === 2) {
@@ -1180,9 +1229,25 @@ class TournamentBracketController extends Controller
         };
 
         // Priority comparator per day
-        $getPriority = function ($m, $day) {
+        $getPriority = function ($m, $day) use ($distributionMode) {
             $pk = $m['pool_key'];
             $rt = $m['round_type'];
+
+            // Jika mode kustom, urutkan pertandingan berdasarkan Lapangan terlebih dahulu, lalu urutan Babak
+            if ($distributionMode === 'custom') {
+                $courtOrder = str_contains($m['assigned_court'] ?? '', '1') ? 10 : (str_contains($m['assigned_court'] ?? '', '2') ? 20 : 30);
+                $roundOrder = match ($rt) {
+                    'playoff' => 1,
+                    'prelim' => 2,
+                    '16b' => 3,
+                    'qf' => 4,
+                    'semifinal' => 5,
+                    'final' => 6,
+                    default => 7,
+                };
+
+                return ($courtOrder * 10) + $roundOrder;
+            }
 
             if ($day === 1) {
                 // Lapangan 1: Kat C Pi prelim -> Kat C Pa prelim -> Ganda 16b (R1)

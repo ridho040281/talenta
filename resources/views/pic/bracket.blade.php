@@ -981,20 +981,33 @@
                                 <i data-lucide="map-pin" class="w-4 h-4"></i>
                                 <span>Distribusi Lapangan:</span>
                             </label>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                 <label class="flex items-start gap-2 p-2.5 rounded-xl border transition cursor-pointer"
-                                       :class="scheduleDistributionMode === 'category_based' ? 'bg-cyan-950/40 border-cyan-500/50 text-cyan-200' : 'bg-slate-900/60 border-slate-800 text-slate-400'">
+                                       :class="scheduleDistributionMode === 'category_based' ? 'bg-cyan-950/40 border-cyan-500/50 text-cyan-200 ring-1 ring-cyan-500/30' : 'bg-slate-900/60 border-slate-800 text-slate-400'">
                                     <input type="radio" value="category_based" x-model="scheduleDistributionMode" class="text-cyan-600 focus:ring-0 mt-0.5">
                                     <div>
-                                        <p class="font-bold text-xs">Berdasarkan Sektor/Kategori</p>
+                                        <p class="font-bold text-xs">Sektor Otomatis</p>
                                         <p class="text-[10px] text-slate-400 leading-relaxed mt-0.5">
-                                            🏸 Lap 1: Kelas 5–6 (C) & Ganda<br>
-                                            🏸 Lap 2: Kelas 1–2 (A) & 3–4 (B)
+                                            🏸 Lap 1: Kelas 5–6 & Ganda<br>
+                                            🏸 Lap 2: Kelas 1–2 & 3–4
                                         </p>
                                     </div>
                                 </label>
                                 <label class="flex items-start gap-2 p-2.5 rounded-xl border transition cursor-pointer"
-                                       :class="scheduleDistributionMode === 'even' ? 'bg-cyan-950/40 border-cyan-500/50 text-cyan-200' : 'bg-slate-900/60 border-slate-800 text-slate-400'">
+                                       :class="scheduleDistributionMode === 'custom' ? 'bg-amber-950/40 border-amber-500/50 text-amber-200 ring-1 ring-amber-500/40' : 'bg-slate-900/60 border-slate-800 text-slate-400'">
+                                    <input type="radio" value="custom" x-model="scheduleDistributionMode" class="text-amber-500 focus:ring-0 mt-0.5">
+                                    <div>
+                                        <p class="font-bold text-xs flex items-center gap-1">
+                                            <span>Kustom Lapangan & Kuota</span>
+                                            <span class="px-1.5 py-0.2 bg-amber-500 text-slate-950 rounded text-[9px] font-black">FLEKSIBEL</span>
+                                        </p>
+                                        <p class="text-[10px] text-slate-400 leading-relaxed mt-0.5">
+                                            Atur bebas lapangan & batasan kuota partai per kelas
+                                        </p>
+                                    </div>
+                                </label>
+                                <label class="flex items-start gap-2 p-2.5 rounded-xl border transition cursor-pointer"
+                                       :class="scheduleDistributionMode === 'even' ? 'bg-cyan-950/40 border-cyan-500/50 text-cyan-200 ring-1 ring-cyan-500/30' : 'bg-slate-900/60 border-slate-800 text-slate-400'">
                                     <input type="radio" value="even" x-model="scheduleDistributionMode" class="text-cyan-600 focus:ring-0 mt-0.5">
                                     <div>
                                         <p class="font-bold text-xs">Bagi Rata Bergantian</p>
@@ -1003,6 +1016,59 @@
                                         </p>
                                     </div>
                                 </label>
+                            </div>
+
+                            <!-- Panel Kustom Kuota & Lapangan per Kategori -->
+                            <div x-show="scheduleDistributionMode === 'custom'" class="pt-3 border-t border-slate-800/80 space-y-2.5" x-transition>
+                                <div class="flex items-center justify-between">
+                                    <label class="font-bold text-amber-400 text-xs flex items-center gap-1.5">
+                                        <i data-lucide="sliders" class="w-4 h-4"></i>
+                                        <span>Atur Lapangan & Kuota Partai Babak Awal per Kategori:</span>
+                                    </label>
+                                    <span class="text-[10px] text-slate-500">Kuota kosong = Semua partai babak 1</span>
+                                </div>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                                    @foreach($pools as $p)
+                                    <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800/80 flex flex-col justify-between gap-2">
+                                        <div class="flex items-center justify-between gap-2">
+                                            <div class="min-w-0">
+                                                <p class="font-bold text-white text-xs truncate">{{ $p['title'] }}</p>
+                                                <p class="text-[10px] text-slate-500 font-mono">{{ count($p['participants']) }} Peserta Terdaftar</p>
+                                            </div>
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-800 text-slate-300">
+                                                {{ strtoupper($p['key']) }}
+                                            </span>
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-800/50 text-[11px]">
+                                            <div>
+                                                <label class="block text-[10px] font-semibold text-slate-400 mb-0.5">Pilih Lapangan:</label>
+                                                <select x-model="scheduleCustomRules['{{ $p['key'] }}'].court"
+                                                        class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-white font-bold text-xs focus:ring-1 focus:ring-amber-500">
+                                                    <template x-for="court in scheduleCourts" :key="court">
+                                                        <option :value="court" x-text="court" :selected="scheduleCustomRules['{{ $p['key'] }}']?.court === court"></option>
+                                                    </template>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="block text-[10px] font-semibold text-slate-400 mb-0.5">Kuota Hari 1 (Partai):</label>
+                                                <div class="relative flex items-center">
+                                                    <input type="number" 
+                                                           x-model.number="scheduleCustomRules['{{ $p['key'] }}'].quota_day1" 
+                                                           min="1" 
+                                                           max="32" 
+                                                           placeholder="Semua"
+                                                           class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-amber-300 font-mono font-bold text-xs placeholder:text-slate-600 focus:ring-1 focus:ring-amber-500 pr-10">
+                                                    <span class="absolute right-2 text-slate-500 text-[10px] font-medium pointer-events-none">partai</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endforeach
+                                </div>
+                                <p class="text-[11px] text-slate-400 bg-amber-950/20 border border-amber-500/20 p-2 rounded-xl leading-relaxed">
+                                    💡 <strong>Contoh:</strong> Jika Kelas 5-6 Putra diisi <span class="text-amber-300 font-bold">7 partai</span> di Lapangan 1 dan Kelas 1-2 diisi <span class="text-amber-300 font-bold">8 partai</span> di Lapangan 2, sistem otomatis membatasi partai Hari 1 sesuai kuota tersebut dan memindahkan sisanya ke Hari 2.
+                                </p>
                             </div>
                         </div>
 
@@ -1119,7 +1185,7 @@
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-[11px] font-bold" x-text="previewData.summary"></span>
-                                    <a :href="'{{ route('pic.bracket.export_excel', $competition->id) }}?use_simulation=1&tournament_days=' + tournamentDays + '&start_date=' + scheduleStartDate + '&start_time=' + scheduleStartTime + '&end_time=' + scheduleEndTime + '&match_duration=' + scheduleMatchDuration + '&semifinal_duration=' + scheduleSemifinalDuration + '&distribution_mode=' + scheduleDistributionMode + '&scope=' + scheduleScope + '&pool_key=' + activePoolKey + '&lunch_break=' + (scheduleLunchBreak ? '1' : '0') + '&friday_break=' + (scheduleFridayBreak ? '1' : '0')" 
+                                    <a :href="'{{ route('pic.bracket.export_excel', $competition->id) }}?use_simulation=1&tournament_days=' + tournamentDays + '&start_date=' + scheduleStartDate + '&start_time=' + scheduleStartTime + '&end_time=' + scheduleEndTime + '&match_duration=' + scheduleMatchDuration + '&semifinal_duration=' + scheduleSemifinalDuration + '&distribution_mode=' + scheduleDistributionMode + '&scope=' + scheduleScope + '&pool_key=' + activePoolKey + '&lunch_break=' + (scheduleLunchBreak ? '1' : '0') + '&friday_break=' + (scheduleFridayBreak ? '1' : '0') + '&custom_rules=' + encodeURIComponent(JSON.stringify(scheduleCustomRules))" 
                                        target="_blank"
                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow transition cursor-pointer"
                                        title="Download hasil simulasi jadwal ini ke file Excel">
@@ -1151,11 +1217,12 @@
                                         <thead class="bg-slate-900 text-slate-400 font-bold sticky top-0 z-10 border-b border-slate-800">
                                             <tr>
                                                 <th class="p-2.5 text-center w-14">Jam</th>
-                                                <th class="p-2.5 w-24">Lapangan</th>
+                                                <th class="p-2.5 w-32">Pilih Lapangan</th>
                                                 <th class="p-2.5 text-center w-16">Partai</th>
                                                 <th class="p-2.5 w-32">Kategori</th>
                                                 <th class="p-2.5 w-28">Babak</th>
                                                 <th class="p-2.5">Pertandingan (Tim 1 vs Tim 2)</th>
+                                                <th class="p-2.5 text-center w-24">Pindah Hari</th>
                                             </tr>
                                         </thead>
                                         <tbody class="divide-y divide-slate-800/60 font-mono text-[11px]">
@@ -1163,9 +1230,13 @@
                                                 <tr class="hover:bg-slate-900/50 transition" :class="m.scheduled_time === '13:00' && previewActiveDay == 4 ? 'bg-emerald-950/20' : ''">
                                                     <td class="p-2 text-center font-bold text-emerald-400" x-text="m.scheduled_time || '-'"></td>
                                                     <td class="p-2">
-                                                        <span class="px-2 py-0.5 rounded-md font-bold text-[10px]"
-                                                              :class="m.court_number === 'Lapangan 1' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : (m.court_number === 'Lapangan 2' ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' : 'bg-slate-800 text-slate-400')"
-                                                              x-text="m.court_number"></span>
+                                                        <select x-model="m.court_number" 
+                                                                @change="recalculatePreviewTimes()"
+                                                                class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-[11px] font-bold text-white focus:ring-1 focus:ring-amber-500 cursor-pointer">
+                                                            <template x-for="c in scheduleCourts" :key="c">
+                                                                <option :value="c" x-text="c" :selected="m.court_number === c"></option>
+                                                            </template>
+                                                        </select>
                                                     </td>
                                                     <td class="p-2 text-center text-slate-300 font-bold" x-text="m.match_order ? '#' + m.match_order : '-'"></td>
                                                     <td class="p-2 font-sans font-medium text-slate-300 truncate" x-text="m.pool_title"></td>
@@ -1179,12 +1250,21 @@
                                                             <span class="text-slate-500 text-[10px]" x-text="'(' + m.team2_school + ')'"></span>
                                                         </div>
                                                     </td>
+                                                    <td class="p-2 text-center">
+                                                        <select x-model.number="m.match_day" 
+                                                                @change="recalculatePreviewTimes()"
+                                                                class="bg-slate-900 border border-slate-700 rounded-lg px-1.5 py-1 text-[10px] font-bold text-amber-300 focus:ring-1 focus:ring-amber-500 cursor-pointer">
+                                                            <template x-for="dNum in scheduleDaysList" :key="dNum">
+                                                                <option :value="dNum" x-text="'Hari ' + dNum" :selected="m.match_day == dNum"></option>
+                                                            </template>
+                                                        </select>
+                                                    </td>
                                                 </tr>
                                             </template>
                                             <template x-if="!previewData.days[previewActiveDay]?.matches?.length">
                                                 <tr>
-                                                    <td colspan="6" class="p-8 text-center text-slate-500 font-sans">
-                                                        Tidak ada pertandingan yang dijadwalkan pada hari ini.
+                                                    <td colspan="7" class="p-8 text-center text-slate-500 font-sans">
+                                                         Tidak ada pertandingan yang dijadwalkan pada hari ini.
                                                     </td>
                                                 </tr>
                                             </template>
@@ -1608,6 +1688,15 @@
             scheduleLunchStart: '12:00',
             scheduleLunchEnd: '13:00',
             scheduleFridayBreak: true,
+            scheduleCustomRules: {
+                @foreach($pools as $p)
+                '{{ $p['key'] }}': {
+                    court: '{{ (str_contains($p['key'], "kat_c") || stripos($p['title'], "kelas 5") !== false || stripos($p['title'], "ganda") !== false) ? "Lapangan 1" : "Lapangan 2" }}',
+                    day: 1,
+                    quota_day1: null
+                },
+                @endforeach
+            },
 
             // Preview State
             showPreviewTable: false,
@@ -1781,6 +1870,102 @@
                 }
             },
 
+            recalculatePreviewTimes() {
+                if (!this.previewData || !this.previewData.matches) return;
+
+                const days = {};
+                for (let d = 1; d <= this.tournamentDays; d++) {
+                    const existingDay = this.previewData.days ? this.previewData.days[d] : null;
+                    days[d] = {
+                        day_num: d,
+                        date: existingDay?.date || null,
+                        label: existingDay?.label || ('Hari ' + d),
+                        total_matches: 0,
+                        matches: []
+                    };
+                }
+
+                // Place each match into its assigned day
+                this.previewData.matches.forEach(m => {
+                    let d = parseInt(m.match_day) || 1;
+                    if (d > this.tournamentDays) d = this.tournamentDays;
+                    if (d < 1) d = 1;
+                    m.match_day = d;
+                    m.match_day_label = days[d]?.label || ('Hari ' + d);
+                    m.match_date = days[d]?.date || null;
+                    if (!days[d]) {
+                        days[d] = { day_num: d, date: null, label: 'Hari ' + d, total_matches: 0, matches: [] };
+                    }
+                    days[d].matches.push(m);
+                });
+
+                // Calculate order & time per court for each day
+                for (let d = 1; d <= this.tournamentDays; d++) {
+                    const dayMatches = days[d].matches;
+                    const courtCounters = {};
+                    const courtCurrentTime = {};
+
+                    this.scheduleCourts.forEach(c => {
+                        courtCounters[c] = 0;
+                        const [h, min] = (this.scheduleStartTime || '08:00').split(':').map(Number);
+                        const dt = new Date();
+                        dt.setHours(h, min, 0, 0);
+                        courtCurrentTime[c] = dt;
+                    });
+
+                    const duration = (d >= 3) ? parseInt(this.scheduleSemifinalDuration) : parseInt(this.scheduleMatchDuration);
+                    let dayContested = 0;
+
+                    dayMatches.forEach(m => {
+                        if (!m.is_contested || m.court_number === 'BYE') {
+                            m.scheduled_time = null;
+                            m.match_order = null;
+                            return;
+                        }
+
+                        let court = m.court_number;
+                        if (!courtCurrentTime[court]) {
+                            court = this.scheduleCourts[0] || 'Lapangan 1';
+                            m.court_number = court;
+                        }
+
+                        // Jeda Ishoma Siang (12:00 - 13:00) pada hari 1, 2, 3
+                        if (this.scheduleLunchBreak && d !== 4) {
+                            const curHours = courtCurrentTime[court].getHours();
+                            const curMins = courtCurrentTime[court].getMinutes();
+                            const curTimeStr = String(curHours).padStart(2, '0') + ':' + String(curMins).padStart(2, '0');
+                            if (curTimeStr >= '12:00' && curTimeStr < '13:00') {
+                                courtCurrentTime[court].setHours(13, 0, 0, 0);
+                            }
+                        }
+
+                        // Jeda Jumatan (10:30 - 13:00) pada hari 4
+                        if (d === 4 && this.scheduleFridayBreak) {
+                            const curHours = courtCurrentTime[court].getHours();
+                            const curMins = courtCurrentTime[court].getMinutes();
+                            const curTimeStr = String(curHours).padStart(2, '0') + ':' + String(curMins).padStart(2, '0');
+                            if (courtCounters[court] >= 5 || (curTimeStr >= '10:30' && curTimeStr < '13:00')) {
+                                courtCurrentTime[court].setHours(13, 0, 0, 0);
+                            }
+                        }
+
+                        courtCounters[court] = (courtCounters[court] || 0) + 1;
+                        m.match_order = courtCounters[court];
+
+                        const hoursStr = String(courtCurrentTime[court].getHours()).padStart(2, '0');
+                        const minsStr = String(courtCurrentTime[court].getMinutes()).padStart(2, '0');
+                        m.scheduled_time = hoursStr + ':' + minsStr;
+
+                        courtCurrentTime[court].setMinutes(courtCurrentTime[court].getMinutes() + duration);
+                        dayContested++;
+                    });
+
+                    days[d].total_matches = dayContested;
+                }
+
+                this.previewData.days = days;
+            },
+
             async fetchSchedulePreview() {
                 if (this.isLoadingPreview) return;
                 this.isLoadingPreview = true;
@@ -1808,7 +1993,8 @@
                             lunch_break: this.scheduleLunchBreak,
                             lunch_start: this.scheduleLunchStart,
                             lunch_end: this.scheduleLunchEnd,
-                            friday_break: this.scheduleFridayBreak
+                            friday_break: this.scheduleFridayBreak,
+                            custom_rules: this.scheduleCustomRules
                         })
                     });
 
@@ -1859,7 +2045,10 @@
                             lunch_break: this.scheduleLunchBreak,
                             lunch_start: this.scheduleLunchStart,
                             lunch_end: this.scheduleLunchEnd,
-                            friday_break: this.scheduleFridayBreak
+                            friday_break: this.scheduleFridayBreak,
+                            custom_rules: this.scheduleCustomRules,
+                            matches: (this.previewData && this.previewData.matches) ? this.previewData.matches : null,
+                            summary: (this.previewData && this.previewData.summary) ? this.previewData.summary : null
                         })
                     });
 
