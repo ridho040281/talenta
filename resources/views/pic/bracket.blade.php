@@ -344,7 +344,7 @@
                                     </div>
 
                                     <!-- Schedule Info Bar -->
-                                    @if($poExisting && $poExisting->court_number)
+                                    @if($poExisting && $poExisting->court_number && ($poExisting->scheduled_time || $poExisting->match_day))
                                         <div class="px-3 py-1.5 bg-slate-950/80 border-b border-slate-800/80 flex items-center justify-between text-[11px] font-mono">
                                             <div class="flex items-center gap-1.5 flex-wrap">
                                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 font-bold text-[10px] border border-sky-500/30">
@@ -358,9 +358,11 @@
                                                         Partai #{{ $poExisting->match_order }}
                                                     </span>
                                                 @endif
-                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[10px] border border-emerald-500/30">
-                                                    ⏰ {{ $poExisting->scheduled_time ?? '07:30' }}
-                                                </span>
+                                                @if($poExisting->scheduled_time)
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[10px] border border-emerald-500/30">
+                                                        ⏰ {{ $poExisting->scheduled_time }}
+                                                    </span>
+                                                @endif
                                             </div>
                                             <button type="button" 
                                                     @click="openEditScheduleModal('{{ $poMatch['match_code'] }}', '{{ $poExisting->court_number }}', '{{ $poExisting->scheduled_time ?? '07:30' }}', '{{ $poExisting->match_order ?? 0 }}', '{{ $poExisting->match_day ?? 1 }}', '{{ $poExisting->match_date?->format('Y-m-d') ?? '' }}')"
@@ -483,7 +485,7 @@
                                     </div>
 
                                     <!-- Court & Time Schedule Badge Bar -->
-                                    @if($existing && $existing->court_number && strtoupper($existing->court_number) !== 'BYE')
+                                    @if($existing && $existing->court_number && strtoupper($existing->court_number) !== 'BYE' && ($existing->scheduled_time || $existing->match_day))
                                         <div class="px-3 py-1.5 bg-slate-950/80 border-b border-slate-800/80 flex items-center justify-between text-[11px] font-mono">
                                             <div class="flex items-center gap-1.5 flex-wrap">
                                                 @if($existing->match_day_label || $existing->match_day)
@@ -673,9 +675,15 @@
                                     @if($existing)
                                         <div class="px-3 py-2 bg-slate-950/80 border-t border-slate-800/80 flex items-center justify-between text-[10px]">
                                             <span class="text-slate-400 font-mono font-bold">
-                                                {{ $existing->court_number !== 'BYE' ? $existing->court_number : 'Lolos Langsung' }}
-                                                @if($existing->scheduled_time)
-                                                    • {{ $existing->scheduled_time }}
+                                                @if($existing->court_number && $existing->court_number !== 'BYE' && ($existing->scheduled_time || $existing->match_day))
+                                                    {{ $existing->court_number }}
+                                                    @if($existing->scheduled_time)
+                                                        • {{ $existing->scheduled_time }}
+                                                    @endif
+                                                @elseif($existing->court_number === 'BYE')
+                                                    Lolos Langsung
+                                                @else
+                                                    <span class="text-slate-500 font-normal">Belum Dijadwalkan</span>
                                                 @endif
                                             </span>
                                             <div class="flex items-center gap-1.5">

@@ -298,7 +298,7 @@
                                         </div>
 
                                         <!-- Schedule Info Bar -->
-                                        @if($poExisting && $poExisting->court_number)
+                                        @if($poExisting && $poExisting->court_number && ($poExisting->scheduled_time || $poExisting->match_day))
                                             <div class="px-3.5 py-1.5 bg-slate-950/80 border-b border-slate-800/80 flex items-center justify-between text-[11px] font-mono">
                                                 <div class="flex items-center gap-1.5 flex-wrap">
                                                     @if($poExisting->match_day_label || $poExisting->match_day)
@@ -314,9 +314,11 @@
                                                             Partai #{{ $poExisting->match_order }}
                                                         </span>
                                                     @endif
-                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[10px] border border-emerald-500/30">
-                                                        ⏰ {{ $poExisting->scheduled_time ?? '08:30' }}
-                                                    </span>
+                                                    @if($poExisting->scheduled_time)
+                                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[10px] border border-emerald-500/30">
+                                                            ⏰ {{ $poExisting->scheduled_time }}
+                                                        </span>
+                                                    @endif
                                                 </div>
                                                 <span class="text-[9px] text-slate-500 font-bold uppercase">GOR</span>
                                             </div>
@@ -420,7 +422,7 @@
                                         </div>
 
                                         <!-- Court & Time Schedule Badge Bar (Public) -->
-                                        @if($existing && $existing->court_number && strtoupper($existing->court_number) !== 'BYE')
+                                        @if($existing && $existing->court_number && strtoupper($existing->court_number) !== 'BYE' && ($existing->scheduled_time || $existing->match_day))
                                             <div class="px-3.5 py-1.5 bg-slate-950/80 border-b border-slate-800/80 flex items-center justify-between text-[11px] font-mono">
                                                 <div class="flex items-center gap-1.5 flex-wrap">
                                                     @if($existing->match_day_label || $existing->match_day)
@@ -583,7 +585,7 @@
                                             </div>
                                         </div>
 
-                                        @if($existing && $existing->court_number && strtoupper($existing->court_number) !== 'BYE')
+                                        @if($existing && $existing->court_number && strtoupper($existing->court_number) !== 'BYE' && ($existing->scheduled_time || $existing->match_day))
                                             <div class="px-3 py-1.5 bg-slate-950/80 border-t border-slate-800 text-[10px] text-slate-400 flex items-center justify-between font-mono">
                                                 <span>{{ $existing->court_number }} {{ $existing->scheduled_time ? '• ' . $existing->scheduled_time : '' }}</span>
                                                 <a href="{{ route('badminton.scoreboard', $existing->id) }}" target="_blank" class="text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1">

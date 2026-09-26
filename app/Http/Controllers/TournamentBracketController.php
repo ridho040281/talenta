@@ -357,7 +357,7 @@ class TournamentBracketController extends Controller
                     'match_day' => (int) ($m->match_day ?: 1),
                     'match_day_label' => $m->match_day_label ?: "Hari {$m->match_day}",
                     'match_date' => $m->match_date?->format('Y-m-d'),
-                    'court_number' => $m->court_number ?: 'Lapangan 1',
+                    'court_number' => $m->court_number ?: '-',
                     'scheduled_time' => $m->scheduled_time ? $m->scheduled_time.' WIB' : '-',
                     'match_order' => $m->match_order ? '#'.$m->match_order : '-',
                     'category' => $categoryLabel,
@@ -860,7 +860,7 @@ class TournamentBracketController extends Controller
             'match_day' => null,
             'match_date' => null,
             'match_day_label' => null,
-            'court_number' => 'Lapangan 1',
+            'court_number' => null,
         ]);
 
         return response()->json([
@@ -2490,8 +2490,10 @@ class TournamentBracketController extends Controller
                 $svg[] = '</g>';
 
                 // Play-off schedule text above the line
-                $poSched = $po['existing_match']?->scheduled_time ?? '07:30';
-                $svg[] = "<text x='".($poStemX + 15)."' y='".($targetY - 4)."' font-size='7.5' font-mono font-weight='700' fill='{$accentColor}'>{$poSched}</text>";
+                if (! empty($po['existing_match']?->scheduled_time)) {
+                    $poSched = $po['existing_match']->scheduled_time;
+                    $svg[] = "<text x='".($poStemX + 15)."' y='".($targetY - 4)."' font-size='7.5' font-mono font-weight='700' fill='{$accentColor}'>{$poSched}</text>";
+                }
             }
         }
 
@@ -2601,14 +2603,12 @@ class TournamentBracketController extends Controller
                     if ($em->team1_set1 > 0 || $em->team2_set1 > 0) {
                         $scoreStr = "{$em->team1_set1}-{$em->team2_set1}";
                         $svg[] = "<text x='{$contentStartX}' y='".($yMid + 12)."' font-size='8.5' font-mono font-weight='bold' fill='{$subTextColor}'>{$scoreStr}</text>";
-                    } elseif (! empty($em->court_number) || ! empty($em->scheduled_time)) {
+                    } elseif (! empty($em->court_number) && strtoupper($em->court_number) !== 'BYE' && (! empty($em->scheduled_time) || ! empty($em->match_day))) {
                         $schedParts = [];
                         if (! empty($em->match_day)) {
                             $schedParts[] = "H{$em->match_day}";
                         }
-                        if (! empty($em->court_number) && strtoupper($em->court_number) !== 'BYE') {
-                            $schedParts[] = $em->court_number;
-                        }
+                        $schedParts[] = $em->court_number;
                         if (! empty($em->scheduled_time)) {
                             $schedParts[] = $em->scheduled_time;
                         }
