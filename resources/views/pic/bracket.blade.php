@@ -114,6 +114,15 @@
                 <i data-lucide="printer" class="w-4 h-4 text-slate-300"></i>
                 <span>Cetak Bagan (A4)</span>
             </a>
+
+            <!-- Export Jadwal Excel Button -->
+            <a href="{{ route('pic.bracket.export_excel', $competition->id) }}" 
+               target="_blank" 
+               class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 font-bold text-xs shadow-sm transition cursor-pointer"
+               title="Export Rekap Jadwal & Order of Play ke Microsoft Excel (.xlsx)">
+                <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-400"></i>
+                <span>Export Jadwal (Excel)</span>
+            </a>
         </div>
     </div>
 
@@ -1089,7 +1098,16 @@
                                     <span class="font-extrabold text-white">Simulasi Jadwal Berhasil Dihitung!</span>
                                     <span class="text-slate-400" x-text="'• Total: ' + previewData.total_matches + ' Partai Pertandingan'"></span>
                                 </div>
-                                <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-[11px] font-bold" x-text="previewData.summary"></span>
+                                <div class="flex items-center gap-2">
+                                    <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-[11px] font-bold" x-text="previewData.summary"></span>
+                                    <a :href="'{{ route('pic.bracket.export_excel', $competition->id) }}?use_simulation=1&tournament_days=' + tournamentDays + '&start_date=' + scheduleStartDate + '&start_time=' + scheduleStartTime + '&match_duration=' + scheduleMatchDuration + '&semifinal_duration=' + scheduleSemifinalDuration + '&distribution_mode=' + scheduleDistributionMode + '&scope=' + scheduleScope + '&pool_key=' + schedulePoolKey + '&friday_break=' + (scheduleFridayBreak ? '1' : '0')" 
+                                       target="_blank"
+                                       class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow transition cursor-pointer"
+                                       title="Download hasil simulasi jadwal ini ke file Excel">
+                                        <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
+                                        <span>Download Excel</span>
+                                    </a>
+                                </div>
                             </div>
 
                             <!-- Pilihan Tab Hari di Pratinjau -->

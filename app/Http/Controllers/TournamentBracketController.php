@@ -9,6 +9,14 @@ use App\Traits\CompetitionPoolTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Color;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Worksheet\PageSetup;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class TournamentBracketController extends Controller
 {
@@ -281,6 +289,298 @@ class TournamentBracketController extends Controller
         $appSettings = AppSetting::pluck('value', 'key')->all();
 
         return view('pic.bracket-print', compact('competition', 'activePool', 'bracketData', 'appSettings'));
+    }
+
+    /**
+     * Export Rekap Jadwal & Order of Play ke Microsoft Excel (.xlsx)
+     */
+    public function exportScheduleExcel(Request $request, $competition_id)
+    {
+        $competition = Competition::with(['category', 'registrations.members'])->findOrFail($competition_id);
+        $this->ensureIsBadminton($competition);
+        $user = Auth::user();
+
+        if ($user && ! in_array($user->role, ['superadmin', 'panitia'])) {
+            $managedIds = PicController::getManagedCompetitionIds($user);
+            $isAuthorizedBadminton = (method_exists($user, 'managesBadminton') && $user->managesBadminton()) && (
+                strtoupper($competition->code ?? '') === 'BLT' ||
+                str_contains(strtolower($competition->name ?? ''), 'bulu tangkis') ||
+                str_contains(strtolower($competition->name ?? ''), 'badminton')
+            );
+
+            if (! in_array($competition->id, $managedIds) && ! $isAuthorizedBadminton) {
+                abort(403, 'Akses ditolak.');
+            }
+        }
+
+        // 1. Ambil data pertandingan
+        $useSimulation = $request->boolean('use_simulation');
+        $dbMatches = BadmintonMatch::where('competition_id', $competition->id)
+            ->where('court_number', '!=', 'BYE')
+            ->orderBy('match_day')
+            ->orderBy('court_number')
+            ->orderBy('scheduled_time')
+            ->orderBy('match_order')
+            ->get();
+
+        $matchesList = [];
+
+        if (! $useSimulation && $dbMatches->isNotEmpty()) {
+            foreach ($dbMatches as $m) {
+                $categoryLabel = match ($m->category) {
+                    'MS' => 'Tunggal Putra',
+                    'WS' => 'Tunggal Putri',
+                    'MD' => 'Ganda Putra',
+                    'WD' => 'Ganda Putri',
+                    'XD' => 'Ganda Campuran',
+                    default => $m->category ?: 'Bulu Tangkis',
+                };
+
+                $scoreText = '-';
+                if ($m->match_status === 'finished') {
+                    $scores = [];
+                    if ($m->team1_set1 || $m->team2_set1) {
+                        $scores[] = "{$m->team1_set1}-{$m->team2_set1}";
+                    }
+                    if ($m->team1_set2 || $m->team2_set2) {
+                        $scores[] = "{$m->team1_set2}-{$m->team2_set2}";
+                    }
+                    if ($m->team1_set3 || $m->team2_set3) {
+                        $scores[] = "{$m->team1_set3}-{$m->team2_set3}";
+                    }
+                    $scoreText = ! empty($scores) ? implode(', ', $scores) : 'Selesai';
+                } elseif ($m->match_status === 'ongoing') {
+                    $scoreText = 'Sedang Main';
+                }
+
+                $matchesList[] = [
+                    'match_day' => (int) ($m->match_day ?: 1),
+                    'match_day_label' => $m->match_day_label ?: "Hari {$m->match_day}",
+                    'match_date' => $m->match_date?->format('Y-m-d'),
+                    'court_number' => $m->court_number ?: 'Lapangan 1',
+                    'scheduled_time' => $m->scheduled_time ? $m->scheduled_time.' WIB' : '-',
+                    'match_order' => $m->match_order ? '#'.$m->match_order : '-',
+                    'category' => $categoryLabel,
+                    'round_name' => $m->round_name ?: 'Babak 1',
+                    'team1_player' => $m->team1_player1 ?: 'Menunggu Pemenang',
+                    'team1_school' => $m->team1_school ?: 'TBD',
+                    'team2_player' => $m->team2_player1 ?: 'Menunggu Pemenang',
+                    'team2_school' => $m->team2_school ?: 'TBD',
+                    'status' => $m->match_status === 'finished' ? 'Selesai' : ($m->match_status === 'ongoing' ? 'Sedang Main' : 'Belum Main'),
+                    'score' => $scoreText,
+                ];
+            }
+        } else {
+            // Ambil dari simulasi jadwal multi-hari
+            $plan = $this->buildMultiDaySchedulePlan($competition, $request->all());
+            foreach ($plan['matches'] as $m) {
+                if (! $m['is_contested'] || $m['court_number'] === 'BYE') {
+                    continue;
+                }
+                $matchesList[] = [
+                    'match_day' => (int) ($m['match_day'] ?: 1),
+                    'match_day_label' => $m['match_day_label'] ?: "Hari {$m['match_day']}",
+                    'match_date' => $m['match_date'],
+                    'court_number' => $m['court_number'],
+                    'scheduled_time' => $m['scheduled_time'] ? $m['scheduled_time'].' WIB' : '-',
+                    'match_order' => $m['match_order'] ? '#'.$m['match_order'] : '-',
+                    'category' => $m['pool_title'] ?: $m['category'],
+                    'round_name' => $m['round_name'],
+                    'team1_player' => $m['team1_player'] ?: 'Menunggu Pemenang',
+                    'team1_school' => $m['team1_school'] ?: 'TBD',
+                    'team2_player' => $m['team2_player'] ?: 'Menunggu Pemenang',
+                    'team2_school' => $m['team2_school'] ?: 'TBD',
+                    'status' => $m['status'] === 'finished' ? 'Selesai' : ($m['status'] === 'ongoing' ? 'Sedang Main' : 'Belum Main'),
+                    'score' => '-',
+                ];
+            }
+        }
+
+        // 2. Buat Dokumen Excel dengan PhpSpreadsheet
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Order of Play');
+
+        // Page setup
+        $sheet->getPageSetup()->setOrientation(PageSetup::ORIENTATION_LANDSCAPE);
+        $sheet->getPageSetup()->setPaperSize(PageSetup::PAPERSIZE_A4);
+
+        // Header Title
+        $sheet->setCellValue('A1', 'REKAPITULASI JADWAL PERTANDINGAN (ORDER OF PLAY)');
+        $sheet->setCellValue('A2', strtoupper($competition->name));
+        $sheet->setCellValue('A3', 'Diterbitkan: '.Carbon::now()->locale('id')->isoFormat('dddd, D MMMM Y - HH:mm').' WIB • Total: '.count($matchesList).' Partai Pertandingan');
+
+        $sheet->mergeCells('A1:L1');
+        $sheet->mergeCells('A2:L2');
+        $sheet->mergeCells('A3:L3');
+
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new Color('FF0F172A'));
+        $sheet->getStyle('A2')->getFont()->setBold(true)->setSize(11)->setColor(new Color('FF2563EB'));
+        $sheet->getStyle('A3')->getFont()->setItalic(true)->setSize(9)->setColor(new Color('FF64748B'));
+
+        $sheet->getStyle('A1:L3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        // Table Header
+        $headers = [
+            'A5' => 'NO',
+            'B5' => 'HARI & TANGGAL',
+            'C5' => 'JAM MAIN',
+            'D5' => 'LAPANGAN',
+            'E5' => 'PARTAI',
+            'F5' => 'SEKTOR / KATEGORI',
+            'G5' => 'BABAK',
+            'H5' => 'PEMAIN 1',
+            'I5' => 'ASAL SEKOLAH 1',
+            'J5' => 'VS',
+            'K5' => 'PEMAIN 2',
+            'L5' => 'ASAL SEKOLAH 2',
+        ];
+
+        foreach ($headers as $cell => $title) {
+            $sheet->setCellValue($cell, $title);
+        }
+
+        $headerStyle = [
+            'font' => [
+                'bold' => true,
+                'color' => ['rgb' => 'FFFFFF'],
+                'size' => 10,
+            ],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '0F172A'],
+            ],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['rgb' => '334155'],
+                ],
+            ],
+        ];
+        $sheet->getStyle('A5:L5')->applyFromArray($headerStyle);
+        $sheet->getRowDimension(5)->setRowHeight(26);
+
+        // Data Rows
+        $row = 6;
+        $no = 1;
+        $currentDay = null;
+
+        foreach ($matchesList as $m) {
+            // Group header when Day changes
+            if ($currentDay !== $m['match_day']) {
+                $currentDay = $m['match_day'];
+                $dayTitle = '📅 '.strtoupper($m['match_day_label']);
+
+                $sheet->setCellValue("A{$row}", $dayTitle);
+                $sheet->mergeCells("A{$row}:L{$row}");
+                $sheet->getStyle("A{$row}:L{$row}")->applyFromArray([
+                    'font' => [
+                        'bold' => true,
+                        'color' => ['rgb' => '0F172A'],
+                        'size' => 10,
+                    ],
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['rgb' => 'E2E8F0'],
+                    ],
+                    'alignment' => [
+                        'horizontal' => Alignment::HORIZONTAL_LEFT,
+                        'vertical' => Alignment::VERTICAL_CENTER,
+                        'indent' => 1,
+                    ],
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => ['rgb' => 'CBD5E1'],
+                        ],
+                    ],
+                ]);
+                $sheet->getRowDimension($row)->setRowHeight(22);
+                $row++;
+            }
+
+            $sheet->setCellValue("A{$row}", $no++);
+            $sheet->setCellValue("B{$row}", $m['match_day_label']);
+            $sheet->setCellValue("C{$row}", $m['scheduled_time']);
+            $sheet->setCellValue("D{$row}", $m['court_number']);
+            $sheet->setCellValue("E{$row}", $m['match_order']);
+            $sheet->setCellValue("F{$row}", $m['category']);
+            $sheet->setCellValue("G{$row}", $m['round_name']);
+            $sheet->setCellValue("H{$row}", $m['team1_player']);
+            $sheet->setCellValue("I{$row}", $m['team1_school']);
+            $sheet->setCellValue("J{$row}", 'VS');
+            $sheet->setCellValue("K{$row}", $m['team2_player']);
+            $sheet->setCellValue("L{$row}", $m['team2_school']);
+
+            $isZebra = ($no % 2 === 0);
+            $rowBg = $isZebra ? 'F8FAFC' : 'FFFFFF';
+
+            $sheet->getStyle("A{$row}:L{$row}")->applyFromArray([
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => $rowBg],
+                ],
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                        'color' => ['rgb' => 'E2E8F0'],
+                    ],
+                ],
+                'alignment' => [
+                    'vertical' => Alignment::VERTICAL_CENTER,
+                ],
+            ]);
+
+            // Specific cell alignments
+            $sheet->getStyle("A{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("B{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("C{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("D{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("E{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("G{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("J{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("J{$row}")->getFont()->setBold(true)->getColor()->setRGB('D97706');
+
+            $sheet->getRowDimension($row)->setRowHeight(20);
+            $row++;
+        }
+
+        // Auto size columns with min width
+        $colWidths = [
+            'A' => 6,
+            'B' => 24,
+            'C' => 13,
+            'D' => 15,
+            'E' => 10,
+            'F' => 26,
+            'G' => 18,
+            'H' => 26,
+            'I' => 22,
+            'J' => 6,
+            'K' => 26,
+            'L' => 22,
+        ];
+        foreach ($colWidths as $col => $w) {
+            $sheet->getColumnDimension($col)->setWidth($w);
+        }
+
+        // Freeze pane below header
+        $sheet->freezePane('A6');
+
+        $slugName = Str::slug($competition->name ?: 'Turnamen');
+        $fileName = "Jadwal_Pertandingan_{$slugName}_".date('Ymd_His').'.xlsx';
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, $fileName, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'max-age=0',
+        ]);
     }
 
     /**
