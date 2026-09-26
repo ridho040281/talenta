@@ -453,6 +453,25 @@ class TournamentBracketController extends Controller
                 $winnerTeam = $existingRecord->winner_team;
             }
 
+            // Lindungi nama atlet definitif jika data hasil pertandingan babak sebelumnya sudah ada di database
+            $team1Player = $m['team1_player'] ?? 'Menunggu Pemenang';
+            $team1School = $m['team1_school'] ?? 'TBD';
+            $team1Id = $m['team1_id'] ?? null;
+            if ($existingRecord && ! empty($existingRecord->team1_registration_id)) {
+                $team1Id = $existingRecord->team1_registration_id;
+                $team1School = $existingRecord->team1_school;
+                $team1Player = $existingRecord->team1_player1;
+            }
+
+            $team2Player = $m['team2_player'] ?? 'Menunggu Pemenang';
+            $team2School = $m['team2_school'] ?? 'TBD';
+            $team2Id = $m['team2_id'] ?? null;
+            if ($existingRecord && ! empty($existingRecord->team2_registration_id)) {
+                $team2Id = $existingRecord->team2_registration_id;
+                $team2School = $existingRecord->team2_school;
+                $team2Player = $existingRecord->team2_player1;
+            }
+
             BadmintonMatch::updateOrCreate(
                 [
                     'competition_id' => $competition->id,
@@ -468,12 +487,12 @@ class TournamentBracketController extends Controller
                     'round_name' => $m['round_name'],
                     'category' => $m['category'],
                     'match_type' => $m['match_type'],
-                    'team1_registration_id' => $m['team1_id'] ?? null,
-                    'team1_school' => $m['team1_school'] ?? 'TBD',
-                    'team1_player1' => $m['team1_player'] ?? 'TBD',
-                    'team2_registration_id' => $m['team2_id'] ?? null,
-                    'team2_school' => $m['team2_school'] ?? 'TBD',
-                    'team2_player1' => $m['team2_player'] ?? 'TBD',
+                    'team1_registration_id' => $team1Id,
+                    'team1_school' => $team1School,
+                    'team1_player1' => $team1Player,
+                    'team2_registration_id' => $team2Id,
+                    'team2_school' => $team2School,
+                    'team2_player1' => $team2Player,
                     'match_status' => $status,
                     'winner_team' => $winnerTeam,
                 ]
@@ -592,12 +611,9 @@ class TournamentBracketController extends Controller
             // 1. Play-offs
             if (! empty($bData['playoffs']['has_playoffs']) && ! empty($bData['playoffs']['matches'])) {
                 foreach ($bData['playoffs']['matches'] as $poIdx => $poMatch) {
-                    $t1 = $poMatch['team1'];
-                    $t2 = $poMatch['team2'];
+                    $t1 = $poMatch['team1'] ?? null;
+                    $t2 = $poMatch['team2'] ?? null;
                     if (! $t1 && ! $t2) {
-                        continue;
-                    }
-                    if (! empty($t1['is_pending_draw']) || ! empty($t2['is_pending_draw'])) {
                         continue;
                     }
 
@@ -614,14 +630,16 @@ class TournamentBracketController extends Controller
                         'assigned_court' => $assignedCourt,
                         'team1' => $t1,
                         'team2' => $t2,
+                        'is_bye1' => false,
+                        'is_bye2' => false,
                         'is_contested' => true,
-                        'status' => 'upcoming',
-                        'winner_team' => null,
+                        'status' => $poMatch['status'] ?? 'upcoming',
+                        'winner_team' => ! empty($poMatch['winner']) ? (($poMatch['winner'] == $t1) ? 1 : 2) : null,
                     ];
                 }
             }
 
-            // 2. Bracket Rounds
+            // 2. Bracket Rounds (Babak Penyisihan, 16 Besar, Perempat Final, Semifinal, dan Grand Final)
             $totalRounds = count($bData['rounds']);
             foreach ($bData['rounds'] as $round) {
                 $rIdx = (int) ($round['round_index'] ?? 1);
@@ -644,27 +662,65 @@ class TournamentBracketController extends Controller
                 }
 
                 foreach ($round['matches'] as $m) {
-                    $t1 = $m['team1'];
-                    $t2 = $m['team2'];
-                    if (! $t1 && ! $t2) {
-                        continue;
-                    }
-                    if (! empty($t1['is_pending_draw']) || ! empty($t2['is_pending_draw'])) {
-                        continue;
-                    }
+                    $t1 = $m['team1'] ?? null;
+                    $t2 = $m['team2'] ?? null;
 
-                    $isBye1 = ! empty($m['is_bye1']);
-                    $isBye2 = ! empty($m['is_bye2']);
-                    $isContested = (! $isBye1 && ! $isBye2);
+                    if ($rIdx === 1) {
+                        $isBye1 = ! empty($m['is_bye1']);
+                        $isBye2 = ! empty($m['is_bye2']);
 
-                    $status = 'upcoming';
-                    $winnerTeam = null;
-                    if ($t1 && ! $isBye1 && $isBye2) {
-                        $status = 'finished';
-                        $winnerTeam = 1;
-                    } elseif ($t2 && ! $isBye2 && $isBye1) {
-                        $status = 'finished';
-                        $winnerTeam = 2;
+                        // Jika kedua slot kosong atau keduanya BYE (tidak ada partai riil)
+                        if (($isBye1 && $isBye2) || (! $t1 && ! $t2)) {
+                            continue;
+                        }
+
+                        $isContested = (! $isBye1 && ! $isBye2);
+                        $status = 'upcoming';
+                        $winnerTeam = null;
+                        if ($t1 && ! $isBye1 && $isBye2) {
+                            $status = 'finished';
+                            $winnerTeam = 1;
+                        } elseif ($t2 && ! $isBye2 && $isBye1) {
+                            $status = 'finished';
+                            $winnerTeam = 2;
+                        }
+                    } else {
+                        // Babak 2, QF, Semifinal, Final adalah pertandingan resmi yang WAJIB dijadwalkan
+                        $isBye1 = false;
+                        $isBye2 = false;
+                        $isContested = true;
+                        $status = 'upcoming';
+                        $winnerTeam = null;
+
+                        if (! empty($m['existing_match'])) {
+                            $em = $m['existing_match'];
+                            if (in_array($em->match_status, ['ongoing', 'finished'])) {
+                                $status = $em->match_status;
+                                $winnerTeam = $em->winner_team;
+                            }
+                        }
+
+                        // Buat label placeholder resmi jika pemenang babak sebelumnya belum bertanding
+                        $mIdx = (int) ($m['match_index'] ?? 1);
+                        $prevRoundShort = $isFinal ? 'SF' : ($isSemi ? 'QF' : ($isQf ? '16B' : 'R'.($rIdx - 1)));
+                        if (! $t1 || empty($t1['name'])) {
+                            $prevM1 = ($mIdx * 2) - 1;
+                            $t1 = [
+                                'id' => null,
+                                'name' => "Pemenang {$prevRoundShort} #{$prevM1}",
+                                'institution' => 'Menunggu Pemenang',
+                                'is_placeholder' => true,
+                            ];
+                        }
+                        if (! $t2 || empty($t2['name'])) {
+                            $prevM2 = $mIdx * 2;
+                            $t2 = [
+                                'id' => null,
+                                'name' => "Pemenang {$prevRoundShort} #{$prevM2}",
+                                'institution' => 'Menunggu Pemenang',
+                                'is_placeholder' => true,
+                            ];
+                        }
                     }
 
                     $rawMatchesList[] = [
@@ -716,18 +772,35 @@ class TournamentBracketController extends Controller
                 return 1;
             }
 
-            // 4+ Hari
-            if ($rType === 'final') {
-                return min(4, $tournamentDays);
-            }
-            if ($rType === 'semifinal') {
-                return min(3, $tournamentDays);
-            }
-            if ($rType === 'qf' || $rType === '16b') {
-                return min(2, $tournamentDays);
+            if ($tournamentDays === 4) {
+                if ($rType === 'final') {
+                    return 4;
+                }
+                if ($rType === 'semifinal') {
+                    return 3;
+                }
+                if ($rType === 'qf' || $rType === '16b') {
+                    return 2;
+                }
+
+                return 1; // 32 Besar / Penyisihan Awal
             }
 
-            return 1; // 32 Besar / Penyisihan Awal
+            // 5+ Hari
+            if ($rType === 'final') {
+                return $tournamentDays;
+            }
+            if ($rType === 'semifinal') {
+                return max(1, $tournamentDays - 1);
+            }
+            if ($rType === 'qf') {
+                return max(1, $tournamentDays - 2);
+            }
+            if ($rType === '16b') {
+                return max(1, $tournamentDays - 3);
+            }
+
+            return 1; // 32 Besar / Prelim / Playoff
         };
 
         // Priority comparator per day
@@ -920,10 +993,14 @@ class TournamentBracketController extends Controller
                     $courtCounters[$assignedCourt]++;
                     $assignedOrder = $courtCounters[$assignedCourt];
 
-                    // Check for Friday break on Day 4:
-                    // Partai ke-6 (misal Putra 5-6 dan Ganda) dijadwalkan setelah sholat Jumat (13:00 WIB)
-                    if ($d === 4 && $fridayBreak && $assignedOrder === 6) {
-                        $courtCurrentTime[$assignedCourt] = Carbon::createFromFormat('H:i', '13:00');
+                    // Jeda Sholat Jumat pada Hari Final (Hari 4):
+                    // Sesi Pagi: Partai 1 s.d. 5 selesai pukul 10:30 WIB
+                    // Sesi Siang: Partai 6 (Putra 5-6) & Partai 7 (Ganda) lanjut pukul 13:00 WIB
+                    if ($d === 4 && $fridayBreak) {
+                        $cTimeStr = $courtCurrentTime[$assignedCourt]->format('H:i');
+                        if ($assignedOrder === 6 || ($cTimeStr >= '10:30' && $cTimeStr < '13:00')) {
+                            $courtCurrentTime[$assignedCourt] = Carbon::createFromFormat('H:i', '13:00');
+                        }
                     }
 
                     $assignedTime = $courtCurrentTime[$assignedCourt]->format('H:i');

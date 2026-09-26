@@ -289,6 +289,7 @@ class BadmintonMatchController extends Controller
         }
 
         $this->syncPlayoffWinnerToMainBracket($match);
+        $this->syncRoundWinnerToNextRound($match);
 
         return response()->json([
             'success' => true,
@@ -631,6 +632,50 @@ class BadmintonMatchController extends Controller
                 $targetR1Match->team2_school = 'TBD';
                 $targetR1Match->save();
                 $this->touchMatchTimestamp($targetR1Match->id);
+            }
+        }
+    }
+
+    private function syncRoundWinnerToNextRound(BadmintonMatch $match): void
+    {
+        if (! preg_match('/^(.+)-R(\d+)-M(\d+)$/', $match->match_code, $m)) {
+            return;
+        }
+
+        $poolKey = $m[1];
+        $currentRound = (int) $m[2];
+        $currentMatchIndex = (int) $m[3];
+
+        $nextRound = $currentRound + 1;
+        $nextMatchIndex = (int) ceil($currentMatchIndex / 2);
+        $nextSlot = ($currentMatchIndex % 2 === 1) ? 1 : 2;
+        $nextMatchCode = "{$poolKey}-R{$nextRound}-M{$nextMatchIndex}";
+
+        $targetMatch = BadmintonMatch::where('competition_id', $match->competition_id)
+            ->where('match_code', $nextMatchCode)
+            ->first();
+
+        if (! $targetMatch) {
+            return;
+        }
+
+        if ($match->match_status === 'finished' && in_array($match->winner_team, [1, 2])) {
+            $isT1 = ($match->winner_team === 1);
+            $targetMatch->{"team{$nextSlot}_registration_id"} = $isT1 ? $match->team1_registration_id : $match->team2_registration_id;
+            $targetMatch->{"team{$nextSlot}_player1"} = $isT1 ? $match->team1_player1 : $match->team2_player1;
+            $targetMatch->{"team{$nextSlot}_player2"} = $isT1 ? $match->team1_player2 : $match->team2_player2;
+            $targetMatch->{"team{$nextSlot}_school"} = $isT1 ? $match->team1_school : $match->team2_school;
+            $targetMatch->save();
+            $this->touchMatchTimestamp($targetMatch->id);
+        } elseif (in_array($match->match_status, ['upcoming', 'ongoing', 'interval'])) {
+            $placeholder = "Pemenang R{$currentRound} #{$currentMatchIndex}";
+            if ($targetMatch->{"team{$nextSlot}_player1"} !== $placeholder && ! str_contains($targetMatch->{"team{$nextSlot}_player1"} ?? '', 'Pemenang')) {
+                $targetMatch->{"team{$nextSlot}_registration_id"} = null;
+                $targetMatch->{"team{$nextSlot}_player1"} = $placeholder;
+                $targetMatch->{"team{$nextSlot}_player2"} = null;
+                $targetMatch->{"team{$nextSlot}_school"} = 'Menunggu Pemenang';
+                $targetMatch->save();
+                $this->touchMatchTimestamp($targetMatch->id);
             }
         }
     }
