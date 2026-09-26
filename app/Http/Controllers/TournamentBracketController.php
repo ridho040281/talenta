@@ -809,6 +809,56 @@ class TournamentBracketController extends Controller
     }
 
     /**
+     * Kosongkan alokasi waktu dan lapangan pertandingan (Reset Jadwal)
+     * Hanya berlaku untuk pertandingan yang belum berjalan (status upcoming).
+     * Pertandingan yang sudah finished/ongoing TIDAK AKAN di-reset demi integritas skor wasit.
+     */
+    public function resetSchedule(Request $request, $competition_id)
+    {
+        $competition = Competition::findOrFail($competition_id);
+        $this->ensureIsBadminton($competition);
+        $user = Auth::user();
+
+        if ($user && ! in_array($user->role, ['superadmin', 'panitia'])) {
+            $managedIds = PicController::getManagedCompetitionIds($user);
+            $isAuthorizedBadminton = (method_exists($user, 'managesBadminton') && $user->managesBadminton()) && (
+                strtoupper($competition->code ?? '') === 'BLT' ||
+                str_contains(strtolower($competition->name ?? ''), 'bulu tangkis') ||
+                str_contains(strtolower($competition->name ?? ''), 'badminton')
+            );
+
+            if (! in_array($competition->id, $managedIds) && ! $isAuthorizedBadminton) {
+                return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
+            }
+        }
+
+        $scope = $request->input('scope', 'all');
+        $targetPoolKey = $request->input('pool_key');
+
+        $query = BadmintonMatch::where('competition_id', $competition->id)
+            ->whereNotIn('match_status', ['ongoing', 'finished']);
+
+        if ($scope === 'pool' && ! empty($targetPoolKey)) {
+            $query->where('match_code', 'like', "{$targetPoolKey}-%");
+        }
+
+        $resetCount = $query->update([
+            'scheduled_time' => null,
+            'match_order' => null,
+            'match_day' => null,
+            'match_date' => null,
+            'match_day_label' => null,
+            'court_number' => 'Lapangan 1',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Berhasil mengosongkan jadwal untuk {$resetCount} pertandingan! Anda dapat mengatur ulang jadwal dari awal.",
+            'reset_count' => $resetCount,
+        ]);
+    }
+
+    /**
      * Membangun rencana jadwal multi-hari terpadu (dipakai Preview dan Generate)
      */
     protected function buildMultiDaySchedulePlan(Competition $competition, array $input): array

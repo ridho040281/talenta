@@ -196,6 +196,7 @@ Route::middleware(['auth', 'role:pic_lomba,superadmin,panitia,juri'])->group(fun
     Route::get('/pic/lomba/{competition_id}/bagan/export-excel', [TournamentBracketController::class, 'exportScheduleExcel'])->name('pic.bracket.export_excel');
     Route::post('/pic/lomba/{competition_id}/bagan/generate-matches', [TournamentBracketController::class, 'generateMatches'])->name('pic.bracket.generate_matches');
     Route::post('/pic/lomba/{competition_id}/bagan/preview-schedule', [TournamentBracketController::class, 'previewSchedule'])->name('pic.bracket.preview_schedule');
+    Route::post('/pic/lomba/{competition_id}/bagan/reset-schedule', [TournamentBracketController::class, 'resetSchedule'])->name('pic.bracket.reset_schedule');
     Route::post('/pic/lomba/{competition_id}/bagan/update-schedule', [TournamentBracketController::class, 'updateMatchSchedule'])->name('pic.bracket.update_schedule');
     Route::post('/pic/lomba/{competition_id}/bagan/save-format', [TournamentBracketController::class, 'saveBracketFormat'])->name('pic.bracket.save_format');
     Route::post('/pic/lomba/{competition_id}/bagan/publication', [TournamentBracketController::class, 'updatePublicationSettings'])->name('pic.bracket.publication');

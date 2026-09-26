@@ -1181,7 +1181,7 @@
 
             <!-- Modal Footer Buttons -->
             <div class="flex items-center justify-between gap-2.5 pt-3 border-t border-slate-800 shrink-0">
-                <div>
+                <div class="flex items-center gap-2">
                     <button type="button" 
                             x-show="showPreviewTable"
                             @click="showPreviewTable = false"
@@ -1194,6 +1194,16 @@
                             @click="closeSyncModal()"
                             class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition cursor-pointer">
                         Batal
+                    </button>
+                    <!-- Tombol Reset Jadwal (Kosongkan Waktu & Lapangan) -->
+                    <button type="button" 
+                            x-show="!showPreviewTable"
+                            @click="resetSchedule()"
+                            :disabled="isResetting || isSyncing"
+                            class="px-3 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 font-bold text-xs transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                            title="Kosongkan seluruh jam main dan hari pertandingan yang belum bertanding">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5 text-rose-400" :class="isResetting ? 'animate-spin' : ''"></i>
+                        <span x-text="isResetting ? 'Mengosongkan...' : 'Reset Jadwal'"></span>
                     </button>
                 </div>
 
@@ -1838,6 +1848,59 @@
                     this.toastMessage = 'Terjadi kesalahan jaringan saat menyinkronkan data.';
                 } finally {
                     this.isSyncing = false;
+                    if (window.lucide) window.lucide.createIcons();
+                }
+            },
+
+            isResetting: false,
+
+            async resetSchedule() {
+                if (this.isResetting) return;
+
+                const scopeText = (this.scheduleScope === 'pool') 
+                    ? 'kategori lomba ini' 
+                    : 'seluruh kategori lomba';
+                const msg = `Apakah Anda yakin ingin mengosongkan seluruh jam main, hari, dan nomor lapangan untuk ${scopeText}?\n\nCatatan:\n• Pertandingan yang belum dimulai akan kembali bersih (siap diatur ulang dari nol).\n• Skor pertandingan yang SUDAH SELESAI tetap AMAN 100%.`;
+
+                if (!confirm(msg)) {
+                    return;
+                }
+
+                this.isResetting = true;
+                this.toastMessage = '';
+
+                try {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+                    const response = await fetch('{{ route("pic.bracket.reset_schedule", $competition->id) }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            scope: this.scheduleScope,
+                            pool_key: this.activePoolKey
+                        })
+                    });
+
+                    const res = await response.json();
+                    if (res.success) {
+                        this.toastSuccess = true;
+                        this.toastMessage = res.message || 'Jadwal pertandingan berhasil dikosongkan!';
+                        this.previewData = null;
+                        this.showPreviewTable = false;
+                        setTimeout(() => window.location.reload(), 1200);
+                    } else {
+                        this.toastSuccess = false;
+                        this.toastMessage = res.message || 'Gagal mereset jadwal.';
+                    }
+                } catch (err) {
+                    console.error('Reset schedule error:', err);
+                    this.toastSuccess = false;
+                    this.toastMessage = 'Terjadi kesalahan jaringan saat mereset jadwal.';
+                } finally {
+                    this.isResetting = false;
                     if (window.lucide) window.lucide.createIcons();
                 }
             }
