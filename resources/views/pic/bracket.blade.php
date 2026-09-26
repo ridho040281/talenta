@@ -1031,8 +1031,8 @@
                         </div>
                     </div>
 
-                    <!-- 3. Jam Mulai & Estimasi Durasi Per Babak -->
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-2xl bg-slate-950 border border-slate-800">
+                    <!-- 3. Jam Mulai, Jam Selesai & Estimasi Durasi Per Babak -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 p-3.5 rounded-2xl bg-slate-950 border border-slate-800">
                         <div>
                             <label class="block font-bold text-slate-300 mb-1">
                                 Jam Mulai Harian:
@@ -1041,6 +1041,16 @@
                                    x-model="scheduleStartTime"
                                    class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono font-bold text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none">
                             <p class="text-[10px] text-slate-500 mt-1">Default: 08:00 WIB</p>
+                        </div>
+
+                        <div>
+                            <label class="block font-bold text-slate-300 mb-1">
+                                Jam Selesai Harian (Maks):
+                            </label>
+                            <input type="time" 
+                                   x-model="scheduleEndTime"
+                                   class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono font-bold text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none">
+                            <p class="text-[10px] text-slate-500 mt-1">Batas Maks: 18:00 WIB</p>
                         </div>
 
                         <div>
@@ -1075,8 +1085,17 @@
                             <p class="text-[10px] text-slate-500 mt-1">Sesuai Kertas: 30 mnt</p>
                         </div>
 
+                        <!-- Checkbox Jeda Ishoma Siang -->
+                        <div class="col-span-1 sm:col-span-2 md:col-span-4 pt-2 border-t border-slate-800/80 flex items-center justify-between flex-wrap gap-2">
+                            <label class="flex items-center gap-2 cursor-pointer text-slate-300 font-medium">
+                                <input type="checkbox" x-model="scheduleLunchBreak" class="rounded bg-slate-900 border-slate-700 text-emerald-500 focus:ring-0">
+                                <span>Otomatis Jeda Ishoma Siang (12:00 – 13:00 WIB) pada Hari 1, 2, 3</span>
+                            </label>
+                            <span class="text-[10px] text-amber-400 font-mono font-bold">Lanjut Pukul 13:00 WIB</span>
+                        </div>
+
                         <!-- Checkbox Jeda Jumat -->
-                        <div class="col-span-1 sm:col-span-3 pt-2 border-t border-slate-800/80 flex items-center justify-between">
+                        <div class="col-span-1 sm:col-span-2 md:col-span-4 pt-1 flex items-center justify-between flex-wrap gap-2">
                             <label class="flex items-center gap-2 cursor-pointer text-slate-300 font-medium">
                                 <input type="checkbox" x-model="scheduleFridayBreak" class="rounded bg-slate-900 border-slate-700 text-emerald-500 focus:ring-0">
                                 <span>Otomatis Jeda Ibadah Sholat Jum'at (10:30 – 13:00 WIB) pada Hari Final</span>
@@ -1100,7 +1119,7 @@
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-[11px] font-bold" x-text="previewData.summary"></span>
-                                    <a :href="'{{ route('pic.bracket.export_excel', $competition->id) }}?use_simulation=1&tournament_days=' + tournamentDays + '&start_date=' + scheduleStartDate + '&start_time=' + scheduleStartTime + '&match_duration=' + scheduleMatchDuration + '&semifinal_duration=' + scheduleSemifinalDuration + '&distribution_mode=' + scheduleDistributionMode + '&scope=' + scheduleScope + '&pool_key=' + schedulePoolKey + '&friday_break=' + (scheduleFridayBreak ? '1' : '0')" 
+                                    <a :href="'{{ route('pic.bracket.export_excel', $competition->id) }}?use_simulation=1&tournament_days=' + tournamentDays + '&start_date=' + scheduleStartDate + '&start_time=' + scheduleStartTime + '&end_time=' + scheduleEndTime + '&match_duration=' + scheduleMatchDuration + '&semifinal_duration=' + scheduleSemifinalDuration + '&distribution_mode=' + scheduleDistributionMode + '&scope=' + scheduleScope + '&pool_key=' + activePoolKey + '&lunch_break=' + (scheduleLunchBreak ? '1' : '0') + '&friday_break=' + (scheduleFridayBreak ? '1' : '0')" 
                                        target="_blank"
                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow transition cursor-pointer"
                                        title="Download hasil simulasi jadwal ini ke file Excel">
@@ -1582,8 +1601,12 @@
             scheduleDistributionMode: 'category_based',
             newCourtInput: '',
             scheduleStartTime: '08:00',
+            scheduleEndTime: '18:00',
             scheduleMatchDuration: 20,
             scheduleSemifinalDuration: 30,
+            scheduleLunchBreak: true,
+            scheduleLunchStart: '12:00',
+            scheduleLunchEnd: '13:00',
             scheduleFridayBreak: true,
 
             // Preview State
@@ -1776,11 +1799,15 @@
                             pool_key: this.activePoolKey,
                             courts: this.scheduleCourts,
                             start_time: this.scheduleStartTime,
+                            end_time: this.scheduleEndTime,
                             match_duration: parseInt(this.scheduleMatchDuration),
                             semifinal_duration: parseInt(this.scheduleSemifinalDuration),
                             tournament_days: parseInt(this.tournamentDays),
                             start_date: this.scheduleStartDate,
                             distribution_mode: this.scheduleDistributionMode,
+                            lunch_break: this.scheduleLunchBreak,
+                            lunch_start: this.scheduleLunchStart,
+                            lunch_end: this.scheduleLunchEnd,
                             friday_break: this.scheduleFridayBreak
                         })
                     });
@@ -1823,11 +1850,15 @@
                             pool_key: this.activePoolKey,
                             courts: this.scheduleCourts,
                             start_time: this.scheduleStartTime,
+                            end_time: this.scheduleEndTime,
                             match_duration: parseInt(this.scheduleMatchDuration),
                             semifinal_duration: parseInt(this.scheduleSemifinalDuration),
                             tournament_days: parseInt(this.tournamentDays),
                             start_date: this.scheduleStartDate,
                             distribution_mode: this.scheduleDistributionMode,
+                            lunch_break: this.scheduleLunchBreak,
+                            lunch_start: this.scheduleLunchStart,
+                            lunch_end: this.scheduleLunchEnd,
                             friday_break: this.scheduleFridayBreak
                         })
                     });

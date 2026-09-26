@@ -911,9 +911,17 @@ class TournamentBracketController extends Controller
             $startTime = '08:00';
         }
 
+        $endTime = $input['end_time'] ?? '18:00';
+        if (! preg_match('/^\d{1,2}:\d{2}$/', $endTime)) {
+            $endTime = '18:00';
+        }
+
         $matchDuration = max(10, (int) ($input['match_duration'] ?? 20));
         $semifinalDuration = max(10, (int) ($input['semifinal_duration'] ?? 30));
         $distributionMode = $input['distribution_mode'] ?? 'category_based'; // 'category_based' | 'even'
+        $lunchBreak = ! empty($input['lunch_break'] ?? true);
+        $lunchStart = $input['lunch_start'] ?? '12:00';
+        $lunchEnd = $input['lunch_end'] ?? '13:00';
         $fridayBreak = ! empty($input['friday_break'] ?? true);
 
         $getDayDateAndLabel = function ($dayNum) use ($startDate) {
@@ -1115,8 +1123,11 @@ class TournamentBracketController extends Controller
                 if ($rType === 'final' || $rType === 'semifinal') {
                     return 3;
                 }
-                if ($rType === 'qf' || $rType === '16b') {
+                if ($rType === 'qf') {
                     return 2;
+                }
+                if ($rType === '16b') {
+                    return ((int) ($m['round_index'] ?? 1) === 1) ? 1 : 2;
                 }
 
                 return 1;
@@ -1129,11 +1140,26 @@ class TournamentBracketController extends Controller
                 if ($rType === 'semifinal') {
                     return 3;
                 }
-                if ($rType === 'qf' || $rType === '16b') {
+                if ($rType === 'qf') {
+                    // Kelas 5-6 (kat_c) dan Ganda QF dimainkan Hari 3 Pagi sebelum Semifinal
+                    // Kelas 1-2 (kat_a) dan Kelas 3-4 (kat_b) QF dimainkan Hari 2 Siang
+                    if (str_contains($m['pool_key'], 'kat_c') || str_contains($m['pool_key'], 'ganda')) {
+                        return 3;
+                    }
+
+                    return 2;
+                }
+                if ($rType === '16b') {
+                    // Babak 1 pada bagan 16 besar (Round 1) dimainkan Hari 1 Siang
+                    // Babak 2 pada bagan 32 besar (Round 2) dimainkan Hari 2 Pagi
+                    if ((int) ($m['round_index'] ?? 1) === 1) {
+                        return 1;
+                    }
+
                     return 2;
                 }
 
-                return 1; // 32 Besar / Penyisihan Awal
+                return 1; // 32 Besar / Penyisihan Awal / Playoff
             }
 
             // 5+ Hari
@@ -1147,7 +1173,7 @@ class TournamentBracketController extends Controller
                 return max(1, $tournamentDays - 2);
             }
             if ($rType === '16b') {
-                return max(1, $tournamentDays - 3);
+                return ((int) ($m['round_index'] ?? 1) === 1) ? max(1, $tournamentDays - 4) : max(1, $tournamentDays - 3);
             }
 
             return 1; // 32 Besar / Prelim / Playoff
@@ -1159,19 +1185,24 @@ class TournamentBracketController extends Controller
             $rt = $m['round_type'];
 
             if ($day === 1) {
+                // Lapangan 1: Kat C Pi prelim -> Kat C Pa prelim -> Ganda 16b (R1)
                 if (str_contains($pk, 'kat_c_pi')) {
                     return 10;
                 }
                 if (str_contains($pk, 'kat_c_pa')) {
                     return 20;
                 }
-                if (str_contains($pk, 'kat_a_pa')) {
+                if (str_contains($pk, 'ganda')) {
+                    return 25;
+                }
+                // Lapangan 2: Kat B Pa prelim -> Kat B Pi 16b (R1) -> Kat A Pa 16b (R1) -> Kat A Pi 16b (R1)
+                if (str_contains($pk, 'kat_b_pa')) {
                     return 30;
                 }
                 if (str_contains($pk, 'kat_b_pi')) {
                     return 40;
                 }
-                if (str_contains($pk, 'kat_b_pa')) {
+                if (str_contains($pk, 'kat_a_pa')) {
                     return 50;
                 }
                 if (str_contains($pk, 'kat_a_pi')) {
@@ -1182,75 +1213,78 @@ class TournamentBracketController extends Controller
             }
 
             if ($day === 2) {
+                // Lapangan 1: Kat C Pi 16b -> Kat C Pa 16b
                 if (str_contains($pk, 'kat_c_pi') && $rt === '16b') {
                     return 10;
                 }
                 if (str_contains($pk, 'kat_c_pa') && $rt === '16b') {
                     return 20;
                 }
-                if (str_contains($pk, 'kat_c_pi') && $rt === 'qf') {
+                // Lapangan 2: Kat B Pa 16b -> QF Kat A Pi -> QF Kat A Pa -> QF Kat B Pi -> QF Kat B Pa
+                if (str_contains($pk, 'kat_b_pa') && $rt === '16b') {
                     return 30;
                 }
-                if (str_contains($pk, 'kat_c_pa') && $rt === 'qf') {
+                if (str_contains($pk, 'kat_a_pi') && $rt === 'qf') {
                     return 40;
                 }
-                if (str_contains($pk, 'ganda')) {
+                if (str_contains($pk, 'kat_a_pa') && $rt === 'qf') {
                     return 50;
                 }
-
-                if (str_contains($pk, 'kat_a_pi') && $rt !== 'qf') {
+                if (str_contains($pk, 'kat_b_pi') && $rt === 'qf') {
                     return 60;
                 }
-                if (str_contains($pk, 'kat_a_pa')) {
+                if (str_contains($pk, 'kat_b_pa') && $rt === 'qf') {
                     return 70;
                 }
-                if (str_contains($pk, 'kat_b_pa') && $rt === '16b') {
-                    return 80;
-                }
-                if (str_contains($pk, 'kat_b_pi')) {
-                    return 90;
-                }
-                if (str_contains($pk, 'kat_a_pi') && $rt === 'qf') {
-                    return 100;
-                }
-                if (str_contains($pk, 'kat_b_pa') && $rt === 'qf') {
-                    return 110;
-                }
 
-                return 120;
+                return 80;
             }
 
             if ($day === 3) {
-                if (str_contains($pk, 'ganda') && $rt === 'qf') {
-                    return 10;
+                // Sesi Pagi: Perempat Final (QF)
+                if ($rt === 'qf') {
+                    if (str_contains($pk, 'kat_c_pi')) {
+                        return 10;
+                    }
+                    if (str_contains($pk, 'kat_c_pa')) {
+                        return 20;
+                    }
+                    if (str_contains($pk, 'ganda')) {
+                        return 30;
+                    }
+
+                    return 35;
                 }
-                if (str_contains($pk, 'kat_c_pi')) {
-                    return 20;
-                }
-                if (str_contains($pk, 'kat_c_pa')) {
-                    return 30;
-                }
-                if (str_contains($pk, 'ganda')) {
+
+                // Sesi Siang: Seluruh Semifinal
+                if (str_contains($pk, 'kat_a_pi')) {
                     return 40;
                 }
-
-                if (str_contains($pk, 'kat_a_pi')) {
+                if (str_contains($pk, 'kat_a_pa')) {
                     return 50;
                 }
-                if (str_contains($pk, 'kat_a_pa')) {
+                if (str_contains($pk, 'kat_b_pi')) {
                     return 60;
                 }
-                if (str_contains($pk, 'kat_b_pi')) {
+                if (str_contains($pk, 'kat_b_pa')) {
                     return 70;
                 }
-                if (str_contains($pk, 'kat_b_pa')) {
+                if (str_contains($pk, 'kat_c_pi')) {
                     return 80;
                 }
+                if (str_contains($pk, 'kat_c_pa')) {
+                    return 90;
+                }
+                if (str_contains($pk, 'ganda')) {
+                    return 100;
+                }
 
-                return 90;
+                return 110;
             }
 
             if ($day >= 4) {
+                // Grand Final (Lapangan 1)
+                // Sesi Pagi: 5 Partai (Kat A Pi, Kat A Pa, Kat B Pi, Kat B Pa, Kat C Pi)
                 if (str_contains($pk, 'kat_a_pi')) {
                     return 10;
                 }
@@ -1266,6 +1300,7 @@ class TournamentBracketController extends Controller
                 if (str_contains($pk, 'kat_c_pi')) {
                     return 50;
                 }
+                // Sesi Siang (setelah Jumatan): 2 Partai (Kat C Pa, Ganda)
                 if (str_contains($pk, 'kat_c_pa')) {
                     return 60;
                 }
@@ -1331,6 +1366,12 @@ class TournamentBracketController extends Controller
                     $dayCourtIndex++;
                 }
 
+                // Pada Hari 3 (QF Kat C & Ganda pagi, Semifinal siang):
+                // Jika mode kategori, alokasikan Ganda QF ke Lapangan 2 agar kedua lapangan aktif seimbang di sesi pagi
+                if ($distributionMode === 'category_based' && $d === 3 && $m['round_type'] === 'qf' && str_contains($m['pool_key'], 'ganda') && count($courts) > 1) {
+                    $assignedCourt = $courts[1];
+                }
+
                 // Pada Hari 4 (Final), seluruh pertandingan dipusatkan di Lapangan 1 (Utama)
                 if ($d === 4 && count($courts) > 0) {
                     $assignedCourt = $courts[0];
@@ -1340,6 +1381,22 @@ class TournamentBracketController extends Controller
                 $assignedOrder = null;
 
                 if ($isContested) {
+                    // Jeda Ishoma Siang (12:00 - 13:00 WIB) pada Hari 1, 2, 3
+                    if ($lunchBreak && $d !== 4) {
+                        $cTimeStr = $courtCurrentTime[$assignedCourt]->format('H:i');
+                        if ($cTimeStr >= $lunchStart && $cTimeStr < $lunchEnd) {
+                            $courtCurrentTime[$assignedCourt] = Carbon::createFromFormat('H:i', $lunchEnd);
+                        }
+                    }
+
+                    // Pada Hari 3, seluruh Semifinal dimulai pada Sesi Siang (13:00 WIB) setelah istirahat & makan siang
+                    if ($d === 3 && $m['round_type'] === 'semifinal') {
+                        $cTimeStr = $courtCurrentTime[$assignedCourt]->format('H:i');
+                        if ($cTimeStr < '13:00') {
+                            $courtCurrentTime[$assignedCourt] = Carbon::createFromFormat('H:i', '13:00');
+                        }
+                    }
+
                     $courtCounters[$assignedCourt]++;
                     $assignedOrder = $courtCounters[$assignedCourt];
 
@@ -1399,7 +1456,7 @@ class TournamentBracketController extends Controller
         }
 
         $courtListStr = implode(', ', $courts);
-        $summary = "{$tournamentDays} Hari ({$courtListStr}, mulai {$startTime} WIB)";
+        $summary = "{$tournamentDays} Hari ({$courtListStr}, {$startTime} - {$endTime} WIB)";
 
         return [
             'summary' => $summary,
