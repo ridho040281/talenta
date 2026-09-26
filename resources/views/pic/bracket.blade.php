@@ -854,7 +854,7 @@
          x-cloak
          class="fixed inset-0 z-50 overflow-y-auto bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
         <div @click.away="closeSyncModal()" 
-             :class="showPreviewTable ? 'max-w-4xl' : 'max-w-xl'"
+             :class="showPreviewTable ? 'max-w-6xl' : 'max-w-4xl'"
              class="bg-slate-900 border border-slate-800 w-full rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 text-white animate-in fade-in zoom-in-95 duration-200 transition-all max-h-[92vh] flex flex-col">
             
             <!-- Modal Header -->
@@ -1019,54 +1019,62 @@
                             </div>
 
                             <!-- Panel Kustom Kuota & Lapangan per Kategori -->
-                            <div x-show="scheduleDistributionMode === 'custom'" class="pt-3 border-t border-slate-800/80 space-y-2.5" x-transition>
-                                <div class="flex items-center justify-between">
-                                    <label class="font-bold text-amber-400 text-xs flex items-center gap-1.5">
-                                        <i data-lucide="sliders" class="w-4 h-4"></i>
+                            <div x-show="scheduleDistributionMode === 'custom'" class="pt-3 border-t border-slate-800/80 space-y-3" x-transition>
+                                <div class="flex items-center justify-between flex-wrap gap-2">
+                                    <label class="font-extrabold text-amber-400 text-xs sm:text-sm flex items-center gap-2">
+                                        <i data-lucide="sliders" class="w-4 h-4 text-amber-400"></i>
                                         <span>Atur Lapangan & Kuota Partai Babak Awal per Kategori:</span>
                                     </label>
-                                    <span class="text-[10px] text-slate-500">Kuota kosong = Semua partai babak 1</span>
+                                    <span class="text-[11px] text-slate-400 bg-slate-800 px-2.5 py-0.5 rounded-full font-medium">
+                                        Kuota kosong = Jadwalkan semua partai babak 1
+                                    </span>
                                 </div>
                                 
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                                     @foreach($pools as $p)
-                                    <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800/80 flex flex-col justify-between gap-2">
-                                        <div class="flex items-center justify-between gap-2">
-                                            <div class="min-w-0">
-                                                <p class="font-bold text-white text-xs truncate">{{ $p['title'] }}</p>
-                                                <p class="text-[10px] text-slate-500 font-mono">{{ count($p['participants']) }} Peserta Terdaftar</p>
+                                    <div class="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 hover:border-slate-700 shadow-sm flex flex-col justify-between gap-3 transition">
+                                        <div class="flex items-start justify-between gap-2">
+                                            <div>
+                                                <p class="font-extrabold text-white text-xs sm:text-sm leading-snug">{{ $p['title'] }}</p>
+                                                <p class="text-[11px] text-slate-400 font-mono mt-0.5 flex items-center gap-1.5">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                                    <span>{{ count($p['participants']) }} Peserta Terdaftar</span>
+                                                </p>
                                             </div>
-                                            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-800 text-slate-300">
+                                            <span class="px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold bg-slate-800/90 text-amber-300 border border-slate-700/80 shrink-0">
                                                 {{ strtoupper($p['key']) }}
                                             </span>
                                         </div>
-                                        <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-800/50 text-[11px]">
+
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2.5 border-t border-slate-800/80 text-xs">
                                             <div>
-                                                <label class="block text-[10px] font-semibold text-slate-400 mb-0.5">Pilih Lapangan:</label>
+                                                <label class="block text-[11px] font-bold text-slate-400 mb-1">Pilih Lapangan:</label>
                                                 <select x-model="scheduleCustomRules['{{ $p['key'] }}'].court"
-                                                        class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-white font-bold text-xs focus:ring-1 focus:ring-amber-500">
+                                                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-white font-bold text-xs focus:ring-1 focus:ring-amber-500 focus:outline-none">
                                                     <template x-for="court in scheduleCourts" :key="court">
                                                         <option :value="court" x-text="court" :selected="scheduleCustomRules['{{ $p['key'] }}']?.court === court"></option>
                                                     </template>
                                                 </select>
                                             </div>
                                             <div>
-                                                <label class="block text-[10px] font-semibold text-slate-400 mb-0.5">Kuota Hari 1 (Partai):</label>
-                                                <div class="relative flex items-center">
+                                                <label class="block text-[11px] font-bold text-slate-400 mb-1">Kuota Hari 1 (Partai):</label>
+                                                <div class="flex items-center">
                                                     <input type="number" 
                                                            x-model.number="scheduleCustomRules['{{ $p['key'] }}'].quota_day1" 
                                                            min="1" 
-                                                           max="32" 
+                                                           max="64" 
                                                            placeholder="Semua"
-                                                           class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-amber-300 font-mono font-bold text-xs placeholder:text-slate-600 focus:ring-1 focus:ring-amber-500 pr-10">
-                                                    <span class="absolute right-2 text-slate-500 text-[10px] font-medium pointer-events-none">partai</span>
+                                                           class="w-full bg-slate-900 border border-slate-700 rounded-l-xl px-3 py-2 text-amber-300 font-mono font-bold text-xs placeholder:text-slate-500 focus:ring-1 focus:ring-amber-500 focus:outline-none">
+                                                    <span class="bg-slate-800 border border-l-0 border-slate-700 rounded-r-xl px-2.5 py-2 text-slate-400 text-xs font-semibold select-none">
+                                                        partai
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                     @endforeach
                                 </div>
-                                <p class="text-[11px] text-slate-400 bg-amber-950/20 border border-amber-500/20 p-2 rounded-xl leading-relaxed">
+                                <p class="text-[11px] text-slate-400 bg-amber-950/20 border border-amber-500/20 p-2.5 rounded-xl leading-relaxed">
                                     💡 <strong>Contoh:</strong> Jika Kelas 5-6 Putra diisi <span class="text-amber-300 font-bold">7 partai</span> di Lapangan 1 dan Kelas 1-2 diisi <span class="text-amber-300 font-bold">8 partai</span> di Lapangan 2, sistem otomatis membatasi partai Hari 1 sesuai kuota tersebut dan memindahkan sisanya ke Hari 2.
                                 </p>
                             </div>
