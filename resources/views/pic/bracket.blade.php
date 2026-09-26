@@ -909,7 +909,7 @@
                                 </label>
                                 <span class="text-[10px] text-emerald-400 font-bold font-mono">Format Resmi: 4 Hari</span>
                             </div>
-                            <div class="flex flex-wrap gap-2">
+                            <div class="flex flex-wrap items-center gap-2">
                                 <template x-for="days in scheduleDaysList" :key="days">
                                     <button type="button" 
                                             @click="tournamentDays = days"
@@ -921,9 +921,26 @@
                                 <button type="button" 
                                         x-show="scheduleDaysList.length < 7"
                                         @click="addScheduleDay()"
-                                        class="py-2 px-2.5 rounded-xl border border-dashed border-slate-700 hover:border-amber-400 text-slate-400 hover:text-amber-300 font-bold transition flex items-center gap-1 cursor-pointer">
+                                        class="py-2 px-2.5 rounded-xl border border-dashed border-slate-700 hover:border-amber-400 text-slate-400 hover:text-amber-300 font-bold transition flex items-center gap-1 cursor-pointer"
+                                        title="Tambah opsi hari">
                                     <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                                     <span>Tambah Hari</span>
+                                </button>
+                                <button type="button" 
+                                        x-show="scheduleDaysList.length > 1"
+                                        @click="removeScheduleDay()"
+                                        class="py-2 px-2.5 rounded-xl border border-dashed border-rose-800/60 hover:border-rose-500 text-rose-400 hover:text-rose-300 font-bold transition flex items-center gap-1 cursor-pointer"
+                                        title="Kurangi / hapus opsi hari terakhir">
+                                    <i data-lucide="minus" class="w-3.5 h-3.5"></i>
+                                    <span>Kurangi Hari</span>
+                                </button>
+                                <button type="button" 
+                                        x-show="scheduleDaysList.length !== 4"
+                                        @click="resetScheduleDays()"
+                                        class="py-2 px-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800 text-xs font-medium transition cursor-pointer flex items-center gap-1"
+                                        title="Kembalikan opsi ke format 4 Hari resmi">
+                                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                                    <span>Reset 4 Hari</span>
                                 </button>
                             </div>
                         </div>
@@ -1789,7 +1806,46 @@
                 if (nextDay <= 7) {
                     this.scheduleDaysList.push(nextDay);
                     this.tournamentDays = nextDay;
+                    this.$nextTick(() => {
+                        if (window.lucide) window.lucide.createIcons();
+                    });
                 }
+            },
+
+            removeScheduleDay() {
+                if (this.scheduleDaysList.length > 1) {
+                    const removed = this.scheduleDaysList.pop();
+                    if (this.tournamentDays >= removed) {
+                        this.tournamentDays = this.scheduleDaysList[this.scheduleDaysList.length - 1];
+                    }
+                    if (this.previewData && this.previewData.matches) {
+                        this.previewData.matches.forEach(m => {
+                            if (m.match_day > this.scheduleDaysList.length) {
+                                m.match_day = this.scheduleDaysList.length;
+                            }
+                        });
+                        this.recalculatePreviewTimes();
+                    }
+                    this.$nextTick(() => {
+                        if (window.lucide) window.lucide.createIcons();
+                    });
+                }
+            },
+
+            resetScheduleDays() {
+                this.scheduleDaysList = [1, 2, 3, 4];
+                this.tournamentDays = 4;
+                if (this.previewData && this.previewData.matches) {
+                    this.previewData.matches.forEach(m => {
+                        if (m.match_day > 4) {
+                            m.match_day = 4;
+                        }
+                    });
+                    this.recalculatePreviewTimes();
+                }
+                this.$nextTick(() => {
+                    if (window.lucide) window.lucide.createIcons();
+                });
             },
 
             toggleCourt(courtName) {
