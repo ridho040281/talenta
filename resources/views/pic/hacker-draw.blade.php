@@ -27,22 +27,6 @@
         </div>
 
         <div class="flex items-center flex-wrap gap-2.5">
-            <!-- Batch / Full-Shuffle Auto Draw -->
-            <button type="button" 
-                    @click="openBatchModal()" 
-                    :disabled="isDecoding || allUndrawnParticipants.length === 0"
-                    class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 hover:from-emerald-500/30 hover:to-teal-500/30 text-emerald-300 border border-emerald-500/50 font-bold text-xs shadow-md transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                    title="Undi Semua Peserta Sekaligus dalam 1 Kali Putar">
-                <i data-lucide="zap" class="w-4 h-4 text-emerald-400"></i>
-                <span>⚡ Batch / Full-Shuffle Auto Draw</span>
-            </button>
-
-            <!-- Switch to Spin Wheel -->
-            <a href="{{ route('pic.spin.wheel', $competition->id) }}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold text-xs transition">
-                <i data-lucide="disc" class="w-4 h-4"></i>
-                <span>Mode Spin Wheel</span>
-            </a>
-
             @if($competition->isTournamentBracket())
             <!-- Menu Seeded Button (Khusus Bulu Tangkis & Tenis Meja) -->
             <button type="button" 
@@ -67,17 +51,53 @@
                 <span>Layar TV (/tv/{{ $competition->slug }})</span>
             </a>
 
-            <!-- Reset All -->
-            <form action="{{ route('pic.spin.wheel.reset', $competition->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin me-reset SEMUA nomor undian pada cabang {{ addslashes($competition->name) }}?')">
-                @csrf
-                <button type="submit" class="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold text-xs transition cursor-pointer">
-                    Reset Semua Undian
+            <!-- Dropdown Menu Opsi Titik 3 (Reset Undian Seperti Menu Bulu Tangkis) -->
+            <div class="relative z-50" x-data="{ openMenu: false }" @click.outside="openMenu = false">
+                <button type="button" 
+                        @click="openMenu = !openMenu; $nextTick(() => { if (window.lucide) window.lucide.createIcons(); })" 
+                        class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition cursor-pointer flex items-center justify-center shadow-sm"
+                        title="Menu Opsi Reset">
+                    <i data-lucide="more-vertical" class="w-4 h-4"></i>
                 </button>
-            </form>
 
-            <a href="{{ route('pic.undian') }}" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition">
-                Kembali
-            </a>
+                <div x-show="openMenu" 
+                     x-cloak 
+                     x-transition:enter="transition ease-out duration-100"
+                     x-transition:enter-start="opacity-0 scale-95"
+                     x-transition:enter-end="opacity-100 scale-100"
+                     x-transition:leave="transition ease-in duration-75"
+                     x-transition:leave-start="opacity-100 scale-100"
+                     x-transition:leave-end="opacity-0 scale-95"
+                     class="absolute right-0 mt-2 w-60 bg-[#0B1120] border border-slate-700/90 rounded-2xl shadow-2xl py-2 z-50 text-xs font-sans">
+
+                    @if(count($pools) > 1)
+                    <!-- 1. Reset Kategori Ini -->
+                    <button type="button" 
+                            @click="openMenu = false; promptResetWithPassword('pool')"
+                            :disabled="activeDrawnParticipants.length === 0 || isDecoding"
+                            class="w-full text-left flex items-center gap-2.5 px-3.5 py-2.5 text-amber-400 hover:bg-amber-500/10 transition font-bold cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4 text-amber-400 shrink-0"></i>
+                        <div>
+                            <span class="block">Reset Kategori Ini</span>
+                            <span class="text-[10px] text-slate-500 font-normal block">Hapus undian kategori aktif</span>
+                        </div>
+                    </button>
+
+                    <div class="my-1 border-t border-slate-800"></div>
+                    @endif
+
+                    <!-- 2. Reset Undi Cabang Ini -->
+                    <button type="button" 
+                            @click="openMenu = false; promptResetWithPassword('all')"
+                            class="w-full text-left flex items-center gap-2.5 px-3.5 py-2.5 text-rose-400 hover:bg-rose-500/10 transition font-bold cursor-pointer">
+                        <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-400 shrink-0"></i>
+                        <div>
+                            <span class="block">Reset Undi Cabang Ini</span>
+                            <span class="text-[10px] text-slate-500 font-normal block">Hapus seluruh undian cabang ini</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
