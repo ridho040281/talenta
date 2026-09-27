@@ -1570,6 +1570,7 @@ class TournamentBracketController extends Controller
             'match_order' => 'nullable|integer|min:1|max:999',
             'match_day' => 'nullable|integer|min:1|max:7',
             'match_date' => 'nullable|date',
+            'force_override' => 'nullable|boolean',
         ]);
 
         $match = BadmintonMatch::firstOrNew([
@@ -1577,8 +1578,80 @@ class TournamentBracketController extends Controller
             'match_code' => $request->input('match_code'),
         ]);
 
-        $match->court_number = $request->input('court_number') ?: ($match->court_number ?: 'Lapangan 1');
-        $match->scheduled_time = $request->input('scheduled_time');
+        $targetCourt = $request->input('court_number') ?: ($match->court_number ?: 'Lapangan 1');
+        $targetTime = $request->input('scheduled_time');
+        $targetDay = $request->filled('match_day') ? (int) $request->input('match_day') : ($match->match_day ?: 1);
+        $targetDate = $request->input('match_date') ?: ($match->match_date?->format('Y-m-d') ?: null);
+        $matchCode = $request->input('match_code');
+
+        // Validasi: Waktu dan Lapangan Tidak Boleh Sama dengan Partai Lain (Cegah Bentrok Lapangan)
+        if (! empty($targetCourt) && strtoupper($targetCourt) !== 'BYE' && ! empty($targetTime)) {
+            $normalizeTime = function ($val) {
+                if (empty($val)) {
+                    return '';
+                }
+                $t = str_replace('.', ':', trim($val));
+                $parts = explode(':', $t);
+                if (count($parts) === 2 && is_numeric($parts[0]) && is_numeric($parts[1])) {
+                    return sprintf('%02d:%02d', (int) $parts[0], (int) $parts[1]);
+                }
+
+                return $t;
+            };
+
+            $normTime = $normalizeTime($targetTime);
+            $dotTime = str_replace(':', '.', $normTime);
+            $strippedColon = ltrim($normTime, '0');
+            $strippedDot = ltrim($dotTime, '0');
+
+            $conflictQuery = BadmintonMatch::where('competition_id', $competition_id)
+                ->where('match_code', '!=', $matchCode)
+                ->where('court_number', $targetCourt)
+                ->where('court_number', '!=', 'BYE')
+                ->where(function ($q) use ($normTime, $dotTime, $strippedColon, $strippedDot, $targetTime) {
+                    $q->where('scheduled_time', $normTime)
+                        ->orWhere('scheduled_time', $dotTime)
+                        ->orWhere('scheduled_time', $strippedColon)
+                        ->orWhere('scheduled_time', $strippedDot)
+                        ->orWhere('scheduled_time', $targetTime);
+                });
+
+            if ($targetDate) {
+                $conflictQuery->where(function ($q) use ($targetDate, $targetDay) {
+                    $q->where('match_date', $targetDate)
+                        ->orWhere('match_day', $targetDay);
+                });
+            } else {
+                $conflictQuery->where('match_day', $targetDay);
+            }
+
+            $conflict = $conflictQuery->first();
+
+            if ($conflict && ! $request->boolean('force_override')) {
+                $conflictPartai = $conflict->match_order ? "Partai #{$conflict->match_order}" : $conflict->match_code;
+                $conflictDay = $conflict->match_day_label ?: "Hari {$conflict->match_day}";
+                $conflictPlayers = '';
+                if ($conflict->team1_player1 || $conflict->team2_player1) {
+                    $conflictPlayers = ' ('.trim("{$conflict->team1_player1} vs {$conflict->team2_player1}", ' vs').')';
+                }
+
+                return response()->json([
+                    'success' => false,
+                    'is_conflict' => true,
+                    'message' => "Lapangan telah digunakan! {$targetCourt} pada jam {$targetTime} ({$conflictDay}) sudah digunakan untuk {$conflictPartai}{$conflictPlayers}. Silakan pilih jam atau lapangan lain.",
+                    'conflict' => [
+                        'match_code' => $conflict->match_code,
+                        'match_order' => $conflict->match_order,
+                        'court_number' => $conflict->court_number,
+                        'scheduled_time' => $conflict->scheduled_time,
+                        'match_day' => $conflict->match_day,
+                    ],
+                ], 422);
+            }
+        }
+
+        $match->court_number = $targetCourt;
+        $match->scheduled_time = $targetTime;
         $match->match_order = $request->input('match_order');
 
         if ($request->filled('match_day')) {
@@ -2018,6 +2091,76 @@ class TournamentBracketController extends Controller
 
         $isDoublesPool = str_contains(strtolower($poolKey), 'ganda') || collect($poolParticipants)->contains(fn ($p) => str_contains($p['name'] ?? '', ' / '));
 
+        // Deteksi bentrok jadwal pertandingan (lapangan dan jam yang sama di hari yang sama)
+        $normalizeTime = function ($val) {
+            if (empty($val)) {
+                return '';
+            }
+            $t = str_replace('.', ':', trim($val));
+            $parts = explode(':', $t);
+            if (count($parts) === 2 && is_numeric($parts[0]) && is_numeric($parts[1])) {
+                return sprintf('%02d:%02d', (int) $parts[0], (int) $parts[1]);
+            }
+
+            return $t;
+        };
+
+        $slotUsages = [];
+        foreach ($existingMatches as $em) {
+            if (! empty($em->court_number) && strtoupper($em->court_number) !== 'BYE' && ! empty($em->scheduled_time)) {
+                $timeClean = $normalizeTime($em->scheduled_time);
+                $dayVal = (int) ($em->match_day ?: 1);
+                $dateVal = $em->match_date?->format('Y-m-d') ?: "day_{$dayVal}";
+                $slotKey = "{$dateVal}|".strtolower(trim($em->court_number))."|{$timeClean}";
+                $slotUsages[$slotKey][] = [
+                    'code' => $em->match_code,
+                    'order' => $em->match_order,
+                    'court' => $em->court_number,
+                    'time' => $em->scheduled_time,
+                    'day' => $dayVal,
+                ];
+            }
+        }
+
+        $scheduleConflicts = [];
+        foreach ($slotUsages as $slotKey => $matchesInSlot) {
+            if (count($matchesInSlot) > 1) {
+                foreach ($matchesInSlot as $mItem) {
+                    $otherDescriptions = [];
+                    foreach ($matchesInSlot as $other) {
+                        if ($other['code'] !== $mItem['code']) {
+                            $otherPartai = $other['order'] ? "Partai #{$other['order']}" : $other['code'];
+                            $otherDescriptions[] = $otherPartai;
+                        }
+                    }
+                    $scheduleConflicts[$mItem['code']] = [
+                        'court' => $mItem['court'],
+                        'time' => $mItem['time'],
+                        'day' => $mItem['day'],
+                        'message' => 'Bentrok jadwal dengan '.implode(', ', $otherDescriptions),
+                    ];
+                }
+            }
+        }
+
+        $allMatchesSchedule = $existingMatches->map(function ($em) {
+            $players = '';
+            if ($em->team1_player1 || $em->team2_player1) {
+                $players = trim("{$em->team1_player1} vs {$em->team2_player1}", ' vs');
+            }
+
+            return [
+                'code' => $em->match_code,
+                'order' => $em->match_order,
+                'court' => $em->court_number,
+                'time' => $em->scheduled_time,
+                'day' => (int) ($em->match_day ?: 1),
+                'day_label' => $em->match_day_label ?: ('Hari '.($em->match_day ?: 1)),
+                'date' => $em->match_date?->format('Y-m-d') ?: null,
+                'players' => $players,
+            ];
+        })->values()->all();
+
         $bracketData = [
             'bracket_size' => $bracketSize,
             'is_doubles' => $isDoublesPool,
@@ -2028,6 +2171,8 @@ class TournamentBracketController extends Controller
             'champion' => $champion,
             'bwf_protections' => $bwfProtections,
             'has_bwf_protections' => count($bwfProtections) > 0,
+            'schedule_conflicts' => $scheduleConflicts,
+            'all_matches_schedule' => $allMatchesSchedule,
             'playoffs' => [
                 'has_playoffs' => $isPlayoff,
                 'mode' => $bracketMode,

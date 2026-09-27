@@ -394,16 +394,23 @@
                                     $isPoFinished = ($poMatch['status'] === 'finished');
                                     $isPoOngoing = ($poMatch['status'] === 'ongoing');
                                     $isPoPending = ($poMatch['status'] === 'pending_draw');
+                                    $poConflict = $bracketData['schedule_conflicts'][$poMatch['match_code']] ?? null;
                                 @endphp
                                 <div id="match-card-{{ $poMatch['match_code'] }}" class="bg-slate-900/90 rounded-2xl border transition-all duration-200 shadow-lg relative overflow-hidden group
-                                    {{ $isPoOngoing ? 'border-amber-500/60 ring-1 ring-amber-500/40' : ($isPoFinished ? 'border-emerald-500/40 shadow-emerald-500/5' : 'border-amber-500/30 hover:border-amber-500/50') }}">
+                                    {{ $poConflict ? 'border-rose-500/80 shadow-rose-500/20 ring-2 ring-rose-500/60' : ($isPoOngoing ? 'border-amber-500/60 ring-1 ring-amber-500/40' : ($isPoFinished ? 'border-emerald-500/40 shadow-emerald-500/5' : 'border-amber-500/30 hover:border-amber-500/50')) }}">
                                     <!-- Header Bar -->
                                     <div class="px-3.5 py-2 bg-slate-950/80 border-b border-slate-800/80 flex items-center justify-between text-[11px]">
                                         <div class="flex items-center gap-1.5 font-mono font-bold text-amber-400">
                                             <i data-lucide="zap" class="w-3.5 h-3.5"></i>
                                             <span>{{ $poMatch['match_code'] }}</span>
                                         </div>
-                                        <div>
+                                        <div class="flex items-center gap-1.5">
+                                            @if($poConflict)
+                                                <span class="px-2 py-0.5 rounded-md bg-rose-500/25 text-rose-300 font-extrabold text-[10px] border border-rose-500/50 flex items-center gap-1 animate-pulse" title="{{ $poConflict['message'] }}">
+                                                    <i data-lucide="alert-triangle" class="w-3 h-3 text-rose-400"></i>
+                                                    <span>Bentrok Lapangan</span>
+                                                </span>
+                                            @endif
                                             @if($isPoOngoing)
                                                 <span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold text-[10px] border border-amber-500/40 flex items-center gap-1">
                                                     <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span> Live Tanding
@@ -426,12 +433,12 @@
 
                                     <!-- Schedule Info Bar -->
                                     @if($poExisting && $poExisting->court_number && ($poExisting->scheduled_time || $poExisting->match_day))
-                                        <div class="px-3 py-1.5 bg-slate-950/80 border-b border-slate-800/80 flex items-center justify-between text-[11px] font-mono">
+                                        <div class="px-3 py-1.5 {{ $poConflict ? 'bg-rose-950/40 border-b border-rose-500/40' : 'bg-slate-950/80 border-b border-slate-800/80' }} flex items-center justify-between text-[11px] font-mono">
                                             <div class="flex items-center gap-1.5 flex-wrap">
                                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 font-bold text-[10px] border border-sky-500/30">
                                                     📅 {{ $poExisting->match_day_label ?: ('Hari ' . ($poExisting->match_day ?: 1)) }}
                                                 </span>
-                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-bold text-[10px] border border-indigo-500/30">
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded {{ $poConflict ? 'bg-rose-500/30 text-rose-200 border-rose-500/60 font-black ring-1 ring-rose-400/40' : 'bg-indigo-500/20 text-indigo-300 font-bold border-indigo-500/30' }} text-[10px] border">
                                                     🏸 {{ $poExisting->court_number }}
                                                 </span>
                                                 @if($poExisting->match_order)
@@ -440,18 +447,24 @@
                                                     </span>
                                                 @endif
                                                 @if($poExisting->scheduled_time)
-                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[10px] border border-emerald-500/30">
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded {{ $poConflict ? 'bg-rose-500/30 text-rose-200 border-rose-500/60 font-black ring-1 ring-rose-400/40' : 'bg-emerald-500/20 text-emerald-300 font-bold border-emerald-500/30' }} text-[10px] border">
                                                         ⏰ {{ $poExisting->scheduled_time }}
                                                     </span>
                                                 @endif
                                             </div>
                                             <button type="button" 
                                                     @click.stop="openEditScheduleModal('{{ $poMatch['match_code'] }}', '{{ $poExisting?->court_number ?? 'Lapangan 1' }}', '{{ $poExisting?->scheduled_time ?? '07:30' }}', '{{ $poExisting?->match_order ?? 0 }}', '{{ $poExisting?->match_day ?? 1 }}', '{{ $poExisting?->match_date?->format('Y-m-d') ?? '' }}')"
-                                                    class="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-amber-300 transition cursor-pointer"
-                                                    title="Ubah Jadwal Play-off">
+                                                    class="p-1 rounded {{ $poConflict ? 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-300' : 'hover:bg-slate-800 text-slate-400 hover:text-amber-300' }} transition cursor-pointer"
+                                                    title="{{ $poConflict ? $poConflict['message'] . ' - Klik untuk perbaiki!' : 'Ubah Jadwal Play-off' }}">
                                                 <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                                             </button>
                                         </div>
+                                        @if($poConflict)
+                                            <div class="px-3 py-1 bg-rose-500/20 border-b border-rose-500/30 text-[10px] font-bold text-rose-300 flex items-center gap-1.5">
+                                                <i data-lucide="alert-triangle" class="w-3 h-3 text-rose-400 shrink-0"></i>
+                                                <span class="truncate">{{ $poConflict['message'] }}</span>
+                                            </div>
+                                        @endif
                                     @endif
 
                                     <!-- Teams -->
@@ -523,10 +536,11 @@
                                     $isOngoing = ($match['status'] === 'ongoing');
                                     $isByeAdvance = ($match['status'] === 'bye_advance');
                                     $existing = $match['existing_match'];
+                                    $conflictData = $bracketData['schedule_conflicts'][$match['match_code']] ?? null;
                                 @endphp
 
                                 <div id="match-card-{{ $match['match_code'] }}" class="bg-slate-900/90 rounded-2xl border transition-all duration-200 shadow-lg relative overflow-hidden group
-                                    {{ $isOngoing ? 'border-amber-500/60 shadow-amber-500/10 ring-1 ring-amber-500/40' : ($isFinished ? 'border-emerald-500/40 shadow-emerald-500/5' : ($isByeAdvance ? 'border-cyan-500/30 bg-cyan-950/10' : 'border-slate-800 hover:border-slate-700')) }}">
+                                    {{ $conflictData ? 'border-rose-500/80 shadow-rose-500/20 ring-2 ring-rose-500/60' : ($isOngoing ? 'border-amber-500/60 shadow-amber-500/10 ring-1 ring-amber-500/40' : ($isFinished ? 'border-emerald-500/40 shadow-emerald-500/5' : ($isByeAdvance ? 'border-cyan-500/30 bg-cyan-950/10' : 'border-slate-800 hover:border-slate-700'))) }}">
 
                                     <!-- Match Header Bar -->
                                     <div class="px-3.5 py-2 bg-slate-950/60 border-b border-slate-800/80 flex items-center justify-between text-[11px]">
@@ -541,6 +555,12 @@
                                             </span>
                                         </div>
                                         <div class="flex items-center gap-1.5">
+                                            @if($conflictData)
+                                                <span class="px-2 py-0.5 rounded-md bg-rose-500/25 text-rose-300 font-extrabold text-[10px] border border-rose-500/50 flex items-center gap-1 animate-pulse" title="{{ $conflictData['message'] }}">
+                                                    <i data-lucide="alert-triangle" class="w-3 h-3 text-rose-400"></i>
+                                                    <span>Bentrok Lapangan</span>
+                                                </span>
+                                            @endif
                                             @if($isByeAdvance)
                                                 <span class="px-2 py-0.5 rounded-md bg-cyan-500/15 text-cyan-300 font-bold text-[10px] border border-cyan-500/30">
                                                     BYE Advance
@@ -575,14 +595,14 @@
 
                                     <!-- Court & Time Schedule Badge Bar -->
                                     @if($existing && $existing->court_number && strtoupper($existing->court_number) !== 'BYE' && ($existing->scheduled_time || $existing->match_day))
-                                        <div class="px-3 py-1.5 bg-slate-950/80 border-b border-slate-800/80 flex items-center justify-between text-[11px] font-mono">
+                                        <div class="px-3 py-1.5 {{ $conflictData ? 'bg-rose-950/40 border-b border-rose-500/40' : 'bg-slate-950/80 border-b border-slate-800/80' }} flex items-center justify-between text-[11px] font-mono">
                                             <div class="flex items-center gap-1.5 flex-wrap">
                                                 @if($existing->match_day_label || $existing->match_day)
                                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 font-bold text-[10px] border border-sky-500/30">
                                                         📅 {{ $existing->match_day_label ?: ('Hari ' . $existing->match_day) }}
                                                     </span>
                                                 @endif
-                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-bold text-[10px] border border-indigo-500/30">
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded {{ $conflictData ? 'bg-rose-500/30 text-rose-200 border-rose-500/60 font-black ring-1 ring-rose-400/40' : 'bg-indigo-500/20 text-indigo-300 font-bold border-indigo-500/30' }} text-[10px] border">
                                                     🏸 {{ $existing->court_number }}
                                                 </span>
                                                 @if(!empty($match['match_number']) || !empty($existing->match_order))
@@ -591,18 +611,24 @@
                                                     </span>
                                                 @endif
                                                 @if($existing->scheduled_time)
-                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[10px] border border-emerald-500/30">
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded {{ $conflictData ? 'bg-rose-500/30 text-rose-200 border-rose-500/60 font-black ring-1 ring-rose-400/40' : 'bg-emerald-500/20 text-emerald-300 font-bold border-emerald-500/30' }} text-[10px] border">
                                                         ⏰ {{ $existing->scheduled_time }}
                                                     </span>
                                                 @endif
                                             </div>
                                             <button type="button" 
                                                     @click.stop="openEditScheduleModal('{{ $match['match_code'] }}', '{{ $existing?->court_number ?? 'Lapangan 1' }}', '{{ $existing?->scheduled_time ?? '' }}', '{{ $match['match_number'] ?? ($existing?->match_order ?? '') }}', '{{ $existing?->match_day ?? 1 }}', '{{ $existing?->match_date?->format('Y-m-d') ?? ($competition->schedule_date ? \Carbon\Carbon::parse($competition->schedule_date)->format('Y-m-d') : '') }}')"
-                                                    class="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-amber-300 transition cursor-pointer"
-                                                    title="Ubah Hari, Lapangan & Jam Tanding Partai Ini">
+                                                    class="p-1 rounded {{ $conflictData ? 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-300' : 'hover:bg-slate-800 text-slate-400 hover:text-amber-300' }} transition cursor-pointer"
+                                                    title="{{ $conflictData ? $conflictData['message'] . ' - Klik untuk perbaiki!' : 'Ubah Hari, Lapangan & Jam Tanding Partai Ini' }}">
                                                 <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                                             </button>
                                         </div>
+                                        @if($conflictData)
+                                            <div class="px-3 py-1 bg-rose-500/20 border-b border-rose-500/30 text-[10px] font-bold text-rose-300 flex items-center gap-1.5">
+                                                <i data-lucide="alert-triangle" class="w-3 h-3 text-rose-400 shrink-0"></i>
+                                                <span class="truncate">{{ $conflictData['message'] }}</span>
+                                            </div>
+                                        @endif
                                     @elseif(!$isByeAdvance && ($match['status'] ?? '') !== 'pending_draw')
                                         <div class="px-3 py-1.5 bg-slate-950/40 border-b border-slate-800/60 flex items-center justify-between text-[10px] text-slate-400 font-mono">
                                             <span class="text-slate-500">Jadwal belum diset</span>
@@ -1477,6 +1503,19 @@
             </div>
 
             <div class="space-y-3.5 text-xs">
+                <!-- Live Conflict Warning Alert -->
+                <div x-show="scheduleConflictWarning" 
+                     x-cloak 
+                     x-transition 
+                     class="p-3.5 rounded-2xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs space-y-1.5 animate-in fade-in duration-200">
+                    <div class="flex items-center gap-2 font-black text-rose-400">
+                        <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0 text-rose-400"></i>
+                        <span class="text-xs uppercase tracking-wide">Lapangan Telah Digunakan!</span>
+                    </div>
+                    <p class="text-[11px] leading-relaxed text-rose-200" x-text="scheduleConflictWarning"></p>
+                    <p class="text-[10px] text-rose-300/80 italic">⚠️ Harap ubah jam tanding atau pilih lapangan lain untuk menghindari jadwal tanding yang bentrok.</p>
+                </div>
+
                 <!-- Hari & Tanggal -->
                 <div class="grid grid-cols-2 gap-3">
                     <div>
@@ -1484,6 +1523,7 @@
                             Pilih Hari:
                         </label>
                         <select x-model="editMatchData.matchDay" 
+                                @change="checkScheduleConflict()"
                                 class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-bold text-xs focus:ring-1 focus:ring-amber-500 focus:outline-none">
                             <option value="1">Hari 1</option>
                             <option value="2">Hari 2</option>
@@ -1501,6 +1541,7 @@
                         </label>
                         <input type="date" 
                                x-model="editMatchData.matchDate"
+                               @change="checkScheduleConflict()"
                                class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono text-xs focus:ring-1 focus:ring-amber-500 focus:outline-none">
                     </div>
                 </div>
@@ -1510,6 +1551,7 @@
                         Pilih Lapangan:
                     </label>
                     <select x-model="editMatchData.courtNumber" 
+                            @change="checkScheduleConflict()"
                             class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-bold text-xs focus:ring-1 focus:ring-amber-500 focus:outline-none">
                         <option value="Lapangan 1">Lapangan 1</option>
                         <option value="Lapangan 2">Lapangan 2</option>
@@ -1541,8 +1583,11 @@
                         </label>
                         <input type="text" 
                                x-model="editMatchData.scheduledTime"
+                               @input="checkScheduleConflict()"
+                               @change="checkScheduleConflict()"
                                placeholder="Cth: 08:35"
-                               class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono font-bold text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none">
+                               class="w-full bg-slate-950 border rounded-xl px-3 py-2 text-white font-mono font-bold text-xs focus:outline-none"
+                               :class="scheduleConflictWarning ? 'border-rose-500 focus:ring-1 focus:ring-rose-500 text-rose-300' : 'border-slate-800 focus:ring-1 focus:ring-emerald-500'">
                         <p class="text-[10px] text-slate-500 mt-1">Estimasi jam main</p>
                     </div>
                 </div>
@@ -1556,10 +1601,10 @@
                 </button>
                 <button type="button" 
                         @click="saveSingleMatchSchedule()"
-                        :disabled="isSavingSchedule"
+                        :disabled="isSavingSchedule || !!scheduleConflictWarning"
                         class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-1.5 cursor-pointer">
                     <i data-lucide="save" class="w-3.5 h-3.5"></i>
-                    <span x-text="isSavingSchedule ? 'Menyimpan...' : 'Simpan Jadwal'"></span>
+                    <span x-text="isSavingSchedule ? 'Menyimpan...' : (scheduleConflictWarning ? 'Lapangan Bentrok!' : 'Simpan Jadwal')"></span>
                 </button>
             </div>
         </div>
@@ -1969,7 +2014,63 @@
             previewData: null,
             previewActiveDay: 1,
 
-            // Single match edit state
+            // Single match edit & conflict detection state
+            allMatchesList: @json($bracketData['all_matches_schedule'] ?? []),
+            scheduleConflictWarning: null,
+
+            normalizeTime(timeStr) {
+                if (!timeStr) return '';
+                let t = timeStr.toString().trim().replace('.', ':');
+                const parts = t.split(':');
+                if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                    const h = parts[0].padStart(2, '0');
+                    const m = parts[1].padStart(2, '0');
+                    return `${h}:${m}`;
+                }
+                return t;
+            },
+
+            checkScheduleConflict() {
+                const court = (this.editMatchData.courtNumber || '').trim();
+                const time = this.normalizeTime(this.editMatchData.scheduledTime);
+                const day = parseInt(this.editMatchData.matchDay) || 1;
+                const date = (this.editMatchData.matchDate || '').trim();
+                const currentCode = this.editMatchData.matchCode;
+
+                if (!court || court.toUpperCase() === 'BYE' || !time) {
+                    this.scheduleConflictWarning = null;
+                    return null;
+                }
+
+                const conflict = (this.allMatchesList || []).find(m => {
+                    if (m.code === currentCode) return false;
+                    if (!m.court || m.court.toUpperCase() === 'BYE') return false;
+                    if (m.court.toLowerCase().trim() !== court.toLowerCase().trim()) return false;
+
+                    const mTime = this.normalizeTime(m.time);
+                    if (mTime !== time) return false;
+
+                    if (date && m.date) {
+                        return m.date === date;
+                    }
+                    return (m.day || 1) === day;
+                });
+
+                if (conflict) {
+                    const partaiLabel = conflict.order ? `Partai #${conflict.order}` : conflict.code;
+                    const dayLabel = conflict.day_label || `Hari ${conflict.day || 1}`;
+                    const playersInfo = conflict.players ? ` (${conflict.players})` : '';
+                    this.scheduleConflictWarning = `Lapangan telah digunakan! ${conflict.court} pada jam ${this.editMatchData.scheduledTime} (${dayLabel}) sudah digunakan untuk ${partaiLabel}${playersInfo}. Silakan pilih jam atau lapangan lain.`;
+                    this.$nextTick(() => {
+                        if (window.lucide) window.lucide.createIcons();
+                    });
+                    return conflict;
+                }
+
+                this.scheduleConflictWarning = null;
+                return null;
+            },
+
             editMatchData: {
                 matchCode: '',
                 courtNumber: 'Lapangan 1',
@@ -2126,6 +2227,7 @@
             openEditScheduleModal(matchCode, courtNumber, scheduledTime, matchOrder, matchDay, matchDate) {
                 console.log('openEditScheduleModal:', { matchCode, courtNumber, scheduledTime, matchOrder, matchDay, matchDate });
                 this.isSavingSchedule = false;
+                this.scheduleConflictWarning = null;
                 this.editMatchData = {
                     matchCode: matchCode || '',
                     courtNumber: courtNumber || 'Lapangan 1',
@@ -2135,6 +2237,7 @@
                     matchDate: matchDate || (this.scheduleStartDate || '')
                 };
                 this.showEditMatchModal = true;
+                this.checkScheduleConflict();
                 this.$nextTick(() => {
                     if (window.lucide) window.lucide.createIcons();
                 });
@@ -2142,10 +2245,17 @@
 
             closeEditModal() {
                 this.showEditMatchModal = false;
+                this.scheduleConflictWarning = null;
             },
 
             async saveSingleMatchSchedule() {
                 if (this.isSavingSchedule) return;
+                const conflict = this.checkScheduleConflict();
+                if (conflict || this.scheduleConflictWarning) {
+                    alert(this.scheduleConflictWarning || 'Lapangan telah digunakan pada jam tersebut! Silakan pilih jam atau lapangan lain.');
+                    return;
+                }
+
                 this.isSavingSchedule = true;
                 try {
                     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
@@ -2171,6 +2281,12 @@
 
                     if (!response.ok) {
                         const errData = await response.json().catch(() => ({}));
+                        if (errData.is_conflict) {
+                            this.scheduleConflictWarning = errData.message;
+                            this.$nextTick(() => {
+                                if (window.lucide) window.lucide.createIcons();
+                            });
+                        }
                         throw new Error(errData.message || `Gagal menyimpan jadwal (Status ${response.status})`);
                     }
 
