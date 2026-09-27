@@ -34,14 +34,89 @@
       x-data="{ 
           viewMode: (new URLSearchParams(window.location.search).get('view') || localStorage.getItem('talenta_bracket_view') || 'classic'),
           classicTheme: (localStorage.getItem('talenta_bracket_theme') || 'dark'),
+          fitMode: (localStorage.getItem('talenta_bracket_fit_mode') || 'fit'),
+          roundFilter: 'all',
+          cardsScale: 1,
+          manualZoom: 1,
           setViewMode(mode) {
               this.viewMode = mode;
               localStorage.setItem('talenta_bracket_view', mode);
+              this.updateCardsScale();
               if (window.lucide) { this.$nextTick(() => window.lucide.createIcons()); }
           },
           setClassicTheme(theme) {
               this.classicTheme = theme;
               localStorage.setItem('talenta_bracket_theme', theme);
+          },
+          setFitMode(mode) {
+              this.fitMode = mode;
+              localStorage.setItem('talenta_bracket_fit_mode', mode);
+              this.updateCardsScale();
+              if (window.lucide) { this.$nextTick(() => window.lucide.createIcons()); }
+          },
+          setRoundFilter(filter) {
+              this.roundFilter = filter;
+              this.updateCardsScale();
+              if (window.lucide) { this.$nextTick(() => window.lucide.createIcons()); }
+          },
+          adjustZoom(deltaPercent) {
+              this.fitMode = 'scroll';
+              const cur = (this.manualZoom || 1);
+              this.manualZoom = Math.max(0.4, Math.min(1.5, Math.round((cur + deltaPercent / 100) * 100) / 100));
+              this.cardsScale = this.manualZoom;
+          },
+          resetZoom() {
+              this.manualZoom = 1;
+              this.setFitMode('fit');
+          },
+          updateCardsScale() {
+              if (this.viewMode !== 'cards') return;
+              this.$nextTick(() => {
+                  const wrapper = this.$refs.cardsWrapper;
+                  const content = this.$refs.cardsContent;
+                  if (!wrapper || !content) return;
+
+                  if (this.fitMode === 'fit') {
+                      if (this.roundFilter !== 'all') {
+                          this.cardsScale = 1;
+                          return;
+                      }
+                      const prevZoom = content.style.zoom;
+                      content.style.zoom = '1';
+                      const availW = wrapper.clientWidth;
+                      const reqW = content.scrollWidth;
+                      content.style.zoom = prevZoom;
+
+                      if (reqW > 0 && availW > 0 && reqW > availW) {
+                          const scale = Math.max(0.35, Math.min(1, (availW - 8) / reqW));
+                          this.cardsScale = Math.round(scale * 1000) / 1000;
+                      } else {
+                          this.cardsScale = 1;
+                      }
+                  } else {
+                      this.cardsScale = this.manualZoom;
+                  }
+              });
+          },
+          getCardsScaleStyle() {
+              if (this.viewMode !== 'cards') return '';
+              if (this.roundFilter !== 'all') return '';
+              const scale = (this.fitMode === 'fit') ? this.cardsScale : this.manualZoom;
+              if (scale && scale !== 1) {
+                  return `zoom: ${scale};`;
+              }
+              return '';
+          },
+          init() {
+              window.addEventListener('resize', () => {
+                  if (this.fitMode === 'fit') {
+                      this.updateCardsScale();
+                  }
+              });
+              this.$watch('viewMode', () => setTimeout(() => this.updateCardsScale(), 60));
+              this.$watch('fitMode', () => setTimeout(() => this.updateCardsScale(), 60));
+              this.$watch('roundFilter', () => setTimeout(() => this.updateCardsScale(), 60));
+              setTimeout(() => this.updateCardsScale(), 150);
           }
       }">
 
@@ -111,6 +186,37 @@
                         class="px-3 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1.5">
                     <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
                     <span>Kartu Lomba</span>
+                </button>
+            </div>
+
+            <!-- Responsive Width Switcher: Pas 1 Layar vs Scroll -->
+            <div class="inline-flex p-1 bg-slate-800/80 rounded-xl border border-slate-700 text-xs font-bold">
+                <button type="button" 
+                        @click="setFitMode('fit')" 
+                        :class="fitMode === 'fit' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white'" 
+                        class="px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5 cursor-pointer"
+                        title="Tampilkan seluruh bagan pas muat 1 layar penuh tanpa scroll horizontal">
+                    <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
+                    <span class="hidden sm:inline">Pas 1 Layar</span>
+                </button>
+                <button type="button" 
+                        @click="setFitMode('scroll')" 
+                        :class="fitMode === 'scroll' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'" 
+                        class="px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5 cursor-pointer"
+                        title="Tampilkan ukuran penuh dengan scroll horizontal">
+                    <i data-lucide="move-horizontal" class="w-3.5 h-3.5"></i>
+                    <span class="hidden sm:inline">Scroll</span>
+                </button>
+            </div>
+
+            <!-- Zoom In/Out when in Cards Mode -->
+            <div x-show="viewMode === 'cards' && roundFilter === 'all'" class="inline-flex items-center p-1 bg-slate-800/80 rounded-xl border border-slate-700 text-xs font-bold">
+                <button type="button" @click="adjustZoom(-10)" class="p-1.5 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition cursor-pointer" title="Perkecil (-10%)">
+                    <i data-lucide="zoom-out" class="w-3.5 h-3.5"></i>
+                </button>
+                <span class="px-2 text-[11px] font-mono text-cyan-400" x-text="Math.round(((fitMode === 'fit') ? cardsScale : manualZoom) * 100) + '%'"></span>
+                <button type="button" @click="adjustZoom(10)" class="p-1.5 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition cursor-pointer" title="Perbesar (+10%)">
+                    <i data-lucide="zoom-in" class="w-3.5 h-3.5"></i>
                 </button>
             </div>
 
@@ -230,10 +336,49 @@
             </div>
             @endif
 
+            <!-- Round Navigator Tabs for Cards Mode -->
+            <div x-show="viewMode === 'cards'" x-cloak class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin mb-4">
+                <span class="text-[11px] font-bold text-slate-400 shrink-0 mr-1 flex items-center gap-1">
+                    <i data-lucide="layers" class="w-3.5 h-3.5 text-indigo-400"></i>
+                    <span>Filter Babak:</span>
+                </span>
+                <button type="button" 
+                        @click="setRoundFilter('all')" 
+                        :class="roundFilter === 'all' ? 'bg-indigo-600 text-white font-black shadow' : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'"
+                        class="px-3 py-1 rounded-lg text-xs transition shrink-0 cursor-pointer">
+                    Semua Babak
+                </button>
+                @if(!empty($bracketData['playoffs']['has_playoffs']) && !empty($bracketData['playoffs']['matches']))
+                    <button type="button" 
+                            @click="setRoundFilter('playoff')" 
+                            :class="roundFilter === 'playoff' ? 'bg-amber-600 text-white font-black shadow' : 'bg-slate-900/80 text-amber-400 hover:text-white border border-amber-500/30'"
+                            class="px-3 py-1 rounded-lg text-xs transition shrink-0 cursor-pointer">
+                        ⚡ Play-off
+                    </button>
+                @endif
+                @foreach($bracketData['rounds'] as $rIdx => $rItem)
+                    <button type="button" 
+                            @click="setRoundFilter({{ $rItem['round_number'] ?? $loop->iteration }})" 
+                            :class="roundFilter === {{ $rItem['round_number'] ?? $loop->iteration }} ? 'bg-indigo-600 text-white font-black shadow' : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'"
+                            class="px-3 py-1 rounded-lg text-xs transition shrink-0 cursor-pointer">
+                        {{ $rItem['round_name'] }}
+                    </button>
+                @endforeach
+                <button type="button" 
+                        @click="setRoundFilter('champion')" 
+                        :class="roundFilter === 'champion' ? 'bg-amber-600 text-white font-black shadow' : 'bg-slate-900/80 text-amber-300 hover:text-white border border-slate-800'"
+                        class="px-3 py-1 rounded-lg text-xs transition shrink-0 cursor-pointer flex items-center gap-1">
+                    🏆 Juara
+                </button>
+            </div>
+
             <!-- Classic Line Tree (Persis Bagan GOR Standar BWF) -->
-            <div x-show="viewMode === 'classic'" x-cloak class="overflow-x-auto pb-10 scrollbar-thin">
-                <div class="p-6 rounded-3xl border shadow-2xl overflow-auto min-w-[1050px] lg:min-w-[1300px] flex justify-center transition-colors duration-300"
-                     :class="classicTheme === 'white' ? 'bg-white border-slate-200 shadow-slate-950/30' : 'bg-slate-900/90 border-slate-800 shadow-2xl'">
+            <div x-show="viewMode === 'classic'" x-cloak :class="fitMode === 'fit' ? 'w-full overflow-hidden pb-10' : 'overflow-x-auto pb-10 scrollbar-thin'">
+                <div class="p-6 rounded-3xl border shadow-2xl transition-colors duration-300"
+                     :class="[
+                         classicTheme === 'white' ? 'bg-white border-slate-200 shadow-slate-950/30' : 'bg-slate-900/90 border-slate-800 shadow-2xl',
+                         fitMode === 'fit' ? 'w-full overflow-hidden flex justify-center' : 'overflow-auto min-w-[1050px] lg:min-w-[1300px] flex justify-center'
+                     ]">
                     <div x-show="classicTheme === 'white'" class="w-full flex justify-center">
                         {!! $bracketData['classic_svg_light'] !!}
                     </div>
@@ -244,12 +389,20 @@
             </div>
 
             <!-- Bracket Columns Horizontal Scroll Area -->
-            <div x-show="viewMode === 'cards'" x-cloak class="overflow-x-auto pb-10 scrollbar-thin">
-                <div class="inline-flex gap-8 min-w-full items-stretch px-2">
+            <div x-show="viewMode === 'cards'" x-cloak 
+                 x-ref="cardsWrapper"
+                 :class="fitMode === 'fit' && roundFilter === 'all' ? 'w-full overflow-x-hidden pb-10' : 'overflow-x-auto pb-10 scrollbar-thin'">
+                <div x-ref="cardsContent" 
+                     class="min-w-full items-stretch px-2 transition-all duration-200"
+                     :class="[
+                         roundFilter !== 'all' ? 'flex justify-center w-full' : (fitMode === 'fit' ? 'flex flex-nowrap justify-between gap-3 sm:gap-4 md:gap-5 w-full' : 'inline-flex gap-6 sm:gap-8')
+                     ]"
+                     :style="getCardsScaleStyle()">
 
                     <!-- Play-off Column (if active) -->
                     @if(!empty($bracketData['playoffs']['has_playoffs']) && !empty($bracketData['playoffs']['matches']))
-                        <div class="flex flex-col min-w-[280px] sm:min-w-[320px] max-w-[340px]">
+                        <div x-show="roundFilter === 'all' || roundFilter === 'playoff'" 
+                             :class="roundFilter !== 'all' ? 'w-full max-w-xl mx-auto' : (fitMode === 'fit' ? 'flex flex-col flex-1 min-w-[190px] sm:min-w-[210px] max-w-[320px]' : 'flex flex-col min-w-[280px] sm:min-w-[320px] max-w-[340px]')">
                             <div class="mb-5 text-center">
                                 <div class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/15 border border-amber-500/30 shadow-md">
                                     <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
@@ -369,7 +522,8 @@
                     @endif
 
                     @foreach($bracketData['rounds'] as $round)
-                        <div class="flex flex-col min-w-[280px] sm:min-w-[320px] max-w-[340px]">
+                        <div x-show="roundFilter === 'all' || roundFilter === {{ $round['round_number'] ?? $loop->iteration }}" 
+                             :class="roundFilter !== 'all' ? 'w-full max-w-xl mx-auto' : (fitMode === 'fit' ? 'flex flex-col flex-1 min-w-[190px] sm:min-w-[210px] max-w-[320px]' : 'flex flex-col min-w-[280px] sm:min-w-[320px] max-w-[340px]')">
                             <!-- Round Header -->
                             <div class="mb-5 text-center">
                                 <div class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 shadow-md">
@@ -608,7 +762,8 @@
                     @endforeach
 
                     <!-- Champion Podium Card -->
-                    <div class="flex flex-col min-w-[260px] max-w-[280px]">
+                    <div x-show="roundFilter === 'all' || roundFilter === 'champion' || roundFilter === {{ count($bracketData['rounds']) }}" 
+                         :class="roundFilter !== 'all' ? 'w-full max-w-md mx-auto' : (fitMode === 'fit' ? 'flex flex-col flex-1 min-w-[190px] sm:min-w-[210px] max-w-[280px]' : 'flex flex-col min-w-[260px] max-w-[280px]')">
                         <div class="mb-5 text-center">
                             <div class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/30 shadow-md">
                                 <span class="w-2 h-2 rounded-full bg-amber-400"></span>
