@@ -2219,14 +2219,14 @@ class TournamentBracketController extends Controller
             // Doubles: 2 player lines + 1 school line per slot
             $defaultSlotHeight = ($bracketSize > 16 ? 44 : ($bracketSize > 8 ? 50 : 58));
             $defaultSlotWidth = ($bracketSize > 16 ? 380 : 420);
-            $defaultBranchWidth = ($bracketSize > 16 ? 180 : 210);
+            $defaultBranchWidth = ($bracketSize > 16 ? 205 : 235);
             $champBoxWidth = 220;
             $champBoxHeight = 52;
         } else {
             // Singles: 1 player line + 1 school line per slot
             $defaultSlotHeight = ($bracketSize > 16 ? 36 : ($bracketSize > 8 ? 44 : 52));
             $defaultSlotWidth = ($bracketSize > 16 ? 340 : 380);
-            $defaultBranchWidth = ($bracketSize > 16 ? 160 : 185);
+            $defaultBranchWidth = ($bracketSize > 16 ? 190 : 215);
             $champBoxWidth = 180;
             $champBoxHeight = 42;
         }
@@ -2518,9 +2518,23 @@ class TournamentBracketController extends Controller
                 $svg[] = '</g>';
 
                 // Play-off schedule text above the line
-                if (! empty($po['existing_match']?->scheduled_time)) {
-                    $poSched = $po['existing_match']->scheduled_time;
-                    $svg[] = "<text x='".($poStemX + 15)."' y='".($targetY - 4)."' font-size='7.5' font-mono font-weight='700' fill='{$accentColor}'>{$poSched}</text>";
+                if (! empty($po['existing_match'])) {
+                    $poEm = $po['existing_match'];
+                    $poSchedParts = [];
+                    if (! empty($poEm->match_day)) {
+                        $poSchedParts[] = "H{$poEm->match_day}";
+                    }
+                    if (! empty($poEm->court_number) && strtoupper($poEm->court_number) !== 'BYE') {
+                        $poSchedParts[] = $poEm->court_number;
+                    }
+                    if (! empty($poEm->scheduled_time)) {
+                        $poSchedParts[] = $poEm->scheduled_time;
+                    }
+                    if (! empty($poSchedParts)) {
+                        $poSchedStr = htmlspecialchars(implode(' • ', $poSchedParts), ENT_QUOTES);
+                        $poSchedColor = $isDark ? '#fbbf24' : '#b45309';
+                        $svg[] = "<text x='".($poStemX + 16)."' y='".($targetY - 5)."' font-size='10.5' font-weight='800' fill='{$poSchedColor}'>{$poSchedStr}</text>";
+                    }
                 }
             }
         }
@@ -2595,9 +2609,11 @@ class TournamentBracketController extends Controller
                     $svg[] = "<rect x='{$badgeX}' y='{$badgeY}' width='{$badgeW}' height='{$badgeH}' rx='4' fill='{$badgeBg}' stroke='{$badgeBorder}' stroke-width='1.8'/>";
                     $svg[] = "<text x='{$bracketVLineX}' y='".($yMid + 4.5)."' text-anchor='middle' font-size='12' font-weight='900' font-family='monospace, system-ui, sans-serif' fill='{$badgeText}'>{$numStr}</text>";
                     $svg[] = '</g>';
-                }
 
-                $contentStartX = $bracketVLineX + ($matchNumber !== null ? 20 : 8);
+                    $contentStartX = $bracketVLineX + (int) ($badgeW / 2 + 7);
+                } else {
+                    $contentStartX = $bracketVLineX + 8;
+                }
 
                 // Winner text on line (Peserta yang Lolos ke Babak Berikutnya)
                 if (! empty($match['winner'])) {
@@ -2610,16 +2626,16 @@ class TournamentBracketController extends Controller
                         $w1 = htmlspecialchars(trim($wNames[0] ?? ''), ENT_QUOTES);
                         $w2 = htmlspecialchars(trim($wNames[1] ?? ''), ENT_QUOTES);
                         $wMaxLen = max(mb_strlen($w1), mb_strlen($w2));
-                        $wSize = ($wMaxLen > 24) ? '8.5' : (($bracketSize > 16) ? '9.5' : '10.5');
+                        $wSize = ($wMaxLen > 24) ? '9' : (($bracketSize > 16) ? '10' : '11');
 
                         // 2 lines above the horizontal branch stem line
-                        $svg[] = "<text x='{$contentStartX}' y='".($yMid - 13)."' font-size='{$wSize}' font-weight='800' fill='{$wColor}'>{$w1}</text>";
-                        $svg[] = "<text x='{$contentStartX}' y='".($yMid - 3)."' font-size='{$wSize}' font-weight='800' fill='{$wColor}'>{$w2}</text>";
+                        $svg[] = "<text x='{$contentStartX}' y='".($yMid - 14)."' font-size='{$wSize}' font-weight='800' fill='{$wColor}'>{$w1}</text>";
+                        $svg[] = "<text x='{$contentStartX}' y='".($yMid - 3.5)."' font-size='{$wSize}' font-weight='800' fill='{$wColor}'>{$w2}</text>";
                     } else {
                         // Single player advancing
                         $wName = htmlspecialchars($rawWinnerName, ENT_QUOTES);
                         $wLen = mb_strlen($rawWinnerName);
-                        $wFontSize = ($wLen > 26) ? '10' : (($bracketSize > 16) ? '11' : '12.5');
+                        $wFontSize = ($wLen > 26) ? '10.5' : (($bracketSize > 16) ? '11.5' : '13');
                         $svg[] = "<text x='{$contentStartX}' y='".($yMid - 6)."' font-size='{$wFontSize}' font-weight='800' fill='{$wColor}'>{$wName}</text>";
                     }
                 }
@@ -2629,19 +2645,24 @@ class TournamentBracketController extends Controller
                     $em = $match['existing_match'];
                     if ($em->team1_set1 > 0 || $em->team2_set1 > 0) {
                         $scoreStr = "{$em->team1_set1}-{$em->team2_set1}";
-                        $svg[] = "<text x='{$contentStartX}' y='".($yMid + 12)."' font-size='8.5' font-mono font-weight='bold' fill='{$subTextColor}'>{$scoreStr}</text>";
-                    } elseif (! empty($em->court_number) && strtoupper($em->court_number) !== 'BYE' && (! empty($em->scheduled_time) || ! empty($em->match_day))) {
+                        $scoreFontSize = ($bracketSize > 16) ? '10' : '11';
+                        $svg[] = "<text x='{$contentStartX}' y='".($yMid + 13)."' font-size='{$scoreFontSize}' font-weight='800' fill='{$subTextColor}'>{$scoreStr}</text>";
+                    } elseif ((! empty($em->court_number) && strtoupper($em->court_number) !== 'BYE') || ! empty($em->scheduled_time) || ! empty($em->match_day)) {
                         $schedParts = [];
                         if (! empty($em->match_day)) {
                             $schedParts[] = "H{$em->match_day}";
                         }
-                        $schedParts[] = $em->court_number;
+                        if (! empty($em->court_number) && strtoupper($em->court_number) !== 'BYE') {
+                            $schedParts[] = $em->court_number;
+                        }
                         if (! empty($em->scheduled_time)) {
                             $schedParts[] = $em->scheduled_time;
                         }
                         if (! empty($schedParts)) {
                             $schedStr = htmlspecialchars(implode(' • ', $schedParts), ENT_QUOTES);
-                            $svg[] = "<text x='{$contentStartX}' y='".($yMid + 11)."' font-size='7.5' font-mono font-weight='700' fill='{$accentColor}'>{$schedStr}</text>";
+                            $schedFontSize = ($bracketSize > 16) ? '10.5' : '11.5';
+                            $schedColor = $isDark ? '#fbbf24' : '#b45309';
+                            $svg[] = "<text x='{$contentStartX}' y='".($yMid + 13)."' font-size='{$schedFontSize}' font-weight='800' fill='{$schedColor}'>{$schedStr}</text>";
                         }
                     }
                 }
