@@ -506,8 +506,15 @@
                                             <span>&rarr; Menuju Slot #{{ $poMatch['target_slot'] }} Babak 1</span>
                                         </span>
                                         @if($poExisting)
-                                            <div class="flex items-center gap-1">
-                                                <a href="{{ route('badminton.umpire', $poExisting->id) }}" target="_blank" class="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-bold">Wasit</a>
+                                            <div class="flex items-center gap-1.5">
+                                                <a href="{{ route('badminton.umpire', $poExisting->id) }}" target="_blank" class="px-2 py-0.5 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 font-bold transition flex items-center gap-1" title="Lembar Skoring Wasit">
+                                                    <i data-lucide="activity" class="w-3 h-3"></i>
+                                                    <span>Wasit</span>
+                                                </a>
+                                                <a href="{{ route('badminton.scoreboard', $poExisting->id) }}" target="_blank" class="px-2 py-0.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold transition flex items-center gap-1" title="Papan Skor TV">
+                                                    <i data-lucide="tv" class="w-3 h-3"></i>
+                                                    <span>Skor</span>
+                                                </a>
                                             </div>
                                         @endif
                                     </div>
@@ -791,39 +798,24 @@
                                     </div>
 
                                     <!-- Card Action Footer (Umpire & TV buttons if synced) -->
-                                    @if($existing)
-                                        <div class="px-3 py-2 bg-slate-950/80 border-t border-slate-800/80 flex items-center justify-between text-[10px]">
-                                            <span class="text-slate-400 font-mono font-bold">
-                                                @if($existing->court_number && $existing->court_number !== 'BYE' && ($existing->scheduled_time || $existing->match_day))
-                                                    {{ $existing->court_number }}
-                                                    @if($existing->scheduled_time)
-                                                        • {{ $existing->scheduled_time }}
-                                                    @endif
-                                                @elseif($existing->court_number === 'BYE')
-                                                    Lolos Langsung
-                                                @else
-                                                    <span class="text-slate-500 font-normal">Belum Dijadwalkan</span>
-                                                @endif
+                                    <!-- Card Action Footer (Umpire & TV buttons) -->
+                                    @if($existing && !$isByeAdvance && $existing->court_number !== 'BYE')
+                                        <div class="px-3 py-1.5 bg-slate-950/80 border-t border-slate-800/80 flex items-center justify-end gap-1.5 text-[10px]">
+                                            <a href="{{ route('badminton.umpire', $existing->id) }}" target="_blank" class="px-2.5 py-1 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 font-bold transition flex items-center gap-1 shadow-sm" title="Lembar Skoring Wasit">
+                                                <i data-lucide="activity" class="w-3 h-3"></i>
+                                                <span>Wasit</span>
+                                            </a>
+                                            <a href="{{ route('badminton.scoreboard', $existing->id) }}" target="_blank" class="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold transition flex items-center gap-1 shadow-sm" title="Papan Skor TV Lapangan">
+                                                <i data-lucide="tv" class="w-3 h-3"></i>
+                                                <span>Skor</span>
+                                            </a>
+                                        </div>
+                                    @elseif($isByeAdvance || ($existing && $existing->court_number === 'BYE'))
+                                        <div class="px-3 py-1.5 bg-slate-950/40 border-t border-slate-800/60 flex items-center justify-between text-[10px] text-cyan-400 font-mono">
+                                            <span class="flex items-center gap-1">
+                                                <i data-lucide="check-circle-2" class="w-3 h-3 text-cyan-400"></i>
+                                                <span>Lolos Langsung (BYE)</span>
                                             </span>
-                                            <div class="flex items-center gap-1.5">
-                                                @if($existing->court_number !== 'BYE')
-                                                    <button type="button" 
-                                                            @click.stop="openEditScheduleModal('{{ $match['match_code'] }}', '{{ $existing?->court_number ?? 'Lapangan 1' }}', '{{ $existing?->scheduled_time ?? '' }}', '{{ $match['match_number'] ?? ($existing?->match_order ?? '') }}', '{{ $existing?->match_day ?? 1 }}', '{{ $existing?->match_date?->format('Y-m-d') ?? ($competition->schedule_date ? \Carbon\Carbon::parse($competition->schedule_date)->format('Y-m-d') : '') }}')"
-                                                            class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold transition flex items-center gap-1 cursor-pointer"
-                                                            title="Atur Jadwal / Lapangan">
-                                                        <i data-lucide="calendar" class="w-3 h-3 text-amber-400"></i>
-                                                        <span>Jadwal</span>
-                                                    </button>
-                                                @endif
-                                                <a href="{{ route('badminton.umpire', $existing->id) }}" target="_blank" class="px-2 py-1 rounded bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 font-bold transition flex items-center gap-1">
-                                                    <i data-lucide="activity" class="w-3 h-3"></i>
-                                                    <span>Wasit</span>
-                                                </a>
-                                                <a href="{{ route('badminton.scoreboard', $existing->id) }}" target="_blank" class="px-2 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold transition flex items-center gap-1">
-                                                    <i data-lucide="tv" class="w-3 h-3"></i>
-                                                    <span>Skor</span>
-                                                </a>
-                                            </div>
                                         </div>
                                     @endif
 
