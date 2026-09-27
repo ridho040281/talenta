@@ -515,7 +515,7 @@
                                                 @endif
                                             </div>
                                             <button type="button" 
-                                                    @click.stop="openEditScheduleModal('{{ $match['match_code'] }}', '{{ $existing?->court_number ?? 'Lapangan 1' }}', '{{ $existing?->scheduled_time ?? '' }}', '{{ $match['match_number'] ?? ($existing?->match_order ?? '') }}', '{{ $existing?->match_day ?? 1 }}', '{{ $existing?->match_date?->format('Y-m-d') ?? '' }}')"
+                                                    @click.stop="openEditScheduleModal('{{ $match['match_code'] }}', '{{ $existing?->court_number ?? 'Lapangan 1' }}', '{{ $existing?->scheduled_time ?? '' }}', '{{ $match['match_number'] ?? ($existing?->match_order ?? '') }}', '{{ $existing?->match_day ?? 1 }}', '{{ $existing?->match_date?->format('Y-m-d') ?? ($competition->schedule_date ? \Carbon\Carbon::parse($competition->schedule_date)->format('Y-m-d') : '') }}')"
                                                     class="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-amber-300 transition cursor-pointer"
                                                     title="Ubah Hari, Lapangan & Jam Tanding Partai Ini">
                                                 <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
@@ -1668,17 +1668,20 @@
 
             init() {
                 this.$nextTick(() => {
-                    if (window.location.hash) {
-                        const targetId = window.location.hash.substring(1);
-                        const targetEl = document.getElementById(targetId);
-                        if (targetEl) {
-                            setTimeout(() => {
-                                targetEl.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-                                targetEl.classList.add('ring-2', 'ring-amber-400');
-                                setTimeout(() => targetEl.classList.remove('ring-2', 'ring-amber-400'), 2500);
-                            }, 300);
+                    try {
+                        const targetId = sessionStorage.getItem('talenta_scroll_to_card') || (window.location.hash ? window.location.hash.substring(1) : null);
+                        if (targetId) {
+                            sessionStorage.removeItem('talenta_scroll_to_card');
+                            const targetEl = document.getElementById(targetId);
+                            if (targetEl) {
+                                setTimeout(() => {
+                                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                                    targetEl.classList.add('ring-2', 'ring-amber-400');
+                                    setTimeout(() => targetEl.classList.remove('ring-2', 'ring-amber-400'), 2500);
+                                }, 300);
+                            }
                         }
-                    }
+                    } catch (e) {}
                 });
             },
             classicTheme: 'white',
@@ -1942,6 +1945,7 @@
 
             openEditScheduleModal(matchCode, courtNumber, scheduledTime, matchOrder, matchDay, matchDate) {
                 console.log('openEditScheduleModal:', { matchCode, courtNumber, scheduledTime, matchOrder, matchDay, matchDate });
+                this.isSavingSchedule = false;
                 this.editMatchData = {
                     matchCode: matchCode || '',
                     courtNumber: courtNumber || 'Lapangan 1',
@@ -1965,6 +1969,16 @@
                 this.isSavingSchedule = true;
                 try {
                     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+                    const payload = {
+                        match_code: this.editMatchData.matchCode,
+                        court_number: this.editMatchData.courtNumber,
+                        scheduled_time: this.editMatchData.scheduledTime,
+                        match_order: this.editMatchData.matchOrder ? parseInt(this.editMatchData.matchOrder) : null,
+                        match_day: this.editMatchData.matchDay ? parseInt(this.editMatchData.matchDay) : 1,
+                        match_date: this.editMatchData.matchDate || null
+                    };
+                    console.log('Saving single match schedule:', payload);
+
                     const response = await fetch('{{ route("pic.bracket.update_schedule", $competition->id) }}', {
                         method: 'POST',
                         headers: {
@@ -1972,14 +1986,7 @@
                             'X-CSRF-TOKEN': csrfToken,
                             'Accept': 'application/json'
                         },
-                        body: JSON.stringify({
-                            match_code: this.editMatchData.matchCode,
-                            court_number: this.editMatchData.courtNumber,
-                            scheduled_time: this.editMatchData.scheduledTime,
-                            match_order: this.editMatchData.matchOrder ? parseInt(this.editMatchData.matchOrder) : null,
-                            match_day: this.editMatchData.matchDay ? parseInt(this.editMatchData.matchDay) : 1,
-                            match_date: this.editMatchData.matchDate || null
-                        })
+                        body: JSON.stringify(payload)
                     });
 
                     if (!response.ok) {
@@ -1996,16 +2003,14 @@
                         const currentMode = this.viewMode || 'cards';
                         try {
                             localStorage.setItem('talenta_bracket_view_mode', currentMode);
+                            if (savedCode) {
+                                sessionStorage.setItem('talenta_scroll_to_card', 'match-card-' + savedCode);
+                            }
                         } catch (e) {}
 
                         setTimeout(() => {
-                            const url = new URL(window.location.href);
-                            url.searchParams.set('view_mode', currentMode);
-                            if (savedCode) {
-                                url.hash = 'match-card-' + savedCode;
-                            }
-                            window.location.href = url.toString();
-                        }, 500);
+                            window.location.reload();
+                        }, 400);
                     } else {
                         alert(res.message || 'Gagal menyimpan perubahan.');
                     }
