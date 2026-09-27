@@ -70,6 +70,8 @@ Route::get('/badminton', function () {
     return redirect()->route('badminton.arena');
 });
 Route::get('/badminton/scoreboard/{id?}', [BadmintonMatchController::class, 'scoreboard'])->name('badminton.scoreboard');
+Route::get('/badminton/court/{court}', [BadmintonMatchController::class, 'courtScoreboard'])->name('badminton.court.scoreboard');
+Route::get('/lapangan/{court}', [BadmintonMatchController::class, 'courtScoreboard'])->name('badminton.court.short');
 Route::get('/badminton/arena', [BadmintonMatchController::class, 'arenaScoreboard'])->name('badminton.arena');
 Route::get('/badminton/umpire/{id}', [BadmintonMatchController::class, 'umpire'])->name('badminton.umpire');
 Route::get('/badminton/matches/{id}/state', [BadmintonMatchController::class, 'apiState'])->name('badminton.api.state');

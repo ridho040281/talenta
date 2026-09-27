@@ -53,9 +53,17 @@
         </div>
 
         <div class="flex items-center gap-2">
+            <div class="hidden md:flex items-center gap-1 mr-1">
+                @foreach($courts as $c)
+                    <a href="{{ route('badminton.court.scoreboard', $c) }}" target="_blank" class="px-2 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-amber-300 hover:text-white text-xs font-bold border border-slate-800 flex items-center gap-1 transition" title="Buka Layar TV Khusus {{ $c }}">
+                        <span>🏸</span>
+                        <span>TV {{ $c }}</span>
+                    </a>
+                @endforeach
+            </div>
             <a href="{{ route('badminton.scoreboard') }}" class="px-3 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-bold border border-slate-800 flex items-center gap-1.5 transition">
                 <i data-lucide="monitor" class="w-4 h-4 text-amber-400"></i>
-                <span>Mode 1 Lapangan Fokus</span>
+                <span>Mode 1 Lapangan</span>
             </a>
             <button @click="toggleFullscreen()" class="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 transition" title="Toggle Fullscreen">
                 <i data-lucide="maximize" class="w-4 h-4"></i>
@@ -84,7 +92,10 @@
                     <div>
                         <div class="flex justify-between items-center pb-2.5 border-b-2 border-neutral-800/80 mb-3 text-xs tracking-wider">
                             <div class="flex items-center gap-2 sm:gap-3">
-                                <span class="font-led font-black bg-amber-400 text-black px-2.5 py-0.5 rounded text-xs sm:text-sm uppercase tracking-wider" x-text="courtName"></span>
+                                <a :href="'/badminton/court/' + encodeURIComponent(courtName)" target="_blank" class="font-led font-black bg-amber-400 hover:bg-amber-300 text-black px-2.5 py-0.5 rounded text-xs sm:text-sm uppercase tracking-wider transition inline-flex items-center gap-1 shadow-sm" title="Buka TV Layar Tunggal Khusus Lapangan Ini">
+                                    <span x-text="courtName"></span>
+                                    <i data-lucide="external-link" class="w-3 h-3 text-neutral-900"></i>
+                                </a>
                                 <span class="font-led font-black bg-neutral-900 text-amber-400 border border-amber-400/40 px-2 py-0.5 rounded text-xs" x-text="courtMatches[courtName].category"></span>
                                 <span class="font-bold text-neutral-300 uppercase tracking-wider text-xs truncate max-w-[180px] sm:max-w-none" x-text="courtMatches[courtName].round_name"></span>
                             </div>

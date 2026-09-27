@@ -320,30 +320,119 @@ class BadmintonMatchController extends Controller
             ->header('Expires', '0');
     }
 
+    public function courtScoreboard(Request $request, $court)
+    {
+        $request->merge(['court' => $court]);
+
+        return $this->scoreboard($request);
+    }
+
     public function scoreboard(Request $request, $id = null)
     {
         $appSettings = AppSetting::getAllSettings();
 
-        $match = null;
-        if ($id) {
-            $match = BadmintonMatch::with('competition')->find($id);
+        // Get distinct active courts (excluding BYE)
+        $courts = BadmintonMatch::whereNotNull('court_number')
+            ->where('court_number', '!=', '')
+            ->where('court_number', '!=', 'BYE')
+            ->select('court_number')
+            ->distinct()
+            ->orderBy('court_number')
+            ->pluck('court_number');
+
+        if ($courts->isEmpty()) {
+            $courts = collect(['Lapangan 1', 'Lapangan 2']);
         }
 
-        if (! $match) {
-            // Find active ongoing match or latest match
+        $courtParam = $request->query('court');
+        $selectedCourt = null;
+        if (! empty($courtParam)) {
+            $courtClean = trim($courtParam);
+            if (is_numeric($courtClean)) {
+                $selectedCourt = 'Lapangan '.$courtClean;
+            } else {
+                $selectedCourt = ucwords(strtolower($courtClean));
+            }
+
+            // Find matching court from available courts if matched case-insensitively
+            $matched = $courts->first(function ($c) use ($selectedCourt) {
+                return strtolower(trim($c)) === strtolower(trim($selectedCourt));
+            });
+            if ($matched) {
+                $selectedCourt = $matched;
+            }
+        }
+
+        $match = null;
+        $isManualLock = false;
+
+        // 1. If explicit match ID is provided in URL
+        if ($id && is_numeric($id)) {
+            $match = BadmintonMatch::with('competition')->find($id);
+            if ($match && ! $selectedCourt) {
+                $isManualLock = true;
+                if (! empty($match->court_number) && strtoupper($match->court_number) !== 'BYE') {
+                    $selectedCourt = $match->court_number;
+                }
+            }
+        }
+
+        // 2. If dedicated court is selected
+        if (! $match && $selectedCourt) {
+            // Find active ongoing or interval match on this court
             $match = BadmintonMatch::with('competition')
-                ->where('match_status', 'ongoing')
+                ->where('court_number', $selectedCourt)
+                ->whereIn('match_status', ['ongoing', 'interval'])
+                ->latest('updated_at')
+                ->first();
+
+            // Next, find next upcoming match on this court
+            if (! $match) {
+                $match = BadmintonMatch::with('competition')
+                    ->where('court_number', $selectedCourt)
+                    ->where('match_status', 'upcoming')
+                    ->orderBy('court_order')
+                    ->orderBy('scheduled_time')
+                    ->first();
+            }
+
+            // Finally, latest match on this court (e.g. finished match)
+            if (! $match) {
+                $match = BadmintonMatch::with('competition')
+                    ->where('court_number', $selectedCourt)
+                    ->latest('updated_at')
+                    ->first();
+            }
+        }
+
+        // 3. Fallback: find any ongoing match across all courts, or latest match
+        if (! $match && ! $selectedCourt) {
+            $match = BadmintonMatch::with('competition')
+                ->whereIn('match_status', ['ongoing', 'interval'])
                 ->latest('updated_at')
                 ->first();
 
             if (! $match) {
                 $match = BadmintonMatch::with('competition')->latest()->first();
             }
+
+            if ($match && ! empty($match->court_number) && strtoupper($match->court_number) !== 'BYE') {
+                $selectedCourt = $match->court_number;
+            } elseif ($courts->isNotEmpty()) {
+                $selectedCourt = $courts->first();
+            }
         }
 
-        $allMatches = BadmintonMatch::latest()->take(20)->get();
+        $allMatches = BadmintonMatch::where(function ($q) {
+            $q->whereNull('court_number')->orWhere('court_number', '!=', 'BYE');
+        })
+            ->latest()
+            ->take(30)
+            ->get();
 
-        return view('badminton.scoreboard', compact('match', 'allMatches', 'appSettings'));
+        $formattedMatch = $match ? $this->formatMatchState($match) : null;
+
+        return view('badminton.scoreboard', compact('match', 'formattedMatch', 'allMatches', 'courts', 'selectedCourt', 'isManualLock', 'appSettings'));
     }
 
     public function arenaScoreboard(Request $request)
@@ -351,70 +440,22 @@ class BadmintonMatchController extends Controller
         $appSettings = AppSetting::getAllSettings();
 
         // Get distinct courts
-        $courts = BadmintonMatch::select('court_number')->distinct()->orderBy('court_number')->pluck('court_number');
+        $courts = BadmintonMatch::whereNotNull('court_number')
+            ->where('court_number', '!=', '')
+            ->where('court_number', '!=', 'BYE')
+            ->select('court_number')->distinct()->orderBy('court_number')->pluck('court_number');
         if ($courts->isEmpty()) {
             $courts = collect(['Lapangan 1', 'Lapangan 2']);
         }
 
-        // Get the most relevant match for each court (ongoing first, then upcoming, then finished)
-        $courtMatches = [];
-        foreach ($courts as $court) {
-            $m = BadmintonMatch::where('court_number', $court)
-                ->whereIn('match_status', ['ongoing', 'interval'])
-                ->latest('updated_at')
-                ->first();
-
-            if (! $m) {
-                $m = BadmintonMatch::where('court_number', $court)
-                    ->where('match_status', 'upcoming')
-                    ->first();
-            }
-
-            if (! $m) {
-                $m = BadmintonMatch::where('court_number', $court)
-                    ->latest('updated_at')
-                    ->first();
-            }
-
-            if ($m) {
-                $courtMatches[$court] = $this->formatMatchState($m);
-            }
-        }
+        $courtMatches = $this->buildArenaState();
 
         return view('badminton.arena', compact('courts', 'courtMatches', 'appSettings'));
     }
 
     public function apiActiveCourts()
     {
-        $courts = BadmintonMatch::select('court_number')->distinct()->orderBy('court_number')->pluck('court_number');
-        if ($courts->isEmpty()) {
-            $courts = collect(['Lapangan 1', 'Lapangan 2']);
-        }
-        $courtMatches = [];
-        foreach ($courts as $court) {
-            $m = BadmintonMatch::where('court_number', $court)
-                ->whereIn('match_status', ['ongoing', 'interval'])
-                ->latest('updated_at')
-                ->first();
-
-            if (! $m) {
-                $m = BadmintonMatch::where('court_number', $court)
-                    ->where('match_status', 'upcoming')
-                    ->first();
-            }
-
-            if (! $m) {
-                $m = BadmintonMatch::where('court_number', $court)
-                    ->latest('updated_at')
-                    ->first();
-            }
-
-            if ($m) {
-                $courtMatches[$court] = $this->formatMatchState($m);
-            }
-        }
-
-        return response()->json($courtMatches)
+        return response()->json($this->buildArenaState())
             ->header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
             ->header('Pragma', 'no-cache')
             ->header('Expires', '0');
@@ -540,7 +581,10 @@ class BadmintonMatchController extends Controller
      */
     private function buildArenaState(): array
     {
-        $courts = BadmintonMatch::select('court_number')->distinct()->orderBy('court_number')->pluck('court_number');
+        $courts = BadmintonMatch::whereNotNull('court_number')
+            ->where('court_number', '!=', '')
+            ->where('court_number', '!=', 'BYE')
+            ->select('court_number')->distinct()->orderBy('court_number')->pluck('court_number');
         if ($courts->isEmpty()) {
             $courts = collect(['Lapangan 1', 'Lapangan 2']);
         }
@@ -549,12 +593,32 @@ class BadmintonMatchController extends Controller
             $m = BadmintonMatch::where('court_number', $court)
                 ->whereIn('match_status', ['ongoing', 'interval'])
                 ->latest('updated_at')->first();
+
+            // If match just finished within last 45s, keep displaying the victory screen for the celebration
             if (! $m) {
-                $m = BadmintonMatch::where('court_number', $court)->where('match_status', 'upcoming')->first();
+                $justFinished = BadmintonMatch::where('court_number', $court)
+                    ->where('match_status', 'finished')
+                    ->where('finished_at', '>=', now()->subSeconds(45))
+                    ->latest('finished_at')
+                    ->first();
+
+                if ($justFinished) {
+                    $m = $justFinished;
+                }
             }
+
+            if (! $m) {
+                $m = BadmintonMatch::where('court_number', $court)
+                    ->where('match_status', 'upcoming')
+                    ->orderBy('court_order')
+                    ->orderBy('scheduled_time')
+                    ->first();
+            }
+
             if (! $m) {
                 $m = BadmintonMatch::where('court_number', $court)->latest('updated_at')->first();
             }
+
             if ($m) {
                 $courtMatches[$court] = $this->formatMatchState($m);
             }
@@ -593,6 +657,7 @@ class BadmintonMatchController extends Controller
             'is_set_finished' => $match->isCurrentSetFinished(),
             'interval_until' => $match->interval_until?->toIso8601String(),
             'interval_remaining' => $match->interval_until ? max(0, (int) ceil(now()->diffInRealSeconds($match->interval_until, false))) : 0,
+            'started_at' => $match->started_at?->toIso8601String(),
             'updated_at' => $match->updated_at?->toIso8601String() ?? now()->toIso8601String(),
         ];
     }

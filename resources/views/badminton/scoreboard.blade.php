@@ -86,29 +86,53 @@
 <body class="h-screen w-screen overflow-hidden text-slate-100 font-sans antialiased flex flex-col justify-between select-none relative" x-data="liveScoreboardApp()">
 
     <!-- TOP CONTROL BAR (COMPACT HEADER) -->
-    <header class="h-10 sm:h-12 shrink-0 bg-slate-950/80 border-b border-white/[0.08] px-4 flex items-center justify-between text-xs backdrop-blur-xl z-20">
-        <div class="flex items-center gap-3">
-            <a href="{{ route('badminton.index') }}" class="flex items-center gap-2 text-slate-400 hover:text-white transition">
+    <header class="h-10 sm:h-12 shrink-0 bg-slate-950/80 border-b border-white/[0.08] px-3 sm:px-4 flex items-center justify-between text-xs backdrop-blur-xl z-20">
+        <div class="flex items-center gap-2 sm:gap-3">
+            <a href="{{ route('badminton.index') }}" class="flex items-center gap-1.5 text-slate-400 hover:text-white transition">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i>
-                <span class="font-bold">Kembali</span>
+                <span class="font-bold hidden sm:inline">Kembali</span>
             </a>
             <div class="h-4 w-[1px] bg-white/[0.1]"></div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5 sm:gap-2">
                 <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
                 <span class="font-extrabold tracking-wider text-rose-400 uppercase text-[11px] sm:text-xs">LIVE SCOREBOARD</span>
+            </div>
+
+            <!-- Dedicated TV Court Selector Tabs -->
+            <div class="hidden md:flex items-center gap-1.5 ml-2 pl-3 border-l border-white/[0.1]">
+                @foreach($courts as $c)
+                    <a href="{{ route('badminton.court.scoreboard', $c) }}" 
+                       class="px-2.5 py-1 rounded-xl text-xs font-bold transition flex items-center gap-1.5 {{ $selectedCourt === $c ? 'bg-amber-400 text-black shadow-lg shadow-amber-400/20 font-black' : 'bg-white/[0.05] text-slate-300 hover:bg-white/[0.1] hover:text-white border border-white/[0.08]' }}"
+                       title="Kunci TV ke {{ $c }} (Auto-Switch Partai)">
+                        <span>🏸</span>
+                        <span>{{ $c }}</span>
+                        @if($selectedCourt === $c)
+                            <span class="w-1.5 h-1.5 rounded-full bg-black animate-pulse"></span>
+                        @endif
+                    </a>
+                @endforeach
             </div>
         </div>
 
         <div class="flex items-center gap-2">
+            <!-- Auto TV Court Active Pill Indicator -->
+            <template x-if="selectedCourt">
+                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 font-extrabold text-[11px] shadow-sm">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span class="uppercase tracking-wider">AUTO TV: <span x-text="selectedCourt"></span></span>
+                </div>
+            </template>
+
             <!-- Winner Celebration Toggle Button -->
             <button type="button" @click="showWinnerModal = !showWinnerModal" class="px-2.5 py-1 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-400/50 flex items-center gap-1.5 transition text-xs font-bold cursor-pointer shadow-sm" x-show="match && match.match_status === 'finished'">
                 <span>🏆</span>
                 <span class="hidden sm:inline">Pemenang</span>
             </button>
 
-            <!-- Court Selector -->
+            <!-- Manual Match Dropdown Selector -->
             @if(isset($allMatches) && $allMatches->isNotEmpty())
-            <select onchange="window.location.href='/badminton/scoreboard/' + this.value" class="bg-[#0C111D] text-amber-300 font-bold border border-white/[0.12] rounded-xl px-2.5 py-1 text-xs focus:ring-2 focus:ring-amber-400 outline-none">
+            <select onchange="window.location.href='/badminton/scoreboard/' + this.value" class="hidden xl:inline-block bg-[#0C111D] text-amber-300 font-bold border border-white/[0.12] rounded-xl px-2.5 py-1 text-xs focus:ring-2 focus:ring-amber-400 outline-none max-w-[220px] truncate" title="Pilih Partai Pertandingan Tertentu">
+                <option value="" disabled {{ !$match ? 'selected' : '' }}>-- Pilih Manual Partai --</option>
                 @foreach($allMatches as $m)
                     <option value="{{ $m->id }}" {{ $match && $match->id == $m->id ? 'selected' : '' }}>
                         {{ $m->court_number }} ({{ $m->category }}) - {{ $m->team1_school }} vs {{ $m->team2_school }}
@@ -117,25 +141,80 @@
             </select>
             @endif
 
-            <a href="{{ route('badminton.arena') }}" class="px-3 py-1 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-amber-300 hover:text-white text-xs font-bold border border-white/[0.1] flex items-center gap-1.5 transition">
+            <!-- Keep Multi-Arena Button 100% Intact -->
+            <a href="{{ route('badminton.arena') }}" class="px-3 py-1 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-amber-300 hover:text-white text-xs font-bold border border-white/[0.1] flex items-center gap-1.5 transition shadow-sm" title="Buka Tampilan Semua Lapangan Berdampingan">
                 <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-emerald-400"></i>
                 <span class="hidden sm:inline">Mode Multi-Lapangan</span>
             </a>
 
+            <!-- Fullscreen Button -->
             <button @click="toggleFullscreen()" class="p-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-300 hover:text-white border border-white/[0.1] transition cursor-pointer" title="Toggle Fullscreen">
                 <i data-lucide="maximize" class="w-3.5 h-3.5"></i>
             </button>
         </div>
     </header>
 
-    @if(!$match)
-    <div class="flex-1 flex flex-col items-center justify-center text-center p-6 text-slate-500">
-        <i data-lucide="tv" class="w-16 h-16 mb-4 text-slate-700"></i>
-        <h2 class="text-xl font-bold text-slate-300">Tidak ada pertandingan aktif</h2>
-        <p class="text-xs text-slate-500 mt-1">Silakan pilih atau buat pertandingan bulu tangkis di dashboard.</p>
-    </div>
-    @else
+    <!-- STANDBY STATE (WHEN WAITING FOR A MATCH ON SELECTED COURT) -->
+    <template x-if="!hasMatch()">
+        <div class="flex-1 w-full max-w-4xl mx-auto p-4 sm:p-6 flex flex-col items-center justify-center text-center min-h-[70vh]">
+            <div class="led-panel rounded-3xl p-6 sm:p-12 w-full border-2 border-white/10 shadow-2xl relative overflow-hidden flex flex-col items-center justify-center">
+                
+                <!-- Glow background decoration -->
+                <div class="absolute -top-24 -left-24 w-60 h-60 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute -bottom-24 -right-24 w-60 h-60 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div class="w-20 h-20 rounded-3xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mb-6 text-amber-400 shadow-[0_0_30px_rgba(251,191,36,0.2)] animate-pulse">
+                    <i data-lucide="tv" class="w-10 h-10"></i>
+                </div>
+
+                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-black tracking-widest uppercase mb-3 shadow-sm">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span>🟢 AUTO-SYNC TV AKTIF</span>
+                </div>
+
+                <h2 class="text-3xl sm:text-5xl font-black font-player text-white tracking-wider uppercase drop-shadow-md" x-text="selectedCourt ? selectedCourt : 'PAPAN SKOR BULU TANGKIS'"></h2>
+                
+                <p class="text-base sm:text-lg text-slate-300 font-semibold mt-3 max-w-lg leading-relaxed">
+                    Menunggu wasit memulai pertandingan berikutnya di lapangan ini...
+                </p>
+
+                <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-md text-left">
+                    <div class="p-3.5 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center gap-3">
+                        <span class="text-2xl">⚡</span>
+                        <div>
+                            <div class="text-xs font-bold text-white uppercase tracking-wider">Otomatis Terhubung</div>
+                            <div class="text-[11px] text-slate-400">Skor langsung aktif saat wasit klik Mulai</div>
+                        </div>
+                    </div>
+                    <div class="p-3.5 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center gap-3">
+                        <span class="text-2xl">📺</span>
+                        <div>
+                            <div class="text-xs font-bold text-white uppercase tracking-wider">Tanpa Operator</div>
+                            <div class="text-[11px] text-slate-400">TV akan berganti sendiri tiap partai baru</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Court Switcher on Standby Screen -->
+                <div class="mt-8 flex flex-wrap items-center justify-center gap-2">
+                    <span class="text-xs text-slate-400 font-bold mr-1">Pilih Lapangan:</span>
+                    @foreach($courts as $c)
+                        <a href="{{ route('badminton.court.scoreboard', $c) }}" class="px-3 py-1.5 rounded-xl text-xs font-bold border transition flex items-center gap-1.5 {{ $selectedCourt === $c ? 'bg-amber-400 text-black border-amber-400 font-black shadow-md' : 'bg-white/[0.05] text-slate-300 hover:text-white border-white/[0.1]' }}">
+                            <span>🏸</span>
+                            <span>{{ $c }}</span>
+                        </a>
+                    @endforeach
+                    <a href="{{ route('badminton.arena') }}" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-white/[0.05] hover:bg-white/[0.1] text-emerald-400 border border-white/[0.1] transition flex items-center gap-1.5">
+                        <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+                        <span>Mode Multi-Lapangan</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </template>
+
     <!-- MAIN DISPLAY CONTAINER (ZERO-SCROLL VIEWPORT RESPONSIVE) -->
+    <template x-if="hasMatch()">
     <main class="flex-1 w-full max-w-[98vw] 2xl:max-w-[96vw] mx-auto p-2 sm:p-3 flex items-center justify-center min-h-0 overflow-hidden">
         
         <!-- THE AUTHENTIC LED DISPLAY PANEL -->
@@ -387,7 +466,7 @@
 
         </div>
     </main>
-    @endif
+    </template>
 
     <!-- CHAMPION CONFETTI ENGINE (PURE JAVASCRIPT - ZERO DEPENDENCIES - 100% OFFLINE) -->
     <script>
@@ -484,12 +563,15 @@
 
         function liveScoreboardApp() {
             return {
-                match: @json($match),
-                matchTimer: 18,
+                match: @json($formattedMatch ?? $match),
+                selectedCourt: @json($selectedCourt),
+                isManualLock: @json($isManualLock ?? false),
+                matchTimer: '00',
                 isSyncing: false,
                 lastDataHash: '',
                 intervalRemaining: 0,
                 intervalTimerId: null,
+                matchTimerTickerId: null,
                 showWinnerModal: true,
                 confettiEngine: null,
 
@@ -500,12 +582,34 @@
                         }
                     } catch (_) {}
                     this.confettiEngine = new ChampionConfetti('champion-confetti-canvas');
-                    if (this.match) {
+                    if (this.hasMatch()) {
                         this.syncIntervalTimer(this.match);
+                        this.updateMatchTimer();
                         if (this.match.match_status === 'finished') {
                             this.confettiEngine.start();
                         }
-                        this.startFastSync();
+                    }
+
+                    // Live clock ticker
+                    this.matchTimerTickerId = setInterval(() => {
+                        this.updateMatchTimer();
+                    }, 5000);
+
+                    // Always start fast sync
+                    this.startFastSync();
+                },
+
+                hasMatch() {
+                    return this.match !== null && this.match !== undefined && Boolean(this.match.id);
+                },
+
+                updateMatchTimer() {
+                    if (this.hasMatch() && this.match.started_at && this.match.match_status !== 'upcoming') {
+                        const diffMs = Date.now() - new Date(this.match.started_at).getTime();
+                        const mins = Math.max(0, Math.floor(diffMs / 60000));
+                        this.matchTimer = mins < 10 ? '0' + mins : mins;
+                    } else {
+                        this.matchTimer = '00';
                     }
                 },
 
@@ -560,34 +664,80 @@
                 },
 
                 async fetchLatestScore() {
-                    if (!this.match || this.isSyncing) return;
+                    if (this.isSyncing) return;
                     this.isSyncing = true;
                     try {
-                        const res = await fetch(`{{ url('/api/badminton/matches') }}/${this.match.id}/state?_t=${Date.now()}`, {
-                            headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache', 'Accept': 'application/json' }
-                        });
-                        if (res.ok) {
-                            const data = await res.json();
-                            
-                            // Synchronize interval countdown on every state update
-                            this.syncIntervalTimer(data);
+                        if (this.selectedCourt && !this.isManualLock) {
+                            // Dedicated TV Court Auto-Sync Mode
+                            const res = await fetch(`{{ url('/api/badminton/active-courts') }}?_t=${Date.now()}`, {
+                                headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache', 'Accept': 'application/json' }
+                            });
+                            if (res.ok) {
+                                const courtsData = await res.json();
+                                const courtMatch = courtsData[this.selectedCourt];
+                                
+                                if (courtMatch) {
+                                    const isDifferentMatch = !this.match || (this.match.id !== courtMatch.id);
+                                    
+                                    if (isDifferentMatch) {
+                                        if (this.confettiEngine && this.confettiEngine.isRunning) {
+                                            this.confettiEngine.stop();
+                                        }
+                                        this.showWinnerModal = false;
+                                        this.lastDataHash = '';
+                                        this.match = courtMatch;
+                                        this.updateMatchTimer();
+                                        this.$nextTick(() => {
+                                            if (window.lucide) lucide.createIcons();
+                                        });
+                                    }
 
-                            // Trigger / stop confetti based on match status
-                            if (data.match_status === 'finished') {
-                                if (this.confettiEngine && !this.confettiEngine.isRunning) {
-                                    this.confettiEngine.start();
-                                }
-                            } else {
-                                if (this.confettiEngine && this.confettiEngine.isRunning) {
-                                    this.confettiEngine.stop();
-                                    this.showWinnerModal = true;
+                                    this.syncIntervalTimer(courtMatch);
+
+                                    if (courtMatch.match_status === 'finished') {
+                                        if (this.confettiEngine && !this.confettiEngine.isRunning) {
+                                            this.confettiEngine.start();
+                                        }
+                                    } else {
+                                        if (this.confettiEngine && this.confettiEngine.isRunning) {
+                                            this.confettiEngine.stop();
+                                        }
+                                    }
+
+                                    const hash = `${courtMatch.id}-${courtMatch.current_set}-${courtMatch.team1_set1}-${courtMatch.team2_set1}-${courtMatch.team1_set2}-${courtMatch.team2_set2}-${courtMatch.team1_set3}-${courtMatch.team2_set3}-${courtMatch.server_team}-${courtMatch.server_player}-${courtMatch.match_status}-${courtMatch.team1_player1}-${courtMatch.team2_player1}-${courtMatch.interval_until}`;
+                                    if (this.lastDataHash !== hash) {
+                                        this.lastDataHash = hash;
+                                        this.match = courtMatch;
+                                        this.updateMatchTimer();
+                                    }
                                 }
                             }
+                        } else if (this.match && this.match.id) {
+                            // Direct Match ID Inspection
+                            const res = await fetch(`{{ url('/api/badminton/matches') }}/${this.match.id}/state?_t=${Date.now()}`, {
+                                headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache', 'Accept': 'application/json' }
+                            });
+                            if (res.ok) {
+                                const data = await res.json();
+                                this.syncIntervalTimer(data);
 
-                            const hash = `${data.current_set}-${data.team1_set1}-${data.team2_set1}-${data.team1_set2}-${data.team2_set2}-${data.team1_set3}-${data.team2_set3}-${data.server_team}-${data.server_player}-${data.match_status}-${data.team1_player1}-${data.team2_player1}-${data.interval_until}`;
-                            if (this.lastDataHash !== hash) {
-                                this.lastDataHash = hash;
-                                this.match = data;
+                                if (data.match_status === 'finished') {
+                                    if (this.confettiEngine && !this.confettiEngine.isRunning) {
+                                        this.confettiEngine.start();
+                                    }
+                                } else {
+                                    if (this.confettiEngine && this.confettiEngine.isRunning) {
+                                        this.confettiEngine.stop();
+                                        this.showWinnerModal = true;
+                                    }
+                                }
+
+                                const hash = `${data.id}-${data.current_set}-${data.team1_set1}-${data.team2_set1}-${data.team1_set2}-${data.team2_set2}-${data.team1_set3}-${data.team2_set3}-${data.server_team}-${data.server_player}-${data.match_status}-${data.team1_player1}-${data.team2_player1}-${data.interval_until}`;
+                                if (this.lastDataHash !== hash) {
+                                    this.lastDataHash = hash;
+                                    this.match = data;
+                                    this.updateMatchTimer();
+                                }
                             }
                         }
                     } catch (_) {
