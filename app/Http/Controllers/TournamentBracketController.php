@@ -9,6 +9,7 @@ use App\Traits\CompetitionPoolTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -752,44 +753,42 @@ class TournamentBracketController extends Controller
             $planSummary = $plan['summary'];
         }
 
+        $existingMatches = BadmintonMatch::where('competition_id', $competition->id)
+            ->get()
+            ->keyBy('match_code');
+
         $syncedCount = 0;
-        foreach ($planMatches as $m) {
-            $existingRecord = BadmintonMatch::where('competition_id', $competition->id)
-                ->where('match_code', $m['match_code'])
-                ->first();
+        DB::transaction(function () use ($competition, $planMatches, $existingMatches, &$syncedCount) {
+            foreach ($planMatches as $m) {
+                $existingRecord = $existingMatches->get($m['match_code']);
 
-            $status = $m['status'];
-            $winnerTeam = $m['winner_team'];
-            if ($existingRecord && in_array($existingRecord->match_status, ['ongoing', 'finished'])) {
-                $status = $existingRecord->match_status;
-                $winnerTeam = $existingRecord->winner_team;
-            }
+                $status = $m['status'];
+                $winnerTeam = $m['winner_team'];
+                if ($existingRecord && in_array($existingRecord->match_status, ['ongoing', 'finished'])) {
+                    $status = $existingRecord->match_status;
+                    $winnerTeam = $existingRecord->winner_team;
+                }
 
-            // Lindungi nama atlet definitif jika data hasil pertandingan babak sebelumnya sudah ada di database
-            $team1Player = $m['team1_player'] ?? 'Menunggu Pemenang';
-            $team1School = $m['team1_school'] ?? 'TBD';
-            $team1Id = $m['team1_id'] ?? null;
-            if ($existingRecord && ! empty($existingRecord->team1_registration_id)) {
-                $team1Id = $existingRecord->team1_registration_id;
-                $team1School = $existingRecord->team1_school;
-                $team1Player = $existingRecord->team1_player1;
-            }
+                // Lindungi nama atlet definitif jika data hasil pertandingan babak sebelumnya sudah ada di database
+                $team1Player = $m['team1_player'] ?? 'Menunggu Pemenang';
+                $team1School = $m['team1_school'] ?? 'TBD';
+                $team1Id = $m['team1_id'] ?? null;
+                if ($existingRecord && ! empty($existingRecord->team1_registration_id)) {
+                    $team1Id = $existingRecord->team1_registration_id;
+                    $team1School = $existingRecord->team1_school;
+                    $team1Player = $existingRecord->team1_player1;
+                }
 
-            $team2Player = $m['team2_player'] ?? 'Menunggu Pemenang';
-            $team2School = $m['team2_school'] ?? 'TBD';
-            $team2Id = $m['team2_id'] ?? null;
-            if ($existingRecord && ! empty($existingRecord->team2_registration_id)) {
-                $team2Id = $existingRecord->team2_registration_id;
-                $team2School = $existingRecord->team2_school;
-                $team2Player = $existingRecord->team2_player1;
-            }
+                $team2Player = $m['team2_player'] ?? 'Menunggu Pemenang';
+                $team2School = $m['team2_school'] ?? 'TBD';
+                $team2Id = $m['team2_id'] ?? null;
+                if ($existingRecord && ! empty($existingRecord->team2_registration_id)) {
+                    $team2Id = $existingRecord->team2_registration_id;
+                    $team2School = $existingRecord->team2_school;
+                    $team2Player = $existingRecord->team2_player1;
+                }
 
-            BadmintonMatch::updateOrCreate(
-                [
-                    'competition_id' => $competition->id,
-                    'match_code' => $m['match_code'],
-                ],
-                [
+                $attributes = [
                     'court_number' => $m['court_number'],
                     'scheduled_time' => $m['scheduled_time'],
                     'match_order' => $m['match_order'],
@@ -807,15 +806,24 @@ class TournamentBracketController extends Controller
                     'team2_player1' => $team2Player,
                     'match_status' => $status,
                     'winner_team' => $winnerTeam,
-                ]
-            );
+                ];
 
-            $syncedCount++;
-        }
+                if ($existingRecord) {
+                    $existingRecord->fill($attributes)->save();
+                } else {
+                    BadmintonMatch::create(array_merge([
+                        'competition_id' => $competition->id,
+                        'match_code' => $m['match_code'],
+                    ], $attributes));
+                }
+
+                $syncedCount++;
+            }
+        });
 
         return response()->json([
             'success' => true,
-            'message' => "Berhasil menyinkronkan {$syncedCount} pertandingan ke jadwal ({$plan['summary']})!",
+            'message' => "Berhasil menyinkronkan {$syncedCount} pertandingan ke jadwal ({$planSummary})!",
             'total_synced' => $syncedCount,
         ]);
     }
@@ -970,7 +978,7 @@ class TournamentBracketController extends Controller
             }
             $matchType = stripos($poolTitle, 'ganda') !== false ? 'double' : 'single';
 
-            $bData = $this->buildTournamentTree($pool['participants'], $competition, $poolKey);
+            $bData = $this->buildTournamentTree($pool['participants'], $competition, $poolKey, ['skip_svg' => true]);
             if (empty($bData['rounds'])) {
                 continue;
             }
@@ -1623,7 +1631,7 @@ class TournamentBracketController extends Controller
     /**
      * Membangun Pohon Bagan Turnamen Berdasarkan Standar BWF
      */
-    public function buildTournamentTree(array $poolParticipants, Competition $competition, string $poolKey = 'pool'): array
+    public function buildTournamentTree(array $poolParticipants, Competition $competition, string $poolKey = 'pool', array $options = []): array
     {
         $settings = $competition->bracket_settings[$poolKey] ?? null;
         $bracketMode = $settings['mode'] ?? 'auto';
@@ -2030,8 +2038,13 @@ class TournamentBracketController extends Controller
             ],
         ];
 
-        $bracketData['classic_svg_light'] = $this->renderClassicBracketSvg($bracketData, ['isDark' => false]);
-        $bracketData['classic_svg_dark'] = $this->renderClassicBracketSvg($bracketData, ['isDark' => true]);
+        if (empty($options['skip_svg'])) {
+            $bracketData['classic_svg_light'] = $this->renderClassicBracketSvg($bracketData, ['isDark' => false]);
+            $bracketData['classic_svg_dark'] = $this->renderClassicBracketSvg($bracketData, ['isDark' => true]);
+        } else {
+            $bracketData['classic_svg_light'] = '';
+            $bracketData['classic_svg_dark'] = '';
+        }
 
         return $bracketData;
     }

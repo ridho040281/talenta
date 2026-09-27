@@ -1362,7 +1362,7 @@
                             @click="executeSyncSchedule()"
                             :disabled="isSyncing || scheduleCourts.length === 0"
                             class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2 cursor-pointer">
-                        <i data-lucide="check-circle" class="w-4 h-4" :class="isSyncing ? 'animate-spin' : ''"></i>
+                        <i data-lucide="refresh-cw" class="w-4 h-4" :class="isSyncing ? 'animate-spin' : ''"></i>
                         <span x-text="isSyncing ? 'Menyinkronkan...' : (showPreviewTable ? 'Konfirmasi & Terapkan Jadwal' : 'Terapkan & Sinkronkan')"></span>
                     </button>
                 </div>
@@ -2082,6 +2082,11 @@
                         })
                     });
 
+                    if (!response.ok) {
+                        const errData = await response.json().catch(() => ({}));
+                        throw new Error(errData.message || `Gagal memuat pratinjau (Status ${response.status})`);
+                    }
+
                     const res = await response.json();
                     if (res.success) {
                         this.previewData = res;
@@ -2092,7 +2097,7 @@
                     }
                 } catch (err) {
                     console.error('Preview error:', err);
-                    alert('Terjadi kesalahan saat memuat pratinjau jadwal.');
+                    alert(err.message || 'Terjadi kesalahan saat memuat pratinjau jadwal.');
                 } finally {
                     this.isLoadingPreview = false;
                     this.$nextTick(() => {
@@ -2136,23 +2141,32 @@
                         })
                     });
 
+                    if (!response.ok) {
+                        const errData = await response.json().catch(() => ({}));
+                        throw new Error(errData.message || `Gagal menyinkronkan (Status ${response.status})`);
+                    }
+
                     const res = await response.json();
                     if (res.success) {
                         this.toastSuccess = true;
                         this.toastMessage = res.message || 'Jadwal pertandingan berhasil disinkronkan ke sistem wasit!';
                         this.closeSyncModal();
-                        setTimeout(() => window.location.reload(), 1000);
+                        setTimeout(() => window.location.reload(), 800);
                     } else {
                         this.toastSuccess = false;
                         this.toastMessage = res.message || 'Gagal menyinkronkan jadwal pertandingan.';
+                        alert(res.message || 'Gagal menyinkronkan jadwal pertandingan.');
                     }
                 } catch (err) {
                     console.error('Sync error:', err);
                     this.toastSuccess = false;
-                    this.toastMessage = 'Terjadi kesalahan jaringan saat menyinkronkan data.';
+                    this.toastMessage = err.message || 'Terjadi kesalahan jaringan saat menyinkronkan data.';
+                    alert(err.message || 'Terjadi kesalahan jaringan saat menyinkronkan data.');
                 } finally {
                     this.isSyncing = false;
-                    if (window.lucide) window.lucide.createIcons();
+                    this.$nextTick(() => {
+                        if (window.lucide) window.lucide.createIcons();
+                    });
                 }
             },
 
