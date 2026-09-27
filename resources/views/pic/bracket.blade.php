@@ -251,11 +251,11 @@
             <div class="flex items-center gap-2 flex-wrap">
                 <span class="text-xs font-bold text-slate-400">Tampilan Bagan:</span>
                 <div class="inline-flex p-1 bg-slate-950 rounded-xl border border-slate-800">
-                    <button type="button" @click="viewMode = 'classic'" :class="viewMode === 'classic' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
+                    <button type="button" @click="setViewMode('classic')" :class="viewMode === 'classic' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
                         <i data-lucide="git-branch" class="w-3.5 h-3.5"></i>
                         <span>Model Garis Klasik (BWF GOR)</span>
                     </button>
-                    <button type="button" @click="viewMode = 'cards'" :class="viewMode === 'cards' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
+                    <button type="button" @click="setViewMode('cards')" :class="viewMode === 'cards' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
                         <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
                         <span>Model Kartu Pertandingan</span>
                     </button>
@@ -314,7 +314,7 @@
                                     $isPoOngoing = ($poMatch['status'] === 'ongoing');
                                     $isPoPending = ($poMatch['status'] === 'pending_draw');
                                 @endphp
-                                <div class="bg-slate-900/90 rounded-2xl border transition-all duration-200 shadow-lg relative overflow-hidden group
+                                <div id="match-card-{{ $poMatch['match_code'] }}" class="bg-slate-900/90 rounded-2xl border transition-all duration-200 shadow-lg relative overflow-hidden group
                                     {{ $isPoOngoing ? 'border-amber-500/60 ring-1 ring-amber-500/40' : ($isPoFinished ? 'border-emerald-500/40 shadow-emerald-500/5' : 'border-amber-500/30 hover:border-amber-500/50') }}">
                                     <!-- Header Bar -->
                                     <div class="px-3.5 py-2 bg-slate-950/80 border-b border-slate-800/80 flex items-center justify-between text-[11px]">
@@ -443,7 +443,7 @@
                                     $existing = $match['existing_match'];
                                 @endphp
 
-                                <div class="bg-slate-900/90 rounded-2xl border transition-all duration-200 shadow-lg relative overflow-hidden group
+                                <div id="match-card-{{ $match['match_code'] }}" class="bg-slate-900/90 rounded-2xl border transition-all duration-200 shadow-lg relative overflow-hidden group
                                     {{ $isOngoing ? 'border-amber-500/60 shadow-amber-500/10 ring-1 ring-amber-500/40' : ($isFinished ? 'border-emerald-500/40 shadow-emerald-500/5' : ($isByeAdvance ? 'border-cyan-500/30 bg-cyan-950/10' : 'border-slate-800 hover:border-slate-700')) }}">
 
                                     <!-- Match Header Bar -->
@@ -1642,7 +1642,45 @@
             competitionId: {{ $competition->id }},
             activePoolKey: '{{ $activePoolKey }}',
             hasRounds: {{ ($bracketData && !empty($bracketData['rounds'])) ? 'true' : 'false' }},
-            viewMode: 'classic',
+            viewMode: (function() {
+                try {
+                    const urlMode = new URLSearchParams(window.location.search).get('view_mode');
+                    if (urlMode && ['classic', 'cards'].includes(urlMode)) {
+                        return urlMode;
+                    }
+                    const savedMode = localStorage.getItem('talenta_bracket_view_mode');
+                    if (savedMode && ['classic', 'cards'].includes(savedMode)) {
+                        return savedMode;
+                    }
+                } catch (e) {}
+                return 'cards';
+            })(),
+
+            setViewMode(mode) {
+                this.viewMode = mode;
+                try {
+                    localStorage.setItem('talenta_bracket_view_mode', mode);
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('view_mode', mode);
+                    window.history.replaceState({}, '', url);
+                } catch (e) {}
+            },
+
+            init() {
+                this.$nextTick(() => {
+                    if (window.location.hash) {
+                        const targetId = window.location.hash.substring(1);
+                        const targetEl = document.getElementById(targetId);
+                        if (targetEl) {
+                            setTimeout(() => {
+                                targetEl.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                                targetEl.classList.add('ring-2', 'ring-amber-400');
+                                setTimeout(() => targetEl.classList.remove('ring-2', 'ring-amber-400'), 2500);
+                            }, 300);
+                        }
+                    }
+                });
+            },
             classicTheme: 'white',
             isSyncing: false,
             toastMessage: '',
@@ -1794,7 +1832,15 @@
                         this.toastSuccess = true;
                         this.toastMessage = res.message;
                         this.closeFormatModal();
-                        setTimeout(() => window.location.reload(), 600);
+                        const currentMode = this.viewMode || 'cards';
+                        try {
+                            localStorage.setItem('talenta_bracket_view_mode', currentMode);
+                        } catch (e) {}
+                        setTimeout(() => {
+                            const url = new URL(window.location.href);
+                            url.searchParams.set('view_mode', currentMode);
+                            window.location.href = url.toString();
+                        }, 600);
                     } else {
                         alert(res.message || 'Gagal menyimpan format bagan.');
                     }
@@ -1946,7 +1992,20 @@
                         this.toastSuccess = true;
                         this.toastMessage = res.message;
                         this.closeEditModal();
-                        setTimeout(() => window.location.reload(), 600);
+                        const savedCode = this.editMatchData.matchCode;
+                        const currentMode = this.viewMode || 'cards';
+                        try {
+                            localStorage.setItem('talenta_bracket_view_mode', currentMode);
+                        } catch (e) {}
+
+                        setTimeout(() => {
+                            const url = new URL(window.location.href);
+                            url.searchParams.set('view_mode', currentMode);
+                            if (savedCode) {
+                                url.hash = 'match-card-' + savedCode;
+                            }
+                            window.location.href = url.toString();
+                        }, 500);
                     } else {
                         alert(res.message || 'Gagal menyimpan perubahan.');
                     }
@@ -2163,7 +2222,15 @@
                         this.toastSuccess = true;
                         this.toastMessage = res.message || 'Jadwal pertandingan berhasil disinkronkan ke sistem wasit!';
                         this.closeSyncModal();
-                        setTimeout(() => window.location.reload(), 800);
+                        const currentMode = this.viewMode || 'cards';
+                        try {
+                            localStorage.setItem('talenta_bracket_view_mode', currentMode);
+                        } catch (e) {}
+                        setTimeout(() => {
+                            const url = new URL(window.location.href);
+                            url.searchParams.set('view_mode', currentMode);
+                            window.location.href = url.toString();
+                        }, 800);
                     } else {
                         this.toastSuccess = false;
                         this.toastMessage = res.message || 'Gagal menyinkronkan jadwal pertandingan.';
@@ -2219,8 +2286,15 @@
                         this.toastSuccess = true;
                         this.toastMessage = res.message || 'Jadwal pertandingan berhasil dikosongkan!';
                         this.previewData = null;
-                        this.showPreviewTable = false;
-                        setTimeout(() => window.location.reload(), 1200);
+                        const currentMode = this.viewMode || 'cards';
+                        try {
+                            localStorage.setItem('talenta_bracket_view_mode', currentMode);
+                        } catch (e) {}
+                        setTimeout(() => {
+                            const url = new URL(window.location.href);
+                            url.searchParams.set('view_mode', currentMode);
+                            window.location.href = url.toString();
+                        }, 1000);
                     } else {
                         this.toastSuccess = false;
                         this.toastMessage = res.message || 'Gagal mereset jadwal.';
