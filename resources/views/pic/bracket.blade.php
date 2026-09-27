@@ -347,7 +347,10 @@
         </div>
 
         <!-- Classic Line Tree (Persis Bagan GOR Standar BWF) -->
-        <div x-show="viewMode === 'classic'" :class="fitMode === 'fit' ? 'w-full overflow-hidden pb-8 pt-2' : 'overflow-x-auto pb-8 pt-2 scrollbar-thin'">
+        <div x-show="viewMode === 'classic'" 
+             x-cloak 
+             style="display: none;" 
+             :class="fitMode === 'fit' ? 'w-full overflow-hidden pb-8 pt-2' : 'overflow-x-auto pb-8 pt-2 scrollbar-thin'">
             <div class="p-4 sm:p-6 rounded-3xl border shadow-2xl transition-colors duration-300"
                  :class="[
                      classicTheme === 'white' ? 'bg-white border-slate-200 shadow-slate-950/30' : 'bg-slate-950 border-slate-800 shadow-indigo-950/30',
@@ -364,6 +367,7 @@
 
         <!-- Bracket Visual Cards Container -->
         <div x-show="viewMode === 'cards'" 
+             x-cloak
              x-ref="cardsWrapper"
              :class="fitMode === 'fit' && roundFilter === 'all' ? 'w-full overflow-x-hidden pb-8 pt-2' : 'overflow-x-auto pb-8 pt-2 scrollbar-thin'">
             <div x-ref="cardsContent" 
@@ -1760,6 +1764,79 @@
         </div>
     </div>
 
+    <!-- Modal Notifikasi Interaktif Premium (Pengganti window.alert) -->
+    <div x-show="noticeModal.show" 
+         x-cloak
+         @click.self="closeNotice()"
+         @keydown.escape.window="if (noticeModal.show) closeNotice()"
+         class="fixed inset-0 z-[130] overflow-y-auto bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+        <div @click.stop
+             class="relative bg-slate-900 border border-slate-700/80 w-full max-w-md rounded-3xl p-6 sm:p-7 shadow-2xl space-y-5 text-white animate-in fade-in zoom-in-95 duration-200 overflow-hidden text-center">
+            
+            <!-- Ambient Glow Top Background -->
+            <div class="absolute -top-16 left-1/2 -translate-x-1/2 w-44 h-44 rounded-full blur-3xl pointer-events-none"
+                 :class="{
+                     'bg-amber-500/25': noticeModal.type === 'warning',
+                     'bg-rose-500/25': noticeModal.type === 'error',
+                     'bg-emerald-500/25': noticeModal.type === 'success',
+                     'bg-cyan-500/25': noticeModal.type === 'info'
+                 }">
+            </div>
+
+            <!-- Icon Header -->
+            <div class="relative">
+                <template x-if="noticeModal.type === 'warning'">
+                    <div class="w-16 h-16 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400 shadow-xl shadow-amber-500/10">
+                        <i data-lucide="alert-triangle" class="w-8 h-8"></i>
+                    </div>
+                </template>
+                <template x-if="noticeModal.type === 'error'">
+                    <div class="w-16 h-16 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center mx-auto text-rose-400 shadow-xl shadow-rose-500/10">
+                        <i data-lucide="alert-circle" class="w-8 h-8"></i>
+                    </div>
+                </template>
+                <template x-if="noticeModal.type === 'success'">
+                    <div class="w-16 h-16 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mx-auto text-emerald-400 shadow-xl shadow-emerald-500/10">
+                        <i data-lucide="check-circle-2" class="w-8 h-8"></i>
+                    </div>
+                </template>
+                <template x-if="noticeModal.type === 'info'">
+                    <div class="w-16 h-16 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center mx-auto text-cyan-400 shadow-xl shadow-cyan-500/10">
+                        <i data-lucide="info" class="w-8 h-8"></i>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Title & Subtitle -->
+            <div class="space-y-1.5 relative">
+                <h3 class="text-base sm:text-lg font-black text-white tracking-tight" x-text="noticeModal.title"></h3>
+                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400" 
+                   x-text="noticeModal.type === 'warning' ? 'Peringatan Penjadwalan' : (noticeModal.type === 'error' ? 'Terjadi Kendala' : 'Informasi Sistem')"></p>
+            </div>
+
+            <!-- Message Box -->
+            <div class="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 text-left text-xs leading-relaxed text-slate-200 shadow-inner relative max-h-56 overflow-y-auto">
+                <p class="whitespace-pre-line font-medium leading-relaxed" x-text="noticeModal.message"></p>
+            </div>
+
+            <!-- Action Button -->
+            <div class="pt-1 relative">
+                <button type="button" 
+                        @click="closeNotice()" 
+                        class="w-full py-3 px-5 rounded-xl font-black text-xs shadow-lg transition flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                        :class="{
+                            'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 shadow-amber-500/25': noticeModal.type === 'warning',
+                            'bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white shadow-rose-600/25': noticeModal.type === 'error',
+                            'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 shadow-emerald-500/25': noticeModal.type === 'success',
+                            'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-cyan-600/25': noticeModal.type === 'info'
+                        }">
+                    <span x-text="noticeModal.buttonText || 'Saya Mengerti'"></span>
+                    <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
 </div>
 @endsection
 
@@ -1914,6 +1991,30 @@
             toastMessage: '',
             toastSuccess: true,
 
+            // Modal Notifikasi Interaktif Pengganti window.alert
+            noticeModal: {
+                show: false,
+                type: 'warning',
+                title: '',
+                message: '',
+                buttonText: 'Saya Mengerti'
+            },
+
+            showNotice(title, message, type = 'warning', buttonText = 'Saya Mengerti') {
+                this.noticeModal.title = title || 'Pemberitahuan';
+                this.noticeModal.message = message || '';
+                this.noticeModal.type = type;
+                this.noticeModal.buttonText = buttonText;
+                this.noticeModal.show = true;
+                this.$nextTick(() => {
+                    if (window.lucide) window.lucide.createIcons();
+                });
+            },
+
+            closeNotice() {
+                this.noticeModal.show = false;
+            },
+
 
             // Publication & Standby Notice State
             showPublicationModal: false,
@@ -1962,11 +2063,11 @@
                         this.pubSettings = res.publication;
                         this.closePublicationModal();
                     } else {
-                        alert(res.message || 'Gagal menyimpan pengaturan publikasi.');
+                        this.showNotice('Gagal Publikasi', res.message || 'Gagal menyimpan pengaturan publikasi.', 'error');
                     }
                 } catch (err) {
                     console.error('Save publication error:', err);
-                    alert('Terjadi kesalahan jaringan.');
+                    this.showNotice('Kesalahan Jaringan', 'Terjadi kesalahan jaringan saat menyimpan pengaturan publikasi.', 'error');
                 } finally {
                     this.isSavingPublication = false;
                     if (window.lucide) window.lucide.createIcons();
@@ -2126,11 +2227,11 @@
                             window.location.href = url.toString();
                         }, 600);
                     } else {
-                        alert(res.message || 'Gagal menyimpan format bagan.');
+                        this.showNotice('Gagal Simpan Format', res.message || 'Gagal menyimpan format bagan.', 'error');
                     }
                 } catch (err) {
                     console.error('Save format error:', err);
-                    alert('Terjadi kesalahan jaringan.');
+                    this.showNotice('Kesalahan Jaringan', 'Terjadi kesalahan jaringan saat menyimpan format bagan.', 'error');
                 } finally {
                     this.isSavingFormat = false;
                 }
@@ -2252,7 +2353,12 @@
                 if (this.isSavingSchedule) return;
                 const conflict = this.checkScheduleConflict();
                 if (conflict || this.scheduleConflictWarning) {
-                    alert(this.scheduleConflictWarning || 'Lapangan telah digunakan pada jam tersebut! Silakan pilih jam atau lapangan lain.');
+                    this.showNotice(
+                        'Jadwal Lapangan Bentrok!',
+                        this.scheduleConflictWarning || 'Lapangan telah digunakan pada jam tersebut! Silakan pilih jam atau lapangan lain.',
+                        'warning',
+                        'Saya Mengerti, Ubah Jadwal'
+                    );
                     return;
                 }
 
@@ -2286,8 +2392,21 @@
                             this.$nextTick(() => {
                                 if (window.lucide) window.lucide.createIcons();
                             });
+                            this.showNotice(
+                                'Jadwal Lapangan Bentrok!',
+                                errData.message,
+                                'warning',
+                                'Saya Mengerti, Ubah Jadwal'
+                            );
+                            return;
                         }
-                        throw new Error(errData.message || `Gagal menyimpan jadwal (Status ${response.status})`);
+                        this.showNotice(
+                            'Gagal Menyimpan Jadwal',
+                            errData.message || `Gagal menyimpan jadwal (Status ${response.status})`,
+                            'error',
+                            'Tutup'
+                        );
+                        return;
                     }
 
                     const res = await response.json();
@@ -2308,11 +2427,11 @@
                             window.location.reload();
                         }, 400);
                     } else {
-                        alert(res.message || 'Gagal menyimpan perubahan.');
+                        this.showNotice('Gagal Menyimpan', res.message || 'Gagal menyimpan perubahan.', 'error', 'Tutup');
                     }
                 } catch (err) {
                     console.error('Save schedule error:', err);
-                    alert(err.message || 'Terjadi kesalahan jaringan.');
+                    this.showNotice('Terjadi Kendala', err.message || 'Terjadi kesalahan jaringan.', 'error', 'Tutup');
                 } finally {
                     this.isSavingSchedule = false;
                     this.$nextTick(() => {
@@ -2465,11 +2584,11 @@
                         this.showPreviewTable = true;
                         this.previewActiveDay = 1;
                     } else {
-                        alert(res.message || 'Gagal memuat pratinjau jadwal.');
+                        this.showNotice('Pratinjau Jadwal Gagal', res.message || 'Gagal memuat pratinjau jadwal.', 'error', 'Tutup');
                     }
                 } catch (err) {
                     console.error('Preview error:', err);
-                    alert(err.message || 'Terjadi kesalahan saat memuat pratinjau jadwal.');
+                    this.showNotice('Kesalahan Jaringan', err.message || 'Terjadi kesalahan saat memuat pratinjau jadwal.', 'error', 'Tutup');
                 } finally {
                     this.isLoadingPreview = false;
                     this.$nextTick(() => {
@@ -2535,13 +2654,13 @@
                     } else {
                         this.toastSuccess = false;
                         this.toastMessage = res.message || 'Gagal menyinkronkan jadwal pertandingan.';
-                        alert(res.message || 'Gagal menyinkronkan jadwal pertandingan.');
+                        this.showNotice('Sinkronisasi Jadwal Gagal', res.message || 'Gagal menyinkronkan jadwal pertandingan.', 'error', 'Tutup');
                     }
                 } catch (err) {
                     console.error('Sync error:', err);
                     this.toastSuccess = false;
                     this.toastMessage = err.message || 'Terjadi kesalahan jaringan saat menyinkronkan data.';
-                    alert(err.message || 'Terjadi kesalahan jaringan saat menyinkronkan data.');
+                    this.showNotice('Kesalahan Jaringan', err.message || 'Terjadi kesalahan jaringan saat menyinkronkan data.', 'error', 'Tutup');
                 } finally {
                     this.isSyncing = false;
                     this.$nextTick(() => {
@@ -2599,11 +2718,13 @@
                     } else {
                         this.toastSuccess = false;
                         this.toastMessage = res.message || 'Gagal mereset jadwal.';
+                        this.showNotice('Gagal Reset Jadwal', res.message || 'Gagal mereset jadwal.', 'error', 'Tutup');
                     }
                 } catch (err) {
                     console.error('Reset schedule error:', err);
                     this.toastSuccess = false;
                     this.toastMessage = 'Terjadi kesalahan jaringan saat mereset jadwal.';
+                    this.showNotice('Kesalahan Jaringan', 'Terjadi kesalahan jaringan saat mereset jadwal.', 'error', 'Tutup');
                 } finally {
                     this.isResetting = false;
                     if (window.lucide) window.lucide.createIcons();
