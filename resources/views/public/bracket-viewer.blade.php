@@ -396,9 +396,16 @@
 
                                         <!-- Header Bar -->
                                         <div class="px-3.5 py-2 bg-slate-950/70 border-b border-slate-800/80 flex items-center justify-between text-[11px]">
-                                            <span class="font-mono font-bold text-slate-400">
-                                                {{ $match['match_code'] }}
-                                            </span>
+                                            <div class="flex items-center gap-1.5 font-mono">
+                                                @if(!empty($match['match_number']))
+                                                    <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-extrabold text-[11px] border border-amber-500/30">
+                                                        Partai #{{ $match['match_number'] }}
+                                                    </span>
+                                                @endif
+                                                <span class="font-bold text-slate-400 text-[10px]">
+                                                    {{ $match['match_code'] }}
+                                                </span>
+                                            </div>
                                             <div>
                                                 @if($isByeAdvance)
                                                     <span class="px-2 py-0.5 rounded-md bg-cyan-500/15 text-cyan-300 font-bold text-[10px] border border-cyan-500/30">
@@ -433,9 +440,9 @@
                                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-bold text-[10px] border border-indigo-500/30">
                                                         🏸 {{ $existing->court_number }}
                                                     </span>
-                                                    @if($existing->match_order)
+                                                    @if(!empty($match['match_number']) || !empty($existing->match_order))
                                                         <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold text-[10px] border border-amber-500/30">
-                                                            Partai #{{ $existing->match_order }}
+                                                            Partai #{{ $match['match_number'] ?? $existing->match_order }}
                                                         </span>
                                                     @endif
                                                     @if($existing->scheduled_time)

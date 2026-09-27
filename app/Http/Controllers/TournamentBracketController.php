@@ -1112,6 +1112,7 @@ class TournamentBracketController extends Controller
                         'category' => $categoryCode,
                         'match_type' => $matchType,
                         'match_code' => $m['match_code'],
+                        'match_number' => $m['match_number'] ?? null,
                         'round_name' => $rName,
                         'round_type' => $roundType,
                         'round_index' => $rIdx,
@@ -1486,7 +1487,9 @@ class TournamentBracketController extends Controller
                     'match_code' => $m['match_code'],
                     'court_number' => $assignedCourt,
                     'scheduled_time' => $assignedTime,
-                    'match_order' => $assignedOrder,
+                    'match_order' => $m['match_number'] ?? $assignedOrder,
+                    'bracket_match_number' => $m['match_number'] ?? null,
+                    'court_order' => $assignedOrder,
                     'match_day' => $d,
                     'match_date' => $dayDate,
                     'match_day_label' => $dayLabel,
@@ -1880,6 +1883,7 @@ class TournamentBracketController extends Controller
         // Round 1
         $numR1Matches = (int) ($bracketSize / 2);
         $r1Matches = [];
+        $structuralMatchSeq = 0;
         for ($m = 1; $m <= $numR1Matches; $m++) {
             $slot1 = ($m * 2) - 1;
             $slot2 = $m * 2;
@@ -1916,8 +1920,15 @@ class TournamentBracketController extends Controller
             $hasBwfProtection = ! empty($p1['is_bwf_separated']) || ! empty($p2['is_bwf_separated']);
             $bwfNote = $p1['bwf_note'] ?? ($p2['bwf_note'] ?? null);
 
+            $bracketMatchNumber = null;
+            if (! ($status === 'bye_advance' || $isBye1 || $isBye2 || (($p1['name'] ?? '') === '[BYE]') || (($p2['name'] ?? '') === '[BYE]'))) {
+                $structuralMatchSeq++;
+                $bracketMatchNumber = $structuralMatchSeq;
+            }
+
             $r1Matches[$m] = [
                 'match_code' => $matchCode,
+                'match_number' => $bracketMatchNumber,
                 'round_index' => 1,
                 'match_index' => $m,
                 'slot1' => $slot1,
@@ -1969,8 +1980,12 @@ class TournamentBracketController extends Controller
                     $status = 'ongoing';
                 }
 
+                $structuralMatchSeq++;
+                $bracketMatchNumber = $structuralMatchSeq;
+
                 $currentMatches[] = [
                     'match_code' => $matchCode,
+                    'match_number' => $bracketMatchNumber,
                     'round_index' => $r,
                     'match_index' => $m,
                     'team1' => $t1,
@@ -2539,9 +2554,8 @@ class TournamentBracketController extends Controller
                 $matchNumber = null;
                 if (! $isByeAdvance) {
                     $sequentialMatchNum++;
-                    $em = $match['existing_match'] ?? null;
-                    // Prioritaskan nomor partai resmi dari jadwal database jika ada, jika belum ada gunakan nomor urut bagan
-                    $matchNumber = (! empty($em?->match_order)) ? $em->match_order : $sequentialMatchNum;
+                    // KUNCI NOMOR BADGE BAGAN: Selalu gunakan nomor urut struktural bagan asli
+                    $matchNumber = $match['match_number'] ?? $sequentialMatchNum;
                 }
 
                 // Horizontal arm from top
