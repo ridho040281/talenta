@@ -43,7 +43,8 @@
                 <span>Mode Spin Wheel</span>
             </a>
 
-            <!-- Menu Seeded Button -->
+            @if($competition->isTournamentBracket())
+            <!-- Menu Seeded Button (Khusus Bulu Tangkis & Tenis Meja) -->
             <button type="button" 
                     @click="openSeededModal()" 
                     :disabled="isDecoding"
@@ -53,7 +54,6 @@
                 <span>Menu Seeded</span>
             </button>
 
-            @if(strtoupper($competition->code ?? '') === 'BLT' || str_contains(strtolower($competition->name ?? ''), 'bulu tangkis') || str_contains(strtolower($competition->name ?? ''), 'badminton'))
             <!-- Bagan Pertandingan -->
             <a :href="'{{ route('pic.bracket', $competition->id) }}' + (activePoolKey ? '?pool=' + encodeURIComponent(activePoolKey) : '')" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-500/20 to-blue-600/20 hover:from-indigo-500/30 hover:to-blue-600/30 text-indigo-300 border border-indigo-500/50 font-bold text-xs shadow-md transition cursor-pointer" title="Lihat Bagan Pertandingan (Knockout Bracket)">
                 <i data-lucide="git-branch" class="w-4 h-4 text-indigo-400"></i>
@@ -131,6 +131,7 @@
                     <h4 class="text-sm font-black text-white truncate mt-0.5" x-text="activePool?.title || '{{ $competition->name }}'"></h4>
                 </div>
                 <div class="shrink-0 flex items-center gap-1.5">
+                    @if($competition->isTournamentBracket())
                     <button type="button" 
                             @click="openSeededModal()" 
                             :disabled="isDecoding"
@@ -138,6 +139,7 @@
                             title="Atur Pemain Unggulan (Seeded) untuk kategori ini">
                         <span>⭐ Atur Seeded</span>
                     </button>
+                    @endif
                     <button type="button" 
                             @click="resetActivePool()" 
                             :disabled="activeDrawnParticipants.length === 0 || isDecoding"
@@ -406,6 +408,7 @@
 
     </div>
 
+    @if($competition->isTournamentBracket())
     <!-- Modal Pengaturan Pemain Unggulan (Seeded) -->
     <div x-show="isSeededModalOpen" 
          x-cloak 
@@ -562,6 +565,7 @@
 
         </div>
     </div>
+    @endif
 
     <!-- Modal Batch / Full-Shuffle Auto Draw -->
     <div x-show="isBatchModalOpen" 

@@ -644,6 +644,7 @@
 
     </div>
 
+    @if($competition->isTournamentBracket())
     <!-- Modal Pengaturan Pemain Unggulan (Seeded) -->
     <div x-show="isSeededModalOpen" 
          x-cloak 
@@ -800,6 +801,7 @@
 
         </div>
     </div>
+    @endif
 
     <!-- Modal Batch / Full-Shuffle Auto Draw -->
     <div x-show="isBatchModalOpen" 

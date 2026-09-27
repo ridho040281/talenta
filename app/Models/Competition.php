@@ -1089,7 +1089,9 @@ class Competition extends Model
         return in_array($code, ['BLT', 'TMJ'])
             || str_contains($compName, 'bulu tangkis')
             || str_contains($compName, 'badminton')
-            || str_contains($compName, 'tenis meja');
+            || str_contains($compName, 'tenis meja')
+            || str_contains($compName, 'table tennis')
+            || str_contains($compName, 'pingpong');
     }
 
     public function getJudgeRoleTitleAttribute(): string
