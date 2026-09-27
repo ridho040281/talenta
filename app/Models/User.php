@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Http\Controllers\PicController;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -261,5 +262,60 @@ class User extends Authenticatable
         }
 
         return false;
+    }
+
+    /**
+     * Check if user is authorized to manage Stage & Timekeeper competitions (MTQ, Tahfidz, Pop Singer)
+     */
+    public function managesStageCompetition(): bool
+    {
+        if (in_array($this->role, ['superadmin', 'panitia'])) {
+            return true;
+        }
+
+        if ($this->role === 'pic_lomba') {
+            $managedIds = PicController::getManagedCompetitionIds($this);
+
+            return Competition::whereIn('id', $managedIds)
+                ->where(function ($q) {
+                    $q->whereIn('code', ['MTQ', 'THF', 'POP'])
+                        ->orWhere('name', 'like', '%MTQ%')
+                        ->orWhere('name', 'like', '%Tahfid%')
+                        ->orWhere('name', 'like', '%Pop Singer%');
+                })
+                ->exists();
+        }
+
+        return false;
+    }
+
+    /**
+     * Get managed Stage & Timekeeper competitions collection
+     */
+    public function getManagedStageCompetitions()
+    {
+        if (in_array($this->role, ['superadmin', 'panitia'])) {
+            return Competition::where(function ($q) {
+                $q->whereIn('code', ['MTQ', 'THF', 'POP'])
+                    ->orWhere('name', 'like', '%MTQ%')
+                    ->orWhere('name', 'like', '%Tahfid%')
+                    ->orWhere('name', 'like', '%Pop Singer%');
+            })->get();
+        }
+
+        if ($this->role === 'pic_lomba') {
+            $managedIds = PicController::getManagedCompetitionIds($this);
+
+            return Competition::whereIn('id', $managedIds)
+                ->where(function ($q) {
+                    $q->whereIn('code', ['MTQ', 'THF', 'POP'])
+                        ->orWhere('name', 'like', '%MTQ%')
+                        ->orWhere('name', 'like', '%Tahfid%')
+                        ->orWhere('name', 'like', '%Pop Singer%');
+                })
+                ->get();
+        }
+
+        return collect();
     }
 }

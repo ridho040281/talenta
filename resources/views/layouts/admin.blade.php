@@ -733,6 +733,42 @@
                 </div>
                 @endif
 
+                @if(auth()->user() && method_exists(auth()->user(), 'managesStageCompetition') && auth()->user()->managesStageCompetition())
+                @php
+                    $stageCompetitions = auth()->user()->getManagedStageCompetitions();
+                    $firstStageComp = $stageCompetitions->first();
+                @endphp
+                @if($firstStageComp)
+                <!-- Fase 2.5: Panggung & Timekeeper (MTQ, Tahfidz, Pop Singer) -->
+                <div class="space-y-1 pt-1">
+                    <div x-show="sidebarOpen" class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Panggung & Timer</div>
+                    <div x-show="!sidebarOpen" class="hidden md:block border-t border-white/[0.08] mx-2 my-2"></div>
+                    <a href="{{ route('pic.stage.control', $firstStageComp->id) }}" 
+                       class="relative group flex items-center rounded-2xl transition {{ request()->routeIs('pic.stage.control*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}"
+                       :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
+                        <i data-lucide="timer" class="w-4 h-4 shrink-0 text-amber-400"></i>
+                        <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Konsol Timekeeper</span>
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                            <span>Konsol Timekeeper</span>
+                        </div>
+                    </a>
+                    <a href="{{ route('stage.viewer', $firstStageComp->slug ?: $firstStageComp->code) }}" target="_blank" 
+                       class="relative group flex items-center rounded-2xl transition hover:bg-white/[0.04] text-slate-400 hover:text-slate-200"
+                       :class="sidebarOpen ? 'justify-between px-3 py-2.5' : 'justify-center px-0 py-2.5'">
+                        <div class="flex items-center gap-3 truncate">
+                            <i data-lucide="tv-2" class="w-4 h-4 shrink-0 text-purple-400"></i>
+                            <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Layar Panggung TV</span>
+                        </div>
+                        <span x-show="sidebarOpen" class="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span>
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                            <span>Layar Panggung TV</span>
+                            <span class="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span>
+                        </div>
+                    </a>
+                </div>
+                @endif
+                @endif
+
                 <!-- Fase 3: Pasca Lomba & Hasil -->
                 <div class="space-y-1 pt-1">
                     <div x-show="sidebarOpen" class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Pasca Lomba</div>

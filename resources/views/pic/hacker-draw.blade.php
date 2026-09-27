@@ -51,6 +51,20 @@
                 <span>Layar TV (/tv/{{ $competition->slug }})</span>
             </a>
 
+            @if(\App\Http\Controllers\StageController::isTimekeeperSupported($competition))
+            <!-- Konsol Timekeeper Panggung -->
+            <a href="{{ route('pic.stage.control', $competition->id) }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500/20 to-purple-600/20 hover:from-amber-500/30 hover:to-purple-600/30 text-amber-300 border border-amber-500/40 font-bold text-xs shadow-md transition cursor-pointer" title="Buka Konsol Operator Timekeeper & Layar Panggung">
+                <i data-lucide="timer" class="w-4 h-4 text-amber-400"></i>
+                <span>Konsol Timekeeper</span>
+            </a>
+
+            <!-- Layar Panggung TV Proyektor -->
+            <a href="{{ route('stage.viewer', $competition->slug ?: $competition->code) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 font-bold text-xs shadow-sm transition" title="Buka Layar Panggung Proyektor / Smart TV">
+                <i data-lucide="tv-2" class="w-4 h-4 text-purple-400"></i>
+                <span>Layar Panggung</span>
+            </a>
+            @endif
+
             <!-- Dropdown Menu Opsi Titik 3 (Reset Undian Seperti Menu Bulu Tangkis) -->
             <div class="relative z-50" x-data="{ openMenu: false }" @click.outside="openMenu = false">
                 <button type="button" 
