@@ -365,7 +365,7 @@
                                                 @endif
                                             </div>
                                             <button type="button" 
-                                                    @click="openEditScheduleModal('{{ $poMatch['match_code'] }}', '{{ $poExisting->court_number }}', '{{ $poExisting->scheduled_time ?? '07:30' }}', '{{ $poExisting->match_order ?? 0 }}', '{{ $poExisting->match_day ?? 1 }}', '{{ $poExisting->match_date?->format('Y-m-d') ?? '' }}')"
+                                                    @click.stop="openEditScheduleModal('{{ $poMatch['match_code'] }}', '{{ $poExisting->court_number ?? 'Lapangan 1' }}', '{{ $poExisting->scheduled_time ?? '07:30' }}', '{{ $poExisting->match_order ?? 0 }}', '{{ $poExisting->match_day ?? 1 }}', '{{ $poExisting->match_date?->format('Y-m-d') ?? '' }}')"
                                                     class="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-amber-300 transition cursor-pointer"
                                                     title="Ubah Jadwal Play-off">
                                                 <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
@@ -515,7 +515,7 @@
                                                 @endif
                                             </div>
                                             <button type="button" 
-                                                    @click="openEditScheduleModal('{{ $match['match_code'] }}', '{{ $existing->court_number }}', '{{ $existing->scheduled_time ?? '' }}', '{{ $existing->match_order ?? '' }}', '{{ $existing->match_day ?? 1 }}', '{{ $existing->match_date?->format('Y-m-d') ?? '' }}')"
+                                                    @click.stop="openEditScheduleModal('{{ $match['match_code'] }}', '{{ $existing->court_number }}', '{{ $existing->scheduled_time ?? '' }}', '{{ $match['match_number'] ?? ($existing->match_order ?? '') }}', '{{ $existing->match_day ?? 1 }}', '{{ $existing->match_date?->format('Y-m-d') ?? '' }}')"
                                                     class="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-amber-300 transition cursor-pointer"
                                                     title="Ubah Hari, Lapangan & Jam Tanding Partai Ini">
                                                 <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
@@ -525,7 +525,7 @@
                                         <div class="px-3 py-1.5 bg-slate-950/40 border-b border-slate-800/60 flex items-center justify-between text-[10px] text-slate-400 font-mono">
                                             <span class="text-slate-500">Jadwal belum diset</span>
                                             <button type="button" 
-                                                    @click="openEditScheduleModal('{{ $match['match_code'] }}', 'Lapangan 1', '', '', 1, '{{ $competition->schedule_date ? \Carbon\Carbon::parse($competition->schedule_date)->format('Y-m-d') : '' }}')"
+                                                    @click.stop="openEditScheduleModal('{{ $match['match_code'] }}', '{{ $existing->court_number ?? 'Lapangan 1' }}', '{{ $existing->scheduled_time ?? '' }}', '{{ $match['match_number'] ?? ($existing->match_order ?? '') }}', '{{ $existing->match_day ?? 1 }}', '{{ $existing->match_date?->format('Y-m-d') ?? ($competition->schedule_date ? \Carbon\Carbon::parse($competition->schedule_date)->format('Y-m-d') : '') }}')"
                                                     class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold transition flex items-center gap-1 cursor-pointer">
                                                 <i data-lucide="clock" class="w-3 h-3 text-amber-400"></i>
                                                 <span>Set Jadwal</span>
@@ -696,7 +696,7 @@
                                             <div class="flex items-center gap-1.5">
                                                 @if($existing->court_number !== 'BYE')
                                                     <button type="button" 
-                                                            @click="openEditScheduleModal('{{ $match['match_code'] }}', '{{ $existing->court_number }}', '{{ $existing->scheduled_time ?? '' }}', '{{ $existing->match_order ?? '' }}')"
+                                                            @click.stop="openEditScheduleModal('{{ $match['match_code'] }}', '{{ $existing->court_number ?? 'Lapangan 1' }}', '{{ $existing->scheduled_time ?? '' }}', '{{ $match['match_number'] ?? ($existing->match_order ?? '') }}', '{{ $existing->match_day ?? 1 }}', '{{ $existing->match_date?->format('Y-m-d') ?? ($competition->schedule_date ? \Carbon\Carbon::parse($competition->schedule_date)->format('Y-m-d') : '') }}')"
                                                             class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold transition flex items-center gap-1 cursor-pointer"
                                                             title="Atur Jadwal / Lapangan">
                                                         <i data-lucide="calendar" class="w-3 h-3 text-amber-400"></i>
@@ -1372,9 +1372,9 @@
     <!-- Modal: Quick Edit Single Match Schedule -->
     <div x-show="showEditMatchModal" 
          x-cloak
+         @click.self="closeEditModal()"
          class="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div @click.away="closeEditModal()" 
-             class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 text-white animate-in fade-in zoom-in-95 duration-200">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 text-white animate-in fade-in zoom-in-95 duration-200">
             
             <div class="flex items-center justify-between border-b border-slate-800 pb-3.5">
                 <div class="flex items-center gap-2.5">
@@ -1892,12 +1892,12 @@
 
             openEditScheduleModal(matchCode, courtNumber, scheduledTime, matchOrder, matchDay, matchDate) {
                 this.editMatchData = {
-                    matchCode: matchCode,
+                    matchCode: matchCode || '',
                     courtNumber: courtNumber || 'Lapangan 1',
                     scheduledTime: scheduledTime || '',
                     matchOrder: matchOrder || '',
-                    matchDay: matchDay || 1,
-                    matchDate: matchDate || ''
+                    matchDay: parseInt(matchDay) || 1,
+                    matchDate: matchDate || (this.scheduleStartDate || '')
                 };
                 this.showEditMatchModal = true;
                 this.$nextTick(() => {
@@ -1931,21 +1931,28 @@
                         })
                     });
 
+                    if (!response.ok) {
+                        const errData = await response.json().catch(() => ({}));
+                        throw new Error(errData.message || `Gagal menyimpan jadwal (Status ${response.status})`);
+                    }
+
                     const res = await response.json();
                     if (res.success) {
                         this.toastSuccess = true;
                         this.toastMessage = res.message;
                         this.closeEditModal();
-                        setTimeout(() => window.location.reload(), 700);
+                        setTimeout(() => window.location.reload(), 600);
                     } else {
                         alert(res.message || 'Gagal menyimpan perubahan.');
                     }
                 } catch (err) {
                     console.error('Save schedule error:', err);
-                    alert('Terjadi kesalahan jaringan.');
+                    alert(err.message || 'Terjadi kesalahan jaringan.');
                 } finally {
                     this.isSavingSchedule = false;
-                    if (window.lucide) window.lucide.createIcons();
+                    this.$nextTick(() => {
+                        if (window.lucide) window.lucide.createIcons();
+                    });
                 }
             },
 
