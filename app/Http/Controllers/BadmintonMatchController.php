@@ -322,7 +322,9 @@ class BadmintonMatchController extends Controller
 
     public function courtScoreboard(Request $request, $court)
     {
-        $request->merge(['court' => $court]);
+        $courtDecoded = urldecode($court);
+        $request->query->set('court', $courtDecoded);
+        $request->merge(['court' => $courtDecoded]);
 
         return $this->scoreboard($request);
     }
@@ -344,7 +346,7 @@ class BadmintonMatchController extends Controller
             $courts = collect(['Lapangan 1', 'Lapangan 2']);
         }
 
-        $courtParam = $request->query('court');
+        $courtParam = $request->input('court') ?: $request->query('court');
         $selectedCourt = null;
         if (! empty($courtParam)) {
             $courtClean = trim($courtParam);
@@ -391,7 +393,7 @@ class BadmintonMatchController extends Controller
                 $match = BadmintonMatch::with('competition')
                     ->where('court_number', $selectedCourt)
                     ->where('match_status', 'upcoming')
-                    ->orderBy('court_order')
+                    ->orderBy('match_order')
                     ->orderBy('scheduled_time')
                     ->first();
             }
@@ -610,7 +612,7 @@ class BadmintonMatchController extends Controller
             if (! $m) {
                 $m = BadmintonMatch::where('court_number', $court)
                     ->where('match_status', 'upcoming')
-                    ->orderBy('court_order')
+                    ->orderBy('match_order')
                     ->orderBy('scheduled_time')
                     ->first();
             }
