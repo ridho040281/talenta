@@ -388,13 +388,14 @@ class BadmintonMatchController extends Controller
                 ->latest('updated_at')
                 ->first();
 
-            // Next, find next upcoming match on this court
+            // Next, find next upcoming match on this court (Day 1 earliest time first)
             if (! $match) {
                 $match = BadmintonMatch::with('competition')
                     ->where('court_number', $selectedCourt)
                     ->where('match_status', 'upcoming')
-                    ->orderBy('match_order')
+                    ->orderBy('match_day')
                     ->orderBy('scheduled_time')
+                    ->orderBy('match_order')
                     ->first();
             }
 
@@ -612,8 +613,9 @@ class BadmintonMatchController extends Controller
             if (! $m) {
                 $m = BadmintonMatch::where('court_number', $court)
                     ->where('match_status', 'upcoming')
-                    ->orderBy('match_order')
+                    ->orderBy('match_day')
                     ->orderBy('scheduled_time')
+                    ->orderBy('match_order')
                     ->first();
             }
 
