@@ -521,15 +521,35 @@ class TournamentBracketController extends Controller
             }
         }
 
-        // 2. Bracket Rounds (Babak 1, Babak 2/16B, QF, SF, Final)
+        // 2. Bracket Rounds (Babak 1, Babak 2/16B, QF, SF, Perebutan Juara 3, Final)
         if (! empty($bData['rounds'])) {
+            $totalRounds = count($bData['rounds']);
             foreach ($bData['rounds'] as $round) {
                 $rIdx = (int) ($round['round_index'] ?? 1);
                 $rName = $round['round_name'] ?? "Babak {$rIdx}";
+
+                // Standar BWF (Opsi 1): Perebutan Juara 3 dicantumkan tepat sebelum Grand Final
+                if ($rIdx === $totalRounds && ! empty($bData['bronze_match']['has_bronze_match'])) {
+                    $bm = $bData['bronze_match'];
+                    $bracketMatches[] = [
+                        'round_name' => 'Perebutan Juara 3',
+                        'round_type' => 'bronze',
+                        'round_index' => $totalRounds - 0.5,
+                        'match_code' => $bm['match_code'],
+                        'match_number' => $bm['match_number'] ?? null,
+                        'team1' => $bm['team1'] ?? null,
+                        'team2' => $bm['team2'] ?? null,
+                        'winner' => $bm['winner'] ?? null,
+                        'status' => $bm['status'] ?? 'upcoming',
+                        'is_bye1' => false,
+                        'is_bye2' => false,
+                    ];
+                }
+
                 foreach ($round['matches'] as $m) {
                     $bracketMatches[] = [
                         'round_name' => $rName,
-                        'round_type' => 'bracket',
+                        'round_type' => ($rIdx === $totalRounds) ? 'final' : 'bracket',
                         'round_index' => $rIdx,
                         'match_code' => $m['match_code'],
                         'match_number' => $m['match_number'] ?? null,
@@ -542,24 +562,6 @@ class TournamentBracketController extends Controller
                     ];
                 }
             }
-        }
-
-        // 3. Perebutan Juara 3 (Bronze Medal Match)
-        if (! empty($bData['bronze_match']['has_bronze_match'])) {
-            $bm = $bData['bronze_match'];
-            $bracketMatches[] = [
-                'round_name' => 'Perebutan Juara 3',
-                'round_type' => 'bronze',
-                'round_index' => 99,
-                'match_code' => $bm['match_code'],
-                'match_number' => $bm['match_number'] ?? null,
-                'team1' => $bm['team1'] ?? null,
-                'team2' => $bm['team2'] ?? null,
-                'winner' => $bm['winner'] ?? null,
-                'status' => $bm['status'] ?? 'upcoming',
-                'is_bye1' => false,
-                'is_bye2' => false,
-            ];
         }
 
         // Header Title
