@@ -2307,13 +2307,14 @@ class TournamentBracketController extends Controller
         }
 
         if (! $match->exists) {
-            $match->round_name = $request->input('round_name', 'Babak 1');
+            $isBronze = str_contains($matchCode, '-3RD-');
+            $match->round_name = $request->input('round_name', $isBronze ? 'Perebutan Juara 3' : 'Babak 1');
             $match->category = $request->input('category', 'MS');
             $match->match_type = $request->input('match_type', 'single');
-            $match->team1_school = $request->input('team1_school', 'TBD');
-            $match->team1_player1 = $request->input('team1_player1', 'TBD');
-            $match->team2_school = $request->input('team2_school', 'TBD');
-            $match->team2_player1 = $request->input('team2_player1', 'TBD');
+            $match->team1_school = $request->input('team1_school', $isBronze ? 'Menunggu Semifinal 1' : 'TBD');
+            $match->team1_player1 = $request->input('team1_player1', $isBronze ? 'Kalah SF #1' : 'TBD');
+            $match->team2_school = $request->input('team2_school', $isBronze ? 'Menunggu Semifinal 2' : 'TBD');
+            $match->team2_player1 = $request->input('team2_player1', $isBronze ? 'Kalah SF #2' : 'TBD');
             $match->match_status = 'upcoming';
         }
 
@@ -2769,6 +2770,71 @@ class TournamentBracketController extends Controller
 
                 $bronzeMatchCode = "{$poolKey}-3RD-M1";
                 $existingBronzeMatch = $existingMatches->get($bronzeMatchCode);
+
+                if (! $existingBronzeMatch) {
+                    $finalCode = "{$poolKey}-R{$totalRounds}-M1";
+                    $finalExisting = $existingMatches->get($finalCode);
+
+                    if ($finalExisting && $finalExisting->match_day) {
+                        $allCourts = $existingMatches->pluck('court_number')->filter(fn ($c) => ! empty($c) && strtoupper($c) !== 'BYE')->unique()->values()->all();
+                        $bronzeCourt = (count($allCourts) > 1 && $finalExisting->court_number === $allCourts[0]) ? $allCourts[1] : ($finalExisting->court_number ?: 'Lapangan 2');
+
+                        $existingBronzeMatch = BadmintonMatch::create([
+                            'competition_id' => $competition->id,
+                            'match_code' => $bronzeMatchCode,
+                            'round_name' => 'Perebutan Juara 3',
+                            'category' => $finalExisting->category ?: 'MS',
+                            'match_type' => $finalExisting->match_type ?: 'single',
+                            'court_number' => $bronzeCourt,
+                            'match_day' => $finalExisting->match_day,
+                            'match_date' => $finalExisting->match_date,
+                            'match_day_label' => $finalExisting->match_day_label,
+                            'match_order' => max(1, (int) ($finalExisting->match_order ?: 1) - 1),
+                            'scheduled_time' => $finalExisting->scheduled_time ?: '08:00',
+                            'team1_player1' => 'Kalah SF #1',
+                            'team1_school' => 'Menunggu Semifinal 1',
+                            'team2_player1' => 'Kalah SF #2',
+                            'team2_school' => 'Menunggu Semifinal 2',
+                            'match_status' => 'upcoming',
+                        ]);
+
+                        $existingMatches->put($bronzeMatchCode, $existingBronzeMatch);
+                    }
+                }
+
+                if ($existingBronzeMatch) {
+                    $sf1Existing = $existingMatches->get("{$poolKey}-R".($totalRounds - 1).'-M1');
+                    $sf2Existing = $existingMatches->get("{$poolKey}-R".($totalRounds - 1).'-M2');
+                    $needsSave = false;
+
+                    if ($sf1Existing && $sf1Existing->match_status === 'finished' && in_array($sf1Existing->winner_team, [1, 2])) {
+                        $loserIsT1 = ($sf1Existing->winner_team === 2);
+                        $t1Name = $loserIsT1 ? $sf1Existing->team1_player1 : $sf1Existing->team2_player1;
+                        if ($existingBronzeMatch->team1_player1 !== $t1Name) {
+                            $existingBronzeMatch->team1_registration_id = $loserIsT1 ? $sf1Existing->team1_registration_id : $sf1Existing->team2_registration_id;
+                            $existingBronzeMatch->team1_player1 = $t1Name;
+                            $existingBronzeMatch->team1_player2 = $loserIsT1 ? $sf1Existing->team1_player2 : $sf1Existing->team2_player2;
+                            $existingBronzeMatch->team1_school = $loserIsT1 ? $sf1Existing->team1_school : $sf1Existing->team2_school;
+                            $needsSave = true;
+                        }
+                    }
+
+                    if ($sf2Existing && $sf2Existing->match_status === 'finished' && in_array($sf2Existing->winner_team, [1, 2])) {
+                        $loserIsT1 = ($sf2Existing->winner_team === 2);
+                        $t2Name = $loserIsT1 ? $sf2Existing->team1_player1 : $sf2Existing->team2_player1;
+                        if ($existingBronzeMatch->team2_player1 !== $t2Name) {
+                            $existingBronzeMatch->team2_registration_id = $loserIsT1 ? $sf2Existing->team1_registration_id : $sf2Existing->team2_registration_id;
+                            $existingBronzeMatch->team2_player1 = $t2Name;
+                            $existingBronzeMatch->team2_player2 = $loserIsT1 ? $sf2Existing->team1_player2 : $sf2Existing->team2_player2;
+                            $existingBronzeMatch->team2_school = $loserIsT1 ? $sf2Existing->team1_school : $sf2Existing->team2_school;
+                            $needsSave = true;
+                        }
+                    }
+
+                    if ($needsSave) {
+                        $existingBronzeMatch->save();
+                    }
+                }
 
                 $bronzeWinner = null;
                 $bronzeLoser = null;

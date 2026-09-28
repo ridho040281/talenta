@@ -934,19 +934,82 @@
                                 $isBmW2 = ($bmEm && $bmEm->winner_team === 2);
                             @endphp
                             <div class="bg-slate-900/90 rounded-2xl border border-amber-500/30 shadow-xl overflow-hidden text-left relative">
-                                <div class="px-3.5 py-2.5 bg-gradient-to-r from-amber-500/15 to-transparent border-b border-amber-500/20 flex items-center justify-between">
-                                    <div class="flex items-center gap-1.5">
-                                        <span class="text-sm">🥉</span>
-                                        <span class="text-xs font-black text-amber-300 uppercase tracking-wide">Perebutan Juara 3</span>
+                                <!-- Card Header Bar -->
+                                <div class="px-3.5 py-2.5 bg-slate-950/90 border-b border-slate-800/80 flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-mono text-[11px] font-bold border border-amber-500/30">
+                                            Partai #{{ $bm['match_number'] ?? ($bmEm?->match_order ?? '-') }}
+                                        </span>
+                                        <span class="text-[11px] font-mono text-slate-400 font-semibold">
+                                            {{ $bm['match_code'] }}
+                                        </span>
                                     </div>
-                                    @if($bmEm && $bmEm->match_status === 'finished')
-                                        <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">Selesai</span>
-                                    @elseif($bmEm && $bmEm->match_status === 'ongoing')
-                                        <span class="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20 animate-pulse">Berlangsung</span>
-                                    @else
-                                        <span class="text-[10px] font-bold text-slate-400 bg-slate-800 px-2 py-0.5 rounded-md">Terjadwal</span>
-                                    @endif
+
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 font-black text-[10px] border border-amber-500/30 flex items-center gap-1">
+                                            <span>🥉</span>
+                                            <span>Juara 3</span>
+                                        </span>
+                                        @if($bmEm && $bmEm->match_status === 'finished')
+                                            <span class="px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 font-bold text-[10px] border border-emerald-500/30">
+                                                Selesai
+                                            </span>
+                                        @elseif($bmEm && $bmEm->match_status === 'ongoing')
+                                            <span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold text-[10px] border border-amber-500/40 flex items-center gap-1">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
+                                                Live Tanding
+                                            </span>
+                                        @else
+                                            <button type="button" 
+                                                    @click.stop="openEditScheduleModal('{{ $bm['match_code'] }}', '{{ $bmEm?->court_number ?? 'Lapangan 2' }}', '{{ $bmEm?->scheduled_time ?? '' }}', '{{ $bm['match_number'] ?? ($bmEm?->match_order ?? '') }}', '{{ $bmEm?->match_day ?? 4 }}', '{{ $bmEm?->match_date?->format('Y-m-d') ?? ($competition->schedule_date ? \Carbon\Carbon::parse($competition->schedule_date)->format('Y-m-d') : '') }}')"
+                                                    class="px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white font-mono text-[10px] transition cursor-pointer">
+                                                Jadwal
+                                            </button>
+                                        @endif
+                                    </div>
                                 </div>
+
+                                <!-- Court & Time Schedule Badge Bar -->
+                                @if($bmEm && $bmEm->court_number && strtoupper($bmEm->court_number) !== 'BYE' && ($bmEm->scheduled_time || $bmEm->match_day))
+                                    <div class="px-3 py-1.5 bg-slate-950/80 border-b border-slate-800/80 flex items-center justify-between text-[11px] font-mono">
+                                        <div class="flex items-center gap-1.5 flex-wrap">
+                                            @if($bmEm->match_day_label || $bmEm->match_day)
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 font-bold text-[10px] border border-sky-500/30">
+                                                    📅 {{ $bmEm->match_day_label ?: ('Hari ' . $bmEm->match_day) }}
+                                                </span>
+                                            @endif
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-bold border-indigo-500/30 text-[10px] border">
+                                                🏸 {{ $bmEm->court_number }}
+                                            </span>
+                                            @if(!empty($bm['match_number']) || !empty($bmEm->match_order))
+                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold text-[10px] border border-amber-500/30">
+                                                    Partai #{{ $bm['match_number'] ?? $bmEm->match_order }}
+                                                </span>
+                                            @endif
+                                            @if($bmEm->scheduled_time)
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold border-emerald-500/30 text-[10px] border">
+                                                    ⏰ {{ $bmEm->scheduled_time }}
+                                                </span>
+                                            @endif
+                                        </div>
+                                        <button type="button" 
+                                                @click.stop="openEditScheduleModal('{{ $bm['match_code'] }}', '{{ $bmEm->court_number }}', '{{ $bmEm->scheduled_time }}', '{{ $bm['match_number'] ?? $bmEm->match_order }}', '{{ $bmEm->match_day ?? 4 }}', '{{ $bmEm->match_date?->format('Y-m-d') ?? ($competition->schedule_date ? \Carbon\Carbon::parse($competition->schedule_date)->format('Y-m-d') : '') }}')"
+                                                class="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-amber-300 transition cursor-pointer"
+                                                title="Ubah Hari, Lapangan & Jam Tanding Partai Perebutan Juara 3">
+                                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                    </div>
+                                @else
+                                    <div class="px-3 py-1.5 bg-slate-950/40 border-b border-slate-800/60 flex items-center justify-between text-[10px] text-slate-400 font-mono">
+                                        <span class="text-slate-500">Jadwal belum diset</span>
+                                        <button type="button" 
+                                                @click.stop="openEditScheduleModal('{{ $bm['match_code'] }}', '{{ $bmEm?->court_number ?? 'Lapangan 2' }}', '{{ $bmEm?->scheduled_time ?? '' }}', '{{ $bm['match_number'] ?? ($bmEm?->match_order ?? '') }}', '{{ $bmEm?->match_day ?? 4 }}', '{{ $bmEm?->match_date?->format('Y-m-d') ?? ($competition->schedule_date ? \Carbon\Carbon::parse($competition->schedule_date)->format('Y-m-d') : '') }}')"
+                                                class="px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold transition flex items-center gap-1 cursor-pointer border border-amber-500/40">
+                                            <i data-lucide="clock" class="w-3 h-3 text-amber-400"></i>
+                                            <span>Set Jadwal & Lapangan</span>
+                                        </button>
+                                    </div>
+                                @endif
 
                                 <div class="p-3 space-y-2">
                                     <!-- Kalah SF 1 -->
@@ -996,34 +1059,19 @@
                                     @endif
                                 </div>
 
-                                <!-- Card Action Footer -->
-                                <div class="px-3 py-2 bg-slate-950/80 border-t border-slate-800/80 flex items-center justify-between text-[10px]">
-                                    <div class="flex items-center gap-1.5 text-slate-400">
-                                        @if($bmEm && ($bmEm->court_number || $bmEm->scheduled_time))
-                                            <button type="button" 
-                                                    @click="openQuickEdit({{ json_encode($bmEm) }})" 
-                                                    class="hover:text-indigo-400 transition flex items-center gap-1 cursor-pointer font-medium text-slate-300">
-                                                <i data-lucide="calendar" class="w-3 h-3 text-amber-400"></i>
-                                                <span>{{ $bmEm->court_number }} {{ $bmEm->scheduled_time ? '• '.$bmEm->scheduled_time : '' }}</span>
-                                                <i data-lucide="edit-2" class="w-2.5 h-2.5 text-slate-500"></i>
-                                            </button>
-                                        @else
-                                            <span class="text-slate-500">Day 4 (Final)</span>
-                                        @endif
+                                <!-- Card Action Footer (Umpire & TV buttons) -->
+                                @if($bmEm)
+                                    <div class="px-3 py-1.5 bg-slate-950/80 border-t border-slate-800/80 flex items-center justify-end gap-1.5 text-[10px]">
+                                        <a href="{{ route('badminton.umpire', $bmEm->id) }}" target="_blank" class="px-2.5 py-1 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 font-bold transition flex items-center gap-1 shadow-sm" title="Lembar Skoring Wasit">
+                                            <i data-lucide="activity" class="w-3 h-3"></i>
+                                            <span>Wasit</span>
+                                        </a>
+                                        <a href="{{ route('badminton.scoreboard', $bmEm->id) }}" target="_blank" class="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold transition flex items-center gap-1 shadow-sm" title="Papan Skor TV Lapangan">
+                                            <i data-lucide="tv" class="w-3 h-3"></i>
+                                            <span>Skor</span>
+                                        </a>
                                     </div>
-                                    @if($bmEm)
-                                        <div class="flex items-center gap-1.5">
-                                            <a href="{{ route('badminton.umpire', $bmEm->id) }}" target="_blank" class="px-2 py-0.5 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 font-bold transition flex items-center gap-1" title="Lembar Skoring Wasit">
-                                                <i data-lucide="activity" class="w-2.5 h-2.5"></i>
-                                                <span>Wasit</span>
-                                            </a>
-                                            <a href="{{ route('badminton.scoreboard', $bmEm->id) }}" target="_blank" class="px-2 py-0.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold transition flex items-center gap-1" title="Papan Skor TV Lapangan">
-                                                <i data-lucide="tv" class="w-2.5 h-2.5"></i>
-                                                <span>Skor</span>
-                                            </a>
-                                        </div>
-                                    @endif
-                                </div>
+                                @endif
                             </div>
                         @endif
                     </div>

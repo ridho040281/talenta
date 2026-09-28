@@ -811,19 +811,64 @@
                                     $isBmW2 = ($bmEm && $bmEm->winner_team === 2);
                                 @endphp
                                 <div class="bg-slate-900/90 rounded-2xl border border-amber-500/30 shadow-xl overflow-hidden text-left relative">
-                                    <div class="px-3.5 py-2.5 bg-gradient-to-r from-amber-500/15 to-transparent border-b border-amber-500/20 flex items-center justify-between">
-                                        <div class="flex items-center gap-1.5">
-                                            <span class="text-sm">🥉</span>
-                                            <span class="text-xs font-black text-amber-300 uppercase tracking-wide">Perebutan Juara 3</span>
+                                    <!-- Card Header Bar -->
+                                    <div class="px-3.5 py-2.5 bg-slate-950/90 border-b border-slate-800/80 flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-mono text-[11px] font-bold border border-amber-500/30">
+                                                Partai #{{ $bm['match_number'] ?? ($bmEm?->match_order ?? '-') }}
+                                            </span>
+                                            <span class="text-[11px] font-mono text-slate-400 font-semibold">
+                                                {{ $bm['match_code'] }}
+                                            </span>
                                         </div>
-                                        @if($bmEm && $bmEm->match_status === 'finished')
-                                            <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">Selesai</span>
-                                        @elseif($bmEm && $bmEm->match_status === 'ongoing')
-                                            <span class="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20 animate-pulse">Berlangsung</span>
-                                        @else
-                                            <span class="text-[10px] font-bold text-slate-400 bg-slate-800 px-2 py-0.5 rounded-md">Terjadwal</span>
-                                        @endif
+
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 font-black text-[10px] border border-amber-500/30 flex items-center gap-1">
+                                                <span>🥉</span>
+                                                <span>Juara 3</span>
+                                            </span>
+                                            @if($bmEm && $bmEm->match_status === 'finished')
+                                                <span class="px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 font-bold text-[10px] border border-emerald-500/30">
+                                                    Selesai
+                                                </span>
+                                            @elseif($bmEm && $bmEm->match_status === 'ongoing')
+                                                <span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold text-[10px] border border-amber-500/40 flex items-center gap-1">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
+                                                    Live Tanding
+                                                </span>
+                                            @else
+                                                <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-400 font-mono text-[10px]">
+                                                    Jadwal
+                                                </span>
+                                            @endif
+                                        </div>
                                     </div>
+
+                                    <!-- Court & Time Schedule Badge Bar -->
+                                    @if($bmEm && $bmEm->court_number && strtoupper($bmEm->court_number) !== 'BYE' && ($bmEm->scheduled_time || $bmEm->match_day))
+                                        <div class="px-3 py-1.5 bg-slate-950/80 border-b border-slate-800/80 flex items-center justify-between text-[11px] font-mono">
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                @if($bmEm->match_day_label || $bmEm->match_day)
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 font-bold text-[10px] border border-sky-500/30">
+                                                        📅 {{ $bmEm->match_day_label ?: ('Hari ' . $bmEm->match_day) }}
+                                                    </span>
+                                                @endif
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-bold border-indigo-500/30 text-[10px] border">
+                                                    🏸 {{ $bmEm->court_number }}
+                                                </span>
+                                                @if(!empty($bm['match_number']) || !empty($bmEm->match_order))
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold text-[10px] border border-amber-500/30">
+                                                        Partai #{{ $bm['match_number'] ?? $bmEm->match_order }}
+                                                    </span>
+                                                @endif
+                                                @if($bmEm->scheduled_time)
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold border-emerald-500/30 text-[10px] border">
+                                                        ⏰ {{ $bmEm->scheduled_time }}
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endif
 
                                     <div class="p-3 space-y-2">
                                         <!-- Kalah SF 1 -->
