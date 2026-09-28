@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\BadmintonMatch;
 use App\Models\Category;
 use App\Models\Competition;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -169,5 +170,83 @@ class BadmintonCourtScoreboardTest extends TestCase
         $apiResponse = $this->getJson(route('api.badminton.active_courts'));
         $apiResponse->assertStatus(200);
         $this->assertEquals('Citra', $apiResponse->json('Lapangan 1.team1_player1'));
+    }
+
+    public function test_export_excel_all_pools(): void
+    {
+        $admin = User::factory()->create(['role' => 'superadmin']);
+
+        $cat = Category::create([
+            'name' => 'Olahraga Excel',
+            'slug' => 'olahraga-excel',
+        ]);
+
+        $comp = Competition::create([
+            'category_id' => $cat->id,
+            'name' => 'Bulu Tangkis Turnamen',
+            'code' => 'BLT',
+            'slug' => 'bulu-tangkis-turnamen',
+            'type' => 'individual',
+            'status' => 'open',
+        ]);
+
+        BadmintonMatch::create([
+            'competition_id' => $comp->id,
+            'match_code' => 'kat_c_pi-R1-M1',
+            'court_number' => 'Lapangan 1',
+            'round_name' => 'Babak 1',
+            'category' => 'WS',
+            'match_type' => 'single',
+            'team1_player1' => 'Zahra',
+            'team1_school' => 'SD 1',
+            'team2_player1' => 'Nabila',
+            'team2_school' => 'MI 2',
+            'match_status' => 'upcoming',
+            'match_order' => 1,
+            'scheduled_time' => '08:00',
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('pic.bracket.export_excel', $comp->id).'?pool=all');
+        $response->assertStatus(200);
+        $this->assertStringContainsString('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', $response->headers->get('content-type'));
+    }
+
+    public function test_export_excel_single_pool(): void
+    {
+        $admin = User::factory()->create(['role' => 'superadmin']);
+
+        $cat = Category::create([
+            'name' => 'Olahraga Excel 2',
+            'slug' => 'olahraga-excel-2',
+        ]);
+
+        $comp = Competition::create([
+            'category_id' => $cat->id,
+            'name' => 'Bulu Tangkis Turnamen 2',
+            'code' => 'BLT',
+            'slug' => 'bulu-tangkis-turnamen-2',
+            'type' => 'individual',
+            'status' => 'open',
+        ]);
+
+        BadmintonMatch::create([
+            'competition_id' => $comp->id,
+            'match_code' => 'kat_c_pi-R1-M1',
+            'court_number' => 'Lapangan 1',
+            'round_name' => 'Babak 1',
+            'category' => 'WS',
+            'match_type' => 'single',
+            'team1_player1' => 'Zahra',
+            'team1_school' => 'SD 1',
+            'team2_player1' => 'Nabila',
+            'team2_school' => 'MI 2',
+            'match_status' => 'upcoming',
+            'match_order' => 1,
+            'scheduled_time' => '08:00',
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('pic.bracket.export_excel', $comp->id).'?pool=kat_c_pi');
+        $response->assertStatus(200);
+        $this->assertStringContainsString('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', $response->headers->get('content-type'));
     }
 }

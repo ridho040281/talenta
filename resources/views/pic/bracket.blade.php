@@ -115,14 +115,71 @@
                 <span>Cetak Bagan (A4)</span>
             </a>
 
-            <!-- Export Jadwal Excel Button -->
-            <a href="{{ route('pic.bracket.export_excel', $competition->id) }}" 
-               target="_blank" 
-               class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 font-bold text-xs shadow-sm transition cursor-pointer"
-               title="Export Rekap Jadwal & Order of Play ke Microsoft Excel (.xlsx)">
-                <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-400"></i>
-                <span>Export Jadwal (Excel)</span>
-            </a>
+            <!-- Export Jadwal Excel Dropdown -->
+            <div class="relative inline-block text-left" x-data="{ openExportMenu: false }">
+                <button type="button" 
+                        @click="openExportMenu = !openExportMenu" 
+                        @click.outside="openExportMenu = false"
+                        class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 font-bold text-xs shadow-sm transition cursor-pointer"
+                        title="Export Rekap Jadwal & Bagan ke Microsoft Excel (.xlsx)">
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-400"></i>
+                    <span>Export Excel</span>
+                    <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-emerald-400 transition-transform duration-200" :class="openExportMenu ? 'rotate-180' : ''"></i>
+                </button>
+
+                <!-- Dropdown Menu -->
+                <div x-show="openExportMenu" 
+                     x-transition:enter="transition ease-out duration-150"
+                     x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
+                     x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                     x-transition:leave="transition ease-in duration-100"
+                     x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                     x-transition:leave-end="opacity-0 scale-95 -translate-y-1"
+                     class="absolute right-0 mt-2 w-72 rounded-2xl bg-slate-900 border border-slate-700/80 shadow-2xl p-2 z-50 backdrop-blur-xl"
+                     style="display: none;">
+                    
+                    <div class="px-3 py-2 border-b border-slate-800/80 mb-1">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pilih Lingkup Export Excel</div>
+                    </div>
+
+                    <!-- Option 1: Kategori Aktif (Sesuai Bagan yang Sedang Dilihat di Layar) -->
+                    <a href="{{ route('pic.bracket.export_excel', $competition->id) }}?pool={{ urlencode($activePoolKey) }}"
+                       target="_blank"
+                       @click="openExportMenu = false"
+                       class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-emerald-500/10 border border-transparent hover:border-emerald-500/20 text-slate-200 hover:text-emerald-300 transition group cursor-pointer">
+                        <div class="p-2 rounded-lg bg-emerald-500/20 text-emerald-400 shrink-0 group-hover:scale-105 transition">
+                            <i data-lucide="layout-grid" class="w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-xs text-white group-hover:text-emerald-300 flex items-center gap-1.5">
+                                <span>Bagan Kategori Ini</span>
+                                <span class="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-400 font-mono">Aktif</span>
+                            </div>
+                            <div class="text-[11px] text-slate-400 leading-tight mt-0.5">
+                                {{ $activePool['class_label'] ?? $activePool['title'] ?? 'Kategori Aktif' }} • Bagan & Order of Play
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- Option 2: Rekap Lengkap Semua Kategori -->
+                    <a href="{{ route('pic.bracket.export_excel', $competition->id) }}?pool=all"
+                       target="_blank"
+                       @click="openExportMenu = false"
+                       class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-blue-500/10 border border-transparent hover:border-blue-500/20 text-slate-200 hover:text-blue-300 transition group cursor-pointer mt-1">
+                        <div class="p-2 rounded-lg bg-blue-500/20 text-blue-400 shrink-0 group-hover:scale-105 transition">
+                            <i data-lucide="layers" class="w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-xs text-white group-hover:text-blue-300">
+                                Rekap Semua Kategori
+                            </div>
+                            <div class="text-[11px] text-slate-400 leading-tight mt-0.5">
+                                Seluruh sektor & lapangan gabungan (.xlsx multi-sheet)
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 
