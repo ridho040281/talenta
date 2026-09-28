@@ -892,7 +892,7 @@
                         </div>
                     </div>
 
-                    <div class="flex-1 flex flex-col justify-center py-2">
+                    <div class="flex-1 flex flex-col justify-center py-2 space-y-4">
                         <div class="bg-gradient-to-b from-amber-500/10 via-slate-900 to-slate-900 rounded-3xl border border-amber-500/40 p-6 text-center shadow-xl shadow-amber-500/5 relative overflow-hidden">
                             <div class="absolute -right-8 -top-8 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl"></div>
                             
@@ -922,6 +922,110 @@
                                 </p>
                             @endif
                         </div>
+
+                        @if(!empty($bracketData['bronze_match']['has_bronze_match']))
+                            @php
+                                $bm = $bracketData['bronze_match'];
+                                $bmEm = $bm['existing_match'] ?? null;
+                                $bmW = $bm['winner'] ?? null;
+                                $bmT1 = $bm['team1'] ?? null;
+                                $bmT2 = $bm['team2'] ?? null;
+                                $isBmW1 = ($bmEm && $bmEm->winner_team === 1);
+                                $isBmW2 = ($bmEm && $bmEm->winner_team === 2);
+                            @endphp
+                            <div class="bg-slate-900/90 rounded-2xl border border-amber-500/30 shadow-xl overflow-hidden text-left relative">
+                                <div class="px-3.5 py-2.5 bg-gradient-to-r from-amber-500/15 to-transparent border-b border-amber-500/20 flex items-center justify-between">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-sm">🥉</span>
+                                        <span class="text-xs font-black text-amber-300 uppercase tracking-wide">Perebutan Juara 3</span>
+                                    </div>
+                                    @if($bmEm && $bmEm->match_status === 'finished')
+                                        <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">Selesai</span>
+                                    @elseif($bmEm && $bmEm->match_status === 'ongoing')
+                                        <span class="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20 animate-pulse">Berlangsung</span>
+                                    @else
+                                        <span class="text-[10px] font-bold text-slate-400 bg-slate-800 px-2 py-0.5 rounded-md">Terjadwal</span>
+                                    @endif
+                                </div>
+
+                                <div class="p-3 space-y-2">
+                                    <!-- Kalah SF 1 -->
+                                    <div class="p-2 rounded-xl flex items-center justify-between {{ $isBmW1 ? 'bg-emerald-950/40 border border-emerald-500/40 text-emerald-200' : 'bg-slate-950/60 border border-slate-800/80 text-slate-200' }}">
+                                        <div class="min-w-0 pr-2">
+                                            <p class="font-extrabold text-xs truncate {{ $isBmW1 ? 'text-emerald-300' : 'text-white' }}">{{ $bmT1['name'] ?? 'Kalah SF #1' }}</p>
+                                            <p class="text-[10px] text-slate-400 truncate">{{ $bmT1['institution'] ?? 'Menunggu Semifinal 1' }}</p>
+                                        </div>
+                                        <div class="flex items-center gap-1.5 shrink-0 font-mono text-xs font-bold">
+                                            @if($bmEm && ($bmEm->team1_set1 > 0 || $bmEm->team2_set1 > 0))
+                                                <span class="{{ $bmEm->team1_set1 > $bmEm->team2_set1 ? 'text-emerald-400' : 'text-slate-400' }}">{{ $bmEm->team1_set1 }}</span>
+                                            @endif
+                                            @if($isBmW1)
+                                                <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-400"></i>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    <!-- Kalah SF 2 -->
+                                    <div class="p-2 rounded-xl flex items-center justify-between {{ $isBmW2 ? 'bg-emerald-950/40 border border-emerald-500/40 text-emerald-200' : 'bg-slate-950/60 border border-slate-800/80 text-slate-200' }}">
+                                        <div class="min-w-0 pr-2">
+                                            <p class="font-extrabold text-xs truncate {{ $isBmW2 ? 'text-emerald-300' : 'text-white' }}">{{ $bmT2['name'] ?? 'Kalah SF #2' }}</p>
+                                            <p class="text-[10px] text-slate-400 truncate">{{ $bmT2['institution'] ?? 'Menunggu Semifinal 2' }}</p>
+                                        </div>
+                                        <div class="flex items-center gap-1.5 shrink-0 font-mono text-xs font-bold">
+                                            @if($bmEm && ($bmEm->team1_set1 > 0 || $bmEm->team2_set1 > 0))
+                                                <span class="{{ $bmEm->team2_set1 > $bmEm->team1_set1 ? 'text-emerald-400' : 'text-slate-400' }}">{{ $bmEm->team2_set1 }}</span>
+                                            @endif
+                                            @if($isBmW2)
+                                                <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-400"></i>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    <!-- Winner / Juara 3 display -->
+                                    @if($bmW)
+                                        <div class="mt-2 pt-2 border-t border-slate-800 flex items-center justify-between bg-amber-500/10 rounded-xl px-2.5 py-1.5 border border-amber-500/20">
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="text-xs">🥉</span>
+                                                <div>
+                                                    <p class="text-[9px] font-black uppercase text-amber-400">Juara 3 (Perunggu)</p>
+                                                    <p class="text-xs font-black text-white truncate max-w-[140px]">{{ $bmW['name'] }}</p>
+                                                </div>
+                                            </div>
+                                            <span class="text-[9px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">Podium 3</span>
+                                        </div>
+                                    @endif
+                                </div>
+
+                                <!-- Card Action Footer -->
+                                <div class="px-3 py-2 bg-slate-950/80 border-t border-slate-800/80 flex items-center justify-between text-[10px]">
+                                    <div class="flex items-center gap-1.5 text-slate-400">
+                                        @if($bmEm && ($bmEm->court_number || $bmEm->scheduled_time))
+                                            <button type="button" 
+                                                    @click="openQuickEdit({{ json_encode($bmEm) }})" 
+                                                    class="hover:text-indigo-400 transition flex items-center gap-1 cursor-pointer font-medium text-slate-300">
+                                                <i data-lucide="calendar" class="w-3 h-3 text-amber-400"></i>
+                                                <span>{{ $bmEm->court_number }} {{ $bmEm->scheduled_time ? '• '.$bmEm->scheduled_time : '' }}</span>
+                                                <i data-lucide="edit-2" class="w-2.5 h-2.5 text-slate-500"></i>
+                                            </button>
+                                        @else
+                                            <span class="text-slate-500">Day 4 (Final)</span>
+                                        @endif
+                                    </div>
+                                    @if($bmEm)
+                                        <div class="flex items-center gap-1.5">
+                                            <a href="{{ route('badminton.umpire', $bmEm->id) }}" target="_blank" class="px-2 py-0.5 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 font-bold transition flex items-center gap-1" title="Lembar Skoring Wasit">
+                                                <i data-lucide="activity" class="w-2.5 h-2.5"></i>
+                                                <span>Wasit</span>
+                                            </a>
+                                            <a href="{{ route('badminton.scoreboard', $bmEm->id) }}" target="_blank" class="px-2 py-0.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold transition flex items-center gap-1" title="Papan Skor TV Lapangan">
+                                                <i data-lucide="tv" class="w-2.5 h-2.5"></i>
+                                                <span>Skor</span>
+                                            </a>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 </div>
 
@@ -1006,6 +1110,22 @@
                             </div>
                         </div>
                     </label>
+
+                    <!-- Pengaturan Tambahan: Perebutan Juara 3 & 4 -->
+                    <div class="pt-2">
+                        <label class="flex items-start gap-3 p-3.5 rounded-2xl bg-amber-950/20 border border-amber-500/30 hover:border-amber-500/50 cursor-pointer transition">
+                            <input type="checkbox" x-model="hasBronzeMatch" class="mt-0.5 w-4 h-4 rounded text-amber-500 focus:ring-amber-500 bg-slate-900 border-slate-700">
+                            <div class="flex-1 space-y-0.5">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-black text-amber-300 text-xs">🥉 Sertakan Partai Perebutan Juara 3 & 4</span>
+                                    <span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 uppercase">Rekomendasi</span>
+                                </div>
+                                <p class="text-slate-400 text-[11px] leading-relaxed">
+                                    Mempertemukan peserta yang kalah di Semifinal 1 dan Semifinal 2 untuk memperebutkan Juara 3 (Medali Perunggu) dan Juara Harapan 1.
+                                </p>
+                            </div>
+                        </label>
+                    </div>
                 </div>
             </div>
 
@@ -2127,6 +2247,7 @@
             showFormatModal: false,
             bracketMode: '{{ $bracketData['playoffs']['mode'] ?? ($competition->bracket_settings[$activePoolKey]['mode'] ?? 'auto') }}',
             targetBracketSize: {{ $bracketData['playoffs']['target_bracket_size'] ?? ($competition->bracket_settings[$activePoolKey]['target_bracket_size'] ?? 32) }},
+            hasBronzeMatch: {{ ($bracketData['bronze_match']['has_bronze_match'] ?? ($competition->bracket_settings[$activePoolKey]['has_bronze_match'] ?? true)) ? 'true' : 'false' }},
             isSavingFormat: false,
 
             // Schedule & Court Management State
@@ -2257,7 +2378,8 @@
                         body: JSON.stringify({
                             pool_key: this.activePoolKey,
                             mode: this.bracketMode,
-                            target_bracket_size: parseInt(this.targetBracketSize)
+                            target_bracket_size: parseInt(this.targetBracketSize),
+                            has_bronze_match: this.hasBronzeMatch
                         })
                     });
 

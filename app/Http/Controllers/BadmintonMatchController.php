@@ -755,5 +755,37 @@ class BadmintonMatchController extends Controller
                 $this->touchMatchTimestamp($targetMatch->id);
             }
         }
+
+        // Sinkronisasi atlet yang kalah ke partai Perebutan Juara 3 jika babak ini adalah Semifinal
+        $bronzeMatch = BadmintonMatch::where('competition_id', $match->competition_id)
+            ->where('match_code', "{$poolKey}-3RD-M1")
+            ->first();
+
+        $isFinalNext = ($nextMatchIndex === 1) && ! BadmintonMatch::where('competition_id', $match->competition_id)
+            ->where('match_code', "{$poolKey}-R{$nextRound}-M2")
+            ->exists();
+
+        if ($bronzeMatch && $isFinalNext) {
+            $bronzeSlot = ($currentMatchIndex % 2 === 1) ? 1 : 2;
+            if ($match->match_status === 'finished' && in_array($match->winner_team, [1, 2])) {
+                $loserIsT1 = ($match->winner_team === 2);
+                $bronzeMatch->{"team{$bronzeSlot}_registration_id"} = $loserIsT1 ? $match->team1_registration_id : $match->team2_registration_id;
+                $bronzeMatch->{"team{$bronzeSlot}_player1"} = $loserIsT1 ? $match->team1_player1 : $match->team2_player1;
+                $bronzeMatch->{"team{$bronzeSlot}_player2"} = $loserIsT1 ? $match->team1_player2 : $match->team2_player2;
+                $bronzeMatch->{"team{$bronzeSlot}_school"} = $loserIsT1 ? $match->team1_school : $match->team2_school;
+                $bronzeMatch->save();
+                $this->touchMatchTimestamp($bronzeMatch->id);
+            } elseif (in_array($match->match_status, ['upcoming', 'ongoing', 'interval'])) {
+                $placeholder = "Kalah SF #{$currentMatchIndex}";
+                if ($bronzeMatch->{"team{$bronzeSlot}_player1"} !== $placeholder && ! str_contains($bronzeMatch->{"team{$bronzeSlot}_player1"} ?? '', 'Kalah SF')) {
+                    $bronzeMatch->{"team{$bronzeSlot}_registration_id"} = null;
+                    $bronzeMatch->{"team{$bronzeSlot}_player1"} = $placeholder;
+                    $bronzeMatch->{"team{$bronzeSlot}_player2"} = null;
+                    $bronzeMatch->{"team{$bronzeSlot}_school"} = "Menunggu Semifinal {$currentMatchIndex}";
+                    $bronzeMatch->save();
+                    $this->touchMatchTimestamp($bronzeMatch->id);
+                }
+            }
+        }
     }
 }

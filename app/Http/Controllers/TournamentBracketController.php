@@ -375,6 +375,23 @@ class TournamentBracketController extends Controller
                     }
                 }
             }
+
+            // Tambahkan partai perebutan juara 3 jika ada
+            if (! empty($b['bronze_match']['has_bronze_match'])) {
+                $bm = $b['bronze_match'];
+                $treeMatchesByCode[$bm['match_code']] = [
+                    'team1_player' => $bm['team1']['name'] ?? 'Kalah SF #1',
+                    'team1_school' => $bm['team1']['institution'] ?? 'TBD',
+                    'team2_player' => $bm['team2']['name'] ?? 'Kalah SF #2',
+                    'team2_school' => $bm['team2']['institution'] ?? 'TBD',
+                ];
+            } else {
+                // Jika opsi bronze tidak aktif, bersihkan match 3RD yang masih upcoming dari database
+                BadmintonMatch::where('competition_id', $competition->id)
+                    ->where('match_code', 'like', "{$p['key']}-3RD-%")
+                    ->where('match_status', 'upcoming')
+                    ->delete();
+            }
         }
 
         // 2. Ambil match dari database setelah record play-off kadaluarsa dibersihkan
@@ -527,6 +544,24 @@ class TournamentBracketController extends Controller
             }
         }
 
+        // 3. Perebutan Juara 3 (Bronze Medal Match)
+        if (! empty($bData['bronze_match']['has_bronze_match'])) {
+            $bm = $bData['bronze_match'];
+            $bracketMatches[] = [
+                'round_name' => 'Perebutan Juara 3',
+                'round_type' => 'bronze',
+                'round_index' => 99,
+                'match_code' => $bm['match_code'],
+                'match_number' => $bm['match_number'] ?? null,
+                'team1' => $bm['team1'] ?? null,
+                'team2' => $bm['team2'] ?? null,
+                'winner' => $bm['winner'] ?? null,
+                'status' => $bm['status'] ?? 'upcoming',
+                'is_bye1' => false,
+                'is_bye2' => false,
+            ];
+        }
+
         // Header Title
         $sheet->setCellValue('A1', 'BAGAN PERTANDINGAN (SESUAI STRUKTUR BAGAN)');
         $sheet->setCellValue('A2', strtoupper($competition->name.' - '.($pool['title'] ?? $pool['name'] ?? '')));
@@ -581,6 +616,7 @@ class TournamentBracketController extends Controller
                 $currentRound = $bm['round_name'];
                 $roundIcon = match (strtolower($currentRound)) {
                     'grand final', 'final' => '🏆',
+                    'perebutan juara 3' => '🥉',
                     'semifinal' => '🎖️',
                     'perempat final' => '⚔️',
                     default => '🏸',
@@ -1141,13 +1177,17 @@ class TournamentBracketController extends Controller
             'pool_key' => 'required|string',
             'mode' => 'required|in:auto,playoff',
             'target_bracket_size' => 'nullable|integer|in:4,8,16,32,64',
+            'has_bronze_match' => 'nullable|boolean',
         ]);
 
         $settings = $competition->bracket_settings ?? [];
         $poolKey = $request->input('pool_key');
+        $hasBronze = $request->has('has_bronze_match') ? $request->boolean('has_bronze_match') : true;
+
         $settings[$poolKey] = [
             'mode' => $request->input('mode', 'auto'),
             'target_bracket_size' => (int) $request->input('target_bracket_size', 32),
+            'has_bronze_match' => $hasBronze,
             'updated_at' => now()->toIso8601String(),
         ];
 
@@ -1158,6 +1198,14 @@ class TournamentBracketController extends Controller
         if ($request->input('mode') === 'auto') {
             BadmintonMatch::where('competition_id', $competition->id)
                 ->where('match_code', 'like', "{$poolKey}-PO-%")
+                ->where('match_status', 'upcoming')
+                ->delete();
+        }
+
+        // Jika opsi perebutan juara 3 dimatikan, bersihkan record 3RD yang masih upcoming
+        if (! $hasBronze) {
+            BadmintonMatch::where('competition_id', $competition->id)
+                ->where('match_code', 'like', "{$poolKey}-3RD-%")
                 ->where('match_status', 'upcoming')
                 ->delete();
         }
@@ -1686,6 +1734,33 @@ class TournamentBracketController extends Controller
                     ];
                 }
             }
+
+            // 3. Perebutan Juara 3 & 4 (Bronze Medal Match)
+            if (! empty($bData['bronze_match']['has_bronze_match'])) {
+                $bm = $bData['bronze_match'];
+                $assignedBronzeCourt = count($courts) > 1 ? $courts[1] : ($courts[0] ?? 'Lapangan 1');
+
+                $rawMatchesList[] = [
+                    'pool_key' => $poolKey,
+                    'pool_title' => $poolTitle,
+                    'category' => $categoryCode,
+                    'match_type' => $matchType,
+                    'match_code' => $bm['match_code'],
+                    'match_number' => $bm['match_number'] ?? null,
+                    'round_name' => $bm['round_name'],
+                    'round_type' => 'bronze',
+                    'round_index' => $totalRounds,
+                    'total_rounds' => $totalRounds,
+                    'assigned_court' => $assignedBronzeCourt,
+                    'team1' => $bm['team1'],
+                    'team2' => $bm['team2'],
+                    'is_bye1' => false,
+                    'is_bye2' => false,
+                    'is_contested' => true,
+                    'status' => $bm['status'] ?? 'upcoming',
+                    'winner_team' => ! empty($bm['winner']) ? (($bm['winner'] == $bm['team1']) ? 1 : 2) : null,
+                ];
+            }
         }
 
         // Map Match to Day
@@ -1700,6 +1775,10 @@ class TournamentBracketController extends Controller
 
             if ($rType === 'playoff') {
                 return 1;
+            }
+
+            if ($rType === 'bronze') {
+                return $tournamentDays;
             }
 
             // Mode Kustom Kuota Per Kategori untuk babak awal (Prelim / 16B Round 1)
@@ -1724,11 +1803,11 @@ class TournamentBracketController extends Controller
             }
 
             if ($tournamentDays === 2) {
-                return in_array($rType, ['semifinal', 'final']) ? 2 : 1;
+                return in_array($rType, ['semifinal', 'final', 'bronze']) ? 2 : 1;
             }
 
             if ($tournamentDays === 3) {
-                if ($rType === 'final' || $rType === 'semifinal') {
+                if ($rType === 'final' || $rType === 'semifinal' || $rType === 'bronze') {
                     return 3;
                 }
                 if ($rType === 'qf') {
@@ -1742,7 +1821,7 @@ class TournamentBracketController extends Controller
             }
 
             if ($tournamentDays === 4) {
-                if ($rType === 'final') {
+                if ($rType === 'final' || $rType === 'bronze') {
                     return 4;
                 }
                 if ($rType === 'semifinal') {
@@ -1801,8 +1880,9 @@ class TournamentBracketController extends Controller
                     '16b' => 3,
                     'qf' => 4,
                     'semifinal' => 5,
-                    'final' => 6,
-                    default => 7,
+                    'bronze' => 6,
+                    'final' => 7,
+                    default => 8,
                 };
 
                 return ($courtOrder * 10) + $roundOrder;
@@ -1907,32 +1987,30 @@ class TournamentBracketController extends Controller
             }
 
             if ($day >= 4) {
-                // Grand Final (Lapangan 1)
-                // Sesi Pagi: 5 Partai (Kat A Pi, Kat A Pa, Kat B Pi, Kat B Pa, Kat C Pi)
+                // Grand Final & Perebutan Juara 3
+                $base = 80;
                 if (str_contains($pk, 'kat_a_pi')) {
-                    return 10;
-                }
-                if (str_contains($pk, 'kat_a_pa')) {
-                    return 20;
-                }
-                if (str_contains($pk, 'kat_b_pi')) {
-                    return 30;
-                }
-                if (str_contains($pk, 'kat_b_pa')) {
-                    return 40;
-                }
-                if (str_contains($pk, 'kat_c_pi')) {
-                    return 50;
-                }
-                // Sesi Siang (setelah Jumatan): 2 Partai (Kat C Pa, Ganda)
-                if (str_contains($pk, 'kat_c_pa')) {
-                    return 60;
-                }
-                if (str_contains($pk, 'ganda')) {
-                    return 70;
+                    $base = 10;
+                } elseif (str_contains($pk, 'kat_a_pa')) {
+                    $base = 20;
+                } elseif (str_contains($pk, 'kat_b_pi')) {
+                    $base = 30;
+                } elseif (str_contains($pk, 'kat_b_pa')) {
+                    $base = 40;
+                } elseif (str_contains($pk, 'kat_c_pi')) {
+                    $base = 50;
+                } elseif (str_contains($pk, 'kat_c_pa')) {
+                    $base = 60;
+                } elseif (str_contains($pk, 'ganda')) {
+                    $base = 70;
                 }
 
-                return 80;
+                // Partai Perebutan Juara 3 dimainkan sedikit mendahului Grand Final pada kategori yang bersangkutan
+                if ($rt === 'bronze') {
+                    return $base - 5;
+                }
+
+                return $base;
             }
 
             return 100;
@@ -1997,8 +2075,13 @@ class TournamentBracketController extends Controller
                 }
 
                 // Pada Hari 4 (Final), seluruh pertandingan dipusatkan di Lapangan 1 (Utama)
+                // Jika mode kategori dan ada Lapangan 2, alokasikan Perebutan Juara 3 ke Lapangan 2
                 if ($d === 4 && count($courts) > 0) {
-                    $assignedCourt = $courts[0];
+                    if ($distributionMode === 'category_based' && $m['round_type'] === 'bronze' && count($courts) > 1) {
+                        $assignedCourt = $courts[1];
+                    } else {
+                        $assignedCourt = $courts[0];
+                    }
                 }
 
                 $assignedTime = null;
@@ -2639,6 +2722,82 @@ class TournamentBracketController extends Controller
         $finalMatch = $finalRound['matches'][0] ?? null;
         $champion = $finalMatch['winner'] ?? null;
 
+        // Perebutan Juara 3 & 4 (Bronze Medal Match)
+        $poolSettings = $competition->bracket_settings[$poolKey] ?? [];
+        $hasBronzeSetting = ! isset($poolSettings['has_bronze_match']) || ! empty($poolSettings['has_bronze_match']);
+        $bronzeMatchData = null;
+
+        // Syarat perebutan juara 3: pengaturan aktif dan minimal ada babak Semifinal
+        if ($hasBronzeSetting && $totalRounds >= 2) {
+            $sfRoundIndex = $totalRounds - 1;
+            $sfMatches = $rounds[$sfRoundIndex]['matches'] ?? [];
+            if (count($sfMatches) >= 2) {
+                $sf1 = $sfMatches[0];
+                $sf2 = $sfMatches[1];
+
+                // Cari yang kalah di SF 1
+                $loser1 = null;
+                if (! empty($sf1['existing_match']) && $sf1['existing_match']->match_status === 'finished') {
+                    $loser1 = ($sf1['existing_match']->winner_team === 1) ? $sf1['team2'] : (($sf1['existing_match']->winner_team === 2) ? $sf1['team1'] : null);
+                } elseif (! empty($sf1['winner'])) {
+                    $loser1 = ($sf1['winner'] === $sf1['team1']) ? $sf1['team2'] : $sf1['team1'];
+                }
+                if (! $loser1 || empty($loser1['name'])) {
+                    $loser1 = [
+                        'id' => null,
+                        'name' => 'Kalah SF #1',
+                        'institution' => 'Menunggu Semifinal 1',
+                        'is_placeholder' => true,
+                    ];
+                }
+
+                // Cari yang kalah di SF 2
+                $loser2 = null;
+                if (! empty($sf2['existing_match']) && $sf2['existing_match']->match_status === 'finished') {
+                    $loser2 = ($sf2['existing_match']->winner_team === 1) ? $sf2['team2'] : (($sf2['existing_match']->winner_team === 2) ? $sf2['team1'] : null);
+                } elseif (! empty($sf2['winner'])) {
+                    $loser2 = ($sf2['winner'] === $sf2['team1']) ? $sf2['team2'] : $sf2['team1'];
+                }
+                if (! $loser2 || empty($loser2['name'])) {
+                    $loser2 = [
+                        'id' => null,
+                        'name' => 'Kalah SF #2',
+                        'institution' => 'Menunggu Semifinal 2',
+                        'is_placeholder' => true,
+                    ];
+                }
+
+                $bronzeMatchCode = "{$poolKey}-3RD-M1";
+                $existingBronzeMatch = $existingMatches->get($bronzeMatchCode);
+
+                $bronzeWinner = null;
+                $bronzeLoser = null;
+                $bronzeStatus = 'upcoming';
+
+                if ($existingBronzeMatch && $existingBronzeMatch->match_status === 'finished') {
+                    $bronzeStatus = 'finished';
+                    $bronzeWinner = ($existingBronzeMatch->winner_team === 1) ? $loser1 : (($existingBronzeMatch->winner_team === 2) ? $loser2 : null);
+                    $bronzeLoser = ($existingBronzeMatch->winner_team === 1) ? $loser2 : (($existingBronzeMatch->winner_team === 2) ? $loser1 : null);
+                } elseif ($existingBronzeMatch && $existingBronzeMatch->match_status === 'ongoing') {
+                    $bronzeStatus = 'ongoing';
+                }
+
+                $bronzeMatchData = [
+                    'has_bronze_match' => true,
+                    'match_code' => $bronzeMatchCode,
+                    'match_number' => $structuralMatchSeq + 1,
+                    'round_name' => 'Perebutan Juara 3',
+                    'round_type' => 'bronze',
+                    'team1' => $loser1,
+                    'team2' => $loser2,
+                    'winner' => $bronzeWinner,
+                    'loser' => $bronzeLoser,
+                    'status' => $bronzeStatus,
+                    'existing_match' => $existingBronzeMatch,
+                ];
+            }
+        }
+
         $isDoublesPool = str_contains(strtolower($poolKey), 'ganda') || collect($poolParticipants)->contains(fn ($p) => str_contains($p['name'] ?? '', ' / '));
 
         // Deteksi bentrok jadwal pertandingan (lapangan dan jam yang sama di hari yang sama)
@@ -2719,6 +2878,7 @@ class TournamentBracketController extends Controller
             'total_rounds' => $totalRounds,
             'rounds' => $rounds,
             'champion' => $champion,
+            'bronze_match' => $bronzeMatchData,
             'bwf_protections' => $bwfProtections,
             'has_bwf_protections' => count($bwfProtections) > 0,
             'schedule_conflicts' => $scheduleConflicts,
@@ -2941,11 +3101,12 @@ class TournamentBracketController extends Controller
         $boxBg = $isDark ? '#1e293b' : '#ffffff';
         $byeBoxBg = $isDark ? '#0f172a' : '#f8fafc';
         $accentColor = '#d97706';
-
         $champLineLength = 40;
         $rightPadding = 40;
 
-        $totalHeight = ($bracketSize * $slotHeight) + $topMargin + 40;
+        $hasBronzeMatch = ! empty($bracketData['bronze_match']['has_bronze_match']);
+        $extraBottomPadding = ($hasBronzeMatch && $bracketSize <= 8) ? 110 : ($hasBronzeMatch ? 30 : 0);
+        $totalHeight = ($bracketSize * $slotHeight) + $topMargin + 40 + $extraBottomPadding;
         $totalWidth = $leftMargin + $slotWidth + ($totalRounds * $branchWidth) + $champLineLength + $champBoxWidth + $rightPadding;
 
         $svg = [];
@@ -3408,6 +3569,79 @@ class TournamentBracketController extends Controller
         } else {
             $svg[] = "<rect x='{$champX2}' y='{$champBoxY}' width='{$champBoxWidth}' height='{$champBoxHeight}' fill='{$boxBg}' stroke='{$strokeColor}' stroke-width='1.5' stroke-dasharray='4 3' rx='6'/>";
             $svg[] = "<text x='{$champCenterX}' y='".($champY + 4.5)."' text-anchor='middle' font-size='11' font-weight='800' fill='{$subTextColor}'>Pemenang Final</text>";
+        }
+
+        // 5. Modul Perebutan Juara 3 (Bronze Medal Match)
+        if (! empty($bracketData['bronze_match']['has_bronze_match'])) {
+            $bm = $bracketData['bronze_match'];
+            $bModuleX = $champX2;
+            $bBoxW = $champBoxWidth;
+            $bBoxH = max(32, $slotHeight * 0.85);
+            $bModuleY = $champY + 95;
+            if ($bracketSize <= 8) {
+                $bModuleY = max($champY + 85, $totalHeight - 170);
+            }
+
+            $bmTeam1 = $bm['team1'] ?? null;
+            $bmTeam2 = $bm['team2'] ?? null;
+            $bmWinner = $bm['winner'] ?? null;
+            $bmEm = $bm['existing_match'] ?? null;
+
+            $svg[] = "<g class='bronze-match-module'>";
+            $svg[] = "<text x='".($bModuleX + $bBoxW / 2)."' y='".($bModuleY - 24)."' text-anchor='middle' font-size='10.5' font-weight='900' fill='".($isDark ? '#fbbf24' : '#b45309')."'>🥉 PEREBUTAN JUARA 3</text>";
+            $svg[] = "<text x='".($bModuleX + $bBoxW / 2)."' y='".($bModuleY - 11)."' text-anchor='middle' font-size='8' font-weight='600' fill='{$subTextColor}'>Kalah SF #1 vs Kalah SF #2</text>";
+
+            // Box Kalah SF 1
+            $b1Y = $bModuleY;
+            $isW1 = ($bmEm && $bmEm->winner_team === 1);
+            $bg1 = $isW1 ? ($isDark ? '#064e3b' : '#ecfdf5') : $boxBg;
+            $border1 = $isW1 ? '#059669' : ($isDark ? '#475569' : '#cbd5e1');
+            $svg[] = "<rect x='{$bModuleX}' y='{$b1Y}' width='{$bBoxW}' height='{$bBoxH}' rx='4' fill='{$bg1}' stroke='{$border1}' stroke-width='1.5'/>";
+            $name1 = htmlspecialchars($bmTeam1['name'] ?? 'Kalah SF #1', ENT_QUOTES);
+            $inst1 = htmlspecialchars($bmTeam1['institution'] ?? 'Menunggu Semifinal 1', ENT_QUOTES);
+            $svg[] = "<text x='".($bModuleX + 8)."' y='".($b1Y + 13)."' font-size='9.5' font-weight='800' fill='{$textColor}'>{$name1}</text>";
+            if (! empty($inst1) && $inst1 !== 'TBD') {
+                $svg[] = "<text x='".($bModuleX + 8)."' y='".($b1Y + 24)."' font-size='8' font-weight='500' fill='{$subTextColor}'>{$inst1}</text>";
+            }
+
+            // VS line & schedule/score
+            $bMidY = $b1Y + $bBoxH + 11;
+            $svg[] = "<text x='".($bModuleX + 16)."' y='".($bMidY + 3.5)."' font-size='8.5' font-weight='900' fill='".($isDark ? '#64748b' : '#94a3b8')."'>VS</text>";
+            if ($bmEm && ($bmEm->team1_set1 > 0 || $bmEm->team2_set1 > 0)) {
+                $scoreStr = "{$bmEm->team1_set1}-{$bmEm->team2_set1}";
+                $svg[] = "<text x='".($bModuleX + $bBoxW - 8)."' y='".($bMidY + 3.5)."' text-anchor='end' font-size='9' font-weight='800' fill='{$textColor}'>{$scoreStr}</text>";
+            } elseif ($bmEm && (! empty($bmEm->court_number) || ! empty($bmEm->scheduled_time))) {
+                $sParts = array_filter([$bmEm->court_number, $bmEm->scheduled_time]);
+                $sStr = htmlspecialchars(implode(' • ', $sParts), ENT_QUOTES);
+                $svg[] = "<text x='".($bModuleX + $bBoxW - 8)."' y='".($bMidY + 3.5)."' text-anchor='end' font-size='8.5' font-weight='700' fill='".($isDark ? '#fbbf24' : '#b45309')."'>{$sStr}</text>";
+            }
+
+            // Box Kalah SF 2
+            $b2Y = $bMidY + 11;
+            $isW2 = ($bmEm && $bmEm->winner_team === 2);
+            $bg2 = $isW2 ? ($isDark ? '#064e3b' : '#ecfdf5') : $boxBg;
+            $border2 = $isW2 ? '#059669' : ($isDark ? '#475569' : '#cbd5e1');
+            $svg[] = "<rect x='{$bModuleX}' y='{$b2Y}' width='{$bBoxW}' height='{$bBoxH}' rx='4' fill='{$bg2}' stroke='{$border2}' stroke-width='1.5'/>";
+            $name2 = htmlspecialchars($bmTeam2['name'] ?? 'Kalah SF #2', ENT_QUOTES);
+            $inst2 = htmlspecialchars($bmTeam2['institution'] ?? 'Menunggu Semifinal 2', ENT_QUOTES);
+            $svg[] = "<text x='".($bModuleX + 8)."' y='".($b2Y + 13)."' font-size='9.5' font-weight='800' fill='{$textColor}'>{$name2}</text>";
+            if (! empty($inst2) && $inst2 !== 'TBD') {
+                $svg[] = "<text x='".($bModuleX + 8)."' y='".($b2Y + 24)."' font-size='8' font-weight='500' fill='{$subTextColor}'>{$inst2}</text>";
+            }
+
+            // Winner Box: JUARA 3
+            $wBoxY = $b2Y + $bBoxH + 10;
+            if ($bmWinner) {
+                $wName = htmlspecialchars($bmWinner['name'] ?? '', ENT_QUOTES);
+                $svg[] = "<rect x='{$bModuleX}' y='{$wBoxY}' width='{$bBoxW}' height='36' rx='6' fill='#fef3c7' stroke='{$accentColor}' stroke-width='1.8'/>";
+                $svg[] = "<text x='".($bModuleX + $bBoxW / 2)."' y='".($wBoxY + 13)."' text-anchor='middle' font-size='8.5' font-weight='800' fill='#b45309'>🥉 JUARA 3</text>";
+                $svg[] = "<text x='".($bModuleX + $bBoxW / 2)."' y='".($wBoxY + 27)."' text-anchor='middle' font-size='10' font-weight='800' fill='#0f172a'>{$wName}</text>";
+            } else {
+                $svg[] = "<rect x='{$bModuleX}' y='{$wBoxY}' width='{$bBoxW}' height='30' rx='6' fill='{$boxBg}' stroke='{$strokeColor}' stroke-width='1.2' stroke-dasharray='3 2'/>";
+                $svg[] = "<text x='".($bModuleX + $bBoxW / 2)."' y='".($wBoxY + 19)."' text-anchor='middle' font-size='9' font-weight='700' fill='{$subTextColor}'>Pemenang Juara 3</text>";
+            }
+
+            $svg[] = '</g>';
         }
 
         $svg[] = '</svg>';

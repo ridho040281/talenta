@@ -771,7 +771,7 @@
                             </div>
                         </div>
 
-                        <div class="flex-1 flex flex-col justify-center py-2">
+                        <div class="flex-1 flex flex-col justify-center py-2 space-y-4">
                             <div class="bg-gradient-to-b from-amber-500/15 via-slate-900 to-slate-900 rounded-3xl border border-amber-500/40 p-6 text-center shadow-2xl relative overflow-hidden">
                                 <div class="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-400 to-yellow-600 text-slate-950 flex items-center justify-center mx-auto mb-4 shadow-xl shadow-amber-500/30">
                                     <i data-lucide="trophy" class="w-10 h-10"></i>
@@ -799,6 +799,90 @@
                                     </p>
                                 @endif
                             </div>
+
+                            @if(!empty($bracketData['bronze_match']['has_bronze_match']))
+                                @php
+                                    $bm = $bracketData['bronze_match'];
+                                    $bmEm = $bm['existing_match'] ?? null;
+                                    $bmW = $bm['winner'] ?? null;
+                                    $bmT1 = $bm['team1'] ?? null;
+                                    $bmT2 = $bm['team2'] ?? null;
+                                    $isBmW1 = ($bmEm && $bmEm->winner_team === 1);
+                                    $isBmW2 = ($bmEm && $bmEm->winner_team === 2);
+                                @endphp
+                                <div class="bg-slate-900/90 rounded-2xl border border-amber-500/30 shadow-xl overflow-hidden text-left relative">
+                                    <div class="px-3.5 py-2.5 bg-gradient-to-r from-amber-500/15 to-transparent border-b border-amber-500/20 flex items-center justify-between">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="text-sm">🥉</span>
+                                            <span class="text-xs font-black text-amber-300 uppercase tracking-wide">Perebutan Juara 3</span>
+                                        </div>
+                                        @if($bmEm && $bmEm->match_status === 'finished')
+                                            <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">Selesai</span>
+                                        @elseif($bmEm && $bmEm->match_status === 'ongoing')
+                                            <span class="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20 animate-pulse">Berlangsung</span>
+                                        @else
+                                            <span class="text-[10px] font-bold text-slate-400 bg-slate-800 px-2 py-0.5 rounded-md">Terjadwal</span>
+                                        @endif
+                                    </div>
+
+                                    <div class="p-3 space-y-2">
+                                        <!-- Kalah SF 1 -->
+                                        <div class="p-2 rounded-xl flex items-center justify-between {{ $isBmW1 ? 'bg-emerald-950/40 border border-emerald-500/40 text-emerald-200' : 'bg-slate-950/60 border border-slate-800/80 text-slate-200' }}">
+                                            <div class="min-w-0 pr-2">
+                                                <p class="font-extrabold text-xs truncate {{ $isBmW1 ? 'text-emerald-300' : 'text-white' }}">{{ $bmT1['name'] ?? 'Kalah SF #1' }}</p>
+                                                <p class="text-[10px] text-slate-400 truncate">{{ $bmT1['institution'] ?? 'Menunggu Semifinal 1' }}</p>
+                                            </div>
+                                            <div class="flex items-center gap-1.5 shrink-0 font-mono text-xs font-bold">
+                                                @if($bmEm && ($bmEm->team1_set1 > 0 || $bmEm->team2_set1 > 0))
+                                                    <span class="{{ $bmEm->team1_set1 > $bmEm->team2_set1 ? 'text-emerald-400' : 'text-slate-400' }}">{{ $bmEm->team1_set1 }}</span>
+                                                @endif
+                                                @if($isBmW1)
+                                                    <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-400"></i>
+                                                @endif
+                                            </div>
+                                        </div>
+
+                                        <!-- Kalah SF 2 -->
+                                        <div class="p-2 rounded-xl flex items-center justify-between {{ $isBmW2 ? 'bg-emerald-950/40 border border-emerald-500/40 text-emerald-200' : 'bg-slate-950/60 border border-slate-800/80 text-slate-200' }}">
+                                            <div class="min-w-0 pr-2">
+                                                <p class="font-extrabold text-xs truncate {{ $isBmW2 ? 'text-emerald-300' : 'text-white' }}">{{ $bmT2['name'] ?? 'Kalah SF #2' }}</p>
+                                                <p class="text-[10px] text-slate-400 truncate">{{ $bmT2['institution'] ?? 'Menunggu Semifinal 2' }}</p>
+                                            </div>
+                                            <div class="flex items-center gap-1.5 shrink-0 font-mono text-xs font-bold">
+                                                @if($bmEm && ($bmEm->team1_set1 > 0 || $bmEm->team2_set1 > 0))
+                                                    <span class="{{ $bmEm->team2_set1 > $bmEm->team1_set1 ? 'text-emerald-400' : 'text-slate-400' }}">{{ $bmEm->team2_set1 }}</span>
+                                                @endif
+                                                @if($isBmW2)
+                                                    <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-400"></i>
+                                                @endif
+                                            </div>
+                                        </div>
+
+                                        <!-- Winner / Juara 3 display -->
+                                        @if($bmW)
+                                            <div class="mt-2 pt-2 border-t border-slate-800 flex items-center justify-between bg-amber-500/10 rounded-xl px-2.5 py-1.5 border border-amber-500/20">
+                                                <div class="flex items-center gap-1.5">
+                                                    <span class="text-xs">🥉</span>
+                                                    <div>
+                                                        <p class="text-[9px] font-black uppercase text-amber-400">Juara 3 (Perunggu)</p>
+                                                        <p class="text-xs font-black text-white truncate max-w-[140px]">{{ $bmW['name'] }}</p>
+                                                    </div>
+                                                </div>
+                                                <span class="text-[9px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">Podium 3</span>
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    @if($bmEm && ($bmEm->court_number || $bmEm->scheduled_time))
+                                        <div class="px-3 py-1.5 bg-slate-950/80 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400">
+                                            <span class="flex items-center gap-1">
+                                                <i data-lucide="calendar" class="w-3 h-3 text-amber-400"></i>
+                                                <span>{{ $bmEm->court_number }} {{ $bmEm->scheduled_time ? '• '.$bmEm->scheduled_time : '' }}</span>
+                                            </span>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endif
                         </div>
                     </div>
 
