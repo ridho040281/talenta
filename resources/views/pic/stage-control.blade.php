@@ -26,6 +26,19 @@
         </div>
 
         <div class="flex items-center gap-2.5 flex-wrap">
+            <!-- Toggle Mode Waktu ON / OFF (Mode Timer vs Mode Nama Saja) -->
+            <button type="button" 
+                    @click="toggleTimerMode()"
+                    class="px-3.5 py-2.5 rounded-xl border text-xs font-black transition flex items-center gap-2 cursor-pointer shadow-md"
+                    :class="(timer.enabled ?? true) 
+                        ? 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border-emerald-500/40 shadow-emerald-500/10' 
+                        : 'bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border-indigo-500/40 shadow-indigo-500/10'"
+                    :title="(timer.enabled ?? true) ? 'Klik untuk mematikan hitung mundur waktu (Mode Nama Saja)' : 'Klik untuk mengaktifkan kembali hitung mundur waktu'">
+                <span class="w-2 h-2 rounded-full" :class="(timer.enabled ?? true) ? 'bg-emerald-400 animate-pulse' : 'bg-indigo-400'"></span>
+                <i :data-lucide="(timer.enabled ?? true) ? 'timer' : 'user-check'" class="w-4 h-4"></i>
+                <span x-text="(timer.enabled ?? true) ? 'Waktu: ON' : 'Waktu: OFF (Nama Saja)'"></span>
+            </button>
+
             <!-- Open TV Stage Viewer Button -->
             <a href="{{ route('stage.viewer', $competition->slug ?: $competition->code) }}" 
                target="_blank" 
@@ -54,9 +67,10 @@
             <!-- CURRENT PERFORMER & TIMER CARD -->
             <div class="p-6 sm:p-8 rounded-3xl border relative overflow-hidden transition-all duration-300"
                  :class="{
-                     'bg-slate-900/90 border-emerald-500/40 shadow-2xl shadow-emerald-500/10': timerZone === 'normal' && timer.status === 'running',
-                     'bg-slate-900/90 border-amber-500/40 shadow-2xl shadow-amber-500/10': timerZone === 'warning',
-                     'bg-slate-900/90 border-rose-500/40 shadow-2xl shadow-rose-500/10': timerZone === 'overtime',
+                     'bg-slate-900/90 border-emerald-500/40 shadow-2xl shadow-emerald-500/10': (timer.enabled ?? true) && timerZone === 'normal' && timer.status === 'running',
+                     'bg-slate-900/90 border-amber-500/40 shadow-2xl shadow-amber-500/10': (timer.enabled ?? true) && timerZone === 'warning',
+                     'bg-slate-900/90 border-rose-500/40 shadow-2xl shadow-rose-500/10': (timer.enabled ?? true) && timerZone === 'overtime',
+                     'bg-slate-900/90 border-indigo-500/40 shadow-2xl shadow-indigo-500/10': !(timer.enabled ?? true) && timer.status === 'running',
                      'bg-[#101726]/90 border-white/[0.12]': timer.status !== 'running' && timerZone === 'normal'
                  }">
 
@@ -97,8 +111,8 @@
                     <p class="text-xs text-slate-500">Pilih salah satu peserta dari antrian di samping kanan.</p>
                 </div>
 
-                <!-- HUGE DIGITAL TIMER DISPLAY -->
-                <div class="py-4 my-2 text-center rounded-2xl bg-black/40 border border-white/[0.08]">
+                <!-- HUGE DIGITAL TIMER DISPLAY (Ketika Mode Waktu ON) -->
+                <div x-show="timer.enabled ?? true" class="py-4 my-2 text-center rounded-2xl bg-black/40 border border-white/[0.08]">
                     <div class="text-6xl sm:text-7xl lg:text-8xl font-black font-mono tracking-tight transition-colors"
                          :class="{
                              'text-emerald-400': timerZone === 'normal',
@@ -112,30 +126,56 @@
                          x-text="timerZoneLabel"></div>
                 </div>
 
+                <!-- NO-TIMER / NAME-ONLY MODE BANNER (Ketika Mode Waktu OFF) -->
+                <div x-show="!(timer.enabled ?? true)" x-cloak class="py-6 my-2 text-center rounded-2xl bg-indigo-950/40 border border-indigo-500/25 space-y-2">
+                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-black uppercase tracking-wider border border-indigo-500/30">
+                        <i data-lucide="mic" class="w-4 h-4 text-indigo-400"></i>
+                        <span>Mode Nama Saja (Tanpa Batasan Waktu)</span>
+                    </div>
+                    <p class="text-xs text-slate-300 max-w-sm mx-auto">Layar TV Panggung saat ini menampilkan identitas peserta secara penuh tanpa jam hitung mundur.</p>
+                </div>
+
                 <!-- MAIN ACTION BUTTONS (Start, Pause, Finish, Skip) -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
-                    <!-- Start / Resume Button -->
-                    <button type="button" 
-                            @click="triggerAction('start')"
-                            x-show="timer.status !== 'running'"
-                            class="col-span-2 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-sm shadow-lg shadow-emerald-500/25 transition flex items-center justify-center gap-2">
-                        <i data-lucide="play" class="w-5 h-5 fill-current"></i>
-                        <span>MULAI (Space)</span>
-                    </button>
+                    <!-- Timer Mode: Start / Resume Button -->
+                    <template x-if="timer.enabled ?? true">
+                        <button type="button" 
+                                @click="triggerAction('start')"
+                                x-show="timer.status !== 'running'"
+                                class="col-span-2 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-sm shadow-lg shadow-emerald-500/25 transition flex items-center justify-center gap-2 cursor-pointer">
+                            <i data-lucide="play" class="w-5 h-5 fill-current"></i>
+                            <span>MULAI (Space)</span>
+                        </button>
+                    </template>
 
-                    <!-- Pause Button -->
-                    <button type="button" 
-                            @click="triggerAction('pause')"
-                            x-show="timer.status === 'running'"
-                            class="col-span-2 py-3.5 rounded-2xl bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-white font-black text-sm shadow-lg shadow-amber-500/25 transition flex items-center justify-center gap-2">
-                        <i data-lucide="pause" class="w-5 h-5 fill-current"></i>
-                        <span>JEDA (Space)</span>
-                    </button>
+                    <!-- Timer Mode: Pause Button -->
+                    <template x-if="timer.enabled ?? true">
+                        <button type="button" 
+                                @click="triggerAction('pause')"
+                                x-show="timer.status === 'running'"
+                                class="col-span-2 py-3.5 rounded-2xl bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-white font-black text-sm shadow-lg shadow-amber-500/25 transition flex items-center justify-center gap-2 cursor-pointer">
+                            <i data-lucide="pause" class="w-5 h-5 fill-current"></i>
+                            <span>JEDA (Space)</span>
+                        </button>
+                    </template>
+
+                    <!-- No-Timer Mode: Start Button -->
+                    <template x-if="!(timer.enabled ?? true)">
+                        <button type="button" 
+                                @click="triggerAction('start')"
+                                class="col-span-2 py-3.5 rounded-2xl font-black text-sm shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
+                                :class="timer.status === 'running' 
+                                    ? 'bg-indigo-600/50 text-indigo-200 border border-indigo-500/40 shadow-indigo-600/20' 
+                                    : 'bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white shadow-indigo-500/25'">
+                            <i data-lucide="mic" class="w-5 h-5"></i>
+                            <span x-text="timer.status === 'running' ? 'SEDANG TAMPIL (Panggung)' : 'MULAI TAMPIL (Space)'"></span>
+                        </button>
+                    </template>
 
                     <!-- Finish & Next Button -->
                     <button type="button" 
                             @click="triggerAction('finish')"
-                            class="col-span-2 sm:col-span-1 py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-xs shadow-lg shadow-blue-500/20 transition flex flex-col items-center justify-center gap-1">
+                            class="col-span-2 sm:col-span-1 py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-xs shadow-lg shadow-blue-500/20 transition flex flex-col items-center justify-center gap-1 cursor-pointer">
                         <i data-lucide="check-circle" class="w-4 h-4"></i>
                         <span>SELESAI (Enter)</span>
                     </button>
@@ -143,7 +183,7 @@
                     <!-- Skip Button -->
                     <button type="button" 
                             @click="triggerAction('skip')"
-                            class="col-span-2 sm:col-span-1 py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 font-bold text-xs transition flex flex-col items-center justify-center gap-1">
+                            class="col-span-2 sm:col-span-1 py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 font-bold text-xs transition flex flex-col items-center justify-center gap-1 cursor-pointer">
                         <i data-lucide="skip-forward" class="w-4 h-4"></i>
                         <span>LEWATI</span>
                     </button>
@@ -159,48 +199,49 @@
             <!-- TIME ADJUSTERS & BELL CONTROLS -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 
-                <!-- Time Adjusters -->
-                <div class="p-5 rounded-2xl bg-[#121929] border border-white/[0.09] space-y-3">
+                <!-- Time Adjusters (Hanya muncul jika Mode Waktu Aktif) -->
+                <div x-show="timer.enabled ?? true" class="p-5 rounded-2xl bg-[#121929] border border-white/[0.09] space-y-3">
                     <h4 class="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-2">
                         <i data-lucide="clock" class="w-4 h-4 text-[#84D0FF]"></i>
                         <span>Koreksi Waktu</span>
                     </h4>
                     <div class="grid grid-cols-2 gap-2">
-                        <button type="button" @click="adjustTime(60)" class="px-3 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs font-bold text-white transition border border-white/[0.08]">
+                        <button type="button" @click="adjustTime(60)" class="px-3 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs font-bold text-white transition border border-white/[0.08] cursor-pointer">
                             +1 Menit
                         </button>
-                        <button type="button" @click="adjustTime(-60)" class="px-3 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs font-bold text-white transition border border-white/[0.08]">
+                        <button type="button" @click="adjustTime(-60)" class="px-3 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs font-bold text-white transition border border-white/[0.08] cursor-pointer">
                             -1 Menit
                         </button>
-                        <button type="button" @click="adjustTime(30)" class="px-3 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs font-bold text-white transition border border-white/[0.08]">
+                        <button type="button" @click="adjustTime(30)" class="px-3 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs font-bold text-white transition border border-white/[0.08] cursor-pointer">
                             +30 Detik
                         </button>
-                        <button type="button" @click="triggerAction('reset_timer')" class="px-3 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-xs font-bold text-rose-300 transition border border-rose-500/25">
+                        <button type="button" @click="triggerAction('reset_timer')" class="px-3 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-xs font-bold text-rose-300 transition border border-rose-500/25 cursor-pointer">
                             Reset ke {{ $competition->stage_duration_minutes ?: 7 }}m
                         </button>
                     </div>
                 </div>
 
                 <!-- Bell & Sound Controls -->
-                <div class="p-5 rounded-2xl bg-[#121929] border border-white/[0.09] space-y-3">
+                <div class="p-5 rounded-2xl bg-[#121929] border border-white/[0.09] space-y-3"
+                     :class="(timer.enabled ?? true) ? '' : 'sm:col-span-2'">
                     <h4 class="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-2">
                         <i data-lucide="bell" class="w-4 h-4 text-amber-400"></i>
                         <span>Bunyikan Bel ke TV Panggung</span>
                     </h4>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button type="button" @click="triggerBell('bell')" class="px-3 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold transition flex items-center justify-center gap-1.5">
+                    <div class="grid grid-cols-2 gap-2" :class="(timer.enabled ?? true) ? '' : 'sm:grid-cols-4'">
+                        <button type="button" @click="triggerBell('bell')" class="px-3 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer">
                             <i data-lucide="bell" class="w-3.5 h-3.5"></i>
                             <span>Bel 1x (Peringatan)</span>
                         </button>
-                        <button type="button" @click="triggerBell('double')" class="px-3 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold transition flex items-center justify-center gap-1.5">
+                        <button type="button" @click="triggerBell('double')" class="px-3 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer">
                             <i data-lucide="bell-ring" class="w-3.5 h-3.5"></i>
                             <span>Bel 2x (Habis)</span>
                         </button>
-                        <button type="button" @click="triggerBell('gong')" class="px-3 py-2 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 text-xs font-bold transition flex items-center justify-center gap-1.5">
+                        <button type="button" @click="triggerBell('gong')" class="px-3 py-2 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer">
                             <i data-lucide="disc" class="w-3.5 h-3.5"></i>
                             <span>Gong Panggung</span>
                         </button>
-                        <button type="button" @click="triggerBell('buzzer')" class="px-3 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 text-xs font-bold transition flex items-center justify-center gap-1.5">
+                        <button type="button" @click="triggerBell('buzzer')" class="px-3 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer">
                             <i data-lucide="zap" class="w-3.5 h-3.5"></i>
                             <span>Buzzer Digital</span>
                         </button>
@@ -419,16 +460,28 @@
                 }
             },
 
+            async toggleTimerMode() {
+                const newEnabled = !(this.timer.enabled ?? true);
+                this.timer.enabled = newEnabled;
+                await this.triggerAction('toggle_timer_mode', { enabled: newEnabled });
+            },
+
             handleKeyboard(e) {
                 // Ignore if typing inside input
                 if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
 
                 if (e.code === 'Space') {
                     e.preventDefault();
-                    if (this.timer.status === 'running') {
-                        this.triggerAction('pause');
+                    if (!(this.timer.enabled ?? true)) {
+                        if (this.timer.status !== 'running') {
+                            this.triggerAction('start');
+                        }
                     } else {
-                        this.triggerAction('start');
+                        if (this.timer.status === 'running') {
+                            this.triggerAction('pause');
+                        } else {
+                            this.triggerAction('start');
+                        }
                     }
                 } else if (e.code === 'Enter') {
                     e.preventDefault();
@@ -460,6 +513,11 @@
             },
 
             get timerStatusLabel() {
+                if (!(this.timer.enabled ?? true)) {
+                    if (this.timer.status === 'running') return 'Sedang Tampil di Panggung';
+                    if (this.timer.status === 'finished') return 'Penampilan Selesai';
+                    return 'Siap Dimulai (Mode Nama Saja)';
+                }
                 if (this.timer.status === 'running') return 'Timer Aktif Berjalan';
                 if (this.timer.status === 'paused') return 'Timer Dijeda (Paused)';
                 if (this.timer.status === 'finished') return 'Penampilan Selesai';

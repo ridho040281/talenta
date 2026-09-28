@@ -274,6 +274,13 @@ class StageController extends Controller
                 $stageState['started_at'] = null;
                 $stageState['paused_at'] = null;
                 break;
+
+            case 'toggle_timer_mode':
+                $isEnabled = $request->has('enabled')
+                    ? filter_var($request->input('enabled'), FILTER_VALIDATE_BOOLEAN)
+                    : ! ((bool) ($stageState['timer_enabled'] ?? true));
+                $stageState['timer_enabled'] = $isEnabled;
+                break;
         }
 
         $competition->update(['stage_state' => $stageState]);
@@ -316,8 +323,10 @@ class StageController extends Controller
             ]);
 
         $defaultTotalSeconds = ($competition->stage_duration_minutes ?: 7) * 60;
+        $existingTimerEnabled = (bool) ($competition->stage_state['timer_enabled'] ?? true);
         $competition->update([
             'stage_state' => [
+                'timer_enabled' => $existingTimerEnabled,
                 'current_registration_id' => null,
                 'timer_status' => 'idle',
                 'seconds_remaining' => $defaultTotalSeconds,
@@ -442,6 +451,7 @@ class StageController extends Controller
             'next' => $nextData,
             'completed' => $completedList,
             'timer' => [
+                'enabled' => (bool) ($stageState['timer_enabled'] ?? true),
                 'status' => $timerStatus,
                 'seconds_remaining' => $secondsRemaining,
                 'total_duration_seconds' => $totalDurationSec,

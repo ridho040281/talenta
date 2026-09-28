@@ -157,13 +157,24 @@
                         {{ $competition->code }} • STAGE DISPLAY
                     </span>
                     
-                    <span class="inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-black uppercase tracking-wider text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 rounded-full shadow-sm">
-                        <span class="relative flex h-2 w-2">
-                            <span class="animate-pulse-ring absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 animate-live-dot"></span>
+                    <template x-if="timer.enabled ?? true">
+                        <span class="inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-black uppercase tracking-wider text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 rounded-full shadow-sm">
+                            <span class="relative flex h-2 w-2">
+                                <span class="animate-pulse-ring absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 animate-live-dot"></span>
+                            </span>
+                            <span>LIVE ON AIR</span>
                         </span>
-                        <span>LIVE ON AIR</span>
-                    </span>
+                    </template>
+                    <template x-if="!(timer.enabled ?? true)">
+                        <span class="inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-black uppercase tracking-wider text-indigo-300 bg-indigo-500/15 border border-indigo-500/30 px-2.5 py-0.5 rounded-full shadow-sm">
+                            <span class="relative flex h-2 w-2">
+                                <span class="animate-pulse-ring absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500 animate-live-dot"></span>
+                            </span>
+                            <span>PANGGUNG UTAMA</span>
+                        </span>
+                    </template>
                 </div>
                 
                 <h1 class="text-base sm:text-2xl lg:text-3xl font-black text-white truncate tracking-tight font-display mt-0.5 drop-shadow-sm">
@@ -290,7 +301,7 @@
             </div>
 
             <!-- Middle: Performer Identity Info (ACTIVE STATE) -->
-            <div class="my-8 sm:my-10 relative z-10" x-show="current">
+            <div class="my-6 sm:my-8 relative z-10 transition-all duration-300" x-show="current" :class="!(timer.enabled ?? true) ? 'my-auto py-6 sm:py-12' : ''">
                 <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-xs sm:text-sm font-bold uppercase tracking-wider mb-3">
                     <i data-lucide="school" class="w-4 h-4 text-cyan-400"></i>
                     <span x-text="current ? current.institution : '-'" class="truncate"></span>
@@ -301,7 +312,8 @@
 
                 <div class="flex items-start justify-between gap-4">
                     <div class="min-w-0 flex-1">
-                        <h2 class="text-3xl sm:text-5xl lg:text-7xl font-black text-white tracking-tight leading-tight uppercase font-display drop-shadow-lg"
+                        <h2 class="font-black text-white tracking-tight leading-tight uppercase font-display drop-shadow-lg"
+                            :class="(timer.enabled ?? true) ? 'text-3xl sm:text-5xl lg:text-7xl' : 'text-4xl sm:text-6xl lg:text-8xl'"
                             x-text="current ? current.name : 'Menunggu Penampil...'">
                         </h2>
 
@@ -312,6 +324,12 @@
                                 <span x-text="current.members.join(', ')"></span>
                             </p>
                         </template>
+
+                        <!-- Extra badge in No-Timer mode -->
+                        <div x-show="!(timer.enabled ?? true)" class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-xs sm:text-sm font-black uppercase tracking-wider mt-6 shadow-xl shadow-indigo-500/10">
+                            <i data-lucide="mic" class="w-4 h-4 text-indigo-400"></i>
+                            <span>Sedang Tampil di Panggung</span>
+                        </div>
                     </div>
 
                     <!-- Live Equalizer Visualizer (Dancing Bars on Stage) -->
@@ -351,8 +369,8 @@
                 </template>
             </div>
 
-            <!-- Bottom: Massive High-Impact Stage Digital Timer & Progress -->
-            <div class="space-y-4 sm:space-y-6 relative z-10 pt-6 border-t border-white/[0.12]">
+            <!-- Bottom: Massive High-Impact Stage Digital Timer & Progress (Hanya saat Mode Waktu ON) -->
+            <div x-show="timer.enabled ?? true" class="space-y-4 sm:space-y-6 relative z-10 pt-6 border-t border-white/[0.12]">
                 
                 <div class="flex flex-col sm:flex-row items-center justify-between gap-5">
                     <!-- GIANT TIMER DISPLAY -->
@@ -578,7 +596,7 @@
                 startLocalTicker() {
                     if (this.timerTickInterval) clearInterval(this.timerTickInterval);
                     this.timerTickInterval = setInterval(() => {
-                        if (this.timer.status === 'running') {
+                        if ((this.timer.enabled ?? true) && this.timer.status === 'running') {
                             this.secondsLeft = Math.max(-3600, this.secondsLeft - 1);
 
                             // Auto trigger warning chime when reaching exact warning minute
@@ -672,6 +690,10 @@
                 },
 
                 get timerStatusLabel() {
+                    if (!(this.timer.enabled ?? true)) {
+                        if (this.current) return 'SEDANG TAMPIL';
+                        return 'BERSIAP (STANDBY)';
+                    }
                     if (this.timer.status === 'running') return 'SEDANG TAMPIL';
                     if (this.timer.status === 'paused') return 'DIJEDA (PAUSED)';
                     if (this.timer.status === 'finished') return 'SELESAI';
