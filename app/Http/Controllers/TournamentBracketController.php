@@ -336,33 +336,31 @@ class TournamentBracketController extends Controller
             }
         }
 
-        // Ambil match dari database
-        $dbMatchesQuery = BadmintonMatch::where('competition_id', $competition->id);
-        if ($isSingleCategory) {
-            $dbMatchesQuery->where('match_code', 'like', "{$targetPool['key']}-%");
-        }
-        $rawDbMatches = $dbMatchesQuery->orderBy('match_day')
-            ->orderBy('court_number')
-            ->orderBy('scheduled_time')
-            ->orderBy('match_order')
-            ->get();
-        $dbMatchesByCode = $rawDbMatches->keyBy('match_code');
-
-        // Petakan pohon bagan resmi dari struktur undian/unggulan aktif
+        // 1. Petakan pohon bagan resmi dari struktur undian/unggulan aktif
         // Ini menjamin nama atlet pada file Excel 100% identik dengan bagan yang sedang dilihat di layar
         $treeMatchesByCode = [];
         foreach ($allPools as $p) {
             $b = $this->buildTournamentTree($p['participants'], $competition, $p['key'], ['skip_svg' => true]);
-            if (! empty($b['playoffs']['matches'])) {
-                foreach ($b['playoffs']['matches'] as $po) {
-                    $treeMatchesByCode[$po['match_code']] = [
-                        'team1_player' => $po['team1']['name'] ?? 'Menunggu Undian',
-                        'team1_school' => $po['team1']['institution'] ?? 'TBD',
-                        'team2_player' => $po['team2']['name'] ?? 'Menunggu Undian',
-                        'team2_school' => $po['team2']['institution'] ?? 'TBD',
-                    ];
+
+            // Jika pool ini tidak memiliki babak play-off, bersihkan match play-off sisa yang masih 'upcoming' dari database
+            if (empty($b['playoffs']['has_playoffs'])) {
+                BadmintonMatch::where('competition_id', $competition->id)
+                    ->where('match_code', 'like', "{$p['key']}-PO-%")
+                    ->where('match_status', 'upcoming')
+                    ->delete();
+            } else {
+                if (! empty($b['playoffs']['matches'])) {
+                    foreach ($b['playoffs']['matches'] as $po) {
+                        $treeMatchesByCode[$po['match_code']] = [
+                            'team1_player' => $po['team1']['name'] ?? 'Menunggu Undian',
+                            'team1_school' => $po['team1']['institution'] ?? 'TBD',
+                            'team2_player' => $po['team2']['name'] ?? 'Menunggu Undian',
+                            'team2_school' => $po['team2']['institution'] ?? 'TBD',
+                        ];
+                    }
                 }
             }
+
             if (! empty($b['rounds'])) {
                 foreach ($b['rounds'] as $rnd) {
                     foreach ($rnd['matches'] as $rm) {
@@ -378,6 +376,18 @@ class TournamentBracketController extends Controller
                 }
             }
         }
+
+        // 2. Ambil match dari database setelah record play-off kadaluarsa dibersihkan
+        $dbMatchesQuery = BadmintonMatch::where('competition_id', $competition->id);
+        if ($isSingleCategory) {
+            $dbMatchesQuery->where('match_code', 'like', "{$targetPool['key']}-%");
+        }
+        $rawDbMatches = $dbMatchesQuery->orderBy('match_day')
+            ->orderBy('court_number')
+            ->orderBy('scheduled_time')
+            ->orderBy('match_order')
+            ->get();
+        $dbMatchesByCode = $rawDbMatches->keyBy('match_code');
 
         $spreadsheet = new Spreadsheet;
 
@@ -724,8 +734,40 @@ class TournamentBracketController extends Controller
 
         $matchesList = [];
 
+        $timeSortKey = function (?string $t): string {
+            if (empty($t)) {
+                return '99:99';
+            }
+            $clean = str_replace('.', ':', trim($t));
+            $parts = explode(':', $clean);
+            if (count($parts) === 2 && is_numeric($parts[0]) && is_numeric($parts[1])) {
+                return sprintf('%02d:%02d', (int) $parts[0], (int) $parts[1]);
+            }
+
+            return $clean;
+        };
+
         if ($matchesCollection && $matchesCollection->isNotEmpty()) {
             foreach ($matchesCollection as $m) {
+                // 1. Lewati jika match tidak terdaftar dalam pohon bagan resmi turnamen (misal play-off kadaluarsa)
+                if (! empty($treeMatchesByCode) && ! isset($treeMatchesByCode[$m->match_code])) {
+                    continue;
+                }
+
+                // 2. Jika targetPool ditentukan (export per kategori), pastikan hanya mengambil pool yang cocok
+                if ($targetPool && ! str_starts_with($m->match_code, $targetPool['key'].'-')) {
+                    continue;
+                }
+
+                // 3. Hanya sertakan partai yang sudah dijadwalkan (memiliki Lapangan dan Jam Main definitif)
+                // Pertandingan tanpa lapangan / jam (seperti Final yang belum terjadwal) atau BYE TIDAK BOLEH tampil di Order of Play
+                $court = trim((string) ($m->court_number ?? ''));
+                $time = trim((string) ($m->scheduled_time ?? ''));
+
+                if (empty($court) || strtoupper($court) === 'BYE' || $court === '-' || empty($time) || $time === '-') {
+                    continue;
+                }
+
                 $categoryLabel = $this->resolveMatchCategoryTitle($m->match_code, $poolMap, $m->category);
                 $dayLabel = $this->formatMatchDayLabel($m->match_day, $m->match_date?->format('Y-m-d'), $m->match_day_label);
 
@@ -751,9 +793,11 @@ class TournamentBracketController extends Controller
                     'match_day' => (int) ($m->match_day ?: 1),
                     'match_day_label' => $dayLabel,
                     'match_date' => $m->match_date?->format('Y-m-d'),
-                    'court_number' => $m->court_number ?: '-',
-                    'scheduled_time' => $m->scheduled_time ? $m->scheduled_time.' WIB' : '-',
+                    'court_number' => $court,
+                    'scheduled_time' => $time.' WIB',
                     'match_order' => $m->match_order ? '#'.$m->match_order : '-',
+                    'match_order_num' => (int) ($m->match_order ?: 9999),
+                    'time_raw' => $time,
                     'category' => $categoryLabel,
                     'round_name' => $m->round_name ?: 'Babak 1',
                     'team1_player' => $t1Name,
@@ -772,6 +816,17 @@ class TournamentBracketController extends Controller
                 if ($targetPool && ! str_starts_with($m['match_code'], $targetPool['key'].'-')) {
                     continue;
                 }
+                if (! empty($treeMatchesByCode) && ! isset($treeMatchesByCode[$m['match_code']])) {
+                    continue;
+                }
+
+                $court = trim((string) ($m['court_number'] ?? ''));
+                $time = trim((string) ($m['scheduled_time'] ?? ''));
+
+                if (empty($court) || strtoupper($court) === 'BYE' || $court === '-' || empty($time) || $time === '-') {
+                    continue;
+                }
+
                 $categoryLabel = $m['pool_title'] ?? $this->resolveMatchCategoryTitle($m['match_code'], $poolMap, $m['category']);
                 $dayLabel = $this->formatMatchDayLabel($m['match_day'] ?? 1, $m['match_date'] ?? null, $m['match_day_label'] ?? null);
 
@@ -796,9 +851,11 @@ class TournamentBracketController extends Controller
                     'match_day' => (int) ($m['match_day'] ?: 1),
                     'match_day_label' => $dayLabel,
                     'match_date' => $m['match_date'],
-                    'court_number' => $m['court_number'],
-                    'scheduled_time' => $m['scheduled_time'] ? $m['scheduled_time'].' WIB' : '-',
+                    'court_number' => $court,
+                    'scheduled_time' => $time.' WIB',
                     'match_order' => $m['match_order'] ? '#'.$m['match_order'] : '-',
+                    'match_order_num' => (int) ($m['match_order'] ?: 9999),
+                    'time_raw' => $time,
                     'category' => $categoryLabel,
                     'round_name' => $m['round_name'],
                     'team1_player' => $t1Name,
@@ -812,18 +869,21 @@ class TournamentBracketController extends Controller
         }
 
         // Sort matches chronologically: match_day -> court_number -> scheduled_time -> match_order
-        usort($matchesList, function ($a, $b) {
+        usort($matchesList, function ($a, $b) use ($timeSortKey) {
             if ($a['match_day'] !== $b['match_day']) {
                 return $a['match_day'] <=> $b['match_day'];
             }
-            if ($a['court_number'] !== $b['court_number']) {
-                return strcmp($a['court_number'], $b['court_number']);
+            $courtCmp = strnatcasecmp($a['court_number'], $b['court_number']);
+            if ($courtCmp !== 0) {
+                return $courtCmp;
             }
-            if ($a['scheduled_time'] !== $b['scheduled_time']) {
-                return strcmp($a['scheduled_time'], $b['scheduled_time']);
+            $tA = $timeSortKey($a['time_raw']);
+            $tB = $timeSortKey($b['time_raw']);
+            if ($tA !== $tB) {
+                return strcmp($tA, $tB);
             }
 
-            return strcmp($a['match_order'], $b['match_order']);
+            return $a['match_order_num'] <=> $b['match_order_num'];
         });
 
         // Header Title
@@ -876,6 +936,16 @@ class TournamentBracketController extends Controller
         $row = 6;
         $no = 1;
         $currentDay = null;
+
+        if (empty($matchesList)) {
+            $sheet->setCellValue('A6', 'Belum ada jadwal pertandingan resmi yang dialokasikan ke lapangan dan jam main.');
+            $sheet->mergeCells('A6:M6');
+            $sheet->getStyle('A6:M6')->applyFromArray([
+                'font' => ['italic' => true, 'color' => ['rgb' => '64748B'], 'size' => 10],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            ]);
+            $sheet->getRowDimension(6)->setRowHeight(28);
+        }
 
         foreach ($matchesList as $m) {
             if ($currentDay !== $m['match_day']) {
@@ -1084,6 +1154,14 @@ class TournamentBracketController extends Controller
         $competition->bracket_settings = $settings;
         $competition->save();
 
+        // Jika beralih ke mode auto (tanpa play-off), bersihkan record play-off yang masih 'upcoming' dari database
+        if ($request->input('mode') === 'auto') {
+            BadmintonMatch::where('competition_id', $competition->id)
+                ->where('match_code', 'like', "{$poolKey}-PO-%")
+                ->where('match_status', 'upcoming')
+                ->delete();
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Format bagan untuk kategori ini berhasil diperbarui!',
@@ -1219,7 +1297,7 @@ class TournamentBracketController extends Controller
             ->keyBy('match_code');
 
         $syncedCount = 0;
-        DB::transaction(function () use ($competition, $planMatches, $existingMatches, &$syncedCount) {
+        DB::transaction(function () use ($competition, $planMatches, $existingMatches, $request, &$syncedCount) {
             foreach ($planMatches as $m) {
                 $existingRecord = $existingMatches->get($m['match_code']);
 
@@ -1279,6 +1357,17 @@ class TournamentBracketController extends Controller
                 }
 
                 $syncedCount++;
+            }
+
+            // Bersihkan match berstatus 'upcoming' lama yang tidak ada dalam rencana sinkronisasi jadwal aktif
+            $planCodes = collect($planMatches)->pluck('match_code')->filter()->all();
+            if (! empty($planCodes)) {
+                $purgeQuery = BadmintonMatch::where('competition_id', $competition->id)
+                    ->where('match_status', 'upcoming');
+                if ($request->input('scope') === 'pool' && $request->filled('pool_key')) {
+                    $purgeQuery->where('match_code', 'like', "{$request->input('pool_key')}-%");
+                }
+                $purgeQuery->whereNotIn('match_code', $planCodes)->delete();
             }
         });
 
