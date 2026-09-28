@@ -363,6 +363,9 @@ class BadmintonMatchController extends Controller
             if ($matched) {
                 $selectedCourt = $matched;
             }
+        } elseif (! $id) {
+            // Default to first court if no explicit match ID and no court query
+            $selectedCourt = $courts->first() ?? 'Lapangan 1';
         }
 
         $match = null;
@@ -408,15 +411,20 @@ class BadmintonMatchController extends Controller
             }
         }
 
-        // 3. Fallback: find any ongoing match across all courts, or latest match
-        if (! $match && ! $selectedCourt) {
+        // 3. Fallback: find any ongoing match across all courts, or earliest upcoming match
+        if (! $match) {
             $match = BadmintonMatch::with('competition')
                 ->whereIn('match_status', ['ongoing', 'interval'])
                 ->latest('updated_at')
                 ->first();
 
             if (! $match) {
-                $match = BadmintonMatch::with('competition')->latest()->first();
+                $match = BadmintonMatch::with('competition')
+                    ->where('match_status', 'upcoming')
+                    ->orderBy('match_day')
+                    ->orderBy('scheduled_time')
+                    ->orderBy('match_order')
+                    ->first();
             }
 
             if ($match && ! empty($match->court_number) && strtoupper($match->court_number) !== 'BYE') {
