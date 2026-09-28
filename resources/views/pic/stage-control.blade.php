@@ -26,6 +26,25 @@
         </div>
 
         <div class="flex items-center gap-2.5 flex-wrap">
+            <!-- Connection Status Indicator Pill -->
+            <div class="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border transition-all duration-200"
+                 :class="isOnline 
+                     ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25' 
+                     : 'bg-rose-500/20 text-rose-300 border-rose-500/40 animate-pulse shadow-lg shadow-rose-500/10'">
+                <span class="relative flex h-2 w-2">
+                    <span x-show="!isOnline" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2" :class="isOnline ? 'bg-emerald-400' : 'bg-rose-500'"></span>
+                </span>
+                <span x-text="isOnline ? 'Real-time Online' : 'Koneksi Terputus'"></span>
+                <button x-show="!isOnline" 
+                        type="button" 
+                        @click="fetchState(true)" 
+                        :disabled="isReconnecting"
+                        class="ml-1 px-2 py-0.5 rounded bg-rose-500/30 hover:bg-rose-500/50 text-[11px] font-black cursor-pointer transition">
+                    <span x-text="isReconnecting ? 'Menghubungkan...' : 'Hubungkan Ulang'"></span>
+                </button>
+            </div>
+
             <!-- Toggle Mode Waktu ON / OFF (Mode Timer vs Mode Nama Saja) -->
             <button type="button" 
                     @click="toggleTimerMode()"
@@ -56,6 +75,30 @@
                 <span>Reset Semua</span>
             </button>
         </div>
+    </div>
+
+    <!-- OFFLINE WARNING BANNER FOR OPERATOR (Muncul Otomatis Saat Sinyal Putus) -->
+    <div x-show="!isOnline" 
+         x-cloak 
+         class="p-4 rounded-2xl bg-rose-950/80 border border-rose-500/40 text-rose-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xl backdrop-blur-md">
+        <div class="flex items-center gap-2.5">
+            <span class="relative flex h-3 w-3 shrink-0">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
+            </span>
+            <i data-lucide="wifi-off" class="w-4 h-4 text-rose-400 shrink-0"></i>
+            <div>
+                <span class="font-black text-rose-100">Koneksi jaringan panggung terputus!</span>
+                <span class="text-rose-200/90 ml-1">Sistem otomatis mencoba menghubungkan ulang setiap 2 detik. Data lokal tetap aman.</span>
+            </div>
+        </div>
+        <button type="button" 
+                @click="fetchState(true)" 
+                :disabled="isReconnecting" 
+                class="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold shrink-0 transition flex items-center justify-center gap-2 cursor-pointer shadow-md">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5" :class="isReconnecting ? 'animate-spin' : ''"></i>
+            <span x-text="isReconnecting ? 'Menghubungkan...' : 'Hubungkan Sekarang'"></span>
+        </button>
     </div>
 
     <!-- MAIN CONSOLE GRID -->
@@ -366,6 +409,9 @@
             syncUrl: '{{ route("stage.api.state", $competition->slug ?: $competition->code) }}',
             pollInterval: null,
             timerTickInterval: null,
+            isOnline: true,
+            consecutiveFailures: 0,
+            isReconnecting: false,
 
             initApp() {
                 this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
@@ -377,13 +423,30 @@
                     }
                 }, 1000);
 
-                // Start Sync Polling
+                // Browser Online / Offline listeners for smart auto-reconnect
+                window.addEventListener('online', () => {
+                    this.isOnline = true;
+                    this.fetchState(true);
+                });
+                window.addEventListener('offline', () => {
+                    this.isOnline = false;
+                });
+
+                // Start Sync Polling (every 2 seconds)
                 this.pollInterval = setInterval(() => this.fetchState(), 2000);
             },
 
-            async fetchState() {
+            async fetchState(forced = false) {
+                if (forced) this.isReconnecting = true;
                 try {
-                    const res = await fetch(this.syncUrl, { headers: { 'Accept': 'application/json' } });
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 4000);
+                    const res = await fetch(this.syncUrl, { 
+                        headers: { 'Accept': 'application/json' },
+                        signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+
                     if (res.ok) {
                         const data = await res.json();
                         this.current = data.current;
@@ -395,11 +458,25 @@
                         if (data.timer.status !== 'running') {
                             this.secondsLeft = data.timer.seconds_remaining;
                         }
+                        this.isOnline = true;
+                        this.consecutiveFailures = 0;
                         this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
+                    } else {
+                        this.handleSyncFailure();
                     }
                 } catch (err) {
-                    console.warn('Sync error:', err);
+                    this.handleSyncFailure();
+                } finally {
+                    if (forced) this.isReconnecting = false;
                 }
+            },
+
+            handleSyncFailure() {
+                this.consecutiveFailures++;
+                if (this.consecutiveFailures >= 2) {
+                    this.isOnline = false;
+                }
+                this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
             },
 
             async triggerAction(actionName, payload = {}) {
@@ -431,11 +508,17 @@
                             this.secondsLeft = resData.state.timer.seconds_remaining;
                             this.totalSeconds = resData.state.timer.total_duration_seconds;
                             this.warningThreshold = resData.state.timer.warning_threshold_seconds;
+                            this.isOnline = true;
+                            this.consecutiveFailures = 0;
                             this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
                         }
+                    } else {
+                        this.handleSyncFailure();
                     }
                 } catch (err) {
                     console.error('Action error:', err);
+                    this.handleSyncFailure();
+                    alert('Gagal mengirim perintah ke server karena koneksi terputus. Sistem sedang mencoba menyambungkan kembali secara otomatis...');
                 }
             },
 

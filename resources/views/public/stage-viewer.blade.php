@@ -185,6 +185,17 @@
 
         <!-- Right: Digital Clock & Action Controls -->
         <div class="flex items-center gap-2.5 sm:gap-4 shrink-0">
+            <!-- Network Offline Alert Pill (Muncul otomatis saat sinyal drop) -->
+            <div x-show="!isOnline" x-cloak class="flex items-center gap-2 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-2xl bg-rose-500/25 border border-rose-500/40 text-rose-300 text-xs font-bold shadow-lg shadow-rose-500/10 animate-pulse">
+                <span class="relative flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-rose-400"></span>
+                </span>
+                <i data-lucide="wifi-off" class="w-3.5 h-3.5 text-rose-300"></i>
+                <span class="hidden sm:inline">Offline (Menyambung Ulang...)</span>
+                <span class="sm:hidden">Offline</span>
+            </div>
+
             <!-- Realtime Clock Widget -->
             <div class="hidden md:flex flex-col items-end px-3.5 py-1.5 rounded-2xl bg-white/[0.04] border border-white/[0.08] shadow-inner">
                 <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">WAKTU LOKAL</span>
@@ -537,6 +548,18 @@
         </div>
     </main>
 
+    <!-- Reconnecting Floating Toast / Banner (Unobtrusive) -->
+    <div x-show="!isOnline" 
+         x-cloak 
+         class="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full bg-slate-950/90 border border-amber-500/40 text-amber-200 text-xs font-bold shadow-2xl flex items-center gap-3 backdrop-blur-md transition-all">
+        <span class="relative flex h-2.5 w-2.5 shrink-0">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
+        </span>
+        <i data-lucide="wifi-off" class="w-4 h-4 text-amber-300 shrink-0"></i>
+        <span>Sinyal panggung terputus sementara. Layar tetap berjalan & otomatis sinkron saat sinyal kembali.</span>
+    </div>
+
     <!-- FOOTER INFO BAR -->
     <footer class="h-12 px-6 sm:px-8 flex items-center justify-between text-xs text-slate-400 border-t border-white/[0.08] bg-[#040711]/90 backdrop-blur-md">
         <div class="flex items-center gap-2 truncate">
@@ -573,6 +596,9 @@
                 clockTime: '',
                 pollInterval: null,
                 timerTickInterval: null,
+                isOnline: true,
+                consecutiveFailures: 0,
+                syncUrl: '',
 
                 initApp() {
                     this.updateClock();
@@ -585,6 +611,15 @@
                     document.addEventListener('click', () => {
                         if (!this.audioUnlocked) this.enableAudio();
                     }, { once: true });
+
+                    // Browser online/offline event listeners for auto-reconnect
+                    window.addEventListener('online', () => {
+                        this.isOnline = true;
+                        this.fetchSyncData();
+                    });
+                    window.addEventListener('offline', () => {
+                        this.isOnline = false;
+                    });
 
                     // Start Local Timer countdown
                     this.startLocalTicker();
@@ -611,19 +646,42 @@
 
                 startSyncPolling() {
                     const slug = this.competition.slug || this.competition.code;
-                    const url = '{{ route("stage.api.state", ":slug") }}'.replace(':slug', slug);
+                    this.syncUrl = '{{ route("stage.api.state", ":slug") }}'.replace(':slug', slug);
 
-                    this.pollInterval = setInterval(async () => {
-                        try {
-                            const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-                            if (res.ok) {
-                                const data = await res.json();
-                                this.applySyncData(data);
-                            }
-                        } catch (err) {
-                            console.warn('Sync poll error:', err);
-                        }
+                    this.pollInterval = setInterval(() => {
+                        this.fetchSyncData();
                     }, 1500);
+                },
+
+                async fetchSyncData() {
+                    try {
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 4000);
+                        const res = await fetch(this.syncUrl, { 
+                            headers: { 'Accept': 'application/json' },
+                            signal: controller.signal 
+                        });
+                        clearTimeout(timeoutId);
+
+                        if (res.ok) {
+                            const data = await res.json();
+                            this.applySyncData(data);
+                            this.isOnline = true;
+                            this.consecutiveFailures = 0;
+                        } else {
+                            this.handleSyncFailure();
+                        }
+                    } catch (err) {
+                        this.handleSyncFailure();
+                    }
+                },
+
+                handleSyncFailure() {
+                    this.consecutiveFailures++;
+                    if (this.consecutiveFailures >= 2) {
+                        this.isOnline = false;
+                        this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
+                    }
                 },
 
                 applySyncData(data) {
