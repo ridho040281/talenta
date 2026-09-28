@@ -2770,11 +2770,20 @@ class TournamentBracketController extends Controller
 
                 $bronzeMatchCode = "{$poolKey}-3RD-M1";
                 $existingBronzeMatch = $existingMatches->get($bronzeMatchCode);
+                $finalCode = "{$poolKey}-R{$totalRounds}-M1";
+                $finalExisting = $existingMatches->get($finalCode);
+
+                // Opsi 1 (Standar BWF & Turnamen Resmi):
+                // Partai Perebutan Juara 3 bernomor urut sebelum Grand Final.
+                // Grand Final menjadi pertandingan penutup turnamen (paling akhir).
+                $bronzeMatchSeq = $rounds[$totalRounds]['matches'][0]['match_number'] ?? $structuralMatchSeq;
+                $finalMatchNewSeq = $bronzeMatchSeq + 1;
+
+                if (! empty($rounds[$totalRounds]['matches'][0])) {
+                    $rounds[$totalRounds]['matches'][0]['match_number'] = $finalMatchNewSeq;
+                }
 
                 if (! $existingBronzeMatch) {
-                    $finalCode = "{$poolKey}-R{$totalRounds}-M1";
-                    $finalExisting = $existingMatches->get($finalCode);
-
                     if ($finalExisting && $finalExisting->match_day) {
                         $allCourts = $existingMatches->pluck('court_number')->filter(fn ($c) => ! empty($c) && strtoupper($c) !== 'BYE')->unique()->values()->all();
                         $bronzeCourt = (count($allCourts) > 1 && $finalExisting->court_number === $allCourts[0]) ? $allCourts[1] : ($finalExisting->court_number ?: 'Lapangan 2');
@@ -2789,7 +2798,7 @@ class TournamentBracketController extends Controller
                             'match_day' => $finalExisting->match_day,
                             'match_date' => $finalExisting->match_date,
                             'match_day_label' => $finalExisting->match_day_label,
-                            'match_order' => max(1, (int) ($finalExisting->match_order ?: 1) - 1),
+                            'match_order' => $bronzeMatchSeq,
                             'scheduled_time' => $finalExisting->scheduled_time ?: '08:00',
                             'team1_player1' => 'Kalah SF #1',
                             'team1_school' => 'Menunggu Semifinal 1',
@@ -2799,6 +2808,21 @@ class TournamentBracketController extends Controller
                         ]);
 
                         $existingMatches->put($bronzeMatchCode, $existingBronzeMatch);
+
+                        if ($finalExisting->match_order != $finalMatchNewSeq) {
+                            $finalExisting->match_order = $finalMatchNewSeq;
+                            $finalExisting->save();
+                        }
+                    }
+                } else {
+                    // Jika match sudah ada di DB, sinkronkan match_order jika urutan masih terbalik atau bentrok
+                    if ($finalExisting && (! empty($finalExisting->match_order) || ! empty($existingBronzeMatch->match_order))) {
+                        if ((int) $existingBronzeMatch->match_order >= (int) $finalExisting->match_order || (int) $finalExisting->match_order === (int) $bronzeMatchSeq) {
+                            $existingBronzeMatch->match_order = $bronzeMatchSeq;
+                            $existingBronzeMatch->save();
+                            $finalExisting->match_order = $finalMatchNewSeq;
+                            $finalExisting->save();
+                        }
                     }
                 }
 
@@ -2851,7 +2875,7 @@ class TournamentBracketController extends Controller
                 $bronzeMatchData = [
                     'has_bronze_match' => true,
                     'match_code' => $bronzeMatchCode,
-                    'match_number' => $structuralMatchSeq + 1,
+                    'match_number' => $bronzeMatchSeq,
                     'round_name' => 'Perebutan Juara 3',
                     'round_type' => 'bronze',
                     'team1' => $loser1,
@@ -3653,8 +3677,9 @@ class TournamentBracketController extends Controller
             $bmWinner = $bm['winner'] ?? null;
             $bmEm = $bm['existing_match'] ?? null;
 
+            $bmOrderLabel = ! empty($bm['match_number']) ? " (Partai #{$bm['match_number']})" : '';
             $svg[] = "<g class='bronze-match-module'>";
-            $svg[] = "<text x='".($bModuleX + $bBoxW / 2)."' y='".($bModuleY - 24)."' text-anchor='middle' font-size='10.5' font-weight='900' fill='".($isDark ? '#fbbf24' : '#b45309')."'>🥉 PEREBUTAN JUARA 3</text>";
+            $svg[] = "<text x='".($bModuleX + $bBoxW / 2)."' y='".($bModuleY - 24)."' text-anchor='middle' font-size='10.5' font-weight='900' fill='".($isDark ? '#fbbf24' : '#b45309')."'>🥉 PEREBUTAN JUARA 3{$bmOrderLabel}</text>";
             $svg[] = "<text x='".($bModuleX + $bBoxW / 2)."' y='".($bModuleY - 11)."' text-anchor='middle' font-size='8' font-weight='600' fill='{$subTextColor}'>Kalah SF #1 vs Kalah SF #2</text>";
 
             // Box Kalah SF 1
