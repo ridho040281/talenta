@@ -348,6 +348,37 @@ class TournamentBracketController extends Controller
             ->get();
         $dbMatchesByCode = $rawDbMatches->keyBy('match_code');
 
+        // Petakan pohon bagan resmi dari struktur undian/unggulan aktif
+        // Ini menjamin nama atlet pada file Excel 100% identik dengan bagan yang sedang dilihat di layar
+        $treeMatchesByCode = [];
+        foreach ($allPools as $p) {
+            $b = $this->buildTournamentTree($p['participants'], $competition, $p['key'], ['skip_svg' => true]);
+            if (! empty($b['playoffs']['matches'])) {
+                foreach ($b['playoffs']['matches'] as $po) {
+                    $treeMatchesByCode[$po['match_code']] = [
+                        'team1_player' => $po['team1']['name'] ?? 'Menunggu Undian',
+                        'team1_school' => $po['team1']['institution'] ?? 'TBD',
+                        'team2_player' => $po['team2']['name'] ?? 'Menunggu Undian',
+                        'team2_school' => $po['team2']['institution'] ?? 'TBD',
+                    ];
+                }
+            }
+            if (! empty($b['rounds'])) {
+                foreach ($b['rounds'] as $rnd) {
+                    foreach ($rnd['matches'] as $rm) {
+                        $isB1 = ! empty($rm['is_bye1']) || (($rm['team1']['name'] ?? '') === '[BYE]');
+                        $isB2 = ! empty($rm['is_bye2']) || (($rm['team2']['name'] ?? '') === '[BYE]');
+                        $treeMatchesByCode[$rm['match_code']] = [
+                            'team1_player' => $rm['team1']['name'] ?? ($isB1 ? '[BYE]' : 'Menunggu Pemenang'),
+                            'team1_school' => $rm['team1']['institution'] ?? ($isB1 ? 'BYE' : 'TBD'),
+                            'team2_player' => $rm['team2']['name'] ?? ($isB2 ? '[BYE]' : 'Menunggu Pemenang'),
+                            'team2_school' => $rm['team2']['institution'] ?? ($isB2 ? 'BYE' : 'TBD'),
+                        ];
+                    }
+                }
+            }
+        }
+
         $spreadsheet = new Spreadsheet;
 
         if ($isSingleCategory) {
@@ -372,7 +403,8 @@ class TournamentBracketController extends Controller
                 $targetPool,
                 $rawDbMatches->where('court_number', '!=', 'BYE')->values(),
                 $simulationPlan,
-                $poolMap
+                $poolMap,
+                $treeMatchesByCode
             );
 
             $sheetTitleSlug = Str::slug($competition->name.'_'.($targetPool['class_label'] ?? $targetPool['title']));
@@ -388,7 +420,8 @@ class TournamentBracketController extends Controller
                 null,
                 $rawDbMatches->where('court_number', '!=', 'BYE')->values(),
                 $simulationPlan,
-                $poolMap
+                $poolMap,
+                $treeMatchesByCode
             );
 
             // Sheets 2..N: Tiap Kategori memiliki Sheet Bagan Pertandingan sendiri
@@ -558,30 +591,29 @@ class TournamentBracketController extends Controller
             $mCode = $bm['match_code'];
             $em = $dbMatchesByCode->get($mCode) ?? ($simulationMatchesByCode[$mCode] ?? null);
 
-            $isBye1 = ! empty($bm['is_bye1']);
-            $isBye2 = ! empty($bm['is_bye2']);
+            $isBye1 = ! empty($bm['is_bye1']) || (($bm['team1']['name'] ?? '') === '[BYE]');
+            $isBye2 = ! empty($bm['is_bye2']) || (($bm['team2']['name'] ?? '') === '[BYE]');
 
-            // Format Nama Pemain & Sekolah
-            if ($em && ! empty($em->team1_player1)) {
-                $p1Name = $em->team1_player1;
-                $p1School = $em->team1_school ?: '-';
-            } elseif (is_array($em) && ! empty($em['team1_player'])) {
-                $p1Name = $em['team1_player'];
-                $p1School = $em['team1_school'] ?: '-';
-            } else {
-                $p1Name = $bm['team1']['name'] ?? ($isBye1 ? '[BYE]' : 'Menunggu Pemenang');
-                $p1School = $bm['team1']['institution'] ?? ($isBye1 ? 'BYE' : 'TBD');
-            }
+            // Format Nama Pemain & Sekolah: PRIORITASKAN susunan resmi bagan yang tampil di layar
+            $isFinished = (is_object($em) && $em->match_status === 'finished') || (is_array($em) && ($em['status'] ?? '') === 'finished');
+            $isOngoing = (is_object($em) && $em->match_status === 'ongoing') || (is_array($em) && ($em['status'] ?? '') === 'ongoing');
 
-            if ($em && ! empty($em->team2_player1)) {
-                $p2Name = $em->team2_player1;
-                $p2School = $em->team2_school ?: '-';
-            } elseif (is_array($em) && ! empty($em['team2_player'])) {
-                $p2Name = $em['team2_player'];
-                $p2School = $em['team2_school'] ?: '-';
-            } else {
-                $p2Name = $bm['team2']['name'] ?? ($isBye2 ? '[BYE]' : 'Menunggu Pemenang');
-                $p2School = $bm['team2']['institution'] ?? ($isBye2 ? 'BYE' : 'TBD');
+            $p1Name = $bm['team1']['name'] ?? ($isBye1 ? '[BYE]' : 'Menunggu Pemenang');
+            $p1School = $bm['team1']['institution'] ?? ($isBye1 ? 'BYE' : '-');
+
+            $p2Name = $bm['team2']['name'] ?? ($isBye2 ? '[BYE]' : 'Menunggu Pemenang');
+            $p2School = $bm['team2']['institution'] ?? ($isBye2 ? 'BYE' : '-');
+
+            // Khusus jika pertandingan sudah live/selesai dan ada nama atlet yang tersimpan secara definitif
+            if (($isFinished || $isOngoing) && is_object($em)) {
+                if (! empty($em->team1_player1) && ($p1Name === 'Menunggu Pemenang' || str_starts_with($p1Name, 'Pemenang '))) {
+                    $p1Name = $em->team1_player1;
+                    $p1School = $em->team1_school ?: '-';
+                }
+                if (! empty($em->team2_player1) && ($p2Name === 'Menunggu Pemenang' || str_starts_with($p2Name, 'Pemenang '))) {
+                    $p2Name = $em->team2_player1;
+                    $p2School = $em->team2_school ?: '-';
+                }
             }
 
             // Jadwal
@@ -684,7 +716,8 @@ class TournamentBracketController extends Controller
         ?array $targetPool,
         $matchesCollection,
         ?array $simulationPlan,
-        array $poolMap
+        array $poolMap,
+        array $treeMatchesByCode = []
     ): void {
         $sheet->getPageSetup()->setOrientation(PageSetup::ORIENTATION_LANDSCAPE);
         $sheet->getPageSetup()->setPaperSize(PageSetup::PAPERSIZE_A4);
@@ -696,6 +729,24 @@ class TournamentBracketController extends Controller
                 $categoryLabel = $this->resolveMatchCategoryTitle($m->match_code, $poolMap, $m->category);
                 $dayLabel = $this->formatMatchDayLabel($m->match_day, $m->match_date?->format('Y-m-d'), $m->match_day_label);
 
+                $treeInfo = $treeMatchesByCode[$m->match_code] ?? null;
+                $t1Name = $m->team1_player1 ?: 'Menunggu Pemenang';
+                $t1School = $m->team1_school ?: 'TBD';
+                $t2Name = $m->team2_player1 ?: 'Menunggu Pemenang';
+                $t2School = $m->team2_school ?: 'TBD';
+
+                // Jika match belum berjalan/selesai, utamakan nama atlet dari pohon bagan resmi
+                if (! in_array($m->match_status, ['ongoing', 'finished']) && $treeInfo) {
+                    if (! empty($treeInfo['team1_player'])) {
+                        $t1Name = $treeInfo['team1_player'];
+                        $t1School = $treeInfo['team1_school'];
+                    }
+                    if (! empty($treeInfo['team2_player'])) {
+                        $t2Name = $treeInfo['team2_player'];
+                        $t2School = $treeInfo['team2_school'];
+                    }
+                }
+
                 $matchesList[] = [
                     'match_day' => (int) ($m->match_day ?: 1),
                     'match_day_label' => $dayLabel,
@@ -705,10 +756,10 @@ class TournamentBracketController extends Controller
                     'match_order' => $m->match_order ? '#'.$m->match_order : '-',
                     'category' => $categoryLabel,
                     'round_name' => $m->round_name ?: 'Babak 1',
-                    'team1_player' => $m->team1_player1 ?: 'Menunggu Pemenang',
-                    'team1_school' => $m->team1_school ?: 'TBD',
-                    'team2_player' => $m->team2_player1 ?: 'Menunggu Pemenang',
-                    'team2_school' => $m->team2_school ?: 'TBD',
+                    'team1_player' => $t1Name,
+                    'team1_school' => $t1School,
+                    'team2_player' => $t2Name,
+                    'team2_school' => $t2School,
                     'score' => $this->formatMatchScore($m),
                     'status' => $m->match_status === 'finished' ? 'Selesai' : ($m->match_status === 'ongoing' ? 'Sedang Main' : 'Belum Main'),
                 ];
@@ -724,6 +775,23 @@ class TournamentBracketController extends Controller
                 $categoryLabel = $m['pool_title'] ?? $this->resolveMatchCategoryTitle($m['match_code'], $poolMap, $m['category']);
                 $dayLabel = $this->formatMatchDayLabel($m['match_day'] ?? 1, $m['match_date'] ?? null, $m['match_day_label'] ?? null);
 
+                $treeInfo = $treeMatchesByCode[$m['match_code']] ?? null;
+                $t1Name = $m['team1_player'] ?: 'Menunggu Pemenang';
+                $t1School = $m['team1_school'] ?: 'TBD';
+                $t2Name = $m['team2_player'] ?: 'Menunggu Pemenang';
+                $t2School = $m['team2_school'] ?: 'TBD';
+
+                if ($treeInfo) {
+                    if (! empty($treeInfo['team1_player'])) {
+                        $t1Name = $treeInfo['team1_player'];
+                        $t1School = $treeInfo['team1_school'];
+                    }
+                    if (! empty($treeInfo['team2_player'])) {
+                        $t2Name = $treeInfo['team2_player'];
+                        $t2School = $treeInfo['team2_school'];
+                    }
+                }
+
                 $matchesList[] = [
                     'match_day' => (int) ($m['match_day'] ?: 1),
                     'match_day_label' => $dayLabel,
@@ -733,10 +801,10 @@ class TournamentBracketController extends Controller
                     'match_order' => $m['match_order'] ? '#'.$m['match_order'] : '-',
                     'category' => $categoryLabel,
                     'round_name' => $m['round_name'],
-                    'team1_player' => $m['team1_player'] ?: 'Menunggu Pemenang',
-                    'team1_school' => $m['team1_school'] ?: 'TBD',
-                    'team2_player' => $m['team2_player'] ?: 'Menunggu Pemenang',
-                    'team2_school' => $m['team2_school'] ?: 'TBD',
+                    'team1_player' => $t1Name,
+                    'team1_school' => $t1School,
+                    'team2_player' => $t2Name,
+                    'team2_school' => $t2School,
                     'score' => '-',
                     'status' => $m['status'] === 'finished' ? 'Selesai' : ($m['status'] === 'ongoing' ? 'Sedang Main' : 'Belum Main'),
                 ];
@@ -1162,11 +1230,11 @@ class TournamentBracketController extends Controller
                     $winnerTeam = $existingRecord->winner_team;
                 }
 
-                // Lindungi nama atlet definitif jika data hasil pertandingan babak sebelumnya sudah ada di database
+                // Lindungi nama atlet definitif HANYA jika data hasil pertandingan sudah berlangsung (ongoing/finished)
                 $team1Player = $m['team1_player'] ?? 'Menunggu Pemenang';
                 $team1School = $m['team1_school'] ?? 'TBD';
                 $team1Id = $m['team1_id'] ?? null;
-                if ($existingRecord && ! empty($existingRecord->team1_registration_id)) {
+                if ($existingRecord && in_array($existingRecord->match_status, ['ongoing', 'finished']) && ! empty($existingRecord->team1_registration_id)) {
                     $team1Id = $existingRecord->team1_registration_id;
                     $team1School = $existingRecord->team1_school;
                     $team1Player = $existingRecord->team1_player1;
@@ -1175,7 +1243,7 @@ class TournamentBracketController extends Controller
                 $team2Player = $m['team2_player'] ?? 'Menunggu Pemenang';
                 $team2School = $m['team2_school'] ?? 'TBD';
                 $team2Id = $m['team2_id'] ?? null;
-                if ($existingRecord && ! empty($existingRecord->team2_registration_id)) {
+                if ($existingRecord && in_array($existingRecord->match_status, ['ongoing', 'finished']) && ! empty($existingRecord->team2_registration_id)) {
                     $team2Id = $existingRecord->team2_registration_id;
                     $team2School = $existingRecord->team2_school;
                     $team2Player = $existingRecord->team2_player1;
