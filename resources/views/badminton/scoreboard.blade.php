@@ -135,7 +135,7 @@
                 <option value="" disabled {{ !$match ? 'selected' : '' }}>-- Pilih Manual Partai --</option>
                 @foreach($allMatches as $m)
                     <option value="{{ $m->id }}" {{ $match && $match->id == $m->id ? 'selected' : '' }}>
-                        {{ $m->court_number }} ({{ $m->category }}) - {{ $m->team1_school }} vs {{ $m->team2_school }}
+                        {{ $m->court_number }} ({{ $m->category_label }}) - {{ $m->team1_school }} vs {{ $m->team2_school }}
                     </option>
                 @endforeach
             </select>

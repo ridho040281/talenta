@@ -1809,7 +1809,51 @@ class AdminController extends Controller
             $matchQuery->where('match_status', $request->match_status);
         }
         if ($request->filled('category')) {
-            $matchQuery->where('category', $request->category);
+            $cat = $request->category;
+            $matchQuery->where(function ($q) use ($cat) {
+                if ($cat === 'kat_a') {
+                    $q->where('match_code', 'like', 'kat_a_%')
+                        ->orWhere('category', 'like', 'kat_a_%');
+                } elseif ($cat === 'kat_b') {
+                    $q->where('match_code', 'like', 'kat_b_%')
+                        ->orWhere('category', 'like', 'kat_b_%');
+                } elseif ($cat === 'kat_c') {
+                    $q->where('match_code', 'like', 'kat_c_%')
+                        ->orWhere('category', 'like', 'kat_c_%');
+                } elseif ($cat === 'ganda') {
+                    $q->where('match_code', 'like', 'ganda_%')
+                        ->orWhere('category', 'like', 'ganda_%')
+                        ->orWhereIn('category', ['MD', 'WD', 'XD'])
+                        ->orWhere('match_type', 'double');
+                } elseif ($cat === 'all_pa') {
+                    $q->where('match_code', 'like', '%_pa-%')
+                        ->orWhere('category', 'like', '%_pa')
+                        ->orWhereIn('category', ['MS', 'MD']);
+                } elseif ($cat === 'all_pi') {
+                    $q->where('match_code', 'like', '%_pi-%')
+                        ->orWhere('category', 'like', '%_pi')
+                        ->orWhereIn('category', ['WS', 'WD']);
+                } elseif ($cat === 'MS') {
+                    $q->where('category', 'MS')
+                        ->orWhere('match_code', 'like', '%_pa-%');
+                } elseif ($cat === 'WS') {
+                    $q->where('category', 'WS')
+                        ->orWhere('match_code', 'like', '%_pi-%');
+                } elseif ($cat === 'MD') {
+                    $q->where('category', 'MD')
+                        ->orWhere('match_code', 'like', 'ganda_pa-%');
+                } elseif ($cat === 'WD') {
+                    $q->where('category', 'WD')
+                        ->orWhere('match_code', 'like', 'ganda_pi-%');
+                } elseif ($cat === 'XD') {
+                    $q->where('category', 'XD')
+                        ->orWhere('match_code', 'like', 'ganda_mix-%');
+                } else {
+                    $q->where('category', $cat)
+                        ->orWhere('match_code', 'like', "{$cat}-%")
+                        ->orWhere('match_code', 'like', "{$cat}_%");
+                }
+            });
         }
         $badmintonMatches = $matchQuery->paginate(12)->appends($request->query());
 

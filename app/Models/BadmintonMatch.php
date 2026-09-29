@@ -49,6 +49,11 @@ class BadmintonMatch extends Model
         'scores_history',
     ];
 
+    protected $appends = [
+        'category_label',
+        'category_title',
+    ];
+
     protected function casts(): array
     {
         return [
@@ -220,5 +225,75 @@ class BadmintonMatch extends Model
     public function isCurrentSetFinished(): bool
     {
         return $this->isSetFinished($this->current_set);
+    }
+
+    public function getCategoryLabelAttribute(): string
+    {
+        $code = $this->match_code ?? '';
+        $prefix = explode('-', $code)[0] ?? '';
+
+        $pools = [
+            'kat_a_pa' => 'Kat A (1–2) PA',
+            'kat_a_pi' => 'Kat A (1–2) PI',
+            'kat_b_pa' => 'Kat B (3–4) PA',
+            'kat_b_pi' => 'Kat B (3–4) PI',
+            'kat_c_pa' => 'Kat C (5–6) PA',
+            'kat_c_pi' => 'Kat C (5–6) PI',
+            'ganda_pa' => 'Ganda PA',
+            'ganda_pi' => 'Ganda PI',
+            'ganda_mix' => 'Ganda MIX',
+        ];
+
+        if (isset($pools[$prefix])) {
+            return $pools[$prefix];
+        }
+
+        if (isset($pools[$this->category])) {
+            return $pools[$this->category];
+        }
+
+        return match ($this->category) {
+            'MS' => 'Tunggal PA',
+            'WS' => 'Tunggal PI',
+            'MD' => 'Ganda PA',
+            'WD' => 'Ganda PI',
+            'XD' => 'Ganda MIX',
+            default => $this->category ?: 'Bulu Tangkis',
+        };
+    }
+
+    public function getCategoryTitleAttribute(): string
+    {
+        $code = $this->match_code ?? '';
+        $prefix = explode('-', $code)[0] ?? '';
+
+        $pools = [
+            'kat_a_pa' => 'Kategori A (Kelas 1–2) - Tunggal Putra (PA)',
+            'kat_a_pi' => 'Kategori A (Kelas 1–2) - Tunggal Putri (PI)',
+            'kat_b_pa' => 'Kategori B (Kelas 3–4) - Tunggal Putra (PA)',
+            'kat_b_pi' => 'Kategori B (Kelas 3–4) - Tunggal Putri (PI)',
+            'kat_c_pa' => 'Kategori C (Kelas 5–6) - Tunggal Putra (PA)',
+            'kat_c_pi' => 'Kategori C (Kelas 5–6) - Tunggal Putri (PI)',
+            'ganda_pa' => 'Ganda Putra (PA)',
+            'ganda_pi' => 'Ganda Putri (PI)',
+            'ganda_mix' => 'Ganda Campuran (MIX)',
+        ];
+
+        if (isset($pools[$prefix])) {
+            return $pools[$prefix];
+        }
+
+        if (isset($pools[$this->category])) {
+            return $pools[$this->category];
+        }
+
+        return match ($this->category) {
+            'MS' => 'MS - Tunggal Putra',
+            'WS' => 'WS - Tunggal Putri',
+            'MD' => 'MD - Ganda Putra',
+            'WD' => 'WD - Ganda Putri',
+            'XD' => 'XD - Ganda Campuran',
+            default => $this->category ?: 'Bulu Tangkis',
+        };
     }
 }

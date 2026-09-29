@@ -29,10 +29,54 @@ class BadmintonMatchController extends Controller
         }
 
         if ($request->filled('category')) {
-            $query->where('category', $request->category);
+            $cat = $request->category;
+            $query->where(function ($q) use ($cat) {
+                if ($cat === 'kat_a') {
+                    $q->where('match_code', 'like', 'kat_a_%')
+                        ->orWhere('category', 'like', 'kat_a_%');
+                } elseif ($cat === 'kat_b') {
+                    $q->where('match_code', 'like', 'kat_b_%')
+                        ->orWhere('category', 'like', 'kat_b_%');
+                } elseif ($cat === 'kat_c') {
+                    $q->where('match_code', 'like', 'kat_c_%')
+                        ->orWhere('category', 'like', 'kat_c_%');
+                } elseif ($cat === 'ganda') {
+                    $q->where('match_code', 'like', 'ganda_%')
+                        ->orWhere('category', 'like', 'ganda_%')
+                        ->orWhereIn('category', ['MD', 'WD', 'XD'])
+                        ->orWhere('match_type', 'double');
+                } elseif ($cat === 'all_pa') {
+                    $q->where('match_code', 'like', '%_pa-%')
+                        ->orWhere('category', 'like', '%_pa')
+                        ->orWhereIn('category', ['MS', 'MD']);
+                } elseif ($cat === 'all_pi') {
+                    $q->where('match_code', 'like', '%_pi-%')
+                        ->orWhere('category', 'like', '%_pi')
+                        ->orWhereIn('category', ['WS', 'WD']);
+                } elseif ($cat === 'MS') {
+                    $q->where('category', 'MS')
+                        ->orWhere('match_code', 'like', '%_pa-%');
+                } elseif ($cat === 'WS') {
+                    $q->where('category', 'WS')
+                        ->orWhere('match_code', 'like', '%_pi-%');
+                } elseif ($cat === 'MD') {
+                    $q->where('category', 'MD')
+                        ->orWhere('match_code', 'like', 'ganda_pa-%');
+                } elseif ($cat === 'WD') {
+                    $q->where('category', 'WD')
+                        ->orWhere('match_code', 'like', 'ganda_pi-%');
+                } elseif ($cat === 'XD') {
+                    $q->where('category', 'XD')
+                        ->orWhere('match_code', 'like', 'ganda_mix-%');
+                } else {
+                    $q->where('category', $cat)
+                        ->orWhere('match_code', 'like', "{$cat}-%")
+                        ->orWhere('match_code', 'like', "{$cat}_%");
+                }
+            });
         }
 
-        $matches = $query->paginate(15);
+        $matches = $query->paginate(15)->withQueryString();
         $competitions = Competition::where('code', 'BLT')->orWhere('name', 'like', '%Bulu Tangkis%')->orWhere('name', 'like', '%Badminton%')->get();
         if ($competitions->isEmpty()) {
             $competitions = Competition::all();
@@ -53,7 +97,7 @@ class BadmintonMatchController extends Controller
             'court_number' => 'required|string|max:50',
             'match_code' => 'nullable|string|max:50',
             'round_name' => 'required|string|max:100',
-            'category' => 'required|string|in:MS,WS,MD,WD,XD',
+            'category' => 'required|string|max:50',
             'match_type' => 'required|string|in:single,double',
             'team1_school' => 'required|string|max:150',
             'team1_player1' => 'required|string|max:150',
@@ -62,6 +106,11 @@ class BadmintonMatchController extends Controller
             'team2_player1' => 'required|string|max:150',
             'team2_player2' => 'nullable|string|max:150',
         ]);
+
+        if (empty($validated['match_code'])) {
+            $prefix = $validated['category'] ?: 'BLT';
+            $validated['match_code'] = $prefix.'-M'.(BadmintonMatch::where('category', $validated['category'])->count() + 1);
+        }
 
         $validated['current_set'] = 1;
         $validated['team1_set1'] = 0;
@@ -89,7 +138,7 @@ class BadmintonMatchController extends Controller
             'court_number' => 'required|string|max:50',
             'match_code' => 'nullable|string|max:50',
             'round_name' => 'required|string|max:100',
-            'category' => 'required|string|in:MS,WS,MD,WD,XD',
+            'category' => 'required|string|max:50',
             'match_type' => 'required|string|in:single,double',
             'team1_school' => 'required|string|max:150',
             'team1_player1' => 'required|string|max:150',

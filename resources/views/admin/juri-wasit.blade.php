@@ -400,12 +400,35 @@
                 </select>
 
                 <select name="category" onchange="this.form.submit()" class="bg-[#0C111D] border border-white/[0.12] text-slate-200 rounded-xl px-3 py-2 text-xs font-medium outline-none">
-                    <option value="">Semua Sektor</option>
-                    <option value="MS" {{ request('category') == 'MS' ? 'selected' : '' }}>MS - Tunggal Putra</option>
-                    <option value="WS" {{ request('category') == 'WS' ? 'selected' : '' }}>WS - Tunggal Putri</option>
-                    <option value="MD" {{ request('category') == 'MD' ? 'selected' : '' }}>MD - Ganda Putra</option>
-                    <option value="WD" {{ request('category') == 'WD' ? 'selected' : '' }}>WD - Ganda Putri</option>
-                    <option value="XD" {{ request('category') == 'XD' ? 'selected' : '' }}>XD - Ganda Campuran</option>
+                    <option value="">Semua Kategori</option>
+                    <optgroup label="Kategori & Sektor (Kelas & PA/PI)">
+                        <option value="kat_a_pa" {{ request('category') == 'kat_a_pa' ? 'selected' : '' }}>Kat A (Kelas 1–2) - Putra (PA)</option>
+                        <option value="kat_a_pi" {{ request('category') == 'kat_a_pi' ? 'selected' : '' }}>Kat A (Kelas 1–2) - Putri (PI)</option>
+                        <option value="kat_b_pa" {{ request('category') == 'kat_b_pa' ? 'selected' : '' }}>Kat B (Kelas 3–4) - Putra (PA)</option>
+                        <option value="kat_b_pi" {{ request('category') == 'kat_b_pi' ? 'selected' : '' }}>Kat B (Kelas 3–4) - Putri (PI)</option>
+                        <option value="kat_c_pa" {{ request('category') == 'kat_c_pa' ? 'selected' : '' }}>Kat C (Kelas 5–6) - Putra (PA)</option>
+                        <option value="kat_c_pi" {{ request('category') == 'kat_c_pi' ? 'selected' : '' }}>Kat C (Kelas 5–6) - Putri (PI)</option>
+                        <option value="ganda_pa" {{ request('category') == 'ganda_pa' ? 'selected' : '' }}>Ganda Putra (PA)</option>
+                        <option value="ganda_pi" {{ request('category') == 'ganda_pi' ? 'selected' : '' }}>Ganda Putri (PI)</option>
+                        <option value="ganda_mix" {{ request('category') == 'ganda_mix' ? 'selected' : '' }}>Ganda Campuran (MIX)</option>
+                    </optgroup>
+                    <optgroup label="Per Jenjang Kelas">
+                        <option value="kat_a" {{ request('category') == 'kat_a' ? 'selected' : '' }}>Semua Kat A (Kelas 1–2)</option>
+                        <option value="kat_b" {{ request('category') == 'kat_b' ? 'selected' : '' }}>Semua Kat B (Kelas 3–4)</option>
+                        <option value="kat_c" {{ request('category') == 'kat_c' ? 'selected' : '' }}>Semua Kat C (Kelas 5–6)</option>
+                        <option value="ganda" {{ request('category') == 'ganda' ? 'selected' : '' }}>Semua Ganda</option>
+                    </optgroup>
+                    <optgroup label="Sektor Gender">
+                        <option value="all_pa" {{ request('category') == 'all_pa' ? 'selected' : '' }}>Semua Putra (PA)</option>
+                        <option value="all_pi" {{ request('category') == 'all_pi' ? 'selected' : '' }}>Semua Putri (PI)</option>
+                    </optgroup>
+                    <optgroup label="Standar BWF (Umum)">
+                        <option value="MS" {{ request('category') == 'MS' ? 'selected' : '' }}>MS - Tunggal Putra</option>
+                        <option value="WS" {{ request('category') == 'WS' ? 'selected' : '' }}>WS - Tunggal Putri</option>
+                        <option value="MD" {{ request('category') == 'MD' ? 'selected' : '' }}>MD - Ganda Putra</option>
+                        <option value="WD" {{ request('category') == 'WD' ? 'selected' : '' }}>WD - Ganda Putri</option>
+                        <option value="XD" {{ request('category') == 'XD' ? 'selected' : '' }}>XD - Ganda Campuran</option>
+                    </optgroup>
                 </select>
 
                 <select name="match_status" onchange="this.form.submit()" class="bg-[#0C111D] border border-white/[0.12] text-slate-200 rounded-xl px-3 py-2 text-xs font-medium outline-none">
@@ -435,7 +458,7 @@
                 <!-- Card Header -->
                 <div class="flex items-center justify-between border-b border-white/[0.08] pb-3 text-xs">
                     <div class="flex items-center gap-2">
-                        <span class="px-2 py-0.5 rounded-md font-mono font-bold bg-[#0C111D] text-amber-400 border border-amber-400/30 text-[11px]">{{ $match->category }}</span>
+                        <span class="px-2 py-0.5 rounded-md font-mono font-bold bg-[#0C111D] text-amber-400 border border-amber-400/30 text-[11px]" title="{{ $match->category_title }}">{{ $match->category_label }}</span>
                         <span class="font-bold text-white">{{ $match->court_number }}</span>
                     </div>
                     <div>

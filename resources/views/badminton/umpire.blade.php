@@ -41,7 +41,7 @@
             </a>
             <div class="min-w-0">
                 <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                    <span class="px-1.5 py-0.5 rounded font-mono font-black bg-amber-400 text-black text-[10px] sm:text-xs shrink-0 shadow-xs">{{ $match->category }}</span>
+                    <span class="px-1.5 py-0.5 rounded font-mono font-black bg-amber-400 text-black text-[10px] sm:text-xs shrink-0 shadow-xs" title="{{ $match->category_title }}">{{ $match->category_label }}</span>
                     <h1 class="text-xs sm:text-base font-extrabold text-white truncate flex items-center gap-1">
                         <span>{{ $match->court_number }}</span>
                         @if($match->match_order)
@@ -393,9 +393,20 @@
                     <div>
                         <label class="text-slate-400 font-bold block mb-1">Kategori</label>
                         <select name="category" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-bold">
-                            @foreach(['MS', 'WS', 'MD', 'WD', 'XD'] as $c)
-                                <option value="{{ $c }}" {{ $match->category == $c ? 'selected' : '' }}>{{ $c }}</option>
-                            @endforeach
+                            <option value="kat_a_pa" {{ $match->category == 'kat_a_pa' ? 'selected' : '' }}>Kat A (Kelas 1–2) - Putra (PA)</option>
+                            <option value="kat_a_pi" {{ $match->category == 'kat_a_pi' ? 'selected' : '' }}>Kat A (Kelas 1–2) - Putri (PI)</option>
+                            <option value="kat_b_pa" {{ $match->category == 'kat_b_pa' ? 'selected' : '' }}>Kat B (Kelas 3–4) - Putra (PA)</option>
+                            <option value="kat_b_pi" {{ $match->category == 'kat_b_pi' ? 'selected' : '' }}>Kat B (Kelas 3–4) - Putri (PI)</option>
+                            <option value="kat_c_pa" {{ $match->category == 'kat_c_pa' ? 'selected' : '' }}>Kat C (Kelas 5–6) - Putra (PA)</option>
+                            <option value="kat_c_pi" {{ $match->category == 'kat_c_pi' ? 'selected' : '' }}>Kat C (Kelas 5–6) - Putri (PI)</option>
+                            <option value="ganda_pa" {{ $match->category == 'ganda_pa' ? 'selected' : '' }}>Ganda Putra (PA)</option>
+                            <option value="ganda_pi" {{ $match->category == 'ganda_pi' ? 'selected' : '' }}>Ganda Putri (PI)</option>
+                            <option value="ganda_mix" {{ $match->category == 'ganda_mix' ? 'selected' : '' }}>Ganda Campuran (MIX)</option>
+                            <option value="MS" {{ $match->category == 'MS' ? 'selected' : '' }}>MS - Tunggal Putra (Umum)</option>
+                            <option value="WS" {{ $match->category == 'WS' ? 'selected' : '' }}>WS - Tunggal Putri (Umum)</option>
+                            <option value="MD" {{ $match->category == 'MD' ? 'selected' : '' }}>MD - Ganda Putra (Umum)</option>
+                            <option value="WD" {{ $match->category == 'WD' ? 'selected' : '' }}>WD - Ganda Putri (Umum)</option>
+                            <option value="XD" {{ $match->category == 'XD' ? 'selected' : '' }}>XD - Ganda Campuran (Umum)</option>
                         </select>
                     </div>
                     <div>
