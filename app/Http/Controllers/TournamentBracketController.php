@@ -685,6 +685,14 @@ class TournamentBracketController extends Controller
                 $statusText = 'BYE (Lolos Otomatis)';
             } elseif ((is_object($em) && $em->match_status === 'finished') || (is_array($em) && ($em['status'] ?? '') === 'finished')) {
                 $winnerNum = is_object($em) ? $em->winner_team : ($em['winner_team'] ?? null);
+                if (! in_array($winnerNum, [1, 2]) && is_object($em)) {
+                    $setsWon = $em->getSetsWon();
+                    if ($setsWon['t1'] > $setsWon['t2']) {
+                        $winnerNum = 1;
+                    } elseif ($setsWon['t2'] > $setsWon['t1']) {
+                        $winnerNum = 2;
+                    }
+                }
                 if ($winnerNum === 1) {
                     $statusText = 'Pemenang: '.$p1Name;
                 } elseif ($winnerNum === 2) {
@@ -815,16 +823,35 @@ class TournamentBracketController extends Controller
                 $t2Name = $m->team2_player1 ?: 'Menunggu Pemenang';
                 $t2School = $m->team2_school ?: 'TBD';
 
-                // Jika match belum berjalan/selesai, utamakan nama atlet dari pohon bagan resmi
-                if (! in_array($m->match_status, ['ongoing', 'finished']) && $treeInfo) {
-                    if (! empty($treeInfo['team1_player'])) {
+                // Prioritaskan nama atlet yang lolos dari pohon bagan resmi jika match belum selesai atau nama database masih placeholder
+                if ($treeInfo) {
+                    if (! empty($treeInfo['team1_player']) && ($m->match_status !== 'finished' || $t1Name === 'Menunggu Pemenang' || str_starts_with($t1Name, 'Pemenang '))) {
                         $t1Name = $treeInfo['team1_player'];
-                        $t1School = $treeInfo['team1_school'];
+                        $t1School = $treeInfo['team1_school'] ?: '-';
                     }
-                    if (! empty($treeInfo['team2_player'])) {
+                    if (! empty($treeInfo['team2_player']) && ($m->match_status !== 'finished' || $t2Name === 'Menunggu Pemenang' || str_starts_with($t2Name, 'Pemenang '))) {
                         $t2Name = $treeInfo['team2_player'];
-                        $t2School = $treeInfo['team2_school'];
+                        $t2School = $treeInfo['team2_school'] ?: '-';
                     }
+                }
+
+                $wNum = $m->winner_team;
+                if (! in_array($wNum, [1, 2])) {
+                    $setsWon = $m->getSetsWon();
+                    if ($setsWon['t1'] > $setsWon['t2']) {
+                        $wNum = 1;
+                    } elseif ($setsWon['t2'] > $setsWon['t1']) {
+                        $wNum = 2;
+                    }
+                }
+                $winnerName = ($wNum === 1) ? $t1Name : (($wNum === 2) ? $t2Name : null);
+                $scoreVal = $this->formatMatchScore($m);
+
+                $statusLabel = 'Belum Main';
+                if ($m->match_status === 'finished') {
+                    $statusLabel = $winnerName ? "Pemenang: {$winnerName}" : 'Selesai';
+                } elseif ($m->match_status === 'ongoing') {
+                    $statusLabel = 'Sedang Main';
                 }
 
                 $matchesList[] = [
@@ -842,8 +869,10 @@ class TournamentBracketController extends Controller
                     'team1_school' => $t1School,
                     'team2_player' => $t2Name,
                     'team2_school' => $t2School,
-                    'score' => $this->formatMatchScore($m),
-                    'status' => $m->match_status === 'finished' ? 'Selesai' : ($m->match_status === 'ongoing' ? 'Sedang Main' : 'Belum Main'),
+                    'score' => $scoreVal,
+                    'winner_name' => $winnerName,
+                    'match_status' => $m->match_status,
+                    'status' => $statusLabel,
                 ];
             }
         } elseif (! empty($simulationPlan['matches'])) {
@@ -1002,7 +1031,20 @@ class TournamentBracketController extends Controller
                 $row++;
             }
 
-            $displayScore = ($m['score'] !== '-' && ! empty($m['score'])) ? $m['score'] : $m['status'];
+            $displayScore = 'Belum Main';
+            if ($m['match_status'] === 'finished' || str_starts_with($m['status'], 'Pemenang') || $m['status'] === 'Selesai') {
+                if ($m['score'] !== '-' && ! empty($m['score']) && ! empty($m['winner_name'])) {
+                    $displayScore = "{$m['score']} (Pemenang: {$m['winner_name']})";
+                } elseif (! empty($m['winner_name'])) {
+                    $displayScore = "Pemenang: {$m['winner_name']}";
+                } elseif ($m['score'] !== '-' && ! empty($m['score'])) {
+                    $displayScore = $m['score'];
+                } else {
+                    $displayScore = 'Selesai';
+                }
+            } elseif ($m['match_status'] === 'ongoing') {
+                $displayScore = 'Sedang Main';
+            }
 
             $sheet->setCellValue("A{$row}", $no++);
             $sheet->setCellValue("B{$row}", $m['match_day_label']);
@@ -2768,7 +2810,16 @@ class TournamentBracketController extends Controller
 
                 if ($poExisting && $poExisting->match_status === 'finished') {
                     $poStatus = 'finished';
-                    $poWinner = ($poExisting->winner_team === 1) ? $p1 : (($poExisting->winner_team === 2) ? $p2 : null);
+                    $wTeam = $poExisting->winner_team;
+                    if (! in_array($wTeam, [1, 2])) {
+                        $setsWon = $poExisting->getSetsWon();
+                        if ($setsWon['t1'] > $setsWon['t2']) {
+                            $wTeam = 1;
+                        } elseif ($setsWon['t2'] > $setsWon['t1']) {
+                            $wTeam = 2;
+                        }
+                    }
+                    $poWinner = ($wTeam === 1) ? $p1 : (($wTeam === 2) ? $p2 : null);
                 } elseif ($poExisting && $poExisting->match_status === 'ongoing') {
                     $poStatus = 'ongoing';
                 } elseif (! empty($p1['is_pending_draw']) || ! empty($p2['is_pending_draw'])) {
@@ -2856,7 +2907,16 @@ class TournamentBracketController extends Controller
 
             if ($existingMatch && $existingMatch->match_status === 'finished') {
                 $status = 'finished';
-                $winner = $existingMatch->winner_team === 1 ? $p1 : ($existingMatch->winner_team === 2 ? $p2 : null);
+                $wTeam = $existingMatch->winner_team;
+                if (! in_array($wTeam, [1, 2])) {
+                    $setsWon = $existingMatch->getSetsWon();
+                    if ($setsWon['t1'] > $setsWon['t2']) {
+                        $wTeam = 1;
+                    } elseif ($setsWon['t2'] > $setsWon['t1']) {
+                        $wTeam = 2;
+                    }
+                }
+                $winner = ($wTeam === 1) ? $p1 : (($wTeam === 2) ? $p2 : null);
             } elseif ($p1 && ! $isBye1 && ! $isPending1 && $isBye2) {
                 $winner = $p1;
                 $status = 'bye_advance';
@@ -2927,7 +2987,16 @@ class TournamentBracketController extends Controller
 
                 if ($existingMatch && $existingMatch->match_status === 'finished') {
                     $status = 'finished';
-                    $winner = $existingMatch->winner_team === 1 ? $t1 : ($existingMatch->winner_team === 2 ? $t2 : null);
+                    $wTeam = $existingMatch->winner_team;
+                    if (! in_array($wTeam, [1, 2])) {
+                        $setsWon = $existingMatch->getSetsWon();
+                        if ($setsWon['t1'] > $setsWon['t2']) {
+                            $wTeam = 1;
+                        } elseif ($setsWon['t2'] > $setsWon['t1']) {
+                            $wTeam = 2;
+                        }
+                    }
+                    $winner = ($wTeam === 1) ? $t1 : (($wTeam === 2) ? $t2 : null);
                 } elseif ($existingMatch && $existingMatch->match_status === 'ongoing') {
                     $status = 'ongoing';
                 }
