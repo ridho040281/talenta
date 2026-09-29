@@ -2044,7 +2044,19 @@ class TournamentBracketController extends Controller
                     return $pA <=> $pB;
                 }
 
-                return strcmp($a['match_code'], $b['match_code']);
+                $roundA = (int) ($a['round_index'] ?? 1);
+                $roundB = (int) ($b['round_index'] ?? 1);
+                if ($roundA !== $roundB) {
+                    return $roundA <=> $roundB;
+                }
+
+                $orderA = $a['match_number'] ?? $a['bracket_match_number'] ?? null;
+                $orderB = $b['match_number'] ?? $b['bracket_match_number'] ?? null;
+                if ($orderA !== null && $orderB !== null && $orderA !== $orderB) {
+                    return (int) $orderA <=> (int) $orderB;
+                }
+
+                return strnatcasecmp($a['match_code'], $b['match_code']);
             });
 
             // Tracking court order & times
