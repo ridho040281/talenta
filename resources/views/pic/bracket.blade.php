@@ -110,9 +110,9 @@
             <a href="{{ route('pic.bracket.print', $competition->id) }}?pool={{ urlencode($activePoolKey) }}" 
                target="_blank" 
                class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.10] font-bold text-xs shadow-sm transition"
-               title="Cetak format bagan resmi A4 Landscape">
+               title="Cetak & Unduh Format Bagan Resmi (A4, A3, F4, Poster & Vektor SVG)">
                 <i data-lucide="printer" class="w-4 h-4 text-slate-300"></i>
-                <span>Cetak Bagan (A4)</span>
+                <span>Cetak / Poster Bagan</span>
             </a>
 
             <!-- Export Jadwal Excel Dropdown -->

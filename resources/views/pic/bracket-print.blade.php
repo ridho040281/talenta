@@ -79,7 +79,8 @@
                 padding: 1.25rem 0.75rem;
                 min-height: 100vh;
             }
-            .print-sheet.orientation-landscape {
+            /* A4 */
+            .print-sheet.size-a4.orientation-landscape {
                 width: 297mm;
                 max-width: 100%;
                 height: 200mm;
@@ -90,7 +91,7 @@
                 border: 1px solid #334155;
                 border-radius: 8px;
             }
-            .print-sheet.orientation-portrait {
+            .print-sheet.size-a4.orientation-portrait {
                 width: 210mm;
                 max-width: 100%;
                 height: 285mm;
@@ -101,6 +102,73 @@
                 border: 1px solid #334155;
                 border-radius: 8px;
             }
+            /* A3 */
+            .print-sheet.size-a3.orientation-landscape {
+                width: 420mm;
+                max-width: 100%;
+                height: 285mm;
+                max-height: 290mm;
+                padding: 6mm 9mm 5mm 9mm;
+                margin-bottom: 24px;
+                box-shadow: 0 16px 45px -4px rgba(0, 0, 0, 0.45);
+                border: 1px solid #334155;
+                border-radius: 10px;
+            }
+            .print-sheet.size-a3.orientation-portrait {
+                width: 297mm;
+                max-width: 100%;
+                height: 405mm;
+                max-height: 410mm;
+                padding: 7mm 8mm 6mm 8mm;
+                margin-bottom: 24px;
+                box-shadow: 0 16px 45px -4px rgba(0, 0, 0, 0.45);
+                border: 1px solid #334155;
+                border-radius: 10px;
+            }
+            /* F4 / Folio */
+            .print-sheet.size-f4.orientation-landscape {
+                width: 330mm;
+                max-width: 100%;
+                height: 205mm;
+                max-height: 210mm;
+                padding: 4mm 7mm 3mm 7mm;
+                margin-bottom: 24px;
+                box-shadow: 0 12px 35px -4px rgba(0, 0, 0, 0.4);
+                border: 1px solid #334155;
+                border-radius: 8px;
+            }
+            .print-sheet.size-f4.orientation-portrait {
+                width: 215mm;
+                max-width: 100%;
+                height: 318mm;
+                max-height: 322mm;
+                padding: 5mm 6mm 4mm 6mm;
+                margin-bottom: 24px;
+                box-shadow: 0 12px 35px -4px rgba(0, 0, 0, 0.4);
+                border: 1px solid #334155;
+                border-radius: 8px;
+            }
+            /* Poster / Bebas Ukuran (Auto) */
+            .print-sheet.size-poster.orientation-landscape {
+                width: 100%;
+                max-width: 1360px;
+                min-height: 780px;
+                padding: 8mm 12mm 6mm 12mm;
+                margin-bottom: 24px;
+                box-shadow: 0 20px 50px -4px rgba(0, 0, 0, 0.5);
+                border: 1px solid #334155;
+                border-radius: 12px;
+            }
+            .print-sheet.size-poster.orientation-portrait {
+                width: 100%;
+                max-width: 900px;
+                min-height: 1100px;
+                padding: 8mm 10mm 6mm 10mm;
+                margin-bottom: 24px;
+                box-shadow: 0 20px 50px -4px rgba(0, 0, 0, 0.5);
+                border: 1px solid #334155;
+                border-radius: 12px;
+            }
         }
 
         @media print {
@@ -108,11 +176,9 @@
                 width: 100% !important;
                 height: 100% !important;
                 min-height: 100% !important;
-                max-height: 100% !important;
                 margin: 0 !important;
                 padding: 0 !important;
                 background: #ffffff !important;
-                overflow: hidden !important;
             }
             .no-print {
                 display: none !important;
@@ -120,6 +186,7 @@
             .print-sheet {
                 width: 100% !important;
                 height: 100% !important;
+                min-height: 100% !important;
                 max-height: 100% !important;
                 padding: 0 !important;
                 margin: 0 !important;
@@ -162,7 +229,7 @@
         }
     </style>
 
-    <!-- Dynamic @page Orientation Style Injection -->
+    <!-- Dynamic @page Orientation & Size Style Injection -->
     <style id="dynamic-print-page-style">
         @page {
             size: A4 landscape;
@@ -172,7 +239,17 @@
 </head>
 <body class="antialiased" 
       x-data="{
+          paperSize: (new URLSearchParams(window.location.search).get('size') || localStorage.getItem('talenta_bracket_print_size') || 'a4'),
           orientation: (new URLSearchParams(window.location.search).get('orientation') || localStorage.getItem('talenta_bracket_print_orientation') || 'landscape'),
+          isExportingImage: false,
+          setPaperSize(size) {
+              this.paperSize = size;
+              localStorage.setItem('talenta_bracket_print_size', size);
+              this.updatePrintStyle();
+              if (window.lucide) { 
+                  this.$nextTick(() => window.lucide.createIcons()); 
+              }
+          },
           setOrientation(mode) {
               this.orientation = mode;
               localStorage.setItem('talenta_bracket_print_orientation', mode);
@@ -183,80 +260,274 @@
           },
           updatePrintStyle() {
               const styleEl = document.getElementById('dynamic-print-page-style');
-              if (styleEl) {
+              if (!styleEl) return;
+
+              if (this.paperSize === 'poster') {
+                  // Mode Poster / Bebas Ukuran: Bebas ukuran apa saja (A2, A1, A0, Plotter, atau Cetak Poster Multi-Lembar)
+                  styleEl.innerHTML = `@page { size: auto !important; margin: 4mm 6mm !important; }`;
+                  return;
+              }
+
+              if (this.paperSize === 'a3') {
                   if (this.orientation === 'portrait') {
-                      styleEl.innerHTML = `@page { size: A4 portrait !important; margin: 6mm 6mm !important; }`;
+                      styleEl.innerHTML = `@page { size: A3 portrait !important; margin: 6mm 6mm !important; }`;
                   } else {
-                      styleEl.innerHTML = `@page { size: A4 landscape !important; margin: 4mm 6mm !important; }`;
+                      styleEl.innerHTML = `@page { size: A3 landscape !important; margin: 4mm 6mm !important; }`;
                   }
+                  return;
+              }
+
+              if (this.paperSize === 'f4') {
+                  if (this.orientation === 'portrait') {
+                      styleEl.innerHTML = `@page { size: 215mm 330mm !important; margin: 6mm 6mm !important; }`;
+                  } else {
+                      styleEl.innerHTML = `@page { size: 330mm 215mm !important; margin: 4mm 6mm !important; }`;
+                  }
+                  return;
+              }
+
+              // Default: A4
+              if (this.orientation === 'portrait') {
+                  styleEl.innerHTML = `@page { size: A4 portrait !important; margin: 6mm 6mm !important; }`;
+              } else {
+                  styleEl.innerHTML = `@page { size: A4 landscape !important; margin: 4mm 6mm !important; }`;
+              }
+          },
+          downloadSvg() {
+              const svgEl = document.querySelector('.bracket-svg-container svg');
+              if (!svgEl) {
+                  alert('Bagan SVG tidak ditemukan.');
+                  return;
+              }
+              const serializer = new XMLSerializer();
+              let source = serializer.serializeToString(svgEl);
+              if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
+                  source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+              }
+              const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `Bagan_{{ Str::slug($competition->name . '_' . ($activePool['title'] ?? 'Resmi')) }}.svg`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+          },
+          async downloadPng() {
+              const svgEl = document.querySelector('.bracket-svg-container svg');
+              if (!svgEl) {
+                  alert('Bagan SVG tidak ditemukan.');
+                  return;
+              }
+              this.isExportingImage = true;
+              try {
+                  const serializer = new XMLSerializer();
+                  let source = serializer.serializeToString(svgEl);
+                  if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
+                      source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+                  }
+                  const img = new Image();
+                  const svgBlob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+                  const url = URL.createObjectURL(svgBlob);
+
+                  img.onload = () => {
+                      const canvas = document.createElement('canvas');
+                      const targetWidth = 3600;
+                      const viewBox = svgEl.viewBox.baseVal;
+                      const aspect = (viewBox && viewBox.height && viewBox.width) ? (viewBox.height / viewBox.width) : 0.6;
+                      canvas.width = targetWidth;
+                      canvas.height = Math.round(targetWidth * aspect);
+
+                      const ctx = canvas.getContext('2d');
+                      ctx.fillStyle = '#ffffff';
+                      ctx.fillRect(0, 0, canvas.width, canvas.height);
+                      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                      URL.revokeObjectURL(url);
+
+                      canvas.toBlob((pngBlob) => {
+                          this.isExportingImage = false;
+                          if (!pngBlob) return;
+                          const pngUrl = URL.createObjectURL(pngBlob);
+                          const a = document.createElement('a');
+                          a.href = pngUrl;
+                          a.download = `Bagan_Poster_HD_{{ Str::slug($competition->name . '_' . ($activePool['title'] ?? 'Resmi')) }}.png`;
+                          document.body.appendChild(a);
+                          a.click();
+                          document.body.removeChild(a);
+                          URL.revokeObjectURL(pngUrl);
+                      }, 'image/png');
+                  };
+                  img.onerror = () => {
+                      this.isExportingImage = false;
+                      alert('Gagal mengonversi gambar.');
+                  };
+                  img.src = url;
+              } catch (e) {
+                  this.isExportingImage = false;
+                  console.error(e);
+                  alert('Terjadi kesalahan saat mengonversi gambar.');
               }
           }
       }"
       x-init="updatePrintStyle()">
 
     <!-- Screen Action Control Bar (No Print) -->
-    <div class="no-print max-w-[297mm] mx-auto mb-4 px-2">
-        <div class="bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-xl flex flex-col lg:flex-row items-center justify-between border border-slate-800 gap-4">
+    <div class="no-print max-w-7xl mx-auto mb-3 px-2">
+        <div class="bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-xl flex flex-col xl:flex-row items-center justify-between border border-slate-800 gap-4">
             
             <!-- Left Info -->
-            <div class="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-start">
+            <div class="flex items-center gap-3 w-full xl:w-auto justify-between xl:justify-start">
                 <button type="button" onclick="smartGoBack('{{ route('pic.bracket', $competition->id) }}')" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition cursor-pointer" title="Kembali ke Bagan PIC">
                     <i data-lucide="arrow-left" class="w-4 h-4"></i>
                 </button>
                 <div>
                     <h2 class="text-sm font-black flex items-center gap-2">
                         <i data-lucide="printer" class="w-4 h-4 text-emerald-400"></i>
-                        <span>Pratinjau Cetak Bagan Pertandingan</span>
+                        <span>Cetak & Ekspor Bagan Pertandingan</span>
                     </h2>
                     <p class="text-xs text-slate-400">{{ $competition->name }} • {{ $activePool['title'] ?? 'Bagan Resmi' }}</p>
                 </div>
             </div>
 
-            <!-- Center Menu: Orientation Switcher (Landscape / Portrait) -->
-            <div class="flex items-center gap-2 w-full lg:w-auto justify-center">
-                <span class="text-xs font-bold text-slate-400 mr-1 flex items-center gap-1.5">
-                    <i data-lucide="sliders" class="w-3.5 h-3.5 text-slate-400"></i>
-                    <span>Orientasi Kertas:</span>
-                </span>
-                <div class="inline-flex p-1 bg-slate-950 rounded-xl border border-slate-800 text-xs font-bold shadow-inner">
-                    <!-- Landscape Button -->
-                    <button type="button" 
-                            @click="setOrientation('landscape')"
-                            :class="orientation === 'landscape' ? 'bg-emerald-500 text-slate-950 shadow-md font-black' : 'text-slate-400 hover:text-white'"
-                            class="px-3 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1.5">
-                        <i data-lucide="layout-template" class="w-3.5 h-3.5"></i>
-                        <span>Landscape (Mendatar)</span>
-                    </button>
+            <!-- Center Controls: Paper Size & Orientation Switchers -->
+            <div class="flex items-center gap-3 w-full xl:w-auto justify-center flex-wrap">
+                <!-- Paper Size Switcher -->
+                <div class="flex items-center gap-1.5">
+                    <span class="text-xs font-bold text-slate-400 flex items-center gap-1">
+                        <i data-lucide="file" class="w-3.5 h-3.5 text-slate-400"></i>
+                        <span>Kertas:</span>
+                    </span>
+                    <div class="inline-flex p-1 bg-slate-950 rounded-xl border border-slate-800 text-xs font-bold shadow-inner">
+                        <button type="button" 
+                                @click="setPaperSize('a4')"
+                                :class="paperSize === 'a4' ? 'bg-emerald-500 text-slate-950 shadow-md font-black' : 'text-slate-400 hover:text-white'"
+                                class="px-2.5 py-1 rounded-lg transition cursor-pointer"
+                                title="Ukuran A4 Standar (297 x 210 mm)">
+                            A4
+                        </button>
+                        <button type="button" 
+                                @click="setPaperSize('a3')"
+                                :class="paperSize === 'a3' ? 'bg-emerald-500 text-slate-950 shadow-md font-black' : 'text-slate-400 hover:text-white'"
+                                class="px-2.5 py-1 rounded-lg transition cursor-pointer"
+                                title="Ukuran A3 Besar (420 x 297 mm - 2x A4)">
+                            A3
+                        </button>
+                        <button type="button" 
+                                @click="setPaperSize('f4')"
+                                :class="paperSize === 'f4' ? 'bg-emerald-500 text-slate-950 shadow-md font-black' : 'text-slate-400 hover:text-white'"
+                                class="px-2.5 py-1 rounded-lg transition cursor-pointer"
+                                title="Ukuran Folio / F4 (330 x 215 mm)">
+                            F4
+                        </button>
+                        <button type="button" 
+                                @click="setPaperSize('poster')"
+                                :class="paperSize === 'poster' ? 'bg-amber-400 text-slate-950 shadow-md font-black' : 'text-slate-400 hover:text-white'"
+                                class="px-2.5 py-1 rounded-lg transition cursor-pointer flex items-center gap-1"
+                                title="Mode Poster / Bebas Ukuran (Auto size - bisa A2, A1, A0, Plotter, atau Cetak Poster Multi-Lembar)">
+                            <i data-lucide="sparkles" class="w-3 h-3 text-amber-950"></i>
+                            <span>Poster / Bebas</span>
+                        </button>
+                    </div>
+                </div>
 
-                    <!-- Portrait Button -->
-                    <button type="button" 
-                            @click="setOrientation('portrait')"
-                            :class="orientation === 'portrait' ? 'bg-emerald-500 text-slate-950 shadow-md font-black' : 'text-slate-400 hover:text-white'"
-                            class="px-3 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1.5">
-                        <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
-                        <span>Portrait (Tegak)</span>
-                    </button>
+                <!-- Orientation Switcher -->
+                <div class="flex items-center gap-1.5">
+                    <span class="text-xs font-bold text-slate-400 flex items-center gap-1">
+                        <i data-lucide="sliders" class="w-3.5 h-3.5 text-slate-400"></i>
+                        <span>Posisi:</span>
+                    </span>
+                    <div class="inline-flex p-1 bg-slate-950 rounded-xl border border-slate-800 text-xs font-bold shadow-inner">
+                        <button type="button" 
+                                @click="setOrientation('landscape')"
+                                :class="orientation === 'landscape' ? 'bg-emerald-500 text-slate-950 shadow-md font-black' : 'text-slate-400 hover:text-white'"
+                                class="px-2.5 py-1 rounded-lg transition cursor-pointer flex items-center gap-1"
+                                title="Landscape / Mendatar">
+                            <i data-lucide="layout-template" class="w-3.5 h-3.5"></i>
+                            <span class="hidden sm:inline">Landscape</span>
+                        </button>
+                        <button type="button" 
+                                @click="setOrientation('portrait')"
+                                :class="orientation === 'portrait' ? 'bg-emerald-500 text-slate-950 shadow-md font-black' : 'text-slate-400 hover:text-white'"
+                                class="px-2.5 py-1 rounded-lg transition cursor-pointer flex items-center gap-1"
+                                title="Portrait / Tegak">
+                            <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                            <span class="hidden sm:inline">Portrait</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Right Actions -->
-            <div class="flex items-center gap-3 w-full lg:w-auto justify-end flex-wrap">
-                <div class="bg-amber-500/15 text-amber-300 border border-amber-500/30 px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 font-medium">
-                    <i data-lucide="info" class="w-3.5 h-3.5 text-amber-400 shrink-0"></i>
-                    <span x-text="orientation === 'portrait' ? 'Format 1 Halaman A4 Portrait' : 'Format 1 Halaman A4 Landscape'">Format 1 Halaman A4</span>
-                </div>
-                <button type="button" onclick="window.print()" class="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 transition flex items-center gap-2 cursor-pointer">
+            <!-- Right Actions: Download & Print Buttons -->
+            <div class="flex items-center gap-2 w-full xl:w-auto justify-end flex-wrap">
+                <!-- Unduh SVG -->
+                <button type="button" 
+                        @click="downloadSvg()"
+                        class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-xs border border-slate-700 transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+                        title="Unduh file Vektor SVG murni untuk cetak banner/spanduk MMT di percetakan tanpa batas resolusi">
+                    <i data-lucide="download" class="w-3.5 h-3.5 text-sky-400"></i>
+                    <span>Unduh SVG</span>
+                </button>
+
+                <!-- Unduh PNG HD -->
+                <button type="button" 
+                        @click="downloadPng()"
+                        :disabled="isExportingImage"
+                        class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-xs border border-slate-700 transition flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
+                        title="Unduh gambar PNG HD Resolusi Tinggi 3600px siap cetak poster">
+                    <template x-if="!isExportingImage">
+                        <i data-lucide="image" class="w-3.5 h-3.5 text-amber-400"></i>
+                    </template>
+                    <template x-if="isExportingImage">
+                        <i data-lucide="loader" class="w-3.5 h-3.5 animate-spin text-amber-400"></i>
+                    </template>
+                    <span x-text="isExportingImage ? 'Memproses...' : 'Unduh PNG HD'"></span>
+                </button>
+
+                <!-- Cetak Sekarang -->
+                <button type="button" 
+                        onclick="window.print()" 
+                        class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 transition flex items-center gap-1.5 cursor-pointer">
                     <i data-lucide="printer" class="w-4 h-4"></i>
-                    <span x-text="orientation === 'portrait' ? 'Cetak Sekarang (A4 Portrait)' : 'Cetak Sekarang (A4 Landscape)'">Cetak Sekarang</span>
+                    <span>Cetak Sekarang</span>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Printable Sheet (Strictly 1 Sheet A4 Landscape or Portrait) -->
+    <!-- Notice Banners (Screen only) -->
+    <div class="no-print max-w-7xl mx-auto mb-3 px-2">
+        <template x-if="paperSize === 'poster'">
+            <div class="p-3 bg-amber-500/15 border border-amber-500/30 rounded-xl text-amber-200 text-xs flex items-center gap-2.5 shadow-sm">
+                <i data-lucide="sparkles" class="w-4 h-4 text-amber-400 shrink-0"></i>
+                <div class="leading-relaxed">
+                    <strong>Mode Poster / Ukuran Bebas Aktif:</strong> Batasan ukuran A4 telah dibuka! Pada dialog cetak printer (<kbd class="px-1 py-0.5 rounded bg-slate-800 text-amber-300 font-mono text-[10px]">Ctrl + P</kbd>), Anda bebas memilih ukuran kertas apa saja di printer Anda (A3, A2, A1, Plotter) atau aktifkan fitur <strong>Poster Printing / Multi-Sheet Tiling</strong> (cetak gabungan 4 atau 9 lembar A4 untuk ditempel jadi poster besar). Anda juga bisa mengklik <strong>Unduh SVG</strong> untuk mencetak banner/spanduk di percetakan.
+                </div>
+            </div>
+        </template>
+        <template x-if="paperSize === 'a3'">
+            <div class="p-3 bg-sky-500/15 border border-sky-500/30 rounded-xl text-sky-200 text-xs flex items-center gap-2.5 shadow-sm">
+                <i data-lucide="info" class="w-4 h-4 text-sky-400 shrink-0"></i>
+                <div class="leading-relaxed">
+                    <strong>Format Kertas A3:</strong> Dokumen disesuaikan untuk kertas ukuran A3 (420 &times; 297 mm — 2x lipat A4). Pada dialog cetak printer, pastikan Anda memilih ukuran kertas <strong>A3</strong>. Sangat ideal untuk papan pengumuman GOR!
+                </div>
+            </div>
+        </template>
+        <template x-if="paperSize === 'f4'">
+            <div class="p-3 bg-indigo-500/15 border border-indigo-500/30 rounded-xl text-indigo-200 text-xs flex items-center gap-2.5 shadow-sm">
+                <i data-lucide="info" class="w-4 h-4 text-indigo-400 shrink-0"></i>
+                <div class="leading-relaxed">
+                    <strong>Format Kertas F4 / Folio:</strong> Disesuaikan untuk kertas HVS panjang / Folio (330 &times; 215 mm). Pada dialog cetak, pastikan memilih ukuran kertas Folio / F4.
+                </div>
+            </div>
+        </template>
+    </div>
+
+    <!-- Printable Sheet -->
     <div id="printable-sheet" 
          class="print-sheet transition-all duration-300"
-         :class="orientation === 'portrait' ? 'orientation-portrait' : 'orientation-landscape'">
+         :class="['size-' + paperSize, 'orientation-' + orientation]">
 
         <!-- Top Header & Kop Surat -->
         <div class="shrink-0">
