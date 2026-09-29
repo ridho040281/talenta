@@ -3801,9 +3801,20 @@ class TournamentBracketController extends Controller
                 // Match score or Court Schedule if available (Standar BWF: Hanya untuk partai yang dimainkan, bukan BYE)
                 if (! $isByeAdvance && ! empty($match['existing_match'])) {
                     $em = $match['existing_match'];
+                    $scoreSets = [];
                     if ($em->team1_set1 > 0 || $em->team2_set1 > 0) {
-                        $scoreStr = "{$em->team1_set1}-{$em->team2_set1}";
-                        $scoreFontSize = ($bracketSize > 16) ? '10' : '11';
+                        $scoreSets[] = "{$em->team1_set1}-{$em->team2_set1}";
+                    }
+                    if ($em->team1_set2 > 0 || $em->team2_set2 > 0) {
+                        $scoreSets[] = "{$em->team1_set2}-{$em->team2_set2}";
+                    }
+                    if ($em->team1_set3 > 0 || $em->team2_set3 > 0) {
+                        $scoreSets[] = "{$em->team1_set3}-{$em->team2_set3}";
+                    }
+
+                    if (! empty($scoreSets)) {
+                        $scoreStr = implode(', ', $scoreSets);
+                        $scoreFontSize = (count($scoreSets) > 2 || $bracketSize > 16) ? '9.5' : '10.5';
                         $svg[] = "<text x='{$contentStartX}' y='".($yMid + 13)."' font-size='{$scoreFontSize}' font-weight='800' fill='{$subTextColor}'>{$scoreStr}</text>";
                     } elseif ((! empty($em->court_number) && strtoupper($em->court_number) !== 'BYE') || ! empty($em->scheduled_time)) {
                         $schedParts = [];
@@ -3910,8 +3921,19 @@ class TournamentBracketController extends Controller
             // VS line & schedule/score
             $bMidY = $b1Y + $bBoxH + 11;
             $svg[] = "<text x='".($bModuleX + 16)."' y='".($bMidY + 3.5)."' font-size='8.5' font-weight='900' fill='".($isDark ? '#64748b' : '#94a3b8')."'>VS</text>";
+            $bmScoreSets = [];
             if ($bmEm && ($bmEm->team1_set1 > 0 || $bmEm->team2_set1 > 0)) {
-                $scoreStr = "{$bmEm->team1_set1}-{$bmEm->team2_set1}";
+                $bmScoreSets[] = "{$bmEm->team1_set1}-{$bmEm->team2_set1}";
+            }
+            if ($bmEm && ($bmEm->team1_set2 > 0 || $bmEm->team2_set2 > 0)) {
+                $bmScoreSets[] = "{$bmEm->team1_set2}-{$bmEm->team2_set2}";
+            }
+            if ($bmEm && ($bmEm->team1_set3 > 0 || $bmEm->team2_set3 > 0)) {
+                $bmScoreSets[] = "{$bmEm->team1_set3}-{$bmEm->team2_set3}";
+            }
+
+            if (! empty($bmScoreSets)) {
+                $scoreStr = implode(', ', $bmScoreSets);
                 $svg[] = "<text x='".($bModuleX + $bBoxW - 8)."' y='".($bMidY + 3.5)."' text-anchor='end' font-size='9' font-weight='800' fill='{$textColor}'>{$scoreStr}</text>";
             } elseif ($bmEm && (! empty($bmEm->court_number) || ! empty($bmEm->scheduled_time))) {
                 $sParts = array_filter([$bmEm->court_number, $bmEm->scheduled_time]);

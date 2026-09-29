@@ -149,4 +149,59 @@ class TournamentBracketRenderTest extends TestCase
         // But H1 schedule text must NOT be rendered under the stem line
         $this->assertStringNotContainsString('>H1<', $svg);
     }
+
+    public function test_multi_set_scores_render_all_played_sets_in_bracket_svg(): void
+    {
+        $controller = new TournamentBracketController;
+
+        $bracketData = [
+            'bracket_size' => 16,
+            'is_doubles' => false,
+            'total_participants' => 10,
+            'total_rounds' => 4,
+            'rounds' => [
+                1 => [
+                    'round_index' => 1,
+                    'round_name' => 'Babak 16 Besar',
+                    'matches' => [
+                        [
+                            'match_number' => 2,
+                            'status' => 'finished',
+                            'is_bye1' => false,
+                            'is_bye2' => false,
+                            'team1' => [
+                                'slot_number' => 3,
+                                'name' => 'Siti Salwa',
+                                'institution' => 'MI Perwanida Blitar',
+                            ],
+                            'team2' => [
+                                'slot_number' => 4,
+                                'name' => 'Emilia Nathania Hagi',
+                                'institution' => 'MIN 5 Blitar',
+                            ],
+                            'winner' => [
+                                'name' => 'Siti Salwa',
+                            ],
+                            'existing_match' => (object) [
+                                'match_day' => 1,
+                                'court_number' => 'Lap 1',
+                                'scheduled_time' => '16:20',
+                                'team1_set1' => 21,
+                                'team2_set1' => 7,
+                                'team1_set2' => 21,
+                                'team2_set2' => 15,
+                                'team1_set3' => 0,
+                                'team2_set3' => 0,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $svg = $controller->renderClassicBracketSvg($bracketData);
+
+        $this->assertStringContainsString('Siti Salwa', $svg);
+        $this->assertStringContainsString('21-7, 21-15', $svg);
+    }
 }

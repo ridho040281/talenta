@@ -879,7 +879,13 @@
                                             </div>
                                             <div class="flex items-center gap-1.5 shrink-0 font-mono text-xs font-bold">
                                                 @if($bmEm && ($bmEm->team1_set1 > 0 || $bmEm->team2_set1 > 0))
-                                                    <span class="{{ $bmEm->team1_set1 > $bmEm->team2_set1 ? 'text-emerald-400' : 'text-slate-400' }}">{{ $bmEm->team1_set1 }}</span>
+                                                    <span class="{{ $bmEm->team1_set1 > $bmEm->team2_set1 ? 'text-emerald-400 font-bold' : 'text-slate-400' }}">{{ $bmEm->team1_set1 }}</span>
+                                                @endif
+                                                @if($bmEm && ($bmEm->team1_set2 > 0 || $bmEm->team2_set2 > 0))
+                                                    <span class="{{ $bmEm->team1_set2 > $bmEm->team2_set2 ? 'text-emerald-400 font-bold' : 'text-slate-400' }}">{{ $bmEm->team1_set2 }}</span>
+                                                @endif
+                                                @if($bmEm && ($bmEm->team1_set3 > 0 || $bmEm->team2_set3 > 0))
+                                                    <span class="{{ $bmEm->team1_set3 > $bmEm->team2_set3 ? 'text-emerald-400 font-bold' : 'text-slate-400' }}">{{ $bmEm->team1_set3 }}</span>
                                                 @endif
                                                 @if($isBmW1)
                                                     <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-400"></i>
@@ -895,7 +901,13 @@
                                             </div>
                                             <div class="flex items-center gap-1.5 shrink-0 font-mono text-xs font-bold">
                                                 @if($bmEm && ($bmEm->team1_set1 > 0 || $bmEm->team2_set1 > 0))
-                                                    <span class="{{ $bmEm->team2_set1 > $bmEm->team1_set1 ? 'text-emerald-400' : 'text-slate-400' }}">{{ $bmEm->team2_set1 }}</span>
+                                                    <span class="{{ $bmEm->team2_set1 > $bmEm->team1_set1 ? 'text-emerald-400 font-bold' : 'text-slate-400' }}">{{ $bmEm->team2_set1 }}</span>
+                                                @endif
+                                                @if($bmEm && ($bmEm->team1_set2 > 0 || $bmEm->team2_set2 > 0))
+                                                    <span class="{{ $bmEm->team2_set2 > $bmEm->team1_set2 ? 'text-emerald-400 font-bold' : 'text-slate-400' }}">{{ $bmEm->team2_set2 }}</span>
+                                                @endif
+                                                @if($bmEm && ($bmEm->team1_set3 > 0 || $bmEm->team2_set3 > 0))
+                                                    <span class="{{ $bmEm->team2_set3 > $bmEm->team1_set3 ? 'text-emerald-400 font-bold' : 'text-slate-400' }}">{{ $bmEm->team2_set3 }}</span>
                                                 @endif
                                                 @if($isBmW2)
                                                     <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-400"></i>
