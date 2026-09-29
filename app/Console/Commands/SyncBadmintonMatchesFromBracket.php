@@ -168,19 +168,43 @@ class SyncBadmintonMatchesFromBracket extends Command
                 $team1Player = $m['team1_player'] ?? 'Menunggu Pemenang';
                 $team1School = $m['team1_school'] ?? 'TBD';
                 $team1Id = $m['team1_id'] ?? null;
-                if ($existingRecord && in_array($existingRecord->match_status, ['ongoing', 'finished']) && ! empty($existingRecord->team1_registration_id)) {
-                    $team1Id = $existingRecord->team1_registration_id;
+                $team1Player1 = $team1Player;
+                $team1Player2 = null;
+
+                if (str_contains($team1Player, ' / ')) {
+                    $t1Parts = explode(' / ', $team1Player, 2);
+                    $team1Player1 = trim($t1Parts[0]);
+                    $team1Player2 = trim($t1Parts[1] ?? '');
+                }
+
+                if ($existingRecord && in_array($existingRecord->match_status, ['ongoing', 'finished'])) {
+                    if (! empty($existingRecord->team1_registration_id)) {
+                        $team1Id = $existingRecord->team1_registration_id;
+                    }
                     $team1School = $existingRecord->team1_school;
-                    $team1Player = $existingRecord->team1_player1;
+                    $team1Player1 = $existingRecord->team1_player1;
+                    $team1Player2 = $existingRecord->team1_player2;
                 }
 
                 $team2Player = $m['team2_player'] ?? 'Menunggu Pemenang';
                 $team2School = $m['team2_school'] ?? 'TBD';
                 $team2Id = $m['team2_id'] ?? null;
-                if ($existingRecord && in_array($existingRecord->match_status, ['ongoing', 'finished']) && ! empty($existingRecord->team2_registration_id)) {
-                    $team2Id = $existingRecord->team2_registration_id;
+                $team2Player1 = $team2Player;
+                $team2Player2 = null;
+
+                if (str_contains($team2Player, ' / ')) {
+                    $t2Parts = explode(' / ', $team2Player, 2);
+                    $team2Player1 = trim($t2Parts[0]);
+                    $team2Player2 = trim($t2Parts[1] ?? '');
+                }
+
+                if ($existingRecord && in_array($existingRecord->match_status, ['ongoing', 'finished'])) {
+                    if (! empty($existingRecord->team2_registration_id)) {
+                        $team2Id = $existingRecord->team2_registration_id;
+                    }
                     $team2School = $existingRecord->team2_school;
-                    $team2Player = $existingRecord->team2_player1;
+                    $team2Player1 = $existingRecord->team2_player1;
+                    $team2Player2 = $existingRecord->team2_player2;
                 }
 
                 $attributes = [
@@ -195,10 +219,12 @@ class SyncBadmintonMatchesFromBracket extends Command
                     'match_type' => $m['match_type'],
                     'team1_registration_id' => $team1Id,
                     'team1_school' => $team1School,
-                    'team1_player1' => $team1Player,
+                    'team1_player1' => $team1Player1,
+                    'team1_player2' => $team1Player2,
                     'team2_registration_id' => $team2Id,
                     'team2_school' => $team2School,
-                    'team2_player1' => $team2Player,
+                    'team2_player1' => $team2Player1,
+                    'team2_player2' => $team2Player2,
                     'match_status' => $status,
                     'winner_team' => $winnerTeam,
                 ];
