@@ -387,7 +387,7 @@
                     
                     $primaryMember = $registration->members->first();
                     $nisnVal = !empty($primaryMember?->nisn) ? trim($primaryMember->nisn) : (!empty($registration->user?->nisn) ? trim($registration->user->nisn) : 'NISN');
-                    $cbtUsername = $nisnVal . '@milad57.com';
+                    $cbtUsername = $nisnVal . '.17447';
                     $cbtPassword = $nisnVal;
                     $cbtUrl = $appSettings['cbt_url'] ?? 'https://www.e-ujian.com/login';
                 @endphp
