@@ -1632,9 +1632,9 @@ class TournamentBracketController extends Controller
             'kat_c_pa-R3-M2' => ['day' => 2, 'court' => 'Lapangan 1', 'time' => '15:00', 'order' => 26],
             'kat_c_pa-R3-M3' => ['day' => 2, 'court' => 'Lapangan 1', 'time' => '15:20', 'order' => 27],
             'kat_c_pa-R3-M4' => ['day' => 2, 'court' => 'Lapangan 1', 'time' => '15:40', 'order' => 28],
-            'kat_c_pa-R4-M1' => ['day' => 3, 'court' => 'Lapangan 1', 'time' => '14:30', 'order' => 29],
-            'kat_c_pa-R4-M2' => ['day' => 3, 'court' => 'Lapangan 1', 'time' => '15:00', 'order' => 30],
-            'kat_c_pa-3RD-M1' => ['day' => 3, 'court' => 'Lapangan 1', 'time' => '15:30', 'order' => 31],
+            'kat_c_pa-R4-M1' => ['day' => 3, 'court' => 'Lapangan 1', 'time' => '11:00', 'order' => 29],
+            'kat_c_pa-R4-M2' => ['day' => 3, 'court' => 'Lapangan 1', 'time' => '11:30', 'order' => 30],
+            'kat_c_pa-3RD-M1' => ['day' => 3, 'court' => 'Lapangan 1', 'time' => '13:30', 'order' => 31],
             'kat_c_pa-R5-M1' => ['day' => 4, 'court' => 'Lapangan 1', 'time' => '13:00', 'order' => 32],
         ];
 

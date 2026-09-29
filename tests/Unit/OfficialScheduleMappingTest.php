@@ -23,7 +23,7 @@ class OfficialScheduleMappingTest extends TestCase
             'kat_c_pi-R1-M3' => ['day' => 1, 'court' => 'Lapangan 1', 'time' => '08:00', 'order' => 1],
             'kat_c_pi-R5-M1' => ['day' => 4, 'court' => 'Lapangan 1', 'time' => '10:00', 'order' => 23],
             'kat_c_pa-R1-M1' => ['day' => 1, 'court' => 'Lapangan 1', 'time' => '10:20', 'order' => 1],
-            'kat_c_pa-R4-M1' => ['day' => 3, 'court' => 'Lapangan 1', 'time' => '14:30', 'order' => 29],
+            'kat_c_pa-R4-M1' => ['day' => 3, 'court' => 'Lapangan 1', 'time' => '11:00', 'order' => 29],
             'kat_c_pa-R5-M1' => ['day' => 4, 'court' => 'Lapangan 1', 'time' => '13:00', 'order' => 32],
         ];
 
