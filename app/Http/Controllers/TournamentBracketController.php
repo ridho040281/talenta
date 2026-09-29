@@ -1085,30 +1085,49 @@ class TournamentBracketController extends Controller
     }
 
     /**
-     * Format label hari dan tanggal secara konsisten dan rapi
+     * Format label hari dan tanggal secara konsisten dan rapi (Default mulai Selasa, 29 September 2026)
      */
     protected function formatMatchDayLabel($matchDay, $matchDate = null, $customLabel = null): string
     {
         $dayNum = (int) ($matchDay ?: 1);
 
-        if (! empty($customLabel) && str_contains($customLabel, '(') && str_contains($customLabel, ')')) {
-            return $customLabel;
-        }
-
         if (! empty($matchDate)) {
             try {
                 $cDate = Carbon::parse($matchDate);
+                // Koreksi otomatis jika pernah tersimpan tanggal 28 Sep untuk Hari 1
+                if ($dayNum === 1 && $cDate->format('Y-m-d') === '2026-09-28') {
+                    $cDate = Carbon::parse('2026-09-29');
+                } elseif ($dayNum === 2 && $cDate->format('Y-m-d') === '2026-09-29') {
+                    $cDate = Carbon::parse('2026-09-30');
+                } elseif ($dayNum === 3 && $cDate->format('Y-m-d') === '2026-09-30') {
+                    $cDate = Carbon::parse('2026-10-01');
+                } elseif ($dayNum === 4 && $cDate->format('Y-m-d') === '2026-10-01') {
+                    $cDate = Carbon::parse('2026-10-02');
+                }
 
                 return "Hari {$dayNum} (".$cDate->locale('id')->isoFormat('dddd, D MMM Y').')';
             } catch (\Throwable $e) {
             }
         }
 
+        if (! empty($customLabel) && str_contains($customLabel, '(') && str_contains($customLabel, ')')) {
+            // Bersihkan jika label kustom lama memuat tanggal 28
+            if (str_contains($customLabel, '28 Sep') || str_contains($customLabel, '28/09')) {
+                $baseDate = Carbon::parse('2026-09-29')->addDays($dayNum - 1);
+
+                return "Hari {$dayNum} (".$baseDate->locale('id')->isoFormat('dddd, D MMM Y').')';
+            }
+
+            return $customLabel;
+        }
+
         if (! empty($customLabel)) {
             return $customLabel;
         }
 
-        return "Hari {$dayNum}";
+        $baseDate = Carbon::parse('2026-09-29')->addDays($dayNum - 1);
+
+        return "Hari {$dayNum} (".$baseDate->locale('id')->isoFormat('dddd, D MMM Y').')';
     }
 
     /**
@@ -1674,6 +1693,9 @@ class TournamentBracketController extends Controller
         if (! empty($rawStartDate)) {
             try {
                 $startDate = Carbon::parse($rawStartDate);
+                if ($startDate->format('Y-m-d') === '2026-09-28') {
+                    $startDate = Carbon::parse('2026-09-29');
+                }
             } catch (\Throwable $e) {
                 $startDate = null;
             }
@@ -1681,6 +1703,9 @@ class TournamentBracketController extends Controller
         if (! $startDate && ! empty($competition->schedule_date)) {
             try {
                 $startDate = Carbon::parse($competition->schedule_date);
+                if ($startDate->format('Y-m-d') === '2026-09-28') {
+                    $startDate = Carbon::parse('2026-09-29');
+                }
             } catch (\Throwable $e) {
                 $startDate = null;
             }

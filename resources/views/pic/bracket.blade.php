@@ -2317,7 +2317,7 @@
             scheduleCourts: ['Lapangan 1', 'Lapangan 2'],
             tournamentDays: 4,
             scheduleDaysList: [1, 2, 3, 4],
-            scheduleStartDate: '{{ $competition->schedule_date ? \Carbon\Carbon::parse($competition->schedule_date)->format("Y-m-d") : "2026-09-29" }}',
+            scheduleStartDate: '{{ ($competition->schedule_date && \Carbon\Carbon::parse($competition->schedule_date)->format("Y-m-d") !== "2026-09-28") ? \Carbon\Carbon::parse($competition->schedule_date)->format("Y-m-d") : "2026-09-29" }}',
             scheduleScope: 'all',
             scheduleDistributionMode: 'category_based',
             newCourtInput: '',
