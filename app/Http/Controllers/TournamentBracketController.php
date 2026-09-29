@@ -366,11 +366,19 @@ class TournamentBracketController extends Controller
                     foreach ($rnd['matches'] as $rm) {
                         $isB1 = ! empty($rm['is_bye1']) || (($rm['team1']['name'] ?? '') === '[BYE]');
                         $isB2 = ! empty($rm['is_bye2']) || (($rm['team2']['name'] ?? '') === '[BYE]');
+                        $isByeMatch = ($isB1 || $isB2);
                         $treeMatchesByCode[$rm['match_code']] = [
+                            'match_code' => $rm['match_code'],
+                            'round_name' => $rnd['round_name'] ?? 'Babak 1',
+                            'pool_key' => $p['key'],
+                            'category_title' => $p['title'] ?? null,
+                            'is_bye' => $isByeMatch,
+                            'is_bye1' => $isB1,
+                            'is_bye2' => $isB2,
                             'team1_player' => $rm['team1']['name'] ?? ($isB1 ? '[BYE]' : 'Menunggu Pemenang'),
-                            'team1_school' => $rm['team1']['institution'] ?? ($isB1 ? 'BYE' : 'TBD'),
+                            'team1_school' => $rm['team1']['institution'] ?? ($isB1 ? 'Bebas Babak 1' : 'TBD'),
                             'team2_player' => $rm['team2']['name'] ?? ($isB2 ? '[BYE]' : 'Menunggu Pemenang'),
-                            'team2_school' => $rm['team2']['institution'] ?? ($isB2 ? 'BYE' : 'TBD'),
+                            'team2_school' => $rm['team2']['institution'] ?? ($isB2 ? 'Bebas Babak 1' : 'TBD'),
                         ];
                     }
                 }
@@ -428,7 +436,7 @@ class TournamentBracketController extends Controller
                 $sheet2,
                 $competition,
                 $targetPool,
-                $rawDbMatches->where('court_number', '!=', 'BYE')->values(),
+                $rawDbMatches->values(),
                 $simulationPlan,
                 $poolMap,
                 $treeMatchesByCode
@@ -445,7 +453,7 @@ class TournamentBracketController extends Controller
                 $sheet1,
                 $competition,
                 null,
-                $rawDbMatches->where('court_number', '!=', 'BYE')->values(),
+                $rawDbMatches->values(),
                 $simulationPlan,
                 $poolMap,
                 $treeMatchesByCode
@@ -793,6 +801,8 @@ class TournamentBracketController extends Controller
             return $clean;
         };
 
+        $processedCodes = [];
+
         if ($matchesCollection && $matchesCollection->isNotEmpty()) {
             foreach ($matchesCollection as $m) {
                 // 1. Lewati jika match tidak terdaftar dalam pohon bagan resmi turnamen (misal play-off kadaluarsa)
@@ -805,19 +815,25 @@ class TournamentBracketController extends Controller
                     continue;
                 }
 
-                // 3. Hanya sertakan partai yang sudah dijadwalkan (memiliki Lapangan dan Jam Main definitif)
-                // Pertandingan tanpa lapangan / jam (seperti Final yang belum terjadwal) atau BYE TIDAK BOLEH tampil di Order of Play
                 $court = trim((string) ($m->court_number ?? ''));
                 $time = trim((string) ($m->scheduled_time ?? ''));
+                $treeInfo = $treeMatchesByCode[$m->match_code] ?? null;
 
-                if (empty($court) || strtoupper($court) === 'BYE' || $court === '-' || empty($time) || $time === '-') {
+                $isBye = (strtoupper($court) === 'BYE')
+                    || (! empty($treeInfo['is_bye']))
+                    || ($treeInfo && (($treeInfo['team1_player'] ?? '') === '[BYE]' || ($treeInfo['team2_player'] ?? '') === '[BYE]'))
+                    || ($m->team1_player1 === '[BYE]' || $m->team2_player1 === '[BYE]');
+
+                // Pertandingan belum dialokasikan (bukan BYE dan belum ada lapangan / jam definitif) TIDAK BOLEH tampil di Order of Play
+                if (! $isBye && (empty($court) || $court === '-' || empty($time) || $time === '-')) {
                     continue;
                 }
 
-                $categoryLabel = $this->resolveMatchCategoryTitle($m->match_code, $poolMap, $m->category);
-                $dayLabel = $this->formatMatchDayLabel($m->match_day, $m->match_date?->format('Y-m-d'), $m->match_day_label);
+                $processedCodes[$m->match_code] = true;
 
-                $treeInfo = $treeMatchesByCode[$m->match_code] ?? null;
+                $categoryLabel = $this->resolveMatchCategoryTitle($m->match_code, $poolMap, $m->category);
+                $dayLabel = $this->formatMatchDayLabel($m->match_day ?: 1, $m->match_date?->format('Y-m-d'), $m->match_day_label);
+
                 $t1Name = $m->team1_player1 ?: 'Menunggu Pemenang';
                 $t1School = $m->team1_school ?: 'TBD';
                 $t2Name = $m->team2_player1 ?: 'Menunggu Pemenang';
@@ -825,61 +841,133 @@ class TournamentBracketController extends Controller
 
                 // Prioritaskan nama atlet yang lolos dari pohon bagan resmi jika match belum selesai atau nama database masih placeholder
                 if ($treeInfo) {
-                    if (! empty($treeInfo['team1_player']) && ($m->match_status !== 'finished' || $t1Name === 'Menunggu Pemenang' || str_starts_with($t1Name, 'Pemenang '))) {
+                    if (! empty($treeInfo['team1_player']) && ($m->match_status !== 'finished' || $t1Name === 'Menunggu Pemenang' || str_starts_with($t1Name, 'Pemenang ') || $isBye)) {
                         $t1Name = $treeInfo['team1_player'];
-                        $t1School = $treeInfo['team1_school'] ?: '-';
+                        $t1School = $treeInfo['team1_school'] ?: ($t1Name === '[BYE]' ? 'Bebas Babak 1' : '-');
                     }
-                    if (! empty($treeInfo['team2_player']) && ($m->match_status !== 'finished' || $t2Name === 'Menunggu Pemenang' || str_starts_with($t2Name, 'Pemenang '))) {
+                    if (! empty($treeInfo['team2_player']) && ($m->match_status !== 'finished' || $t2Name === 'Menunggu Pemenang' || str_starts_with($t2Name, 'Pemenang ') || $isBye)) {
                         $t2Name = $treeInfo['team2_player'];
-                        $t2School = $treeInfo['team2_school'] ?: '-';
+                        $t2School = $treeInfo['team2_school'] ?: ($t2Name === '[BYE]' ? 'Bebas Babak 1' : '-');
                     }
                 }
 
-                $wNum = $m->winner_team;
-                if (! in_array($wNum, [1, 2])) {
-                    $setsWon = $m->getSetsWon();
-                    if ($setsWon['t1'] > $setsWon['t2']) {
-                        $wNum = 1;
-                    } elseif ($setsWon['t2'] > $setsWon['t1']) {
-                        $wNum = 2;
+                if ($isBye) {
+                    if ($t1Name === '[BYE]' && (empty($t1School) || $t1School === '-' || $t1School === 'BYE')) {
+                        $t1School = 'Bebas Babak 1';
                     }
-                }
-                $winnerName = ($wNum === 1) ? $t1Name : (($wNum === 2) ? $t2Name : null);
-                $scoreVal = $this->formatMatchScore($m);
+                    if ($t2Name === '[BYE]' && (empty($t2School) || $t2School === '-' || $t2School === 'BYE')) {
+                        $t2School = 'Bebas Babak 1';
+                    }
 
-                $statusLabel = 'Belum Main';
-                if ($m->match_status === 'finished') {
-                    $statusLabel = $winnerName ? "Pemenang: {$winnerName}" : 'Selesai';
-                } elseif ($m->match_status === 'ongoing') {
-                    $statusLabel = 'Sedang Main';
+                    $winnerName = ($t1Name !== '[BYE]' && $t1Name !== 'Menunggu Pemenang') ? $t1Name : (($t2Name !== '[BYE]' && $t2Name !== 'Menunggu Pemenang') ? $t2Name : null);
+                    $scoreVal = '-';
+                    $statusLabel = 'BYE (Lolos Otomatis)';
+                    $courtDisplay = 'BYE';
+                    $timeDisplay = '-';
+                    $orderDisplay = '-';
+                    $timeRaw = '99:99';
+                } else {
+                    $wNum = $m->winner_team;
+                    if (! in_array($wNum, [1, 2])) {
+                        $setsWon = $m->getSetsWon();
+                        if ($setsWon['t1'] > $setsWon['t2']) {
+                            $wNum = 1;
+                        } elseif ($setsWon['t2'] > $setsWon['t1']) {
+                            $wNum = 2;
+                        }
+                    }
+                    $winnerName = ($wNum === 1) ? $t1Name : (($wNum === 2) ? $t2Name : null);
+                    $scoreVal = $this->formatMatchScore($m);
+
+                    $statusLabel = 'Belum Main';
+                    if ($m->match_status === 'finished') {
+                        $statusLabel = $winnerName ? "Pemenang: {$winnerName}" : 'Selesai';
+                    } elseif ($m->match_status === 'ongoing') {
+                        $statusLabel = 'Sedang Main';
+                    }
+
+                    $courtDisplay = $court;
+                    $timeDisplay = $time.' WIB';
+                    $orderDisplay = $m->match_order ? '#'.$m->match_order : '-';
+                    $timeRaw = $time;
                 }
 
                 $matchesList[] = [
                     'match_day' => (int) ($m->match_day ?: 1),
                     'match_day_label' => $dayLabel,
                     'match_date' => $m->match_date?->format('Y-m-d'),
-                    'court_number' => $court,
-                    'scheduled_time' => $time.' WIB',
-                    'match_order' => $m->match_order ? '#'.$m->match_order : '-',
+                    'court_number' => $courtDisplay,
+                    'scheduled_time' => $timeDisplay,
+                    'match_order' => $orderDisplay,
                     'match_order_num' => (int) ($m->match_order ?: 9999),
-                    'time_raw' => $time,
+                    'time_raw' => $timeRaw,
                     'category' => $categoryLabel,
-                    'round_name' => $m->round_name ?: 'Babak 1',
+                    'round_name' => $m->round_name ?: ($treeInfo['round_name'] ?? 'Babak 1'),
                     'team1_player' => $t1Name,
                     'team1_school' => $t1School,
                     'team2_player' => $t2Name,
                     'team2_school' => $t2School,
                     'score' => $scoreVal,
                     'winner_name' => $winnerName,
-                    'match_status' => $m->match_status,
+                    'match_status' => $isBye ? 'finished' : $m->match_status,
                     'status' => $statusLabel,
+                    'is_bye' => $isBye,
                 ];
+            }
+
+            // Tambahkan partai BYE dari pohon bagan yang belum tercatat di database (jika ada)
+            if (! empty($treeMatchesByCode)) {
+                foreach ($treeMatchesByCode as $mCode => $tInfo) {
+                    if (empty($tInfo['is_bye']) || isset($processedCodes[$mCode])) {
+                        continue;
+                    }
+
+                    if ($targetPool && ! str_starts_with($mCode, $targetPool['key'].'-')) {
+                        continue;
+                    }
+
+                    $categoryLabel = $this->resolveMatchCategoryTitle($mCode, $poolMap, null);
+                    $dayLabel = $this->formatMatchDayLabel(1, null, 'Hari 1');
+
+                    $t1Name = $tInfo['team1_player'] ?? '[BYE]';
+                    $t1School = $tInfo['team1_school'] ?? ($t1Name === '[BYE]' ? 'Bebas Babak 1' : '-');
+                    $t2Name = $tInfo['team2_player'] ?? '[BYE]';
+                    $t2School = $tInfo['team2_school'] ?? ($t2Name === '[BYE]' ? 'Bebas Babak 1' : '-');
+
+                    if ($t1Name === '[BYE]' && (empty($t1School) || $t1School === '-' || $t1School === 'BYE')) {
+                        $t1School = 'Bebas Babak 1';
+                    }
+                    if ($t2Name === '[BYE]' && (empty($t2School) || $t2School === '-' || $t2School === 'BYE')) {
+                        $t2School = 'Bebas Babak 1';
+                    }
+
+                    $winnerName = ($t1Name !== '[BYE]' && $t1Name !== 'Menunggu Pemenang') ? $t1Name : (($t2Name !== '[BYE]' && $t2Name !== 'Menunggu Pemenang') ? $t2Name : null);
+
+                    $matchesList[] = [
+                        'match_day' => 1,
+                        'match_day_label' => $dayLabel,
+                        'match_date' => null,
+                        'court_number' => 'BYE',
+                        'scheduled_time' => '-',
+                        'match_order' => '-',
+                        'match_order_num' => 9999,
+                        'time_raw' => '99:99',
+                        'category' => $categoryLabel,
+                        'round_name' => $tInfo['round_name'] ?? 'Babak 1',
+                        'team1_player' => $t1Name,
+                        'team1_school' => $t1School,
+                        'team2_player' => $t2Name,
+                        'team2_school' => $t2School,
+                        'score' => '-',
+                        'winner_name' => $winnerName,
+                        'match_status' => 'finished',
+                        'status' => 'BYE (Lolos Otomatis)',
+                        'is_bye' => true,
+                    ];
+                }
             }
         } elseif (! empty($simulationPlan['matches'])) {
             foreach ($simulationPlan['matches'] as $m) {
-                if (! $m['is_contested'] || $m['court_number'] === 'BYE') {
-                    continue;
-                }
                 if ($targetPool && ! str_starts_with($m['match_code'], $targetPool['key'].'-')) {
                     continue;
                 }
@@ -889,8 +977,9 @@ class TournamentBracketController extends Controller
 
                 $court = trim((string) ($m['court_number'] ?? ''));
                 $time = trim((string) ($m['scheduled_time'] ?? ''));
+                $isBye = (! $m['is_contested'] || strtoupper($court) === 'BYE' || ($m['team1_player'] ?? '') === '[BYE]' || ($m['team2_player'] ?? '') === '[BYE]');
 
-                if (empty($court) || strtoupper($court) === 'BYE' || $court === '-' || empty($time) || $time === '-') {
+                if (! $isBye && (empty($court) || $court === '-' || empty($time) || $time === '-')) {
                     continue;
                 }
 
@@ -906,23 +995,45 @@ class TournamentBracketController extends Controller
                 if ($treeInfo) {
                     if (! empty($treeInfo['team1_player'])) {
                         $t1Name = $treeInfo['team1_player'];
-                        $t1School = $treeInfo['team1_school'];
+                        $t1School = $treeInfo['team1_school'] ?: '-';
                     }
                     if (! empty($treeInfo['team2_player'])) {
                         $t2Name = $treeInfo['team2_player'];
-                        $t2School = $treeInfo['team2_school'];
+                        $t2School = $treeInfo['team2_school'] ?: '-';
                     }
+                }
+
+                if ($isBye) {
+                    if ($t1Name === '[BYE]' && (empty($t1School) || $t1School === '-' || $t1School === 'BYE')) {
+                        $t1School = 'Bebas Babak 1';
+                    }
+                    if ($t2Name === '[BYE]' && (empty($t2School) || $t2School === '-' || $t2School === 'BYE')) {
+                        $t2School = 'Bebas Babak 1';
+                    }
+                    $winnerName = ($t1Name !== '[BYE]' && $t1Name !== 'Menunggu Pemenang') ? $t1Name : (($t2Name !== '[BYE]' && $t2Name !== 'Menunggu Pemenang') ? $t2Name : null);
+                    $courtDisplay = 'BYE';
+                    $timeDisplay = '-';
+                    $orderDisplay = '-';
+                    $timeRaw = '99:99';
+                    $statusLabel = 'BYE (Lolos Otomatis)';
+                } else {
+                    $courtDisplay = $court;
+                    $timeDisplay = $time.' WIB';
+                    $orderDisplay = $m['match_order'] ? '#'.$m['match_order'] : '-';
+                    $timeRaw = $time;
+                    $winnerName = null;
+                    $statusLabel = ($m['status'] === 'finished') ? 'Selesai' : (($m['status'] === 'ongoing') ? 'Sedang Main' : 'Belum Main');
                 }
 
                 $matchesList[] = [
                     'match_day' => (int) ($m['match_day'] ?: 1),
                     'match_day_label' => $dayLabel,
                     'match_date' => $m['match_date'],
-                    'court_number' => $court,
-                    'scheduled_time' => $time.' WIB',
-                    'match_order' => $m['match_order'] ? '#'.$m['match_order'] : '-',
+                    'court_number' => $courtDisplay,
+                    'scheduled_time' => $timeDisplay,
+                    'match_order' => $orderDisplay,
                     'match_order_num' => (int) ($m['match_order'] ?: 9999),
-                    'time_raw' => $time,
+                    'time_raw' => $timeRaw,
                     'category' => $categoryLabel,
                     'round_name' => $m['round_name'],
                     'team1_player' => $t1Name,
@@ -930,15 +1041,31 @@ class TournamentBracketController extends Controller
                     'team2_player' => $t2Name,
                     'team2_school' => $t2School,
                     'score' => '-',
-                    'status' => $m['status'] === 'finished' ? 'Selesai' : ($m['status'] === 'ongoing' ? 'Sedang Main' : 'Belum Main'),
+                    'winner_name' => $winnerName,
+                    'match_status' => $isBye ? 'finished' : ($m['status'] ?? 'upcoming'),
+                    'status' => $statusLabel,
+                    'is_bye' => $isBye,
                 ];
             }
         }
 
-        // Sort matches chronologically: match_day -> court_number -> scheduled_time -> match_order
+        // Sort matches chronologically: match_day -> court_number (BYE at end of day) -> scheduled_time -> match_order
         usort($matchesList, function ($a, $b) use ($timeSortKey) {
             if ($a['match_day'] !== $b['match_day']) {
                 return $a['match_day'] <=> $b['match_day'];
+            }
+            $isByeA = ! empty($a['is_bye']) || ($a['court_number'] === 'BYE');
+            $isByeB = ! empty($b['is_bye']) || ($b['court_number'] === 'BYE');
+            if ($isByeA !== $isByeB) {
+                return $isByeA ? 1 : -1;
+            }
+            if ($isByeA && $isByeB) {
+                $catCmp = strnatcasecmp($a['category'] ?? '', $b['category'] ?? '');
+                if ($catCmp !== 0) {
+                    return $catCmp;
+                }
+
+                return strnatcasecmp($a['team1_player'] ?? '', $b['team1_player'] ?? '');
             }
             $courtCmp = strnatcasecmp($a['court_number'], $b['court_number']);
             if ($courtCmp !== 0) {
@@ -1032,7 +1159,9 @@ class TournamentBracketController extends Controller
             }
 
             $displayScore = 'Belum Main';
-            if ($m['match_status'] === 'finished' || str_starts_with($m['status'], 'Pemenang') || $m['status'] === 'Selesai') {
+            if (! empty($m['is_bye']) || ($m['court_number'] ?? '') === 'BYE' || ($m['status'] ?? '') === 'BYE (Lolos Otomatis)') {
+                $displayScore = 'BYE (Lolos Otomatis)';
+            } elseif ($m['match_status'] === 'finished' || str_starts_with($m['status'], 'Pemenang') || $m['status'] === 'Selesai') {
                 if ($m['score'] !== '-' && ! empty($m['score']) && ! empty($m['winner_name'])) {
                     $displayScore = "{$m['score']} (Pemenang: {$m['winner_name']})";
                 } elseif (! empty($m['winner_name'])) {

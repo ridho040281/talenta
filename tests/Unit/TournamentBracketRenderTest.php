@@ -4,6 +4,8 @@ namespace Tests\Unit;
 
 use App\Http\Controllers\TournamentBracketController;
 use App\Models\BadmintonMatch;
+use App\Models\Competition;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use Tests\TestCase;
 
 class TournamentBracketRenderTest extends TestCase
@@ -233,5 +235,120 @@ class TournamentBracketRenderTest extends TestCase
         $match4 = new BadmintonMatch(['match_day' => 4]);
         $this->assertEquals('Hari 4 (Jumat, 2 Okt)', $match4->match_day_label);
         $this->assertEquals('2026-10-02', $match4->match_date->format('Y-m-d'));
+    }
+
+    public function test_order_of_play_worksheet_includes_bye_matches(): void
+    {
+        $controller = new class extends TournamentBracketController
+        {
+            public function callBuildOrderOfPlayWorksheet($sheet, $competition, $targetPool, $matchesCollection, $simulationPlan, $poolMap, $treeMatchesByCode)
+            {
+                $this->buildOrderOfPlayWorksheet($sheet, $competition, $targetPool, $matchesCollection, $simulationPlan, $poolMap, $treeMatchesByCode);
+            }
+        };
+
+        $competition = new Competition([
+            'name' => 'Badminton Cup 2026',
+            'code' => 'BLT',
+        ]);
+
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+
+        $treeMatchesByCode = [
+            'kat_a_pi-R1-M1' => [
+                'match_code' => 'kat_a_pi-R1-M1',
+                'round_name' => 'Babak 16 Besar',
+                'pool_key' => 'kat_a_pi',
+                'category_title' => 'Tunggal Putri SD Kelas 1-2',
+                'is_bye' => true,
+                'is_bye1' => false,
+                'is_bye2' => true,
+                'team1_player' => 'Mikayla Azzahra Putri Tampati',
+                'team1_school' => 'MI Jatisalam Gombang',
+                'team2_player' => '[BYE]',
+                'team2_school' => 'Bebas Babak 1',
+            ],
+            'kat_a_pi-R1-M2' => [
+                'match_code' => 'kat_a_pi-R1-M2',
+                'round_name' => 'Babak 16 Besar',
+                'pool_key' => 'kat_a_pi',
+                'category_title' => 'Tunggal Putri SD Kelas 1-2',
+                'is_bye' => false,
+                'team1_player' => 'Siti Salwa',
+                'team1_school' => 'MI Perwanida Blitar',
+                'team2_player' => 'Emilia Nathania Hagi',
+                'team2_school' => 'MIN 5 Blitar',
+            ],
+        ];
+
+        $rawMatches = collect([
+            new BadmintonMatch([
+                'match_code' => 'kat_a_pi-R1-M1',
+                'match_day' => 1,
+                'court_number' => 'BYE',
+                'scheduled_time' => null,
+                'match_order' => null,
+                'round_name' => 'Babak 16 Besar',
+                'category' => 'WS',
+                'team1_player1' => 'Mikayla Azzahra Putri Tampati',
+                'team1_school' => 'MI Jatisalam Gombang',
+                'team2_player1' => '[BYE]',
+                'team2_school' => 'Bebas Babak 1',
+                'match_status' => 'finished',
+                'winner_team' => 1,
+            ]),
+            new BadmintonMatch([
+                'match_code' => 'kat_a_pi-R1-M2',
+                'match_day' => 1,
+                'court_number' => 'Lapangan 2',
+                'scheduled_time' => '08:00',
+                'match_order' => 1,
+                'round_name' => 'Babak 16 Besar',
+                'category' => 'WS',
+                'team1_player1' => 'Siti Salwa',
+                'team1_school' => 'MI Perwanida Blitar',
+                'team2_player1' => 'Emilia Nathania Hagi',
+                'team2_school' => 'MIN 5 Blitar',
+                'match_status' => 'upcoming',
+            ]),
+        ]);
+
+        $controller->callBuildOrderOfPlayWorksheet(
+            $sheet,
+            $competition,
+            null,
+            $rawMatches,
+            null,
+            ['kat_a_pi' => ['key' => 'kat_a_pi', 'title' => 'Tunggal Putri SD Kelas 1-2']],
+            $treeMatchesByCode
+        );
+
+        // Verify that row 6 has the day header, row 7 has the contested match, and row 8 has the BYE match
+        $foundBye = false;
+        $foundContested = false;
+
+        for ($r = 6; $r <= 15; $r++) {
+            $courtVal = $sheet->getCell("D{$r}")->getValue();
+            $p1Val = $sheet->getCell("H{$r}")->getValue();
+            $p2Val = $sheet->getCell("K{$r}")->getValue();
+            $statusVal = $sheet->getCell("M{$r}")->getValue();
+
+            if ($courtVal === 'BYE') {
+                $foundBye = true;
+                $this->assertEquals('Mikayla Azzahra Putri Tampati', $p1Val);
+                $this->assertEquals('[BYE]', $p2Val);
+                $this->assertEquals('BYE (Lolos Otomatis)', $statusVal);
+            }
+
+            if ($courtVal === 'Lapangan 2') {
+                $foundContested = true;
+                $this->assertEquals('Siti Salwa', $p1Val);
+                $this->assertEquals('Emilia Nathania Hagi', $p2Val);
+            }
+        }
+
+        $this->assertTrue($foundContested, 'Contested match must be rendered in Order of Play');
+        $this->assertTrue($foundBye, 'BYE match must be rendered in Order of Play');
     }
 }
