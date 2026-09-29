@@ -24,11 +24,27 @@ class SyncBadmintonMatchesFromBracket extends Command
         if ($compId) {
             $competition = Competition::with(['category', 'registrations.members'])->find($compId);
         } else {
-            $competition = Competition::with(['category', 'registrations.members'])
-                ->where('code', 'BLT')
-                ->orWhere('name', 'like', '%Bulu Tangkis%')
-                ->orWhere('name', 'like', '%Badminton%')
-                ->first();
+            $existingCompId = BadmintonMatch::whereNotNull('competition_id')->value('competition_id');
+            if ($existingCompId) {
+                $competition = Competition::with(['category', 'registrations.members'])->find($existingCompId);
+            }
+
+            if (! $competition) {
+                $competition = Competition::with(['category', 'registrations.members'])
+                    ->where(function ($q) {
+                        $q->where('code', 'BLT')
+                            ->orWhere('code', 'BT')
+                            ->orWhere('name', 'like', '%Bulu Tangkis%')
+                            ->orWhere('name', 'like', '%Badminton%')
+                            ->orWhere('slug', 'like', '%bulu-tangkis%')
+                            ->orWhere('slug', 'like', '%badminton%');
+                    })
+                    ->first();
+            }
+
+            if (! $competition) {
+                $competition = Competition::with(['category', 'registrations.members'])->first();
+            }
         }
 
         if (! $competition) {

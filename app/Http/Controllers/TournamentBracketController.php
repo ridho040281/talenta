@@ -1479,6 +1479,169 @@ class TournamentBracketController extends Controller
     }
 
     /**
+     * Master Timetable Resmi Sesuai Dokumen Cetak Bagan & Jadwal (Order of Play)
+     */
+    public static function getOfficialScheduleForMatch(string $matchCode): ?array
+    {
+        $map = [
+            // 1. Kategori A (Kelas 1-2) Putra (PA) - Lapangan 2
+            'kat_a_pa-R1-M1' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '08:00', 'order' => 1],
+            'kat_a_pa-R1-M2' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '08:20', 'order' => 2],
+            'kat_a_pa-R1-M3' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '08:40', 'order' => 3],
+            'kat_a_pa-R1-M4' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '09:00', 'order' => 4],
+            'kat_a_pa-R1-M5' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '09:20', 'order' => 5],
+            'kat_a_pa-R1-M6' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '09:40', 'order' => 6],
+            'kat_a_pa-R1-M7' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '10:00', 'order' => 7],
+            'kat_a_pa-R1-M8' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '10:20', 'order' => 8],
+            'kat_a_pa-R2-M1' => ['day' => 2, 'court' => 'Lapangan 2', 'time' => '08:40', 'order' => 9],
+            'kat_a_pa-R2-M2' => ['day' => 2, 'court' => 'Lapangan 2', 'time' => '09:00', 'order' => 10],
+            'kat_a_pa-R2-M3' => ['day' => 2, 'court' => 'Lapangan 2', 'time' => '09:20', 'order' => 11],
+            'kat_a_pa-R2-M4' => ['day' => 2, 'court' => 'Lapangan 2', 'time' => '09:40', 'order' => 12],
+            'kat_a_pa-R3-M1' => ['day' => 3, 'court' => 'Lapangan 2', 'time' => '09:00', 'order' => 13],
+            'kat_a_pa-R3-M2' => ['day' => 3, 'court' => 'Lapangan 2', 'time' => '09:30', 'order' => 14],
+            'kat_a_pa-3RD-M1' => ['day' => 3, 'court' => 'Lapangan 2', 'time' => '12:30', 'order' => 15],
+            'kat_a_pa-R4-M1' => ['day' => 4, 'court' => 'Lapangan 1', 'time' => '08:30', 'order' => 16],
+
+            // 2. Kategori A (Kelas 1-2) Putri (PI) - Lapangan 2
+            'kat_a_pi-R1-M2' => ['day' => 2, 'court' => 'Lapangan 2', 'time' => '08:00', 'order' => 1],
+            'kat_a_pi-R1-M7' => ['day' => 2, 'court' => 'Lapangan 2', 'time' => '08:20', 'order' => 2],
+            'kat_a_pi-R2-M1' => ['day' => 2, 'court' => 'Lapangan 2', 'time' => '14:00', 'order' => 3],
+            'kat_a_pi-R2-M2' => ['day' => 2, 'court' => 'Lapangan 2', 'time' => '14:20', 'order' => 4],
+            'kat_a_pi-R2-M3' => ['day' => 2, 'court' => 'Lapangan 2', 'time' => '14:40', 'order' => 5],
+            'kat_a_pi-R2-M4' => ['day' => 2, 'court' => 'Lapangan 2', 'time' => '15:00', 'order' => 6],
+            'kat_a_pi-R3-M1' => ['day' => 3, 'court' => 'Lapangan 2', 'time' => '08:00', 'order' => 7],
+            'kat_a_pi-R3-M2' => ['day' => 3, 'court' => 'Lapangan 2', 'time' => '08:30', 'order' => 8],
+            'kat_a_pi-3RD-M1' => ['day' => 3, 'court' => 'Lapangan 2', 'time' => '12:00', 'order' => 9],
+            'kat_a_pi-R4-M1' => ['day' => 4, 'court' => 'Lapangan 1', 'time' => '08:00', 'order' => 10],
+
+            // 3. Kategori B (Kelas 3-4) Putri (PI) - Lapangan 2
+            'kat_b_pi-R1-M2' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '10:40', 'order' => 1],
+            'kat_b_pi-R1-M3' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '11:00', 'order' => 2],
+            'kat_b_pi-R1-M4' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '11:20', 'order' => 3],
+            'kat_b_pi-R1-M5' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '11:40', 'order' => 4],
+            'kat_b_pi-R1-M6' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '12:00', 'order' => 5],
+            'kat_b_pi-R1-M7' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '12:20', 'order' => 6],
+            'kat_b_pi-R1-M8' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '12:40', 'order' => 7],
+            'kat_b_pi-R2-M1' => ['day' => 2, 'court' => 'Lapangan 2', 'time' => '12:40', 'order' => 8],
+            'kat_b_pi-R2-M2' => ['day' => 2, 'court' => 'Lapangan 2', 'time' => '13:00', 'order' => 9],
+            'kat_b_pi-R2-M3' => ['day' => 2, 'court' => 'Lapangan 2', 'time' => '13:20', 'order' => 10],
+            'kat_b_pi-R2-M4' => ['day' => 2, 'court' => 'Lapangan 2', 'time' => '13:40', 'order' => 11],
+            'kat_b_pi-R3-M1' => ['day' => 3, 'court' => 'Lapangan 2', 'time' => '10:00', 'order' => 12],
+            'kat_b_pi-R3-M2' => ['day' => 3, 'court' => 'Lapangan 2', 'time' => '10:30', 'order' => 13],
+            'kat_b_pi-3RD-M1' => ['day' => 3, 'court' => 'Lapangan 2', 'time' => '13:00', 'order' => 14],
+            'kat_b_pi-R4-M1' => ['day' => 4, 'court' => 'Lapangan 1', 'time' => '09:00', 'order' => 15],
+
+            // 4. Kategori B (Kelas 3-4) Putra (PA) - Lapangan 2
+            'kat_b_pa-R1-M1' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '13:00', 'order' => 1],
+            'kat_b_pa-R1-M2' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '13:20', 'order' => 2],
+            'kat_b_pa-R1-M3' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '13:40', 'order' => 3],
+            'kat_b_pa-R1-M4' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '14:00', 'order' => 4],
+            'kat_b_pa-R1-M5' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '14:20', 'order' => 5],
+            'kat_b_pa-R1-M6' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '14:40', 'order' => 6],
+            'kat_b_pa-R1-M7' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '15:00', 'order' => 7],
+            'kat_b_pa-R1-M8' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '15:20', 'order' => 8],
+            'kat_b_pa-R1-M9' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '15:40', 'order' => 9],
+            'kat_b_pa-R1-M10' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '16:00', 'order' => 10],
+            'kat_b_pa-R1-M11' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '16:20', 'order' => 11],
+            'kat_b_pa-R1-M12' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '16:40', 'order' => 12],
+            'kat_b_pa-R1-M13' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '17:00', 'order' => 13],
+            'kat_b_pa-R1-M14' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '17:20', 'order' => 14],
+            'kat_b_pa-R1-M15' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '17:40', 'order' => 15],
+            'kat_b_pa-R1-M16' => ['day' => 1, 'court' => 'Lapangan 2', 'time' => '18:00', 'order' => 16],
+            'kat_b_pa-R2-M1' => ['day' => 2, 'court' => 'Lapangan 2', 'time' => '10:00', 'order' => 17],
+            'kat_b_pa-R2-M2' => ['day' => 2, 'court' => 'Lapangan 2', 'time' => '10:20', 'order' => 18],
+            'kat_b_pa-R2-M3' => ['day' => 2, 'court' => 'Lapangan 2', 'time' => '10:40', 'order' => 19],
+            'kat_b_pa-R2-M4' => ['day' => 2, 'court' => 'Lapangan 2', 'time' => '11:00', 'order' => 20],
+            'kat_b_pa-R2-M5' => ['day' => 2, 'court' => 'Lapangan 2', 'time' => '11:20', 'order' => 21],
+            'kat_b_pa-R2-M6' => ['day' => 2, 'court' => 'Lapangan 2', 'time' => '11:40', 'order' => 22],
+            'kat_b_pa-R2-M7' => ['day' => 2, 'court' => 'Lapangan 2', 'time' => '12:00', 'order' => 23],
+            'kat_b_pa-R2-M8' => ['day' => 2, 'court' => 'Lapangan 2', 'time' => '12:20', 'order' => 24],
+            'kat_b_pa-R3-M1' => ['day' => 2, 'court' => 'Lapangan 2', 'time' => '15:20', 'order' => 25],
+            'kat_b_pa-R3-M2' => ['day' => 2, 'court' => 'Lapangan 2', 'time' => '15:40', 'order' => 26],
+            'kat_b_pa-R3-M3' => ['day' => 2, 'court' => 'Lapangan 2', 'time' => '16:00', 'order' => 27],
+            'kat_b_pa-R3-M4' => ['day' => 2, 'court' => 'Lapangan 2', 'time' => '16:20', 'order' => 28],
+            'kat_b_pa-R4-M1' => ['day' => 3, 'court' => 'Lapangan 2', 'time' => '11:00', 'order' => 29],
+            'kat_b_pa-R4-M2' => ['day' => 3, 'court' => 'Lapangan 2', 'time' => '11:30', 'order' => 30],
+            'kat_b_pa-3RD-M1' => ['day' => 3, 'court' => 'Lapangan 2', 'time' => '13:30', 'order' => 31],
+            'kat_b_pa-R5-M1' => ['day' => 4, 'court' => 'Lapangan 1', 'time' => '09:30', 'order' => 32],
+
+            // 5. Ganda Putra (PA) - Lapangan 1
+            'ganda_pa-R1-M2' => ['day' => 2, 'court' => 'Lapangan 1', 'time' => '16:00', 'order' => 1],
+            'ganda_pa-R1-M6' => ['day' => 2, 'court' => 'Lapangan 1', 'time' => '16:20', 'order' => 2],
+            'ganda_pa-R1-M7' => ['day' => 2, 'court' => 'Lapangan 1', 'time' => '16:40', 'order' => 3],
+            'ganda_pa-R2-M1' => ['day' => 3, 'court' => 'Lapangan 1', 'time' => '08:00', 'order' => 4],
+            'ganda_pa-R2-M2' => ['day' => 3, 'court' => 'Lapangan 1', 'time' => '08:30', 'order' => 5],
+            'ganda_pa-R2-M3' => ['day' => 3, 'court' => 'Lapangan 1', 'time' => '09:00', 'order' => 6],
+            'ganda_pa-R2-M4' => ['day' => 3, 'court' => 'Lapangan 1', 'time' => '09:30', 'order' => 7],
+            'ganda_pa-R3-M1' => ['day' => 3, 'court' => 'Lapangan 1', 'time' => '12:00', 'order' => 8],
+            'ganda_pa-R3-M2' => ['day' => 3, 'court' => 'Lapangan 1', 'time' => '12:30', 'order' => 9],
+            'ganda_pa-3RD-M1' => ['day' => 3, 'court' => 'Lapangan 1', 'time' => '14:00', 'order' => 10],
+            'ganda_pa-R4-M1' => ['day' => 4, 'court' => 'Lapangan 1', 'time' => '13:30', 'order' => 11],
+
+            // 6. Kategori C (Kelas 5-6) Putri (PI) - Lapangan 1
+            'kat_c_pi-R1-M3' => ['day' => 1, 'court' => 'Lapangan 1', 'time' => '08:00', 'order' => 1],
+            'kat_c_pi-R1-M6' => ['day' => 1, 'court' => 'Lapangan 1', 'time' => '08:20', 'order' => 2],
+            'kat_c_pi-R1-M7' => ['day' => 1, 'court' => 'Lapangan 1', 'time' => '08:40', 'order' => 3],
+            'kat_c_pi-R1-M10' => ['day' => 1, 'court' => 'Lapangan 1', 'time' => '09:00', 'order' => 4],
+            'kat_c_pi-R1-M11' => ['day' => 1, 'court' => 'Lapangan 1', 'time' => '09:20', 'order' => 5],
+            'kat_c_pi-R1-M14' => ['day' => 1, 'court' => 'Lapangan 1', 'time' => '09:40', 'order' => 6],
+            'kat_c_pi-R1-M15' => ['day' => 1, 'court' => 'Lapangan 1', 'time' => '10:00', 'order' => 7],
+            'kat_c_pi-R2-M1' => ['day' => 2, 'court' => 'Lapangan 1', 'time' => '08:00', 'order' => 8],
+            'kat_c_pi-R2-M2' => ['day' => 2, 'court' => 'Lapangan 1', 'time' => '08:20', 'order' => 9],
+            'kat_c_pi-R2-M3' => ['day' => 2, 'court' => 'Lapangan 1', 'time' => '08:40', 'order' => 10],
+            'kat_c_pi-R2-M4' => ['day' => 2, 'court' => 'Lapangan 1', 'time' => '09:00', 'order' => 11],
+            'kat_c_pi-R2-M5' => ['day' => 2, 'court' => 'Lapangan 1', 'time' => '09:20', 'order' => 12],
+            'kat_c_pi-R2-M6' => ['day' => 2, 'court' => 'Lapangan 1', 'time' => '09:40', 'order' => 13],
+            'kat_c_pi-R2-M7' => ['day' => 2, 'court' => 'Lapangan 1', 'time' => '10:00', 'order' => 14],
+            'kat_c_pi-R2-M8' => ['day' => 2, 'court' => 'Lapangan 1', 'time' => '10:20', 'order' => 15],
+            'kat_c_pi-R3-M1' => ['day' => 3, 'court' => 'Lapangan 1', 'time' => '10:00', 'order' => 16],
+            'kat_c_pi-R3-M2' => ['day' => 3, 'court' => 'Lapangan 1', 'time' => '10:30', 'order' => 17],
+            'kat_c_pi-R3-M3' => ['day' => 3, 'court' => 'Lapangan 1', 'time' => '11:00', 'order' => 18],
+            'kat_c_pi-R3-M4' => ['day' => 3, 'court' => 'Lapangan 1', 'time' => '11:30', 'order' => 19],
+            'kat_c_pi-R4-M1' => ['day' => 3, 'court' => 'Lapangan 1', 'time' => '13:00', 'order' => 20],
+            'kat_c_pi-R4-M2' => ['day' => 3, 'court' => 'Lapangan 1', 'time' => '13:30', 'order' => 21],
+            'kat_c_pi-3RD-M1' => ['day' => 3, 'court' => 'Lapangan 1', 'time' => '15:30', 'order' => 22],
+            'kat_c_pi-R5-M1' => ['day' => 4, 'court' => 'Lapangan 1', 'time' => '10:00', 'order' => 23],
+
+            // 7. Kategori C (Kelas 5-6) Putra (PA) - Lapangan 1
+            'kat_c_pa-R1-M1' => ['day' => 1, 'court' => 'Lapangan 1', 'time' => '10:20', 'order' => 1],
+            'kat_c_pa-R1-M2' => ['day' => 1, 'court' => 'Lapangan 1', 'time' => '10:40', 'order' => 2],
+            'kat_c_pa-R1-M3' => ['day' => 1, 'court' => 'Lapangan 1', 'time' => '11:00', 'order' => 3],
+            'kat_c_pa-R1-M4' => ['day' => 1, 'court' => 'Lapangan 1', 'time' => '11:20', 'order' => 4],
+            'kat_c_pa-R1-M5' => ['day' => 1, 'court' => 'Lapangan 1', 'time' => '11:40', 'order' => 5],
+            'kat_c_pa-R1-M6' => ['day' => 1, 'court' => 'Lapangan 1', 'time' => '12:00', 'order' => 6],
+            'kat_c_pa-R1-M7' => ['day' => 1, 'court' => 'Lapangan 1', 'time' => '12:20', 'order' => 7],
+            'kat_c_pa-R1-M8' => ['day' => 1, 'court' => 'Lapangan 1', 'time' => '12:40', 'order' => 8],
+            'kat_c_pa-R1-M9' => ['day' => 1, 'court' => 'Lapangan 1', 'time' => '13:00', 'order' => 9],
+            'kat_c_pa-R1-M10' => ['day' => 1, 'court' => 'Lapangan 1', 'time' => '13:20', 'order' => 10],
+            'kat_c_pa-R1-M11' => ['day' => 1, 'court' => 'Lapangan 1', 'time' => '13:40', 'order' => 11],
+            'kat_c_pa-R1-M12' => ['day' => 1, 'court' => 'Lapangan 1', 'time' => '14:00', 'order' => 12],
+            'kat_c_pa-R1-M13' => ['day' => 1, 'court' => 'Lapangan 1', 'time' => '14:20', 'order' => 13],
+            'kat_c_pa-R1-M14' => ['day' => 1, 'court' => 'Lapangan 1', 'time' => '14:40', 'order' => 14],
+            'kat_c_pa-R1-M15' => ['day' => 1, 'court' => 'Lapangan 1', 'time' => '15:00', 'order' => 15],
+            'kat_c_pa-R1-M16' => ['day' => 1, 'court' => 'Lapangan 1', 'time' => '15:20', 'order' => 16],
+            'kat_c_pa-R2-M1' => ['day' => 2, 'court' => 'Lapangan 1', 'time' => '10:40', 'order' => 17],
+            'kat_c_pa-R2-M2' => ['day' => 2, 'court' => 'Lapangan 1', 'time' => '11:00', 'order' => 18],
+            'kat_c_pa-R2-M3' => ['day' => 2, 'court' => 'Lapangan 1', 'time' => '11:20', 'order' => 19],
+            'kat_c_pa-R2-M4' => ['day' => 2, 'court' => 'Lapangan 1', 'time' => '11:40', 'order' => 20],
+            'kat_c_pa-R2-M5' => ['day' => 2, 'court' => 'Lapangan 1', 'time' => '12:00', 'order' => 21],
+            'kat_c_pa-R2-M6' => ['day' => 2, 'court' => 'Lapangan 1', 'time' => '12:20', 'order' => 22],
+            'kat_c_pa-R2-M7' => ['day' => 2, 'court' => 'Lapangan 1', 'time' => '12:40', 'order' => 23],
+            'kat_c_pa-R2-M8' => ['day' => 2, 'court' => 'Lapangan 1', 'time' => '13:00', 'order' => 24],
+            'kat_c_pa-R3-M1' => ['day' => 2, 'court' => 'Lapangan 1', 'time' => '14:40', 'order' => 25],
+            'kat_c_pa-R3-M2' => ['day' => 2, 'court' => 'Lapangan 1', 'time' => '15:00', 'order' => 26],
+            'kat_c_pa-R3-M3' => ['day' => 2, 'court' => 'Lapangan 1', 'time' => '15:20', 'order' => 27],
+            'kat_c_pa-R3-M4' => ['day' => 2, 'court' => 'Lapangan 1', 'time' => '15:40', 'order' => 28],
+            'kat_c_pa-R4-M1' => ['day' => 3, 'court' => 'Lapangan 1', 'time' => '14:30', 'order' => 29],
+            'kat_c_pa-R4-M2' => ['day' => 3, 'court' => 'Lapangan 1', 'time' => '15:00', 'order' => 30],
+            'kat_c_pa-3RD-M1' => ['day' => 3, 'court' => 'Lapangan 1', 'time' => '16:00', 'order' => 31],
+            'kat_c_pa-R5-M1' => ['day' => 4, 'court' => 'Lapangan 1', 'time' => '13:00', 'order' => 32],
+        ];
+
+        return $map[$matchCode] ?? null;
+    }
+
+    /**
      * Membangun rencana jadwal multi-hari terpadu (dipakai Preview dan Generate)
      */
     protected function buildMultiDaySchedulePlan(Competition $competition, array $input): array
@@ -1768,6 +1931,10 @@ class TournamentBracketController extends Controller
         // Map Match to Day
         $poolContestedCounter = [];
         $getDayForMatch = function ($m) use ($tournamentDays, $distributionMode, $customRules, &$poolContestedCounter) {
+            if ($official = self::getOfficialScheduleForMatch($m['match_code'] ?? '')) {
+                return (int) $official['day'];
+            }
+
             if ($tournamentDays <= 1) {
                 return 1;
             }
@@ -2038,6 +2205,28 @@ class TournamentBracketController extends Controller
 
             // Sort matches for this day
             usort($dayMatches, function ($a, $b) use ($d, $getPriority) {
+                $offA = self::getOfficialScheduleForMatch($a['match_code'] ?? '');
+                $offB = self::getOfficialScheduleForMatch($b['match_code'] ?? '');
+
+                if ($offA && $offB) {
+                    $courtComp = strcmp($offA['court'], $offB['court']);
+                    if ($courtComp !== 0) {
+                        return $courtComp;
+                    }
+                    $timeComp = strcmp($offA['time'], $offB['time']);
+                    if ($timeComp !== 0) {
+                        return $timeComp;
+                    }
+
+                    return ($offA['order'] ?? 0) <=> ($offB['order'] ?? 0);
+                }
+                if ($offA && ! $offB) {
+                    return -1;
+                }
+                if (! $offA && $offB) {
+                    return 1;
+                }
+
                 $pA = $getPriority($a, $d);
                 $pB = $getPriority($b, $d);
                 if ($pA !== $pB) {
@@ -2075,33 +2264,42 @@ class TournamentBracketController extends Controller
 
             foreach ($dayMatches as $m) {
                 $isContested = $m['is_contested'];
-                $assignedCourt = $m['assigned_court'];
+                $official = self::getOfficialScheduleForMatch($m['match_code'] ?? '');
 
-                if ($distributionMode === 'even' && $isContested) {
-                    $assignedCourt = $courts[$dayCourtIndex % count($courts)];
-                    $dayCourtIndex++;
-                }
-
-                // Pada Hari 3 (QF Kat C & Ganda pagi, Semifinal siang):
-                // Jika mode kategori, alokasikan Ganda QF ke Lapangan 2 agar kedua lapangan aktif seimbang di sesi pagi
-                if ($distributionMode === 'category_based' && $d === 3 && $m['round_type'] === 'qf' && str_contains($m['pool_key'], 'ganda') && count($courts) > 1) {
-                    $assignedCourt = $courts[1];
-                }
-
-                // Pada Hari 4 (Final), seluruh pertandingan dipusatkan di Lapangan 1 (Utama)
-                // Jika mode kategori dan ada Lapangan 2, alokasikan Perebutan Juara 3 ke Lapangan 2
-                if ($d === 4 && count($courts) > 0) {
-                    if ($distributionMode === 'category_based' && $m['round_type'] === 'bronze' && count($courts) > 1) {
-                        $assignedCourt = $courts[1];
-                    } else {
-                        $assignedCourt = $courts[0];
-                    }
-                }
-
+                $assignedCourt = null;
                 $assignedTime = null;
                 $assignedOrder = null;
 
-                if ($isContested) {
+                if ($official && $isContested) {
+                    $assignedCourt = $official['court'];
+                    $assignedTime = str_replace('.', ':', $official['time']);
+                    $assignedOrder = $official['order'];
+                    $courtCounters[$assignedCourt] = ($courtCounters[$assignedCourt] ?? 0) + 1;
+                    $dayContestedCount++;
+                } elseif ($isContested) {
+                    $assignedCourt = $m['assigned_court'];
+
+                    if ($distributionMode === 'even') {
+                        $assignedCourt = $courts[$dayCourtIndex % count($courts)];
+                        $dayCourtIndex++;
+                    }
+
+                    // Pada Hari 3 (QF Kat C & Ganda pagi, Semifinal siang):
+                    // Jika mode kategori, alokasikan Ganda QF ke Lapangan 2 agar kedua lapangan aktif seimbang di sesi pagi
+                    if ($distributionMode === 'category_based' && $d === 3 && $m['round_type'] === 'qf' && str_contains($m['pool_key'], 'ganda') && count($courts) > 1) {
+                        $assignedCourt = $courts[1];
+                    }
+
+                    // Pada Hari 4 (Final), seluruh pertandingan dipusatkan di Lapangan 1 (Utama)
+                    // Jika mode kategori dan ada Lapangan 2, alokasikan Perebutan Juara 3 ke Lapangan 2
+                    if ($d === 4 && count($courts) > 0) {
+                        if ($distributionMode === 'category_based' && $m['round_type'] === 'bronze' && count($courts) > 1) {
+                            $assignedCourt = $courts[1];
+                        } else {
+                            $assignedCourt = $courts[0];
+                        }
+                    }
+
                     // Jeda Ishoma Siang (12:00 - 13:00 WIB) pada Hari 1, 2, 3
                     if ($lunchBreak && $d !== 4) {
                         $cTimeStr = $courtCurrentTime[$assignedCourt]->format('H:i');
@@ -2142,7 +2340,7 @@ class TournamentBracketController extends Controller
                     'match_code' => $m['match_code'],
                     'court_number' => $assignedCourt,
                     'scheduled_time' => $assignedTime,
-                    'match_order' => $m['match_number'] ?? $assignedOrder,
+                    'match_order' => $official['order'] ?? ($m['match_number'] ?? $assignedOrder),
                     'bracket_match_number' => $m['match_number'] ?? null,
                     'court_order' => $assignedOrder,
                     'match_day' => $d,
