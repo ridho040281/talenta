@@ -176,17 +176,26 @@
                 width: 100% !important;
                 height: 100% !important;
                 min-height: 100% !important;
+                max-height: 100% !important;
                 margin: 0 !important;
                 padding: 0 !important;
                 background: #ffffff !important;
+                overflow: hidden !important;
             }
             .no-print {
                 display: none !important;
             }
+            .sheet-scroll-wrapper {
+                overflow: visible !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                display: block !important;
+            }
             .print-sheet {
                 width: 100% !important;
                 height: 100% !important;
-                min-height: 100% !important;
                 max-height: 100% !important;
                 padding: 0 !important;
                 margin: 0 !important;
@@ -237,141 +246,7 @@
         }
     </style>
 </head>
-<body class="antialiased" 
-      x-data="{
-          paperSize: (new URLSearchParams(window.location.search).get('size') || localStorage.getItem('talenta_bracket_print_size') || 'a4'),
-          orientation: (new URLSearchParams(window.location.search).get('orientation') || localStorage.getItem('talenta_bracket_print_orientation') || 'landscape'),
-          isExportingImage: false,
-          setPaperSize(size) {
-              this.paperSize = size;
-              localStorage.setItem('talenta_bracket_print_size', size);
-              this.updatePrintStyle();
-              if (window.lucide) { 
-                  this.$nextTick(() => window.lucide.createIcons()); 
-              }
-          },
-          setOrientation(mode) {
-              this.orientation = mode;
-              localStorage.setItem('talenta_bracket_print_orientation', mode);
-              this.updatePrintStyle();
-              if (window.lucide) { 
-                  this.$nextTick(() => window.lucide.createIcons()); 
-              }
-          },
-          updatePrintStyle() {
-              const styleEl = document.getElementById('dynamic-print-page-style');
-              if (!styleEl) return;
-
-              if (this.paperSize === 'poster') {
-                  // Mode Poster / Bebas Ukuran: Bebas ukuran apa saja (A2, A1, A0, Plotter, atau Cetak Poster Multi-Lembar)
-                  styleEl.innerHTML = `@page { size: auto !important; margin: 4mm 6mm !important; }`;
-                  return;
-              }
-
-              if (this.paperSize === 'a3') {
-                  if (this.orientation === 'portrait') {
-                      styleEl.innerHTML = `@page { size: A3 portrait !important; margin: 6mm 6mm !important; }`;
-                  } else {
-                      styleEl.innerHTML = `@page { size: A3 landscape !important; margin: 4mm 6mm !important; }`;
-                  }
-                  return;
-              }
-
-              if (this.paperSize === 'f4') {
-                  if (this.orientation === 'portrait') {
-                      styleEl.innerHTML = `@page { size: 215mm 330mm !important; margin: 6mm 6mm !important; }`;
-                  } else {
-                      styleEl.innerHTML = `@page { size: 330mm 215mm !important; margin: 4mm 6mm !important; }`;
-                  }
-                  return;
-              }
-
-              // Default: A4
-              if (this.orientation === 'portrait') {
-                  styleEl.innerHTML = `@page { size: A4 portrait !important; margin: 6mm 6mm !important; }`;
-              } else {
-                  styleEl.innerHTML = `@page { size: A4 landscape !important; margin: 4mm 6mm !important; }`;
-              }
-          },
-          downloadSvg() {
-              const svgEl = document.querySelector('.bracket-svg-container svg');
-              if (!svgEl) {
-                  alert('Bagan SVG tidak ditemukan.');
-                  return;
-              }
-              const serializer = new XMLSerializer();
-              let source = serializer.serializeToString(svgEl);
-              if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
-                  source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
-              }
-              const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `Bagan_{{ Str::slug($competition->name . '_' . ($activePool['title'] ?? 'Resmi')) }}.svg`;
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-              URL.revokeObjectURL(url);
-          },
-          async downloadPng() {
-              const svgEl = document.querySelector('.bracket-svg-container svg');
-              if (!svgEl) {
-                  alert('Bagan SVG tidak ditemukan.');
-                  return;
-              }
-              this.isExportingImage = true;
-              try {
-                  const serializer = new XMLSerializer();
-                  let source = serializer.serializeToString(svgEl);
-                  if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
-                      source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
-                  }
-                  const img = new Image();
-                  const svgBlob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
-                  const url = URL.createObjectURL(svgBlob);
-
-                  img.onload = () => {
-                      const canvas = document.createElement('canvas');
-                      const targetWidth = 3600;
-                      const viewBox = svgEl.viewBox.baseVal;
-                      const aspect = (viewBox && viewBox.height && viewBox.width) ? (viewBox.height / viewBox.width) : 0.6;
-                      canvas.width = targetWidth;
-                      canvas.height = Math.round(targetWidth * aspect);
-
-                      const ctx = canvas.getContext('2d');
-                      ctx.fillStyle = '#ffffff';
-                      ctx.fillRect(0, 0, canvas.width, canvas.height);
-                      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-                      URL.revokeObjectURL(url);
-
-                      canvas.toBlob((pngBlob) => {
-                          this.isExportingImage = false;
-                          if (!pngBlob) return;
-                          const pngUrl = URL.createObjectURL(pngBlob);
-                          const a = document.createElement('a');
-                          a.href = pngUrl;
-                          a.download = `Bagan_Poster_HD_{{ Str::slug($competition->name . '_' . ($activePool['title'] ?? 'Resmi')) }}.png`;
-                          document.body.appendChild(a);
-                          a.click();
-                          document.body.removeChild(a);
-                          URL.revokeObjectURL(pngUrl);
-                      }, 'image/png');
-                  };
-                  img.onerror = () => {
-                      this.isExportingImage = false;
-                      alert('Gagal mengonversi gambar.');
-                  };
-                  img.src = url;
-              } catch (e) {
-                  this.isExportingImage = false;
-                  console.error(e);
-                  alert('Terjadi kesalahan saat mengonversi gambar.');
-              }
-          }
-      }"
-      x-init="updatePrintStyle()">
+<body class="antialiased" x-data="bracketPrintApp">
 
     <!-- Screen Action Control Bar (No Print) -->
     <div class="no-print max-w-7xl mx-auto mb-3 px-2">
@@ -476,13 +351,14 @@
                         :disabled="isExportingImage"
                         class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-xs border border-slate-700 transition flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
                         title="Unduh gambar PNG HD Resolusi Tinggi 3600px siap cetak poster">
-                    <template x-if="!isExportingImage">
+                    <span x-show="!isExportingImage" class="inline-flex items-center gap-1.5">
                         <i data-lucide="image" class="w-3.5 h-3.5 text-amber-400"></i>
-                    </template>
-                    <template x-if="isExportingImage">
-                        <i data-lucide="loader" class="w-3.5 h-3.5 animate-spin text-amber-400"></i>
-                    </template>
-                    <span x-text="isExportingImage ? 'Memproses...' : 'Unduh PNG HD'"></span>
+                        <span>Unduh PNG HD</span>
+                    </span>
+                    <span x-show="isExportingImage" class="inline-flex items-center gap-1.5" style="display: none;">
+                        <svg class="animate-spin w-3.5 h-3.5 text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <span>Memproses...</span>
+                    </span>
                 </button>
 
                 <!-- Cetak Sekarang -->
@@ -498,36 +374,31 @@
 
     <!-- Notice Banners (Screen only) -->
     <div class="no-print max-w-7xl mx-auto mb-3 px-2">
-        <template x-if="paperSize === 'poster'">
-            <div class="p-3 bg-amber-500/15 border border-amber-500/30 rounded-xl text-amber-200 text-xs flex items-center gap-2.5 shadow-sm">
-                <i data-lucide="sparkles" class="w-4 h-4 text-amber-400 shrink-0"></i>
-                <div class="leading-relaxed">
-                    <strong>Mode Poster / Ukuran Bebas Aktif:</strong> Batasan ukuran A4 telah dibuka! Pada dialog cetak printer (<kbd class="px-1 py-0.5 rounded bg-slate-800 text-amber-300 font-mono text-[10px]">Ctrl + P</kbd>), Anda bebas memilih ukuran kertas apa saja di printer Anda (A3, A2, A1, Plotter) atau aktifkan fitur <strong>Poster Printing / Multi-Sheet Tiling</strong> (cetak gabungan 4 atau 9 lembar A4 untuk ditempel jadi poster besar). Anda juga bisa mengklik <strong>Unduh SVG</strong> untuk mencetak banner/spanduk di percetakan.
-                </div>
+        <div x-show="paperSize === 'poster'" class="p-3 bg-amber-500/15 border border-amber-500/30 rounded-xl text-amber-200 text-xs flex items-center gap-2.5 shadow-sm" style="display: none;">
+            <i data-lucide="sparkles" class="w-4 h-4 text-amber-400 shrink-0"></i>
+            <div class="leading-relaxed">
+                <strong>Mode Poster / Ukuran Bebas Aktif:</strong> Batasan ukuran A4 telah dibuka! Pada dialog cetak printer (<kbd class="px-1 py-0.5 rounded bg-slate-800 text-amber-300 font-mono text-[10px]">Ctrl + P</kbd>), Anda bebas memilih ukuran kertas apa saja di printer Anda (A3, A2, A1, Plotter) atau aktifkan fitur <strong>Poster Printing / Multi-Sheet Tiling</strong> (cetak gabungan 4 atau 9 lembar A4 untuk ditempel jadi poster besar). Anda juga bisa mengklik <strong>Unduh SVG</strong> untuk mencetak banner/spanduk di percetakan.
             </div>
-        </template>
-        <template x-if="paperSize === 'a3'">
-            <div class="p-3 bg-sky-500/15 border border-sky-500/30 rounded-xl text-sky-200 text-xs flex items-center gap-2.5 shadow-sm">
-                <i data-lucide="info" class="w-4 h-4 text-sky-400 shrink-0"></i>
-                <div class="leading-relaxed">
-                    <strong>Format Kertas A3:</strong> Dokumen disesuaikan untuk kertas ukuran A3 (420 &times; 297 mm — 2x lipat A4). Pada dialog cetak printer, pastikan Anda memilih ukuran kertas <strong>A3</strong>. Sangat ideal untuk papan pengumuman GOR!
-                </div>
+        </div>
+        <div x-show="paperSize === 'a3'" class="p-3 bg-sky-500/15 border border-sky-500/30 rounded-xl text-sky-200 text-xs flex items-center gap-2.5 shadow-sm" style="display: none;">
+            <i data-lucide="info" class="w-4 h-4 text-sky-400 shrink-0"></i>
+            <div class="leading-relaxed">
+                <strong>Format Kertas A3:</strong> Dokumen disesuaikan untuk kertas ukuran A3 (420 &times; 297 mm — 2x lipat A4). Pada dialog cetak printer, pastikan Anda memilih ukuran kertas <strong>A3</strong>. Sangat ideal untuk papan pengumuman GOR!
             </div>
-        </template>
-        <template x-if="paperSize === 'f4'">
-            <div class="p-3 bg-indigo-500/15 border border-indigo-500/30 rounded-xl text-indigo-200 text-xs flex items-center gap-2.5 shadow-sm">
-                <i data-lucide="info" class="w-4 h-4 text-indigo-400 shrink-0"></i>
-                <div class="leading-relaxed">
-                    <strong>Format Kertas F4 / Folio:</strong> Disesuaikan untuk kertas HVS panjang / Folio (330 &times; 215 mm). Pada dialog cetak, pastikan memilih ukuran kertas Folio / F4.
-                </div>
+        </div>
+        <div x-show="paperSize === 'f4'" class="p-3 bg-indigo-500/15 border border-indigo-500/30 rounded-xl text-indigo-200 text-xs flex items-center gap-2.5 shadow-sm" style="display: none;">
+            <i data-lucide="info" class="w-4 h-4 text-indigo-400 shrink-0"></i>
+            <div class="leading-relaxed">
+                <strong>Format Kertas F4 / Folio:</strong> Disesuaikan untuk kertas HVS panjang / Folio (330 &times; 215 mm). Pada dialog cetak, pastikan memilih ukuran kertas Folio / F4.
             </div>
-        </template>
+        </div>
     </div>
 
-    <!-- Printable Sheet -->
-    <div id="printable-sheet" 
-         class="print-sheet transition-all duration-300"
-         :class="['size-' + paperSize, 'orientation-' + orientation]">
+    <!-- Printable Sheet Wrapper for horizontal screen scrolling -->
+    <div class="sheet-scroll-wrapper w-full overflow-x-auto flex justify-center pb-8">
+        <div id="printable-sheet" 
+             class="print-sheet transition-all duration-300"
+             :class="['size-' + paperSize, 'orientation-' + orientation]">
 
         <!-- Top Header & Kop Surat -->
         <div class="shrink-0">
@@ -657,13 +528,154 @@
             <!-- Footer page info -->
             <div class="mt-0.5 text-[7px] text-slate-400 flex items-center justify-between font-mono">
                 <span>Dokumen Bagan Resmi Dicetak Melalui Sistem Talenta • {{ date('d/m/Y H:i:s') }}</span>
-                <span x-text="orientation === 'portrait' ? 'Halaman 1 / 1 (A4 Portrait)' : 'Halaman 1 / 1 (A4 Landscape)'">Halaman 1 / 1 (A4 Landscape)</span>
+                <span x-text="footerPageLabel">Halaman 1 / 1 (A4 Landscape)</span>
             </div>
         </div>
 
-    </div>
+        </div> <!-- /printable-sheet -->
+    </div> <!-- /sheet-scroll-wrapper -->
 
     <script>
+        function initBracketPrintApp() {
+            Alpine.data('bracketPrintApp', () => ({
+                paperSize: (new URLSearchParams(window.location.search).get('size') || localStorage.getItem('talenta_bracket_print_size') || 'a4'),
+                orientation: (new URLSearchParams(window.location.search).get('orientation') || localStorage.getItem('talenta_bracket_print_orientation') || 'landscape'),
+                isExportingImage: false,
+
+                init() {
+                    this.updatePrintStyle();
+                },
+
+                setPaperSize(size) {
+                    this.paperSize = size;
+                    localStorage.setItem('talenta_bracket_print_size', size);
+                    this.updatePrintStyle();
+                    if (window.lucide) {
+                        this.$nextTick(() => window.lucide.createIcons());
+                    }
+                },
+
+                setOrientation(mode) {
+                    this.orientation = mode;
+                    localStorage.setItem('talenta_bracket_print_orientation', mode);
+                    this.updatePrintStyle();
+                    if (window.lucide) {
+                        this.$nextTick(() => window.lucide.createIcons());
+                    }
+                },
+
+                updatePrintStyle() {
+                    const styleEl = document.getElementById('dynamic-print-page-style');
+                    if (!styleEl) return;
+
+                    if (this.paperSize === 'poster') {
+                        styleEl.innerHTML = `@page { size: auto; margin: 4mm 6mm; }`;
+                    } else if (this.paperSize === 'a3') {
+                        styleEl.innerHTML = `@page { size: A3 ${this.orientation}; margin: 4mm 6mm; }`;
+                    } else if (this.paperSize === 'f4') {
+                        if (this.orientation === 'portrait') {
+                            styleEl.innerHTML = `@page { size: 215mm 330mm; margin: 5mm 6mm; }`;
+                        } else {
+                            styleEl.innerHTML = `@page { size: 330mm 215mm; margin: 4mm 6mm; }`;
+                        }
+                    } else {
+                        styleEl.innerHTML = `@page { size: A4 ${this.orientation}; margin: 4mm 6mm; }`;
+                    }
+                },
+
+                get footerPageLabel() {
+                    const sizeName = this.paperSize.toUpperCase();
+                    const orientName = this.orientation === 'portrait' ? 'Portrait' : 'Landscape';
+                    return `Halaman 1 / 1 (${sizeName} ${orientName})`;
+                },
+
+                downloadSvg() {
+                    const svgEl = document.querySelector('.bracket-svg-container svg');
+                    if (!svgEl) {
+                        alert('Bagan SVG tidak ditemukan.');
+                        return;
+                    }
+                    const serializer = new XMLSerializer();
+                    let source = serializer.serializeToString(svgEl);
+                    if (!source.match(/^<svg[^>]+xmlns="http:\/\/www\.w3\.org\/2000\/svg"/)) {
+                        source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+                    }
+                    const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `Bagan_{{ Str::slug($competition->name . '_' . ($activePool['title'] ?? 'Resmi')) }}.svg`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                },
+
+                async downloadPng() {
+                    const svgEl = document.querySelector('.bracket-svg-container svg');
+                    if (!svgEl) {
+                        alert('Bagan SVG tidak ditemukan.');
+                        return;
+                    }
+                    this.isExportingImage = true;
+                    try {
+                        const serializer = new XMLSerializer();
+                        let source = serializer.serializeToString(svgEl);
+                        if (!source.match(/^<svg[^>]+xmlns="http:\/\/www\.w3\.org\/2000\/svg"/)) {
+                            source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+                        }
+                        const img = new Image();
+                        const svgBlob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+                        const url = URL.createObjectURL(svgBlob);
+
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            const targetWidth = 3600;
+                            const viewBox = svgEl.viewBox ? svgEl.viewBox.baseVal : null;
+                            const aspect = (viewBox && viewBox.height && viewBox.width) ? (viewBox.height / viewBox.width) : 0.6;
+                            canvas.width = targetWidth;
+                            canvas.height = Math.round(targetWidth * aspect);
+
+                            const ctx = canvas.getContext('2d');
+                            ctx.fillStyle = '#ffffff';
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                            URL.revokeObjectURL(url);
+
+                            canvas.toBlob((pngBlob) => {
+                                this.isExportingImage = false;
+                                if (!pngBlob) return;
+                                const pngUrl = URL.createObjectURL(pngBlob);
+                                const a = document.createElement('a');
+                                a.href = pngUrl;
+                                a.download = `Bagan_Poster_HD_{{ Str::slug($competition->name . '_' . ($activePool['title'] ?? 'Resmi')) }}.png`;
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                                URL.revokeObjectURL(pngUrl);
+                            }, 'image/png');
+                        };
+                        img.onerror = () => {
+                            this.isExportingImage = false;
+                            alert('Gagal mengonversi gambar.');
+                        };
+                        img.src = url;
+                    } catch (e) {
+                        this.isExportingImage = false;
+                        console.error(e);
+                        alert('Terjadi kesalahan saat mengonversi gambar.');
+                    }
+                }
+            }));
+        }
+
+        if (window.Alpine) {
+            initBracketPrintApp();
+        } else {
+            document.addEventListener('alpine:init', initBracketPrintApp);
+        }
+
         if (window.lucide) {
             window.lucide.createIcons();
         }
