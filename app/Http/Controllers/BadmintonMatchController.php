@@ -18,7 +18,7 @@ class BadmintonMatchController extends Controller
             abort(403, 'Halaman ini khusus untuk koordinator dan wasit cabang Bulu Tangkis.');
         }
 
-        $query = BadmintonMatch::with(['competition', 'umpire'])->latest();
+        $query = BadmintonMatch::with(['competition', 'umpire'])->orderedForTournament($request->get('sort'));
 
         if ($request->filled('court')) {
             $query->where('court_number', $request->court);

@@ -437,6 +437,12 @@
                     <option value="ongoing" {{ request('match_status') == 'ongoing' ? 'selected' : '' }}>Sedang Berlangsung (LIVE)</option>
                     <option value="finished" {{ request('match_status') == 'finished' ? 'selected' : '' }}>Selesai</option>
                 </select>
+
+                <select name="sort" onchange="this.form.submit()" class="bg-[#0C111D] border border-white/[0.12] text-slate-200 rounded-xl px-3 py-2 text-xs font-medium outline-none">
+                    <option value="schedule" {{ request('sort', 'schedule') == 'schedule' ? 'selected' : '' }}>Urut: Jam Main Pagi-Sore</option>
+                    <option value="order" {{ request('sort') == 'order' ? 'selected' : '' }}>Urut: Nomor Partai (#1, #2...)</option>
+                    <option value="latest" {{ request('sort') == 'latest' ? 'selected' : '' }}>Urut: Terakhir Diinput</option>
+                </select>
             </form>
 
             <a href="{{ route('badminton.bracket') }}" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/25 flex items-center gap-2 shrink-0 transition cursor-pointer" title="Buka Bagan Pertandingan Bulu Tangkis">

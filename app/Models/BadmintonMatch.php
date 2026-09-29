@@ -296,4 +296,45 @@ class BadmintonMatch extends Model
             default => $this->category ?: 'Bulu Tangkis',
         };
     }
+
+    /**
+     * Scope query to order matches logically for tournament schedule display.
+     */
+    public function scopeOrderedForTournament($query, ?string $sort = 'schedule')
+    {
+        if ($sort === 'latest') {
+            return $query->latest();
+        }
+
+        if ($sort === 'order') {
+            return $query
+                ->orderByRaw("CASE 
+                    WHEN match_status IN ('ongoing', 'interval') THEN 1 
+                    WHEN match_status = 'upcoming' OR match_status IS NULL OR match_status = '' THEN 2 
+                    WHEN match_status = 'finished' THEN 3 
+                    ELSE 4 
+                END ASC")
+                ->orderByRaw('CASE WHEN match_date IS NULL THEN 1 ELSE 0 END, match_date ASC')
+                ->orderByRaw('CASE WHEN match_day IS NULL OR match_day = 0 THEN 1 ELSE 0 END, match_day ASC')
+                ->orderByRaw('CASE WHEN match_order IS NULL OR match_order = 0 THEN 1 ELSE 0 END, match_order ASC')
+                ->orderByRaw("CASE WHEN scheduled_time IS NULL OR scheduled_time = '' THEN 1 ELSE 0 END, REPLACE(scheduled_time, '.', ':') ASC")
+                ->orderByRaw("CASE WHEN UPPER(court_number) = 'BYE' THEN 1 ELSE 0 END, court_number ASC")
+                ->orderBy('id', 'asc');
+        }
+
+        // Default: 'schedule' (Jam Main Awal & Urutan Bagan)
+        return $query
+            ->orderByRaw("CASE 
+                WHEN match_status IN ('ongoing', 'interval') THEN 1 
+                WHEN match_status = 'upcoming' OR match_status IS NULL OR match_status = '' THEN 2 
+                WHEN match_status = 'finished' THEN 3 
+                ELSE 4 
+            END ASC")
+            ->orderByRaw('CASE WHEN match_date IS NULL THEN 1 ELSE 0 END, match_date ASC')
+            ->orderByRaw('CASE WHEN match_day IS NULL OR match_day = 0 THEN 1 ELSE 0 END, match_day ASC')
+            ->orderByRaw("CASE WHEN scheduled_time IS NULL OR scheduled_time = '' THEN 1 ELSE 0 END, REPLACE(scheduled_time, '.', ':') ASC")
+            ->orderByRaw('CASE WHEN match_order IS NULL OR match_order = 0 THEN 1 ELSE 0 END, match_order ASC')
+            ->orderByRaw("CASE WHEN UPPER(court_number) = 'BYE' THEN 1 ELSE 0 END, court_number ASC")
+            ->orderBy('id', 'asc');
+    }
 }

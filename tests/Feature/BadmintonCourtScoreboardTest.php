@@ -249,4 +249,86 @@ class BadmintonCourtScoreboardTest extends TestCase
         $response->assertStatus(200);
         $this->assertStringContainsString('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', $response->headers->get('content-type'));
     }
+
+    public function test_matches_are_ordered_for_tournament_by_schedule_time_and_order(): void
+    {
+        $comp = Competition::create([
+            'category_id' => Category::firstOrCreate(['slug' => 'test-cat'], ['name' => 'Test'])->id,
+            'name' => 'Bulu Tangkis Urutan Test',
+            'code' => 'BLT',
+            'slug' => 'bulu-tangkis-urutan-test',
+            'type' => 'individual',
+            'status' => 'open',
+        ]);
+
+        // M1: Babak 1 jam 09.00
+        $m1 = BadmintonMatch::create([
+            'competition_id' => $comp->id,
+            'match_code' => 'kat_c_pi-R1-M4',
+            'court_number' => 'Lapangan 1',
+            'round_name' => 'Babak 1',
+            'match_status' => 'upcoming',
+            'match_order' => 4,
+            'scheduled_time' => '09.00',
+            'team1_school' => 'SD A',
+            'team1_player1' => 'P1 A',
+            'team2_school' => 'SD B',
+            'team2_player1' => 'P2 B',
+        ]);
+
+        // M2: Perebutan Juara 3 jam 13.00 (dibuat belakangan)
+        $m2 = BadmintonMatch::create([
+            'competition_id' => $comp->id,
+            'match_code' => 'kat_c_pi-BRONZE-M1',
+            'court_number' => 'Lapangan 1',
+            'round_name' => 'Perebutan Juara 3',
+            'match_status' => 'upcoming',
+            'match_order' => 22,
+            'scheduled_time' => '13.00',
+            'team1_school' => 'SD C',
+            'team1_player1' => 'P1 C',
+            'team2_school' => 'SD D',
+            'team2_player1' => 'P2 D',
+        ]);
+
+        // M3: Pertandingan LIVE sedang berlangsung jam 08.00
+        $m3 = BadmintonMatch::create([
+            'competition_id' => $comp->id,
+            'match_code' => 'kat_c_pi-R1-M1',
+            'court_number' => 'Lapangan 2',
+            'round_name' => 'Babak 1',
+            'match_status' => 'ongoing',
+            'match_order' => 1,
+            'scheduled_time' => '08.00',
+            'team1_school' => 'SD E',
+            'team1_player1' => 'P1 E',
+            'team2_school' => 'SD F',
+            'team2_player1' => 'P2 F',
+        ]);
+
+        // M4: Pertandingan Selesai jam 07.30
+        $m4 = BadmintonMatch::create([
+            'competition_id' => $comp->id,
+            'match_code' => 'kat_c_pi-R1-M0',
+            'court_number' => 'Lapangan 1',
+            'round_name' => 'Babak Kualifikasi',
+            'match_status' => 'finished',
+            'match_order' => 0,
+            'scheduled_time' => '07.30',
+            'team1_school' => 'SD G',
+            'team1_player1' => 'P1 G',
+            'team2_school' => 'SD H',
+            'team2_player1' => 'P2 H',
+        ]);
+
+        $orderedIds = BadmintonMatch::where('competition_id', $comp->id)
+            ->orderedForTournament('schedule')
+            ->pluck('id')
+            ->all();
+
+        // 1. Ongoing/LIVE harus paling depan ($m3)
+        // 2. Upcoming jam 09.00 ($m1) harus sebelum upcoming jam 13.00 ($m2)
+        // 3. Finished ($m4) harus di urutan belakang
+        $this->assertEquals([$m3->id, $m1->id, $m2->id, $m4->id], $orderedIds);
+    }
 }

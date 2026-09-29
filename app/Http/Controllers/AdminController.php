@@ -1801,7 +1801,7 @@ class AdminController extends Controller
             });
 
         // 2. Data for Tab 2: Wasit & Pertandingan Bulu Tangkis
-        $matchQuery = BadmintonMatch::with(['competition', 'umpire'])->latest();
+        $matchQuery = BadmintonMatch::with(['competition', 'umpire'])->orderedForTournament($request->get('sort'));
         if ($request->filled('court')) {
             $matchQuery->where('court_number', $request->court);
         }
