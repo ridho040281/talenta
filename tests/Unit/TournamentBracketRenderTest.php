@@ -94,4 +94,59 @@ class TournamentBracketRenderTest extends TestCase
         $this->assertStringContainsString('BIMA APRILINO', $svg);
         $this->assertStringNotContainsString('GILBERT SYELDION ALFARO / ..', $svg);
     }
+
+    public function test_bye_matches_do_not_render_day_or_schedule_on_advancing_stem(): void
+    {
+        $controller = new TournamentBracketController;
+
+        $bracketData = [
+            'bracket_size' => 16,
+            'is_doubles' => false,
+            'total_participants' => 10,
+            'total_rounds' => 4,
+            'rounds' => [
+                1 => [
+                    'round_index' => 1,
+                    'round_name' => 'Babak 16 Besar',
+                    'matches' => [
+                        [
+                            'match_number' => null,
+                            'status' => 'bye_advance',
+                            'is_bye1' => false,
+                            'is_bye2' => true,
+                            'team1' => [
+                                'slot_number' => 1,
+                                'seed_number' => 1,
+                                'name' => 'Mikayla Azzahra Putri Tampati',
+                                'institution' => 'MI Jatisalam Gombang',
+                            ],
+                            'team2' => [
+                                'slot_number' => 2,
+                                'is_bye' => true,
+                                'name' => '[BYE]',
+                                'institution' => 'Bebas Babak 1',
+                            ],
+                            'winner' => [
+                                'name' => 'Mikayla Azzahra Putri Tampati',
+                            ],
+                            'existing_match' => (object) [
+                                'match_day' => 1,
+                                'court_number' => 'BYE',
+                                'scheduled_time' => null,
+                                'team1_set1' => 0,
+                                'team2_set1' => 0,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $svg = $controller->renderClassicBracketSvg($bracketData);
+
+        // Advancing player name should still be visible on the line
+        $this->assertStringContainsString('Mikayla Azzahra Putri Tampati', $svg);
+        // But H1 schedule text must NOT be rendered under the stem line
+        $this->assertStringNotContainsString('>H1<', $svg);
+    }
 }

@@ -3798,14 +3798,14 @@ class TournamentBracketController extends Controller
                     }
                 }
 
-                // Match score or Court Schedule if available
-                if (! empty($match['existing_match'])) {
+                // Match score or Court Schedule if available (Standar BWF: Hanya untuk partai yang dimainkan, bukan BYE)
+                if (! $isByeAdvance && ! empty($match['existing_match'])) {
                     $em = $match['existing_match'];
                     if ($em->team1_set1 > 0 || $em->team2_set1 > 0) {
                         $scoreStr = "{$em->team1_set1}-{$em->team2_set1}";
                         $scoreFontSize = ($bracketSize > 16) ? '10' : '11';
                         $svg[] = "<text x='{$contentStartX}' y='".($yMid + 13)."' font-size='{$scoreFontSize}' font-weight='800' fill='{$subTextColor}'>{$scoreStr}</text>";
-                    } elseif ((! empty($em->court_number) && strtoupper($em->court_number) !== 'BYE') || ! empty($em->scheduled_time) || ! empty($em->match_day)) {
+                    } elseif ((! empty($em->court_number) && strtoupper($em->court_number) !== 'BYE') || ! empty($em->scheduled_time)) {
                         $schedParts = [];
                         if (! empty($em->match_day)) {
                             $schedParts[] = "H{$em->match_day}";
