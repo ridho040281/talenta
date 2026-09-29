@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Helpers\NameStandardizer;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -225,6 +226,57 @@ class BadmintonMatch extends Model
     public function isCurrentSetFinished(): bool
     {
         return $this->isSetFinished($this->current_set);
+    }
+
+    public function getMatchDayLabelAttribute($value): string
+    {
+        $dayNum = (int) ($this->attributes['match_day'] ?? 1);
+        if ($dayNum <= 0) {
+            $dayNum = 1;
+        }
+
+        // Standard official calendar starting Tuesday, 29 September 2026:
+        // Day 1 = Selasa, 29 Sep
+        // Day 2 = Rabu, 30 Sep
+        // Day 3 = Kamis, 1 Okt
+        // Day 4 = Jumat, 2 Okt
+        $dayLabels = [
+            1 => 'Hari 1 (Selasa, 29 Sep)',
+            2 => 'Hari 2 (Rabu, 30 Sep)',
+            3 => 'Hari 3 (Kamis, 1 Okt)',
+            4 => 'Hari 4 (Jumat, 2 Okt)',
+        ];
+
+        if (isset($dayLabels[$dayNum])) {
+            return $dayLabels[$dayNum];
+        }
+
+        if (! empty($value) && ! str_contains($value, '28 Sep') && ! str_contains($value, 'Senin')) {
+            return $value;
+        }
+
+        return "Hari {$dayNum}";
+    }
+
+    public function getMatchDateAttribute($value): ?Carbon
+    {
+        $dayNum = (int) ($this->attributes['match_day'] ?? 1);
+        if ($dayNum <= 0) {
+            $dayNum = 1;
+        }
+
+        $dates = [
+            1 => '2026-09-29',
+            2 => '2026-09-30',
+            3 => '2026-10-01',
+            4 => '2026-10-02',
+        ];
+
+        if (isset($dates[$dayNum])) {
+            return Carbon::parse($dates[$dayNum]);
+        }
+
+        return ! empty($value) ? Carbon::parse($value) : null;
     }
 
     public function getCategoryLabelAttribute(): string

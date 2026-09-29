@@ -3,7 +3,8 @@
 namespace Tests\Unit;
 
 use App\Http\Controllers\TournamentBracketController;
-use PHPUnit\Framework\TestCase;
+use App\Models\BadmintonMatch;
+use Tests\TestCase;
 
 class TournamentBracketRenderTest extends TestCase
 {
@@ -203,5 +204,34 @@ class TournamentBracketRenderTest extends TestCase
 
         $this->assertStringContainsString('Siti Salwa', $svg);
         $this->assertStringContainsString('21-7, 21-15', $svg);
+    }
+
+    public function test_badminton_match_day_label_is_strictly_anchored_to_29_sep_2026(): void
+    {
+        $match1 = new BadmintonMatch([
+            'match_day' => 1,
+            'match_day_label' => 'Hari 1 (Senin, 28 Sep)',
+            'match_date' => '2026-09-28',
+        ]);
+
+        $this->assertEquals('Hari 1 (Selasa, 29 Sep)', $match1->match_day_label);
+        $this->assertEquals('2026-09-29', $match1->match_date->format('Y-m-d'));
+
+        $match2 = new BadmintonMatch([
+            'match_day' => 2,
+            'match_day_label' => 'Hari 2 (Selasa, 29 Sep)',
+            'match_date' => '2026-09-29',
+        ]);
+
+        $this->assertEquals('Hari 2 (Rabu, 30 Sep)', $match2->match_day_label);
+        $this->assertEquals('2026-09-30', $match2->match_date->format('Y-m-d'));
+
+        $match3 = new BadmintonMatch(['match_day' => 3]);
+        $this->assertEquals('Hari 3 (Kamis, 1 Okt)', $match3->match_day_label);
+        $this->assertEquals('2026-10-01', $match3->match_date->format('Y-m-d'));
+
+        $match4 = new BadmintonMatch(['match_day' => 4]);
+        $this->assertEquals('Hari 4 (Jumat, 2 Okt)', $match4->match_day_label);
+        $this->assertEquals('2026-10-02', $match4->match_date->format('Y-m-d'));
     }
 }
