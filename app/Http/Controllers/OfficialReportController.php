@@ -267,6 +267,15 @@ class OfficialReportController extends Controller
     {
         $competitionId = $request->query('competition_id');
         $competition = Competition::with(['category', 'judges', 'pic'])->findOrFail($competitionId);
+
+        $user = Auth::user();
+        if ($user && $user->role === 'pic_lomba') {
+            $managedIds = PicController::getManagedCompetitionIds($user);
+            if (! in_array($competition->id, $managedIds)) {
+                abort(403, 'Akses ditolak: Anda tidak memiliki wewenang untuk membuka berita acara cabang lomba ini.');
+            }
+        }
+
         $type = $request->query('type', 'live'); // 'live' (terisi) or 'blank' (template kosong)
 
         $isSports = self::isSportsCompetition($competition);

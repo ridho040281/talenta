@@ -244,6 +244,10 @@ Route::middleware(['auth', 'role:superadmin,panitia,pic_lomba,admin'])->prefix('
     Route::post('/daftar-hadir/scan', [AttendanceController::class, 'scan'])->name('attendance.scan');
     Route::post('/daftar-hadir/{id}/toggle', [AttendanceController::class, 'toggle'])->name('attendance.toggle');
     Route::get('/daftar-hadir/cetak', [AttendanceController::class, 'printReport'])->name('attendance.print');
+
+    // Berita Acara Lomba & Cetak (Superadmin, Panitia, PIC Lomba, Admin)
+    Route::get('/berita-acara', [OfficialReportController::class, 'index'])->name('berita-acara.index');
+    Route::get('/berita-acara/cetak', [OfficialReportController::class, 'print'])->name('berita-acara.print');
 });
 
 /*
@@ -258,8 +262,6 @@ Route::middleware(['auth', 'role:superadmin,panitia'])->prefix('admin')->name('a
     Route::get('/api/recap-participants', [AdminController::class, 'apiRecapParticipants'])->name('api.recap_participants');
     Route::get('/api/recap-cashflow', [AdminController::class, 'apiRecapCashflow'])->name('api.recap_cashflow');
     Route::get('/api/recap-institutions', [AdminController::class, 'apiRecapInstitutions'])->name('api.recap_institutions');
-    Route::get('/berita-acara', [OfficialReportController::class, 'index'])->name('berita-acara.index');
-    Route::get('/berita-acara/cetak', [OfficialReportController::class, 'print'])->name('berita-acara.print');
 
     // Sertifikat & Piagam Kejuaraan
     Route::get('/sertifikat', [CertificateController::class, 'index'])->name('certificates.index');
