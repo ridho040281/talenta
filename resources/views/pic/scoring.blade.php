@@ -144,57 +144,94 @@
     </div>
 
     <!-- =========================================================================
-         SEARCH & FILTER TOOLBAR
+         TAB NAVIGATION CONTROLS (Tab 1: Input Penilaian | Tab 2: Matriks Rekap Nilai)
          ========================================================================= -->
-    <div class="ai-panel p-4 rounded-2xl border border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
-        
-        <!-- Search Input -->
-        <div class="relative w-full sm:w-80">
-            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-            <input type="text" 
-                   x-model="searchQuery" 
-                   placeholder="Cari nama peserta, sekolah, #undian..." 
-                   class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-white/[0.12] text-xs font-semibold text-white focus:outline-none focus:border-[#7A5AF8] transition placeholder:text-slate-500">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <!-- Segmented Tab Pills -->
+        <div class="inline-flex p-1.5 bg-slate-950/90 rounded-2xl border border-white/[0.08] shadow-xl">
+            <button type="button" 
+                    @click="switchTab('input')"
+                    class="px-5 py-2.5 rounded-xl font-black text-xs transition-all flex items-center gap-2 cursor-pointer select-none"
+                    :class="activeTab === 'input' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-lg shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white'">
+                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                <span>1. Form Input Penilaian</span>
+            </button>
+            <button type="button" 
+                    @click="switchTab('rekap')"
+                    class="px-5 py-2.5 rounded-xl font-black text-xs transition-all flex items-center gap-2 cursor-pointer select-none"
+                    :class="activeTab === 'rekap' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white shadow-lg shadow-[#7A5AF8]/30 font-black' : 'text-slate-400 hover:text-white'">
+                <i data-lucide="table-2" class="w-4 h-4"></i>
+                <span>2. Matriks Rekap Nilai Lengkap</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold"
+                      :class="activeTab === 'rekap' ? 'bg-white/20 text-white' : 'bg-white/[0.08] text-slate-400'"
+                      x-text="scoredCount + '/' + participants.length"></span>
+            </button>
         </div>
 
-        <!-- Filter Segmented Controls -->
-        <div class="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-end">
-            <!-- Sector Filter -->
-            <div class="inline-flex p-1 bg-slate-950 rounded-xl border border-white/[0.08] text-xs">
-                <button type="button" 
-                        @click="sectorFilter = 'all'" 
-                        class="px-3 py-1.5 rounded-lg font-bold transition"
-                        :class="sectorFilter === 'all' ? 'bg-[#7A5AF8] text-white shadow-xs' : 'text-slate-400 hover:text-white'">
-                    Semua Sektor
-                </button>
-                <button type="button" 
-                        @click="sectorFilter = 'PA'" 
-                        class="px-3 py-1.5 rounded-lg font-bold transition"
-                        :class="sectorFilter === 'PA' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'">
-                    👦 Putra (PA)
-                </button>
-                <button type="button" 
-                        @click="sectorFilter = 'PI'" 
-                        class="px-3 py-1.5 rounded-lg font-bold transition"
-                        :class="sectorFilter === 'PI' ? 'bg-pink-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'">
-                    👧 Putri (PI)
-                </button>
-            </div>
-
-            <!-- Status Filter -->
-            <select x-model="statusFilter" 
-                    class="px-3 py-2 rounded-xl bg-slate-950 border border-white/[0.12] text-xs font-bold text-slate-300 focus:outline-none focus:border-[#7A5AF8] cursor-pointer">
-                <option value="all">Semua Status</option>
-                <option value="unscored">⚪ Belum Dinilai Lengkap</option>
-                <option value="scored">🟢 Sudah Terkunci</option>
-            </select>
+        <!-- External Quick Links -->
+        <div class="flex items-center gap-2">
+            <a href="{{ route('admin.berita-acara.index', ['competition_id' => $competition->id]) }}" 
+               class="px-4 py-2.5 rounded-2xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 hover:text-white border border-white/[0.08] text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+                <i data-lucide="file-text" class="w-4 h-4 text-emerald-400"></i>
+                <span>Berita Acara Cetak</span>
+                <i data-lucide="arrow-up-right" class="w-3 h-3 opacity-60"></i>
+            </a>
         </div>
     </div>
 
     <!-- =========================================================================
-         PARTICIPANTS SCORING ACCORDION LIST
+         TAB 1 CONTENT: FORM INPUT PENILAIAN PER PESERTA (ACCORDION)
          ========================================================================= -->
-    <div class="space-y-4">
+    <div x-show="activeTab === 'input'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-6">
+        
+        <!-- SEARCH & FILTER TOOLBAR -->
+        <div class="ai-panel p-4 rounded-2xl border border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
+            
+            <!-- Search Input -->
+            <div class="relative w-full sm:w-80">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                <input type="text" 
+                       x-model="searchQuery" 
+                       placeholder="Cari nama peserta, sekolah, #undian..." 
+                       class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-white/[0.12] text-xs font-semibold text-white focus:outline-none focus:border-[#7A5AF8] transition placeholder:text-slate-500">
+            </div>
+
+            <!-- Filter Segmented Controls -->
+            <div class="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-end">
+                <!-- Sector Filter -->
+                <div class="inline-flex p-1 bg-slate-950 rounded-xl border border-white/[0.08] text-xs">
+                    <button type="button" 
+                            @click="sectorFilter = 'all'" 
+                            class="px-3 py-1.5 rounded-lg font-bold transition"
+                            :class="sectorFilter === 'all' ? 'bg-[#7A5AF8] text-white shadow-xs' : 'text-slate-400 hover:text-white'">
+                        Semua Sektor
+                    </button>
+                    <button type="button" 
+                            @click="sectorFilter = 'PA'" 
+                            class="px-3 py-1.5 rounded-lg font-bold transition"
+                            :class="sectorFilter === 'PA' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'">
+                        👦 Putra (PA)
+                    </button>
+                    <button type="button" 
+                            @click="sectorFilter = 'PI'" 
+                            class="px-3 py-1.5 rounded-lg font-bold transition"
+                            :class="sectorFilter === 'PI' ? 'bg-pink-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'">
+                        👧 Putri (PI)
+                    </button>
+                </div>
+
+                <!-- Status Filter -->
+                <select x-model="statusFilter" 
+                        class="px-3 py-2 rounded-xl bg-slate-950 border border-white/[0.12] text-xs font-bold text-slate-300 focus:outline-none focus:border-[#7A5AF8] cursor-pointer">
+                    <option value="all">Semua Status</option>
+                    <option value="unscored">⚪ Belum Dinilai Lengkap</option>
+                    <option value="scored">🟢 Sudah Terkunci</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- PARTICIPANTS SCORING ACCORDION LIST -->
+        <div class="space-y-4">
         
         <template x-for="(reg, index) in filteredParticipants" :key="reg.id">
             <div class="ai-card rounded-3xl border transition-all duration-300 overflow-hidden shadow-xl"
@@ -419,7 +456,7 @@
             </div>
         </template>
 
-        <!-- EMPTY STATE -->
+        <!-- EMPTY STATE TAB 1 -->
         <template x-if="filteredParticipants.length === 0">
             <div class="p-12 text-center rounded-3xl bg-slate-950/60 border border-white/[0.08] space-y-3">
                 <i data-lucide="user-x" class="w-12 h-12 text-slate-600 mx-auto"></i>
@@ -427,6 +464,414 @@
                 <p class="text-xs text-slate-500">Coba ubah kata kunci pencarian atau reset filter sektor di atas.</p>
             </div>
         </template>
+
+    </div>
+    </div>
+
+    <!-- =========================================================================
+         TAB 2 CONTENT: MATRIKS REKAP NILAI LENGKAP SEMUA JURI & KRITERIA
+         ========================================================================= -->
+    <div x-show="activeTab === 'rekap'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-6">
+        
+        <!-- TOOLBAR REKAP & VIEW OPTIONS -->
+        <div class="ai-panel p-4 rounded-2xl border border-white/[0.08] flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-lg">
+            
+            <!-- Left: Search & Filter Controls -->
+            <div class="flex items-center gap-3 flex-wrap flex-1">
+                <!-- Search Input -->
+                <div class="relative w-full sm:w-72">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                    <input type="text" 
+                           x-model="searchQuery" 
+                           placeholder="Cari nama, sekolah, #undian..." 
+                           class="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-950 border border-white/[0.12] text-xs font-semibold text-white focus:outline-none focus:border-[#7A5AF8] transition placeholder:text-slate-500">
+                </div>
+
+                <!-- Sector Filter -->
+                <div class="inline-flex p-1 bg-slate-950 rounded-xl border border-white/[0.08] text-xs">
+                    <button type="button" 
+                            @click="sectorFilter = 'all'" 
+                            class="px-2.5 py-1 rounded-lg font-bold transition cursor-pointer"
+                            :class="sectorFilter === 'all' ? 'bg-[#7A5AF8] text-white shadow-xs' : 'text-slate-400 hover:text-white'">
+                        Semua Sektor
+                    </button>
+                    <button type="button" 
+                            @click="sectorFilter = 'PA'" 
+                            class="px-2.5 py-1 rounded-lg font-bold transition cursor-pointer"
+                            :class="sectorFilter === 'PA' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'">
+                        👦 PA
+                    </button>
+                    <button type="button" 
+                            @click="sectorFilter = 'PI'" 
+                            class="px-2.5 py-1 rounded-lg font-bold transition cursor-pointer"
+                            :class="sectorFilter === 'PI' ? 'bg-pink-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'">
+                        👧 PI
+                    </button>
+                </div>
+
+                <!-- Status Filter -->
+                <select x-model="statusFilter" 
+                        class="px-3 py-1.5 rounded-xl bg-slate-950 border border-white/[0.12] text-xs font-bold text-slate-300 focus:outline-none focus:border-[#7A5AF8] cursor-pointer">
+                    <option value="all">Semua Status</option>
+                    <option value="scored">🟢 Lengkap Terkunci</option>
+                    <option value="unscored">⚪ Belum Lengkap</option>
+                </select>
+            </div>
+
+            <!-- Right: Mode Tampilan, Reset Sort, & Export -->
+            <div class="flex items-center gap-2.5 flex-wrap justify-end">
+                <!-- Mode Tampilan Switcher (Rinci vs Ringkas) -->
+                <div class="inline-flex p-1 bg-slate-950 rounded-xl border border-white/[0.08] text-xs">
+                    <button type="button" 
+                            @click="viewMode = 'detailed'" 
+                            class="px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 cursor-pointer"
+                            :class="viewMode === 'detailed' ? 'bg-[#7A5AF8] text-white shadow-xs' : 'text-slate-400 hover:text-white'"
+                            title="Tampilkan rincian sub-kriteria per juri">
+                        <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+                        <span>Rincian Kriteria</span>
+                    </button>
+                    <button type="button" 
+                            @click="viewMode = 'summary'" 
+                            class="px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 cursor-pointer"
+                            :class="viewMode === 'summary' ? 'bg-[#7A5AF8] text-white shadow-xs' : 'text-slate-400 hover:text-white'"
+                            title="Tampilkan hanya total akumulasi per juri">
+                        <i data-lucide="columns" class="w-3.5 h-3.5"></i>
+                        <span>Ringkas (Total Juri)</span>
+                    </button>
+                </div>
+
+                <!-- Reset Sort Button -->
+                <button type="button" 
+                        @click="setSort('rank')"
+                        class="px-3 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-300 hover:text-white border border-white/[0.08] text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                        title="Kembalikan urutan tabel ke Peringkat Nilai Tertinggi">
+                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                    <span>Reset Urutan</span>
+                </button>
+
+                <!-- Export CSV / Excel Button -->
+                <button type="button" 
+                        @click="exportRecapCsv()"
+                        class="px-3.5 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+                        title="Download Data Rekap Nilai ke File CSV/Excel">
+                    <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-400"></i>
+                    <span>Export Excel (CSV)</span>
+                </button>
+            </div>
+
+        </div>
+
+        <!-- INFO TIPS BAR -->
+        <div class="px-4 py-2.5 rounded-2xl bg-slate-900/60 border border-white/[0.06] flex items-center justify-between text-xs text-slate-400 flex-wrap gap-2">
+            <div class="flex items-center gap-2">
+                <i data-lucide="help-circle" class="w-3.5 h-3.5 text-amber-400 shrink-0"></i>
+                <span>Klik pada <strong>judul kolom tabel</strong> mana saja untuk mengurutkan (Sort Ascending <span class="text-amber-400">▲</span> / Descending <span class="text-amber-400">▼</span>).</span>
+            </div>
+            <div class="font-mono text-[11px] text-slate-300">
+                Total: <strong class="text-white" x-text="sortedAndFilteredRecapParticipants.length"></strong> Peserta
+            </div>
+        </div>
+
+        <!-- MATRIKS REKAP TABLE -->
+        <div class="ai-card rounded-3xl border border-white/[0.08] shadow-2xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    
+                    <!-- THEAD -->
+                    <thead class="bg-slate-950/95 backdrop-blur-md text-[11px] font-black uppercase tracking-wider text-slate-300 border-b border-white/[0.12] sticky top-0 z-20">
+                        
+                        <!-- Top Header Row -->
+                        <tr>
+                            <th :rowspan="viewMode === 'detailed' ? 2 : 1" 
+                                @click="setSort('rank')"
+                                class="py-3.5 px-3 text-center cursor-pointer hover:bg-white/[0.06] transition select-none border-r border-white/[0.06] min-w-[65px]"
+                                title="Urutkan berdasarkan Peringkat / Ranking">
+                                <div class="flex items-center justify-center gap-1">
+                                    <span>Rank</span>
+                                    <span class="text-slate-500 font-mono text-[10px]" :class="sortBy === 'rank' ? 'text-amber-400 font-black' : ''" x-text="sortBy === 'rank' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕'"></span>
+                                </div>
+                            </th>
+
+                            <th :rowspan="viewMode === 'detailed' ? 2 : 1" 
+                                @click="setSort('draw_number')"
+                                class="py-3.5 px-3 text-center cursor-pointer hover:bg-white/[0.06] transition select-none border-r border-white/[0.06] min-w-[70px]"
+                                title="Urutkan berdasarkan Nomor Undian">
+                                <div class="flex items-center justify-center gap-1">
+                                    <span>#Undian</span>
+                                    <span class="text-slate-500 font-mono text-[10px]" :class="sortBy === 'draw_number' ? 'text-amber-400 font-black' : ''" x-text="sortBy === 'draw_number' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕'"></span>
+                                </div>
+                            </th>
+
+                            <th :rowspan="viewMode === 'detailed' ? 2 : 1" 
+                                @click="setSort('participant_number')"
+                                class="py-3.5 px-3 cursor-pointer hover:bg-white/[0.06] transition select-none border-r border-white/[0.06] min-w-[90px]"
+                                title="Urutkan berdasarkan Nomor Peserta">
+                                <div class="flex items-center gap-1">
+                                    <span>No. Peserta</span>
+                                    <span class="text-slate-500 font-mono text-[10px]" :class="sortBy === 'participant_number' ? 'text-amber-400 font-black' : ''" x-text="sortBy === 'participant_number' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕'"></span>
+                                </div>
+                            </th>
+
+                            <th :rowspan="viewMode === 'detailed' ? 2 : 1" 
+                                @click="setSort('name')"
+                                class="py-3.5 px-4 cursor-pointer hover:bg-white/[0.06] transition select-none border-r border-white/[0.06] min-w-[180px]"
+                                title="Urutkan berdasarkan Nama Peserta (A-Z)">
+                                <div class="flex items-center gap-1">
+                                    <span>Nama Peserta</span>
+                                    <span class="text-slate-500 font-mono text-[10px]" :class="sortBy === 'name' ? 'text-amber-400 font-black' : ''" x-text="sortBy === 'name' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕'"></span>
+                                </div>
+                            </th>
+
+                            <th :rowspan="viewMode === 'detailed' ? 2 : 1" 
+                                @click="setSort('institution')"
+                                class="py-3.5 px-4 cursor-pointer hover:bg-white/[0.06] transition select-none border-r border-white/[0.06] min-w-[160px]"
+                                title="Urutkan berdasarkan Asal Lembaga / Sekolah">
+                                <div class="flex items-center gap-1">
+                                    <span>Lembaga / Sekolah</span>
+                                    <span class="text-slate-500 font-mono text-[10px]" :class="sortBy === 'institution' ? 'text-amber-400 font-black' : ''" x-text="sortBy === 'institution' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕'"></span>
+                                </div>
+                            </th>
+
+                            <!-- Dynamic Judges Columns Header -->
+                            <template x-for="(j, jIdx) in judges" :key="j.id || jIdx">
+                                <template x-if="viewMode === 'detailed'">
+                                    <th :colspan="criteria.length + 1" 
+                                        class="py-2.5 px-3 text-center border-r border-white/[0.08] bg-indigo-950/40 text-indigo-200">
+                                        <div class="font-black text-xs text-white" x-text="(j.role_title || ('Juri ' + (jIdx + 1))) + ': ' + j.name"></div>
+                                        <div class="text-[9px] text-indigo-300 font-medium lowercase" x-text="'rincian ' + criteria.length + ' kriteria penilaian'"></div>
+                                    </th>
+                                </template>
+                                <template x-if="viewMode === 'summary'">
+                                    <th @click="setSort('judge_total', j.id)"
+                                        class="py-3.5 px-3 text-center cursor-pointer hover:bg-white/[0.06] transition select-none border-r border-white/[0.06] bg-indigo-950/30 text-indigo-200 min-w-[100px]"
+                                        :title="'Urutkan berdasarkan nilai total ' + (j.role_title || ('Juri ' + (jIdx + 1)))">
+                                        <div class="flex items-center justify-center gap-1">
+                                            <span x-text="j.role_title || ('Juri ' + (jIdx + 1))"></span>
+                                            <span class="text-slate-500 font-mono text-[10px]" :class="sortBy === 'judge_total' && sortJudgeId === j.id ? 'text-amber-400 font-black' : ''" x-text="sortBy === 'judge_total' && sortJudgeId === j.id ? (sortDirection === 'asc' ? '▲' : '▼') : '↕'"></span>
+                                        </div>
+                                    </th>
+                                </template>
+                            </template>
+
+                            <!-- Overall Totals, Average, & Status Headers -->
+                            <th :rowspan="viewMode === 'detailed' ? 2 : 1" 
+                                @click="setSort('total')"
+                                class="py-3.5 px-3 text-center cursor-pointer hover:bg-white/[0.06] transition select-none border-r border-white/[0.06] bg-[#7A5AF8]/15 text-[#C7D2FE] min-w-[90px]"
+                                title="Urutkan berdasarkan Total Akumulasi Nilai Semua Juri">
+                                <div class="flex items-center justify-center gap-1">
+                                    <span>Total Skor</span>
+                                    <span class="text-slate-500 font-mono text-[10px]" :class="sortBy === 'total' ? 'text-amber-400 font-black' : ''" x-text="sortBy === 'total' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕'"></span>
+                                </div>
+                            </th>
+
+                            <th :rowspan="viewMode === 'detailed' ? 2 : 1" 
+                                @click="setSort('average')"
+                                class="py-3.5 px-3 text-center cursor-pointer hover:bg-white/[0.06] transition select-none border-r border-white/[0.06] bg-amber-500/15 text-amber-300 min-w-[95px]"
+                                title="Urutkan berdasarkan Nilai Rata-Rata Akhir">
+                                <div class="flex items-center justify-center gap-1">
+                                    <span>Rata-Rata</span>
+                                    <span class="text-slate-500 font-mono text-[10px]" :class="sortBy === 'average' ? 'text-amber-400 font-black' : ''" x-text="sortBy === 'average' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕'"></span>
+                                </div>
+                            </th>
+
+                            <th :rowspan="viewMode === 'detailed' ? 2 : 1" 
+                                @click="setSort('status')"
+                                class="py-3.5 px-3 text-center cursor-pointer hover:bg-white/[0.06] transition select-none border-r border-white/[0.06] min-w-[85px]"
+                                title="Urutkan berdasarkan Kelengkapan Status Penilaian">
+                                <div class="flex items-center justify-center gap-1">
+                                    <span>Status</span>
+                                    <span class="text-slate-500 font-mono text-[10px]" :class="sortBy === 'status' ? 'text-amber-400 font-black' : ''" x-text="sortBy === 'status' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕'"></span>
+                                </div>
+                            </th>
+
+                            <th :rowspan="viewMode === 'detailed' ? 2 : 1" 
+                                class="py-3.5 px-3 text-center min-w-[60px]">
+                                <span>Aksi</span>
+                            </th>
+                        </tr>
+
+                        <!-- Sub Header Row (Khusus Detailed View Mode: Menampilkan Nama Tiap Kriteria & Total per Juri) -->
+                        <tr x-show="viewMode === 'detailed'" class="border-t border-white/[0.08] bg-slate-950/80 text-[10px]">
+                            <template x-for="(j, jIdx) in judges" :key="'sub-j-' + (j.id || jIdx)">
+                                <!-- Group of Criteria Sub Headers -->
+                                <template x-for="(c, cIdx) in criteria" :key="'sub-c-' + c.id">
+                                    <th @click="setSort('criterion', j.id, c.id)"
+                                        class="py-2 px-2 text-center cursor-pointer hover:bg-white/[0.08] transition select-none border-r border-white/[0.04] text-slate-300 min-w-[65px]"
+                                        :title="c.name + ' (Bobot: ' + (c.weight_percentage || 100) + '%, Rentang: ' + (c.min_score || 0) + '-' + (c.max_score || 100) + ')'">
+                                        <div class="flex items-center justify-center gap-0.5">
+                                            <span class="truncate max-w-[75px]" x-text="c.name"></span>
+                                            <span class="text-slate-500 font-mono text-[9px]" :class="sortBy === 'criterion' && sortJudgeId === j.id && sortCritId === c.id ? 'text-amber-400 font-black' : ''" x-text="sortBy === 'criterion' && sortJudgeId === j.id && sortCritId === c.id ? (sortDirection === 'asc' ? '▲' : '▼') : '↕'"></span>
+                                        </div>
+                                    </th>
+                                </template>
+                                <!-- Subtotal Column for this Judge -->
+                                <th @click="setSort('judge_total', j.id)"
+                                    class="py-2 px-2.5 text-center cursor-pointer hover:bg-white/[0.08] transition select-none border-r border-white/[0.08] bg-indigo-950/60 text-indigo-300 font-black min-w-[70px]"
+                                    :title="'Total skor dari ' + (j.role_title || ('Juri ' + (jIdx + 1)))">
+                                    <div class="flex items-center justify-center gap-0.5">
+                                        <span>Total</span>
+                                        <span class="text-slate-500 font-mono text-[9px]" :class="sortBy === 'judge_total' && sortJudgeId === j.id ? 'text-amber-400 font-black' : ''" x-text="sortBy === 'judge_total' && sortJudgeId === j.id ? (sortDirection === 'asc' ? '▲' : '▼') : '↕'"></span>
+                                    </div>
+                                </th>
+                            </template>
+                        </tr>
+
+                    </thead>
+
+                    <!-- TBODY DATA ROWS -->
+                    <tbody class="divide-y divide-white/[0.06] font-medium text-slate-300">
+                        <template x-for="(reg, index) in sortedAndFilteredRecapParticipants" :key="'recap-' + reg.id">
+                            <tr class="hover:bg-white/[0.03] transition-colors"
+                                :class="{
+                                    'bg-amber-500/[0.04]': getParticipantRank(reg.id) === 1,
+                                    'bg-slate-300/[0.03]': getParticipantRank(reg.id) === 2,
+                                    'bg-amber-700/[0.03]': getParticipantRank(reg.id) === 3
+                                }">
+                                
+                                <!-- Rank Badge -->
+                                <td class="py-3 px-3 text-center border-r border-white/[0.06]">
+                                    <template x-if="getParticipantRank(reg.id) === 1">
+                                        <span class="inline-flex items-center justify-center w-7 h-7 rounded-xl bg-gradient-to-tr from-amber-400 to-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/20 text-xs">
+                                            🥇 1
+                                        </span>
+                                    </template>
+                                    <template x-if="getParticipantRank(reg.id) === 2">
+                                        <span class="inline-flex items-center justify-center w-7 h-7 rounded-xl bg-gradient-to-tr from-slate-200 to-slate-400 text-slate-950 font-black shadow-md text-xs">
+                                            🥈 2
+                                        </span>
+                                    </template>
+                                    <template x-if="getParticipantRank(reg.id) === 3">
+                                        <span class="inline-flex items-center justify-center w-7 h-7 rounded-xl bg-gradient-to-tr from-amber-700 to-amber-800 text-amber-100 font-black shadow-md text-xs">
+                                            🥉 3
+                                        </span>
+                                    </template>
+                                    <template x-if="getParticipantRank(reg.id) > 3">
+                                        <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-lg bg-slate-800 border border-white/[0.08] text-slate-300 font-mono font-black text-xs" 
+                                              x-text="getParticipantRank(reg.id)">
+                                        </span>
+                                    </template>
+                                    <template x-if="!getParticipantRank(reg.id)">
+                                        <span class="text-slate-600 font-mono">-</span>
+                                    </template>
+                                </td>
+
+                                <!-- Draw Number -->
+                                <td class="py-3 px-3 text-center border-r border-white/[0.06] font-mono">
+                                    <span class="px-2 py-1 rounded-lg font-black text-xs"
+                                          :class="reg.draw_number ? 'bg-amber-400/15 text-amber-300 border border-amber-400/30' : 'text-slate-600'"
+                                          x-text="reg.draw_number ? '#' + reg.draw_number : '-'"></span>
+                                </td>
+
+                                <!-- Participant Code -->
+                                <td class="py-3 px-3 border-r border-white/[0.06] font-mono">
+                                    <span class="text-[11px] font-bold text-[#84D0FF] bg-[#4E6EFF]/15 border border-[#4E6EFF]/30 px-2 py-0.5 rounded"
+                                          x-text="reg.participant_number"></span>
+                                </td>
+
+                                <!-- Participant Name -->
+                                <td class="py-3 px-4 border-r border-white/[0.06]">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs font-black text-white uppercase truncate font-display" x-text="reg.name"></span>
+                                        <span class="text-[10px] font-bold px-1.5 py-0.2 rounded shrink-0"
+                                              :class="reg.gender === 'P' ? 'bg-pink-500/20 text-pink-300' : 'bg-blue-500/20 text-blue-300'"
+                                              x-text="reg.gender === 'P' ? 'PI' : 'PA'"></span>
+                                    </div>
+                                    <template x-if="reg.chosen_song">
+                                        <div class="text-[10px] text-purple-300 truncate max-w-xs mt-0.5" x-text="'🎵 ' + reg.chosen_song"></div>
+                                    </template>
+                                </td>
+
+                                <!-- Institution -->
+                                <td class="py-3 px-4 border-r border-white/[0.06] text-xs font-semibold text-slate-400 truncate max-w-[200px]"
+                                    x-text="reg.institution"></td>
+
+                                <!-- Judge Scores Cells -->
+                                <template x-for="(j, jIdx) in judges" :key="'cell-j-' + (j.id || jIdx)">
+                                    <template x-if="viewMode === 'detailed'">
+                                        <!-- Criteria Values List -->
+                                        <template x-for="(c, cIdx) in criteria" :key="'cell-c-' + c.id">
+                                            <td class="py-3 px-2 text-center border-r border-white/[0.04] font-mono text-xs"
+                                                :class="getCriterionValue(reg.id, j.id, c.id) !== '' ? 'text-slate-200' : 'text-slate-600'"
+                                                x-text="getCriterionValue(reg.id, j.id, c.id) !== '' ? Number(getCriterionValue(reg.id, j.id, c.id)).toFixed(1) : '-'">
+                                            </td>
+                                        </template>
+                                        <!-- Judge Total Subtotal -->
+                                        <td class="py-3 px-2.5 text-center border-r border-white/[0.08] font-mono text-xs font-black bg-indigo-950/20"
+                                            :class="getJudgeSubtotal(reg.id, j.id) > 0 ? 'text-indigo-300' : 'text-slate-600'"
+                                            x-text="getJudgeSubtotal(reg.id, j.id) > 0 ? getJudgeSubtotal(reg.id, j.id).toFixed(1) : '-'">
+                                        </td>
+                                    </template>
+                                    <template x-if="viewMode === 'summary'">
+                                        <td class="py-3 px-3 text-center border-r border-white/[0.06] font-mono text-xs font-black bg-indigo-950/20"
+                                            :class="getJudgeSubtotal(reg.id, j.id) > 0 ? 'text-indigo-300' : 'text-slate-600'"
+                                            x-text="getJudgeSubtotal(reg.id, j.id) > 0 ? getJudgeSubtotal(reg.id, j.id).toFixed(1) : '-'">
+                                        </td>
+                                    </template>
+                                </template>
+
+                                <!-- Total Score -->
+                                <td class="py-3 px-3 text-center border-r border-white/[0.06] font-mono text-xs font-black bg-[#7A5AF8]/10"
+                                    :class="getRegTotalScore(reg.id) > 0 ? 'text-white' : 'text-slate-600'"
+                                    x-text="getRegTotalScore(reg.id) > 0 ? getRegTotalScore(reg.id).toFixed(1) : '-'">
+                                </td>
+
+                                <!-- Average Score -->
+                                <td class="py-3 px-3 text-center border-r border-white/[0.06] font-mono text-xs font-black bg-amber-500/10"
+                                    :class="getRegAverage(reg.id) > 0 ? 'text-amber-400 font-black' : 'text-slate-600'"
+                                    x-text="getRegAverage(reg.id) > 0 ? getRegAverage(reg.id).toFixed(2) : '-'">
+                                </td>
+
+                                <!-- Status -->
+                                <td class="py-3 px-3 text-center border-r border-white/[0.06]">
+                                    <template x-if="isRegFullyScored(reg.id)">
+                                        <span class="inline-flex items-center gap-1 text-[10px] font-black uppercase text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-lg">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                            Lengkap
+                                        </span>
+                                    </template>
+                                    <template x-if="isRegPartiallyScored(reg.id)">
+                                        <span class="inline-flex items-center gap-1 text-[10px] font-black uppercase text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-lg">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                                            Sebagian
+                                        </span>
+                                    </template>
+                                    <template x-if="!isRegFullyScored(reg.id) && !isRegPartiallyScored(reg.id)">
+                                        <span class="inline-flex items-center text-[10px] font-bold text-slate-500 bg-slate-900 border border-white/[0.08] px-2 py-0.5 rounded-lg">
+                                            Belum
+                                        </span>
+                                    </template>
+                                </td>
+
+                                <!-- Action Button: Open and Edit in Tab 1 -->
+                                <td class="py-3 px-3 text-center">
+                                    <button type="button" 
+                                            @click="editParticipantInTab1(reg.id)"
+                                            class="p-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-300 hover:text-white border border-white/[0.08] transition inline-flex items-center justify-center shadow-sm cursor-pointer"
+                                            title="Buka Form Input Penilaian Peserta Ini">
+                                        <i data-lucide="edit-3" class="w-3.5 h-3.5 text-[#4E6EFF]"></i>
+                                    </button>
+                                </td>
+
+                            </tr>
+                        </template>
+
+                        <!-- Empty State in Tab 2 -->
+                        <template x-if="sortedAndFilteredRecapParticipants.length === 0">
+                            <tr>
+                                <td :colspan="10 + (viewMode === 'detailed' ? (judges.length * (criteria.length + 1)) : judges.length)" 
+                                    class="py-12 text-center text-slate-500">
+                                    <div class="space-y-2">
+                                        <i data-lucide="user-x" class="w-8 h-8 mx-auto text-slate-600"></i>
+                                        <p class="font-bold text-sm text-slate-400">Tidak ada peserta yang cocok dengan filter pencarian.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </template>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
     </div>
 
@@ -544,6 +989,16 @@ function multiJudgeScoringApp(competition, initialJudges, initialCriteria, initi
         participants: initialParticipants || [],
         scoresData: initialScoresMap || {},
         
+        // Tab Navigation State (input: Form Input Nilai | rekap: Matriks Rekap Lengkap)
+        activeTab: '{{ request("tab") === "rekap" ? "rekap" : "input" }}',
+        viewMode: 'detailed', // 'detailed' (per kriteria) | 'summary' (total juri saja)
+        
+        // Sorting State
+        sortBy: 'rank', // 'rank', 'draw_number', 'participant_number', 'name', 'institution', 'average', 'total', 'judge_total', 'criterion', 'status'
+        sortDirection: 'asc', // 'asc' or 'desc'
+        sortJudgeId: null,
+        sortCritId: null,
+
         searchQuery: '',
         sectorFilter: 'all',
         statusFilter: 'all',
@@ -569,6 +1024,206 @@ function multiJudgeScoringApp(competition, initialJudges, initialCriteria, initi
             this.$nextTick(() => {
                 if (window.lucide) window.lucide.createIcons();
             });
+        },
+
+        switchTab(tab) {
+            this.activeTab = tab;
+            this.$nextTick(() => {
+                if (window.lucide) window.lucide.createIcons();
+            });
+        },
+
+        editParticipantInTab1(regId) {
+            this.activeTab = 'input';
+            this.activeParticipantId = regId;
+            this.$nextTick(() => {
+                if (window.lucide) window.lucide.createIcons();
+                const el = document.getElementById('participant-card-' + regId);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            });
+        },
+
+        // Dynamic Ranking Map based on scored participants (highest average/total)
+        get rankMap() {
+            const scored = this.participants
+                .filter(p => this.getRegAverage(p.id) > 0)
+                .map(p => ({
+                    id: p.id,
+                    avg: this.getRegAverage(p.id),
+                    total: this.getRegTotalScore(p.id),
+                    draw: p.draw_number ?? 99999
+                }))
+                .sort((a, b) => {
+                    if (Math.abs(b.avg - a.avg) > 0.0001) return b.avg - a.avg;
+                    if (Math.abs(b.total - a.total) > 0.0001) return b.total - a.total;
+                    return a.draw - b.draw;
+                });
+
+            const map = {};
+            scored.forEach((item, idx) => {
+                map[item.id] = idx + 1;
+            });
+            return map;
+        },
+
+        getParticipantRank(regId) {
+            return this.rankMap[regId] || null;
+        },
+
+        // Sort switcher
+        setSort(column, judgeId = null, critId = null) {
+            if (this.sortBy === column && this.sortJudgeId === judgeId && this.sortCritId === critId) {
+                this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                this.sortBy = column;
+                this.sortJudgeId = judgeId;
+                this.sortCritId = critId;
+                // Numeric scores, averages, and totals default to descending; strings/ranks/numbers default to ascending
+                if (['average', 'total', 'judge_total', 'criterion'].includes(column)) {
+                    this.sortDirection = 'desc';
+                } else {
+                    this.sortDirection = 'asc';
+                }
+            }
+            this.$nextTick(() => {
+                if (window.lucide) window.lucide.createIcons();
+            });
+        },
+
+        get sortedAndFilteredRecapParticipants() {
+            let list = this.filteredParticipants.slice();
+            const dir = this.sortDirection === 'asc' ? 1 : -1;
+
+            list.sort((a, b) => {
+                let valA, valB;
+
+                if (this.sortBy === 'rank') {
+                    valA = this.getParticipantRank(a.id) ?? 99999;
+                    valB = this.getParticipantRank(b.id) ?? 99999;
+                } else if (this.sortBy === 'draw_number') {
+                    valA = a.draw_number ?? 99999;
+                    valB = b.draw_number ?? 99999;
+                } else if (this.sortBy === 'participant_number') {
+                    valA = a.participant_number || '';
+                    valB = b.participant_number || '';
+                    return dir * valA.localeCompare(valB, undefined, { numeric: true });
+                } else if (this.sortBy === 'name') {
+                    valA = a.name || '';
+                    valB = b.name || '';
+                    return dir * valA.localeCompare(valB);
+                } else if (this.sortBy === 'institution') {
+                    valA = a.institution || '';
+                    valB = b.institution || '';
+                    return dir * valA.localeCompare(valB);
+                } else if (this.sortBy === 'average') {
+                    valA = this.getRegAverage(a.id);
+                    valB = this.getRegAverage(b.id);
+                } else if (this.sortBy === 'total') {
+                    valA = this.getRegTotalScore(a.id);
+                    valB = this.getRegTotalScore(b.id);
+                } else if (this.sortBy === 'judge_total') {
+                    valA = this.getJudgeSubtotal(a.id, this.sortJudgeId);
+                    valB = this.getJudgeSubtotal(b.id, this.sortJudgeId);
+                } else if (this.sortBy === 'criterion') {
+                    const rawA = this.getCriterionValue(a.id, this.sortJudgeId, this.sortCritId);
+                    const rawB = this.getCriterionValue(b.id, this.sortJudgeId, this.sortCritId);
+                    valA = parseFloat(rawA) || 0;
+                    valB = parseFloat(rawB) || 0;
+                } else if (this.sortBy === 'status') {
+                    valA = this.isRegFullyScored(a.id) ? 2 : (this.isRegPartiallyScored(a.id) ? 1 : 0);
+                    valB = this.isRegFullyScored(b.id) ? 2 : (this.isRegPartiallyScored(b.id) ? 1 : 0);
+                } else {
+                    valA = this.getParticipantRank(a.id) ?? 99999;
+                    valB = this.getParticipantRank(b.id) ?? 99999;
+                }
+
+                if (valA < valB) return -1 * dir;
+                if (valA > valB) return 1 * dir;
+                return (a.draw_number ?? 99999) - (b.draw_number ?? 99999);
+            });
+
+            return list;
+        },
+
+        // Client-side Excel (CSV) Export
+        exportRecapCsv() {
+            const list = this.sortedAndFilteredRecapParticipants;
+            if (list.length === 0) {
+                alert('Tidak ada data peserta untuk di-export.');
+                return;
+            }
+
+            const rows = [];
+            
+            // Header row
+            const headers = ['Rank', 'No. Undian', 'No. Peserta', 'Nama Peserta', 'Lembaga / Sekolah', 'Sektor'];
+            this.judges.forEach((j, jIdx) => {
+                const jTitle = (j.role_title || ('Juri ' + (jIdx + 1))) + ' (' + j.name + ')';
+                if (this.viewMode === 'detailed') {
+                    this.criteria.forEach(c => {
+                        headers.push(jTitle + ' - ' + c.name);
+                    });
+                    headers.push(jTitle + ' - Total');
+                } else {
+                    headers.push(jTitle + ' - Total');
+                }
+            });
+            headers.push('Total Skor Semua Juri', 'Rata-Rata Nilai', 'Status');
+            rows.push(headers);
+
+            // Data rows
+            list.forEach(reg => {
+                const row = [
+                    this.getParticipantRank(reg.id) || '-',
+                    reg.draw_number ? ('#' + reg.draw_number) : '-',
+                    reg.participant_number || '-',
+                    reg.name || '-',
+                    reg.institution || '-',
+                    reg.gender === 'P' ? 'Putri (PI)' : 'Putra (PA)'
+                ];
+
+                this.judges.forEach(j => {
+                    if (this.viewMode === 'detailed') {
+                        this.criteria.forEach(c => {
+                            const val = this.getCriterionValue(reg.id, j.id, c.id);
+                            row.push(val !== '' ? Number(val) : '');
+                        });
+                        const sub = this.getJudgeSubtotal(reg.id, j.id);
+                        row.push(sub > 0 ? Number(sub.toFixed(2)) : '');
+                    } else {
+                        const sub = this.getJudgeSubtotal(reg.id, j.id);
+                        row.push(sub > 0 ? Number(sub.toFixed(2)) : '');
+                    }
+                });
+
+                const total = this.getRegTotalScore(reg.id);
+                const avg = this.getRegAverage(reg.id);
+                row.push(total > 0 ? Number(total.toFixed(2)) : 0);
+                row.push(avg > 0 ? Number(avg.toFixed(2)) : 0);
+                row.push(this.isRegFullyScored(reg.id) ? 'Lengkap Terkunci' : (this.isRegPartiallyScored(reg.id) ? 'Sebagian' : 'Belum'));
+
+                rows.push(row);
+            });
+
+            // Generate CSV string with UTF-8 BOM
+            const csvContent = '\uFEFF' + rows.map(r => r.map(cell => {
+                const str = String(cell ?? '').replace(/"/g, '""');
+                return `"${str}"`;
+            }).join(';')).join('\r\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const compName = (this.competition.name || 'rekap-nilai').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+            a.href = url;
+            a.download = `rekap-nilai-${compName}-${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            this.showToast('✓ File rekap nilai berhasil di-download', 'success');
         },
 
         get filteredParticipants() {
@@ -689,6 +1344,16 @@ function multiJudgeScoringApp(competition, initialJudges, initialCriteria, initi
         isRegPartiallyScored(regId) {
             const count = this.getScoredJudgesCount(regId);
             return count > 0 && count < this.judges.length;
+        },
+
+        getRegTotalScore(regId) {
+            const pScores = this.scoresData[regId] || {};
+            let sum = 0;
+            this.judges.forEach(j => {
+                const jTotal = pScores[j.id]?.total_score || 0;
+                sum += jTotal;
+            });
+            return sum;
         },
 
         getRegAverage(regId) {
