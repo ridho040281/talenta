@@ -7,6 +7,7 @@
 <div class="space-y-6" x-data="{
     activeTab: '{{ $activeTab }}',
     selectedCompId: '{{ $selectedComp->id ?? '' }}',
+    tierFormat: '{{ $tierFormat }}',
     eventDate: '{{ date('Y-m-d') }}',
     eventDay: '{{ $dateSpelled['day_name'] }}',
     eventTime: '08.00',
@@ -15,13 +16,19 @@
     judge3: '{{ addslashes($judgesList[2] ?? '') }}',
     
     changeCompetition(id) {
-        window.location.href = '{{ route('admin.berita-acara.index') }}?competition_id=' + id + '&tab=' + this.activeTab;
+        window.location.href = '{{ route('admin.berita-acara.index') }}?competition_id=' + id + '&tab=' + this.activeTab + '&tier_format=' + this.tierFormat;
+    },
+
+    setTierFormat(format) {
+        this.tierFormat = format;
+        window.location.href = '{{ route('admin.berita-acara.index') }}?competition_id=' + this.selectedCompId + '&tab=' + this.activeTab + '&tier_format=' + format;
     },
     
     printLive(sector = null) {
         const url = new URL('{{ route('admin.berita-acara.print') }}', window.location.origin);
         url.searchParams.set('competition_id', this.selectedCompId);
         url.searchParams.set('type', 'live');
+        url.searchParams.set('tier_format', this.tierFormat);
         url.searchParams.set('date', this.eventDate);
         url.searchParams.set('day', this.eventDay);
         url.searchParams.set('time', this.eventTime);
@@ -38,6 +45,7 @@
         const url = new URL('{{ route('admin.berita-acara.print') }}', window.location.origin);
         url.searchParams.set('competition_id', this.selectedCompId);
         url.searchParams.set('type', 'blank');
+        url.searchParams.set('tier_format', this.tierFormat);
         if (sector) {
             url.searchParams.set('sector', sector);
         }
@@ -46,7 +54,7 @@
 }">
 
     <!-- Top Control Bar (Pilih Cabang & Quick Info) -->
-    <div class="ai-card p-4 sm:p-5 rounded-3xl border border-white/[0.08] shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div class="ai-card p-4 sm:p-5 rounded-3xl border border-white/[0.08] shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div class="flex items-center gap-3.5">
             <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#7A5AF8]/20 to-[#4E6EFF]/20 border border-[#7A5AF8]/30 flex items-center justify-center text-white shrink-0 shadow-inner">
                 <i data-lucide="file-text" class="w-6 h-6 text-[#A594FD]"></i>
@@ -62,16 +70,37 @@
             </div>
         </div>
 
-        <!-- Filter Cabang Dropdown -->
-        <div class="flex items-center gap-2.5 w-full md:w-auto">
-            <label class="text-xs font-bold text-slate-400 whitespace-nowrap">Cabang:</label>
-            <select x-model="selectedCompId" @change="changeCompetition($event.target.value)" class="w-full md:w-64 px-3.5 py-2.5 rounded-xl bg-[#0C111D] border border-white/[0.12] text-xs font-bold text-white outline-none focus:border-[#7A5AF8] cursor-pointer">
-                @foreach($competitions as $c)
-                    <option value="{{ $c->id }}" {{ $selectedComp && $selectedComp->id === $c->id ? 'selected' : '' }}>
-                        {{ $c->name }} ({{ $c->code }})
-                    </option>
-                @endforeach
-            </select>
+        <!-- Filter Cabang & Format Juara -->
+        <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+            <!-- Format Tingkat Juara Selector -->
+            <div class="inline-flex p-1 rounded-2xl bg-[#0C111D] border border-white/[0.1] text-xs">
+                <button type="button" 
+                        @click="setTierFormat('juara_123')"
+                        class="px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 cursor-pointer text-xs"
+                        :class="tierFormat === 'juara_123' ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black shadow-md shadow-amber-500/20' : 'text-slate-400 hover:text-white'">
+                    <i data-lucide="award" class="w-3.5 h-3.5"></i>
+                    <span>Juara 1–3 (Tanpa Harapan)</span>
+                </button>
+                <button type="button" 
+                        @click="setTierFormat('with_harapan')"
+                        class="px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 cursor-pointer text-xs"
+                        :class="tierFormat === 'with_harapan' ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-black shadow-md shadow-[#7A5AF8]/20' : 'text-slate-400 hover:text-white'">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                    <span>+ Harapan 1–3</span>
+                </button>
+            </div>
+
+            <!-- Filter Cabang Dropdown -->
+            <div class="flex items-center gap-2">
+                <label class="text-xs font-bold text-slate-400 whitespace-nowrap">Cabang:</label>
+                <select x-model="selectedCompId" @change="changeCompetition($event.target.value)" class="w-full sm:w-56 px-3.5 py-2 rounded-xl bg-[#0C111D] border border-white/[0.12] text-xs font-bold text-white outline-none focus:border-[#7A5AF8] cursor-pointer">
+                    @foreach($competitions as $c)
+                        <option value="{{ $c->id }}" {{ $selectedComp && $selectedComp->id === $c->id ? 'selected' : '' }}>
+                            {{ $c->name }} ({{ $c->code }})
+                        </option>
+                    @endforeach
+                </select>
+            </div>
         </div>
     </div>
 

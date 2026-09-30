@@ -127,6 +127,7 @@ class OfficialReportController extends Controller
 
         $selectedCompId = $request->query('competition_id', $competitions->first()?->id);
         $activeTab = $request->query('tab', 'live'); // 'live' or 'blank'
+        $tierFormat = $request->query('tier_format', 'juara_123'); // 'juara_123' (default Juara 1-3) or 'with_harapan'
 
         $selectedComp = $competitions->firstWhere('id', $selectedCompId) ?: $competitions->first();
 
@@ -216,10 +217,13 @@ class OfficialReportController extends Controller
                     ['tier_label' => 'Juara 1', 'winner' => $ranked[0] ?? $emptyWinner],
                     ['tier_label' => 'Juara 2', 'winner' => $ranked[1] ?? $emptyWinner],
                     ['tier_label' => 'Juara 3', 'winner' => $ranked[2] ?? $emptyWinner],
-                    ['tier_label' => 'Juara Harapan 1', 'winner' => $ranked[3] ?? $emptyWinner],
-                    ['tier_label' => 'Juara Harapan 2', 'winner' => $ranked[4] ?? $emptyWinner],
-                    ['tier_label' => 'Juara Harapan 3', 'winner' => $ranked[5] ?? $emptyWinner],
                 ];
+
+                if ($tierFormat === 'with_harapan') {
+                    $tiers[] = ['tier_label' => 'Juara Harapan 1', 'winner' => $ranked[3] ?? $emptyWinner];
+                    $tiers[] = ['tier_label' => 'Juara Harapan 2', 'winner' => $ranked[4] ?? $emptyWinner];
+                    $tiers[] = ['tier_label' => 'Juara Harapan 3', 'winner' => $ranked[5] ?? $emptyWinner];
+                }
 
                 $sectorsData[$secKey] = [
                     'definition' => $secDef,
@@ -252,6 +256,7 @@ class OfficialReportController extends Controller
             'competitions',
             'selectedComp',
             'activeTab',
+            'tierFormat',
             'isSports',
             'sectorsData',
             'judgesList',
@@ -277,6 +282,7 @@ class OfficialReportController extends Controller
         }
 
         $type = $request->query('type', 'live'); // 'live' (terisi) or 'blank' (template kosong)
+        $tierFormat = $request->query('tier_format', 'juara_123'); // 'juara_123' (default Juara 1-3) or 'with_harapan'
 
         $isSports = self::isSportsCompetition($competition);
         $sectorsDef = self::getCompetitionSectors($competition);
@@ -314,10 +320,13 @@ class OfficialReportController extends Controller
                 ['tier_label' => 'Juara 1', 'no_peserta' => '', 'nama' => '', 'sekolah' => '', 'nilai' => ''],
                 ['tier_label' => 'Juara 2', 'no_peserta' => '', 'nama' => '', 'sekolah' => '', 'nilai' => ''],
                 ['tier_label' => 'Juara 3', 'no_peserta' => '', 'nama' => '', 'sekolah' => '', 'nilai' => ''],
-                ['tier_label' => 'Juara Harapan 1', 'no_peserta' => '', 'nama' => '', 'sekolah' => '', 'nilai' => ''],
-                ['tier_label' => 'Juara Harapan 2', 'no_peserta' => '', 'nama' => '', 'sekolah' => '', 'nilai' => ''],
-                ['tier_label' => 'Juara Harapan 3', 'no_peserta' => '', 'nama' => '', 'sekolah' => '', 'nilai' => ''],
             ];
+
+            if ($tierFormat === 'with_harapan') {
+                $tiers[] = ['tier_label' => 'Juara Harapan 1', 'no_peserta' => '', 'nama' => '', 'sekolah' => '', 'nilai' => ''];
+                $tiers[] = ['tier_label' => 'Juara Harapan 2', 'no_peserta' => '', 'nama' => '', 'sekolah' => '', 'nilai' => ''];
+                $tiers[] = ['tier_label' => 'Juara Harapan 3', 'no_peserta' => '', 'nama' => '', 'sekolah' => '', 'nilai' => ''];
+            }
 
             if ($type === 'live') {
                 // If custom winners were submitted via query/form:
@@ -403,6 +412,7 @@ class OfficialReportController extends Controller
         return view('admin.berita-acara.print', compact(
             'competition',
             'type',
+            'tierFormat',
             'isSports',
             'sectorsData',
             'judges',
