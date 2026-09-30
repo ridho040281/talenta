@@ -815,15 +815,6 @@
                 <div class="space-y-1 pt-1">
                     <div x-show="sidebarOpen" class="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Pasca Lomba</div>
                     <div x-show="!sidebarOpen" class="hidden md:block border-t border-white/[0.08] mx-2 my-2"></div>
-                    <a href="{{ route('admin.recap', ['tab' => 'juara']) }}" 
-                       class="relative group flex items-center rounded-2xl transition {{ request()->routeIs('admin.recap*') || request()->routeIs('admin.scores*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}"
-                       :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
-                        <i data-lucide="medal" class="w-4 h-4 shrink-0 {{ request()->routeIs('admin.recap*') || request()->routeIs('admin.scores*') ? 'text-white' : 'text-[#FF58D5]' }}"></i>
-                        <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Rekap Juara</span>
-                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
-                            <span>Rekap Juara</span>
-                        </div>
-                    </a>
                     <a href="{{ route('live.scoreboard') }}" target="_blank" 
                        class="relative group flex items-center rounded-2xl transition hover:bg-white/[0.04] text-slate-400 hover:text-slate-200"
                        :class="sidebarOpen ? 'justify-between px-3 py-2.5' : 'justify-center px-0 py-2.5'">

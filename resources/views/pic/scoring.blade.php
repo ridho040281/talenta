@@ -97,11 +97,12 @@
                 </a>
 
                 <!-- Recap & Winners -->
-                <a href="{{ route('admin.recap', ['tab' => 'juara', 'competition_id' => $competition->id]) }}" 
-                   class="px-3.5 py-2.5 rounded-2xl bg-[#7A5AF8]/20 hover:bg-[#7A5AF8]/30 text-[#C7D2FE] border border-[#7A5AF8]/40 text-xs font-bold transition flex items-center gap-1.5">
+                <button type="button" 
+                        @click="switchTab('rekap')" 
+                        class="px-3.5 py-2.5 rounded-2xl bg-[#7A5AF8]/20 hover:bg-[#7A5AF8]/30 text-[#C7D2FE] hover:text-white border border-[#7A5AF8]/40 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
                     <i data-lucide="trophy" class="w-4 h-4 text-amber-400"></i>
                     <span>Rekap & Juara</span>
-                </a>
+                </button>
             </div>
 
         </div>

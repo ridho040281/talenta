@@ -236,7 +236,7 @@ Route::middleware(['auth', 'role:superadmin,panitia,pic_lomba,juri'])->prefix('b
 
 /*
 |--------------------------------------------------------------------------
-| Admin, Panitia & PIC Shared Operational Routes (Presensi, Berita Acara, Rekap, Sertifikat, Peserta)
+| Admin, Panitia & PIC Shared Operational Routes (Presensi, Berita Acara, Sertifikat, Peserta)
 | Akses Terpadu untuk Superadmin, Panitia, PIC Lomba, dan Admin
 |--------------------------------------------------------------------------
 */
@@ -249,13 +249,6 @@ Route::middleware(['auth', 'role:superadmin,panitia,pic_lomba,admin'])->prefix('
     // Berita Acara Lomba & Cetak
     Route::get('/berita-acara', [OfficialReportController::class, 'index'])->name('berita-acara.index');
     Route::get('/berita-acara/cetak', [OfficialReportController::class, 'print'])->name('berita-acara.print');
-
-    // Rekapitulasi Terpadu & Rekap Nilai Juara
-    Route::get('/recap', [AdminController::class, 'recap'])->name('recap');
-    Route::get('/rekap-nilai', [AdminController::class, 'recap'])->name('scores');
-    Route::get('/api/recap-participants', [AdminController::class, 'apiRecapParticipants'])->name('api.recap_participants');
-    Route::get('/api/recap-cashflow', [AdminController::class, 'apiRecapCashflow'])->name('api.recap_cashflow');
-    Route::get('/api/recap-institutions', [AdminController::class, 'apiRecapInstitutions'])->name('api.recap_institutions');
 
     // Sertifikat & Piagam Kejuaraan
     Route::get('/sertifikat', [CertificateController::class, 'index'])->name('certificates.index');
@@ -278,11 +271,18 @@ Route::middleware(['auth', 'role:superadmin,panitia,pic_lomba,admin'])->prefix('
 
 /*
 |--------------------------------------------------------------------------
-| Admin & Panitia Exclusive Routes (Dashboard Utama, Invoice & Kas/Refund)
+| Admin & Panitia Exclusive Routes (Dashboard Utama, Rekapitulasi, Invoice & Kas/Refund)
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'role:superadmin,panitia'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+
+    // Rekapitulasi Terpadu, Laporan & Rekap Nilai Juara (Khusus Admin/Panitia)
+    Route::get('/recap', [AdminController::class, 'recap'])->name('recap');
+    Route::get('/rekap-nilai', [AdminController::class, 'recap'])->name('scores');
+    Route::get('/api/recap-participants', [AdminController::class, 'apiRecapParticipants'])->name('api.recap_participants');
+    Route::get('/api/recap-cashflow', [AdminController::class, 'apiRecapCashflow'])->name('api.recap_cashflow');
+    Route::get('/api/recap-institutions', [AdminController::class, 'apiRecapInstitutions'])->name('api.recap_institutions');
 
     // Invoice & Payment Verification Routes
     Route::get('/invoices', [CollectiveRegistrationController::class, 'adminInvoices'])->name('invoices.index');
