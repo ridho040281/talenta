@@ -7,6 +7,7 @@ use App\Models\Competition;
 use App\Models\Registration;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class StageController extends Controller
 {
@@ -55,18 +56,26 @@ class StageController extends Controller
      */
     public function apiState($slug)
     {
-        $competition = Competition::with(['category', 'registrations' => function ($q) {
-            $q->where('status', 'verified')->with('members');
-        }])->where(function ($query) use ($slug) {
-            $query->where('slug', $slug)
-                ->orWhere('code', strtoupper($slug));
-        })->first();
+        $cacheKey = 'stage_state_'.strtolower($slug);
 
-        if (! $competition || ! self::isTimekeeperSupported($competition)) {
+        $state = Cache::remember($cacheKey, 2, function () use ($slug) {
+            $competition = Competition::with(['category', 'registrations' => function ($q) {
+                $q->where('status', 'verified')->with('members');
+            }])->where(function ($query) use ($slug) {
+                $query->where('slug', $slug)
+                    ->orWhere('code', strtoupper($slug));
+            })->first();
+
+            if (! $competition || ! self::isTimekeeperSupported($competition)) {
+                return null;
+            }
+
+            return $this->buildStageState($competition);
+        });
+
+        if (! $state) {
             return response()->json(['error' => 'Fitur Stage & Timekeeper hanya tersedia untuk cabang lomba MTQ, Tahfidz, dan Pop Singer.'], 404);
         }
-
-        $state = $this->buildStageState($competition);
 
         return response()->json($state)
             ->header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
@@ -285,6 +294,16 @@ class StageController extends Controller
 
         $competition->update(['stage_state' => $stageState]);
 
+        // Invalidate stage cache for instant TV sync
+        $compSlug = strtolower($competition->slug ?: '');
+        $compCode = strtolower($competition->code ?: '');
+        if ($compSlug) {
+            Cache::forget("stage_state_{$compSlug}");
+        }
+        if ($compCode) {
+            Cache::forget("stage_state_{$compCode}");
+        }
+
         $updatedState = $this->buildStageState($competition->fresh(['registrations.members']));
 
         if ($request->ajax() || $request->wantsJson()) {
@@ -336,6 +355,16 @@ class StageController extends Controller
                 'bell_trigger' => null,
             ],
         ]);
+
+        // Invalidate stage cache
+        $compSlug = strtolower($competition->slug ?: '');
+        $compCode = strtolower($competition->code ?: '');
+        if ($compSlug) {
+            Cache::forget("stage_state_{$compSlug}");
+        }
+        if ($compCode) {
+            Cache::forget("stage_state_{$compCode}");
+        }
 
         return redirect()->back()->with('success', 'Semua antrian giliran panggung berhasil direset.');
     }

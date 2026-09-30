@@ -38,38 +38,37 @@
             font-family: var(--font-display);
             background-color: #040711;
             background-image:
-                radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.22) 0px, transparent 50%),
-                radial-gradient(at 100% 0%, rgba(14, 165, 233, 0.20) 0px, transparent 45%),
-                radial-gradient(at 50% 50%, rgba(15, 23, 42, 0.9) 0px, transparent 75%),
-                radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.15) 0px, transparent 50%),
-                radial-gradient(at 0% 100%, rgba(16, 185, 129, 0.15) 0px, transparent 50%),
-                radial-gradient(rgba(255, 255, 255, 0.05) 1.2px, transparent 1.2px);
-            background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 32px 32px;
-            background-attachment: fixed;
+                radial-gradient(circle at 10% 10%, rgba(79, 70, 229, 0.18) 0%, transparent 40%),
+                radial-gradient(circle at 90% 10%, rgba(14, 165, 233, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.95) 0%, transparent 100%),
+                radial-gradient(circle at 90% 90%, rgba(236, 72, 153, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 10% 90%, rgba(16, 185, 129, 0.12) 0%, transparent 40%);
             color: #F8FAFC;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+            transform: translateZ(0);
         }
 
-        /* Ultra Glassmorphism */
+        /* High-Performance Pre-Blended Dark Glass Cards (Zero GPU Lag on Smart TV) */
         .glass-card {
-            background: rgba(13, 20, 36, 0.72);
-            backdrop-filter: blur(28px);
-            -webkit-backdrop-filter: blur(28px);
-            border: 1px solid rgba(255, 255, 255, 0.10);
-            box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+            background: linear-gradient(145deg, #0e1628 0%, #080e1a 100%);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+            transform: translateZ(0);
         }
 
         .glass-card-amber {
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(15, 23, 42, 0.85) 100%);
-            backdrop-filter: blur(24px);
+            background: linear-gradient(145deg, #1b1712 0%, #0d121e 100%);
             border: 1px solid rgba(245, 158, 11, 0.35);
-            box-shadow: 0 20px 40px -10px rgba(245, 158, 11, 0.15), inset 0 1px 0 rgba(245, 158, 11, 0.3);
+            box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(245, 158, 11, 0.25);
+            transform: translateZ(0);
         }
 
         .glass-card-emerald {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.10) 0%, rgba(15, 23, 42, 0.85) 100%);
-            backdrop-filter: blur(24px);
+            background: linear-gradient(145deg, #0f1d1c 0%, #0d121e 100%);
             border: 1px solid rgba(16, 185, 129, 0.30);
-            box-shadow: 0 20px 40px -10px rgba(16, 185, 129, 0.15), inset 0 1px 0 rgba(16, 185, 129, 0.3);
+            box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(16, 185, 129, 0.25);
+            transform: translateZ(0);
         }
 
         .timer-digits {
@@ -78,21 +77,21 @@
             font-variant-numeric: tabular-nums;
         }
 
-        /* Equalizer Animation */
-        @keyframes eq-dance {
-            0%, 100% { height: 6px; }
-            50% { height: 28px; }
+        /* Equalizer Animation (Hardware-Accelerated transform) */
+        @keyframes eq-scale {
+            0%, 100% { transform: scaleY(0.2); }
+            50% { transform: scaleY(1); }
         }
-        .eq-bar-1 { animation: eq-dance 0.9s ease-in-out infinite 0.1s; }
-        .eq-bar-2 { animation: eq-dance 0.7s ease-in-out infinite 0.3s; }
-        .eq-bar-3 { animation: eq-dance 1.1s ease-in-out infinite 0.2s; }
-        .eq-bar-4 { animation: eq-dance 0.8s ease-in-out infinite 0.4s; }
-        .eq-bar-5 { animation: eq-dance 1.0s ease-in-out infinite 0.15s; }
+        .eq-bar-1 { transform-origin: bottom; animation: eq-scale 0.9s ease-in-out infinite 0.1s; }
+        .eq-bar-2 { transform-origin: bottom; animation: eq-scale 0.7s ease-in-out infinite 0.3s; }
+        .eq-bar-3 { transform-origin: bottom; animation: eq-scale 1.1s ease-in-out infinite 0.2s; }
+        .eq-bar-4 { transform-origin: bottom; animation: eq-scale 0.8s ease-in-out infinite 0.4s; }
+        .eq-bar-5 { transform-origin: bottom; animation: eq-scale 1.0s ease-in-out infinite 0.15s; }
 
         /* Pulse Live Animation */
         @keyframes pulse-live {
             0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.3; transform: scale(0.85); }
+            50% { opacity: 0.35; transform: scale(0.9); }
         }
         .animate-live-dot {
             animation: pulse-live 1.8s infinite ease-in-out;
@@ -100,7 +99,7 @@
 
         @keyframes pulse-ring {
             0% { transform: scale(0.9); opacity: 0.8; }
-            100% { transform: scale(2); opacity: 0; }
+            100% { transform: scale(1.8); opacity: 0; }
         }
         .animate-pulse-ring {
             animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
@@ -135,7 +134,7 @@
       x-init="initApp()">
 
     <!-- TOP GLOWING HEADER BAR -->
-    <header class="h-20 sm:h-24 px-4 sm:px-8 flex items-center justify-between border-b border-white/[0.1] bg-[#060913]/85 backdrop-blur-2xl shrink-0 z-30 sticky top-0 shadow-2xl">
+    <header class="h-20 sm:h-24 px-4 sm:px-8 flex items-center justify-between border-b border-white/[0.1] bg-[#060913] shrink-0 z-30 sticky top-0 shadow-2xl">
         
         <!-- Left: Logo & Event / Competition Identity -->
         <div class="flex items-center gap-3.5 sm:gap-6 min-w-0">
@@ -240,27 +239,27 @@
         <!-- ============================================================== -->
         <div class="lg:col-span-8 flex flex-col justify-between glass-card rounded-[2.5rem] p-6 sm:p-8 lg:p-12 relative overflow-hidden group transition-all duration-700">
             
-            <!-- Dynamic Stage Aura / Ambient Glow -->
-            <div class="absolute -right-24 -top-24 w-96 h-96 rounded-full blur-[100px] pointer-events-none transition-all duration-1000"
+            <!-- Dynamic Stage Aura / Ambient Glow (Hardware-Accelerated Radial Gradients) -->
+            <div class="absolute -right-24 -top-24 w-96 h-96 rounded-full pointer-events-none transition-all duration-700 opacity-60"
                  :class="{
-                     'bg-emerald-500/25': timerZone === 'normal' && timer.status === 'running',
-                     'bg-amber-500/30': timerZone === 'warning',
-                     'bg-rose-600/35 animate-pulse': timerZone === 'overtime',
-                     'bg-indigo-600/20': timer.status !== 'running'
+                     'bg-[radial-gradient(circle,rgba(16,185,129,0.22)_0%,transparent_70%)]': timerZone === 'normal' && timer.status === 'running',
+                     'bg-[radial-gradient(circle,rgba(245,158,11,0.25)_0%,transparent_70%)]': timerZone === 'warning',
+                     'bg-[radial-gradient(circle,rgba(225,29,72,0.30)_0%,transparent_70%)]': timerZone === 'overtime',
+                     'bg-[radial-gradient(circle,rgba(79,70,229,0.18)_0%,transparent_70%)]': timer.status !== 'running'
                  }"></div>
             
-            <div class="absolute -left-20 -bottom-20 w-80 h-80 rounded-full blur-[90px] pointer-events-none transition-all duration-1000"
+            <div class="absolute -left-20 -bottom-20 w-80 h-80 rounded-full pointer-events-none transition-all duration-700 opacity-50"
                  :class="{
-                     'bg-teal-500/20': timerZone === 'normal' && timer.status === 'running',
-                     'bg-orange-500/25': timerZone === 'warning',
-                     'bg-red-600/30': timerZone === 'overtime',
-                     'bg-blue-600/15': timer.status !== 'running'
+                     'bg-[radial-gradient(circle,rgba(20,184,166,0.18)_0%,transparent_70%)]': timerZone === 'normal' && timer.status === 'running',
+                     'bg-[radial-gradient(circle,rgba(249,115,22,0.22)_0%,transparent_70%)]': timerZone === 'warning',
+                     'bg-[radial-gradient(circle,rgba(220,38,38,0.25)_0%,transparent_70%)]': timerZone === 'overtime',
+                     'bg-[radial-gradient(circle,rgba(37,99,235,0.15)_0%,transparent_70%)]': timer.status !== 'running'
                  }"></div>
 
             <!-- Top Row: Live Status Pill & Huge Stage Draw Badge -->
             <div class="flex items-center justify-between gap-4 relative z-10">
                 <div class="flex items-center gap-3">
-                    <span class="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg backdrop-blur-md"
+                    <span class="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg"
                           :class="{
                               'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-emerald-500/10': timer.status === 'running',
                               'bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-amber-500/10': timer.status === 'paused',
@@ -287,12 +286,12 @@
                     </span>
 
                     <template x-if="current && current.sub_category">
-                        <span class="hidden sm:inline-flex items-center px-3.5 py-2 rounded-2xl bg-white/[0.08] border border-white/[0.12] text-xs font-bold text-slate-200 backdrop-blur-md shadow-sm"
+                        <span class="hidden sm:inline-flex items-center px-3.5 py-2 rounded-2xl bg-white/[0.08] border border-white/[0.12] text-xs font-bold text-slate-200 shadow-sm"
                               x-text="current.sub_category"></span>
                     </template>
 
                     <template x-if="current && current.chosen_song">
-                        <span class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-purple-500/20 border border-purple-500/30 text-xs font-bold text-purple-300 backdrop-blur-md shadow-sm">
+                        <span class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-purple-500/20 border border-purple-500/30 text-xs font-bold text-purple-300 shadow-sm">
                             <i data-lucide="music" class="w-3.5 h-3.5 text-purple-400"></i>
                             <span x-text="'Lagu: ' + current.chosen_song"></span>
                         </span>
@@ -413,7 +412,7 @@
 
                     <!-- Visual Indicator Badges -->
                     <div class="flex sm:flex-col items-center sm:items-end gap-2 text-right">
-                        <div class="px-4 py-2 rounded-2xl border text-xs sm:text-sm font-black tracking-wider uppercase shadow-lg backdrop-blur-md"
+                        <div class="px-4 py-2 rounded-2xl border text-xs sm:text-sm font-black tracking-wider uppercase shadow-lg"
                              :class="{
                                  'bg-emerald-500/20 border-emerald-500/40 text-emerald-300 shadow-emerald-500/10': timerZone === 'normal',
                                  'bg-amber-500/25 border-amber-500/50 text-amber-300 shadow-amber-500/10 animate-pulse': timerZone === 'warning',
@@ -448,7 +447,7 @@
             <!-- CARD 2: BERIKUTNYA (UP NEXT / STANDBY) -->
             <div class="glass-card-amber rounded-[2rem] p-6 sm:p-7 relative overflow-hidden shadow-2xl">
                 <!-- Background ambient sparkle -->
-                <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-amber-500/15 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-[radial-gradient(circle,rgba(245,158,11,0.18)_0%,transparent_70%)] rounded-full pointer-events-none"></div>
 
                 <div class="flex items-center justify-between gap-2 pb-3.5 border-b border-amber-500/25 relative z-10">
                     <div class="flex items-center gap-2.5">
@@ -551,7 +550,7 @@
     <!-- Reconnecting Floating Toast / Banner (Unobtrusive) -->
     <div x-show="!isOnline" 
          x-cloak 
-         class="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full bg-slate-950/90 border border-amber-500/40 text-amber-200 text-xs font-bold shadow-2xl flex items-center gap-3 backdrop-blur-md transition-all">
+         class="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full bg-slate-950 border border-amber-500/40 text-amber-200 text-xs font-bold shadow-2xl flex items-center gap-3 transition-all">
         <span class="relative flex h-2.5 w-2.5 shrink-0">
             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
             <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
@@ -561,7 +560,7 @@
     </div>
 
     <!-- FOOTER INFO BAR -->
-    <footer class="h-12 px-6 sm:px-8 flex items-center justify-between text-xs text-slate-400 border-t border-white/[0.08] bg-[#040711]/90 backdrop-blur-md">
+    <footer class="h-12 px-6 sm:px-8 flex items-center justify-between text-xs text-slate-400 border-t border-white/[0.08] bg-[#040711]">
         <div class="flex items-center gap-2 truncate">
             <span class="font-bold text-slate-300">{{ $appSettings['institution_name'] ?? 'MTsN 1 Blitar' }}</span>
             <span>•</span>
@@ -650,7 +649,7 @@
 
                     this.pollInterval = setInterval(() => {
                         this.fetchSyncData();
-                    }, 1500);
+                    }, 2500);
                 },
 
                 async fetchSyncData() {
@@ -685,12 +684,15 @@
                 },
 
                 applySyncData(data) {
+                    const prevCurrentId = this.current ? this.current.id : null;
+                    const prevNextId = this.next ? this.next.id : null;
+                    const prevCompletedLen = this.completed ? this.completed.length : 0;
+
                     this.competition = data.competition;
                     this.current = data.current;
                     this.next = data.next;
                     this.completed = data.completed || [];
                     
-                    const oldStatus = this.timer.status;
                     this.timer = data.timer;
                     this.totalSeconds = data.timer.total_duration_seconds;
                     this.warningThreshold = data.timer.warning_threshold_seconds;
@@ -722,7 +724,14 @@
                         this.playChimeSound(data.timer.bell_trigger.type || 'bell');
                     }
 
-                    this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
+                    const newCurrentId = this.current ? this.current.id : null;
+                    const newNextId = this.next ? this.next.id : null;
+                    const newCompletedLen = this.completed ? this.completed.length : 0;
+
+                    // Only re-scan icons if participant structure changed
+                    if (prevCurrentId !== newCurrentId || prevNextId !== newNextId || prevCompletedLen !== newCompletedLen) {
+                        this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
+                    }
                 },
 
                 // Timer Computed Getters
