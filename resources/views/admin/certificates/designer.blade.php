@@ -9,111 +9,125 @@
     $bgUrl = $template->background_path ? asset('storage/' . $template->background_path) : null;
 @endphp
 
-<div class="space-y-6" x-data="{
-    activeTab: 'nama',
-    saving: false,
-    saveSuccess: false,
-    saveError: '',
-    
-    // Layout Configuration Object
-    cfg: {{ json_encode($layout) }},
+<script>
+    function certificateDesigner() {
+        return {
+            activeTab: 'nama',
+            saving: false,
+            saveSuccess: false,
+            saveError: '',
+            
+            // Layout Configuration Object
+            cfg: {!! json_encode($layout) !!},
 
-    // Active dragged element
-    draggingElement: null,
+            // Active dragged element
+            draggingElement: null,
 
-    resetDefaults() {
-        if (confirm('Kembalikan seluruh tata letak ke pengaturan awal?')) {
-            this.cfg = {
-                nomor: { top: 25, left: 50, size: 14, color: '#1e293b', bold: false, align: 'center', font: 'sans', visible: true },
-                nama: { top: 43, left: 50, size: 32, color: '#0f172a', bold: true, align: 'center', font: 'serif', visible: true },
-                sekolah: { top: 53, left: 50, size: 18, color: '#334155', bold: false, align: 'center', font: 'sans', visible: true },
-                predikat: { text: '', top: 61, left: 50, size: 22, color: '#b45309', bold: true, align: 'center', font: 'sans', visible: true },
-                lomba: { top: 68, left: 50, size: 18, color: '#1e293b', bold: true, align: 'center', font: 'sans', visible: true },
-                tanggal: { top: 79, left: 75, size: 14, color: '#334155', bold: false, align: 'center', font: 'sans', visible: true },
-                qrcode: { top: 75, left: 15, size: 75, visible: true },
-                teks_1: { text: '', top: 35, left: 50, size: 16, color: '#1e293b', bold: false, align: 'center', font: 'sans', visible: false },
-                teks_2: { text: '', top: 57, left: 50, size: 15, color: '#1e293b', bold: false, align: 'center', font: 'sans', visible: false },
-                teks_3: { text: '', top: 71, left: 50, size: 14, color: '#1e293b', bold: false, align: 'center', font: 'sans', visible: false }
-            };
-        }
-    },
-
-    getPredikatPreview() {
-        if (this.cfg.predikat && this.cfg.predikat.text && this.cfg.predikat.text.trim() !== '') {
-            return this.cfg.predikat.text;
-        }
-        const t = '{{ $template->type }}';
-        if (t === 'peserta') return 'PESERTA';
-        if (t === 'pembimbing') return 'GURU PEMBIMBING';
-        if (t === 'juri') return 'DEWAN JURI / WASIT';
-        return 'JUARA 1';
-    },
-
-    getFontFamily(fontKey) {
-        switch (fontKey) {
-            case 'times':
-                return "'Times New Roman', Times, 'Liberation Serif', serif";
-            case 'arial':
-                return "Arial, 'Helvetica Neue', Helvetica, sans-serif";
-            case 'arial-narrow':
-            case 'arial-narrow-bold':
-                return "'Arial Narrow', 'Nimbus Sans Narrow', 'Helvetica Neue Condensed', sans-serif-condensed, sans-serif";
-            case 'serif':
-                return "'Playfair Display', Georgia, Cambria, 'Times New Roman', serif";
-            case 'sans':
-            default:
-                return "'Plus Jakarta Sans', Arial, sans-serif";
-        }
-    },
-
-    isFontForceBold(fontKey, boldVal) {
-        if (fontKey === 'arial-narrow-bold') return true;
-        return !!boldVal;
-    },
-
-    saveLayoutAjax() {
-        this.saving = true;
-        this.saveSuccess = false;
-        this.saveError = '';
-
-        fetch('{{ route('admin.certificates.template.layout', $template->id) }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json'
+            resetDefaults() {
+                if (confirm('Kembalikan seluruh tata letak ke pengaturan awal?')) {
+                    this.cfg = {
+                        nomor: { top: 25, left: 50, size: 14, color: '#1e293b', bold: false, align: 'center', font: 'sans', visible: true },
+                        nama: { top: 43, left: 50, size: 32, color: '#0f172a', bold: true, align: 'center', font: 'serif', visible: true },
+                        sekolah: { top: 53, left: 50, size: 18, color: '#334155', bold: false, align: 'center', font: 'sans', visible: true },
+                        predikat: { text: '', top: 61, left: 50, size: 22, color: '#b45309', bold: true, align: 'center', font: 'sans', visible: true },
+                        lomba: { top: 68, left: 50, size: 18, color: '#1e293b', bold: true, align: 'center', font: 'sans', visible: true },
+                        tanggal: { top: 79, left: 75, size: 14, color: '#334155', bold: false, align: 'center', font: 'sans', visible: true },
+                        qrcode: { top: 75, left: 15, size: 75, visible: true },
+                        teks_1: { text: '', top: 35, left: 50, size: 16, color: '#1e293b', bold: false, align: 'center', font: 'sans', visible: false },
+                        teks_2: { text: '', top: 57, left: 50, size: 15, color: '#1e293b', bold: false, align: 'center', font: 'sans', visible: false },
+                        teks_3: { text: '', top: 71, left: 50, size: 14, color: '#1e293b', bold: false, align: 'center', font: 'sans', visible: false }
+                    };
+                }
             },
-            body: JSON.stringify({ layout_config: this.cfg })
-        })
-        .then(res => res.json())
-        .then(data => {
-            this.saving = false;
-            if (data.success) {
-                this.saveSuccess = true;
-                setTimeout(() => this.saveSuccess = false, 3500);
-            } else {
-                this.saveError = data.message || 'Gagal menyimpan layout.';
-            }
-        })
-        .catch(err => {
-            this.saving = false;
-            this.saveError = 'Terjadi kesalahan jaringan saat menyimpan.';
-        });
-    },
 
-    testPrint() {
-        const url = new URL('{{ route('admin.certificates.print') }}', window.location.origin);
-        url.searchParams.set('type', '{{ $template->type }}');
-        @if($template->competition_id)
-        url.searchParams.set('competition_id', '{{ $template->competition_id }}');
-        @endif
-        url.searchParams.set('name', 'AHMAD FAUZI NURDIN');
-        url.searchParams.set('school', 'MTs Negeri 1 Blitar');
-        url.searchParams.set('rank', 'Juara 1');
-        url.searchParams.set('cert_seq', '001');
-        window.open(url.toString(), '_blank');
+            getPredikatPreview() {
+                if (this.cfg.predikat && this.cfg.predikat.text && this.cfg.predikat.text.trim() !== '') {
+                    return this.cfg.predikat.text;
+                }
+                const t = @json($template->type);
+                if (t === 'peserta') return 'PESERTA';
+                if (t === 'pembimbing') return 'GURU PEMBIMBING';
+                if (t === 'juri') return 'DEWAN JURI / WASIT';
+                return 'JUARA 1';
+            },
+
+            getFontFamily(fontKey) {
+                switch (fontKey) {
+                    case 'times':
+                        return "'Times New Roman', Times, 'Liberation Serif', serif";
+                    case 'arial':
+                        return "Arial, 'Helvetica Neue', Helvetica, sans-serif";
+                    case 'arial-narrow':
+                    case 'arial-narrow-bold':
+                        return "'Arial Narrow', 'Nimbus Sans Narrow', 'Helvetica Neue Condensed', sans-serif-condensed, sans-serif";
+                    case 'serif':
+                        return "'Playfair Display', Georgia, Cambria, 'Times New Roman', serif";
+                    case 'sans':
+                    default:
+                        return "'Plus Jakarta Sans', Arial, sans-serif";
+                }
+            },
+
+            isFontForceBold(fontKey, boldVal) {
+                if (fontKey === 'arial-narrow-bold') return true;
+                return !!boldVal;
+            },
+
+            saveLayoutAjax() {
+                this.saving = true;
+                this.saveSuccess = false;
+                this.saveError = '';
+
+                fetch(@json(route('admin.certificates.template.layout', $template->id)), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ layout_config: this.cfg })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    this.saving = false;
+                    if (data.success) {
+                        this.saveSuccess = true;
+                        setTimeout(() => this.saveSuccess = false, 3500);
+                    } else {
+                        this.saveError = data.message || 'Gagal menyimpan layout.';
+                    }
+                })
+                .catch(err => {
+                    this.saving = false;
+                    this.saveError = 'Terjadi kesalahan jaringan saat menyimpan.';
+                });
+            },
+
+            testPrint() {
+                const url = new URL(@json(route('admin.certificates.print')), window.location.origin);
+                url.searchParams.set('type', @json($template->type));
+                @if($template->competition_id)
+                url.searchParams.set('competition_id', @json($template->competition_id));
+                @endif
+                url.searchParams.set('name', 'AHMAD FAUZI NURDIN');
+                url.searchParams.set('school', 'MTs Negeri 1 Blitar');
+                url.searchParams.set('rank', 'Juara 1');
+                url.searchParams.set('cert_seq', '001');
+                window.open(url.toString(), '_blank');
+            }
+        };
     }
-}">
+
+    if (typeof Alpine !== 'undefined') {
+        Alpine.data('certificateDesigner', certificateDesigner);
+    } else {
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('certificateDesigner', certificateDesigner);
+        });
+    }
+</script>
+
+<div class="space-y-6" x-data="certificateDesigner()">
 
     <!-- Alert Notifikasi -->
     @if(session('success'))
