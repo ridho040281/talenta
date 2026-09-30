@@ -58,14 +58,6 @@
                 <span x-text="(timer.enabled ?? true) ? 'Waktu: ON' : 'Waktu: OFF (Nama Saja)'"></span>
             </button>
 
-            <!-- Multi-Judge Scoring Input Button -->
-            <a href="{{ route('pic.scoring', $competition->id) }}" 
-               class="px-3.5 py-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-amber-500/10"
-               title="Buka Lembar Input Nilai Multi-Juri untuk cabang lomba ini">
-                <i data-lucide="edit-3" class="w-4 h-4 text-amber-400"></i>
-                <span>Input Nilai Juri</span>
-            </a>
-
             <!-- Open TV Stage Viewer Button -->
             <a href="{{ route('stage.viewer', $competition->slug ?: $competition->code) }}" 
                target="_blank" 
