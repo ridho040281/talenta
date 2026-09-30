@@ -307,14 +307,60 @@
                 </div>
             </div>
 
+            <!-- Filter Sektor (Semua, PA, PI) & Quick Search Bar -->
+            <div class="space-y-2.5 pb-2">
+                <!-- Sector Filter Buttons -->
+                <div class="grid grid-cols-3 gap-1.5 p-1 rounded-2xl bg-black/40 border border-white/[0.08] text-xs font-black">
+                    <button type="button" 
+                            @click="sectorFilter = 'all'"
+                            class="py-2 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer"
+                            :class="sectorFilter === 'all' ? 'bg-[#7A5AF8] text-white shadow-md' : 'text-slate-400 hover:text-white'">
+                        <span>Semua</span>
+                        <span class="text-[10px] px-1.5 py-0.2 rounded-full font-mono" :class="sectorFilter === 'all' ? 'bg-white/20 text-white' : 'bg-white/5 text-slate-400'">{{ $registrations->count() }}</span>
+                    </button>
+                    <button type="button" 
+                            @click="sectorFilter = 'PA'"
+                            class="py-2 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer"
+                            :class="sectorFilter === 'PA' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:text-white'">
+                        <span>Putra (PA)</span>
+                        <span class="text-[10px] px-1.5 py-0.2 rounded-full font-mono" :class="sectorFilter === 'PA' ? 'bg-white/20 text-white' : 'bg-white/5 text-slate-400'">{{ $registrations->filter(fn($r) => $r->primary_gender !== 'P')->count() }}</span>
+                    </button>
+                    <button type="button" 
+                            @click="sectorFilter = 'PI'"
+                            class="py-2 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer"
+                            :class="sectorFilter === 'PI' ? 'bg-pink-600 text-white shadow-md' : 'text-slate-400 hover:text-white'">
+                        <span>Putri (PI)</span>
+                        <span class="text-[10px] px-1.5 py-0.2 rounded-full font-mono" :class="sectorFilter === 'PI' ? 'bg-white/20 text-white' : 'bg-white/5 text-slate-400'">{{ $registrations->filter(fn($r) => $r->primary_gender === 'P')->count() }}</span>
+                    </button>
+                </div>
+
+                <!-- Search Input -->
+                <div class="relative">
+                    <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                    <input type="text" 
+                           x-model="searchQuery" 
+                           placeholder="Cari nama, sekolah, #undian..." 
+                           class="w-full pl-8.5 pr-8 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#7A5AF8] transition">
+                    <button type="button" 
+                            x-show="searchQuery" 
+                            @click="searchQuery = ''" 
+                            class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
+                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+            </div>
+
             <!-- Participant List -->
-            <div class="space-y-2.5 max-h-[640px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-700">
+            <div class="space-y-2.5 max-h-[600px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-700">
                 @forelse($registrations as $reg)
                     @php
                         $firstMember = $reg->members->first();
                         $displayName = $reg->team_name ?: ($firstMember?->full_name ?: 'Peserta #' . $reg->id);
+                        $genderCode = ($reg->primary_gender === 'P') ? 'PI' : 'PA';
+                        $searchKey = strtolower($displayName . ' ' . $reg->institution_name . ' ' . ($reg->draw_number ?? '') . ' ' . ($reg->participant_number ?? '') . ' ' . ($reg->sub_category ?? ''));
                     @endphp
-                    <div class="p-3.5 rounded-2xl border transition flex items-center justify-between gap-3"
+                    <div x-show="(sectorFilter === 'all' || sectorFilter === '{{ $genderCode }}') && (!searchQuery.trim() || '{{ addslashes($searchKey) }}'.includes(searchQuery.toLowerCase().trim()))"
+                         class="p-3.5 rounded-2xl border transition flex items-center justify-between gap-3"
                          :class="{
                              'bg-emerald-500/15 border-emerald-500/40 ring-1 ring-emerald-400/50': current && current.id === {{ $reg->id }},
                              'bg-amber-500/10 border-amber-500/30': next && next.id === {{ $reg->id }} && (!current || current.id !== {{ $reg->id }}),
@@ -335,9 +381,14 @@
                             </div>
 
                             <div class="min-w-0">
-                                <div class="flex items-center gap-2">
+                                <div class="flex items-center gap-2 flex-wrap">
                                     <h5 class="text-xs font-bold text-white truncate">{{ $displayName }}</h5>
-                                    @if($reg->sub_category)
+                                    @if($genderCode === 'PI')
+                                        <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-pink-500/20 text-pink-300 border border-pink-500/30 shrink-0">Putri (PI)</span>
+                                    @else
+                                        <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30 shrink-0">Putra (PA)</span>
+                                    @endif
+                                    @if($reg->sub_category && !str_contains(strtolower($reg->sub_category), 'putra') && !str_contains(strtolower($reg->sub_category), 'putri'))
                                         <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-white/[0.06] text-slate-400 shrink-0">{{ $reg->sub_category }}</span>
                                     @endif
                                     @if($reg->chosen_song)
@@ -404,6 +455,9 @@
             secondsLeft: initialState.timer.seconds_remaining || ((initialState.competition.duration_minutes || 7) * 60),
             totalSeconds: initialState.timer.total_duration_seconds || ((initialState.competition.duration_minutes || 7) * 60),
             warningThreshold: initialState.timer.warning_threshold_seconds || ((initialState.competition.warning_minutes || 2) * 60),
+
+            sectorFilter: 'all',
+            searchQuery: '',
 
             actionUrl: '{{ route("pic.stage.control.action", $competition->id) }}',
             syncUrl: '{{ route("stage.api.state", $competition->slug ?: $competition->code) }}',
