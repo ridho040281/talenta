@@ -9,40 +9,44 @@
     <style>
         @page {
             size: A4 portrait;
-            margin: 8mm 15mm 8mm 15mm;
+            margin: 0;
         }
 
         @media print {
             html, body {
+                width: 210mm !important;
+                height: 297mm !important;
                 background: #ffffff !important;
                 color: #000000 !important;
                 font-family: 'Arial Narrow', Arial, 'Nimbus Sans L', sans-serif !important;
-                font-size: 10.5pt !important;
-                line-height: 1.25 !important;
+                font-size: 11pt !important;
+                line-height: 1.3 !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 margin: 0 !important;
                 padding: 0 !important;
-                width: 100% !important;
-                height: auto !important;
             }
             .no-print {
                 display: none !important;
             }
             .print-page {
-                page-break-after: always;
-                break-after: page;
+                box-shadow: none !important;
+                margin: 0 auto !important;
+                padding: 1.2cm 1.8cm 1.2cm 1.8cm !important;
+                width: 210mm !important;
+                max-width: 210mm !important;
+                height: 297mm !important;
+                max-height: 297mm !important;
+                border: none !important;
+                border-radius: 0 !important;
+                box-sizing: border-box !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                border: none !important;
-                box-shadow: none !important;
-                max-width: 100% !important;
-                width: 100% !important;
-                height: auto !important;
-                min-height: auto !important;
-                box-sizing: border-box !important;
+                page-break-after: always;
+                break-after: page;
             }
             .print-page:last-child {
                 page-break-after: auto;
@@ -63,23 +67,35 @@
 
         body {
             font-family: 'Arial Narrow', Arial, 'Nimbus Sans L', sans-serif;
-            font-size: 10.5pt;
-            line-height: 1.25;
+            font-size: 11pt;
+            line-height: 1.3;
             color: #111827;
         }
 
+        .print-page {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            background: white;
+            padding: 1.2cm 1.8cm 1.2cm 1.8cm;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
         .kop-double-line {
-            border-top: 2px solid #000000;
+            border-top: 2.5px solid #000000;
             border-bottom: 1px solid #000000;
-            height: 3px;
-            margin-top: 3px;
-            margin-bottom: 8px;
+            height: 4px;
+            margin-top: 4px;
+            margin-bottom: 10px;
         }
 
         .report-table th, .report-table td {
             border: 1px solid #000000;
-            padding: 3px 6px;
-            font-size: 10.5pt;
+            padding: 4px 6px;
+            font-size: 11pt;
             line-height: 1.2;
         }
 
@@ -90,7 +106,7 @@
         }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen py-4 sm:py-6 font-sans">
+<body class="bg-slate-100 min-h-screen py-4 sm:py-8 font-sans">
 
     <!-- Top Action Bar (Hidden on Print) -->
     <div class="max-w-4xl mx-auto mb-4 px-4 no-print flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl shadow-md border border-slate-200">
@@ -125,18 +141,19 @@
 
     <div class="space-y-8 print:space-y-0">
         @foreach($sectorsData as $secKey => $sector)
-            <!-- Printable A4 Page per Sector -->
-            <div class="print-page max-w-[210mm] mx-auto bg-white p-6 sm:p-8 shadow-xl border border-slate-300 print:border-none print:shadow-none print:p-0 flex flex-col justify-between">
+            <!-- Printable A4 Page per Sector (Strict 1 Page 297mm Height) -->
+            <div class="print-page shadow-xl border border-slate-300 print:border-none print:shadow-none">
                 
+                <!-- Main Document Body -->
                 <div>
                     <!-- ==================== KOP SURAT RESMI ==================== -->
                     @if(!empty($kopImage))
-                        <div class="mb-2 w-full flex justify-center">
-                            <img src="{{ asset('storage/' . $kopImage) }}" alt="Kop Kegiatan" class="w-full h-auto max-h-[100px] object-contain block">
+                        <div class="mb-3 w-full flex justify-center">
+                            <img src="{{ asset('storage/' . $kopImage) }}" alt="Kop Kegiatan" class="w-full h-auto max-h-[110px] object-contain block">
                         </div>
                     @else
                         <!-- Fallback Kop Surat Manual jika belum upload kop kegiatan -->
-                        <div class="flex items-center justify-between gap-3">
+                        <div class="flex items-center justify-between gap-4">
                             <div class="w-16 h-16 shrink-0 flex items-center justify-center">
                                 @if(!empty($appSettings['institution_logo']))
                                     <img src="{{ asset('storage/' . $appSettings['institution_logo']) }}" alt="Logo Madrasah" class="max-h-16 max-w-16 object-contain">
@@ -153,16 +170,16 @@
                             </div>
 
                             <div class="flex-1 text-center space-y-0.5">
-                                <div class="text-[11px] font-bold tracking-wider uppercase text-black">
+                                <div class="text-xs font-bold tracking-wider uppercase text-black">
                                     PANITIA {{ strtoupper($appSettings['event_name'] ?? 'MILAD KE-57') }}
                                 </div>
-                                <div class="text-sm font-black tracking-wide uppercase text-black">
+                                <div class="text-sm sm:text-base font-black tracking-wide uppercase text-black">
                                     {{ strtoupper($appSettings['institution_name'] ?? 'MADRASAH TSANAWIYAH NEGERI 1 BLITAR') }}
                                 </div>
-                                <div class="text-[9.5px] text-black italic">
+                                <div class="text-[10px] text-black italic">
                                     {{ $appSettings['address'] ?? 'Kantor : Jl. Ponpes Terpadu Al-Kamal Kunir Wonodadi Blitar' }}
                                 </div>
-                                <div class="text-[9px] text-black">
+                                <div class="text-[9.5px] text-black">
                                     Telp. {{ $appSettings['contact_phone'] ?? '0342-561634' }} Kode Pos {{ $appSettings['postal_code'] ?? '66156' }} Website: <span class="underline text-blue-800">{{ $appSettings['school_website'] ?? 'www.mtsn1blitar.sch.id' }}</span>
                                 </div>
                             </div>
@@ -184,28 +201,28 @@
                     @endif
 
                     <!-- ==================== JUDUL DOKUMEN ==================== -->
-                    <div class="text-center space-y-0.5 mb-2">
-                        <h1 class="text-base font-black tracking-wider uppercase underline underline-offset-2">
+                    <div class="text-center space-y-0.5 mb-3">
+                        <h1 class="text-base sm:text-lg font-black tracking-wider uppercase underline underline-offset-4">
                             BERITA ACARA
                         </h1>
-                        <div class="text-xs font-bold uppercase tracking-wide">
+                        <div class="text-xs sm:text-sm font-bold uppercase tracking-wide">
                             {{ $isSports ? 'PERTANDINGAN CABANG' : 'PENJURIAN LOMBA' }} {{ strtoupper($competition->name) }}
                         </div>
                         @if(count($sectorsData) > 1 || (!empty($sector['definition']['title']) && !str_contains(strtolower($sector['definition']['title']), 'umum')))
-                            <div class="text-xs font-black uppercase tracking-wider text-black">
+                            <div class="text-xs sm:text-sm font-black uppercase tracking-wider text-black">
                                 {{ strtoupper($sector['definition']['title']) }}
                             </div>
                         @endif
-                        <div class="text-[10pt] font-bold uppercase tracking-wider">
+                        <div class="text-[11pt] font-bold uppercase tracking-wider">
                             TINGKAT SD/MI SE-EKS KARESIDENAN KEDIRI
                         </div>
-                        <div class="text-[10pt] font-bold uppercase tracking-wider">
+                        <div class="text-[11pt] font-bold uppercase tracking-wider">
                             DALAM RANGKA {{ $eventName }}{{ $hasMts ? '' : ' MTSN 1 BLITAR' }}
                         </div>
                     </div>
 
                     <!-- ==================== NARASI PEMBUKA ==================== -->
-                    <div class="text-[10.5pt] text-justify space-y-1 mb-2 leading-snug">
+                    <div class="text-[11pt] text-justify space-y-2 mb-3 leading-snug">
                         <p>
                             Bahwa pada hari ini, <strong>{{ $type === 'blank' ? '..........................' : $eventDay }}</strong> tanggal <strong>{{ $type === 'blank' ? '..................................................' : $dateSpelled['day_spelled'] }}</strong> bulan <strong>{{ $type === 'blank' ? '..........................' : $dateSpelled['month_name'] }}</strong> tahun <strong>{{ $type === 'blank' ? '..................................................' : $dateSpelled['year_spelled'] }}</strong> Pukul <strong>{{ $type === 'blank' ? '........' : $eventTime }}</strong> WIB bertempat di MTs N 1 Blitar. Berdasarkan Penilaian {{ $isSports ? 'Dewan Wasit' : 'Dewan Juri' }} yang terdiri dari:
                         </p>
@@ -222,7 +239,7 @@
                     </div>
 
                     <!-- ==================== TABEL PEMENANG ==================== -->
-                    <div class="mb-2">
+                    <div class="mb-3">
                         <table class="w-full report-table">
                             <thead>
                                 <tr>
@@ -251,21 +268,21 @@
                     </div>
 
                     <!-- ==================== KALIMAT PENUTUP ==================== -->
-                    <div class="text-[10.5pt] text-justify mb-2 leading-snug">
+                    <div class="text-[11pt] text-justify mb-3 leading-snug">
                         <p>
                             Demikian hasil keputusan ini ditetapkan. Keputusan {{ $isSports ? 'Dewan Wasit' : 'Dewan Juri' }} bersifat mutlak dan tidak dapat diganggu gugat.
                         </p>
                     </div>
 
                     <!-- ==================== TANDA TANGAN DEWAN JURI / WASIT ==================== -->
-                    <div class="avoid-break mt-3 pt-1">
-                        <div class="text-right text-[10.5pt] mb-2 pr-2">
+                    <div class="avoid-break mt-4 pt-1">
+                        <div class="text-right text-[11pt] mb-3 pr-2">
                             Blitar, {{ $type === 'blank' ? '........................................' : $dateSpelled['date_formatted'] }}
                         </div>
 
-                        <div class="grid grid-cols-3 text-center text-[10.5pt] gap-4">
+                        <div class="grid grid-cols-3 text-center text-[11pt] gap-4">
                             <!-- Juri / Wasit 1 -->
-                            <div class="flex flex-col justify-between h-16 sm:h-18">
+                            <div class="flex flex-col justify-between h-20 sm:h-22">
                                 <div class="font-bold">{{ $isSports ? 'Wasit 1' : 'Juri 1' }}</div>
                                 <div>
                                     <div class="font-bold underline underline-offset-2">
@@ -275,7 +292,7 @@
                             </div>
 
                             <!-- Juri / Wasit 2 -->
-                            <div class="flex flex-col justify-between h-16 sm:h-18">
+                            <div class="flex flex-col justify-between h-20 sm:h-22">
                                 <div class="font-bold">{{ $isSports ? 'Wasit 2' : 'Juri 2' }}</div>
                                 <div>
                                     <div class="font-bold underline underline-offset-2">
@@ -285,7 +302,7 @@
                             </div>
 
                             <!-- Juri / Wasit 3 -->
-                            <div class="flex flex-col justify-between h-16 sm:h-18">
+                            <div class="flex flex-col justify-between h-20 sm:h-22">
                                 <div class="font-bold">{{ $isSports ? 'Wasit 3' : 'Juri 3' }}</div>
                                 <div>
                                     <div class="font-bold underline underline-offset-2">
@@ -297,8 +314,8 @@
                     </div>
                 </div>
 
-                <!-- ==================== FOOTER TIPIS ==================== -->
-                <div class="avoid-break pt-1.5 mt-3 border-t border-slate-300 flex items-center justify-between text-[8pt] text-slate-500 font-mono">
+                <!-- ==================== FOOTER META (STATIS DI PALING BAWAH HALAMAN) ==================== -->
+                <div class="avoid-break pt-2 border-t border-slate-300 flex items-center justify-between text-[8.5pt] text-slate-500 font-mono">
                     <span>Panitia {{ $appSettings['event_name'] ?? 'Milad ke-57' }} {{ $appSettings['institution_name'] ?? 'MTsN 1 Blitar' }} • Dokumen Berita Acara • Aplikasi {{ $appSettings['app_name'] ?? 'TALENTA' }}</span>
                     <span>Dicetak pada: {{ now()->format('d/m/Y H:i:s') }}</span>
                 </div>
