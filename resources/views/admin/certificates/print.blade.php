@@ -86,7 +86,24 @@
         }
 
         .font-sans {
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-family: 'Plus Jakarta Sans', Arial, sans-serif;
+        }
+
+        .font-times {
+            font-family: 'Times New Roman', Times, 'Liberation Serif', serif;
+        }
+
+        .font-arial {
+            font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+        }
+
+        .font-arial-narrow {
+            font-family: 'Arial Narrow', 'Nimbus Sans Narrow', 'Helvetica Neue Condensed', sans-serif-condensed, sans-serif;
+        }
+
+        .font-arial-narrow-bold {
+            font-family: 'Arial Narrow', 'Nimbus Sans Narrow', 'Helvetica Neue Condensed', sans-serif-condensed, sans-serif;
+            font-weight: bold !important;
         }
 
         /* Floating Non-Print Toolbar */
@@ -250,13 +267,27 @@
             <div class="cert-overlay">
                 @php
                     $calcTx = fn($align) => ($align === 'left') ? 'translate(0, -50%)' : (($align === 'right') ? 'translate(-100%, -50%)' : 'translate(-50%, -50%)');
+                    $getFontClass = function($fontKey) {
+                        return match($fontKey ?? 'sans') {
+                            'times' => 'font-times',
+                            'arial' => 'font-arial',
+                            'arial-narrow' => 'font-arial-narrow',
+                            'arial-narrow-bold' => 'font-arial-narrow-bold',
+                            'serif' => 'font-serif',
+                            default => 'font-sans',
+                        };
+                    };
+                    $isBold = function($fontKey, $boldVal) {
+                        if ($fontKey === 'arial-narrow-bold') return true;
+                        return !empty($boldVal);
+                    };
                 @endphp
 
                 <!-- Nomor Sertifikat -->
                 @if(!empty($layout['nomor']['visible']))
                 @php $aNomor = $layout['nomor']['align'] ?? 'center'; @endphp
-                <div class="cert-text-element {{ ($layout['nomor']['font'] ?? 'sans') === 'serif' ? 'font-serif' : 'font-sans' }}"
-                     style="top: {{ $layout['nomor']['top'] }}%; left: {{ $layout['nomor']['left'] }}%; transform: {{ $calcTx($aNomor) }}; text-align: {{ $aNomor }}; font-size: {{ $layout['nomor']['size'] }}px; color: {{ $layout['nomor']['color'] }}; font-weight: {{ !empty($layout['nomor']['bold']) ? 'bold' : 'normal' }};">
+                <div class="cert-text-element {{ $getFontClass($layout['nomor']['font'] ?? 'sans') }}"
+                     style="top: {{ $layout['nomor']['top'] }}%; left: {{ $layout['nomor']['left'] }}%; transform: {{ $calcTx($aNomor) }}; text-align: {{ $aNomor }}; font-size: {{ $layout['nomor']['size'] }}px; color: {{ $layout['nomor']['color'] }}; font-weight: {{ $isBold($layout['nomor']['font'] ?? 'sans', $layout['nomor']['bold'] ?? false) ? 'bold' : 'normal' }};">
                     Nomor: {{ $item['cert_number'] }}
                 </div>
                 @endif
@@ -264,8 +295,8 @@
                 <!-- Nama Penerima (Juara / Peserta / Guru / Juri) -->
                 @if(!empty($layout['nama']['visible']))
                 @php $aNama = $layout['nama']['align'] ?? 'center'; @endphp
-                <div class="cert-text-element {{ ($layout['nama']['font'] ?? 'serif') === 'serif' ? 'font-serif' : 'font-sans' }}"
-                     style="top: {{ $layout['nama']['top'] }}%; left: {{ $layout['nama']['left'] }}%; transform: {{ $calcTx($aNama) }}; text-align: {{ $aNama }}; font-size: {{ $layout['nama']['size'] }}px; color: {{ $layout['nama']['color'] }}; font-weight: {{ !empty($layout['nama']['bold']) ? 'bold' : 'normal' }}; letter-spacing: 0.5px;">
+                <div class="cert-text-element {{ $getFontClass($layout['nama']['font'] ?? 'serif') }}"
+                     style="top: {{ $layout['nama']['top'] }}%; left: {{ $layout['nama']['left'] }}%; transform: {{ $calcTx($aNama) }}; text-align: {{ $aNama }}; font-size: {{ $layout['nama']['size'] }}px; color: {{ $layout['nama']['color'] }}; font-weight: {{ $isBold($layout['nama']['font'] ?? 'serif', $layout['nama']['bold'] ?? true) ? 'bold' : 'normal' }}; letter-spacing: 0.5px;">
                     {{ $item['name'] }}
                 </div>
                 @endif
@@ -273,8 +304,8 @@
                 <!-- Asal Sekolah / Madrasah / Lembaga -->
                 @if(!empty($layout['sekolah']['visible']))
                 @php $aSekolah = $layout['sekolah']['align'] ?? 'center'; @endphp
-                <div class="cert-text-element {{ ($layout['sekolah']['font'] ?? 'sans') === 'serif' ? 'font-serif' : 'font-sans' }}"
-                     style="top: {{ $layout['sekolah']['top'] }}%; left: {{ $layout['sekolah']['left'] }}%; transform: {{ $calcTx($aSekolah) }}; text-align: {{ $aSekolah }}; font-size: {{ $layout['sekolah']['size'] }}px; color: {{ $layout['sekolah']['color'] }}; font-weight: {{ !empty($layout['sekolah']['bold']) ? 'bold' : 'normal' }};">
+                <div class="cert-text-element {{ $getFontClass($layout['sekolah']['font'] ?? 'sans') }}"
+                     style="top: {{ $layout['sekolah']['top'] }}%; left: {{ $layout['sekolah']['left'] }}%; transform: {{ $calcTx($aSekolah) }}; text-align: {{ $aSekolah }}; font-size: {{ $layout['sekolah']['size'] }}px; color: {{ $layout['sekolah']['color'] }}; font-weight: {{ $isBold($layout['sekolah']['font'] ?? 'sans', $layout['sekolah']['bold'] ?? false) ? 'bold' : 'normal' }};">
                     {{ $item['institution'] }}
                 </div>
                 @endif
@@ -282,8 +313,8 @@
                 <!-- Predikat Juara / Kategori -->
                 @if(!empty($layout['predikat']['visible']))
                 @php $aPredikat = $layout['predikat']['align'] ?? 'center'; @endphp
-                <div class="cert-text-element {{ ($layout['predikat']['font'] ?? 'sans') === 'serif' ? 'font-serif' : 'font-sans' }}"
-                     style="top: {{ $layout['predikat']['top'] }}%; left: {{ $layout['predikat']['left'] }}%; transform: {{ $calcTx($aPredikat) }}; text-align: {{ $aPredikat }}; font-size: {{ $layout['predikat']['size'] }}px; color: {{ $layout['predikat']['color'] }}; font-weight: {{ !empty($layout['predikat']['bold']) ? 'bold' : 'normal' }};">
+                <div class="cert-text-element {{ $getFontClass($layout['predikat']['font'] ?? 'sans') }}"
+                     style="top: {{ $layout['predikat']['top'] }}%; left: {{ $layout['predikat']['left'] }}%; transform: {{ $calcTx($aPredikat) }}; text-align: {{ $aPredikat }}; font-size: {{ $layout['predikat']['size'] }}px; color: {{ $layout['predikat']['color'] }}; font-weight: {{ $isBold($layout['predikat']['font'] ?? 'sans', $layout['predikat']['bold'] ?? true) ? 'bold' : 'normal' }};">
                     {{ $item['predikat'] }}
                 </div>
                 @endif
@@ -291,8 +322,8 @@
                 <!-- Cabang Lomba -->
                 @if(!empty($layout['lomba']['visible']))
                 @php $aLomba = $layout['lomba']['align'] ?? 'center'; @endphp
-                <div class="cert-text-element {{ ($layout['lomba']['font'] ?? 'sans') === 'serif' ? 'font-serif' : 'font-sans' }}"
-                     style="top: {{ $layout['lomba']['top'] }}%; left: {{ $layout['lomba']['left'] }}%; transform: {{ $calcTx($aLomba) }}; text-align: {{ $aLomba }}; font-size: {{ $layout['lomba']['size'] }}px; color: {{ $layout['lomba']['color'] }}; font-weight: {{ !empty($layout['lomba']['bold']) ? 'bold' : 'normal' }};">
+                <div class="cert-text-element {{ $getFontClass($layout['lomba']['font'] ?? 'sans') }}"
+                     style="top: {{ $layout['lomba']['top'] }}%; left: {{ $layout['lomba']['left'] }}%; transform: {{ $calcTx($aLomba) }}; text-align: {{ $aLomba }}; font-size: {{ $layout['lomba']['size'] }}px; color: {{ $layout['lomba']['color'] }}; font-weight: {{ $isBold($layout['lomba']['font'] ?? 'sans', $layout['lomba']['bold'] ?? true) ? 'bold' : 'normal' }};">
                     {{ $item['competition_name'] }}
                 </div>
                 @endif
@@ -300,8 +331,8 @@
                 <!-- Tanggal Titimangsa Penerbitan -->
                 @if(!empty($layout['tanggal']['visible']))
                 @php $aTanggal = $layout['tanggal']['align'] ?? 'center'; @endphp
-                <div class="cert-text-element {{ ($layout['tanggal']['font'] ?? 'sans') === 'serif' ? 'font-serif' : 'font-sans' }}"
-                     style="top: {{ $layout['tanggal']['top'] }}%; left: {{ $layout['tanggal']['left'] }}%; transform: {{ $calcTx($aTanggal) }}; text-align: {{ $aTanggal }}; font-size: {{ $layout['tanggal']['size'] }}px; color: {{ $layout['tanggal']['color'] }}; font-weight: {{ !empty($layout['tanggal']['bold']) ? 'bold' : 'normal' }};">
+                <div class="cert-text-element {{ $getFontClass($layout['tanggal']['font'] ?? 'sans') }}"
+                     style="top: {{ $layout['tanggal']['top'] }}%; left: {{ $layout['tanggal']['left'] }}%; transform: {{ $calcTx($aTanggal) }}; text-align: {{ $aTanggal }}; font-size: {{ $layout['tanggal']['size'] }}px; color: {{ $layout['tanggal']['color'] }}; font-weight: {{ $isBold($layout['tanggal']['font'] ?? 'sans', $layout['tanggal']['bold'] ?? false) ? 'bold' : 'normal' }};">
                     {{ $item['date_formatted'] }}
                 </div>
                 @endif
@@ -325,8 +356,8 @@
                     $align1 = $layout['teks_1']['align'] ?? 'center';
                     $tx1 = $align1 === 'left' ? 'translate(0, -50%)' : ($align1 === 'right' ? 'translate(-100%, -50%)' : 'translate(-50%, -50%)');
                 @endphp
-                <div class="cert-text-element {{ ($layout['teks_1']['font'] ?? 'sans') === 'serif' ? 'font-serif' : 'font-sans' }}"
-                     style="top: {{ $layout['teks_1']['top'] }}%; left: {{ $layout['teks_1']['left'] }}%; transform: {{ $tx1 }}; text-align: {{ $align1 }}; font-size: {{ $layout['teks_1']['size'] }}px; color: {{ $layout['teks_1']['color'] }}; font-weight: {{ !empty($layout['teks_1']['bold']) ? 'bold' : 'normal' }}; white-space: pre-wrap; max-width: 80%;">
+                <div class="cert-text-element {{ $getFontClass($layout['teks_1']['font'] ?? 'sans') }}"
+                     style="top: {{ $layout['teks_1']['top'] }}%; left: {{ $layout['teks_1']['left'] }}%; transform: {{ $tx1 }}; text-align: {{ $align1 }}; font-size: {{ $layout['teks_1']['size'] }}px; color: {{ $layout['teks_1']['color'] }}; font-weight: {{ $isBold($layout['teks_1']['font'] ?? 'sans', $layout['teks_1']['bold'] ?? false) ? 'bold' : 'normal' }}; white-space: pre-wrap; max-width: 80%;">
                     {!! nl2br(e($t1)) !!}
                 </div>
                 @endif
@@ -342,8 +373,8 @@
                     $align2 = $layout['teks_2']['align'] ?? 'center';
                     $tx2 = $align2 === 'left' ? 'translate(0, -50%)' : ($align2 === 'right' ? 'translate(-100%, -50%)' : 'translate(-50%, -50%)');
                 @endphp
-                <div class="cert-text-element {{ ($layout['teks_2']['font'] ?? 'sans') === 'serif' ? 'font-serif' : 'font-sans' }}"
-                     style="top: {{ $layout['teks_2']['top'] }}%; left: {{ $layout['teks_2']['left'] }}%; transform: {{ $tx2 }}; text-align: {{ $align2 }}; font-size: {{ $layout['teks_2']['size'] }}px; color: {{ $layout['teks_2']['color'] }}; font-weight: {{ !empty($layout['teks_2']['bold']) ? 'bold' : 'normal' }}; white-space: pre-wrap; max-width: 80%;">
+                <div class="cert-text-element {{ $getFontClass($layout['teks_2']['font'] ?? 'sans') }}"
+                     style="top: {{ $layout['teks_2']['top'] }}%; left: {{ $layout['teks_2']['left'] }}%; transform: {{ $tx2 }}; text-align: {{ $align2 }}; font-size: {{ $layout['teks_2']['size'] }}px; color: {{ $layout['teks_2']['color'] }}; font-weight: {{ $isBold($layout['teks_2']['font'] ?? 'sans', $layout['teks_2']['bold'] ?? false) ? 'bold' : 'normal' }}; white-space: pre-wrap; max-width: 80%;">
                     {!! nl2br(e($t2)) !!}
                 </div>
                 @endif
@@ -359,8 +390,8 @@
                     $align3 = $layout['teks_3']['align'] ?? 'center';
                     $tx3 = $align3 === 'left' ? 'translate(0, -50%)' : ($align3 === 'right' ? 'translate(-100%, -50%)' : 'translate(-50%, -50%)');
                 @endphp
-                <div class="cert-text-element {{ ($layout['teks_3']['font'] ?? 'sans') === 'serif' ? 'font-serif' : 'font-sans' }}"
-                     style="top: {{ $layout['teks_3']['top'] }}%; left: {{ $layout['teks_3']['left'] }}%; transform: {{ $tx3 }}; text-align: {{ $align3 }}; font-size: {{ $layout['teks_3']['size'] }}px; color: {{ $layout['teks_3']['color'] }}; font-weight: {{ !empty($layout['teks_3']['bold']) ? 'bold' : 'normal' }}; white-space: pre-wrap; max-width: 80%;">
+                <div class="cert-text-element {{ $getFontClass($layout['teks_3']['font'] ?? 'sans') }}"
+                     style="top: {{ $layout['teks_3']['top'] }}%; left: {{ $layout['teks_3']['left'] }}%; transform: {{ $tx3 }}; text-align: {{ $align3 }}; font-size: {{ $layout['teks_3']['size'] }}px; color: {{ $layout['teks_3']['color'] }}; font-weight: {{ $isBold($layout['teks_3']['font'] ?? 'sans', $layout['teks_3']['bold'] ?? false) ? 'bold' : 'normal' }}; white-space: pre-wrap; max-width: 80%;">
                     {!! nl2br(e($t3)) !!}
                 </div>
                 @endif

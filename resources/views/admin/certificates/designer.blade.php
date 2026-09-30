@@ -49,6 +49,28 @@
         return 'JUARA 1';
     },
 
+    getFontFamily(fontKey) {
+        switch (fontKey) {
+            case 'times':
+                return "'Times New Roman', Times, 'Liberation Serif', serif";
+            case 'arial':
+                return "Arial, 'Helvetica Neue', Helvetica, sans-serif";
+            case 'arial-narrow':
+            case 'arial-narrow-bold':
+                return "'Arial Narrow', 'Nimbus Sans Narrow', 'Helvetica Neue Condensed', sans-serif-condensed, sans-serif";
+            case 'serif':
+                return "'Playfair Display', Georgia, Cambria, 'Times New Roman', serif";
+            case 'sans':
+            default:
+                return "'Plus Jakarta Sans', Arial, sans-serif";
+        }
+    },
+
+    isFontForceBold(fontKey, boldVal) {
+        if (fontKey === 'arial-narrow-bold') return true;
+        return !!boldVal;
+    },
+
     saveLayoutAjax() {
         this.saving = true;
         this.saveSuccess = false;
@@ -560,11 +582,12 @@
                              position: 'absolute',
                              top: cfg.nomor.top + '%',
                              left: cfg.nomor.left + '%',
-                             transform: 'translate(-50%, -50%)',
+                             transform: (cfg.nomor.align === 'left' ? 'translate(0, -50%)' : (cfg.nomor.align === 'right' ? 'translate(-100%, -50%)' : 'translate(-50%, -50%)')),
                              fontSize: (cfg.nomor.size * 0.45) + 'px',
                              color: cfg.nomor.color,
-                             fontWeight: cfg.nomor.bold ? 'bold' : 'normal',
-                             fontFamily: cfg.nomor.font === 'serif' ? 'Georgia, serif' : 'Plus Jakarta Sans, sans-serif'
+                             fontWeight: isFontForceBold(cfg.nomor.font, cfg.nomor.bold) ? 'bold' : 'normal',
+                             fontFamily: getFontFamily(cfg.nomor.font),
+                             textAlign: cfg.nomor.align || 'center'
                          }"
                          class="cursor-pointer transition hover:outline hover:outline-2 hover:outline-purple-500 whitespace-nowrap"
                          @click="activeTab = 'nomor'">
@@ -577,11 +600,12 @@
                              position: 'absolute',
                              top: cfg.nama.top + '%',
                              left: cfg.nama.left + '%',
-                             transform: 'translate(-50%, -50%)',
+                             transform: (cfg.nama.align === 'left' ? 'translate(0, -50%)' : (cfg.nama.align === 'right' ? 'translate(-100%, -50%)' : 'translate(-50%, -50%)')),
                              fontSize: (cfg.nama.size * 0.48) + 'px',
                              color: cfg.nama.color,
-                             fontWeight: cfg.nama.bold ? 'bold' : 'normal',
-                             fontFamily: cfg.nama.font === 'serif' ? 'Georgia, serif' : 'Plus Jakarta Sans, sans-serif',
+                             fontWeight: isFontForceBold(cfg.nama.font, cfg.nama.bold) ? 'bold' : 'normal',
+                             fontFamily: getFontFamily(cfg.nama.font),
+                             textAlign: cfg.nama.align || 'center',
                              letterSpacing: '0.5px'
                          }"
                          class="cursor-pointer transition hover:outline hover:outline-2 hover:outline-purple-500 whitespace-nowrap"
@@ -595,11 +619,12 @@
                              position: 'absolute',
                              top: cfg.sekolah.top + '%',
                              left: cfg.sekolah.left + '%',
-                             transform: 'translate(-50%, -50%)',
+                             transform: (cfg.sekolah.align === 'left' ? 'translate(0, -50%)' : (cfg.sekolah.align === 'right' ? 'translate(-100%, -50%)' : 'translate(-50%, -50%)')),
                              fontSize: (cfg.sekolah.size * 0.45) + 'px',
                              color: cfg.sekolah.color,
-                             fontWeight: cfg.sekolah.bold ? 'bold' : 'normal',
-                             fontFamily: cfg.sekolah.font === 'serif' ? 'Georgia, serif' : 'Plus Jakarta Sans, sans-serif'
+                             fontWeight: isFontForceBold(cfg.sekolah.font, cfg.sekolah.bold) ? 'bold' : 'normal',
+                             fontFamily: getFontFamily(cfg.sekolah.font),
+                             textAlign: cfg.sekolah.align || 'center'
                          }"
                          class="cursor-pointer transition hover:outline hover:outline-2 hover:outline-purple-500 whitespace-nowrap"
                          @click="activeTab = 'sekolah'">
@@ -615,8 +640,8 @@
                              transform: (cfg.predikat.align === 'left' ? 'translate(0, -50%)' : (cfg.predikat.align === 'right' ? 'translate(-100%, -50%)' : 'translate(-50%, -50%)')),
                              fontSize: (cfg.predikat.size * 0.48) + 'px',
                              color: cfg.predikat.color,
-                             fontWeight: cfg.predikat.bold ? 'bold' : 'normal',
-                             fontFamily: cfg.predikat.font === 'serif' ? 'Georgia, serif' : 'Plus Jakarta Sans, sans-serif',
+                             fontWeight: isFontForceBold(cfg.predikat.font, cfg.predikat.bold) ? 'bold' : 'normal',
+                             fontFamily: getFontFamily(cfg.predikat.font),
                              textAlign: cfg.predikat.align || 'center'
                          }"
                          class="cursor-pointer transition hover:outline hover:outline-2 hover:outline-purple-500 whitespace-nowrap"
@@ -630,11 +655,12 @@
                              position: 'absolute',
                              top: cfg.lomba.top + '%',
                              left: cfg.lomba.left + '%',
-                             transform: 'translate(-50%, -50%)',
+                             transform: (cfg.lomba.align === 'left' ? 'translate(0, -50%)' : (cfg.lomba.align === 'right' ? 'translate(-100%, -50%)' : 'translate(-50%, -50%)')),
                              fontSize: (cfg.lomba.size * 0.45) + 'px',
                              color: cfg.lomba.color,
-                             fontWeight: cfg.lomba.bold ? 'bold' : 'normal',
-                             fontFamily: cfg.lomba.font === 'serif' ? 'Georgia, serif' : 'Plus Jakarta Sans, sans-serif'
+                             fontWeight: isFontForceBold(cfg.lomba.font, cfg.lomba.bold) ? 'bold' : 'normal',
+                             fontFamily: getFontFamily(cfg.lomba.font),
+                             textAlign: cfg.lomba.align || 'center'
                          }"
                          class="cursor-pointer transition hover:outline hover:outline-2 hover:outline-purple-500 whitespace-nowrap"
                          @click="activeTab = 'lomba'">
@@ -647,11 +673,12 @@
                              position: 'absolute',
                              top: cfg.tanggal.top + '%',
                              left: cfg.tanggal.left + '%',
-                             transform: 'translate(-50%, -50%)',
+                             transform: (cfg.tanggal.align === 'left' ? 'translate(0, -50%)' : (cfg.tanggal.align === 'right' ? 'translate(-100%, -50%)' : 'translate(-50%, -50%)')),
                              fontSize: (cfg.tanggal.size * 0.45) + 'px',
                              color: cfg.tanggal.color,
-                             fontWeight: cfg.tanggal.bold ? 'bold' : 'normal',
-                             fontFamily: cfg.tanggal.font === 'serif' ? 'Georgia, serif' : 'Plus Jakarta Sans, sans-serif'
+                             fontWeight: isFontForceBold(cfg.tanggal.font, cfg.tanggal.bold) ? 'bold' : 'normal',
+                             fontFamily: getFontFamily(cfg.tanggal.font),
+                             textAlign: cfg.tanggal.align || 'center'
                          }"
                          class="cursor-pointer transition hover:outline hover:outline-2 hover:outline-purple-500 whitespace-nowrap"
                          @click="activeTab = 'tanggal'">
@@ -667,8 +694,8 @@
                              transform: (cfg.teks_1.align === 'left' ? 'translate(0, -50%)' : (cfg.teks_1.align === 'right' ? 'translate(-100%, -50%)' : 'translate(-50%, -50%)')),
                              fontSize: (cfg.teks_1.size * 0.45) + 'px',
                              color: cfg.teks_1.color,
-                             fontWeight: cfg.teks_1.bold ? 'bold' : 'normal',
-                             fontFamily: cfg.teks_1.font === 'serif' ? 'Georgia, serif' : 'Plus Jakarta Sans, sans-serif',
+                             fontWeight: isFontForceBold(cfg.teks_1.font, cfg.teks_1.bold) ? 'bold' : 'normal',
+                             fontFamily: getFontFamily(cfg.teks_1.font),
                              textAlign: cfg.teks_1.align || 'center'
                          }"
                          class="cursor-pointer transition hover:outline hover:outline-2 hover:outline-purple-500 whitespace-pre-wrap max-w-[80%]"
@@ -685,8 +712,8 @@
                              transform: (cfg.teks_2.align === 'left' ? 'translate(0, -50%)' : (cfg.teks_2.align === 'right' ? 'translate(-100%, -50%)' : 'translate(-50%, -50%)')),
                              fontSize: (cfg.teks_2.size * 0.45) + 'px',
                              color: cfg.teks_2.color,
-                             fontWeight: cfg.teks_2.bold ? 'bold' : 'normal',
-                             fontFamily: cfg.teks_2.font === 'serif' ? 'Georgia, serif' : 'Plus Jakarta Sans, sans-serif',
+                             fontWeight: isFontForceBold(cfg.teks_2.font, cfg.teks_2.bold) ? 'bold' : 'normal',
+                             fontFamily: getFontFamily(cfg.teks_2.font),
                              textAlign: cfg.teks_2.align || 'center'
                          }"
                          class="cursor-pointer transition hover:outline hover:outline-2 hover:outline-purple-500 whitespace-pre-wrap max-w-[80%]"
@@ -703,8 +730,8 @@
                              transform: (cfg.teks_3.align === 'left' ? 'translate(0, -50%)' : (cfg.teks_3.align === 'right' ? 'translate(-100%, -50%)' : 'translate(-50%, -50%)')),
                              fontSize: (cfg.teks_3.size * 0.45) + 'px',
                              color: cfg.teks_3.color,
-                             fontWeight: cfg.teks_3.bold ? 'bold' : 'normal',
-                             fontFamily: cfg.teks_3.font === 'serif' ? 'Georgia, serif' : 'Plus Jakarta Sans, sans-serif',
+                             fontWeight: isFontForceBold(cfg.teks_3.font, cfg.teks_3.bold) ? 'bold' : 'normal',
+                             fontFamily: getFontFamily(cfg.teks_3.font),
                              textAlign: cfg.teks_3.align || 'center'
                          }"
                          class="cursor-pointer transition hover:outline hover:outline-2 hover:outline-purple-500 whitespace-pre-wrap max-w-[80%]"
@@ -883,9 +910,13 @@
                                                 <input type="checkbox" x-model="val.bold" class="rounded border-white/[0.2] bg-slate-900 text-purple-600 focus:ring-0">
                                                 <span>Bold</span>
                                             </label>
-                                            <select x-show="val.font !== undefined" x-model="val.font" class="px-2 py-1 rounded bg-[#0C111D] border border-white/[0.1] text-[11px] text-white">
-                                                <option value="sans">Sans</option>
-                                                <option value="serif">Serif</option>
+                                            <select x-show="val.font !== undefined" x-model="val.font" class="px-2 py-1 rounded bg-[#0C111D] border border-white/[0.15] text-[11px] text-white outline-none cursor-pointer focus:border-purple-500">
+                                                <option value="times">Times New Roman</option>
+                                                <option value="arial">Arial</option>
+                                                <option value="arial-narrow">Arial Narrow (Reguler)</option>
+                                                <option value="arial-narrow-bold">Arial Narrow (Bold)</option>
+                                                <option value="sans">Plus Jakarta Sans</option>
+                                                <option value="serif">Playfair Display / Serif</option>
                                             </select>
                                         </div>
                                     </div>
