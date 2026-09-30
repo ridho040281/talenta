@@ -181,6 +181,11 @@ Route::middleware(['auth', 'role:pic_lomba,superadmin,panitia,admin'])->prefix('
     Route::post('/lomba/{competition_id}/stage-control/action', [StageController::class, 'handleAction'])->name('stage.control.action');
     Route::post('/lomba/{competition_id}/stage-control/reset-all', [StageController::class, 'resetAllStage'])->name('stage.control.reset_all');
 
+    // Multi-Judge Scoring Console for PIC & Operator
+    Route::get('/lomba/{competition_id}/scoring', [PicController::class, 'multiJudgeScoring'])->name('scoring');
+    Route::post('/lomba/{competition_id}/scoring/judges', [PicController::class, 'updateJudges'])->name('scoring.judges');
+    Route::post('/lomba/{competition_id}/scoring/peserta/{registration_id}', [PicController::class, 'storeMultiJudgeScore'])->name('scoring.save');
+
     // Berita Acara Lomba
     Route::get('/berita-acara', [OfficialReportController::class, 'index'])->name('berita-acara.index');
     Route::get('/berita-acara/cetak', [OfficialReportController::class, 'print'])->name('berita-acara.print');

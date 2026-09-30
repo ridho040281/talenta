@@ -360,14 +360,20 @@
                                 <span>Input Skor Pertandingan</span>
                             </a>
                         @else
-                            <a href="{{ route('juri.scoring', $comp['id']) }}" class="gradient-btn flex-1 py-2.5 px-4 rounded-xl text-white font-bold text-xs shadow-lg shadow-[#7A5AF8]/20 transition flex items-center justify-center gap-2 group/btn cursor-pointer">
-                                <i data-lucide="clipboard-pen" class="w-4 h-4 text-white group-hover/btn:scale-110 transition"></i>
-                                <span>Buka Lembar Penilaian Juri</span>
-                            </a>
+                            <div class="w-full grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <a href="{{ route('pic.scoring', $comp['id']) }}" class="py-2.5 px-3 rounded-xl bg-gradient-to-r from-indigo-500 to-[#4E6EFF] hover:from-indigo-600 hover:to-[#3b5beb] text-white font-black text-xs shadow-lg shadow-indigo-500/20 transition flex items-center justify-center gap-1.5 cursor-pointer" title="Input nilai dari banyak juri sekaligus dalam 1 layar">
+                                    <i data-lucide="edit-3" class="w-4 h-4 text-amber-300"></i>
+                                    <span>Input Multi-Juri (PIC)</span>
+                                </a>
+                                <a href="{{ route('juri.scoring', $comp['id']) }}" class="py-2.5 px-3 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 hover:text-white font-bold text-xs border border-white/[0.08] transition flex items-center justify-center gap-1.5 cursor-pointer" title="Buka lembar penilaian juri tunggal">
+                                    <i data-lucide="clipboard-pen" class="w-4 h-4 text-[#A594FD]"></i>
+                                    <span>Lembar Juri</span>
+                                </a>
+                            </div>
                             @if($isTimekeeperAllowed && !empty($comp['has_stage_timer']))
-                                <a href="{{ route('pic.stage.control', $comp['id']) }}" class="py-2.5 px-3 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold transition flex items-center gap-1.5 shrink-0" title="Buka Konsol Timekeeper / Operator Panggung">
+                                <a href="{{ route('pic.stage.control', $comp['id']) }}" class="w-full py-2 px-3 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold transition flex items-center justify-center gap-1.5" title="Buka Konsol Timekeeper / Operator Panggung">
                                     <i data-lucide="timer" class="w-4 h-4 text-amber-400"></i>
-                                    <span class="hidden sm:inline">Timekeeper</span>
+                                    <span>Kontrol Layar Panggung & Timekeeper</span>
                                 </a>
                             @endif
                         @endif

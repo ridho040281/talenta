@@ -7,10 +7,13 @@ use App\Models\AppSetting;
 use App\Models\BadmintonMatch;
 use App\Models\Category;
 use App\Models\Competition;
+use App\Models\CompetitionCriterion;
 use App\Models\DrawAllocation;
 use App\Models\Invoice;
 use App\Models\Registration;
 use App\Models\RegistrationMember;
+use App\Models\Score;
+use App\Models\ScoreDetail;
 use App\Models\User;
 use App\Services\ImageOptimizerService;
 use App\Services\WablasNotificationService;
@@ -2955,5 +2958,255 @@ class PicController extends Controller
         }
 
         return back()->with('success', $msg);
+    }
+
+    /**
+     * Multi-Judge Scoring Console for Competition PIC / Admin
+     */
+    public function multiJudgeScoring($competition_id)
+    {
+        $user = Auth::user();
+        $this->authorizeCompetitionManagement($user, $competition_id);
+
+        $competition = Competition::with([
+            'category',
+            'criteria',
+            'judges',
+            'registrations' => function ($q) {
+                $q->where('status', 'verified')
+                    ->with(['members', 'scores.details', 'school']);
+            },
+        ])->findOrFail($competition_id);
+
+        // If no criteria exist yet, auto create a standard default criterion so scoring is always functional
+        if ($competition->criteria->isEmpty()) {
+            CompetitionCriterion::create([
+                'competition_id' => $competition->id,
+                'name' => 'Nilai Keseluruhan',
+                'weight_percentage' => 100,
+                'min_score' => 0,
+                'max_score' => 100,
+                'description' => 'Nilai akumulatif penampilan peserta',
+            ]);
+            $competition->load('criteria');
+        }
+
+        // If no judges assigned yet, auto-create default 3 judges (Juri 1, Juri 2, Juri 3)
+        if ($competition->judges->isEmpty()) {
+            for ($i = 1; $i <= 3; $i++) {
+                $judgeUser = User::firstOrCreate(
+                    ['username' => 'juri_comp_'.$competition->id.'_'.$i],
+                    [
+                        'name' => 'Dewan Juri '.$i,
+                        'email' => 'juri'.$i.'_comp'.$competition->id.'@talenta.local',
+                        'password' => Hash::make('talenta2026'),
+                        'role' => 'juri',
+                        'is_active' => true,
+                    ]
+                );
+
+                $competition->judges()->syncWithoutDetaching([
+                    $judgeUser->id => ['role_title' => 'Juri '.$i],
+                ]);
+            }
+            $competition->load('judges');
+        }
+
+        // Sort participants by Draw Number (ascending), nulls last, then ID
+        $participants = $competition->registrations->sortBy(function ($reg) {
+            return $reg->draw_number ?? 99999;
+        })->values();
+
+        // Build existing scores map: [registration_id => [judge_id => ['total' => ..., 'is_locked' => ..., 'criteria' => [criterion_id => val], 'notes' => ...]]]
+        $scoresMap = [];
+        foreach ($participants as $reg) {
+            $regScores = [];
+            foreach ($reg->scores as $score) {
+                $critValues = [];
+                foreach ($score->details as $det) {
+                    $critValues[$det->criterion_id] = (float) $det->score_value;
+                }
+                $regScores[$score->judge_id] = [
+                    'score_id' => $score->id,
+                    'total_score' => (float) $score->total_score,
+                    'is_locked' => (bool) $score->is_locked,
+                    'notes' => $score->notes ?: '',
+                    'criteria' => $critValues,
+                ];
+            }
+            $scoresMap[$reg->id] = $regScores;
+        }
+
+        return view('pic.scoring', compact('competition', 'participants', 'scoresMap', 'user'));
+    }
+
+    /**
+     * Update / Set Judge Names and Roles for Competition
+     */
+    public function updateJudges(Request $request, $competition_id)
+    {
+        $user = Auth::user();
+        $this->authorizeCompetitionManagement($user, $competition_id);
+
+        $competition = Competition::with('judges')->findOrFail($competition_id);
+
+        $validated = $request->validate([
+            'judges' => ['required', 'array', 'min:1'],
+            'judges.*.id' => ['nullable'],
+            'judges.*.name' => ['required', 'string', 'max:255'],
+            'judges.*.role_title' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $syncData = [];
+        $existingJudges = $competition->judges->keyBy('id');
+
+        foreach ($validated['judges'] as $index => $jData) {
+            $jName = trim($jData['name']);
+            $jRole = trim($jData['role_title'] ?? ('Juri '.($index + 1)));
+            $jId = ! empty($jData['id']) ? (int) $jData['id'] : null;
+
+            if ($jId && $existingJudges->has($jId)) {
+                $judgeUser = $existingJudges->get($jId);
+                $judgeUser->update(['name' => $jName]);
+            } else {
+                // Find or create judge user
+                $judgeUser = User::create([
+                    'name' => $jName,
+                    'username' => 'juri_comp_'.$competition->id.'_'.($index + 1).'_'.Str::random(4),
+                    'email' => 'juri_'.Str::slug($jName, '_').'_'.Str::random(4).'@talenta.local',
+                    'password' => Hash::make('talenta2026'),
+                    'role' => 'juri',
+                    'is_active' => true,
+                ]);
+            }
+
+            $syncData[$judgeUser->id] = ['role_title' => $jRole];
+        }
+
+        $competition->judges()->sync($syncData);
+        $competition->load('judges');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Daftar nama Dewan Juri berhasil disimpan!',
+            'judges' => $competition->judges->map(function ($j) {
+                return [
+                    'id' => $j->id,
+                    'name' => $j->name,
+                    'role_title' => $j->pivot->role_title ?? 'Dewan Juri',
+                ];
+            }),
+        ]);
+    }
+
+    /**
+     * Store / Update Multi-Judge Score for a Single Registration
+     */
+    public function storeMultiJudgeScore(Request $request, $competition_id, $registration_id)
+    {
+        $user = Auth::user();
+        $this->authorizeCompetitionManagement($user, $competition_id);
+
+        $competition = Competition::with(['criteria', 'judges'])->findOrFail($competition_id);
+        $registration = Registration::where('id', $registration_id)
+            ->where('competition_id', $competition->id)
+            ->firstOrFail();
+
+        $validated = $request->validate([
+            'scores' => ['required', 'array'],
+            'scores.*.criteria' => ['nullable', 'array'],
+            'scores.*.notes' => ['nullable', 'string'],
+            'is_locked' => ['nullable', 'boolean'],
+        ]);
+
+        $isLocked = $request->boolean('is_locked', true);
+        $criteria = $competition->criteria;
+        $totalWeight = $criteria->sum('weight_percentage') ?: 100;
+        $updatedScores = [];
+
+        DB::transaction(function () use ($competition, $registration, $validated, $criteria, $totalWeight, $isLocked, &$updatedScores) {
+            foreach ($validated['scores'] as $judgeId => $judgeData) {
+                // Verify judge belongs to this competition
+                $judgeUser = $competition->judges->firstWhere('id', (int) $judgeId);
+                if (! $judgeUser) {
+                    continue;
+                }
+
+                $critInputs = $judgeData['criteria'] ?? [];
+                $totalScore = 0;
+                $hasInput = false;
+
+                if ($criteria->isNotEmpty()) {
+                    foreach ($criteria as $criterion) {
+                        $rawVal = isset($critInputs[$criterion->id]) ? (float) $critInputs[$criterion->id] : 0;
+                        if (isset($critInputs[$criterion->id]) && $critInputs[$criterion->id] !== '' && $critInputs[$criterion->id] !== null) {
+                            $hasInput = true;
+                        }
+                        $weight = $criterion->weight_percentage ?: 100;
+                        $totalScore += ($rawVal * ($weight / $totalWeight));
+                    }
+                } else {
+                    $rawVal = isset($judgeData['direct_score']) ? (float) $judgeData['direct_score'] : 0;
+                    if (isset($judgeData['direct_score']) && $judgeData['direct_score'] !== '' && $judgeData['direct_score'] !== null) {
+                        $hasInput = true;
+                    }
+                    $totalScore = $rawVal;
+                }
+
+                // Only save if at least one criterion was entered or explicitly submitted
+                if ($hasInput || $isLocked) {
+                    $score = Score::updateOrCreate(
+                        [
+                            'competition_id' => $competition->id,
+                            'registration_id' => $registration->id,
+                            'judge_id' => $judgeUser->id,
+                        ],
+                        [
+                            'total_score' => round($totalScore, 2),
+                            'is_locked' => $isLocked,
+                            'notes' => $judgeData['notes'] ?? null,
+                        ]
+                    );
+
+                    foreach ($criteria as $criterion) {
+                        $rawVal = isset($critInputs[$criterion->id]) ? (float) $critInputs[$criterion->id] : 0;
+                        ScoreDetail::updateOrCreate(
+                            [
+                                'score_id' => $score->id,
+                                'criterion_id' => $criterion->id,
+                            ],
+                            [
+                                'score_value' => $rawVal,
+                            ]
+                        );
+                    }
+
+                    $updatedScores[$judgeUser->id] = [
+                        'score_id' => $score->id,
+                        'total_score' => (float) $score->total_score,
+                        'is_locked' => (bool) $score->is_locked,
+                        'notes' => $score->notes ?: '',
+                        'criteria' => $critInputs,
+                    ];
+                }
+            }
+        });
+
+        // Recalculate average score for this registration
+        $allLockedScores = Score::where('competition_id', $competition->id)
+            ->where('registration_id', $registration->id)
+            ->where('is_locked', true)
+            ->get();
+
+        $avgScore = $allLockedScores->isNotEmpty() ? round($allLockedScores->avg('total_score'), 2) : 0;
+        $totalJudgesScored = $allLockedScores->count();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Nilai untuk '.$registration->display_name.' berhasil disimpan dan disinkronkan!',
+            'average_score' => $avgScore,
+            'total_judges_scored' => $totalJudgesScored,
+            'scores' => $updatedScores,
+        ]);
     }
 }
