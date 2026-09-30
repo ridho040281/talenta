@@ -415,6 +415,7 @@ class CertificateController extends Controller
         $type = $request->query('type', 'juara');
         $registrationId = $request->query('registration_id');
         $competitionId = $request->query('competition_id');
+        $templateId = $request->query('template_id');
 
         $registration = null;
         $competition = null;
@@ -428,7 +429,17 @@ class CertificateController extends Controller
 
         // Get template
         $template = null;
-        if ($competition) {
+        if ($templateId) {
+            $template = CertificateTemplate::find($templateId);
+            if ($template) {
+                $type = $template->type;
+                if ($template->competition && ! $competition) {
+                    $competition = $template->competition;
+                }
+            }
+        }
+
+        if (! $template && $competition) {
             $template = CertificateTemplate::where('type', $type)
                 ->where('competition_id', $competition->id)
                 ->where('is_active', true)
@@ -454,7 +465,7 @@ class CertificateController extends Controller
         // Prepare single item data
         $certNumberSeq = $request->query('cert_seq', '001');
         $rankTitle = $request->query('rank');
-        if (! $rankTitle) {
+        if (! $rankTitle || ($type === 'peserta' && strtolower($rankTitle) === 'juara 1')) {
             $rankTitle = ! empty($template->layout_config['predikat']['text'])
                 ? $template->layout_config['predikat']['text']
                 : match ($type) {

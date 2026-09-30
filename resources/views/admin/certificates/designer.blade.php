@@ -105,13 +105,14 @@
 
             testPrint() {
                 const url = new URL(@json(route('admin.certificates.print')), window.location.origin);
+                url.searchParams.set('template_id', @json($template->id));
                 url.searchParams.set('type', @json($template->type));
                 @if($template->competition_id)
                 url.searchParams.set('competition_id', @json($template->competition_id));
                 @endif
                 url.searchParams.set('name', 'AHMAD FAUZI NURDIN');
                 url.searchParams.set('school', 'MTs Negeri 1 Blitar');
-                url.searchParams.set('rank', 'Juara 1');
+                url.searchParams.set('rank', this.getPredikatPreview());
                 url.searchParams.set('cert_seq', '001');
                 window.open(url.toString(), '_blank');
             }

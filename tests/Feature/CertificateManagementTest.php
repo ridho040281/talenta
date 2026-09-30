@@ -4,10 +4,13 @@ namespace Tests\Feature;
 
 use App\Models\CertificateTemplate;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class CertificateManagementTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_public_certificate_verify_page_is_accessible(): void
     {
         $response = $this->get('/verifikasi-sertifikat/TLT-JRA-MTQ-0001');
@@ -67,6 +70,12 @@ class CertificateManagementTest extends TestCase
         $response = $this->actingAs($admin)->get(route('admin.certificates.print', ['type' => 'peserta']));
         $response->assertStatus(200);
         $response->assertSee('PESERTA');
+
+        // Even if rank=Juara 1 is passed in query, peserta certificate must not show Juara 1
+        $response2 = $this->actingAs($admin)->get(route('admin.certificates.print', ['type' => 'peserta', 'rank' => 'Juara 1']));
+        $response2->assertStatus(200);
+        $response2->assertSee('PESERTA');
+        $response2->assertDontSee('Juara 1');
     }
 
     public function test_admin_can_save_custom_predikat_text(): void
