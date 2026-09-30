@@ -1220,12 +1220,12 @@ function multiJudgeScoringApp(competition, initialJudges, initialCriteria, initi
 
         <!-- Table Headers -->
         <tr>
-            <th rowspan="${isDetailed ? 2 : 1}" class="th-main" style="width:50px;">Rank</th>
-            <th rowspan="${isDetailed ? 2 : 1}" class="th-main" style="width:70px;">#Undian</th>
-            <th rowspan="${isDetailed ? 2 : 1}" class="th-main" style="width:85px;">No. Peserta</th>
-            <th rowspan="${isDetailed ? 2 : 1}" class="th-main" style="width:200px;">Nama Lengkap Peserta</th>
-            <th rowspan="${isDetailed ? 2 : 1}" class="th-main" style="width:200px;">Asal Lembaga / Sekolah</th>
-            <th rowspan="${isDetailed ? 2 : 1}" class="th-main" style="width:60px;">Sektor</th>
+            <th rowspan="${isDetailed ? 2 : 1}" class="th-main" style="width:60px;">Rank</th>
+            <th rowspan="${isDetailed ? 2 : 1}" class="th-main" style="width:75px;">#Undian</th>
+            <th rowspan="${isDetailed ? 2 : 1}" class="th-main" style="width:90px;">No. Peserta</th>
+            <th rowspan="${isDetailed ? 2 : 1}" class="th-main" style="width:260px; min-width:260px;">Nama Lengkap Peserta</th>
+            <th rowspan="${isDetailed ? 2 : 1}" class="th-main" style="width:240px; min-width:240px;">Asal Lembaga / Sekolah</th>
+            <th rowspan="${isDetailed ? 2 : 1}" class="th-main" style="width:65px;">Sektor</th>
 `;
 
             // Judges Columns Header
@@ -1234,13 +1234,13 @@ function multiJudgeScoringApp(competition, initialJudges, initialCriteria, initi
                 if (isDetailed) {
                     html += `            <th colspan="${this.criteria.length + 1}" class="th-judge">${jTitle}</th>\n`;
                 } else {
-                    html += `            <th class="th-judge" style="width:90px;">${jTitle} (Total)</th>\n`;
+                    html += `            <th class="th-judge" style="width:95px;">${jTitle} (Total)</th>\n`;
                 }
             });
 
-            html += `            <th rowspan="${isDetailed ? 2 : 1}" class="th-total" style="width:90px;">Total Skor</th>
-            <th rowspan="${isDetailed ? 2 : 1}" class="th-avg" style="width:90px;">Rata-Rata</th>
-            <th rowspan="${isDetailed ? 2 : 1}" class="th-status" style="width:110px;">Status Penilaian</th>
+            html += `            <th rowspan="${isDetailed ? 2 : 1}" class="th-total" style="width:95px;">Total Skor</th>
+            <th rowspan="${isDetailed ? 2 : 1}" class="th-avg" style="width:95px;">Rata-Rata</th>
+            <th rowspan="${isDetailed ? 2 : 1}" class="th-status" style="width:120px;">Status Penilaian</th>
         </tr>
 `;
 
@@ -1249,9 +1249,9 @@ function multiJudgeScoringApp(competition, initialJudges, initialCriteria, initi
                 html += `        <tr>\n`;
                 this.judges.forEach(j => {
                     this.criteria.forEach(c => {
-                        html += `            <th class="th-crit" style="width:75px;">${c.name}</th>\n`;
+                        html += `            <th class="th-crit" style="width:80px;">${c.name}</th>\n`;
                     });
-                    html += `            <th class="th-subtotal" style="width:75px;">Total Juri</th>\n`;
+                    html += `            <th class="th-subtotal" style="width:80px;">Total Juri</th>\n`;
                 });
                 html += `        </tr>\n`;
             }
@@ -1267,8 +1267,8 @@ function multiJudgeScoringApp(competition, initialJudges, initialCriteria, initi
             <td class="${rankClass}">${rank ? ('Juara ' + rank) : '-'}</td>
             <td class="text-center mso-text">${reg.draw_number ? ('#' + reg.draw_number) : '-'}</td>
             <td class="text-center mso-text">${reg.participant_number || '-'}</td>
-            <td class="text-left bold">${reg.name || '-'}</td>
-            <td class="text-left">${reg.institution || '-'}</td>
+            <td class="text-left bold" style="white-space:nowrap;">${reg.name || '-'}</td>
+            <td class="text-left" style="white-space:nowrap;">${reg.institution || '-'}</td>
             <td class="text-center ${genderClass}">${genderLabel}</td>
 `;
 
