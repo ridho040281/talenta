@@ -77,32 +77,6 @@
                     <span>Kelola Nama Juri</span>
                     <span class="px-2 py-0.5 rounded-full bg-indigo-500/30 text-white font-mono text-[10px]" x-text="judges.length + ' Juri'"></span>
                 </button>
-
-                @if($isStageSupported)
-                <!-- Stage Control Link -->
-                <a href="{{ route('pic.stage.control', $competition->id) }}" 
-                   class="px-3.5 py-2.5 rounded-2xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 hover:text-white border border-white/[0.08] text-xs font-bold transition flex items-center gap-1.5">
-                    <i data-lucide="timer" class="w-4 h-4 text-amber-400"></i>
-                    <span>Layar Panggung</span>
-                </a>
-                @endif
-
-                <!-- Live Scoreboard Link -->
-                <a href="{{ route('live.scoreboard', $competition->slug ?: $competition->code) }}" 
-                   target="_blank" 
-                   class="px-3.5 py-2.5 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-xs font-bold transition flex items-center gap-1.5">
-                    <i data-lucide="tv" class="w-4 h-4 text-emerald-400"></i>
-                    <span>Scoreboard</span>
-                    <i data-lucide="external-link" class="w-3 h-3 opacity-60"></i>
-                </a>
-
-                <!-- Recap & Winners -->
-                <button type="button" 
-                        @click="switchTab('rekap')" 
-                        class="px-3.5 py-2.5 rounded-2xl bg-[#7A5AF8]/20 hover:bg-[#7A5AF8]/30 text-[#C7D2FE] hover:text-white border border-[#7A5AF8]/40 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
-                    <i data-lucide="trophy" class="w-4 h-4 text-amber-400"></i>
-                    <span>Rekap & Juara</span>
-                </button>
             </div>
 
         </div>
