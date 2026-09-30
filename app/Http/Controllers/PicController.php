@@ -1386,8 +1386,10 @@ class PicController extends Controller
 
             $no = 1;
             foreach ($sorted as $reg) {
-                $firstMember = $reg->members->first();
-                $isGanda = $reg->members->count() > 1 || $reg->isGanda();
+                $members = $reg->members;
+                $memberCount = $members->count();
+                $firstMember = $members->first();
+                $isGanda = $memberCount > 1 || $reg->isGanda();
                 $gender = $reg->primary_gender;
                 $genderClass = ($gender === 'L') ? 'pa' : (($gender === 'P') ? 'pi' : '');
                 $genderLabel = ($gender === 'L') ? 'Putra (PA)' : (($gender === 'P') ? 'Putri (PI)' : 'Ganda / Campuran');
@@ -1417,22 +1419,80 @@ class PicController extends Controller
                     }
                 }
 
-                $participantPureName = $reg->pure_name;
-                $schoolName = $reg->display_school ?: ($reg->institution_name ?: '-');
+                // Format Nama Peserta / Tim & Seluruh Anggota
+                if ($memberCount > 1 || ! empty($reg->team_name)) {
+                    $nameParts = [];
+                    if (! empty($reg->team_name)) {
+                        $nameParts[] = '<strong>'.htmlspecialchars($reg->team_name).'</strong>';
+                    }
+                    if ($memberCount > 0) {
+                        foreach ($members as $idx => $m) {
+                            $roleSuffix = ($idx === 0 && ! empty($reg->team_name)) ? ' <em>(Ketua)</em>' : '';
+                            $nameParts[] = ($idx + 1).'. '.htmlspecialchars($m->full_name).$roleSuffix;
+                        }
+                    } else {
+                        $nameParts[] = htmlspecialchars($reg->pure_name);
+                    }
+                    $participantCellHtml = implode('<br>', $nameParts);
+                } else {
+                    $participantCellHtml = htmlspecialchars($firstMember?->full_name ?: $reg->pure_name);
+                }
+
+                // Format NISN seluruh anggota
+                if ($memberCount > 1) {
+                    $nisnParts = [];
+                    foreach ($members as $idx => $m) {
+                        $nisnParts[] = ($idx + 1).'. '.htmlspecialchars($m->nisn ?: '-');
+                    }
+                    $nisnCellHtml = implode('<br>', $nisnParts);
+                } else {
+                    $nisnCellHtml = htmlspecialchars($firstMember?->nisn ?: '-');
+                }
+
+                // Format Gender
+                if ($memberCount > 1) {
+                    $genders = $members->pluck('gender')->filter();
+                    if ($genders->every(fn ($g) => $g === 'L')) {
+                        $genderCellHtml = 'Putra (PA)';
+                    } elseif ($genders->every(fn ($g) => $g === 'P')) {
+                        $genderCellHtml = 'Putri (PI)';
+                    } else {
+                        $genderParts = [];
+                        foreach ($members as $idx => $m) {
+                            $genderParts[] = ($idx + 1).'. '.($m->gender === 'L' ? 'PA' : ($m->gender === 'P' ? 'PI' : '-'));
+                        }
+                        $genderCellHtml = implode('<br>', $genderParts);
+                    }
+                } else {
+                    $genderCellHtml = htmlspecialchars($genderLabel);
+                }
+
+                // Format Asal Sekolah
+                $defaultSchool = $reg->display_school ?: ($reg->institution_name ?: '-');
+                $uniqueSchools = $members->pluck('school_name')->filter()->unique();
+                if ($memberCount > 1 && $uniqueSchools->count() > 1) {
+                    $schoolParts = [];
+                    foreach ($members as $idx => $m) {
+                        $schoolParts[] = ($idx + 1).'. '.htmlspecialchars($m->school_name ?: $defaultSchool);
+                    }
+                    $schoolCellHtml = implode('<br>', $schoolParts);
+                } else {
+                    $schoolCellHtml = htmlspecialchars($defaultSchool);
+                }
 
                 echo '<tr class="'.$genderClass.'">
                     <td class="center">'.$no++.'</td>
-                    <td class="center">'.htmlspecialchars($reg->registration_code).'</td>
-                    <td class="center bold">'.htmlspecialchars($reg->participant_number ?: '-').'</td>
+                    <td class="center" style="mso-number-format:\'@\';">'.htmlspecialchars($reg->registration_code).'</td>
+                    <td class="center bold" style="mso-number-format:\'@\';">'.htmlspecialchars($reg->participant_number ?: '-').'</td>
                     '.(! $hideDrawCol ? '<td class="center bold">'.htmlspecialchars($reg->draw_number ? '#'.$reg->draw_number : '-').'</td>' : '').'
-                    <td class="bold">'.htmlspecialchars($participantPureName).'</td>
-                    <td class="center">'.htmlspecialchars($firstMember?->nisn ?: '-').'</td>
-                    <td class="center bold">'.htmlspecialchars($genderLabel).'</td>
+                    <td class="bold">'.$participantCellHtml.'</td>
+                    <td class="center" style="mso-number-format:\'@\';">'.$nisnCellHtml.'</td>
+                    <td class="center bold">'.$genderCellHtml.'</td>
                     <td>'.htmlspecialchars($reg->competition->name ?? '-').'</td>
                     <td>'.htmlspecialchars($sectorLabel).'</td>
-                    <td>'.htmlspecialchars($schoolName).'</td>
+                    <td>'.$schoolCellHtml.'</td>
                     <td>'.htmlspecialchars($reg->official_name ?: '-').'</td>
-                    <td class="center">'.htmlspecialchars($reg->official_phone ?: '-').'</td>
+                    <td class="center" style="mso-number-format:\'@\';">'.htmlspecialchars($reg->official_phone ?: '-').'</td>
                     <td class="center bold">'.ucfirst($reg->status).'</td>
                 </tr>';
             }
