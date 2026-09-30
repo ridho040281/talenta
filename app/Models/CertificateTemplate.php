@@ -70,6 +70,7 @@ class CertificateTemplate extends Model
                 'visible' => true,
             ],
             'predikat' => [
+                'text' => '',
                 'top' => 61,
                 'left' => 50,
                 'size' => 22,

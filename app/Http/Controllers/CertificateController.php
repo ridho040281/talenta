@@ -153,23 +153,31 @@ class CertificateController extends Controller
                     ];
                 }
             } elseif ($type === 'peserta') {
+                $pesertaRole = ! empty($template->layout_config['predikat']['text'])
+                    ? $template->layout_config['predikat']['text']
+                    : 'PESERTA';
+
                 $recipients = $selectedComp->registrations()
                     ->where('status', 'verified')
                     ->with(['members', 'user'])
                     ->orderBy('participant_number', 'asc')
                     ->get()
-                    ->map(function ($r) use ($selectedComp) {
+                    ->map(function ($r) use ($selectedComp, $pesertaRole) {
                         return [
                             'id' => $r->id,
                             'registration' => $r,
                             'participant_number' => $r->participant_number ?: $r->registration_code,
                             'name' => $r->pure_name ?: ($r->team_name ?: ($r->members->first()?->full_name ?? ('Peserta #'.$r->id))),
                             'institution' => $r->display_school ?: ($r->institution_name ?: '-'),
-                            'role_label' => 'Sebagai Peserta',
+                            'role_label' => $pesertaRole,
                             'competition_name' => $selectedComp->name,
                         ];
                     });
             } elseif ($type === 'pembimbing') {
+                $pembimbingRole = ! empty($template->layout_config['predikat']['text'])
+                    ? $template->layout_config['predikat']['text']
+                    : 'GURU PEMBIMBING';
+
                 $regs = $selectedComp->registrations()
                     ->where('status', 'verified')
                     ->whereNotNull('official_name')
@@ -187,21 +195,25 @@ class CertificateController extends Controller
                             'name' => $r->official_name,
                             'institution' => $r->display_school ?: ($r->institution_name ?: '-'),
                             'phone' => $r->official_phone ?: '-',
-                            'role_label' => 'Sebagai Guru Pembimbing / Pendamping',
+                            'role_label' => $pembimbingRole,
                             'competition_name' => $selectedComp->name,
                         ];
                     }
                 }
                 $recipients = collect(array_values($uniqueOfficials));
             } elseif ($type === 'juri') {
+                $juriRole = ! empty($template->layout_config['predikat']['text'])
+                    ? $template->layout_config['predikat']['text']
+                    : 'DEWAN JURI / WASIT';
+
                 $judges = $selectedComp->judges;
-                $recipients = $judges->map(function ($j) use ($selectedComp) {
+                $recipients = $judges->map(function ($j) use ($selectedComp, $juriRole) {
                     return [
                         'id' => $j->id,
                         'participant_number' => '-',
                         'name' => $j->name,
                         'institution' => $j->institution ?? 'Dewan Juri / Wasit TALENTA',
-                        'role_label' => 'Sebagai Dewan Juri / Wasit',
+                        'role_label' => $juriRole,
                         'competition_name' => $selectedComp->name,
                     ];
                 });
@@ -441,7 +453,18 @@ class CertificateController extends Controller
 
         // Prepare single item data
         $certNumberSeq = $request->query('cert_seq', '001');
-        $rankTitle = $request->query('rank', 'Juara 1');
+        $rankTitle = $request->query('rank');
+        if (! $rankTitle) {
+            $rankTitle = ! empty($template->layout_config['predikat']['text'])
+                ? $template->layout_config['predikat']['text']
+                : match ($type) {
+                    'juara' => 'Juara 1',
+                    'peserta' => 'PESERTA',
+                    'pembimbing' => 'GURU PEMBIMBING',
+                    'juri' => 'DEWAN JURI / WASIT',
+                    default => 'PESERTA',
+                };
+        }
         $recipientName = $request->query('name');
         $schoolName = $request->query('school');
 
@@ -475,7 +498,7 @@ class CertificateController extends Controller
                 'cert_number' => $certNumber,
                 'name' => $recipientName,
                 'institution' => $schoolName,
-                'predikat' => $type === 'juara' ? $rankTitle : ($type === 'peserta' ? 'Sebagai Peserta' : ($type === 'pembimbing' ? 'Sebagai Pembina / Pendamping' : 'Sebagai Dewan Juri / Wasit')),
+                'predikat' => $rankTitle,
                 'competition_name' => $competition ? ($competition->name.($registration && $registration->sub_category ? ' ('.$registration->sub_category.')' : '')) : 'TALENTA MTsN 1 Blitar',
                 'date_formatted' => 'Blitar, '.$dateSpelled['date_formatted'],
                 'qr_svg' => $qrSvg,
@@ -648,12 +671,16 @@ class CertificateController extends Controller
                 $participantName = $r->pure_name ?: ($r->team_name ?: ($r->members->first()?->full_name ?? ('Peserta #'.$r->id)));
                 $schoolName = $r->display_school ?: ($r->institution_name ?: '-');
 
+                $pesertaPredikat = ! empty($template->layout_config['predikat']['text'])
+                    ? $template->layout_config['predikat']['text']
+                    : 'PESERTA';
+
                 $certificateItems[] = [
                     'cert_code' => $certCode,
                     'cert_number' => $certNumber,
                     'name' => $participantName,
                     'institution' => $schoolName,
-                    'predikat' => 'Sebagai Peserta',
+                    'predikat' => $pesertaPredikat,
                     'competition_name' => $competition->name,
                     'date_formatted' => 'Blitar, '.$dateSpelled['date_formatted'],
                     'qr_svg' => $qrSvg,
@@ -691,12 +718,16 @@ class CertificateController extends Controller
                 $verifyUrl = QrSignatureService::certificateUrl($certCode);
                 $qrSvg = QrSignatureService::generateSvg($verifyUrl, 85);
 
+                $pembimbingPredikat = ! empty($template->layout_config['predikat']['text'])
+                    ? $template->layout_config['predikat']['text']
+                    : 'GURU PEMBIMBING';
+
                 $certificateItems[] = [
                     'cert_code' => $certCode,
                     'cert_number' => $certNumber,
                     'name' => $off['official_name'],
                     'institution' => $off['institution'],
-                    'predikat' => 'Sebagai Guru Pembimbing / Pendamping',
+                    'predikat' => $pembimbingPredikat,
                     'competition_name' => $competition->name,
                     'date_formatted' => 'Blitar, '.$dateSpelled['date_formatted'],
                     'qr_svg' => $qrSvg,
@@ -717,12 +748,16 @@ class CertificateController extends Controller
                 $verifyUrl = QrSignatureService::certificateUrl($certCode);
                 $qrSvg = QrSignatureService::generateSvg($verifyUrl, 85);
 
+                $juriPredikat = ! empty($template->layout_config['predikat']['text'])
+                    ? $template->layout_config['predikat']['text']
+                    : 'DEWAN JURI / WASIT';
+
                 $certificateItems[] = [
                     'cert_code' => $certCode,
                     'cert_number' => $certNumber,
                     'name' => $j->name,
                     'institution' => $j->institution ?? 'Dewan Juri / Wasit TALENTA',
-                    'predikat' => 'Sebagai Dewan Juri / Wasit',
+                    'predikat' => $juriPredikat,
                     'competition_name' => $competition->name,
                     'date_formatted' => 'Blitar, '.$dateSpelled['date_formatted'],
                     'qr_svg' => $qrSvg,
@@ -766,7 +801,6 @@ class CertificateController extends Controller
         // Determine if participant is winner or participant
         $competition = $registration->competition;
         $type = 'peserta';
-        $rankTitle = 'Sebagai Peserta';
 
         // Check winner status from scores
         $template = CertificateTemplate::where('type', $type)
@@ -789,6 +823,10 @@ class CertificateController extends Controller
                 'number_format' => '[NO]/TALENTA/MTsN1-BLT/[MONTH]/[YEAR]',
             ]);
         }
+
+        $rankTitle = ! empty($template->layout_config['predikat']['text'])
+            ? $template->layout_config['predikat']['text']
+            : 'PESERTA';
 
         $nowDate = Carbon::now();
         $dateSpelled = OfficialReportController::getDateSpelledOut($nowDate);

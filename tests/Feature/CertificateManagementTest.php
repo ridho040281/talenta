@@ -57,4 +57,43 @@ class CertificateManagementTest extends TestCase
         $template->refresh();
         $this->assertEquals(40, $template->layout_config['nama']['size']);
     }
+
+    public function test_peserta_certificate_predikat_defaults_to_peserta(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'superadmin',
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('admin.certificates.print', ['type' => 'peserta']));
+        $response->assertStatus(200);
+        $response->assertSee('PESERTA');
+    }
+
+    public function test_admin_can_save_custom_predikat_text(): void
+    {
+        $this->withoutMiddleware();
+
+        $admin = User::factory()->create([
+            'role' => 'superadmin',
+        ]);
+
+        $template = CertificateTemplate::create([
+            'name' => 'Template Peserta Test',
+            'type' => 'peserta',
+            'layout_config' => CertificateTemplate::defaultLayoutConfig(),
+        ]);
+
+        $newLayout = CertificateTemplate::defaultLayoutConfig();
+        $newLayout['predikat']['text'] = 'PESERTA TELADAN';
+
+        $response = $this->actingAs($admin)->postJson(route('admin.certificates.template.layout', $template->id), [
+            'layout_config' => $newLayout,
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson(['success' => true]);
+
+        $template->refresh();
+        $this->assertEquals('PESERTA TELADAN', $template->layout_config['predikat']['text']);
+    }
 }

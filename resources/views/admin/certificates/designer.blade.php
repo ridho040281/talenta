@@ -27,7 +27,7 @@
                 nomor: { top: 25, left: 50, size: 14, color: '#1e293b', bold: false, align: 'center', font: 'sans', visible: true },
                 nama: { top: 43, left: 50, size: 32, color: '#0f172a', bold: true, align: 'center', font: 'serif', visible: true },
                 sekolah: { top: 53, left: 50, size: 18, color: '#334155', bold: false, align: 'center', font: 'sans', visible: true },
-                predikat: { top: 61, left: 50, size: 22, color: '#b45309', bold: true, align: 'center', font: 'sans', visible: true },
+                predikat: { text: '', top: 61, left: 50, size: 22, color: '#b45309', bold: true, align: 'center', font: 'sans', visible: true },
                 lomba: { top: 68, left: 50, size: 18, color: '#1e293b', bold: true, align: 'center', font: 'sans', visible: true },
                 tanggal: { top: 79, left: 75, size: 14, color: '#334155', bold: false, align: 'center', font: 'sans', visible: true },
                 qrcode: { top: 75, left: 15, size: 75, visible: true },
@@ -36,6 +36,17 @@
                 teks_3: { text: '', top: 71, left: 50, size: 14, color: '#1e293b', bold: false, align: 'center', font: 'sans', visible: false }
             };
         }
+    },
+
+    getPredikatPreview() {
+        if (this.cfg.predikat && this.cfg.predikat.text && this.cfg.predikat.text.trim() !== '') {
+            return this.cfg.predikat.text;
+        }
+        const t = '{{ $template->type }}';
+        if (t === 'peserta') return 'PESERTA';
+        if (t === 'pembimbing') return 'GURU PEMBIMBING';
+        if (t === 'juri') return 'DEWAN JURI / WASIT';
+        return 'JUARA 1';
     },
 
     saveLayoutAjax() {
@@ -247,7 +258,7 @@
                                 <i data-lucide="award" class="w-3.5 h-3.5"></i>
                             </div>
                             <div>
-                                <div class="text-xs font-bold">Predikat / Kategori</div>
+                                <div class="text-xs font-bold">{{ $template->type === 'peserta' ? 'Status Peserta' : ($template->type === 'juara' ? 'Predikat Juara' : 'Predikat / Peran') }}</div>
                                 <div class="text-[10px] text-slate-400 font-mono" x-text="'Y: ' + cfg.predikat.top + '% | X: ' + cfg.predikat.left + '%'"></div>
                             </div>
                         </div>
@@ -601,15 +612,16 @@
                              position: 'absolute',
                              top: cfg.predikat.top + '%',
                              left: cfg.predikat.left + '%',
-                             transform: 'translate(-50%, -50%)',
+                             transform: (cfg.predikat.align === 'left' ? 'translate(0, -50%)' : (cfg.predikat.align === 'right' ? 'translate(-100%, -50%)' : 'translate(-50%, -50%)')),
                              fontSize: (cfg.predikat.size * 0.48) + 'px',
                              color: cfg.predikat.color,
                              fontWeight: cfg.predikat.bold ? 'bold' : 'normal',
-                             fontFamily: cfg.predikat.font === 'serif' ? 'Georgia, serif' : 'Plus Jakarta Sans, sans-serif'
+                             fontFamily: cfg.predikat.font === 'serif' ? 'Georgia, serif' : 'Plus Jakarta Sans, sans-serif',
+                             textAlign: cfg.predikat.align || 'center'
                          }"
                          class="cursor-pointer transition hover:outline hover:outline-2 hover:outline-purple-500 whitespace-nowrap"
-                         @click="activeTab = 'predikat'">
-                        JUARA 1
+                         @click="activeTab = 'predikat'"
+                         x-text="getPredikatPreview()">
                     </div>
 
                     <!-- 5. Cabang Lomba -->
@@ -770,6 +782,27 @@
                 <template x-for="(val, key) in cfg" :key="key">
                     <div x-show="activeTab === key" class="space-y-4 pt-1">
                         
+
+                        <!-- Khusus Predikat / Status: Input Teks Kustom Opsional -->
+                        <div x-show="key === 'predikat'" class="p-3.5 rounded-2xl bg-white/[0.02] border border-white/[0.05] space-y-1.5">
+                            <div class="flex items-center justify-between">
+                                <label class="block text-xs font-bold text-slate-300">
+                                    {{ $template->type === 'peserta' ? 'Isi Teks Status Peserta:' : ($template->type === 'juara' ? 'Isi Teks Predikat (Opsional):' : 'Isi Teks Status / Peran:') }}
+                                </label>
+                                <span class="text-[10px] text-slate-400 font-mono">
+                                    @if($template->type === 'peserta')
+                                        Kosongkan untuk otomatis: "PESERTA"
+                                    @elseif($template->type === 'juara')
+                                        Kosongkan untuk otomatis: "Juara 1, 2, 3..."
+                                    @elseif($template->type === 'pembimbing')
+                                        Kosongkan untuk otomatis: "GURU PEMBIMBING"
+                                    @elseif($template->type === 'juri')
+                                        Kosongkan untuk otomatis: "DEWAN JURI / WASIT"
+                                    @endif
+                                </span>
+                            </div>
+                            <input type="text" x-model="val.text" placeholder="{{ $template->type === 'peserta' ? 'Default: PESERTA' : ($template->type === 'juara' ? 'Otomatis Juara 1, 2, 3 (atau isi jika ingin teks khusus)' : 'Default: ' . strtoupper($template->type)) }}" class="w-full px-3.5 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs text-white placeholder-slate-500 outline-none focus:border-purple-500">
+                        </div>
 
                         <!-- Khusus Teks Tambahan (teks_1, teks_2, teks_3): Input Teks Kustom -->
                         <div x-show="key.startsWith('teks_')" class="p-3.5 rounded-2xl bg-white/[0.02] border border-white/[0.05] space-y-1.5">
