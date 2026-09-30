@@ -2974,7 +2974,7 @@ class PicController extends Controller
             'judges',
             'registrations' => function ($q) {
                 $q->where('status', 'verified')
-                    ->with(['members', 'scores.details', 'school']);
+                    ->with(['members', 'scores.details']);
             },
         ])->findOrFail($competition_id);
 
@@ -2994,14 +2994,14 @@ class PicController extends Controller
         // If no judges assigned yet, auto-create default 3 judges (Juri 1, Juri 2, Juri 3)
         if ($competition->judges->isEmpty()) {
             for ($i = 1; $i <= 3; $i++) {
+                $judgeEmail = 'juri'.$i.'_comp'.$competition->id.'@talenta.local';
                 $judgeUser = User::firstOrCreate(
-                    ['username' => 'juri_comp_'.$competition->id.'_'.$i],
+                    ['email' => $judgeEmail],
                     [
                         'name' => 'Dewan Juri '.$i,
-                        'email' => 'juri'.$i.'_comp'.$competition->id.'@talenta.local',
                         'password' => Hash::make('talenta2026'),
                         'role' => 'juri',
-                        'is_active' => true,
+                        'status' => 'active',
                     ]
                 );
 
@@ -3072,11 +3072,10 @@ class PicController extends Controller
                 // Find or create judge user
                 $judgeUser = User::create([
                     'name' => $jName,
-                    'username' => 'juri_comp_'.$competition->id.'_'.($index + 1).'_'.Str::random(4),
-                    'email' => 'juri_'.Str::slug($jName, '_').'_'.Str::random(4).'@talenta.local',
+                    'email' => 'juri_'.Str::slug($jName, '_').'_'.time().'_'.Str::random(4).'@talenta.local',
                     'password' => Hash::make('talenta2026'),
                     'role' => 'juri',
-                    'is_active' => true,
+                    'status' => 'active',
                 ]);
             }
 
