@@ -40,7 +40,7 @@
 <script>
 function recapManagerApp() {
     return {
-        activeTab: '{{ in_array(request('tab'), ['lomba', 'buku_kas', 'peserta', 'pendaftar', 'lembaga', 'juara', 'juara-umum']) ? request('tab') : 'lomba' }}',
+        activeTab: '{{ in_array(request('tab'), ['lomba', 'buku_kas', 'peserta', 'pendaftar', 'lembaga', 'juara', 'juara-umum']) ? request('tab') : (request('competition_id') ? 'juara' : 'lomba') }}',
         cashflowFilterType: 'all',
         cashflowFilterStatus: 'all',
         cashflowSearch: '',
@@ -670,7 +670,7 @@ function recapManagerApp() {
     </div>
 
     @php
-        $activeTabReq = in_array(request('tab'), ['lomba', 'buku_kas', 'peserta', 'pendaftar', 'lembaga', 'juara', 'juara-umum']) ? request('tab') : 'lomba';
+        $activeTabReq = in_array(request('tab'), ['lomba', 'buku_kas', 'peserta', 'pendaftar', 'lembaga', 'juara', 'juara-umum']) ? request('tab') : (request('competition_id') ? 'juara' : 'lomba');
     @endphp
     <!-- Navigation Tabs Bar (AIStarterKit Pill Nav) -->
     <div class="ai-card rounded-3xl p-2 border border-white/[0.08] shadow-lg flex flex-wrap items-center justify-between gap-2">
@@ -2341,7 +2341,7 @@ function recapManagerApp() {
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 @foreach($winnersByCompetition as $w)
                     @php $comp = $w['competition']; @endphp
-                    <div class="rounded-3xl border border-white/[0.08] bg-[#0C111D]/80 p-6 space-y-4 hover:border-white/[0.15] transition">
+                    <div id="winner-comp-{{ $comp->id }}" class="rounded-3xl border {{ (request('competition_id') == $comp->id) ? 'border-amber-500/60 shadow-lg shadow-amber-500/10 ring-1 ring-amber-500/30' : 'border-white/[0.08]' }} bg-[#0C111D]/80 p-6 space-y-4 hover:border-white/[0.15] transition">
                         <div class="flex items-center justify-between border-b border-white/[0.08] pb-3">
                             <div>
                                 <span class="text-[10px] font-black uppercase tracking-wider text-[#A594FD] bg-[#7A5AF8]/15 px-2.5 py-1 rounded-lg border border-[#7A5AF8]/30">{{ $comp->code }}</span>

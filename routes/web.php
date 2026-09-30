@@ -236,8 +236,8 @@ Route::middleware(['auth', 'role:superadmin,panitia,pic_lomba,juri'])->prefix('b
 
 /*
 |--------------------------------------------------------------------------
-| Presensi / Daftar Hadir & QR Scanner Routes
-| Akses Terpadu untuk Superadmin, Panitia, dan PIC Lomba
+| Admin, Panitia & PIC Shared Operational Routes (Presensi, Berita Acara, Rekap, Sertifikat, Peserta)
+| Akses Terpadu untuk Superadmin, Panitia, PIC Lomba, dan Admin
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'role:superadmin,panitia,pic_lomba,admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -246,18 +246,11 @@ Route::middleware(['auth', 'role:superadmin,panitia,pic_lomba,admin'])->prefix('
     Route::post('/daftar-hadir/{id}/toggle', [AttendanceController::class, 'toggle'])->name('attendance.toggle');
     Route::get('/daftar-hadir/cetak', [AttendanceController::class, 'printReport'])->name('attendance.print');
 
-    // Berita Acara Lomba & Cetak (Superadmin, Panitia, PIC Lomba, Admin)
+    // Berita Acara Lomba & Cetak
     Route::get('/berita-acara', [OfficialReportController::class, 'index'])->name('berita-acara.index');
     Route::get('/berita-acara/cetak', [OfficialReportController::class, 'print'])->name('berita-acara.print');
-});
 
-/*
-|--------------------------------------------------------------------------
-| Admin & Panitia Shared Operational Routes (Overview, Operasional, Laporan)
-|--------------------------------------------------------------------------
-*/
-Route::middleware(['auth', 'role:superadmin,panitia'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+    // Rekapitulasi Terpadu & Rekap Nilai Juara
     Route::get('/recap', [AdminController::class, 'recap'])->name('recap');
     Route::get('/rekap-nilai', [AdminController::class, 'recap'])->name('scores');
     Route::get('/api/recap-participants', [AdminController::class, 'apiRecapParticipants'])->name('api.recap_participants');
@@ -281,6 +274,15 @@ Route::middleware(['auth', 'role:superadmin,panitia'])->prefix('admin')->name('a
     Route::get('/peserta-multi-lomba', [AdminController::class, 'multiParticipants'])->name('participants.multi');
     Route::get('/juri-wasit', [AdminController::class, 'juriWasitUndian'])->name('juri.wasit');
     Route::get('/undi-peserta', [PicController::class, 'drawIndex'])->name('undian');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Admin & Panitia Exclusive Routes (Dashboard Utama, Invoice & Kas/Refund)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'role:superadmin,panitia'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 
     // Invoice & Payment Verification Routes
     Route::get('/invoices', [CollectiveRegistrationController::class, 'adminInvoices'])->name('invoices.index');
