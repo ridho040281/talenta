@@ -549,13 +549,13 @@
                     <span>Reset Urutan</span>
                 </button>
 
-                <!-- Export XLS Excel Button -->
+                <!-- Export XLSX Excel Button -->
                 <button type="button" 
                         @click="exportRecapXls()"
                         class="px-3.5 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm"
-                        title="Download Data Rekap Nilai ke Format Dokumen Excel (.xls) Rapi">
+                        title="Download Data Rekap Nilai ke Format Dokumen Excel (.xlsx) Rapi (1 Baris per Peserta)">
                     <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-400"></i>
-                    <span>Export Excel (.xls)</span>
+                    <span>Export Excel (.xlsx)</span>
                 </button>
             </div>
 
@@ -1147,174 +1147,17 @@ function multiJudgeScoringApp(competition, initialJudges, initialCriteria, initi
             return list;
         },
 
-        // Client-side Styled Excel (.xls) Export
+        // Server-side Native Spreadsheet (.xlsx) Export
         exportRecapXls() {
-            const list = this.sortedAndFilteredRecapParticipants;
-            if (list.length === 0) {
-                alert('Tidak ada data peserta untuk di-export.');
-                return;
-            }
-
-            const isDetailed = this.viewMode === 'detailed';
-            const totalCols = 6 + (isDetailed ? (this.judges.length * (this.criteria.length + 1)) : this.judges.length) + 3;
-            const compName = this.competition.name || 'Cabang Lomba';
-            const compCode = this.competition.code || '';
-            const nowStr = new Date().toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' });
-
-            let html = `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <style>
-        body { font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 11pt; color: #0F172A; }
-        table { border-collapse: collapse; width: 100%; }
-        th { font-family: Calibri, sans-serif; font-weight: bold; border: 1px solid #475569; text-align: center; vertical-align: middle; }
-        td { font-family: Calibri, sans-serif; border: 1px solid #CBD5E1; vertical-align: middle; padding: 4px 6px; }
-        .title-1 { font-size: 15pt; font-weight: bold; background-color: #1E1B4B; color: #FFFFFF; text-align: center; height: 36px; vertical-align: middle; }
-        .title-2 { font-size: 11pt; font-weight: bold; background-color: #312E81; color: #FFFFFF; text-align: center; height: 26px; vertical-align: middle; }
-        .title-3 { font-size: 9pt; background-color: #EEF2FF; color: #1E1B4B; text-align: center; height: 20px; vertical-align: middle; }
-        .th-main { background-color: #0F172A; color: #FFFFFF; font-size: 10pt; height: 28px; }
-        .th-judge { background-color: #3730A3; color: #FFFFFF; font-size: 10pt; height: 26px; }
-        .th-crit { background-color: #475569; color: #FFFFFF; font-size: 9pt; height: 22px; }
-        .th-subtotal { background-color: #312E81; color: #FFFFFF; font-size: 9pt; font-weight: bold; }
-        .th-total { background-color: #4338CA; color: #FFFFFF; font-size: 10pt; }
-        .th-avg { background-color: #B45309; color: #FFFFFF; font-size: 10pt; }
-        .th-status { background-color: #065F46; color: #FFFFFF; font-size: 10pt; }
-        .text-center { text-align: center; }
-        .text-left { text-align: left; }
-        .text-right { text-align: right; }
-        .bold { font-weight: bold; }
-        .mso-text { mso-number-format:'\\@'; }
-        .mso-score { mso-number-format:'0\\.0'; text-align: center; }
-        .mso-avg { mso-number-format:'0\\.00'; text-align: center; font-weight: bold; background-color: #FEF3C7; color: #B45309; }
-        .mso-total { mso-number-format:'0\\.0'; text-align: center; font-weight: bold; background-color: #EEF2FF; color: #312E81; }
-        .rank-1 { background-color: #FEF3C7; color: #92400E; font-weight: bold; text-align: center; }
-        .rank-2 { background-color: #F1F5F9; color: #334155; font-weight: bold; text-align: center; }
-        .rank-3 { background-color: #FFEDD5; color: #9A3412; font-weight: bold; text-align: center; }
-        .pa { background-color: #EFF6FF; }
-        .pi { background-color: #FFF1F2; }
-        .status-ok { background-color: #D1FAE5; color: #065F46; font-weight: bold; text-align: center; }
-        .status-part { background-color: #FEF3C7; color: #92400E; text-align: center; }
-        .status-none { background-color: #F8FAFC; color: #64748B; text-align: center; }
-    </style>
-</head>
-<body>
-    <table border="1">
-        <!-- Title Banner -->
-        <tr>
-            <th colspan="${totalCols}" class="title-1">
-                REKAPITULASI HASIL PENILAIAN DEWAN JURI RESMI — TALENTA 2026
-            </th>
-        </tr>
-        <tr>
-            <th colspan="${totalCols}" class="title-2">
-                CABANG LOMBA: ${compName.toUpperCase()} (${compCode}) — MTsN 1 BLITAR
-            </th>
-        </tr>
-        <tr>
-            <th colspan="${totalCols}" class="title-3">
-                Waktu Export: ${nowStr} | Total Peserta: ${list.length} Peserta | Mode: ${isDetailed ? 'Rincian Kriteria Penilaian' : 'Ringkas (Total per Juri)'}
-            </th>
-        </tr>
-        <tr><td colspan="${totalCols}" style="height:10px; border:none;"></td></tr>
-
-        <!-- Table Headers -->
-        <tr>
-            <th rowspan="${isDetailed ? 2 : 1}" class="th-main" style="width:60px;">Rank</th>
-            <th rowspan="${isDetailed ? 2 : 1}" class="th-main" style="width:75px;">#Undian</th>
-            <th rowspan="${isDetailed ? 2 : 1}" class="th-main" style="width:90px;">No. Peserta</th>
-            <th rowspan="${isDetailed ? 2 : 1}" class="th-main" style="width:260px; min-width:260px;">Nama Lengkap Peserta</th>
-            <th rowspan="${isDetailed ? 2 : 1}" class="th-main" style="width:240px; min-width:240px;">Asal Lembaga / Sekolah</th>
-            <th rowspan="${isDetailed ? 2 : 1}" class="th-main" style="width:65px;">Sektor</th>
-`;
-
-            // Judges Columns Header
-            this.judges.forEach((j, jIdx) => {
-                const jTitle = (j.role_title || ('Juri ' + (jIdx + 1))) + ': ' + j.name;
-                if (isDetailed) {
-                    html += `            <th colspan="${this.criteria.length + 1}" class="th-judge">${jTitle}</th>\n`;
-                } else {
-                    html += `            <th class="th-judge" style="width:95px;">${jTitle} (Total)</th>\n`;
-                }
+            const params = new URLSearchParams({
+                view_mode: this.viewMode,
+                sector: this.sectorFilter,
+                status: this.statusFilter,
+                sort_by: this.sortBy,
+                sort_dir: this.sortDirection
             });
-
-            html += `            <th rowspan="${isDetailed ? 2 : 1}" class="th-total" style="width:95px;">Total Skor</th>
-            <th rowspan="${isDetailed ? 2 : 1}" class="th-avg" style="width:95px;">Rata-Rata</th>
-            <th rowspan="${isDetailed ? 2 : 1}" class="th-status" style="width:120px;">Status Penilaian</th>
-        </tr>
-`;
-
-            // Sub-headers if detailed mode
-            if (isDetailed) {
-                html += `        <tr>\n`;
-                this.judges.forEach(j => {
-                    this.criteria.forEach(c => {
-                        html += `            <th class="th-crit" style="width:80px;">${c.name}</th>\n`;
-                    });
-                    html += `            <th class="th-subtotal" style="width:80px;">Total Juri</th>\n`;
-                });
-                html += `        </tr>\n`;
-            }
-
-            // Data Rows
-            list.forEach(reg => {
-                const rank = this.getParticipantRank(reg.id);
-                const rankClass = rank === 1 ? 'rank-1' : (rank === 2 ? 'rank-2' : (rank === 3 ? 'rank-3' : 'text-center'));
-                const genderClass = reg.gender === 'P' ? 'pi' : 'pa';
-                const genderLabel = reg.gender === 'P' ? 'PI' : 'PA';
-
-                html += `        <tr>
-            <td class="${rankClass}">${rank ? ('Juara ' + rank) : '-'}</td>
-            <td class="text-center mso-text">${reg.draw_number ? ('#' + reg.draw_number) : '-'}</td>
-            <td class="text-center mso-text">${reg.participant_number || '-'}</td>
-            <td class="text-left bold" style="white-space:nowrap;">${reg.name || '-'}</td>
-            <td class="text-left" style="white-space:nowrap;">${reg.institution || '-'}</td>
-            <td class="text-center ${genderClass}">${genderLabel}</td>
-`;
-
-                this.judges.forEach(j => {
-                    if (isDetailed) {
-                        this.criteria.forEach(c => {
-                            const val = this.getCriterionValue(reg.id, j.id, c.id);
-                            html += `            <td class="mso-score">${val !== '' ? Number(val).toFixed(1) : '-'}</td>\n`;
-                        });
-                        const sub = this.getJudgeSubtotal(reg.id, j.id);
-                        html += `            <td class="mso-total">${sub > 0 ? sub.toFixed(1) : '-'}</td>\n`;
-                    } else {
-                        const sub = this.getJudgeSubtotal(reg.id, j.id);
-                        html += `            <td class="mso-total">${sub > 0 ? sub.toFixed(1) : '-'}</td>\n`;
-                    }
-                });
-
-                const total = this.getRegTotalScore(reg.id);
-                const avg = this.getRegAverage(reg.id);
-                const isFull = this.isRegFullyScored(reg.id);
-                const isPart = this.isRegPartiallyScored(reg.id);
-                const statusClass = isFull ? 'status-ok' : (isPart ? 'status-part' : 'status-none');
-                const statusLabel = isFull ? 'Lengkap Terkunci' : (isPart ? 'Sebagian' : 'Belum');
-
-                html += `            <td class="mso-total">${total > 0 ? total.toFixed(1) : '-'}</td>
-            <td class="mso-avg">${avg > 0 ? avg.toFixed(2) : '-'}</td>
-            <td class="${statusClass}">${statusLabel}</td>
-        </tr>
-`;
-            });
-
-            html += `    </table>
-</body>
-</html>`;
-
-            const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            const safeCompCode = (this.competition.code || 'LOMBA').toLowerCase();
-            a.href = url;
-            a.download = `REKAP_NILAI_${safeCompCode.toUpperCase()}_TALENTA_2026_${new Date().toISOString().slice(0, 10)}.xls`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            this.showToast('✓ File Excel (.xls) berhasil di-download dengan format rapi', 'success');
+            this.showToast('Menyiapkan file Excel (.xlsx)...', 'success');
+            window.location.href = '{{ route("pic.scoring.export.excel", $competition->id) }}?' + params.toString();
         },
 
         get filteredParticipants() {

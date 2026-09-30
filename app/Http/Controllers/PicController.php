@@ -24,6 +24,13 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Color;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class PicController extends Controller
 {
@@ -3206,6 +3213,457 @@ class PicController extends Controller
             'average_score' => $avgScore,
             'total_judges_scored' => $totalJudgesScored,
             'scores' => $updatedScores,
+        ]);
+    }
+
+    /**
+     * Export Scoring Matrix & Judges Breakdown to real .xlsx Excel with generous column widths and no wrap text
+     */
+    public function exportScoringExcel(Request $request, $competition_id)
+    {
+        $user = Auth::user();
+        $this->authorizeCompetitionManagement($user, $competition_id);
+
+        $competition = Competition::with([
+            'category',
+            'criteria',
+            'judges',
+            'registrations' => function ($q) {
+                $q->where('status', 'verified')
+                    ->with(['members', 'scores.details']);
+            },
+        ])->findOrFail($competition_id);
+
+        $viewMode = $request->query('view_mode', 'detailed');
+        $sectorFilter = $request->query('sector', 'all');
+        $statusFilter = $request->query('status', 'all');
+        $sortBy = $request->query('sort_by', 'rank');
+        $sortDir = $request->query('sort_dir', 'asc');
+
+        $judges = $competition->judges;
+        $criteria = $competition->criteria;
+
+        // Filter participants
+        $participants = $competition->registrations->filter(function ($r) use ($sectorFilter, $statusFilter, $judges) {
+            if ($sectorFilter === 'PA' && $r->primary_gender !== 'L') {
+                return false;
+            }
+            if ($sectorFilter === 'PI' && $r->primary_gender !== 'P') {
+                return false;
+            }
+
+            $scoredCount = 0;
+            foreach ($judges as $j) {
+                $score = $r->scores->firstWhere('judge_id', $j->id);
+                if ($score && (float) $score->total_score > 0) {
+                    $scoredCount++;
+                }
+            }
+            $isFullyScored = $judges->isNotEmpty() && $scoredCount >= $judges->count();
+
+            if ($statusFilter === 'scored' && ! $isFullyScored) {
+                return false;
+            }
+            if ($statusFilter === 'unscored' && $isFullyScored) {
+                return false;
+            }
+
+            return true;
+        });
+
+        // Compute scores and rank map
+        $scoresMap = [];
+        $partStats = [];
+        foreach ($competition->registrations as $r) {
+            $regScores = [];
+            $totalSum = 0;
+            $scoredJudges = 0;
+            foreach ($judges as $j) {
+                $score = $r->scores->firstWhere('judge_id', $j->id);
+                $critValues = [];
+                $jTotal = $score ? (float) $score->total_score : 0;
+                if ($score) {
+                    foreach ($score->details as $det) {
+                        $critValues[$det->criterion_id] = (float) $det->score_value;
+                    }
+                    if ($jTotal > 0) {
+                        $totalSum += $jTotal;
+                        $scoredJudges++;
+                    }
+                }
+                $regScores[$j->id] = [
+                    'total_score' => $jTotal,
+                    'criteria' => $critValues,
+                ];
+            }
+            $avg = $scoredJudges > 0 ? ($totalSum / $scoredJudges) : 0;
+            $scoresMap[$r->id] = $regScores;
+            $partStats[$r->id] = [
+                'total' => $totalSum,
+                'avg' => $avg,
+                'draw' => (int) ($r->draw_number ?: 99999),
+            ];
+        }
+
+        // Build rank map based on average descending
+        $scoredList = collect($partStats)->filter(fn ($s) => $s['avg'] > 0)->sortByDesc('avg');
+        $rankMap = [];
+        $currRank = 1;
+        foreach ($scoredList as $regId => $stat) {
+            $rankMap[$regId] = $currRank++;
+        }
+
+        // Sort participants based on requested sort
+        $sorted = $participants->sort(function ($a, $b) use ($sortBy, $sortDir, $rankMap, $partStats) {
+            $dir = ($sortDir === 'desc') ? -1 : 1;
+            if ($sortBy === 'rank') {
+                $valA = $rankMap[$a->id] ?? 99999;
+                $valB = $rankMap[$b->id] ?? 99999;
+            } elseif ($sortBy === 'draw_number') {
+                $valA = (int) ($a->draw_number ?: 99999);
+                $valB = (int) ($b->draw_number ?: 99999);
+            } elseif ($sortBy === 'name') {
+                return $dir * strcmp($a->pure_name, $b->pure_name);
+            } elseif ($sortBy === 'institution') {
+                return $dir * strcmp($a->display_school, $b->display_school);
+            } elseif ($sortBy === 'average') {
+                $valA = $partStats[$a->id]['avg'] ?? 0;
+                $valB = $partStats[$b->id]['avg'] ?? 0;
+            } elseif ($sortBy === 'total') {
+                $valA = $partStats[$a->id]['total'] ?? 0;
+                $valB = $partStats[$b->id]['total'] ?? 0;
+            } else {
+                $valA = $rankMap[$a->id] ?? 99999;
+                $valB = $rankMap[$b->id] ?? 99999;
+            }
+
+            if ($valA == $valB) {
+                return (int) ($a->draw_number ?: 99999) <=> (int) ($b->draw_number ?: 99999);
+            }
+
+            return ($valA < $valB ? -1 : 1) * $dir;
+        })->values();
+
+        // Create Spreadsheet
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle(substr('Rekap '.($competition->code ?: 'Nilai'), 0, 31));
+
+        $isDetailed = ($viewMode === 'detailed');
+
+        // Helper to convert 1-indexed to Excel column letter
+        $toCol = fn ($num) => Coordinate::stringFromColumnIndex($num);
+
+        $colIdx = 1;
+        $cRank = $toCol($colIdx++);
+        $cDraw = $toCol($colIdx++);
+        $cNo = $toCol($colIdx++);
+        $cName = $toCol($colIdx++);
+        $cSchool = $toCol($colIdx++);
+        $cGender = $toCol($colIdx++);
+
+        $judgeCols = [];
+        foreach ($judges as $jIdx => $j) {
+            $jStart = $colIdx;
+            if ($isDetailed) {
+                $critCols = [];
+                foreach ($criteria as $c) {
+                    $critCols[$c->id] = $toCol($colIdx++);
+                }
+                $jTotalCol = $toCol($colIdx++);
+                $judgeCols[$j->id] = [
+                    'start' => $toCol($jStart),
+                    'end' => $jTotalCol,
+                    'criteria' => $critCols,
+                    'total' => $jTotalCol,
+                ];
+            } else {
+                $jCol = $toCol($colIdx++);
+                $judgeCols[$j->id] = [
+                    'start' => $jCol,
+                    'end' => $jCol,
+                    'total' => $jCol,
+                ];
+            }
+        }
+
+        $cTotal = $toCol($colIdx++);
+        $cAvg = $toCol($colIdx++);
+        $cStatus = $toCol($colIdx++);
+        $lastCol = $cStatus;
+
+        // 1. Titles Banner
+        $sheet->mergeCells("A1:{$lastCol}1");
+        $sheet->setCellValue('A1', 'REKAPITULASI HASIL PENILAIAN DEWAN JURI RESMI — TALENTA 2026');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new Color('FFFFFF'));
+        $sheet->getStyle('A1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF1E1B4B');
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getRowDimension(1)->setRowHeight(36);
+
+        $sheet->mergeCells("A2:{$lastCol}2");
+        $sheet->setCellValue('A2', 'CABANG LOMBA: '.strtoupper($competition->name).' ('.$competition->code.') — MTsN 1 BLITAR');
+        $sheet->getStyle('A2')->getFont()->setBold(true)->setSize(11)->setColor(new Color('FFFFFF'));
+        $sheet->getStyle('A2')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF312E81');
+        $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getRowDimension(2)->setRowHeight(26);
+
+        $sheet->mergeCells("A3:{$lastCol}3");
+        $nowStr = now()->translatedFormat('l, d F Y H:i');
+        $sheet->setCellValue('A3', "Waktu Export: {$nowStr} WIB | Total Peserta: ".$sorted->count().' Peserta | Mode: '.($isDetailed ? 'Rincian Kriteria Penilaian' : 'Ringkas (Total per Juri)'));
+        $sheet->getStyle('A3')->getFont()->setSize(9)->setColor(new Color('FF1E1B4B'));
+        $sheet->getStyle('A3')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFEEF2FF');
+        $sheet->getStyle('A3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getRowDimension(3)->setRowHeight(20);
+
+        $sheet->getRowDimension(4)->setRowHeight(8); // Spacer row
+
+        // 2. Table Headers (Row 5 and Row 6)
+        $sheet->getRowDimension(5)->setRowHeight(28);
+        if ($isDetailed) {
+            $sheet->getRowDimension(6)->setRowHeight(22);
+            $sheet->mergeCells("{$cRank}5:{$cRank}6");
+            $sheet->mergeCells("{$cDraw}5:{$cDraw}6");
+            $sheet->mergeCells("{$cNo}5:{$cNo}6");
+            $sheet->mergeCells("{$cName}5:{$cName}6");
+            $sheet->mergeCells("{$cSchool}5:{$cSchool}6");
+            $sheet->mergeCells("{$cGender}5:{$cGender}6");
+            $sheet->mergeCells("{$cTotal}5:{$cTotal}6");
+            $sheet->mergeCells("{$cAvg}5:{$cAvg}6");
+            $sheet->mergeCells("{$cStatus}5:{$cStatus}6");
+        }
+
+        $sheet->setCellValue("{$cRank}5", 'Rank');
+        $sheet->setCellValue("{$cDraw}5", '#Undian');
+        $sheet->setCellValue("{$cNo}5", 'No. Peserta');
+        $sheet->setCellValue("{$cName}5", 'Nama Lengkap Peserta');
+        $sheet->setCellValue("{$cSchool}5", 'Asal Lembaga / Sekolah');
+        $sheet->setCellValue("{$cGender}5", 'Sektor');
+        $sheet->setCellValue("{$cTotal}5", 'Total Skor');
+        $sheet->setCellValue("{$cAvg}5", 'Rata-Rata');
+        $sheet->setCellValue("{$cStatus}5", 'Status');
+
+        // Style base headers
+        $sheet->getStyle('A5:F'.($isDetailed ? 6 : 5))->getFont()->setBold(true)->setColor(new Color('FFFFFF'));
+        $sheet->getStyle('A5:F'.($isDetailed ? 6 : 5))->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF0F172A');
+        $sheet->getStyle('A5:F'.($isDetailed ? 6 : 5))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+
+        // Judges Headers
+        foreach ($judges as $jIdx => $j) {
+            $jConfig = $judgeCols[$j->id];
+            $jTitle = ($j->pivot->role_title ?? ('Juri '.($jIdx + 1))).': '.$j->name;
+            if ($isDetailed) {
+                $sheet->mergeCells("{$jConfig['start']}5:{$jConfig['end']}5");
+                $sheet->setCellValue("{$jConfig['start']}5", $jTitle);
+                $sheet->getStyle("{$jConfig['start']}5:{$jConfig['end']}5")->getFont()->setBold(true)->setColor(new Color('FFFFFF'));
+                $sheet->getStyle("{$jConfig['start']}5:{$jConfig['end']}5")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF3730A3');
+                $sheet->getStyle("{$jConfig['start']}5:{$jConfig['end']}5")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+
+                foreach ($criteria as $c) {
+                    $col = $jConfig['criteria'][$c->id];
+                    $sheet->setCellValue("{$col}6", $c->name);
+                    $sheet->getStyle("{$col}6")->getFont()->setSize(9)->setColor(new Color('FFFFFF'));
+                    $sheet->getStyle("{$col}6")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF475569');
+                    $sheet->getStyle("{$col}6")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+                }
+                $sheet->setCellValue("{$jConfig['total']}6", 'Total');
+                $sheet->getStyle("{$jConfig['total']}6")->getFont()->setBold(true)->setSize(9)->setColor(new Color('FFFFFF'));
+                $sheet->getStyle("{$jConfig['total']}6")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF312E81');
+                $sheet->getStyle("{$jConfig['total']}6")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+            } else {
+                $sheet->setCellValue("{$jConfig['total']}5", $jTitle.' (Total)');
+                $sheet->getStyle("{$jConfig['total']}5")->getFont()->setBold(true)->setColor(new Color('FFFFFF'));
+                $sheet->getStyle("{$jConfig['total']}5")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF3730A3');
+                $sheet->getStyle("{$jConfig['total']}5")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+            }
+        }
+
+        // Totals & Averages Header
+        $sheet->getStyle("{$cTotal}5:{$cTotal}".($isDetailed ? 6 : 5))->getFont()->setBold(true)->setColor(new Color('FFFFFF'));
+        $sheet->getStyle("{$cTotal}5:{$cTotal}".($isDetailed ? 6 : 5))->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF4338CA');
+        $sheet->getStyle("{$cTotal}5:{$cTotal}".($isDetailed ? 6 : 5))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+
+        $sheet->getStyle("{$cAvg}5:{$cAvg}".($isDetailed ? 6 : 5))->getFont()->setBold(true)->setColor(new Color('FFFFFF'));
+        $sheet->getStyle("{$cAvg}5:{$cAvg}".($isDetailed ? 6 : 5))->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFB45309');
+        $sheet->getStyle("{$cAvg}5:{$cAvg}".($isDetailed ? 6 : 5))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+
+        $sheet->getStyle("{$cStatus}5:{$cStatus}".($isDetailed ? 6 : 5))->getFont()->setBold(true)->setColor(new Color('FFFFFF'));
+        $sheet->getStyle("{$cStatus}5:{$cStatus}".($isDetailed ? 6 : 5))->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF065F46');
+        $sheet->getStyle("{$cStatus}5:{$cStatus}".($isDetailed ? 6 : 5))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+
+        // 3. Data Rows
+        $rowIdx = $isDetailed ? 7 : 6;
+        foreach ($sorted as $reg) {
+            $sheet->getRowDimension($rowIdx)->setRowHeight(24);
+            $rank = $rankMap[$reg->id] ?? null;
+            $stats = $partStats[$reg->id] ?? ['total' => 0, 'avg' => 0];
+
+            $sheet->setCellValue("{$cRank}{$rowIdx}", $rank ? "Juara {$rank}" : '-');
+            $sheet->setCellValue("{$cDraw}{$rowIdx}", $reg->draw_number ? "#{$reg->draw_number}" : '-');
+            $sheet->setCellValue("{$cNo}{$rowIdx}", $reg->participant_number ?: $reg->registration_code);
+            $sheet->setCellValue("{$cName}{$rowIdx}", $reg->pure_name);
+            $sheet->setCellValue("{$cSchool}{$rowIdx}", $reg->display_school ?: ($reg->institution_name ?: '-'));
+            $sheet->setCellValue("{$cGender}{$rowIdx}", $reg->primary_gender === 'P' ? 'PI' : 'PA');
+
+            // Alignment
+            $sheet->getStyle("{$cRank}{$rowIdx}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+            $sheet->getStyle("{$cDraw}{$rowIdx}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+            $sheet->getStyle("{$cNo}{$rowIdx}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+            $sheet->getStyle("{$cName}{$rowIdx}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT)->setVertical(Alignment::VERTICAL_CENTER);
+            $sheet->getStyle("{$cName}{$rowIdx}")->getFont()->setBold(true);
+            $sheet->getStyle("{$cSchool}{$rowIdx}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT)->setVertical(Alignment::VERTICAL_CENTER);
+            $sheet->getStyle("{$cGender}{$rowIdx}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+
+            // Gender Fill
+            if ($reg->primary_gender === 'P') {
+                $sheet->getStyle("{$cGender}{$rowIdx}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFFFF1F2');
+            } else {
+                $sheet->getStyle("{$cGender}{$rowIdx}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFEFF6FF');
+            }
+
+            // Rank Highlight
+            if ($rank === 1) {
+                $sheet->getStyle("{$cRank}{$rowIdx}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFFEF3C7');
+                $sheet->getStyle("{$cRank}{$rowIdx}")->getFont()->setBold(true)->setColor(new Color('FF92400E'));
+            } elseif ($rank === 2) {
+                $sheet->getStyle("{$cRank}{$rowIdx}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF1F5F9');
+                $sheet->getStyle("{$cRank}{$rowIdx}")->getFont()->setBold(true)->setColor(new Color('FF334155'));
+            } elseif ($rank === 3) {
+                $sheet->getStyle("{$cRank}{$rowIdx}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFFFEDD5');
+                $sheet->getStyle("{$cRank}{$rowIdx}")->getFont()->setBold(true)->setColor(new Color('FF9A3412'));
+            }
+
+            // Judges Scores
+            $pScores = $scoresMap[$reg->id] ?? [];
+            foreach ($judges as $j) {
+                $jConfig = $judgeCols[$j->id];
+                $jScore = $pScores[$j->id] ?? ['total_score' => 0, 'criteria' => []];
+                if ($isDetailed) {
+                    foreach ($criteria as $c) {
+                        $col = $jConfig['criteria'][$c->id];
+                        $val = $jScore['criteria'][$c->id] ?? null;
+                        if ($val !== null && $val !== '') {
+                            $sheet->setCellValue("{$col}{$rowIdx}", (float) $val);
+                            $sheet->getStyle("{$col}{$rowIdx}")->getNumberFormat()->setFormatCode('0.0');
+                        } else {
+                            $sheet->setCellValue("{$col}{$rowIdx}", '-');
+                        }
+                        $sheet->getStyle("{$col}{$rowIdx}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+                    }
+                    $tot = $jScore['total_score'];
+                    if ($tot > 0) {
+                        $sheet->setCellValue("{$jConfig['total']}{$rowIdx}", (float) $tot);
+                        $sheet->getStyle("{$jConfig['total']}{$rowIdx}")->getNumberFormat()->setFormatCode('0.0');
+                    } else {
+                        $sheet->setCellValue("{$jConfig['total']}{$rowIdx}", '-');
+                    }
+                    $sheet->getStyle("{$jConfig['total']}{$rowIdx}")->getFont()->setBold(true);
+                    $sheet->getStyle("{$jConfig['total']}{$rowIdx}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+                    $sheet->getStyle("{$jConfig['total']}{$rowIdx}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFEEF2FF');
+                } else {
+                    $tot = $jScore['total_score'];
+                    if ($tot > 0) {
+                        $sheet->setCellValue("{$jConfig['total']}{$rowIdx}", (float) $tot);
+                        $sheet->getStyle("{$jConfig['total']}{$rowIdx}")->getNumberFormat()->setFormatCode('0.0');
+                    } else {
+                        $sheet->setCellValue("{$jConfig['total']}{$rowIdx}", '-');
+                    }
+                    $sheet->getStyle("{$jConfig['total']}{$rowIdx}")->getFont()->setBold(true);
+                    $sheet->getStyle("{$jConfig['total']}{$rowIdx}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+                    $sheet->getStyle("{$jConfig['total']}{$rowIdx}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFEEF2FF');
+                }
+            }
+
+            // Total & Avg
+            if ($stats['total'] > 0) {
+                $sheet->setCellValue("{$cTotal}{$rowIdx}", (float) $stats['total']);
+                $sheet->getStyle("{$cTotal}{$rowIdx}")->getNumberFormat()->setFormatCode('0.0');
+            } else {
+                $sheet->setCellValue("{$cTotal}{$rowIdx}", '-');
+            }
+            $sheet->getStyle("{$cTotal}{$rowIdx}")->getFont()->setBold(true);
+            $sheet->getStyle("{$cTotal}{$rowIdx}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+            $sheet->getStyle("{$cTotal}{$rowIdx}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFEEF2FF');
+
+            if ($stats['avg'] > 0) {
+                $sheet->setCellValue("{$cAvg}{$rowIdx}", (float) $stats['avg']);
+                $sheet->getStyle("{$cAvg}{$rowIdx}")->getNumberFormat()->setFormatCode('0.00');
+            } else {
+                $sheet->setCellValue("{$cAvg}{$rowIdx}", '-');
+            }
+            $sheet->getStyle("{$cAvg}{$rowIdx}")->getFont()->setBold(true);
+            $sheet->getStyle("{$cAvg}{$rowIdx}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+            $sheet->getStyle("{$cAvg}{$rowIdx}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFFEF3C7');
+
+            // Status
+            $scoredCount = 0;
+            foreach ($judges as $j) {
+                if (($pScores[$j->id]['total_score'] ?? 0) > 0) {
+                    $scoredCount++;
+                }
+            }
+            $statusLabel = ($scoredCount >= $judges->count()) ? 'Lengkap Terkunci' : ($scoredCount > 0 ? 'Sebagian' : 'Belum');
+            $sheet->setCellValue("{$cStatus}{$rowIdx}", $statusLabel);
+            $sheet->getStyle("{$cStatus}{$rowIdx}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+            if ($statusLabel === 'Lengkap Terkunci') {
+                $sheet->getStyle("{$cStatus}{$rowIdx}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFD1FAE5');
+                $sheet->getStyle("{$cStatus}{$rowIdx}")->getFont()->setBold(true)->setColor(new Color('FF065F46'));
+            }
+
+            $rowIdx++;
+        }
+
+        $lastDataRow = $rowIdx - 1;
+        $headerStartRow = 5;
+
+        // Apply Borders to whole table
+        $borderStyle = [
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['argb' => 'FFCBD5E1'],
+                ],
+            ],
+        ];
+        $sheet->getStyle("A{$headerStartRow}:{$lastCol}{$lastDataRow}")->applyFromArray($borderStyle);
+
+        // Explicit Column Widths and DISABLE text wrapping so every row is strictly 1 single line!
+        $sheet->getStyle("A1:{$lastCol}{$lastDataRow}")->getAlignment()->setWrapText(false);
+
+        $sheet->getColumnDimension($cRank)->setWidth(12);
+        $sheet->getColumnDimension($cDraw)->setWidth(14);
+        $sheet->getColumnDimension($cNo)->setWidth(16);
+        $sheet->getColumnDimension($cName)->setWidth(36);
+        $sheet->getColumnDimension($cSchool)->setWidth(34);
+        $sheet->getColumnDimension($cGender)->setWidth(10);
+        foreach ($judges as $j) {
+            $jConfig = $judgeCols[$j->id];
+            if ($isDetailed) {
+                foreach ($criteria as $c) {
+                    $sheet->getColumnDimension($jConfig['criteria'][$c->id])->setWidth(15);
+                }
+                $sheet->getColumnDimension($jConfig['total'])->setWidth(14);
+            } else {
+                $sheet->getColumnDimension($jConfig['total'])->setWidth(16);
+            }
+        }
+        $sheet->getColumnDimension($cTotal)->setWidth(14);
+        $sheet->getColumnDimension($cAvg)->setWidth(15);
+        $sheet->getColumnDimension($cStatus)->setWidth(18);
+
+        // Freeze Panes at first data row
+        $freezeRow = $isDetailed ? 7 : 6;
+        $sheet->freezePane("A{$freezeRow}");
+
+        $compCodeSafe = strtoupper($competition->code ?: 'LOMBA');
+        $filename = "REKAP_NILAI_{$compCodeSafe}_TALENTA_2026_".date('Ymd_His').'.xlsx';
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+            'Cache-Control' => 'max-age=0',
         ]);
     }
 }

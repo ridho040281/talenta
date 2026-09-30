@@ -183,6 +183,7 @@ Route::middleware(['auth', 'role:pic_lomba,superadmin,panitia,admin'])->prefix('
 
     // Multi-Judge Scoring Console for PIC & Operator
     Route::get('/lomba/{competition_id}/scoring', [PicController::class, 'multiJudgeScoring'])->name('scoring');
+    Route::get('/lomba/{competition_id}/scoring/export-excel', [PicController::class, 'exportScoringExcel'])->name('scoring.export.excel');
     Route::post('/lomba/{competition_id}/scoring/judges', [PicController::class, 'updateJudges'])->name('scoring.judges');
     Route::post('/lomba/{competition_id}/scoring/peserta/{registration_id}', [PicController::class, 'storeMultiJudgeScore'])->name('scoring.save');
 
