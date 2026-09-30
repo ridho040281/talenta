@@ -683,6 +683,48 @@
                             <span>Daftar Hadir & QR</span>
                         </div>
                     </a>
+
+                    @php
+                        $userPicComps = \App\Models\Competition::whereIn('id', \App\Http\Controllers\PicController::getManagedCompetitionIds(auth()->user()))->get();
+                        $firstPicScoringComp = $userPicComps->first();
+                        $targetScoringId = request()->route('competition_id') ?: ($firstPicScoringComp?->id ?? null);
+                    @endphp
+
+                    @if($userPicComps->count() === 1 && $firstPicScoringComp)
+                    <a href="{{ route('pic.scoring', $firstPicScoringComp->id) }}" 
+                       class="relative group flex items-center rounded-2xl transition {{ request()->routeIs('pic.scoring*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}"
+                       :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
+                        <i data-lucide="edit-3" class="w-4 h-4 shrink-0 {{ request()->routeIs('pic.scoring*') ? 'text-white' : 'text-amber-400' }}"></i>
+                        <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Input Nilai Juri</span>
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                            <span>Input Nilai Juri</span>
+                        </div>
+                    </a>
+                    @elseif($userPicComps->count() > 1)
+                    <div x-data="{ openScoringSide: {{ request()->routeIs('pic.scoring*') ? 'true' : 'false' }} }" class="space-y-0.5">
+                        <button type="button" 
+                                @click="sidebarOpen ? openScoringSide = !openScoringSide : window.location.href='{{ route('pic.scoring', $targetScoringId ?: $firstPicScoringComp->id) }}'"
+                                class="w-full relative group flex items-center rounded-2xl transition {{ request()->routeIs('pic.scoring*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}"
+                                :class="sidebarOpen ? 'justify-between px-3 py-2.5' : 'px-0 py-2.5 justify-center'">
+                            <div class="flex items-center gap-3 truncate">
+                                <i data-lucide="edit-3" class="w-4 h-4 shrink-0 {{ request()->routeIs('pic.scoring*') ? 'text-white' : 'text-amber-400' }}"></i>
+                                <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Input Nilai Juri</span>
+                            </div>
+                            <i x-show="sidebarOpen" data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform duration-200" :class="openScoringSide ? 'rotate-180' : ''"></i>
+                            <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                                <span>Input Nilai Juri</span>
+                            </div>
+                        </button>
+                        <div x-show="sidebarOpen && openScoringSide" x-collapse class="pl-7 pr-1 py-1 space-y-1">
+                            @foreach($userPicComps as $uComp)
+                                <a href="{{ route('pic.scoring', $uComp->id) }}" 
+                                   class="block px-2.5 py-1.5 rounded-xl text-xs transition truncate {{ request()->routeIs('pic.scoring*') && request()->route('competition_id') == $uComp->id ? 'text-amber-300 font-bold bg-amber-500/15' : 'text-slate-400 hover:text-white hover:bg-white/[0.04]' }}">
+                                    • {{ $uComp->name }}
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
                 </div>
 
                 @if(auth()->user() && method_exists(auth()->user(), 'managesTournamentBracket') && auth()->user()->managesTournamentBracket())
