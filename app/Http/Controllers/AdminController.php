@@ -314,18 +314,20 @@ class AdminController extends Controller
         ]);
 
         // Update Criteria if submitted
-        if ($request->has('criteria') && is_array($request->criteria)) {
+        if ($request->has('criteria_submitted') || $request->has('criteria')) {
             $competition->criteria()->delete();
-            foreach ($request->criteria as $crit) {
-                if (! empty($crit['name'])) {
-                    CompetitionCriterion::create([
-                        'competition_id' => $competition->id,
-                        'name' => $crit['name'],
-                        'weight_percentage' => (int) ($crit['weight_percentage'] ?? 100),
-                        'min_score' => (float) ($crit['min_score'] ?? 0),
-                        'max_score' => (float) ($crit['max_score'] ?? 100),
-                        'description' => $crit['description'] ?? null,
-                    ]);
+            if ($request->has('criteria') && is_array($request->criteria)) {
+                foreach ($request->criteria as $crit) {
+                    if (! empty($crit['name'])) {
+                        CompetitionCriterion::create([
+                            'competition_id' => $competition->id,
+                            'name' => trim($crit['name']),
+                            'weight_percentage' => (int) ($crit['weight_percentage'] ?? 100),
+                            'min_score' => (float) ($crit['min_score'] ?? 0),
+                            'max_score' => (float) ($crit['max_score'] ?? 100),
+                            'description' => $crit['description'] ?? null,
+                        ]);
+                    }
                 }
             }
         }

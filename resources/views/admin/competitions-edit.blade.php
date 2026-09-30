@@ -14,8 +14,19 @@
         <link rel="icon" href="{{ asset('favicon.ico') }}">
     @endif
 
+    <!-- Self-hosted Fonts -->
+    <link rel="preload" href="{{ asset('vendor/fonts/plus-jakarta-sans.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="{{ asset('vendor/fonts/space-grotesk.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="{{ asset('vendor/fonts/space-mono-700.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="{{ asset('vendor/fonts/fonts.css') }}">
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    
+    <!-- Lucide Icons -->
     <script defer src="{{ asset('vendor/lucide/lucide.min.js') }}"></script>
+    
+    <!-- Alpine.js (Self-hosted Local) -->
+    <script defer src="{{ asset('vendor/alpine/alpine.min.js') }}"></script>
     <style>
         [x-cloak] { display: none !important; }
 
@@ -826,6 +837,7 @@
 
             <!-- KRITERIA PENILAIAN CARD -->
             <div class="card-admin rounded-2xl p-5 sm:p-7 space-y-4" x-data="criteriaApp({{ json_encode($competition->criteria->toArray()) }})">
+                <input type="hidden" name="criteria_submitted" value="1">
                 <div class="flex items-center justify-between pb-4 border-b border-white/[0.07]">
                     <div class="flex items-center gap-3">
                         <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background: rgba(56,189,248,0.12); border: 1px solid rgba(56,189,248,0.22);">
@@ -836,44 +848,47 @@
                             <p class="text-xs text-slate-500">Bobot persentase penilaian cabang lomba</p>
                         </div>
                     </div>
-                    <button type="button" @click="addCriterion()" class="btn-cancel-action flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer" style="color: #34d399; border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.12);">
+                    <button type="button" @click="addCriterion()" class="btn-cancel-action flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer hover:scale-105" style="color: #34d399; border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.12);">
                         <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                         <span>Tambah Kriteria</span>
                     </button>
                 </div>
 
                 <div x-show="criteria.length === 0">
-                    <p class="text-xs text-slate-600 text-center py-6 rounded-xl" style="border: 2px dashed rgba(255,255,255,0.07);">Belum ada kriteria penilaian. Klik tombol di atas untuk menambah.</p>
+                    <p class="text-xs text-slate-500 text-center py-6 rounded-xl" style="border: 2px dashed rgba(255,255,255,0.08);">Belum ada kriteria penilaian. Klik tombol di atas untuk menambah.</p>
                 </div>
 
                 <template x-for="(criterion, index) in criteria" :key="index">
-                    <div class="grid grid-cols-12 gap-2 items-end p-3 rounded-xl" style="background: rgba(12,17,29,0.6); border: 1px solid rgba(255,255,255,0.07);">
-                        <div class="col-span-4">
-                            <label class="block text-[10px] font-bold text-slate-500 mb-1">Nama Kriteria</label>
-                            <input :name="'criteria[' + index + '][name]'" type="text" x-model="criterion.name" placeholder="Contoh: Kreativitas" class="input-admin block w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold">
+                    <div class="grid grid-cols-12 gap-2.5 items-end p-3.5 rounded-xl" style="background: rgba(12,17,29,0.75); border: 1px solid rgba(255,255,255,0.08);">
+                        <div class="col-span-12 sm:col-span-4">
+                            <label class="block text-[10px] font-bold text-slate-400 mb-1">Nama Kriteria <span class="text-rose-400">*</span></label>
+                            <input :name="'criteria[' + index + '][name]'" type="text" required x-model="criterion.name" placeholder="Contoh: Kaidah Tajwid" class="input-admin block w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold">
                         </div>
-                        <div class="col-span-2">
-                            <label class="block text-[10px] font-bold text-slate-500 mb-1">Bobot (%)</label>
-                            <input :name="'criteria[' + index + '][weight_percentage]'" type="number" min="0" max="100" x-model="criterion.weight_percentage" class="input-admin block w-full px-2.5 py-1.5 rounded-lg text-xs font-bold">
+                        <div class="col-span-4 sm:col-span-2">
+                            <label class="block text-[10px] font-bold text-slate-400 mb-1">Bobot (%)</label>
+                            <input :name="'criteria[' + index + '][weight_percentage]'" type="number" min="0" max="100" x-model.number="criterion.weight_percentage" class="input-admin block w-full px-2.5 py-1.5 rounded-lg text-xs font-bold text-emerald-400">
                         </div>
-                        <div class="col-span-2">
-                            <label class="block text-[10px] font-bold text-slate-500 mb-1">Min Skor</label>
-                            <input :name="'criteria[' + index + '][min_score]'" type="number" min="0" x-model="criterion.min_score" class="input-admin block w-full px-2.5 py-1.5 rounded-lg text-xs font-bold">
+                        <div class="col-span-3 sm:col-span-2">
+                            <label class="block text-[10px] font-bold text-slate-400 mb-1">Min Skor</label>
+                            <input :name="'criteria[' + index + '][min_score]'" type="number" min="0" x-model.number="criterion.min_score" class="input-admin block w-full px-2.5 py-1.5 rounded-lg text-xs font-bold">
                         </div>
-                        <div class="col-span-2">
-                            <label class="block text-[10px] font-bold text-slate-500 mb-1">Maks Skor</label>
-                            <input :name="'criteria[' + index + '][max_score]'" type="number" min="0" x-model="criterion.max_score" class="input-admin block w-full px-2.5 py-1.5 rounded-lg text-xs font-bold">
+                        <div class="col-span-3 sm:col-span-2">
+                            <label class="block text-[10px] font-bold text-slate-400 mb-1">Maks Skor</label>
+                            <input :name="'criteria[' + index + '][max_score]'" type="number" min="0" x-model.number="criterion.max_score" class="input-admin block w-full px-2.5 py-1.5 rounded-lg text-xs font-bold">
                         </div>
-                        <div class="col-span-2 flex items-end justify-end">
-                            <button type="button" @click="criteria.splice(index, 1)" class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition hover:bg-rose-500/20 cursor-pointer" style="background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); color: #f87171;">Hapus</button>
+                        <div class="col-span-2 sm:col-span-2 flex items-end justify-end">
+                            <button type="button" @click="removeCriterion(index)" class="w-full py-1.5 rounded-lg text-xs font-bold transition hover:bg-rose-500/25 cursor-pointer flex items-center justify-center gap-1" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #f87171;">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                <span class="hidden sm:inline">Hapus</span>
+                            </button>
                         </div>
                     </div>
                 </template>
 
-                <div x-show="criteria.length > 0" class="flex items-center justify-between text-xs px-1 font-bold">
-                    <span class="text-slate-500">Total Bobot:</span>
+                <div x-show="criteria.length > 0" class="flex items-center justify-between text-xs px-1 font-bold pt-1">
+                    <span class="text-slate-400">Total Akumulasi Bobot:</span>
                     <span :class="totalWeight === 100 ? 'text-emerald-400' : 'text-amber-400'" 
-                          :style="totalWeight === 100 ? 'background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); padding: 2px 10px; border-radius: 999px;' : 'background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); padding: 2px 10px; border-radius: 999px;'"
+                          :style="totalWeight === 100 ? 'background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.25); padding: 2px 12px; border-radius: 999px;' : 'background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.25); padding: 2px 12px; border-radius: 999px;'"
                           x-text="totalWeight + '% ' + (totalWeight === 100 ? '✓ Pas 100%' : '(Disarankan 100%)')"></span>
                 </div>
             </div>
@@ -920,15 +935,30 @@
         }
         function criteriaApp(initialCriteria) {
             return {
-                criteria: initialCriteria || [],
-                get totalWeight() { return this.criteria.reduce((s, c) => s + (parseInt(c.weight_percentage) || 0), 0); },
+                criteria: Array.isArray(initialCriteria) ? initialCriteria : [],
+                get totalWeight() { 
+                    return this.criteria.reduce((s, c) => s + (parseFloat(c.weight_percentage) || 0), 0); 
+                },
                 addCriterion() {
-                    this.criteria.push({ name: '', weight_percentage: 0, min_score: 0, max_score: 100, description: '' });
-                    this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
+                    this.criteria.push({ 
+                        name: '', 
+                        weight_percentage: 25, 
+                        min_score: 0, 
+                        max_score: 100, 
+                        description: '' 
+                    });
+                    this.$nextTick(() => { 
+                        if (window.lucide) window.lucide.createIcons(); 
+                    });
+                },
+                removeCriterion(index) {
+                    this.criteria.splice(index, 1);
                 }
             };
         }
-        document.addEventListener('DOMContentLoaded', function() { if (window.lucide) lucide.createIcons(); });
+        document.addEventListener('DOMContentLoaded', function() { 
+            if (window.lucide) lucide.createIcons(); 
+        });
     </script>
 </body>
 </html>
