@@ -137,6 +137,16 @@
         $kopImage = $appSettings['kop_kegiatan'] ?? ($appSettings['kop_lembaga'] ?? ($appSettings['letterhead_image'] ?? null));
         $eventName = strtoupper($appSettings['event_name'] ?? 'MILAD KE-57');
         $hasMts = str_contains($eventName, 'MTS');
+
+        // Filter non-empty judges
+        $filledJudges = array_values(array_filter($judges, fn($j) => !empty(trim((string)$j))));
+
+        if ($type === 'blank') {
+            $displayJudges = !empty($filledJudges) ? $filledJudges : ['', '', ''];
+        } else {
+            $displayJudges = !empty($filledJudges) ? $filledJudges : ['Dewan Juri'];
+        }
+        $totalJudges = count($displayJudges);
     @endphp
 
     <div class="space-y-8 print:space-y-0">
@@ -228,9 +238,9 @@
                         </p>
 
                         <ol class="list-decimal list-inside pl-4 space-y-0.5">
-                            <li>{{ $type === 'blank' ? '........................................................................................................................' : ($judges[0] ?: '....................................................................................................') }}</li>
-                            <li>{{ $type === 'blank' ? '........................................................................................................................' : ($judges[1] ?: '....................................................................................................') }}</li>
-                            <li>{{ $type === 'blank' ? '........................................................................................................................' : ($judges[2] ?: '....................................................................................................') }}</li>
+                            @foreach($displayJudges as $jName)
+                                <li>{{ $type === 'blank' ? ($jName ?: '........................................................................................................................') : ($jName ?: '....................................................................................................') }}</li>
+                            @endforeach
                         </ol>
 
                         <p>
@@ -274,43 +284,62 @@
                         </p>
                     </div>
 
-                    <!-- ==================== TANDA TANGAN DEWAN JURI / WASIT ==================== -->
+                    <!-- ==================== TANDA TANGAN DEWAN JURI / WASIT (DINAMIS SESUAI JUMLAH JURI) ==================== -->
                     <div class="avoid-break mt-4 pt-1">
                         <div class="text-right text-[11pt] mb-3 pr-2">
                             Blitar, {{ $type === 'blank' ? '........................................' : $dateSpelled['date_formatted'] }}
                         </div>
 
-                        <div class="grid grid-cols-3 text-center text-[11pt] gap-4">
-                            <!-- Juri / Wasit 1 -->
-                            <div class="flex flex-col justify-between h-20 sm:h-22">
-                                <div class="font-bold">{{ $isSports ? 'Wasit 1' : 'Juri 1' }}</div>
-                                <div>
-                                    <div class="font-bold underline underline-offset-2">
-                                        {{ $type === 'blank' ? '( ........................................ )' : ($judges[0] ?: '( ........................................ )') }}
+                        @if($totalJudges === 2)
+                            <!-- 2 Dewan Juri / Wasit: Posisi Kiri dan Kanan Simetris -->
+                            <div class="flex justify-between items-start px-8 text-center text-[11pt]">
+                                <!-- Juri / Wasit 1 (Kiri) -->
+                                <div class="flex flex-col justify-between h-20 sm:h-22 w-64">
+                                    <div class="font-bold">{{ $isSports ? 'Wasit 1 (Utama)' : 'Juri 1 (Ketua Juri)' }}</div>
+                                    <div>
+                                        <div class="font-bold underline underline-offset-2">
+                                            {{ $type === 'blank' ? ($displayJudges[0] ?: '( ........................................ )') : ($displayJudges[0] ?: '( ........................................ )') }}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <!-- Juri / Wasit 2 -->
-                            <div class="flex flex-col justify-between h-20 sm:h-22">
-                                <div class="font-bold">{{ $isSports ? 'Wasit 2' : 'Juri 2' }}</div>
-                                <div>
-                                    <div class="font-bold underline underline-offset-2">
-                                        {{ $type === 'blank' ? '( ........................................ )' : ($judges[1] ?: '( ........................................ )') }}
+                                <!-- Juri / Wasit 2 (Kanan) -->
+                                <div class="flex flex-col justify-between h-20 sm:h-22 w-64">
+                                    <div class="font-bold">{{ $isSports ? 'Wasit 2' : 'Juri 2 (Anggota)' }}</div>
+                                    <div>
+                                        <div class="font-bold underline underline-offset-2">
+                                            {{ $type === 'blank' ? ($displayJudges[1] ?: '( ........................................ )') : ($displayJudges[1] ?: '( ........................................ )') }}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Juri / Wasit 3 -->
-                            <div class="flex flex-col justify-between h-20 sm:h-22">
-                                <div class="font-bold">{{ $isSports ? 'Wasit 3' : 'Juri 3' }}</div>
-                                <div>
-                                    <div class="font-bold underline underline-offset-2">
-                                        {{ $type === 'blank' ? '( ........................................ )' : ($judges[2] ?: '( ........................................ )') }}
+                        @elseif($totalJudges === 1)
+                            <!-- 1 Dewan Juri / Wasit: Rata Kanan -->
+                            <div class="flex justify-end pr-6 text-center text-[11pt]">
+                                <div class="flex flex-col justify-between h-20 sm:h-22 w-64">
+                                    <div class="font-bold">{{ $isSports ? 'Wasit Utama / Pertandingan' : 'Ketua Dewan Juri' }}</div>
+                                    <div>
+                                        <div class="font-bold underline underline-offset-2">
+                                            {{ $type === 'blank' ? ($displayJudges[0] ?: '( ........................................ )') : ($displayJudges[0] ?: '( ........................................ )') }}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        @else
+                            <!-- 3 atau Lebih Dewan Juri / Wasit: Berjajar 3 Kolom -->
+                            <div class="grid grid-cols-3 text-center text-[11pt] gap-4">
+                                @foreach($displayJudges as $idx => $jName)
+                                    <div class="flex flex-col justify-between h-20 sm:h-22">
+                                        <div class="font-bold">{{ $isSports ? 'Wasit '.($idx+1) : 'Juri '.($idx+1) }}</div>
+                                        <div>
+                                            <div class="font-bold underline underline-offset-2">
+                                                {{ $type === 'blank' ? ($jName ?: '( ........................................ )') : ($jName ?: '( ........................................ )') }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
                     </div>
                 </div>
 

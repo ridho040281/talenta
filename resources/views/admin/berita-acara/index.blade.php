@@ -157,8 +157,13 @@
                         <input type="text" x-model="judge2" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8]" placeholder="Nama Juri/Wasit 2">
                     </div>
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">{{ $isSports ? 'Wasit 3' : 'Juri 3 (Anggota)' }}:</label>
-                        <input type="text" x-model="judge3" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8]" placeholder="Nama Juri/Wasit 3">
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">{{ $isSports ? 'Wasit 3' : 'Juri 3 (Opsional / Kosongkan jika 2 Juri)' }}:</label>
+                        <input type="text" x-model="judge3" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs font-bold text-slate-200 outline-none focus:border-[#7A5AF8]" placeholder="Nama Juri/Wasit 3 (Opsional)">
+                    </div>
+
+                    <div class="sm:col-span-2 lg:col-span-3 text-[11px] text-slate-400 bg-white/[0.02] p-2.5 rounded-xl border border-white/[0.05] flex items-center gap-2">
+                        <i data-lucide="info" class="w-4 h-4 text-[#7A5AF8] shrink-0"></i>
+                        <span><strong>Info Format Juri:</strong> Jika cabang lomba menggunakan <strong>2 Juri</strong>, cukup kosongkan kolom Juri 3. Hasil cetak otomatis menyesuaikan hanya memuat 2 Juri dengan posisi tanda tangan simetris di kiri dan kanan.</span>
                     </div>
                 </div>
             </div>
