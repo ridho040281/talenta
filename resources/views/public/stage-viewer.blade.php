@@ -258,37 +258,38 @@
 
             <!-- Top Row: Live Status Pill & Huge Stage Draw Badge -->
             <div class="flex items-center justify-between gap-4 relative z-10">
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2.5 sm:gap-3 flex-wrap">
                     <span class="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg"
                           :class="{
-                              'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-emerald-500/10': timer.status === 'running',
-                              'bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-amber-500/10': timer.status === 'paused',
-                              'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 shadow-indigo-500/10': timer.status === 'idle',
-                              'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-rose-500/10': timer.status === 'finished'
+                              'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-emerald-500/10': current && timer.status === 'running',
+                              'bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-amber-500/10': current && timer.status === 'paused',
+                              'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 shadow-indigo-500/10': !current || timer.status === 'idle',
+                              'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-rose-500/10': current && timer.status === 'finished'
                           }">
                         <span class="relative flex h-3 w-3">
                             <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
                                   :class="{
-                                      'bg-emerald-400': timer.status === 'running',
-                                      'bg-amber-400': timer.status === 'paused',
-                                      'bg-indigo-400': timer.status === 'idle',
-                                      'bg-rose-400': timer.status === 'finished'
+                                      'bg-emerald-400': current && timer.status === 'running',
+                                      'bg-amber-400': current && timer.status === 'paused',
+                                      'bg-indigo-400': !current || timer.status === 'idle',
+                                      'bg-rose-400': current && timer.status === 'finished'
                                   }"></span>
                             <span class="relative inline-flex rounded-full h-3 w-3"
                                   :class="{
-                                      'bg-emerald-400': timer.status === 'running',
-                                      'bg-amber-400': timer.status === 'paused',
-                                      'bg-indigo-400': timer.status === 'idle',
-                                      'bg-rose-400': timer.status === 'finished'
+                                      'bg-emerald-400': current && timer.status === 'running',
+                                      'bg-amber-400': current && timer.status === 'paused',
+                                      'bg-indigo-400': !current || timer.status === 'idle',
+                                      'bg-rose-400': current && timer.status === 'finished'
                                   }"></span>
                         </span>
-                        <span x-text="timerStatusLabel">SEDANG TAMPIL</span>
+                        <span x-text="current ? timerStatusLabel : 'STANDBY • PERSIAPAN'"></span>
                     </span>
 
-                    <template x-if="current && current.sub_category">
-                        <span class="hidden sm:inline-flex items-center px-3.5 py-2 rounded-2xl bg-white/[0.08] border border-white/[0.12] text-xs font-bold text-slate-200 shadow-sm"
-                              x-text="current.sub_category"></span>
-                    </template>
+                    <!-- Active Sector Badge (Putra / Putri) -->
+                    <span class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-black uppercase tracking-wider shadow-sm"
+                          :class="activeSector === 'PI' ? 'bg-pink-500/20 text-pink-300 border border-pink-500/35' : (activeSector === 'PA' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/35' : 'bg-white/[0.08] text-slate-200 border border-white/[0.12]')"
+                          x-text="activeSectorLabel">
+                    </span>
 
                     <template x-if="current && current.chosen_song">
                         <span class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-purple-500/20 border border-purple-500/30 text-xs font-bold text-purple-300 shadow-sm">
@@ -298,7 +299,7 @@
                     </template>
                 </div>
 
-                <!-- Massive High-Impact Stage Draw Number Badge -->
+                <!-- Massive High-Impact Stage Draw Number Badge (Only when performer is active) -->
                 <template x-if="current && current.draw_number">
                     <div class="relative group">
                         <div class="absolute -inset-1 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-400 opacity-60 blur-md group-hover:opacity-90 transition"></div>
@@ -310,7 +311,7 @@
                 </template>
             </div>
 
-            <!-- Middle: Performer Identity Info (ACTIVE STATE) -->
+            <!-- Middle: Performer Identity Info (ACTIVE PERFORMER STATE) -->
             <div class="my-6 sm:my-8 relative z-10 transition-all duration-300" x-show="current" :class="!(timer.enabled ?? true) ? 'my-auto py-6 sm:py-12' : ''">
                 <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-xs sm:text-sm font-bold uppercase tracking-wider mb-3">
                     <i data-lucide="school" class="w-4 h-4 text-cyan-400"></i>
@@ -354,33 +355,46 @@
                 </div>
             </div>
 
-            <!-- Middle: STANDBY / EMPTY STATE (WHEN NO ACTIVE PERFORMER) -->
-            <div class="my-8 sm:my-12 py-10 sm:py-16 text-center relative z-10 rounded-3xl bg-white/[0.02] border border-white/[0.06] backdrop-blur-sm" x-show="!current">
-                <div class="relative w-24 h-24 mx-auto mb-5 flex items-center justify-center">
-                    <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-indigo-500/20 to-cyan-500/20 blur-xl animate-pulse"></div>
-                    <div class="w-20 h-20 rounded-3xl bg-slate-900/90 border border-white/15 flex items-center justify-center shadow-2xl relative">
-                        <i data-lucide="mic" class="w-10 h-10 text-cyan-400 animate-bounce"></i>
+            <!-- Middle: STANDBY / WELCOMING BANNER (WHEN WAITING FOR OPERATOR TO CALL / START) -->
+            <div class="my-auto py-12 sm:py-16 text-center relative z-10 rounded-3xl bg-white/[0.02] border border-white/[0.08] backdrop-blur-md shadow-2xl p-6 sm:p-10" x-show="!current">
+                <div class="relative w-24 h-24 sm:w-28 sm:h-28 mx-auto mb-6 flex items-center justify-center">
+                    <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-indigo-500/30 via-cyan-500/30 to-purple-500/30 blur-2xl animate-pulse"></div>
+                    <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-slate-900/90 border border-white/20 flex items-center justify-center shadow-2xl relative">
+                        <i data-lucide="sparkles" class="w-10 h-10 sm:w-12 sm:h-12 text-cyan-400 animate-bounce"></i>
                     </div>
                 </div>
                 
-                <h3 class="text-xl sm:text-3xl font-black text-white uppercase tracking-tight font-display">
-                    PANGGUNG SIAP • STANDBY
-                </h3>
-                <p class="text-xs sm:text-sm text-slate-400 mt-2 max-w-md mx-auto">
-                    Menunggu operator memulai penampilan peserta selanjutnya dari konsol timekeeper.
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-500/35 text-indigo-300 text-xs sm:text-sm font-black uppercase tracking-wider mb-4 shadow-lg shadow-indigo-500/10">
+                    <span class="w-2 h-2 rounded-full bg-indigo-400 animate-ping"></span>
+                    <span>PANGGUNG UTAMA TALENTA</span>
+                </div>
+
+                <h2 class="text-2xl sm:text-4xl lg:text-5xl font-black text-white uppercase tracking-tight font-display leading-tight drop-shadow-xl">
+                    PERLOMBAAN AKAN SEGERA DIMULAI
+                </h2>
+                <p class="text-sm sm:text-lg lg:text-xl font-bold text-cyan-300/90 mt-3 max-w-2xl mx-auto uppercase tracking-wide">
+                    SELURUH PESERTA HARAP MEMPERSIAPKAN DIRI
                 </p>
 
-                <!-- Next Performer Preview in Empty State -->
-                <template x-if="next">
-                    <div class="inline-flex items-center gap-3 mt-6 px-5 py-2.5 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs sm:text-sm font-bold shadow-lg">
-                        <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-                        <span>Peserta berikutnya siap: <strong class="text-white" x-text="next.name"></strong> (<span x-text="next.institution"></span>)</span>
+                <!-- Active Sector & First Waiting Highlight in Standby Mode -->
+                <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
+                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl border text-xs sm:text-sm font-bold shadow-md"
+                         :class="activeSector === 'PI' ? 'bg-pink-500/20 text-pink-300 border-pink-500/40' : (activeSector === 'PA' ? 'bg-blue-500/20 text-blue-300 border-blue-500/40' : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40')">
+                        <i data-lucide="users" class="w-4 h-4"></i>
+                        <span>Sesi Kategori: <strong class="text-white font-black" x-text="activeSectorLabel"></strong></span>
                     </div>
-                </template>
+
+                    <template x-if="next">
+                        <div class="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-amber-500/15 border border-amber-500/35 text-amber-300 text-xs sm:text-sm font-bold shadow-md">
+                            <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                            <span>Undian Pertama Siap: <strong class="text-white" x-text="'#' + (next.draw_number || 1) + ' ' + next.name"></strong></span>
+                        </div>
+                    </template>
+                </div>
             </div>
 
-            <!-- Bottom: Massive High-Impact Stage Digital Timer & Progress (Hanya saat Mode Waktu ON) -->
-            <div x-show="timer.enabled ?? true" class="space-y-4 sm:space-y-6 relative z-10 pt-6 border-t border-white/[0.12]">
+            <!-- Bottom: Massive High-Impact Stage Digital Timer & Progress (Only shown when performer is active & timer is enabled) -->
+            <div x-show="current && (timer.enabled ?? true)" class="space-y-4 sm:space-y-6 relative z-10 pt-6 border-t border-white/[0.12]">
                 
                 <div class="flex flex-col sm:flex-row items-center justify-between gap-5">
                     <!-- GIANT TIMER DISPLAY -->
@@ -430,9 +444,9 @@
                     <div class="h-full rounded-full transition-all duration-300 ease-out"
                          :style="'width: ' + progressPercent + '%;'"
                          :class="{
-                             'bg-gradient-to-r from-teal-500 via-emerald-400 to-emerald-300 shadow-[0_0_20px_rgba(52,211,153,0.7)]': timerZone === 'normal',
-                             'bg-gradient-to-r from-amber-600 via-amber-400 to-yellow-300 shadow-[0_0_25px_rgba(252,211,77,0.8)]': timerZone === 'warning',
-                             'bg-gradient-to-r from-rose-700 via-red-500 to-rose-400 shadow-[0_0_30px_rgba(244,63,94,0.9)]': timerZone === 'overtime'
+                              'bg-gradient-to-r from-teal-500 via-emerald-400 to-emerald-300 shadow-[0_0_20px_rgba(52,211,153,0.7)]': timerZone === 'normal',
+                              'bg-gradient-to-r from-amber-600 via-amber-400 to-yellow-300 shadow-[0_0_25px_rgba(252,211,77,0.8)]': timerZone === 'warning',
+                              'bg-gradient-to-r from-rose-700 via-red-500 to-rose-400 shadow-[0_0_30px_rgba(244,63,94,0.9)]': timerZone === 'overtime'
                          }"></div>
                 </div>
 
@@ -468,8 +482,15 @@
                     <div class="mt-4 space-y-3 relative z-10">
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0 flex-1">
-                                <h4 class="text-lg sm:text-2xl font-black text-white truncate font-display uppercase tracking-tight"
-                                    x-text="next.name"></h4>
+                                <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                    <h4 class="text-lg sm:text-2xl font-black text-white truncate font-display uppercase tracking-tight"
+                                        x-text="next.name"></h4>
+                                    <template x-if="next.gender_code">
+                                        <span class="text-[10px] font-black px-2 py-0.5 rounded-full shrink-0"
+                                              :class="next.gender_code === 'PI' ? 'bg-pink-500/25 text-pink-300 border border-pink-500/40' : 'bg-blue-500/25 text-blue-300 border border-blue-500/40'"
+                                              x-text="next.gender_code === 'PI' ? 'Putri (PI)' : 'Putra (PA)'"></span>
+                                    </template>
+                                </div>
                                 <p class="text-xs sm:text-sm font-semibold text-amber-200/90 truncate flex items-center gap-2 mt-1">
                                     <i data-lucide="school" class="w-4 h-4 text-amber-400 shrink-0"></i>
                                     <span x-text="next.institution"></span>
@@ -524,7 +545,14 @@
                                     <span x-text="item.draw_number || (idx + 1)"></span>
                                 </div>
                                 <div class="min-w-0">
-                                    <h5 class="text-xs sm:text-sm font-bold text-white truncate group-hover:text-emerald-300 transition-colors" x-text="item.name"></h5>
+                                    <div class="flex items-center gap-1.5">
+                                        <h5 class="text-xs sm:text-sm font-bold text-white truncate group-hover:text-emerald-300 transition-colors" x-text="item.name"></h5>
+                                        <template x-if="item.gender_code">
+                                            <span class="text-[9px] font-bold px-1.5 py-0.2 rounded shrink-0"
+                                                  :class="item.gender_code === 'PI' ? 'bg-pink-500/20 text-pink-300' : 'bg-blue-500/20 text-blue-300'"
+                                                  x-text="item.gender_code"></span>
+                                        </template>
+                                    </div>
                                     <p class="text-[11px] text-slate-400 truncate" x-text="item.institution"></p>
                                 </div>
                             </div>
@@ -577,6 +605,8 @@
         function stageViewerApp(initialState) {
             return {
                 competition: initialState.competition,
+                activeSector: initialState.active_sector || 'PA',
+                activeSectorLabel: initialState.active_sector_label || 'Putra (PA)',
                 current: initialState.current,
                 next: initialState.next,
                 completed: initialState.completed || [],
@@ -689,6 +719,8 @@
                     const prevCompletedLen = this.completed ? this.completed.length : 0;
 
                     this.competition = data.competition;
+                    this.activeSector = data.active_sector || 'PA';
+                    this.activeSectorLabel = data.active_sector_label || 'Putra (PA)';
                     this.current = data.current;
                     this.next = data.next;
                     this.completed = data.completed || [];

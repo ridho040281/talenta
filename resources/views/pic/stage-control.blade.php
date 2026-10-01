@@ -58,6 +58,18 @@
                 <span x-text="(timer.enabled ?? true) ? 'Waktu: ON' : 'Waktu: OFF (Nama Saja)'"></span>
             </button>
 
+            <!-- Layar Sapaan Standby / Jeda Button -->
+            <button type="button" 
+                    @click="setStandbyMode()"
+                    class="px-3.5 py-2.5 rounded-xl border text-xs font-black transition flex items-center gap-2 cursor-pointer shadow-md"
+                    :class="!current 
+                        ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-cyan-500/10 ring-1 ring-cyan-400/50' 
+                        : 'bg-white/[0.06] hover:bg-white/[0.12] text-slate-300 hover:text-white border-white/[0.1]'"
+                    title="Kembalikan TV Panggung ke mode sapaan 'Perlombaan Akan Segera Dimulai'">
+                <i data-lucide="sparkles" class="w-4 h-4 text-cyan-400"></i>
+                <span x-text="!current ? 'Layar Standby: ON' : 'Layar Standby'"></span>
+            </button>
+
             <!-- Open TV Stage Viewer Button -->
             <a href="{{ route('stage.viewer', $competition->slug ?: $competition->code) }}" 
                target="_blank" 
@@ -148,10 +160,15 @@
                     </h2>
                 </div>
 
-                <div class="my-6 py-6 text-center text-slate-500" x-show="!current">
-                    <i data-lucide="user-x" class="w-10 h-10 mx-auto mb-2 opacity-40"></i>
-                    <p class="text-sm font-bold">Belum ada peserta yang aktif di panggung.</p>
-                    <p class="text-xs text-slate-500">Pilih salah satu peserta dari antrian di samping kanan.</p>
+                <div class="my-6 py-6 text-center text-slate-400 space-y-2 rounded-2xl bg-white/[0.02] border border-white/[0.06] p-4" x-show="!current">
+                    <div class="w-12 h-12 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 flex items-center justify-center mx-auto">
+                        <i data-lucide="sparkles" class="w-6 h-6 animate-pulse"></i>
+                    </div>
+                    <p class="text-sm font-black text-white uppercase tracking-wider">Layar Panggung Mode Standby</p>
+                    <p class="text-xs text-slate-400 max-w-md mx-auto">
+                        Layar TV saat ini menampilkan sapaan <strong class="text-cyan-300">"PERLOMBAAN AKAN SEGERA DIMULAI"</strong>. 
+                        Klik <strong class="text-emerald-400">MULAI (Space)</strong> atau tombol <strong class="text-white">Panggil</strong> pada nomor undian di samping untuk memulai penampilan.
+                    </p>
                 </div>
 
                 <!-- HUGE DIGITAL TIMER DISPLAY (Ketika Mode Waktu ON) -->
@@ -312,21 +329,21 @@
                 <!-- Sector Filter Buttons -->
                 <div class="grid grid-cols-3 gap-1.5 p-1 rounded-2xl bg-black/40 border border-white/[0.08] text-xs font-black">
                     <button type="button" 
-                            @click="sectorFilter = 'all'"
+                            @click="setSector('all')"
                             class="py-2 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer"
                             :class="sectorFilter === 'all' ? 'bg-[#7A5AF8] text-white shadow-md' : 'text-slate-400 hover:text-white'">
                         <span>Semua</span>
                         <span class="text-[10px] px-1.5 py-0.2 rounded-full font-mono" :class="sectorFilter === 'all' ? 'bg-white/20 text-white' : 'bg-white/5 text-slate-400'">{{ $registrations->count() }}</span>
                     </button>
                     <button type="button" 
-                            @click="sectorFilter = 'PA'"
+                            @click="setSector('PA')"
                             class="py-2 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer"
                             :class="sectorFilter === 'PA' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:text-white'">
                         <span>Putra (PA)</span>
                         <span class="text-[10px] px-1.5 py-0.2 rounded-full font-mono" :class="sectorFilter === 'PA' ? 'bg-white/20 text-white' : 'bg-white/5 text-slate-400'">{{ $registrations->filter(fn($r) => $r->primary_gender !== 'P')->count() }}</span>
                     </button>
                     <button type="button" 
-                            @click="sectorFilter = 'PI'"
+                            @click="setSector('PI')"
                             class="py-2 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer"
                             :class="sectorFilter === 'PI' ? 'bg-pink-600 text-white shadow-md' : 'text-slate-400 hover:text-white'">
                         <span>Putri (PI)</span>
@@ -456,7 +473,7 @@
             totalSeconds: initialState.timer.total_duration_seconds || ((initialState.competition.duration_minutes || 7) * 60),
             warningThreshold: initialState.timer.warning_threshold_seconds || ((initialState.competition.warning_minutes || 2) * 60),
 
-            sectorFilter: 'all',
+            sectorFilter: initialState.active_sector || 'all',
             searchQuery: '',
 
             actionUrl: '{{ route("pic.stage.control.action", $competition->id) }}',
@@ -576,6 +593,17 @@
                 }
             },
 
+            setSector(sec) {
+                this.sectorFilter = sec;
+                this.triggerAction('set_sector', { sector: sec });
+            },
+
+            setStandbyMode() {
+                if (confirm('Kembalikan TV Panggung ke mode sapaan Standby ("Perlombaan Akan Segera Dimulai")?')) {
+                    this.triggerAction('set_standby');
+                }
+            },
+
             selectPerformer(regId) {
                 if (confirm('Panggil peserta ini ke panggung?')) {
                     this.triggerAction('select_performer', { registration_id: regId });
@@ -650,6 +678,9 @@
             },
 
             get timerStatusLabel() {
+                if (!this.current) {
+                    return 'Layar Standby (Sapaan Pembuka)';
+                }
                 if (!(this.timer.enabled ?? true)) {
                     if (this.timer.status === 'running') return 'Sedang Tampil di Panggung';
                     if (this.timer.status === 'finished') return 'Penampilan Selesai';

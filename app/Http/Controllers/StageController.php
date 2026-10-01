@@ -115,6 +115,39 @@ class StageController extends Controller
     }
 
     /**
+     * Helper to determine registration sector (PA or PI)
+     */
+    public function getRegistrationSector(Registration $r): string
+    {
+        if ($r->primary_gender === 'P') {
+            return 'PI';
+        }
+        if ($r->primary_gender === 'L') {
+            return 'PA';
+        }
+        $sub = strtolower($r->sub_category ?? '');
+        if (str_contains($sub, 'pi') || str_contains($sub, 'putri')) {
+            return 'PI';
+        }
+
+        return 'PA';
+    }
+
+    /**
+     * Filter registrations by sector
+     */
+    public function filterBySector($collection, ?string $sector)
+    {
+        if (! $sector || $sector === 'all') {
+            return $collection;
+        }
+
+        return $collection->filter(function ($r) use ($sector) {
+            return $this->getRegistrationSector($r) === $sector;
+        });
+    }
+
+    /**
      * Handle Operator Actions (Start, Pause, Resume, Next, Prev, Bell, Adjust Time)
      */
     public function handleAction(Request $request, $competition_id)
@@ -127,7 +160,7 @@ class StageController extends Controller
             }
         }
 
-        $competition = Competition::with('registrations')->findOrFail($competition_id);
+        $competition = Competition::with('registrations.members')->findOrFail($competition_id);
 
         if (! self::isTimekeeperSupported($competition)) {
             return response()->json(['error' => 'Fitur Stage & Timekeeper hanya tersedia untuk cabang lomba MTQ, Tahfidz, dan Pop Singer.'], 403);
@@ -141,7 +174,7 @@ class StageController extends Controller
         switch ($action) {
             case 'select_performer':
                 $regId = $request->input('registration_id');
-                $targetReg = Registration::where('competition_id', $competition->id)->where('id', $regId)->first();
+                $targetReg = Registration::with('members')->where('competition_id', $competition->id)->where('id', $regId)->first();
                 if ($targetReg) {
                     Registration::where('competition_id', $competition->id)
                         ->where('stage_status', 'performing')
@@ -150,6 +183,7 @@ class StageController extends Controller
                     $targetReg->update(['stage_status' => 'performing']);
 
                     $stageState['current_registration_id'] = $targetReg->id;
+                    $stageState['active_sector'] = $this->getRegistrationSector($targetReg);
                     $stageState['timer_status'] = 'idle';
                     $stageState['seconds_remaining'] = $defaultTotalSeconds;
                     $stageState['total_duration_seconds'] = $defaultTotalSeconds;
@@ -158,19 +192,41 @@ class StageController extends Controller
                 }
                 break;
 
+            case 'set_sector':
+                $sec = $request->input('sector');
+                if (in_array($sec, ['PA', 'PI', 'all'])) {
+                    $stageState['active_sector'] = $sec;
+                }
+                break;
+
+            case 'set_standby':
+                Registration::where('competition_id', $competition->id)
+                    ->where('stage_status', 'performing')
+                    ->update(['stage_status' => 'waiting']);
+
+                $stageState['current_registration_id'] = null;
+                $stageState['timer_status'] = 'idle';
+                $stageState['seconds_remaining'] = $defaultTotalSeconds;
+                $stageState['total_duration_seconds'] = $defaultTotalSeconds;
+                $stageState['started_at'] = null;
+                $stageState['paused_at'] = null;
+                break;
+
             case 'start':
             case 'resume':
                 if (empty($stageState['current_registration_id'])) {
-                    // Auto select the first waiting participant
-                    $firstWaiting = $competition->registrations()
-                        ->where('status', 'verified')
-                        ->where('stage_status', 'waiting')
-                        ->orderByRaw('COALESCE(draw_number, 99999) ASC')
-                        ->first();
+                    // Auto select the first waiting participant in active sector
+                    $activeSec = $stageState['active_sector'] ?? 'PA';
+                    $waitingPool = $this->filterBySector(
+                        $competition->registrations->where('status', 'verified')->where('stage_status', 'waiting')->sortBy(fn ($r) => $r->draw_number ?? 99999),
+                        $activeSec
+                    );
+                    $firstWaiting = $waitingPool->first();
 
                     if ($firstWaiting) {
                         $firstWaiting->update(['stage_status' => 'performing']);
                         $stageState['current_registration_id'] = $firstWaiting->id;
+                        $stageState['active_sector'] = $this->getRegistrationSector($firstWaiting);
                         $stageState['seconds_remaining'] = $defaultTotalSeconds;
                         $stageState['total_duration_seconds'] = $defaultTotalSeconds;
                     }
@@ -216,16 +272,19 @@ class StageController extends Controller
                     }
                 }
 
-                // Auto find next waiting performer
-                $nextWaiting = Registration::where('competition_id', $competition->id)
-                    ->where('status', 'verified')
-                    ->where('stage_status', 'waiting')
-                    ->orderByRaw('COALESCE(draw_number, 99999) ASC')
-                    ->first();
+                // Auto find next waiting performer in SAME sector
+                $activeSec = $stageState['active_sector'] ?? 'PA';
+                $freshRegs = $competition->fresh(['registrations.members'])->registrations;
+                $waitingPool = $this->filterBySector(
+                    $freshRegs->where('status', 'verified')->where('stage_status', 'waiting')->sortBy(fn ($r) => $r->draw_number ?? 99999),
+                    $activeSec
+                );
+                $nextWaiting = $waitingPool->first();
 
                 if ($nextWaiting) {
                     $nextWaiting->update(['stage_status' => 'performing']);
                     $stageState['current_registration_id'] = $nextWaiting->id;
+                    $stageState['active_sector'] = $this->getRegistrationSector($nextWaiting);
                     $stageState['timer_status'] = 'idle';
                     $stageState['seconds_remaining'] = $defaultTotalSeconds;
                     $stageState['total_duration_seconds'] = $defaultTotalSeconds;
@@ -233,8 +292,8 @@ class StageController extends Controller
                     $stageState['paused_at'] = null;
                 } else {
                     $stageState['current_registration_id'] = null;
-                    $stageState['timer_status'] = 'finished';
-                    $stageState['seconds_remaining'] = 0;
+                    $stageState['timer_status'] = 'idle';
+                    $stageState['seconds_remaining'] = $defaultTotalSeconds;
                 }
                 break;
 
@@ -247,15 +306,18 @@ class StageController extends Controller
                     }
                 }
 
-                $nextWaiting = Registration::where('competition_id', $competition->id)
-                    ->where('status', 'verified')
-                    ->where('stage_status', 'waiting')
-                    ->orderByRaw('COALESCE(draw_number, 99999) ASC')
-                    ->first();
+                $activeSec = $stageState['active_sector'] ?? 'PA';
+                $freshRegs = $competition->fresh(['registrations.members'])->registrations;
+                $waitingPool = $this->filterBySector(
+                    $freshRegs->where('status', 'verified')->where('stage_status', 'waiting')->sortBy(fn ($r) => $r->draw_number ?? 99999),
+                    $activeSec
+                );
+                $nextWaiting = $waitingPool->first();
 
                 if ($nextWaiting) {
                     $nextWaiting->update(['stage_status' => 'performing']);
                     $stageState['current_registration_id'] = $nextWaiting->id;
+                    $stageState['active_sector'] = $this->getRegistrationSector($nextWaiting);
                     $stageState['timer_status'] = 'idle';
                     $stageState['seconds_remaining'] = $defaultTotalSeconds;
                     $stageState['total_duration_seconds'] = $defaultTotalSeconds;
@@ -347,6 +409,7 @@ class StageController extends Controller
             'stage_state' => [
                 'timer_enabled' => $existingTimerEnabled,
                 'current_registration_id' => null,
+                'active_sector' => 'PA',
                 'timer_status' => 'idle',
                 'seconds_remaining' => $defaultTotalSeconds,
                 'total_duration_seconds' => $defaultTotalSeconds,
@@ -389,49 +452,57 @@ class StageController extends Controller
         $currentReg = null;
         if (! empty($stageState['current_registration_id'])) {
             $currentReg = $registrations->firstWhere('id', $stageState['current_registration_id']);
+        } elseif ($registrations->firstWhere('stage_status', 'performing')) {
+            $currentReg = $registrations->firstWhere('stage_status', 'performing');
         }
 
-        if (! $currentReg) {
-            $currentReg = $registrations->firstWhere('stage_status', 'performing')
-                       ?: $registrations->firstWhere('stage_status', 'waiting');
+        // 2. Determine Active Sector (PA or PI)
+        $activeSector = $stageState['active_sector'] ?? null;
+        if (! $activeSector && $currentReg) {
+            $activeSector = $this->getRegistrationSector($currentReg);
+        }
+        if (! $activeSector) {
+            $activeSector = 'PA';
         }
 
-        // 2. Next Performer (Waiting list right after current)
-        $nextReg = null;
-        if ($currentReg) {
-            $nextReg = $registrations->filter(function ($r) use ($currentReg) {
-                return $r->stage_status === 'waiting' && $r->id !== $currentReg->id;
-            })->first();
-        } else {
-            $nextReg = $registrations->firstWhere('stage_status', 'waiting');
-        }
+        // 3. Next Performer (Waiting list in SAME active sector right after current)
+        $sectorWaiting = $this->filterBySector(
+            $registrations->filter(function ($r) use ($currentReg) {
+                return $r->stage_status === 'waiting' && (! $currentReg || $r->id !== $currentReg->id);
+            }),
+            $activeSector
+        );
+        $nextReg = $sectorWaiting->first();
 
-        // 3. Completed List (ordered latest completed first)
+        // 4. Completed List (ordered latest completed first)
         $completedList = $registrations->where('stage_status', 'completed')
             ->values()
             ->map(function ($r) {
                 $firstMember = $r->members->first();
                 $displayName = $r->team_name ?: ($firstMember?->full_name ?: 'Peserta #'.$r->id);
-                $durSec = $r->stage_duration_seconds ?? 0;
+                $durSec = (int) ($r->stage_duration_seconds ?? 0);
                 $min = floor($durSec / 60);
                 $sec = $durSec % 60;
+                $genderCode = $this->getRegistrationSector($r);
 
                 return [
                     'id' => $r->id,
                     'draw_number' => $r->draw_number,
                     'participant_number' => $r->participant_number,
                     'name' => $displayName,
-                    'institution' => $r->institution_name,
+                    'institution' => $r->institution_name ?: '-',
+                    'gender_code' => $genderCode,
                     'duration_seconds' => $durSec,
                     'formatted_duration' => sprintf('%02d:%02d', $min, $sec),
                 ];
-            });
+            })->toArray();
 
         $currentData = null;
         if ($currentReg) {
             $firstMember = $currentReg->members->first();
             $displayName = $currentReg->team_name ?: ($firstMember?->full_name ?: 'Peserta #'.$currentReg->id);
             $membersList = $currentReg->members->pluck('full_name')->toArray();
+            $genderCode = $this->getRegistrationSector($currentReg);
 
             $currentData = [
                 'id' => $currentReg->id,
@@ -439,8 +510,10 @@ class StageController extends Controller
                 'participant_number' => $currentReg->participant_number,
                 'name' => $displayName,
                 'institution' => $currentReg->institution_name,
+                'gender_code' => $genderCode,
+                'gender_label' => $genderCode === 'PI' ? 'Putri (PI)' : 'Putra (PA)',
                 'members' => $membersList,
-                'sub_category' => $currentReg->sub_category,
+                'sub_category' => $currentReg->sub_category ?: ($genderCode === 'PI' ? 'Putri (PI)' : 'Putra (PA)'),
                 'chosen_song' => $currentReg->chosen_song,
                 'stage_status' => $currentReg->stage_status,
             ];
@@ -450,6 +523,7 @@ class StageController extends Controller
         if ($nextReg) {
             $firstMember = $nextReg->members->first();
             $displayName = $nextReg->team_name ?: ($firstMember?->full_name ?: 'Peserta #'.$nextReg->id);
+            $genderCode = $this->getRegistrationSector($nextReg);
 
             $nextData = [
                 'id' => $nextReg->id,
@@ -457,6 +531,9 @@ class StageController extends Controller
                 'participant_number' => $nextReg->participant_number,
                 'name' => $displayName,
                 'institution' => $nextReg->institution_name,
+                'gender_code' => $genderCode,
+                'gender_label' => $genderCode === 'PI' ? 'Putri (PI)' : 'Putra (PA)',
+                'sub_category' => $nextReg->sub_category ?: ($genderCode === 'PI' ? 'Putri (PI)' : 'Putra (PA)'),
                 'chosen_song' => $nextReg->chosen_song,
             ];
         }
@@ -476,6 +553,8 @@ class StageController extends Controller
                 'overtime_minutes' => $defaultOvertimeMin,
                 'bell_sound' => $competition->stage_bell_sound ?: 'bell',
             ],
+            'active_sector' => $activeSector,
+            'active_sector_label' => $activeSector === 'PI' ? 'Putri (PI)' : ($activeSector === 'PA' ? 'Putra (PA)' : 'Semua Sektor'),
             'current' => $currentData,
             'next' => $nextData,
             'completed' => $completedList,
