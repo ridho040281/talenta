@@ -1216,7 +1216,16 @@ function multiJudgeScoringApp(competition, initialJudges, initialCriteria, initi
             const pScores = this.scoresData[regId] || {};
             const jScore = pScores[judgeId] || {};
             const crits = jScore.criteria || {};
-            return crits[critId] !== undefined ? crits[critId] : '';
+            if (crits[critId] !== undefined && crits[critId] !== null && crits[critId] !== '') {
+                return crits[critId];
+            }
+            if (crits[String(critId)] !== undefined && crits[String(critId)] !== null && crits[String(critId)] !== '') {
+                return crits[String(critId)];
+            }
+            if (this.criteria && this.criteria.length === 1 && (jScore.total_score || 0) > 0) {
+                return jScore.total_score;
+            }
+            return '';
         },
 
         setCriterionValue(regId, judgeId, critId, value) {
@@ -1251,20 +1260,28 @@ function multiJudgeScoringApp(competition, initialJudges, initialCriteria, initi
             const crits = jScore.criteria || {};
 
             let total = 0;
+            let hasAnyInput = false;
             if (this.criteria && this.criteria.length > 0) {
                 let totalWeight = this.criteria.reduce((sum, c) => sum + (parseFloat(c.weight_percentage) || 0), 0);
                 if (!totalWeight || totalWeight <= 0) totalWeight = 100;
 
                 this.criteria.forEach(c => {
-                    const val = parseFloat(crits[c.id]) || 0;
-                    const weight = parseFloat(c.weight_percentage) || (100 / this.criteria.length);
-                    total += (val * (weight / totalWeight));
+                    const rawVal = crits[c.id] !== undefined ? crits[c.id] : (crits[String(c.id)] !== undefined ? crits[String(c.id)] : null);
+                    if (rawVal !== null && rawVal !== '') {
+                        hasAnyInput = true;
+                        const val = parseFloat(rawVal) || 0;
+                        const weight = parseFloat(c.weight_percentage) || (100 / this.criteria.length);
+                        total += (val * (weight / totalWeight));
+                    }
                 });
             } else if (jScore.direct_score !== undefined) {
                 total = parseFloat(jScore.direct_score) || 0;
+                hasAnyInput = true;
             }
 
-            jScore.total_score = Math.round(total * 100) / 100;
+            if (hasAnyInput) {
+                jScore.total_score = Math.round(total * 100) / 100;
+            }
         },
 
         getJudgeSubtotal(regId, judgeId) {

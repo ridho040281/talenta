@@ -3047,10 +3047,12 @@ class PicController extends Controller
             return $reg->draw_number ?? 99999;
         })->values();
 
-        // Build existing scores map with auto-healing for any orphaned score records
+        // Build existing scores map with auto-healing for any orphaned score records and criteria mismatches
         $scoresMap = [];
         $compJudges = $competition->judges->values();
         $validJudgeIds = $compJudges->pluck('id')->toArray();
+        $compCriteria = $competition->criteria->values();
+        $compCriteriaIds = $compCriteria->pluck('id')->toArray();
 
         foreach ($participants as $reg) {
             $regScoresMap = [];
@@ -3059,9 +3061,41 @@ class PicController extends Controller
             foreach ($reg->scores as $score) {
                 if (in_array($score->judge_id, $validJudgeIds)) {
                     $critValues = [];
-                    foreach ($score->details as $det) {
-                        $critValues[$det->criterion_id] = (float) $det->score_value;
+                    $details = $score->details;
+
+                    // 1. Direct match by criterion_id
+                    foreach ($details as $det) {
+                        if (in_array($det->criterion_id, $compCriteriaIds)) {
+                            $critValues[$det->criterion_id] = (float) $det->score_value;
+                        }
                     }
+
+                    // 2. If details exist but criterion IDs were mismatched, map by index
+                    if (empty($critValues) && $details->isNotEmpty()) {
+                        foreach ($details->values() as $dIdx => $det) {
+                            if (isset($compCriteria[$dIdx])) {
+                                $targetCrit = $compCriteria[$dIdx];
+                                $critValues[$targetCrit->id] = (float) $det->score_value;
+                                $det->update(['criterion_id' => $targetCrit->id]);
+                            }
+                        }
+                    }
+
+                    // 3. If score has total_score > 0 but NO details at all, auto-populate
+                    if (empty($critValues) && (float) $score->total_score > 0) {
+                        if ($compCriteria->count() === 1) {
+                            $singleCrit = $compCriteria->first();
+                            $critValues[$singleCrit->id] = (float) $score->total_score;
+                            ScoreDetail::updateOrCreate(
+                                ['score_id' => $score->id, 'criterion_id' => $singleCrit->id],
+                                ['score_value' => (float) $score->total_score]
+                            );
+                        } elseif ($compCriteria->isNotEmpty()) {
+                            $firstCrit = $compCriteria->first();
+                            $critValues[$firstCrit->id] = (float) $score->total_score;
+                        }
+                    }
+
                     $regScoresMap[$score->judge_id] = [
                         'score_id' => $score->id,
                         'total_score' => (float) $score->total_score,
@@ -3080,9 +3114,38 @@ class PicController extends Controller
                     if (! isset($regScoresMap[$j->id]) && ! empty($unmatchedScores)) {
                         $orphan = array_shift($unmatchedScores);
                         $critValues = [];
-                        foreach ($orphan->details as $det) {
-                            $critValues[$det->criterion_id] = (float) $det->score_value;
+                        $details = $orphan->details;
+
+                        foreach ($details as $det) {
+                            if (in_array($det->criterion_id, $compCriteriaIds)) {
+                                $critValues[$det->criterion_id] = (float) $det->score_value;
+                            }
                         }
+
+                        if (empty($critValues) && $details->isNotEmpty()) {
+                            foreach ($details->values() as $dIdx => $det) {
+                                if (isset($compCriteria[$dIdx])) {
+                                    $targetCrit = $compCriteria[$dIdx];
+                                    $critValues[$targetCrit->id] = (float) $det->score_value;
+                                    $det->update(['criterion_id' => $targetCrit->id]);
+                                }
+                            }
+                        }
+
+                        if (empty($critValues) && (float) $orphan->total_score > 0) {
+                            if ($compCriteria->count() === 1) {
+                                $singleCrit = $compCriteria->first();
+                                $critValues[$singleCrit->id] = (float) $orphan->total_score;
+                                ScoreDetail::updateOrCreate(
+                                    ['score_id' => $orphan->id, 'criterion_id' => $singleCrit->id],
+                                    ['score_value' => (float) $orphan->total_score]
+                                );
+                            } elseif ($compCriteria->isNotEmpty()) {
+                                $firstCrit = $compCriteria->first();
+                                $critValues[$firstCrit->id] = (float) $orphan->total_score;
+                            }
+                        }
+
                         $regScoresMap[$j->id] = [
                             'score_id' => $orphan->id,
                             'total_score' => (float) $orphan->total_score,
