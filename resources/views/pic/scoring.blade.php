@@ -77,6 +77,14 @@
                     <span>Kelola Nama Juri</span>
                     <span class="px-2 py-0.5 rounded-full bg-indigo-500/30 text-white font-mono text-[10px]" x-text="judges.length + ' Juri'"></span>
                 </button>
+
+                <!-- Export Excel Button in Hero Header -->
+                <button type="button" 
+                        @click="exportRecapXls()"
+                        class="px-4 py-2.5 rounded-2xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-black shadow-lg shadow-emerald-500/10 transition flex items-center gap-2 cursor-pointer">
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-400"></i>
+                    <span>Export Excel (.xlsx)</span>
+                </button>
             </div>
 
         </div>
@@ -144,7 +152,13 @@
         </div>
 
         <!-- External Quick Links -->
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
+            <button type="button" 
+                    @click="exportRecapXls()"
+                    class="px-4 py-2.5 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer">
+                <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-400"></i>
+                <span>Export Excel (.xlsx)</span>
+            </button>
             <a href="{{ route('admin.berita-acara.index', ['competition_id' => $competition->id]) }}" 
                class="px-4 py-2.5 rounded-2xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 hover:text-white border border-white/[0.08] text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
                 <i data-lucide="file-text" class="w-4 h-4 text-emerald-400"></i>
@@ -177,19 +191,19 @@
                 <div class="inline-flex p-1 bg-slate-950 rounded-xl border border-white/[0.08] text-xs">
                     <button type="button" 
                             @click="sectorFilter = 'all'" 
-                            class="px-3 py-1.5 rounded-lg font-bold transition"
+                            class="px-3 py-1.5 rounded-lg font-bold transition cursor-pointer"
                             :class="sectorFilter === 'all' ? 'bg-[#7A5AF8] text-white shadow-xs' : 'text-slate-400 hover:text-white'">
                         Semua Sektor
                     </button>
                     <button type="button" 
                             @click="sectorFilter = 'PA'" 
-                            class="px-3 py-1.5 rounded-lg font-bold transition"
+                            class="px-3 py-1.5 rounded-lg font-bold transition cursor-pointer"
                             :class="sectorFilter === 'PA' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'">
                         👦 Putra (PA)
                     </button>
                     <button type="button" 
                             @click="sectorFilter = 'PI'" 
-                            class="px-3 py-1.5 rounded-lg font-bold transition"
+                            class="px-3 py-1.5 rounded-lg font-bold transition cursor-pointer"
                             :class="sectorFilter === 'PI' ? 'bg-pink-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'">
                         👧 Putri (PI)
                     </button>
@@ -202,6 +216,15 @@
                     <option value="unscored">⚪ Belum Dinilai Lengkap</option>
                     <option value="scored">🟢 Sudah Terkunci</option>
                 </select>
+
+                <!-- Tab 1 Export Excel Quick Button -->
+                <button type="button" 
+                        @click="exportRecapXls()"
+                        class="px-3 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+                        title="Download Data Rekap Nilai ke Format Excel (.xlsx)">
+                    <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-400"></i>
+                    <span>Export Excel</span>
+                </button>
             </div>
         </div>
 
@@ -1213,13 +1236,18 @@ function multiJudgeScoringApp(competition, initialJudges, initialCriteria, initi
             const crits = jScore.criteria || {};
 
             let total = 0;
-            let totalWeight = this.criteria.reduce((sum, c) => sum + (c.weight_percentage || 0), 0) || 100;
+            if (this.criteria && this.criteria.length > 0) {
+                let totalWeight = this.criteria.reduce((sum, c) => sum + (parseFloat(c.weight_percentage) || 0), 0);
+                if (!totalWeight || totalWeight <= 0) totalWeight = 100;
 
-            this.criteria.forEach(c => {
-                const val = parseFloat(crits[c.id]) || 0;
-                const weight = c.weight_percentage || 100;
-                total += (val * (weight / totalWeight));
-            });
+                this.criteria.forEach(c => {
+                    const val = parseFloat(crits[c.id]) || 0;
+                    const weight = parseFloat(c.weight_percentage) || (100 / this.criteria.length);
+                    total += (val * (weight / totalWeight));
+                });
+            } else if (jScore.direct_score !== undefined) {
+                total = parseFloat(jScore.direct_score) || 0;
+            }
 
             jScore.total_score = Math.round(total * 100) / 100;
         },

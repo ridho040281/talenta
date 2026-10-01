@@ -2998,6 +2998,29 @@ class PicController extends Controller
             $competition->load('criteria');
         }
 
+        // Auto sync any judge that already submitted scores for this competition into competition judges
+        $scoringJudgeIds = Score::where('competition_id', $competition->id)
+            ->whereNotNull('judge_id')
+            ->pluck('judge_id')
+            ->unique()
+            ->filter()
+            ->values();
+
+        if ($scoringJudgeIds->isNotEmpty()) {
+            $existingJudgeIds = $competition->judges->pluck('id')->toArray();
+            $missingJudgeIds = $scoringJudgeIds->diff($existingJudgeIds);
+            if ($missingJudgeIds->isNotEmpty()) {
+                $attachData = [];
+                $currCount = count($existingJudgeIds);
+                foreach ($missingJudgeIds as $mId) {
+                    $currCount++;
+                    $attachData[$mId] = ['role_title' => 'Juri '.$currCount];
+                }
+                $competition->judges()->syncWithoutDetaching($attachData);
+                $competition->load('judges');
+            }
+        }
+
         // If no judges assigned yet, auto-create default 3 judges (Juri 1, Juri 2, Juri 3)
         if ($competition->judges->isEmpty()) {
             for ($i = 1; $i <= 3; $i++) {
@@ -3075,6 +3098,9 @@ class PicController extends Controller
             if ($jId && $existingJudges->has($jId)) {
                 $judgeUser = $existingJudges->get($jId);
                 $judgeUser->update(['name' => $jName]);
+            } elseif ($jId && ($foundUser = User::find($jId))) {
+                $judgeUser = $foundUser;
+                $judgeUser->update(['name' => $jName]);
             } else {
                 // Find or create judge user
                 $judgeUser = User::create([
@@ -3122,20 +3148,52 @@ class PicController extends Controller
             'scores' => ['required', 'array'],
             'scores.*.criteria' => ['nullable', 'array'],
             'scores.*.notes' => ['nullable', 'string'],
+            'scores.*.total_score' => ['nullable', 'numeric'],
             'is_locked' => ['nullable', 'boolean'],
         ]);
 
         $isLocked = $request->boolean('is_locked', true);
+
+        // Ensure default criterion exists if empty
+        if ($competition->criteria->isEmpty()) {
+            CompetitionCriterion::create([
+                'competition_id' => $competition->id,
+                'name' => 'Nilai Keseluruhan',
+                'weight_percentage' => 100,
+                'min_score' => 0,
+                'max_score' => 100,
+                'description' => 'Nilai akumulatif penampilan peserta',
+            ]);
+            $competition->load('criteria');
+        }
+
         $criteria = $competition->criteria;
         $totalWeight = $criteria->sum('weight_percentage') ?: 100;
         $updatedScores = [];
 
         DB::transaction(function () use ($competition, $registration, $validated, $criteria, $totalWeight, $isLocked, &$updatedScores) {
             foreach ($validated['scores'] as $judgeId => $judgeData) {
-                // Verify judge belongs to this competition
+                // Find or attach judge user
                 $judgeUser = $competition->judges->firstWhere('id', (int) $judgeId);
                 if (! $judgeUser) {
-                    continue;
+                    $judgeUser = User::find((int) $judgeId);
+                    if ($judgeUser) {
+                        $competition->judges()->syncWithoutDetaching([
+                            $judgeUser->id => ['role_title' => 'Dewan Juri'],
+                        ]);
+                    } else {
+                        // Fallback judge creation
+                        $judgeUser = User::create([
+                            'name' => 'Dewan Juri',
+                            'email' => 'juri_'.time().'_'.Str::random(4).'@talenta.local',
+                            'password' => Hash::make('talenta2026'),
+                            'role' => 'juri',
+                            'status' => 'active',
+                        ]);
+                        $competition->judges()->syncWithoutDetaching([
+                            $judgeUser->id => ['role_title' => 'Dewan Juri'],
+                        ]);
+                    }
                 }
 
                 $critInputs = $judgeData['criteria'] ?? [];
@@ -3144,22 +3202,30 @@ class PicController extends Controller
 
                 if ($criteria->isNotEmpty()) {
                     foreach ($criteria as $criterion) {
-                        $rawVal = isset($critInputs[$criterion->id]) ? (float) $critInputs[$criterion->id] : 0;
+                        $cVal = null;
                         if (isset($critInputs[$criterion->id]) && $critInputs[$criterion->id] !== '' && $critInputs[$criterion->id] !== null) {
-                            $hasInput = true;
+                            $cVal = (float) $critInputs[$criterion->id];
+                        } elseif (isset($critInputs[(string) $criterion->id]) && $critInputs[(string) $criterion->id] !== '' && $critInputs[(string) $criterion->id] !== null) {
+                            $cVal = (float) $critInputs[(string) $criterion->id];
                         }
-                        $weight = $criterion->weight_percentage ?: 100;
-                        $totalScore += ($rawVal * ($weight / $totalWeight));
+
+                        if ($cVal !== null) {
+                            $hasInput = true;
+                            $weight = $criterion->weight_percentage ?: 100;
+                            $totalScore += ($cVal * ($weight / $totalWeight));
+                        }
                     }
-                } else {
-                    $rawVal = isset($judgeData['direct_score']) ? (float) $judgeData['direct_score'] : 0;
-                    if (isset($judgeData['direct_score']) && $judgeData['direct_score'] !== '' && $judgeData['direct_score'] !== null) {
-                        $hasInput = true;
-                    }
-                    $totalScore = $rawVal;
                 }
 
-                // Only save if at least one criterion was entered or explicitly submitted
+                // If criteria total was not calculated but direct total_score was passed
+                if (! $hasInput && isset($judgeData['total_score']) && $judgeData['total_score'] !== '' && $judgeData['total_score'] !== null) {
+                    $totalScore = (float) $judgeData['total_score'];
+                    if ($totalScore > 0) {
+                        $hasInput = true;
+                    }
+                }
+
+                // Only save if at least one criterion was entered or explicitly locked
                 if ($hasInput || $isLocked) {
                     $score = Score::updateOrCreate(
                         [
@@ -3175,16 +3241,29 @@ class PicController extends Controller
                     );
 
                     foreach ($criteria as $criterion) {
-                        $rawVal = isset($critInputs[$criterion->id]) ? (float) $critInputs[$criterion->id] : 0;
-                        ScoreDetail::updateOrCreate(
-                            [
-                                'score_id' => $score->id,
-                                'criterion_id' => $criterion->id,
-                            ],
-                            [
-                                'score_value' => $rawVal,
-                            ]
-                        );
+                        $cVal = null;
+                        if (isset($critInputs[$criterion->id]) && $critInputs[$criterion->id] !== '' && $critInputs[$criterion->id] !== null) {
+                            $cVal = (float) $critInputs[$criterion->id];
+                        } elseif (isset($critInputs[(string) $criterion->id]) && $critInputs[(string) $criterion->id] !== '' && $critInputs[(string) $criterion->id] !== null) {
+                            $cVal = (float) $critInputs[(string) $criterion->id];
+                        }
+
+                        if ($cVal === null && $criteria->count() === 1 && $totalScore > 0) {
+                            $cVal = $totalScore;
+                        }
+
+                        if ($cVal !== null) {
+                            ScoreDetail::updateOrCreate(
+                                [
+                                    'score_id' => $score->id,
+                                    'criterion_id' => $criterion->id,
+                                ],
+                                [
+                                    'score_value' => (float) $cVal,
+                                ]
+                            );
+                            $critInputs[$criterion->id] = (float) $cVal;
+                        }
                     }
 
                     $updatedScores[$judgeUser->id] = [
@@ -3199,13 +3278,13 @@ class PicController extends Controller
         });
 
         // Recalculate average score for this registration
-        $allLockedScores = Score::where('competition_id', $competition->id)
+        $allPositiveScores = Score::where('competition_id', $competition->id)
             ->where('registration_id', $registration->id)
-            ->where('is_locked', true)
+            ->where('total_score', '>', 0)
             ->get();
 
-        $avgScore = $allLockedScores->isNotEmpty() ? round($allLockedScores->avg('total_score'), 2) : 0;
-        $totalJudgesScored = $allLockedScores->count();
+        $avgScore = $allPositiveScores->isNotEmpty() ? round($allPositiveScores->avg('total_score'), 2) : 0;
+        $totalJudgesScored = $allPositiveScores->count();
 
         return response()->json([
             'success' => true,
@@ -3233,6 +3312,42 @@ class PicController extends Controller
                     ->with(['members', 'scores.details']);
             },
         ])->findOrFail($competition_id);
+
+        // Ensure default criterion exists if empty
+        if ($competition->criteria->isEmpty()) {
+            CompetitionCriterion::create([
+                'competition_id' => $competition->id,
+                'name' => 'Nilai Keseluruhan',
+                'weight_percentage' => 100,
+                'min_score' => 0,
+                'max_score' => 100,
+                'description' => 'Nilai akumulatif penampilan peserta',
+            ]);
+            $competition->load('criteria');
+        }
+
+        // Auto sync any scoring judges that exist in scores into competition judges
+        $scoringJudgeIds = Score::where('competition_id', $competition->id)
+            ->whereNotNull('judge_id')
+            ->pluck('judge_id')
+            ->unique()
+            ->filter()
+            ->values();
+
+        if ($scoringJudgeIds->isNotEmpty()) {
+            $existingJudgeIds = $competition->judges->pluck('id')->toArray();
+            $missingJudgeIds = $scoringJudgeIds->diff($existingJudgeIds);
+            if ($missingJudgeIds->isNotEmpty()) {
+                $attachData = [];
+                $currCount = count($existingJudgeIds);
+                foreach ($missingJudgeIds as $mId) {
+                    $currCount++;
+                    $attachData[$mId] = ['role_title' => 'Juri '.$currCount];
+                }
+                $competition->judges()->syncWithoutDetaching($attachData);
+                $competition->load('judges');
+            }
+        }
 
         $viewMode = $request->query('view_mode', 'detailed');
         $sectorFilter = $request->query('sector', 'all');
@@ -3658,12 +3773,16 @@ class PicController extends Controller
         $filename = "REKAP_NILAI_{$compCodeSafe}_TALENTA_2026_".date('Ymd_His').'.xlsx';
 
         return response()->streamDownload(function () use ($spreadsheet) {
+            if (ob_get_length()) {
+                ob_end_clean();
+            }
             $writer = new Xlsx($spreadsheet);
             $writer->save('php://output');
         }, $filename, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => 'attachment; filename="'.$filename.'"',
-            'Cache-Control' => 'max-age=0',
+            'Cache-Control' => 'max-age=0, must-revalidate',
+            'Pragma' => 'public',
         ]);
     }
 }
