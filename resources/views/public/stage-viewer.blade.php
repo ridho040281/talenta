@@ -129,28 +129,28 @@
         }
     </style>
 </head>
-<body class="font-sans antialiased min-h-screen flex flex-col selection:bg-[#7A5AF8] selection:text-white overflow-x-hidden"
+<body class="font-sans antialiased h-screen max-h-screen overflow-hidden flex flex-col selection:bg-[#7A5AF8] selection:text-white"
       x-data="stageViewerApp({{ json_encode($initialState) }})"
       x-init="initApp()">
 
     <!-- TOP GLOWING HEADER BAR -->
-    <header class="h-20 sm:h-24 px-4 sm:px-8 flex items-center justify-between border-b border-white/[0.1] bg-[#060913] shrink-0 z-30 sticky top-0 shadow-2xl">
+    <header class="h-16 sm:h-20 px-4 sm:px-6 lg:px-8 flex items-center justify-between border-b border-white/[0.1] bg-[#060913] shrink-0 z-30 shadow-2xl">
         
         <!-- Left: Logo & Event / Competition Identity -->
-        <div class="flex items-center gap-3.5 sm:gap-6 min-w-0">
+        <div class="flex items-center gap-3 sm:gap-5 min-w-0">
             @if(!empty($appSettings['app_logo']))
                 <div class="relative group shrink-0">
                     <div class="absolute -inset-1 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 opacity-40 blur-sm group-hover:opacity-75 transition"></div>
-                    <img src="{{ asset('storage/' . $appSettings['app_logo']) }}" alt="Logo" class="relative h-11 sm:h-14 w-auto max-w-[160px] object-contain shrink-0 drop-shadow-md">
+                    <img src="{{ asset('storage/' . $appSettings['app_logo']) }}" alt="Logo" class="relative h-10 sm:h-12 w-auto max-w-[140px] object-contain shrink-0 drop-shadow-md">
                 </div>
             @else
-                <div class="w-11 h-11 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-[#6366F1] via-[#4F46E5] to-[#06B6D4] flex items-center justify-center text-white font-black text-xl sm:text-2xl shadow-lg shadow-indigo-500/30 shrink-0 border border-white/20">
-                    <i data-lucide="sparkles" class="w-6 h-6 sm:w-7 sm:h-7 text-white"></i>
+                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-[#6366F1] via-[#4F46E5] to-[#06B6D4] flex items-center justify-center text-white font-black text-lg sm:text-xl shadow-lg shadow-indigo-500/30 shrink-0 border border-white/20">
+                    <i data-lucide="sparkles" class="w-5 h-5 sm:w-6 sm:h-6 text-white"></i>
                 </div>
             @endif
 
             <div class="min-w-0">
-                <div class="flex items-center gap-2.5">
+                <div class="flex items-center gap-2">
                     <span class="inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-black uppercase tracking-wider text-cyan-300 bg-cyan-500/15 border border-cyan-500/30 px-2.5 py-0.5 rounded-full shadow-sm">
                         <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
                         {{ $competition->code }} • STAGE DISPLAY
@@ -176,70 +176,69 @@
                     </template>
                 </div>
                 
-                <h1 class="text-base sm:text-2xl lg:text-3xl font-black text-white truncate tracking-tight font-display mt-0.5 drop-shadow-sm">
+                <h1 class="text-sm sm:text-xl lg:text-2xl font-black text-white truncate tracking-tight font-display mt-0.5 drop-shadow-sm">
                     {{ $competition->name }}
                 </h1>
             </div>
         </div>
 
         <!-- Right: Digital Clock & Action Controls -->
-        <div class="flex items-center gap-2.5 sm:gap-4 shrink-0">
+        <div class="flex items-center gap-2 sm:gap-3.5 shrink-0">
             <!-- Network Offline Alert Pill (Muncul otomatis saat sinyal drop) -->
-            <div x-show="!isOnline" x-cloak class="flex items-center gap-2 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-2xl bg-rose-500/25 border border-rose-500/40 text-rose-300 text-xs font-bold shadow-lg shadow-rose-500/10 animate-pulse">
+            <div x-show="!isOnline" x-cloak class="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-rose-500/25 border border-rose-500/40 text-rose-300 text-xs font-bold shadow-lg shadow-rose-500/10 animate-pulse">
                 <span class="relative flex h-2 w-2">
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
                     <span class="relative inline-flex rounded-full h-2 w-2 bg-rose-400"></span>
                 </span>
                 <i data-lucide="wifi-off" class="w-3.5 h-3.5 text-rose-300"></i>
-                <span class="hidden sm:inline">Offline (Menyambung Ulang...)</span>
-                <span class="sm:hidden">Offline</span>
+                <span class="hidden sm:inline">Offline</span>
             </div>
 
             <!-- Realtime Clock Widget -->
-            <div class="hidden md:flex flex-col items-end px-3.5 py-1.5 rounded-2xl bg-white/[0.04] border border-white/[0.08] shadow-inner">
+            <div class="hidden md:flex flex-col items-end px-3 py-1 rounded-2xl bg-white/[0.04] border border-white/[0.08] shadow-inner">
                 <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">WAKTU LOKAL</span>
-                <span class="font-mono text-base font-black text-slate-100 tracking-wider" x-text="clockTime">--:--:--</span>
+                <span class="font-mono text-sm sm:text-base font-black text-slate-100 tracking-wider" x-text="clockTime">--:--:--</span>
             </div>
 
             <!-- Audio Unmute Pill -->
             <button @click="enableAudio()" 
                     x-show="!audioUnlocked"
                     type="button" 
-                    class="relative group flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold transition shadow-lg shadow-amber-500/10">
-                <span class="relative flex h-2.5 w-2.5">
+                    class="relative group flex items-center gap-2 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold transition shadow-lg shadow-amber-500/10">
+                <span class="relative flex h-2 w-2">
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-400"></span>
                 </span>
-                <i data-lucide="volume-2" class="w-4 h-4"></i>
-                <span class="hidden sm:inline">Aktifkan Bel Audio</span>
+                <i data-lucide="volume-2" class="w-3.5 h-3.5"></i>
+                <span class="hidden sm:inline">Aktifkan Suara</span>
             </button>
 
             <!-- Audio Active Indicator -->
-            <div x-show="audioUnlocked" x-cloak class="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
-                <i data-lucide="volume-check" class="w-4 h-4"></i>
-                <span>Bel Aktif</span>
+            <div x-show="audioUnlocked" x-cloak class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
+                <i data-lucide="volume-check" class="w-3.5 h-3.5"></i>
+                <span>Suara Aktif</span>
             </div>
 
             <!-- Fullscreen Button -->
             <button @click="toggleFullscreen()" 
                     type="button" 
-                    class="p-2.5 sm:px-4 sm:py-2.5 rounded-2xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 hover:text-white border border-white/[0.12] text-xs font-bold transition flex items-center gap-2 shadow-lg">
-                <i data-lucide="maximize" class="w-4 h-4" x-show="!isFullscreen"></i>
-                <i data-lucide="minimize" class="w-4 h-4" x-show="isFullscreen" x-cloak></i>
-                <span class="hidden sm:inline" x-text="isFullscreen ? 'Kecilkan' : 'Layar Penuh'">Layar Penuh</span>
+                    class="p-2 sm:px-3.5 sm:py-2 rounded-2xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 hover:text-white border border-white/[0.12] text-xs font-bold transition flex items-center gap-1.5 shadow-lg">
+                <i data-lucide="maximize" class="w-3.5 h-3.5" x-show="!isFullscreen"></i>
+                <i data-lucide="minimize" class="w-3.5 h-3.5" x-show="isFullscreen" x-cloak></i>
+                <span class="hidden sm:inline" x-text="isFullscreen ? 'Normal' : 'Layar Penuh'">Layar Penuh</span>
             </button>
         </div>
     </header>
 
-    <!-- MAIN 3-PANEL STAGE LAYOUT -->
-    <main class="flex-1 p-3 sm:p-6 lg:p-8 max-w-[1920px] w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-stretch">
+    <!-- MAIN 3-PANEL STAGE LAYOUT (RESPONSIVE 100VH BROADCAST GRID) -->
+    <main class="flex-1 min-h-0 p-3 sm:p-4 lg:p-6 max-w-[1920px] w-full mx-auto grid grid-cols-1 md:grid-cols-12 gap-4 lg:gap-6 items-stretch h-full">
         
         <!-- ============================================================== -->
         <!-- PANEL 1: SEDANG TAMPIL (NOW PERFORMING) — 8 COLS (66%)          -->
         <!-- ============================================================== -->
-        <div class="lg:col-span-8 flex flex-col justify-between glass-card rounded-[2.5rem] p-6 sm:p-8 lg:p-12 relative overflow-hidden group transition-all duration-700">
+        <div class="md:col-span-8 flex flex-col justify-between glass-card rounded-[2rem] p-5 sm:p-7 lg:p-9 relative overflow-hidden group transition-all duration-500 h-full min-h-0">
             
-            <!-- Dynamic Stage Aura / Ambient Glow (Hardware-Accelerated Radial Gradients) -->
+            <!-- Dynamic Stage Aura / Ambient Glow -->
             <div class="absolute -right-24 -top-24 w-96 h-96 rounded-full pointer-events-none transition-all duration-700 opacity-60"
                  :class="{
                      'bg-[radial-gradient(circle,rgba(16,185,129,0.22)_0%,transparent_70%)]': timerZone === 'normal' && timer.status === 'running',
@@ -257,16 +256,16 @@
                  }"></div>
 
             <!-- Top Row: Live Status Pill & Huge Stage Draw Badge -->
-            <div class="flex items-center justify-between gap-4 relative z-10">
-                <div class="flex items-center gap-2.5 sm:gap-3 flex-wrap">
-                    <span class="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg"
+            <div class="flex items-center justify-between gap-3 relative z-10 shrink-0">
+                <div class="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+                    <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg"
                           :class="{
                               'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-emerald-500/10': current && timer.status === 'running',
                               'bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-amber-500/10': current && timer.status === 'paused',
                               'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 shadow-indigo-500/10': !current || timer.status === 'idle',
                               'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-rose-500/10': current && timer.status === 'finished'
                           }">
-                        <span class="relative flex h-3 w-3">
+                        <span class="relative flex h-2.5 w-2.5">
                             <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
                                   :class="{
                                       'bg-emerald-400': current && timer.status === 'running',
@@ -274,7 +273,7 @@
                                       'bg-indigo-400': !current || timer.status === 'idle',
                                       'bg-rose-400': current && timer.status === 'finished'
                                   }"></span>
-                            <span class="relative inline-flex rounded-full h-3 w-3"
+                            <span class="relative inline-flex rounded-full h-2.5 w-2.5"
                                   :class="{
                                       'bg-emerald-400': current && timer.status === 'running',
                                       'bg-amber-400': current && timer.status === 'paused',
@@ -286,35 +285,36 @@
                     </span>
 
                     <!-- Active Sector Badge (Putra / Putri) -->
-                    <span class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-black uppercase tracking-wider shadow-sm"
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-black uppercase tracking-wider shadow-sm"
                           :class="activeSector === 'PI' ? 'bg-pink-500/20 text-pink-300 border border-pink-500/35' : (activeSector === 'PA' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/35' : 'bg-white/[0.08] text-slate-200 border border-white/[0.12]')"
                           x-text="activeSectorLabel">
                     </span>
 
                     <template x-if="current && current.chosen_song">
-                        <span class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-purple-500/20 border border-purple-500/30 text-xs font-bold text-purple-300 shadow-sm">
-                            <i data-lucide="music" class="w-3.5 h-3.5 text-purple-400"></i>
-                            <span x-text="'Lagu: ' + current.chosen_song"></span>
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-purple-500/20 border border-purple-500/30 text-xs font-bold text-purple-300 shadow-sm truncate max-w-[200px]">
+                            <i data-lucide="music" class="w-3 h-3 text-purple-400 shrink-0"></i>
+                            <span x-text="'Lagu: ' + current.chosen_song" class="truncate"></span>
                         </span>
                     </template>
                 </div>
 
-                <!-- Massive High-Impact Stage Draw Number Badge (Only when performer is active) -->
+                <!-- Stage Draw Number Badge (Clean High-Impact Card) -->
                 <template x-if="current && current.draw_number">
-                    <div class="relative group">
-                        <div class="absolute -inset-1 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-400 opacity-60 blur-md group-hover:opacity-90 transition"></div>
-                        <div class="relative flex items-center gap-2.5 px-4 sm:px-6 py-2 sm:py-3 rounded-2xl bg-[#0e1628] border-2 border-amber-400/80 text-amber-300 shadow-2xl">
+                    <div class="relative group shrink-0">
+                        <div class="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-400 opacity-60 blur-sm group-hover:opacity-90 transition"></div>
+                        <div class="relative flex items-center gap-2 px-3.5 sm:px-5 py-1.5 sm:py-2.5 rounded-2xl bg-[#0e1628] border-2 border-amber-400/80 text-amber-300 shadow-2xl">
                             <span class="text-[10px] sm:text-xs font-black uppercase tracking-widest text-amber-400/90">NO. TAMPIL</span>
-                            <span class="text-2xl sm:text-4xl font-black font-mono text-amber-200 tracking-tight" x-text="current.draw_number"></span>
+                            <span class="text-xl sm:text-3xl font-black font-mono text-amber-200 tracking-tight" x-text="current.draw_number"></span>
                         </div>
                     </div>
                 </template>
             </div>
 
             <!-- Middle: Performer Identity Info (ACTIVE PERFORMER STATE) -->
-            <div class="my-6 sm:my-8 relative z-10 transition-all duration-300" x-show="current" :class="!(timer.enabled ?? true) ? 'my-auto py-6 sm:py-12' : ''">
-                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-xs sm:text-sm font-bold uppercase tracking-wider mb-3">
-                    <i data-lucide="school" class="w-4 h-4 text-cyan-400"></i>
+            <div class="my-auto py-2 sm:py-4 relative z-10 transition-all duration-300 flex-1 min-h-0 flex flex-col justify-center" x-show="current">
+                <!-- Institution & Registration Code Badge -->
+                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-xs sm:text-sm font-bold uppercase tracking-wider mb-2.5 max-w-fit shadow-sm">
+                    <i data-lucide="school" class="w-4 h-4 text-cyan-400 shrink-0"></i>
                     <span x-text="current ? current.institution : '-'" class="truncate"></span>
                     <template x-if="current && current.participant_number">
                         <span class="text-cyan-400/70 font-mono" x-text="'• #' + current.participant_number"></span>
@@ -323,28 +323,28 @@
 
                 <div class="flex items-start justify-between gap-4">
                     <div class="min-w-0 flex-1">
-                        <h2 class="font-black text-white tracking-tight leading-tight uppercase font-display drop-shadow-lg"
-                            :class="(timer.enabled ?? true) ? 'text-3xl sm:text-5xl lg:text-7xl' : 'text-4xl sm:text-6xl lg:text-8xl'"
+                        <!-- Responsive Name Header with proper scaling and line break -->
+                        <h2 class="font-black text-white tracking-tight leading-tight uppercase font-display drop-shadow-lg break-words text-2xl sm:text-4xl md:text-5xl lg:text-6xl line-clamp-2"
                             x-text="current ? current.name : 'Menunggu Penampil...'">
                         </h2>
 
                         <!-- Member names if collective -->
                         <template x-if="current && current.members && current.members.length > 1">
-                            <p class="text-xs sm:text-base text-slate-300 line-clamp-1 mt-3 flex items-center gap-2">
-                                <span class="px-2 py-0.5 rounded-lg bg-white/10 text-slate-300 font-bold text-xs uppercase">Anggota Tim:</span>
-                                <span x-text="current.members.join(', ')"></span>
+                            <p class="text-xs sm:text-sm md:text-base text-slate-300 line-clamp-1 mt-2 flex items-center gap-2">
+                                <span class="px-2 py-0.5 rounded-lg bg-white/10 text-slate-300 font-bold text-xs uppercase shrink-0">Anggota Tim:</span>
+                                <span x-text="current.members.join(', ')" class="truncate"></span>
                             </p>
                         </template>
 
                         <!-- Extra badge in No-Timer mode -->
-                        <div x-show="!(timer.enabled ?? true)" class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-xs sm:text-sm font-black uppercase tracking-wider mt-6 shadow-xl shadow-indigo-500/10">
+                        <div x-show="!(timer.enabled ?? true)" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-xs sm:text-sm font-black uppercase tracking-wider mt-3 shadow-xl shadow-indigo-500/10">
                             <i data-lucide="mic" class="w-4 h-4 text-indigo-400"></i>
                             <span>Sedang Tampil di Panggung</span>
                         </div>
                     </div>
 
                     <!-- Live Equalizer Visualizer (Dancing Bars on Stage) -->
-                    <div class="hidden sm:flex items-end gap-1.5 h-10 px-3 py-2 rounded-2xl bg-white/[0.04] border border-white/[0.08] shrink-0" 
+                    <div class="hidden sm:flex items-end gap-1.5 h-10 px-3 py-2 rounded-2xl bg-white/[0.04] border border-white/[0.08] shrink-0 self-center" 
                          x-show="timer.status === 'running'">
                         <span class="w-1.5 bg-emerald-400 rounded-full eq-bar-1"></span>
                         <span class="w-1.5 bg-emerald-400 rounded-full eq-bar-2"></span>
@@ -356,36 +356,36 @@
             </div>
 
             <!-- Middle: STANDBY / WELCOMING BANNER (WHEN WAITING FOR OPERATOR TO CALL / START) -->
-            <div class="my-auto py-12 sm:py-16 text-center relative z-10 rounded-3xl bg-white/[0.02] border border-white/[0.08] backdrop-blur-md shadow-2xl p-6 sm:p-10" x-show="!current">
-                <div class="relative w-24 h-24 sm:w-28 sm:h-28 mx-auto mb-6 flex items-center justify-center">
-                    <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-indigo-500/30 via-cyan-500/30 to-purple-500/30 blur-2xl animate-pulse"></div>
-                    <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-slate-900/90 border border-white/20 flex items-center justify-center shadow-2xl relative">
-                        <i data-lucide="sparkles" class="w-10 h-10 sm:w-12 sm:h-12 text-cyan-400 animate-bounce"></i>
+            <div class="my-auto py-6 sm:py-10 text-center relative z-10 rounded-3xl bg-white/[0.02] border border-white/[0.08] backdrop-blur-md shadow-2xl p-4 sm:p-8 flex-1 min-h-0 flex flex-col justify-center" x-show="!current">
+                <div class="relative w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 flex items-center justify-center shrink-0">
+                    <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-indigo-500/30 via-cyan-500/30 to-purple-500/30 blur-xl animate-pulse"></div>
+                    <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-900/90 border border-white/20 flex items-center justify-center shadow-2xl relative">
+                        <i data-lucide="sparkles" class="w-7 h-7 sm:w-8 sm:h-8 text-cyan-400 animate-bounce"></i>
                     </div>
                 </div>
                 
-                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-500/35 text-indigo-300 text-xs sm:text-sm font-black uppercase tracking-wider mb-4 shadow-lg shadow-indigo-500/10">
+                <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-indigo-500/20 border border-indigo-500/35 text-indigo-300 text-xs sm:text-sm font-black uppercase tracking-wider mb-3 shadow-lg shadow-indigo-500/10 mx-auto">
                     <span class="w-2 h-2 rounded-full bg-indigo-400 animate-ping"></span>
                     <span>PANGGUNG UTAMA TALENTA</span>
                 </div>
 
-                <h2 class="text-2xl sm:text-4xl lg:text-5xl font-black text-white uppercase tracking-tight font-display leading-tight drop-shadow-xl">
+                <h2 class="text-xl sm:text-3xl lg:text-4xl font-black text-white uppercase tracking-tight font-display leading-tight drop-shadow-xl">
                     PERLOMBAAN AKAN SEGERA DIMULAI
                 </h2>
-                <p class="text-sm sm:text-lg lg:text-xl font-bold text-cyan-300/90 mt-3 max-w-2xl mx-auto uppercase tracking-wide">
+                <p class="text-xs sm:text-base lg:text-lg font-bold text-cyan-300/90 mt-2 max-w-xl mx-auto uppercase tracking-wide">
                     SELURUH PESERTA HARAP MEMPERSIAPKAN DIRI
                 </p>
 
                 <!-- Active Sector & First Waiting Highlight in Standby Mode -->
-                <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
-                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl border text-xs sm:text-sm font-bold shadow-md"
+                <div class="mt-4 flex flex-wrap items-center justify-center gap-2.5">
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-2xl border text-xs sm:text-sm font-bold shadow-md"
                          :class="activeSector === 'PI' ? 'bg-pink-500/20 text-pink-300 border-pink-500/40' : (activeSector === 'PA' ? 'bg-blue-500/20 text-blue-300 border-blue-500/40' : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40')">
-                        <i data-lucide="users" class="w-4 h-4"></i>
-                        <span>Sesi Kategori: <strong class="text-white font-black" x-text="activeSectorLabel"></strong></span>
+                        <i data-lucide="users" class="w-3.5 h-3.5"></i>
+                        <span>Sesi: <strong class="text-white font-black" x-text="activeSectorLabel"></strong></span>
                     </div>
 
                     <template x-if="next">
-                        <div class="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-amber-500/15 border border-amber-500/35 text-amber-300 text-xs sm:text-sm font-bold shadow-md">
+                        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-amber-500/15 border border-amber-500/35 text-amber-300 text-xs sm:text-sm font-bold shadow-md">
                             <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
                             <span>Undian Pertama Siap: <strong class="text-white" x-text="'#' + (next.draw_number || 1) + ' ' + next.name"></strong></span>
                         </div>
@@ -394,39 +394,39 @@
             </div>
 
             <!-- Bottom: Massive High-Impact Stage Digital Timer & Progress (Only shown when performer is active & timer is enabled) -->
-            <div x-show="current && (timer.enabled ?? true)" class="space-y-4 sm:space-y-6 relative z-10 pt-6 border-t border-white/[0.12]">
+            <div x-show="current && (timer.enabled ?? true)" class="space-y-3 sm:space-y-4 relative z-10 pt-3 sm:pt-4 border-t border-white/[0.12] shrink-0">
                 
-                <div class="flex flex-col sm:flex-row items-center justify-between gap-5">
+                <div class="flex items-center justify-between gap-4">
                     <!-- GIANT TIMER DISPLAY -->
-                    <div class="flex items-center gap-3 sm:gap-6">
-                        <div class="timer-digits text-7xl sm:text-8xl lg:text-[10rem] font-black tracking-tight transition-all duration-300 select-none leading-none"
+                    <div class="flex items-center gap-3 sm:gap-5">
+                        <div class="timer-digits text-5xl sm:text-7xl lg:text-8xl font-black tracking-tight transition-all duration-300 select-none leading-none"
                              :class="{
-                                 'text-emerald-400 drop-shadow-[0_0_40px_rgba(52,211,153,0.5)]': timerZone === 'normal',
-                                 'text-amber-300 drop-shadow-[0_0_45px_rgba(252,211,77,0.6)]': timerZone === 'warning',
-                                 'text-rose-500 drop-shadow-[0_0_55px_rgba(244,63,94,0.75)] animate-overtime': timerZone === 'overtime'
+                                 'text-emerald-400 drop-shadow-[0_0_35px_rgba(52,211,153,0.5)]': timerZone === 'normal',
+                                 'text-amber-300 drop-shadow-[0_0_40px_rgba(252,211,77,0.6)]': timerZone === 'warning',
+                                 'text-rose-500 drop-shadow-[0_0_50px_rgba(244,63,94,0.75)] animate-overtime': timerZone === 'overtime'
                              }"
                              x-text="formattedTimer">
                             00:00
                         </div>
                         
                         <div class="flex flex-col text-left">
-                            <span class="text-xs sm:text-sm font-black uppercase tracking-widest"
+                            <span class="text-[11px] sm:text-xs font-black uppercase tracking-widest"
                                   :class="{
                                       'text-emerald-400': timerZone === 'normal',
                                       'text-amber-300': timerZone === 'warning',
                                       'text-rose-400': timerZone === 'overtime'
                                   }"
-                                  x-text="timerZone === 'overtime' ? 'OVERTIME (LEWAT)' : 'SISA WAKTU'">
+                                  x-text="timerZone === 'overtime' ? 'OVERTIME' : 'SISA WAKTU'">
                                 SISA WAKTU
                             </span>
-                            <span class="text-[11px] sm:text-xs text-slate-400 font-mono mt-0.5" 
+                            <span class="text-[10px] sm:text-[11px] text-slate-400 font-mono" 
                                   x-text="'Maks ' + competition.duration_minutes + ' Menit'"></span>
                         </div>
                     </div>
 
                     <!-- Visual Indicator Badges -->
-                    <div class="flex sm:flex-col items-center sm:items-end gap-2 text-right">
-                        <div class="px-4 py-2 rounded-2xl border text-xs sm:text-sm font-black tracking-wider uppercase shadow-lg"
+                    <div class="flex flex-col items-end gap-1 text-right">
+                        <div class="px-3 py-1.5 rounded-2xl border text-xs sm:text-sm font-black tracking-wider uppercase shadow-lg"
                              :class="{
                                  'bg-emerald-500/20 border-emerald-500/40 text-emerald-300 shadow-emerald-500/10': timerZone === 'normal',
                                  'bg-amber-500/25 border-amber-500/50 text-amber-300 shadow-amber-500/10 animate-pulse': timerZone === 'warning',
@@ -434,13 +434,13 @@
                              }">
                             <span x-text="timerZoneLabel"></span>
                         </div>
-                        <span class="text-[11px] text-slate-400 font-mono"
-                              x-text="'Peringatan: sisa ' + competition.warning_minutes + ' menit'"></span>
+                        <span class="text-[10px] text-slate-400 font-mono"
+                              x-text="'Peringatan: ' + competition.warning_minutes + ' menit'"></span>
                     </div>
                 </div>
 
                 <!-- Sleek Glowing Progress Bar -->
-                <div class="w-full bg-slate-950/80 rounded-full h-3.5 sm:h-5 p-1 border border-white/[0.12] overflow-hidden shadow-inner">
+                <div class="w-full bg-slate-950/80 rounded-full h-3 sm:h-4 p-0.5 sm:p-1 border border-white/[0.12] overflow-hidden shadow-inner">
                     <div class="h-full rounded-full transition-all duration-300 ease-out"
                          :style="'width: ' + progressPercent + '%;'"
                          :class="{
@@ -456,117 +456,117 @@
         <!-- ============================================================== -->
         <!-- SIDEBAR: BERIKUTNYA & RIWAYAT SELESAI — 4 COLS (33%)            -->
         <!-- ============================================================== -->
-        <div class="lg:col-span-4 flex flex-col gap-5 sm:gap-6">
+        <div class="md:col-span-4 flex flex-col gap-3 sm:gap-4 h-full min-h-0">
             
             <!-- CARD 2: BERIKUTNYA (UP NEXT / STANDBY) -->
-            <div class="glass-card-amber rounded-[2rem] p-6 sm:p-7 relative overflow-hidden shadow-2xl">
+            <div class="glass-card-amber rounded-[1.75rem] p-4 sm:p-5 relative overflow-hidden shadow-xl shrink-0">
                 <!-- Background ambient sparkle -->
-                <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-[radial-gradient(circle,rgba(245,158,11,0.18)_0%,transparent_70%)] rounded-full pointer-events-none"></div>
+                <div class="absolute -right-10 -bottom-10 w-36 h-36 bg-[radial-gradient(circle,rgba(245,158,11,0.18)_0%,transparent_70%)] rounded-full pointer-events-none"></div>
 
-                <div class="flex items-center justify-between gap-2 pb-3.5 border-b border-amber-500/25 relative z-10">
-                    <div class="flex items-center gap-2.5">
-                        <span class="relative flex h-2.5 w-2.5">
+                <div class="flex items-center justify-between gap-2 pb-2.5 border-b border-amber-500/25 relative z-10">
+                    <div class="flex items-center gap-2">
+                        <span class="relative flex h-2 w-2">
                             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-400"></span>
                         </span>
                         <h3 class="text-xs sm:text-sm font-black uppercase tracking-wider text-amber-300">
                             PESERTA BERIKUTNYA
                         </h3>
                     </div>
-                    <span class="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 font-mono tracking-wider">
+                    <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 font-mono tracking-wider">
                         STANDBY
                     </span>
                 </div>
 
                 <template x-if="next">
-                    <div class="mt-4 space-y-3 relative z-10">
-                        <div class="flex items-start justify-between gap-3">
+                    <div class="mt-3 space-y-2.5 relative z-10">
+                        <div class="flex items-start justify-between gap-2.5">
                             <div class="min-w-0 flex-1">
-                                <div class="flex items-center gap-2 mb-1 flex-wrap">
-                                    <h4 class="text-lg sm:text-2xl font-black text-white truncate font-display uppercase tracking-tight"
+                                <div class="flex items-center gap-1.5 mb-1 flex-wrap">
+                                    <h4 class="text-base sm:text-lg lg:text-xl font-black text-white truncate font-display uppercase tracking-tight"
                                         x-text="next.name"></h4>
                                     <template x-if="next.gender_code">
-                                        <span class="text-[10px] font-black px-2 py-0.5 rounded-full shrink-0"
+                                        <span class="text-[9px] font-black px-1.5 py-0.5 rounded-full shrink-0"
                                               :class="next.gender_code === 'PI' ? 'bg-pink-500/25 text-pink-300 border border-pink-500/40' : 'bg-blue-500/25 text-blue-300 border border-blue-500/40'"
-                                              x-text="next.gender_code === 'PI' ? 'Putri (PI)' : 'Putra (PA)'"></span>
+                                              x-text="next.gender_code === 'PI' ? 'PI' : 'PA'"></span>
                                     </template>
                                 </div>
-                                <p class="text-xs sm:text-sm font-semibold text-amber-200/90 truncate flex items-center gap-2 mt-1">
-                                    <i data-lucide="school" class="w-4 h-4 text-amber-400 shrink-0"></i>
-                                    <span x-text="next.institution"></span>
+                                <p class="text-xs sm:text-sm font-semibold text-amber-200/90 truncate flex items-center gap-1.5">
+                                    <i data-lucide="school" class="w-3.5 h-3.5 text-amber-400 shrink-0"></i>
+                                    <span x-text="next.institution" class="truncate"></span>
                                 </p>
                             </div>
 
                             <template x-if="next.draw_number">
-                                <div class="px-3.5 py-1.5 rounded-2xl bg-amber-400/20 border border-amber-400/40 text-amber-300 text-center shrink-0 shadow-lg shadow-amber-500/10">
-                                    <span class="text-[9px] font-black block leading-none text-amber-400/80">NO.</span>
-                                    <span class="text-xl font-black font-mono leading-none text-amber-200" x-text="next.draw_number"></span>
+                                <div class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-2xl bg-amber-400/20 border border-amber-400/40 text-amber-300 text-center shrink-0 shadow-lg shadow-amber-500/10">
+                                    <span class="text-[8px] font-black block leading-none text-amber-400/80">NO.</span>
+                                    <span class="text-lg sm:text-xl font-black font-mono leading-none text-amber-200" x-text="next.draw_number"></span>
                                 </div>
                             </template>
                         </div>
 
                         <!-- Backstage Notice -->
-                        <div class="p-3 rounded-2xl bg-amber-500/15 border border-amber-500/25 text-xs text-amber-200 flex items-center gap-2.5 mt-4 shadow-sm">
-                            <i data-lucide="bell-ring" class="w-4 h-4 text-amber-400 shrink-0 animate-bounce"></i>
-                            <span class="font-medium">Harap segera bersiap di sayap panggung (Backstage).</span>
+                        <div class="p-2 sm:p-2.5 rounded-xl bg-amber-500/15 border border-amber-500/25 text-[11px] sm:text-xs text-amber-200 flex items-center gap-2 shadow-sm">
+                            <i data-lucide="bell-ring" class="w-3.5 h-3.5 text-amber-400 shrink-0 animate-bounce"></i>
+                            <span class="font-medium truncate">Harap segera bersiap di sayap panggung.</span>
                         </div>
                     </div>
                 </template>
 
                 <template x-if="!next">
-                    <div class="py-8 text-center text-slate-400 text-xs font-semibold relative z-10">
-                        <div class="w-12 h-12 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center justify-center mx-auto mb-2 text-slate-500">
-                            <i data-lucide="check-check" class="w-6 h-6"></i>
+                    <div class="py-5 text-center text-slate-400 text-xs font-semibold relative z-10">
+                        <div class="w-9 h-9 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center justify-center mx-auto mb-1.5 text-slate-500">
+                            <i data-lucide="check-check" class="w-4 h-4"></i>
                         </div>
-                        <span class="text-slate-300 font-bold block">Tidak Ada Antrian Berikutnya</span>
-                        <span class="text-[11px] text-slate-500">Semua peserta telah dipanggil atau selesai.</span>
+                        <span class="text-slate-300 font-bold block text-xs">Tidak Ada Antrian Berikutnya</span>
+                        <span class="text-[10px] text-slate-500">Semua peserta telah dipanggil / selesai.</span>
                     </div>
                 </template>
             </div>
 
             <!-- CARD 3: RIWAYAT SELESAI (COMPLETED HISTORY) -->
-            <div class="flex-1 glass-card rounded-[2rem] p-6 sm:p-7 flex flex-col relative overflow-hidden shadow-2xl">
-                <div class="flex items-center justify-between pb-3.5 border-b border-white/[0.1] mb-4">
+            <div class="flex-1 min-h-0 glass-card rounded-[1.75rem] p-4 sm:p-5 flex flex-col relative overflow-hidden shadow-xl">
+                <div class="flex items-center justify-between pb-2.5 border-b border-white/[0.1] mb-2.5 shrink-0">
                     <h3 class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-200 flex items-center gap-2">
-                        <div class="w-6 h-6 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-                            <i data-lucide="history" class="w-3.5 h-3.5"></i>
+                        <div class="w-5 h-5 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                            <i data-lucide="history" class="w-3 h-3"></i>
                         </div>
                         <span>Sudah Selesai Tampil</span>
                     </h3>
-                    <span class="text-xs font-black text-emerald-400 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 font-mono" 
+                    <span class="text-[11px] font-black text-emerald-400 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 font-mono" 
                           x-text="completed.length + ' Peserta'">0 Peserta</span>
                 </div>
 
-                <div class="flex-1 overflow-y-auto space-y-2.5 max-h-[380px] lg:max-h-[420px] pr-1.5 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+                <div class="flex-1 min-h-0 overflow-y-auto space-y-2 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
                     <template x-for="(item, idx) in completed" :key="item.id">
-                        <div class="p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] transition-all flex items-center justify-between gap-3 group">
-                            <div class="flex items-center gap-3 min-w-0">
-                                <div class="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-black text-xs flex items-center justify-center shrink-0 font-mono shadow-sm group-hover:scale-105 transition-transform">
+                        <div class="p-2.5 sm:p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] transition-all flex items-center justify-between gap-2.5 group">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-black text-xs flex items-center justify-center shrink-0 font-mono shadow-sm group-hover:scale-105 transition-transform">
                                     <span x-text="item.draw_number || (idx + 1)"></span>
                                 </div>
                                 <div class="min-w-0">
                                     <div class="flex items-center gap-1.5">
                                         <h5 class="text-xs sm:text-sm font-bold text-white truncate group-hover:text-emerald-300 transition-colors" x-text="item.name"></h5>
                                         <template x-if="item.gender_code">
-                                            <span class="text-[9px] font-bold px-1.5 py-0.2 rounded shrink-0"
+                                            <span class="text-[8px] font-bold px-1 py-0.2 rounded shrink-0"
                                                   :class="item.gender_code === 'PI' ? 'bg-pink-500/20 text-pink-300' : 'bg-blue-500/20 text-blue-300'"
                                                   x-text="item.gender_code"></span>
                                         </template>
                                     </div>
-                                    <p class="text-[11px] text-slate-400 truncate" x-text="item.institution"></p>
+                                    <p class="text-[10px] sm:text-[11px] text-slate-400 truncate" x-text="item.institution"></p>
                                 </div>
                             </div>
                             <div class="text-right shrink-0">
-                                <span class="text-[11px] font-black text-emerald-400 px-2.5 py-1 rounded-xl bg-emerald-500/15 border border-emerald-500/25 font-mono shadow-sm"
+                                <span class="text-[10px] sm:text-[11px] font-black text-emerald-400 px-2 py-0.5 rounded-lg bg-emerald-500/15 border border-emerald-500/25 font-mono shadow-sm"
                                       x-text="'⏱ ' + item.formatted_duration"></span>
                             </div>
                         </div>
                     </template>
 
                     <template x-if="completed.length === 0">
-                        <div class="py-12 text-center text-slate-500 text-xs flex flex-col items-center justify-center">
-                            <i data-lucide="clock" class="w-8 h-8 opacity-40 mb-2"></i>
-                            <span class="font-medium">Belum ada peserta yang menyelesaikan penampilan.</span>
+                        <div class="py-8 text-center text-slate-500 text-xs flex flex-col items-center justify-center">
+                            <i data-lucide="clock" class="w-6 h-6 opacity-40 mb-1.5"></i>
+                            <span class="font-medium text-[11px]">Belum ada peserta yang menyelesaikan penampilan.</span>
                         </div>
                     </template>
                 </div>
@@ -578,25 +578,25 @@
     <!-- Reconnecting Floating Toast / Banner (Unobtrusive) -->
     <div x-show="!isOnline" 
          x-cloak 
-         class="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full bg-slate-950 border border-amber-500/40 text-amber-200 text-xs font-bold shadow-2xl flex items-center gap-3 transition-all">
-        <span class="relative flex h-2.5 w-2.5 shrink-0">
+         class="fixed bottom-12 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-slate-950 border border-amber-500/40 text-amber-200 text-xs font-bold shadow-2xl flex items-center gap-2.5 transition-all">
+        <span class="relative flex h-2 w-2 shrink-0">
             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-400"></span>
         </span>
-        <i data-lucide="wifi-off" class="w-4 h-4 text-amber-300 shrink-0"></i>
-        <span>Sinyal panggung terputus sementara. Layar tetap berjalan & otomatis sinkron saat sinyal kembali.</span>
+        <i data-lucide="wifi-off" class="w-3.5 h-3.5 text-amber-300 shrink-0"></i>
+        <span>Sinyal terputus. Layar otomatis sinkron kembali saat tersambung.</span>
     </div>
 
     <!-- FOOTER INFO BAR -->
-    <footer class="h-12 px-6 sm:px-8 flex items-center justify-between text-xs text-slate-400 border-t border-white/[0.08] bg-[#040711]">
+    <footer class="h-10 sm:h-11 px-4 sm:px-8 flex items-center justify-between text-xs text-slate-400 border-t border-white/[0.08] bg-[#040711] shrink-0">
         <div class="flex items-center gap-2 truncate">
             <span class="font-bold text-slate-300">{{ $appSettings['institution_name'] ?? 'MTsN 1 Blitar' }}</span>
             <span>•</span>
             <span class="truncate">{{ $appSettings['event_name'] ?? ($appSettings['app_name'] ?? 'TALENTA') }}</span>
         </div>
         <div class="flex items-center gap-3 shrink-0">
-            <span class="font-mono text-slate-400 hidden sm:inline" x-text="clockTime">--:--:--</span>
-            <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-slate-400">STAGE SYSTEM</span>
+            <span class="font-mono text-slate-400 hidden sm:inline text-xs" x-text="clockTime">--:--:--</span>
+            <span class="text-[9px] uppercase font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-slate-400">STAGE SYSTEM</span>
         </div>
     </footer>
 
