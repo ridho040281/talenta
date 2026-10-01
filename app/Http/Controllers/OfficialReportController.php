@@ -56,7 +56,10 @@ class OfficialReportController extends Controller
             ];
         }
 
-        if (in_array($code, ['MTQ', 'POP'])) {
+        if (in_array($code, ['MTQ', 'POP', 'THF', 'TFID', 'TAH'])
+            || str_contains(strtolower($comp->name ?? ''), 'mtq')
+            || str_contains(strtolower($comp->name ?? ''), 'tahfid')
+            || str_contains(strtolower($comp->name ?? ''), 'pop')) {
             return [
                 'pa' => ['title' => 'Kategori Putra (PA)', 'group' => 'Putra', 'gender' => 'L', 'is_ganda' => false, 'kat' => 'all'],
                 'pi' => ['title' => 'Kategori Putri (PI)', 'group' => 'Putri', 'gender' => 'P', 'is_ganda' => false, 'kat' => 'all'],
@@ -186,10 +189,10 @@ class OfficialReportController extends Controller
                     return true;
                 });
 
-                // Rank winners by average locked score (only participants who have locked scores > 0)
+                // Rank winners by average score (participants who have entered scores > 0)
                 $ranked = $filteredRegs->map(function ($r) {
-                    $lockedScores = $r->scores->where('is_locked', true);
-                    $avgScore = $lockedScores->isNotEmpty() ? round($lockedScores->avg('total_score'), 2) : 0;
+                    $validScores = $r->scores->filter(fn ($s) => (bool) $s->is_locked || (float) $s->total_score > 0);
+                    $avgScore = $validScores->isNotEmpty() ? round($validScores->avg('total_score'), 2) : 0;
                     $participantName = $r->pure_name ?: ($r->team_name ?: ($r->members->first()?->full_name ?? ('Peserta #'.$r->id)));
                     $schoolName = $r->display_school ?: ($r->institution_name ?: '-');
 
@@ -199,7 +202,7 @@ class OfficialReportController extends Controller
                         'display_name' => $participantName,
                         'institution_name' => $schoolName,
                         'score' => $avgScore > 0 ? $avgScore : '',
-                        'has_score' => ($lockedScores->isNotEmpty() && $avgScore > 0),
+                        'has_score' => ($validScores->isNotEmpty() && $avgScore > 0),
                     ];
                 })
                     ->filter(fn ($item) => $item['has_score'])
@@ -376,8 +379,8 @@ class OfficialReportController extends Controller
                     });
 
                     $ranked = $filteredRegs->map(function ($r) {
-                        $lockedScores = $r->scores->where('is_locked', true);
-                        $avgScore = $lockedScores->isNotEmpty() ? round($lockedScores->avg('total_score'), 2) : 0;
+                        $validScores = $r->scores->filter(fn ($s) => (bool) $s->is_locked || (float) $s->total_score > 0);
+                        $avgScore = $validScores->isNotEmpty() ? round($validScores->avg('total_score'), 2) : 0;
                         $participantName = $r->pure_name ?: ($r->team_name ?: ($r->members->first()?->full_name ?? ('Peserta #'.$r->id)));
                         $schoolName = $r->display_school ?: ($r->institution_name ?: '-');
 
@@ -386,7 +389,7 @@ class OfficialReportController extends Controller
                             'nama' => $participantName,
                             'sekolah' => $schoolName,
                             'nilai' => $avgScore > 0 ? (string) $avgScore : '',
-                            'has_score' => ($lockedScores->isNotEmpty() && $avgScore > 0),
+                            'has_score' => ($validScores->isNotEmpty() && $avgScore > 0),
                         ];
                     })
                         ->filter(fn ($item) => $item['has_score'])
