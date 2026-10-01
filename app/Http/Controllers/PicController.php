@@ -3047,24 +3047,56 @@ class PicController extends Controller
             return $reg->draw_number ?? 99999;
         })->values();
 
-        // Build existing scores map: [registration_id => [judge_id => ['total' => ..., 'is_locked' => ..., 'criteria' => [criterion_id => val], 'notes' => ...]]]
+        // Build existing scores map with auto-healing for any orphaned score records
         $scoresMap = [];
+        $compJudges = $competition->judges->values();
+        $validJudgeIds = $compJudges->pluck('id')->toArray();
+
         foreach ($participants as $reg) {
-            $regScores = [];
+            $regScoresMap = [];
+            $unmatchedScores = [];
+
             foreach ($reg->scores as $score) {
-                $critValues = [];
-                foreach ($score->details as $det) {
-                    $critValues[$det->criterion_id] = (float) $det->score_value;
+                if (in_array($score->judge_id, $validJudgeIds)) {
+                    $critValues = [];
+                    foreach ($score->details as $det) {
+                        $critValues[$det->criterion_id] = (float) $det->score_value;
+                    }
+                    $regScoresMap[$score->judge_id] = [
+                        'score_id' => $score->id,
+                        'total_score' => (float) $score->total_score,
+                        'is_locked' => (bool) $score->is_locked,
+                        'notes' => $score->notes ?: '',
+                        'criteria' => $critValues,
+                    ];
+                } else {
+                    $unmatchedScores[] = $score;
                 }
-                $regScores[$score->judge_id] = [
-                    'score_id' => $score->id,
-                    'total_score' => (float) $score->total_score,
-                    'is_locked' => (bool) $score->is_locked,
-                    'notes' => $score->notes ?: '',
-                    'criteria' => $critValues,
-                ];
             }
-            $scoresMap[$reg->id] = $regScores;
+
+            // Remap unmatched orphaned scores to judges in order
+            if (! empty($unmatchedScores)) {
+                foreach ($compJudges as $idx => $j) {
+                    if (! isset($regScoresMap[$j->id]) && ! empty($unmatchedScores)) {
+                        $orphan = array_shift($unmatchedScores);
+                        $critValues = [];
+                        foreach ($orphan->details as $det) {
+                            $critValues[$det->criterion_id] = (float) $det->score_value;
+                        }
+                        $regScoresMap[$j->id] = [
+                            'score_id' => $orphan->id,
+                            'total_score' => (float) $orphan->total_score,
+                            'is_locked' => (bool) $orphan->is_locked,
+                            'notes' => $orphan->notes ?: '',
+                            'criteria' => $critValues,
+                        ];
+                        // Auto-heal database record so it aligns permanently
+                        $orphan->update(['judge_id' => $j->id]);
+                    }
+                }
+            }
+
+            $scoresMap[$reg->id] = $regScoresMap;
         }
 
         return view('pic.scoring', compact('competition', 'participants', 'scoresMap', 'user'));
@@ -3087,6 +3119,7 @@ class PicController extends Controller
             'judges.*.role_title' => ['nullable', 'string', 'max:255'],
         ]);
 
+        $oldJudgeIds = $competition->judges->pluck('id')->toArray();
         $syncData = [];
         $existingJudges = $competition->judges->keyBy('id');
 
@@ -3113,6 +3146,19 @@ class PicController extends Controller
             }
 
             $syncData[$judgeUser->id] = ['role_title' => $jRole];
+        }
+
+        $newJudgeIds = array_keys($syncData);
+        // Migrate existing scores to new judge IDs if replaced
+        if (count($oldJudgeIds) === count($newJudgeIds)) {
+            foreach ($oldJudgeIds as $idx => $oldId) {
+                $newId = $newJudgeIds[$idx] ?? null;
+                if ($newId && $oldId !== $newId) {
+                    Score::where('competition_id', $competition->id)
+                        ->where('judge_id', $oldId)
+                        ->update(['judge_id' => $newId]);
+                }
+            }
         }
 
         $competition->judges()->sync($syncData);
@@ -3326,93 +3372,59 @@ class PicController extends Controller
             $competition->load('criteria');
         }
 
-        // Auto sync any scoring judges that exist in scores into competition judges
-        $scoringJudgeIds = Score::where('competition_id', $competition->id)
-            ->whereNotNull('judge_id')
-            ->pluck('judge_id')
-            ->unique()
-            ->filter()
-            ->values();
+        $compJudges = $competition->judges->values();
+        $validJudgeIds = $compJudges->pluck('id')->toArray();
 
-        if ($scoringJudgeIds->isNotEmpty()) {
-            $existingJudgeIds = $competition->judges->pluck('id')->toArray();
-            $missingJudgeIds = $scoringJudgeIds->diff($existingJudgeIds);
-            if ($missingJudgeIds->isNotEmpty()) {
-                $attachData = [];
-                $currCount = count($existingJudgeIds);
-                foreach ($missingJudgeIds as $mId) {
-                    $currCount++;
-                    $attachData[$mId] = ['role_title' => 'Juri '.$currCount];
-                }
-                $competition->judges()->syncWithoutDetaching($attachData);
-                $competition->load('judges');
-            }
-        }
-
-        $viewMode = $request->query('view_mode', 'detailed');
-        $sectorFilter = $request->query('sector', 'all');
-        $statusFilter = $request->query('status', 'all');
-        $sortBy = $request->query('sort_by', 'rank');
-        $sortDir = $request->query('sort_dir', 'asc');
-
-        $judges = $competition->judges;
-        $criteria = $competition->criteria;
-
-        // Filter participants
-        $participants = $competition->registrations->filter(function ($r) use ($sectorFilter, $statusFilter, $judges) {
-            if ($sectorFilter === 'PA' && $r->primary_gender !== 'L') {
-                return false;
-            }
-            if ($sectorFilter === 'PI' && $r->primary_gender !== 'P') {
-                return false;
-            }
-
-            $scoredCount = 0;
-            foreach ($judges as $j) {
-                $score = $r->scores->firstWhere('judge_id', $j->id);
-                if ($score && (float) $score->total_score > 0) {
-                    $scoredCount++;
-                }
-            }
-            $isFullyScored = $judges->isNotEmpty() && $scoredCount >= $judges->count();
-
-            if ($statusFilter === 'scored' && ! $isFullyScored) {
-                return false;
-            }
-            if ($statusFilter === 'unscored' && $isFullyScored) {
-                return false;
-            }
-
-            return true;
-        });
-
-        // Compute scores and rank map
+        // Compute scores and rank map with auto-healing
         $scoresMap = [];
         $partStats = [];
         foreach ($competition->registrations as $r) {
-            $regScores = [];
-            $totalSum = 0;
-            $scoredJudges = 0;
-            foreach ($judges as $j) {
-                $score = $r->scores->firstWhere('judge_id', $j->id);
-                $critValues = [];
-                $jTotal = $score ? (float) $score->total_score : 0;
-                if ($score) {
+            $regScoresMap = [];
+            $unmatchedScores = [];
+
+            foreach ($r->scores as $score) {
+                if (in_array($score->judge_id, $validJudgeIds)) {
+                    $critValues = [];
                     foreach ($score->details as $det) {
                         $critValues[$det->criterion_id] = (float) $det->score_value;
                     }
-                    if ($jTotal > 0) {
-                        $totalSum += $jTotal;
-                        $scoredJudges++;
+                    $regScoresMap[$score->judge_id] = [
+                        'total_score' => (float) $score->total_score,
+                        'criteria' => $critValues,
+                    ];
+                } else {
+                    $unmatchedScores[] = $score;
+                }
+            }
+
+            if (! empty($unmatchedScores)) {
+                foreach ($compJudges as $idx => $j) {
+                    if (! isset($regScoresMap[$j->id]) && ! empty($unmatchedScores)) {
+                        $orphan = array_shift($unmatchedScores);
+                        $critValues = [];
+                        foreach ($orphan->details as $det) {
+                            $critValues[$det->criterion_id] = (float) $det->score_value;
+                        }
+                        $regScoresMap[$j->id] = [
+                            'total_score' => (float) $orphan->total_score,
+                            'criteria' => $critValues,
+                        ];
+                        $orphan->update(['judge_id' => $j->id]);
                     }
                 }
-                $regScores[$j->id] = [
-                    'total_score' => $jTotal,
-                    'criteria' => $critValues,
-                ];
+            }
+
+            $totalSum = 0;
+            $scoredJudges = 0;
+            foreach ($judges as $j) {
+                $jTotal = $regScoresMap[$j->id]['total_score'] ?? 0;
+                if ($jTotal > 0) {
+                    $totalSum += $jTotal;
+                    $scoredJudges++;
+                }
             }
             $avg = $scoredJudges > 0 ? ($totalSum / $scoredJudges) : 0;
-            $scoresMap[$r->id] = $regScores;
+            $scoresMap[$r->id] = $regScoresMap;
             $partStats[$r->id] = [
                 'total' => $totalSum,
                 'avg' => $avg,
