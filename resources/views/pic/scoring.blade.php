@@ -377,6 +377,7 @@
                                                        :max="crit.max_score || 100"
                                                        :value="getCriterionValue(reg.id, judge.id, crit.id)"
                                                        @input="setCriterionValue(reg.id, judge.id, crit.id, $event.target.value)"
+                                                       @keydown.enter.prevent="saveRegistrationScores(reg.id); goToNextParticipant(reg.id)"
                                                        placeholder="0.0"
                                                        class="w-full px-3.5 py-2 rounded-xl bg-black/50 border border-white/[0.12] text-sm font-black font-mono text-white focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition placeholder:text-slate-700">
                                             </div>
@@ -1024,7 +1025,10 @@ function multiJudgeScoringApp(competition, initialJudges, initialCriteria, initi
             });
         },
 
-        switchTab(tab) {
+        async switchTab(tab) {
+            if (this.activeParticipantId && this.scoresData[this.activeParticipantId]) {
+                await this.saveRegistrationScores(this.activeParticipantId);
+            }
             this.activeTab = tab;
             this.$nextTick(() => {
                 if (window.lucide) window.lucide.createIcons();
@@ -1206,7 +1210,10 @@ function multiJudgeScoringApp(competition, initialJudges, initialCriteria, initi
             return Math.round((this.scoredCount / this.participants.length) * 100);
         },
 
-        toggleExpand(regId) {
+        async toggleExpand(regId) {
+            if (this.activeParticipantId && this.activeParticipantId !== regId && this.scoresData[this.activeParticipantId]) {
+                await this.saveRegistrationScores(this.activeParticipantId);
+            }
             this.activeParticipantId = this.activeParticipantId === regId ? null : regId;
             this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
         },
@@ -1387,13 +1394,20 @@ function multiJudgeScoringApp(competition, initialJudges, initialCriteria, initi
             }
         },
 
-        goToNextParticipant(currentRegId) {
+        async goToNextParticipant(currentRegId) {
+            if (currentRegId && this.scoresData[currentRegId]) {
+                await this.saveRegistrationScores(currentRegId);
+            }
             const currIdx = this.filteredParticipants.findIndex(p => p.id === currentRegId);
             if (currIdx >= 0 && currIdx < this.filteredParticipants.length - 1) {
                 const nextP = this.filteredParticipants[currIdx + 1];
                 this.activeParticipantId = nextP.id;
                 this.$nextTick(() => {
                     if (window.lucide) window.lucide.createIcons();
+                    const el = document.getElementById('participant-card-' + nextP.id);
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
                 });
             }
         },
