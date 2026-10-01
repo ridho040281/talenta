@@ -190,19 +190,19 @@
                 <!-- Sector Filter -->
                 <div class="inline-flex p-1 bg-slate-950 rounded-xl border border-white/[0.08] text-xs">
                     <button type="button" 
-                            @click="sectorFilter = 'all'" 
+                            @click="setSectorFilter('all')" 
                             class="px-3 py-1.5 rounded-lg font-bold transition cursor-pointer"
                             :class="sectorFilter === 'all' ? 'bg-[#7A5AF8] text-white shadow-xs' : 'text-slate-400 hover:text-white'">
                         Semua Sektor
                     </button>
                     <button type="button" 
-                            @click="sectorFilter = 'PA'" 
+                            @click="setSectorFilter('PA')" 
                             class="px-3 py-1.5 rounded-lg font-bold transition cursor-pointer"
                             :class="sectorFilter === 'PA' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'">
                         👦 Putra (PA)
                     </button>
                     <button type="button" 
-                            @click="sectorFilter = 'PI'" 
+                            @click="setSectorFilter('PI')" 
                             class="px-3 py-1.5 rounded-lg font-bold transition cursor-pointer"
                             :class="sectorFilter === 'PI' ? 'bg-pink-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'">
                         👧 Putri (PI)
@@ -1028,6 +1028,21 @@ function multiJudgeScoringApp(competition, initialJudges, initialCriteria, initi
             this.activeTab = tab;
             this.$nextTick(() => {
                 if (window.lucide) window.lucide.createIcons();
+            });
+        },
+
+        setSectorFilter(val) {
+            this.sectorFilter = val;
+            this.$nextTick(() => {
+                if (window.lucide) window.lucide.createIcons();
+                const list = this.filteredParticipants;
+                if (list.length > 0) {
+                    if (!list.some(p => p.id === this.activeParticipantId)) {
+                        this.activeParticipantId = list[0].id;
+                    }
+                } else {
+                    this.activeParticipantId = null;
+                }
             });
         },
 
