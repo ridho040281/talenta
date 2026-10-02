@@ -21,20 +21,36 @@
             cfg: {!! json_encode($layout) !!},
             numberFormat: @json(old('number_format', $template->number_format ?: '[NO]/TALENTA/MTsN1-BLT/[MONTH]/[YEAR]')),
 
+            canvasWidth: 800,
+
+            init() {
+                this.$nextTick(() => {
+                    this.updateCanvasDimensions();
+                });
+            },
+
+            updateCanvasDimensions() {
+                if (this.$refs.canvasContainer) {
+                    this.canvasWidth = this.$refs.canvasContainer.offsetWidth || 800;
+                }
+            },
+
+            getScaledSize(size) {
+                const s = parseFloat(size) || 16;
+                const cw = (this.$refs.canvasContainer && this.$refs.canvasContainer.offsetWidth) ? this.$refs.canvasContainer.offsetWidth : (this.canvasWidth || 800);
+                return ((s / 1122.52) * cw) + 'px';
+            },
+
             getNomorPreview() {
                 let fmt = (this.numberFormat || '').trim();
                 if (!fmt) {
                     fmt = '[NO]/TALENTA/MTsN1-BLT/[MONTH]/[YEAR]';
                 }
-                let replaced = fmt
+                return fmt
                     .replace(/\[NO\]/gi, '001')
                     .replace(/\[MONTH\]/gi, 'X')
-                    .replace(/\[YEAR\]/gi, '2026');
-                
-                if (/^(nomor|no)\s*:/i.test(replaced)) {
-                    return replaced;
-                }
-                return 'Nomor: ' + replaced;
+                    .replace(/\[YEAR\]/gi, '2026')
+                    .replace(/\[SEQ\]/gi, '001');
             },
 
             // Interactive Drag & Drop and Corner Resize State
@@ -101,9 +117,11 @@
                         dragDelta = (-deltaX + deltaY) / 2;
                     }
 
+                    const cw = (this.$refs.canvasContainer && this.$refs.canvasContainer.offsetWidth) ? this.$refs.canvasContainer.offsetWidth : 800;
+                    const scaleFactor = 1122.52 / cw;
                     const isQr = (this.resizeKey === 'qrcode');
-                    const sensitivity = isQr ? 1.5 : 2.5;
-                    let newSize = Math.round(this.resizeStartSize + (dragDelta / sensitivity));
+                    const sensitivity = isQr ? 0.8 : 1.5;
+                    let newSize = Math.round(this.resizeStartSize + ((dragDelta * scaleFactor) / sensitivity));
 
                     const min = isQr ? 30 : 10;
                     const max = isQr ? 180 : 80;
@@ -207,7 +225,7 @@
                 this.saveSuccess = false;
                 this.saveError = '';
 
-                fetch(@json(route('admin.certificates.template.layout', $template->id)), {
+                return fetch(@json(route('admin.certificates.template.layout', $template->id)), {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -225,28 +243,34 @@
                     if (data.success) {
                         this.saveSuccess = true;
                         setTimeout(() => this.saveSuccess = false, 3500);
+                        return true;
                     } else {
                         this.saveError = data.message || 'Gagal menyimpan layout.';
+                        return false;
                     }
                 })
                 .catch(err => {
                     this.saving = false;
                     this.saveError = 'Terjadi kesalahan jaringan saat menyimpan.';
+                    return false;
                 });
             },
 
             testPrint() {
-                const url = new URL(@json(route('admin.certificates.print')), window.location.origin);
-                url.searchParams.set('template_id', @json($template->id));
-                url.searchParams.set('type', @json($template->type));
-                @if($template->competition_id)
-                url.searchParams.set('competition_id', @json($template->competition_id));
-                @endif
-                url.searchParams.set('name', 'AHMAD FAUZI NURDIN');
-                url.searchParams.set('school', 'MTs Negeri 1 Blitar');
-                url.searchParams.set('rank', this.getPredikatPreview());
-                url.searchParams.set('cert_seq', '001');
-                window.open(url.toString(), '_blank');
+                // Auto save first so print tab ALWAYS has 100% fresh coordinates
+                this.saveLayoutAjax().finally(() => {
+                    const url = new URL(@json(route('admin.certificates.print')), window.location.origin);
+                    url.searchParams.set('template_id', @json($template->id));
+                    url.searchParams.set('type', @json($template->type));
+                    @if($template->competition_id)
+                    url.searchParams.set('competition_id', @json($template->competition_id));
+                    @endif
+                    url.searchParams.set('name', 'AHMAD FAUZI NURDIN');
+                    url.searchParams.set('school', 'MTs Negeri 1 Blitar');
+                    url.searchParams.set('rank', this.getPredikatPreview());
+                    url.searchParams.set('cert_seq', '001');
+                    window.open(url.toString(), '_blank');
+                });
             }
         };
     }
@@ -265,7 +289,8 @@
      @mousemove.window="onPointerMove($event)" 
      @touchmove.window="onPointerMove($event)" 
      @mouseup.window="onPointerUp($event)" 
-     @touchend.window="onPointerUp($event)">
+     @touchend.window="onPointerUp($event)"
+     @resize.window="updateCanvasDimensions()">
 
     <!-- Alert Notifikasi -->
     @if(session('success'))
@@ -743,7 +768,8 @@
                              top: cfg.nomor.top + '%',
                              left: cfg.nomor.left + '%',
                              transform: (cfg.nomor.align === 'left' ? 'translate(0, -50%)' : (cfg.nomor.align === 'right' ? 'translate(-100%, -50%)' : 'translate(-50%, -50%)')),
-                             fontSize: (cfg.nomor.size * 0.45) + 'px',
+                             fontSize: getScaledSize(cfg.nomor.size),
+                             lineHeight: '1.2',
                              color: cfg.nomor.color,
                              fontWeight: isFontForceBold(cfg.nomor.font, cfg.nomor.bold) ? 'bold' : 'normal',
                              fontFamily: getFontFamily(cfg.nomor.font),
@@ -784,7 +810,8 @@
                              top: cfg.nama.top + '%',
                              left: cfg.nama.left + '%',
                              transform: (cfg.nama.align === 'left' ? 'translate(0, -50%)' : (cfg.nama.align === 'right' ? 'translate(-100%, -50%)' : 'translate(-50%, -50%)')),
-                             fontSize: (cfg.nama.size * 0.48) + 'px',
+                             fontSize: getScaledSize(cfg.nama.size),
+                             lineHeight: '1.2',
                              color: cfg.nama.color,
                              fontWeight: isFontForceBold(cfg.nama.font, cfg.nama.bold) ? 'bold' : 'normal',
                              fontFamily: getFontFamily(cfg.nama.font),
@@ -826,7 +853,8 @@
                              top: cfg.sekolah.top + '%',
                              left: cfg.sekolah.left + '%',
                              transform: (cfg.sekolah.align === 'left' ? 'translate(0, -50%)' : (cfg.sekolah.align === 'right' ? 'translate(-100%, -50%)' : 'translate(-50%, -50%)')),
-                             fontSize: (cfg.sekolah.size * 0.45) + 'px',
+                             fontSize: getScaledSize(cfg.sekolah.size),
+                             lineHeight: '1.2',
                              color: cfg.sekolah.color,
                              fontWeight: isFontForceBold(cfg.sekolah.font, cfg.sekolah.bold) ? 'bold' : 'normal',
                              fontFamily: getFontFamily(cfg.sekolah.font),
@@ -867,7 +895,8 @@
                              top: cfg.predikat.top + '%',
                              left: cfg.predikat.left + '%',
                              transform: (cfg.predikat.align === 'left' ? 'translate(0, -50%)' : (cfg.predikat.align === 'right' ? 'translate(-100%, -50%)' : 'translate(-50%, -50%)')),
-                             fontSize: (cfg.predikat.size * 0.48) + 'px',
+                             fontSize: getScaledSize(cfg.predikat.size),
+                             lineHeight: '1.2',
                              color: cfg.predikat.color,
                              fontWeight: isFontForceBold(cfg.predikat.font, cfg.predikat.bold) ? 'bold' : 'normal',
                              fontFamily: getFontFamily(cfg.predikat.font),
@@ -908,7 +937,8 @@
                              top: cfg.lomba.top + '%',
                              left: cfg.lomba.left + '%',
                              transform: (cfg.lomba.align === 'left' ? 'translate(0, -50%)' : (cfg.lomba.align === 'right' ? 'translate(-100%, -50%)' : 'translate(-50%, -50%)')),
-                             fontSize: (cfg.lomba.size * 0.45) + 'px',
+                             fontSize: getScaledSize(cfg.lomba.size),
+                             lineHeight: '1.2',
                              color: cfg.lomba.color,
                              fontWeight: isFontForceBold(cfg.lomba.font, cfg.lomba.bold) ? 'bold' : 'normal',
                              fontFamily: getFontFamily(cfg.lomba.font),
@@ -949,7 +979,8 @@
                              top: cfg.tanggal.top + '%',
                              left: cfg.tanggal.left + '%',
                              transform: (cfg.tanggal.align === 'left' ? 'translate(0, -50%)' : (cfg.tanggal.align === 'right' ? 'translate(-100%, -50%)' : 'translate(-50%, -50%)')),
-                             fontSize: (cfg.tanggal.size * 0.45) + 'px',
+                             fontSize: getScaledSize(cfg.tanggal.size),
+                             lineHeight: '1.2',
                              color: cfg.tanggal.color,
                              fontWeight: isFontForceBold(cfg.tanggal.font, cfg.tanggal.bold) ? 'bold' : 'normal',
                              fontFamily: getFontFamily(cfg.tanggal.font),
@@ -990,7 +1021,8 @@
                              top: cfg.teks_1.top + '%',
                              left: cfg.teks_1.left + '%',
                              transform: (cfg.teks_1.align === 'left' ? 'translate(0, -50%)' : (cfg.teks_1.align === 'right' ? 'translate(-100%, -50%)' : 'translate(-50%, -50%)')),
-                             fontSize: (cfg.teks_1.size * 0.45) + 'px',
+                             fontSize: getScaledSize(cfg.teks_1.size),
+                             lineHeight: '1.2',
                              color: cfg.teks_1.color,
                              fontWeight: isFontForceBold(cfg.teks_1.font, cfg.teks_1.bold) ? 'bold' : 'normal',
                              fontFamily: getFontFamily(cfg.teks_1.font),
@@ -1031,7 +1063,8 @@
                              top: cfg.teks_2.top + '%',
                              left: cfg.teks_2.left + '%',
                              transform: (cfg.teks_2.align === 'left' ? 'translate(0, -50%)' : (cfg.teks_2.align === 'right' ? 'translate(-100%, -50%)' : 'translate(-50%, -50%)')),
-                             fontSize: (cfg.teks_2.size * 0.45) + 'px',
+                             fontSize: getScaledSize(cfg.teks_2.size),
+                             lineHeight: '1.2',
                              color: cfg.teks_2.color,
                              fontWeight: isFontForceBold(cfg.teks_2.font, cfg.teks_2.bold) ? 'bold' : 'normal',
                              fontFamily: getFontFamily(cfg.teks_2.font),
@@ -1072,7 +1105,8 @@
                              top: cfg.teks_3.top + '%',
                              left: cfg.teks_3.left + '%',
                              transform: (cfg.teks_3.align === 'left' ? 'translate(0, -50%)' : (cfg.teks_3.align === 'right' ? 'translate(-100%, -50%)' : 'translate(-50%, -50%)')),
-                             fontSize: (cfg.teks_3.size * 0.45) + 'px',
+                             fontSize: getScaledSize(cfg.teks_3.size),
+                             lineHeight: '1.2',
                              color: cfg.teks_3.color,
                              fontWeight: isFontForceBold(cfg.teks_3.font, cfg.teks_3.bold) ? 'bold' : 'normal',
                              fontFamily: getFontFamily(cfg.teks_3.font),
@@ -1113,8 +1147,8 @@
                              top: cfg.qrcode.top + '%',
                              left: cfg.qrcode.left + '%',
                              transform: 'translate(-50%, -50%)',
-                             width: (cfg.qrcode.size * 0.45) + 'px',
-                             height: (cfg.qrcode.size * 0.45) + 'px'
+                             width: getScaledSize(cfg.qrcode.size),
+                             height: getScaledSize(cfg.qrcode.size)
                          }"
                          :class="activeTab === 'qrcode' ? 'cursor-move z-30 ring-2 ring-purple-500 ring-dashed' : 'cursor-move z-20 hover:ring-1 hover:ring-purple-400/40 hover:ring-dashed'"
                          class="p-1 bg-white rounded shadow-sm border border-slate-300 flex items-center justify-center select-none"
