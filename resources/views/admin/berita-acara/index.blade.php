@@ -14,6 +14,8 @@
     judge1: '{{ addslashes($judgesList[0] ?? '') }}',
     judge2: '{{ addslashes($judgesList[1] ?? '') }}',
     judge3: '{{ addslashes($judgesList[2] ?? '') }}',
+    showImportModal: false,
+    importLoading: false,
     
     changeCompetition(id) {
         window.location.href = '{{ route('admin.berita-acara.index') }}?competition_id=' + id + '&tab=' + this.activeTab + '&tier_format=' + this.tierFormat;
@@ -52,6 +54,31 @@
         window.open(url.toString(), '_blank');
     }
 }">
+
+    <!-- Alert Notifikasi Feedback -->
+    @if(session('success'))
+    <div class="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400"></i>
+            <span>{{ session('success') }}</span>
+        </div>
+        <button type="button" @click="$el.parentElement.remove()" class="text-emerald-400/60 hover:text-emerald-400">
+            <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+    </div>
+    @endif
+
+    @if(session('error'))
+    <div class="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <i data-lucide="alert-circle" class="w-5 h-5 text-rose-400"></i>
+            <span>{{ session('error') }}</span>
+        </div>
+        <button type="button" @click="$el.parentElement.remove()" class="text-rose-400/60 hover:text-rose-400">
+            <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+    </div>
+    @endif
 
     <!-- Top Control Bar (Pilih Cabang & Quick Info) -->
     <div class="ai-card p-4 sm:p-5 rounded-3xl border border-white/[0.08] shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -122,15 +149,34 @@
 
             <!-- Panel Pengaturan Narasi & Juri/Wasit -->
             <div class="ai-card p-5 rounded-3xl border border-white/[0.08] shadow-lg space-y-4">
-                <div class="flex items-center justify-between border-b border-white/[0.08] pb-3">
+                <div class="flex items-center justify-between flex-wrap gap-3 border-b border-white/[0.08] pb-3">
                     <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
                         <i data-lucide="sliders" class="w-4 h-4 text-[#7A5AF8]"></i>
-                        <span>Parameter Berita Acara (Tanggal, Waktu & Dewan {{ $isSports ? 'Wasit' : 'Juri' }})</span>
+                        <span>Parameter Berita Acara & Penginputan Nilai</span>
                     </h3>
-                    <button type="button" @click="printLive()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md transition flex items-center gap-2 cursor-pointer">
-                        <i data-lucide="printer" class="w-4 h-4"></i>
-                        <span>Cetak Berita Acara (A4)</span>
-                    </button>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <a :href="'{{ route('admin.berita-acara.template-nilai') }}?competition_id=' + selectedCompId" 
+                           class="px-3.5 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm" 
+                           title="Unduh blanko penilaian peserta dalam format Excel (.xlsx)">
+                            <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-400"></i>
+                            <span>Template Excel</span>
+                        </a>
+
+                        <button type="button" 
+                                @click="showImportModal = true" 
+                                class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] hover:from-[#6941C6] hover:to-[#3538CD] text-white text-xs font-bold shadow-lg shadow-[#7A5AF8]/20 transition flex items-center gap-1.5 cursor-pointer" 
+                                title="Import nilai peserta dari file Excel untuk penentuan juara instan">
+                            <i data-lucide="upload-cloud" class="w-4 h-4 text-purple-200"></i>
+                            <span>Import Nilai (Excel)</span>
+                        </button>
+
+                        <button type="button" 
+                                @click="printLive()" 
+                                class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-white/[0.1] shadow-md transition flex items-center gap-1.5 cursor-pointer">
+                            <i data-lucide="printer" class="w-4 h-4 text-emerald-400"></i>
+                            <span>Cetak Berita Acara</span>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
@@ -363,6 +409,118 @@
 
         </div>
     @endif
+
+    <!-- ==================== MODAL IMPORT NILAI EXCEL ==================== -->
+    <div x-show="showImportModal" 
+         x-cloak 
+         class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm transition">
+        
+        <div class="relative w-full max-w-lg rounded-3xl bg-[#0F172A] border border-white/[0.12] p-6 shadow-2xl space-y-5 text-slate-200"
+             @click.away="if (!importLoading) showImportModal = false">
+            
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between border-b border-white/[0.08] pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#7A5AF8]/20 to-[#4E6EFF]/20 border border-[#7A5AF8]/30 flex items-center justify-center text-[#A594FD]">
+                        <i data-lucide="upload-cloud" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-black text-white">Import Nilai & Rekap Juara</h3>
+                        <p class="text-xs text-slate-400">{{ $selectedComp->name ?? 'Cabang Lomba' }} ({{ $selectedComp->code ?? '' }})</p>
+                    </div>
+                </div>
+                <button type="button" @click="if (!importLoading) showImportModal = false" class="text-slate-400 hover:text-white p-1 rounded-lg transition cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Petunjuk & Link Unduh Template -->
+            <div class="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 flex items-start gap-3">
+                <i data-lucide="info" class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5"></i>
+                <div class="space-y-1">
+                    <p class="font-bold text-white">Belum memiliki template Excel?</p>
+                    <p class="text-slate-300 text-[11px]">Unduh format resmi yang telah terisi nomor urut dan nama peserta cabang lomba ini:</p>
+                    <a :href="'{{ route('admin.berita-acara.template-nilai') }}?competition_id=' + selectedCompId" 
+                       class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400 hover:underline pt-0.5">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                        <span>Unduh Format Excel ({{ $selectedComp->code ?? '' }})</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Form Upload -->
+            <form action="{{ route('admin.berita-acara.import-nilai') }}" 
+                  method="POST" 
+                  enctype="multipart/form-data" 
+                  @submit="importLoading = true" 
+                  class="space-y-4 text-xs">
+                @csrf
+                <input type="hidden" name="competition_id" value="{{ $selectedComp->id ?? '' }}">
+
+                <!-- Pilih Juri Penilai (Opsional / Otomatis) -->
+                @if($selectedComp && $selectedComp->judges->isNotEmpty())
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Tetapkan Sebagai Penilaian Juri:</label>
+                        <select name="judge_id" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0C111D] border border-white/[0.12] text-xs text-white outline-none focus:border-[#7A5AF8]">
+                            <option value="">-- Otomatis (Juri Utama / Pengguna Saat Ini) --</option>
+                            @foreach($selectedComp->judges as $j)
+                                <option value="{{ $j->id }}">{{ $j->name }} ({{ $j->pivot->role_title ?? 'Dewan Juri' }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endif
+
+                <!-- Opsi Kunci Nilai -->
+                <div class="flex items-center gap-2.5 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                    <input type="checkbox" name="lock_scores" value="1" id="lockScoresCheckbox" checked class="w-4 h-4 rounded border-white/[0.2] bg-slate-900 text-[#7A5AF8] focus:ring-0 cursor-pointer">
+                    <label for="lockScoresCheckbox" class="text-xs text-slate-300 font-medium cursor-pointer">
+                        <strong>Kunci Nilai sebagai Nilai Final</strong>
+                        <span class="block text-[11px] text-slate-400">Otomatis menetapkan pemenang pada Berita Acara & Piagam Sertifikat</span>
+                    </label>
+                </div>
+
+                <!-- File Input Dropzone -->
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Pilih File Spreadsheet (.xlsx / .xls / .csv):</label>
+                    <input type="file" 
+                           name="excel_file" 
+                           required 
+                           accept=".xlsx,.xls,.csv" 
+                           class="w-full text-xs text-slate-300 file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#7A5AF8] file:text-white hover:file:bg-[#6941C6] file:cursor-pointer cursor-pointer border border-white/[0.1] rounded-2xl p-2 bg-[#0C111D] outline-none">
+                </div>
+
+                <!-- Modal Actions -->
+                <div class="pt-3 border-t border-white/[0.08] flex items-center justify-end gap-2.5">
+                    <button type="button" 
+                            @click="if (!importLoading) showImportModal = false" 
+                            :disabled="importLoading"
+                            class="px-4 py-2.5 rounded-xl border border-white/[0.1] text-xs font-bold text-slate-300 hover:bg-white/[0.05] transition disabled:opacity-50 cursor-pointer">
+                        Batal
+                    </button>
+                    <button type="submit" 
+                            :disabled="importLoading"
+                            class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] hover:from-[#6941C6] hover:to-[#3538CD] text-white text-xs font-bold shadow-lg shadow-[#7A5AF8]/30 transition flex items-center gap-2 cursor-pointer disabled:opacity-50">
+                        <template x-if="!importLoading">
+                            <span class="flex items-center gap-2">
+                                <i data-lucide="upload" class="w-4 h-4"></i>
+                                <span>Upload & Proses Nilai</span>
+                            </span>
+                        </template>
+                        <template x-if="importLoading">
+                            <span class="flex items-center gap-2">
+                                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4l-3 3 3 3H4z"></path>
+                                </svg>
+                                <span>Memproses File...</span>
+                            </span>
+                        </template>
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
 
 </div>
 @endsection

@@ -246,9 +246,11 @@ Route::middleware(['auth', 'role:superadmin,panitia,pic_lomba,admin'])->prefix('
     Route::post('/daftar-hadir/{id}/toggle', [AttendanceController::class, 'toggle'])->name('attendance.toggle');
     Route::get('/daftar-hadir/cetak', [AttendanceController::class, 'printReport'])->name('attendance.print');
 
-    // Berita Acara Lomba & Cetak
+    // Berita Acara Lomba & Cetak & Import Nilai
     Route::get('/berita-acara', [OfficialReportController::class, 'index'])->name('berita-acara.index');
     Route::get('/berita-acara/cetak', [OfficialReportController::class, 'print'])->name('berita-acara.print');
+    Route::get('/berita-acara/template-nilai', [OfficialReportController::class, 'downloadScoreTemplate'])->name('berita-acara.template-nilai');
+    Route::post('/berita-acara/import-nilai', [OfficialReportController::class, 'importScores'])->name('berita-acara.import-nilai');
 
     // Sertifikat & Piagam Kejuaraan
     Route::get('/sertifikat', [CertificateController::class, 'index'])->name('certificates.index');

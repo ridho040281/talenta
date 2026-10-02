@@ -5,9 +5,25 @@ namespace App\Http\Controllers;
 use App\Helpers\Terbilang;
 use App\Models\AppSetting;
 use App\Models\Competition;
+use App\Models\Score;
+use App\Models\ScoreDetail;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Color;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class OfficialReportController extends Controller
 {
@@ -424,5 +440,411 @@ class OfficialReportController extends Controller
             'eventDay',
             'appSettings'
         ));
+    }
+
+    /**
+     * Download Official Excel Template for Score Entry
+     */
+    public function downloadScoreTemplate(Request $request): StreamedResponse
+    {
+        $competitionId = $request->query('competition_id');
+        $competition = Competition::with(['category', 'criteria', 'judges'])->findOrFail($competitionId);
+
+        // Fetch verified registrations
+        $regs = $competition->registrations()
+            ->where('status', 'verified')
+            ->with(['members', 'scores.details'])
+            ->orderBy('draw_number', 'asc')
+            ->orderBy('participant_number', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        $sectorsDef = self::getCompetitionSectors($competition);
+
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('REKAP_NILAI');
+
+        // Header Title Banner
+        $sheet->setCellValue('A1', 'REKAPITULASI PENILAIAN LOMBA - TALENTA 2026 MTsN 1 BLITAR');
+        $sheet->mergeCells('A1:H1');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(13)->setColor(new Color('064E3B'));
+
+        $sheet->setCellValue('A2', 'CABANG LOMBA: '.strtoupper($competition->name).' ('.strtoupper($competition->code).') | TOTAL PESERTA: '.$regs->count());
+        $sheet->mergeCells('A2:H2');
+        $sheet->getStyle('A2')->getFont()->setBold(true)->setSize(11)->setColor(new Color('1E293B'));
+
+        $sheet->setCellValue('A3', 'PETUNJUK: Masukkan angka nilai pada kolom "NILAI_TOTAL" (skala 0 - 100). Jangan mengubah ID_REGISTRASI atau NO_PESERTA agar sistem dapat memvalidasi data otomatis.');
+        $sheet->mergeCells('A3:H3');
+        $sheet->getStyle('A3')->getFont()->setItalic(true)->setSize(9)->setColor(new Color('475569'));
+
+        // Column Headers
+        $criteria = $competition->criteria;
+        $hasCriteria = $criteria->isNotEmpty();
+
+        $headers = [
+            'A5' => 'NO',
+            'B5' => 'ID_REGISTRASI',
+            'C5' => 'NO_PESERTA',
+            'D5' => 'NAMA_PESERTA',
+            'E5' => 'ASAL_SEKOLAH',
+            'F5' => 'SEKTOR_KATEGORI',
+        ];
+
+        $colIdx = 7; // Column G
+        if ($hasCriteria) {
+            foreach ($criteria as $crit) {
+                $colLetter = Coordinate::stringFromColumnIndex($colIdx);
+                $headers[$colLetter.'5'] = 'NILAI: '.strtoupper($crit->name).' ('.$crit->weight_percentage.'%)';
+                $colIdx++;
+            }
+            $colLetter = Coordinate::stringFromColumnIndex($colIdx);
+            $headers[$colLetter.'5'] = 'NILAI_TOTAL';
+            $colIdx++;
+        } else {
+            $colLetter = Coordinate::stringFromColumnIndex($colIdx);
+            $headers[$colLetter.'5'] = 'NILAI_TOTAL';
+            $colIdx++;
+        }
+
+        $colLetter = Coordinate::stringFromColumnIndex($colIdx);
+        $headers[$colLetter.'5'] = 'CATATAN_JURI';
+        $lastColLetter = $colLetter;
+
+        foreach ($headers as $cell => $text) {
+            $sheet->setCellValue($cell, $text);
+        }
+
+        // Style Headers Row 5
+        $headerRange = 'A5:'.$lastColLetter.'5';
+        $sheet->getStyle($headerRange)->getFont()->setBold(true)->setColor(new Color('FFFFFF'))->setSize(10);
+        $sheet->getStyle($headerRange)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('1E293B');
+        $sheet->getStyle($headerRange)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getRowDimension(5)->setRowHeight(28);
+
+        // Fill Participant Data
+        $row = 6;
+        $no = 1;
+
+        foreach ($regs as $r) {
+            $participantName = $r->pure_name ?: ($r->team_name ?: ($r->members->first()?->full_name ?? ('Peserta #'.$r->id)));
+            $schoolName = $r->display_school ?: ($r->institution_name ?: '-');
+            $noPeserta = $r->participant_number ?: ($r->registration_code ?: ('P-'.str_pad((string) $r->id, 3, '0', STR_PAD_LEFT)));
+
+            // Determine Sector Label
+            $sectorLabel = 'Umum';
+            foreach ($sectorsDef as $secKey => $secDef) {
+                $isGanda = $r->isGanda();
+                $gender = $r->primary_gender;
+                if ($secDef['is_ganda'] && ! $isGanda) {
+                    continue;
+                }
+                if (! $secDef['is_ganda'] && $isGanda && in_array($competition->code, ['BLT', 'TMJ'])) {
+                    continue;
+                }
+                if (! empty($secDef['rob_cat'])) {
+                    $cat = $secDef['rob_cat'];
+                    if (stripos($r->match_type ?? '', $cat) === false && stripos($r->sub_category ?? '', $cat) === false && stripos($r->target_class ?? '', $cat) === false) {
+                        continue;
+                    }
+                }
+                if ($secDef['gender'] !== 'all' && $gender !== $secDef['gender']) {
+                    continue;
+                }
+                if ($secDef['kat'] === 'a' && ! $r->isKatA()) {
+                    continue;
+                }
+                if ($secDef['kat'] === 'b' && ! $r->isKatB()) {
+                    continue;
+                }
+                if ($secDef['kat'] === 'c' && ! $r->isKatC()) {
+                    continue;
+                }
+                $sectorLabel = $secDef['title'];
+                break;
+            }
+
+            // Existing score if any
+            $existingScore = $r->scores->first();
+
+            $sheet->setCellValue('A'.$row, $no++);
+            $sheet->setCellValueExplicit('B'.$row, 'REG-'.$r->id, DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('C'.$row, (string) $noPeserta, DataType::TYPE_STRING);
+            $sheet->setCellValue('D'.$row, $participantName);
+            $sheet->setCellValue('E'.$row, $schoolName);
+            $sheet->setCellValue('F'.$row, $sectorLabel);
+
+            $cIdx = 7;
+            if ($hasCriteria) {
+                foreach ($criteria as $crit) {
+                    $cL = Coordinate::stringFromColumnIndex($cIdx);
+                    $critDetail = $existingScore?->details->firstWhere('criterion_id', $crit->id);
+                    if ($critDetail) {
+                        $sheet->setCellValue($cL.$row, (float) $critDetail->score_value);
+                    }
+                    $cIdx++;
+                }
+                $cL = Coordinate::stringFromColumnIndex($cIdx);
+                if ($existingScore) {
+                    $sheet->setCellValue($cL.$row, (float) $existingScore->total_score);
+                }
+                $cIdx++;
+            } else {
+                $cL = Coordinate::stringFromColumnIndex($cIdx);
+                if ($existingScore) {
+                    $sheet->setCellValue($cL.$row, (float) $existingScore->total_score);
+                }
+                $cIdx++;
+            }
+
+            $cL = Coordinate::stringFromColumnIndex($cIdx);
+            if ($existingScore && $existingScore->notes) {
+                $sheet->setCellValue($cL.$row, $existingScore->notes);
+            }
+
+            // Zebra styling & borders
+            $rowRange = 'A'.$row.':'.$lastColLetter.$row;
+            if ($row % 2 === 1) {
+                $sheet->getStyle($rowRange)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('F8FAFC');
+            }
+
+            $row++;
+        }
+
+        if ($row > 6) {
+            $dataRange = 'A5:'.$lastColLetter.($row - 1);
+            $sheet->getStyle($dataRange)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->setColor(new Color('CBD5E1'));
+
+            // Center align specific columns
+            $sheet->getStyle('A6:C'.($row - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('F6:'.$lastColLetter.($row - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            // Highlight score column with a soft emerald background
+            $scoreColLetter = $hasCriteria ? Coordinate::stringFromColumnIndex(7 + $criteria->count()) : 'G';
+            $sheet->getStyle($scoreColLetter.'5')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('047857');
+            $sheet->getStyle($scoreColLetter.'6:'.$scoreColLetter.($row - 1))->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('ECFDF5');
+        }
+
+        // Auto-fit column widths
+        foreach (range('A', $lastColLetter) as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $safeName = Str::slug($competition->name);
+        $fileName = 'Template_Nilai_'.strtoupper($competition->code).'_'.$safeName.'.xlsx';
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, $fileName, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'max-age=0, no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+        ]);
+    }
+
+    /**
+     * Import Scores from Excel Spreadsheet
+     */
+    public function importScores(Request $request)
+    {
+        $validated = $request->validate([
+            'competition_id' => 'required|exists:competitions,id',
+            'excel_file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+            'judge_id' => 'nullable|exists:users,id',
+            'lock_scores' => 'nullable',
+        ]);
+
+        $competition = Competition::with(['criteria', 'judges'])->findOrFail($validated['competition_id']);
+        $file = $request->file('excel_file');
+
+        $spreadsheet = IOFactory::load($file->getRealPath());
+        $sheet = $spreadsheet->getActiveSheet();
+        $rows = $sheet->toArray(null, true, true, true);
+
+        if (empty($rows)) {
+            return redirect()->back()->with('error', 'File Excel kosong atau tidak dapat dibaca.');
+        }
+
+        // Find header row (search for ID_REGISTRASI or NO_PESERTA or NILAI)
+        $headerRowIndex = null;
+        $colMap = [];
+
+        foreach ($rows as $rowIndex => $rowCols) {
+            foreach ($rowCols as $colLetter => $val) {
+                $cleanVal = strtoupper(trim((string) $val));
+                if (str_contains($cleanVal, 'ID_REG') || str_contains($cleanVal, 'ID REGISTRASI')) {
+                    $colMap['id_reg'] = $colLetter;
+                    $headerRowIndex = $rowIndex;
+                } elseif (str_contains($cleanVal, 'NO_PESERTA') || str_contains($cleanVal, 'NO PESERTA')) {
+                    $colMap['no_peserta'] = $colLetter;
+                    $headerRowIndex = $rowIndex;
+                } elseif (str_contains($cleanVal, 'NILAI_TOTAL') || str_contains($cleanVal, 'NILAI TOTAL') || $cleanVal === 'NILAI' || str_contains($cleanVal, 'NILAI AKHIR')) {
+                    $colMap['total_score'] = $colLetter;
+                } elseif (str_contains($cleanVal, 'CATATAN')) {
+                    $colMap['notes'] = $colLetter;
+                }
+
+                // Check criteria columns
+                if (str_starts_with($cleanVal, 'NILAI:')) {
+                    foreach ($competition->criteria as $crit) {
+                        if (stripos($cleanVal, $crit->name) !== false) {
+                            $colMap['crit_'.$crit->id] = $colLetter;
+                        }
+                    }
+                }
+            }
+
+            if ($headerRowIndex !== null && isset($colMap['total_score'])) {
+                break;
+            }
+        }
+
+        if (! $headerRowIndex || (! isset($colMap['id_reg']) && ! isset($colMap['no_peserta'])) || ! isset($colMap['total_score'])) {
+            return redirect()->back()->with('error', 'Format file Excel tidak sesuai. Pastikan menggunakan template resmi yang diunduh dari sistem.');
+        }
+
+        // Determine Judge ID
+        $judgeId = $validated['judge_id'] ?? null;
+        if (! $judgeId) {
+            $user = Auth::user();
+            if ($user->role === 'juri') {
+                $judgeId = $user->id;
+            } else {
+                $assignedJudge = $competition->judges->first();
+                $judgeId = $assignedJudge ? $assignedJudge->id : $user->id;
+            }
+        }
+
+        $isLocked = $request->boolean('lock_scores', true);
+        $importedCount = 0;
+        $skippedCount = 0;
+
+        // All verified registrations for this competition indexed by id and participant_number
+        $registrations = $competition->registrations()
+            ->where('status', 'verified')
+            ->get();
+        $regsById = $registrations->keyBy('id');
+        $regsByNo = $registrations->filter(fn ($r) => ! empty($r->participant_number))->keyBy('participant_number');
+        $regsByCode = $registrations->keyBy('registration_code');
+
+        DB::beginTransaction();
+        try {
+            foreach ($rows as $rowIndex => $rowCols) {
+                if ($rowIndex <= $headerRowIndex) {
+                    continue; // Skip header and above
+                }
+
+                $rawIdReg = isset($colMap['id_reg']) ? trim((string) ($rowCols[$colMap['id_reg']] ?? '')) : '';
+                $rawNoPeserta = isset($colMap['no_peserta']) ? trim((string) ($rowCols[$colMap['no_peserta']] ?? '')) : '';
+                $rawTotalScore = isset($colMap['total_score']) ? trim((string) ($rowCols[$colMap['total_score']] ?? '')) : '';
+                $notes = isset($colMap['notes']) ? trim((string) ($rowCols[$colMap['notes']] ?? '')) : null;
+
+                // Strip non-digit characters from REG- prefix if present
+                $idNumber = preg_replace('/[^0-9]/', '', $rawIdReg);
+
+                $registration = null;
+                if ($idNumber && isset($regsById[$idNumber])) {
+                    $registration = $regsById[$idNumber];
+                } elseif ($rawNoPeserta && isset($regsByNo[$rawNoPeserta])) {
+                    $registration = $regsByNo[$rawNoPeserta];
+                } elseif ($rawNoPeserta && isset($regsByCode[$rawNoPeserta])) {
+                    $registration = $regsByCode[$rawNoPeserta];
+                }
+
+                if (! $registration) {
+                    $skippedCount++;
+
+                    continue;
+                }
+
+                // If criteria values are present, calculate total score
+                $totalScore = null;
+                $hasCriteriaScores = false;
+                $critScores = [];
+
+                foreach ($competition->criteria as $crit) {
+                    if (isset($colMap['crit_'.$crit->id])) {
+                        $critVal = trim((string) ($rowCols[$colMap['crit_'.$crit->id]] ?? ''));
+                        if ($critVal !== '' && is_numeric($critVal)) {
+                            $critScores[$crit->id] = (float) $critVal;
+                            $hasCriteriaScores = true;
+                        }
+                    }
+                }
+
+                if ($hasCriteriaScores && $competition->criteria->isNotEmpty()) {
+                    $weightedTotal = 0;
+                    $totalWeight = $competition->criteria->sum('weight_percentage') ?: 100;
+                    foreach ($competition->criteria as $crit) {
+                        $cVal = $critScores[$crit->id] ?? 0;
+                        $weightedTotal += ($cVal * ($crit->weight_percentage / $totalWeight));
+                    }
+                    $totalScore = round($weightedTotal, 2);
+                } elseif ($rawTotalScore !== '' && is_numeric(str_replace(',', '.', $rawTotalScore))) {
+                    $totalScore = round((float) str_replace(',', '.', $rawTotalScore), 2);
+                }
+
+                if ($totalScore === null) {
+                    $skippedCount++;
+
+                    continue; // Skip rows without score
+                }
+
+                // Create or Update Score
+                $score = Score::updateOrCreate(
+                    [
+                        'competition_id' => $competition->id,
+                        'registration_id' => $registration->id,
+                        'judge_id' => $judgeId,
+                    ],
+                    [
+                        'total_score' => $totalScore,
+                        'is_locked' => $isLocked,
+                        'notes' => $notes ?: ('Import Excel oleh '.Auth::user()->name.' pada '.Carbon::now()->translatedFormat('d/m/Y H:i')),
+                    ]
+                );
+
+                // Save criteria details if applicable
+                foreach ($critScores as $critId => $cVal) {
+                    ScoreDetail::updateOrCreate(
+                        [
+                            'score_id' => $score->id,
+                            'criterion_id' => $critId,
+                        ],
+                        [
+                            'score_value' => $cVal,
+                        ]
+                    );
+                }
+
+                $importedCount++;
+            }
+
+            DB::commit();
+            Cache::forget('talenta_admin_recap_summary_data');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Import score error: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
+
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat memproses file Excel: '.$e->getMessage());
+        }
+
+        $msg = "Berhasil mengimpor {$importedCount} nilai peserta untuk cabang {$competition->name}!";
+        if ($skippedCount > 0) {
+            $msg .= " ({$skippedCount} baris kosong/tidak valid dilewati)";
+        }
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $msg,
+                'imported_count' => $importedCount,
+                'skipped_count' => $skippedCount,
+            ]);
+        }
+
+        return redirect()->route('admin.berita-acara.index', ['competition_id' => $competition->id])
+            ->with('success', $msg);
     }
 }
