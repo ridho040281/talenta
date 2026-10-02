@@ -54,8 +54,17 @@
                         Dokumen Resmi & Asli Terverifikasi
                     </span>
 
-                    <!-- IDENTITAS UTAMA (Nama, NISN, Asal Sekolah, Cabang Lomba) -->
-                    <div class="mt-5 space-y-2.5">
+                    <!-- IDENTITAS UTAMA (Nomor Sertifikat di atas Nama, Nama, NISN, Asal Sekolah, Cabang Lomba) -->
+                    <div class="mt-4 space-y-2">
+                        @if(!empty($certData['cert_number']))
+                        <div>
+                            <span class="px-3 py-1 rounded-lg bg-white/[0.06] border border-white/[0.12] text-slate-300 font-mono text-xs tracking-wider inline-flex items-center gap-1.5 shadow-sm">
+                                <i data-lucide="file-text" class="w-3.5 h-3.5 text-[#A594FD]"></i>
+                                No. {{ $certData['cert_number'] }}
+                            </span>
+                        </div>
+                        @endif
+
                         <h2 class="text-2xl sm:text-3xl font-black text-white tracking-wide uppercase leading-snug">
                             {{ $certData['name'] }}
                         </h2>
@@ -82,12 +91,14 @@
                     </div>
                 </div>
 
-                <!-- Detail Verifikasi Card -->
+                <!-- Detail Verifikasi Card (Tanpa Pengulangan Nama di Bawah) -->
                 <div class="bg-slate-900/90 rounded-2xl p-4 sm:p-5 border border-white/[0.08] text-left space-y-3 text-xs shadow-inner">
+                    @if(!empty($certData['cert_number']))
                     <div class="flex items-start justify-between py-1 border-b border-white/[0.06] gap-3">
-                        <span class="text-slate-400 font-medium shrink-0">Nama Penerima:</span>
-                        <span class="font-bold text-white text-right uppercase">{{ $certData['name'] }}</span>
+                        <span class="text-slate-400 font-medium shrink-0">Nomor Sertifikat:</span>
+                        <span class="font-mono font-bold text-white text-right">{{ $certData['cert_number'] }}</span>
                     </div>
+                    @endif
                     @if(!empty($certData['nisn']) && $certData['nisn'] !== '-')
                     <div class="flex items-start justify-between py-1 border-b border-white/[0.06] gap-3">
                         <span class="text-slate-400 font-medium shrink-0">NISN Siswa:</span>

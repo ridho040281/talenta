@@ -870,6 +870,14 @@ class CertificateController extends Controller
             $compCode = strtoupper($parts[2]);
             $id = (int) $parts[3];
 
+            $type = match ($typePrefix) {
+                'JRA' => 'juara',
+                'PST' => 'peserta',
+                'PMB' => 'pembimbing',
+                'JRI' => 'juri',
+                default => 'peserta',
+            };
+
             $competition = Competition::where('code', $compCode)->first();
             $registration = null;
             $judge = null;
@@ -893,6 +901,29 @@ class CertificateController extends Controller
                     default => 'Penerima Sertifikat',
                 };
                 $compName = $competition ? $competition->name : ($registration->competition->name ?? 'TALENTA MTsN 1 Blitar');
+
+                // Get template to format official certificate number
+                $template = null;
+                if ($competition) {
+                    $template = CertificateTemplate::where('type', $type)
+                        ->where('competition_id', $competition->id)
+                        ->where('is_active', true)
+                        ->first();
+                }
+                if (! $template) {
+                    $template = CertificateTemplate::where('type', $type)
+                        ->whereNull('competition_id')
+                        ->where('is_active', true)
+                        ->first();
+                }
+                if (! $template) {
+                    $template = new CertificateTemplate([
+                        'type' => $type,
+                        'number_format' => '[NO]/TALENTA/MTsN1-BLT/[MONTH]/[YEAR]',
+                    ]);
+                }
+
+                $certNumber = $template->formatNumber($id, Carbon::now());
 
                 if ($registration) {
                     $recipientName = $registration->pure_name ?: ($registration->team_name ?: ($registration->members->first()?->full_name ?? ('Peserta #'.$registration->id)));
@@ -918,14 +949,15 @@ class CertificateController extends Controller
                     $schoolName = 'Dewan Juri / Wasit TALENTA';
                     $nisn = '-';
                 } else {
-                    // Fallback for demo preview / sample certificates (e.g. 0001)
-                    $recipientName = 'AHMAD FAUZI NURDIN (CONTOH DOKUMEN)';
+                    // Fallback for demo preview / sample certificates (clean name without '(CONTOH DOKUMEN)')
+                    $recipientName = 'AHMAD FAUZI NURDIN';
                     $schoolName = 'SDN KEPANJENLOR 2 KOTA BLITAR';
                     $nisn = '0012345678';
                 }
 
                 $certData = [
                     'code' => $code,
+                    'cert_number' => $certNumber,
                     'name' => mb_strtoupper($recipientName ?? '-'),
                     'nisn' => $nisn,
                     'institution' => $schoolName,
