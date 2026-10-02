@@ -3435,22 +3435,105 @@ class PicController extends Controller
             $competition->load('criteria');
         }
 
-        $compJudges = $competition->judges->values();
-        $validJudgeIds = $compJudges->pluck('id')->toArray();
+        // Auto sync any judge that already submitted scores for this competition into competition judges
+        $scoringJudgeIds = Score::where('competition_id', $competition->id)
+            ->whereNotNull('judge_id')
+            ->pluck('judge_id')
+            ->unique()
+            ->filter()
+            ->values();
+
+        if ($scoringJudgeIds->isNotEmpty()) {
+            $existingJudgeIds = $competition->judges->pluck('id')->toArray();
+            $missingJudgeIds = $scoringJudgeIds->diff($existingJudgeIds);
+            if ($missingJudgeIds->isNotEmpty()) {
+                $attachData = [];
+                $currCount = count($existingJudgeIds);
+                foreach ($missingJudgeIds as $mId) {
+                    $currCount++;
+                    $attachData[$mId] = ['role_title' => 'Juri '.$currCount];
+                }
+                $competition->judges()->syncWithoutDetaching($attachData);
+                $competition->load('judges');
+            }
+        }
+
+        // If no judges assigned yet, auto-create default 3 judges (Juri 1, Juri 2, Juri 3)
+        if ($competition->judges->isEmpty()) {
+            for ($i = 1; $i <= 3; $i++) {
+                $judgeEmail = 'juri'.$i.'_comp'.$competition->id.'@talenta.local';
+                $judgeUser = User::firstOrCreate(
+                    ['email' => $judgeEmail],
+                    [
+                        'name' => 'Dewan Juri '.$i,
+                        'password' => Hash::make('talenta2026'),
+                        'role' => 'juri',
+                        'status' => 'active',
+                    ]
+                );
+
+                $competition->judges()->syncWithoutDetaching([
+                    $judgeUser->id => ['role_title' => 'Juri '.$i],
+                ]);
+            }
+            $competition->load('judges');
+        }
+
+        // Request parameters
+        $viewMode = $request->get('view_mode', 'detailed');
+        $sector = $request->get('sector', 'all');
+        $statusFilter = $request->get('status', 'all');
+        $sortBy = $request->get('sort_by', 'rank');
+        $sortDir = strtolower($request->get('sort_dir', 'asc')) === 'desc' ? 'desc' : 'asc';
+
+        $judges = $competition->judges->values();
+        $validJudgeIds = $judges->pluck('id')->toArray();
+
+        $criteria = $competition->criteria->values();
+        $compCriteriaIds = $criteria->pluck('id')->toArray();
+
+        $participants = $competition->registrations->values();
 
         // Compute scores and rank map with auto-healing
         $scoresMap = [];
         $partStats = [];
-        foreach ($competition->registrations as $r) {
+        foreach ($participants as $r) {
             $regScoresMap = [];
             $unmatchedScores = [];
 
             foreach ($r->scores as $score) {
                 if (in_array($score->judge_id, $validJudgeIds)) {
                     $critValues = [];
-                    foreach ($score->details as $det) {
-                        $critValues[$det->criterion_id] = (float) $det->score_value;
+                    $details = $score->details;
+
+                    // 1. Direct match by criterion_id
+                    foreach ($details as $det) {
+                        if (in_array($det->criterion_id, $compCriteriaIds)) {
+                            $critValues[$det->criterion_id] = (float) $det->score_value;
+                        }
                     }
+
+                    // 2. If details exist but criterion IDs were mismatched, map by index
+                    if (empty($critValues) && $details->isNotEmpty()) {
+                        foreach ($details->values() as $dIdx => $det) {
+                            if (isset($criteria[$dIdx])) {
+                                $targetCrit = $criteria[$dIdx];
+                                $critValues[$targetCrit->id] = (float) $det->score_value;
+                            }
+                        }
+                    }
+
+                    // 3. If score has total_score > 0 but NO details at all, auto-populate
+                    if (empty($critValues) && (float) $score->total_score > 0) {
+                        if ($criteria->count() === 1) {
+                            $singleCrit = $criteria->first();
+                            $critValues[$singleCrit->id] = (float) $score->total_score;
+                        } elseif ($criteria->isNotEmpty()) {
+                            $firstCrit = $criteria->first();
+                            $critValues[$firstCrit->id] = (float) $score->total_score;
+                        }
+                    }
+
                     $regScoresMap[$score->judge_id] = [
                         'total_score' => (float) $score->total_score,
                         'criteria' => $critValues,
@@ -3461,7 +3544,7 @@ class PicController extends Controller
             }
 
             if (! empty($unmatchedScores)) {
-                foreach ($compJudges as $idx => $j) {
+                foreach ($judges as $idx => $j) {
                     if (! isset($regScoresMap[$j->id]) && ! empty($unmatchedScores)) {
                         $orphan = array_shift($unmatchedScores);
                         $critValues = [];
@@ -3491,16 +3574,44 @@ class PicController extends Controller
             $partStats[$r->id] = [
                 'total' => $totalSum,
                 'avg' => $avg,
+                'scored_count' => $scoredJudges,
                 'draw' => (int) ($r->draw_number ?: 99999),
             ];
         }
 
+        // Apply Sector Filter if specified
+        if ($sector === 'PA') {
+            $participants = $participants->filter(fn ($p) => ($p->primary_gender ?? 'L') === 'L');
+        } elseif ($sector === 'PI') {
+            $participants = $participants->filter(fn ($p) => ($p->primary_gender ?? 'L') === 'P');
+        }
+
+        // Apply Status Filter if specified
+        if ($statusFilter === 'scored') {
+            $participants = $participants->filter(fn ($p) => ($partStats[$p->id]['scored_count'] ?? 0) >= $judges->count() && $judges->count() > 0);
+        } elseif ($statusFilter === 'unscored') {
+            $participants = $participants->filter(fn ($p) => ($partStats[$p->id]['scored_count'] ?? 0) < $judges->count());
+        }
+
         // Build rank map based on average descending
-        $scoredList = collect($partStats)->filter(fn ($s) => $s['avg'] > 0)->sortByDesc('avg');
+        $scoredList = $participants->map(function ($p) use ($partStats) {
+            return [
+                'id' => $p->id,
+                'avg' => $partStats[$p->id]['avg'] ?? 0,
+                'draw' => (int) ($p->draw_number ?: 99999),
+            ];
+        })->filter(fn ($s) => $s['avg'] > 0)->sort(function ($a, $b) {
+            if ($a['avg'] == $b['avg']) {
+                return $a['draw'] <=> $b['draw'];
+            }
+
+            return $b['avg'] <=> $a['avg'];
+        });
+
         $rankMap = [];
         $currRank = 1;
-        foreach ($scoredList as $regId => $stat) {
-            $rankMap[$regId] = $currRank++;
+        foreach ($scoredList as $stat) {
+            $rankMap[$stat['id']] = $currRank++;
         }
 
         // Sort participants based on requested sort
@@ -3585,14 +3696,14 @@ class PicController extends Controller
         // 1. Titles Banner
         $sheet->mergeCells("A1:{$lastCol}1");
         $sheet->setCellValue('A1', 'REKAPITULASI HASIL PENILAIAN DEWAN JURI RESMI — TALENTA 2026');
-        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new Color('FFFFFF'));
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new Color(Color::COLOR_WHITE));
         $sheet->getStyle('A1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF1E1B4B');
         $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
         $sheet->getRowDimension(1)->setRowHeight(36);
 
         $sheet->mergeCells("A2:{$lastCol}2");
         $sheet->setCellValue('A2', 'CABANG LOMBA: '.strtoupper($competition->name).' ('.$competition->code.') — MTsN 1 BLITAR');
-        $sheet->getStyle('A2')->getFont()->setBold(true)->setSize(11)->setColor(new Color('FFFFFF'));
+        $sheet->getStyle('A2')->getFont()->setBold(true)->setSize(11)->setColor(new Color(Color::COLOR_WHITE));
         $sheet->getStyle('A2')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF312E81');
         $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
         $sheet->getRowDimension(2)->setRowHeight(26);
@@ -3633,7 +3744,7 @@ class PicController extends Controller
         $sheet->setCellValue("{$cStatus}5", 'Status');
 
         // Style base headers
-        $sheet->getStyle('A5:F'.($isDetailed ? 6 : 5))->getFont()->setBold(true)->setColor(new Color('FFFFFF'));
+        $sheet->getStyle('A5:F'.($isDetailed ? 6 : 5))->getFont()->setBold(true)->setColor(new Color(Color::COLOR_WHITE));
         $sheet->getStyle('A5:F'.($isDetailed ? 6 : 5))->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF0F172A');
         $sheet->getStyle('A5:F'.($isDetailed ? 6 : 5))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
 
@@ -3644,39 +3755,39 @@ class PicController extends Controller
             if ($isDetailed) {
                 $sheet->mergeCells("{$jConfig['start']}5:{$jConfig['end']}5");
                 $sheet->setCellValue("{$jConfig['start']}5", $jTitle);
-                $sheet->getStyle("{$jConfig['start']}5:{$jConfig['end']}5")->getFont()->setBold(true)->setColor(new Color('FFFFFF'));
+                $sheet->getStyle("{$jConfig['start']}5:{$jConfig['end']}5")->getFont()->setBold(true)->setColor(new Color(Color::COLOR_WHITE));
                 $sheet->getStyle("{$jConfig['start']}5:{$jConfig['end']}5")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF3730A3');
                 $sheet->getStyle("{$jConfig['start']}5:{$jConfig['end']}5")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
 
                 foreach ($criteria as $c) {
                     $col = $jConfig['criteria'][$c->id];
                     $sheet->setCellValue("{$col}6", $c->name);
-                    $sheet->getStyle("{$col}6")->getFont()->setSize(9)->setColor(new Color('FFFFFF'));
+                    $sheet->getStyle("{$col}6")->getFont()->setSize(9)->setColor(new Color(Color::COLOR_WHITE));
                     $sheet->getStyle("{$col}6")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF475569');
                     $sheet->getStyle("{$col}6")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
                 }
                 $sheet->setCellValue("{$jConfig['total']}6", 'Total');
-                $sheet->getStyle("{$jConfig['total']}6")->getFont()->setBold(true)->setSize(9)->setColor(new Color('FFFFFF'));
+                $sheet->getStyle("{$jConfig['total']}6")->getFont()->setBold(true)->setSize(9)->setColor(new Color(Color::COLOR_WHITE));
                 $sheet->getStyle("{$jConfig['total']}6")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF312E81');
                 $sheet->getStyle("{$jConfig['total']}6")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
             } else {
                 $sheet->setCellValue("{$jConfig['total']}5", $jTitle.' (Total)');
-                $sheet->getStyle("{$jConfig['total']}5")->getFont()->setBold(true)->setColor(new Color('FFFFFF'));
+                $sheet->getStyle("{$jConfig['total']}5")->getFont()->setBold(true)->setColor(new Color(Color::COLOR_WHITE));
                 $sheet->getStyle("{$jConfig['total']}5")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF3730A3');
                 $sheet->getStyle("{$jConfig['total']}5")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
             }
         }
 
         // Totals & Averages Header
-        $sheet->getStyle("{$cTotal}5:{$cTotal}".($isDetailed ? 6 : 5))->getFont()->setBold(true)->setColor(new Color('FFFFFF'));
+        $sheet->getStyle("{$cTotal}5:{$cTotal}".($isDetailed ? 6 : 5))->getFont()->setBold(true)->setColor(new Color(Color::COLOR_WHITE));
         $sheet->getStyle("{$cTotal}5:{$cTotal}".($isDetailed ? 6 : 5))->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF4338CA');
         $sheet->getStyle("{$cTotal}5:{$cTotal}".($isDetailed ? 6 : 5))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
 
-        $sheet->getStyle("{$cAvg}5:{$cAvg}".($isDetailed ? 6 : 5))->getFont()->setBold(true)->setColor(new Color('FFFFFF'));
+        $sheet->getStyle("{$cAvg}5:{$cAvg}".($isDetailed ? 6 : 5))->getFont()->setBold(true)->setColor(new Color(Color::COLOR_WHITE));
         $sheet->getStyle("{$cAvg}5:{$cAvg}".($isDetailed ? 6 : 5))->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFB45309');
         $sheet->getStyle("{$cAvg}5:{$cAvg}".($isDetailed ? 6 : 5))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
 
-        $sheet->getStyle("{$cStatus}5:{$cStatus}".($isDetailed ? 6 : 5))->getFont()->setBold(true)->setColor(new Color('FFFFFF'));
+        $sheet->getStyle("{$cStatus}5:{$cStatus}".($isDetailed ? 6 : 5))->getFont()->setBold(true)->setColor(new Color(Color::COLOR_WHITE));
         $sheet->getStyle("{$cStatus}5:{$cStatus}".($isDetailed ? 6 : 5))->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF065F46');
         $sheet->getStyle("{$cStatus}5:{$cStatus}".($isDetailed ? 6 : 5))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
 
