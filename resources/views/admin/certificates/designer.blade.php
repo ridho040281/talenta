@@ -700,22 +700,12 @@
                              fontFamily: getFontFamily(cfg.nomor.font),
                              textAlign: cfg.nomor.align || 'center'
                          }"
-                         :class="activeTab === 'nomor' ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-white/80 bg-purple-500/10 rounded-lg px-2 py-0.5 cursor-grab active:cursor-grabbing z-30 shadow-lg' : 'cursor-grab hover:ring-1 hover:ring-purple-400/60 hover:bg-black/[0.02] rounded px-1 z-20 transition'"
-                         class="whitespace-nowrap select-none"
+                         :class="activeTab === 'nomor' ? 'cursor-move z-30 ring-1 ring-purple-500 ring-dashed' : 'cursor-move z-20 hover:ring-1 hover:ring-purple-400/40 hover:ring-dashed'"
+                         class="whitespace-nowrap select-none px-0.5"
                          @mousedown="startDrag($event, 'nomor')"
                          @touchstart="startDrag($event, 'nomor')"
-                         @click.stop="activeTab = 'nomor'"
-                         @wheel.prevent="onWheelResize($event, 'nomor')">
+                         @click.stop="activeTab = 'nomor'">
                         <span x-text="getNomorPreview()"></span>
-                        <!-- Mini Toolbar -->
-                        <div x-show="activeTab === 'nomor'" 
-                             class="no-drag absolute -top-8 left-1/2 transform -translate-x-1/2 bg-slate-900/95 backdrop-blur text-white text-[10px] px-2.5 py-1 rounded-full shadow-2xl border border-purple-500/50 flex items-center gap-1.5 z-40 whitespace-nowrap select-none pointer-events-auto">
-                            <span class="text-purple-300 font-black" x-text="cfg.nomor.size + 'px'"></span>
-                            <button type="button" @click.stop="changeSize('nomor', -1)" class="w-4 h-4 rounded bg-white/15 hover:bg-rose-500 flex items-center justify-center font-bold text-xs leading-none transition" title="Perkecil Font">-</button>
-                            <button type="button" @click.stop="changeSize('nomor', 1)" class="w-4 h-4 rounded bg-white/15 hover:bg-emerald-500 flex items-center justify-center font-bold text-xs leading-none transition" title="Perbesar Font">+</button>
-                            <span class="text-slate-600">|</span>
-                            <span class="text-[9px] text-slate-300 flex items-center gap-0.5 font-medium">✥ Tarik Geser</span>
-                        </div>
                     </div>
 
                     <!-- 2. Nama Penerima -->
@@ -732,22 +722,12 @@
                              textAlign: cfg.nama.align || 'center',
                              letterSpacing: '0.5px'
                          }"
-                         :class="activeTab === 'nama' ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-white/80 bg-purple-500/10 rounded-lg px-2 py-0.5 cursor-grab active:cursor-grabbing z-30 shadow-lg' : 'cursor-grab hover:ring-1 hover:ring-purple-400/60 hover:bg-black/[0.02] rounded px-1 z-20 transition'"
-                         class="whitespace-nowrap select-none"
+                         :class="activeTab === 'nama' ? 'cursor-move z-30 ring-1 ring-purple-500 ring-dashed' : 'cursor-move z-20 hover:ring-1 hover:ring-purple-400/40 hover:ring-dashed'"
+                         class="whitespace-nowrap select-none px-0.5"
                          @mousedown="startDrag($event, 'nama')"
                          @touchstart="startDrag($event, 'nama')"
-                         @click.stop="activeTab = 'nama'"
-                         @wheel.prevent="onWheelResize($event, 'nama')">
-                        <span>AHMAD FAUZI NURDIN</span>
-                        <!-- Mini Toolbar -->
-                        <div x-show="activeTab === 'nama'" 
-                             class="no-drag absolute -top-8 left-1/2 transform -translate-x-1/2 bg-slate-900/95 backdrop-blur text-white text-[10px] px-2.5 py-1 rounded-full shadow-2xl border border-purple-500/50 flex items-center gap-1.5 z-40 whitespace-nowrap select-none pointer-events-auto">
-                            <span class="text-purple-300 font-black" x-text="cfg.nama.size + 'px'"></span>
-                            <button type="button" @click.stop="changeSize('nama', -1)" class="w-4 h-4 rounded bg-white/15 hover:bg-rose-500 flex items-center justify-center font-bold text-xs leading-none transition" title="Perkecil Font">-</button>
-                            <button type="button" @click.stop="changeSize('nama', 1)" class="w-4 h-4 rounded bg-white/15 hover:bg-emerald-500 flex items-center justify-center font-bold text-xs leading-none transition" title="Perbesar Font">+</button>
-                            <span class="text-slate-600">|</span>
-                            <span class="text-[9px] text-slate-300 flex items-center gap-0.5 font-medium">✥ Tarik Geser</span>
-                        </div>
+                         @click.stop="activeTab = 'nama'">
+                        AHMAD FAUZI NURDIN
                     </div>
 
                     <!-- 3. Asal Sekolah / Lembaga -->
@@ -763,22 +743,12 @@
                              fontFamily: getFontFamily(cfg.sekolah.font),
                              textAlign: cfg.sekolah.align || 'center'
                          }"
-                         :class="activeTab === 'sekolah' ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-white/80 bg-purple-500/10 rounded-lg px-2 py-0.5 cursor-grab active:cursor-grabbing z-30 shadow-lg' : 'cursor-grab hover:ring-1 hover:ring-purple-400/60 hover:bg-black/[0.02] rounded px-1 z-20 transition'"
-                         class="whitespace-nowrap select-none"
+                         :class="activeTab === 'sekolah' ? 'cursor-move z-30 ring-1 ring-purple-500 ring-dashed' : 'cursor-move z-20 hover:ring-1 hover:ring-purple-400/40 hover:ring-dashed'"
+                         class="whitespace-nowrap select-none px-0.5"
                          @mousedown="startDrag($event, 'sekolah')"
                          @touchstart="startDrag($event, 'sekolah')"
-                         @click.stop="activeTab = 'sekolah'"
-                         @wheel.prevent="onWheelResize($event, 'sekolah')">
-                        <span>SDN Kepanjenlor 2 Kota Blitar</span>
-                        <!-- Mini Toolbar -->
-                        <div x-show="activeTab === 'sekolah'" 
-                             class="no-drag absolute -top-8 left-1/2 transform -translate-x-1/2 bg-slate-900/95 backdrop-blur text-white text-[10px] px-2.5 py-1 rounded-full shadow-2xl border border-purple-500/50 flex items-center gap-1.5 z-40 whitespace-nowrap select-none pointer-events-auto">
-                            <span class="text-purple-300 font-black" x-text="cfg.sekolah.size + 'px'"></span>
-                            <button type="button" @click.stop="changeSize('sekolah', -1)" class="w-4 h-4 rounded bg-white/15 hover:bg-rose-500 flex items-center justify-center font-bold text-xs leading-none transition" title="Perkecil Font">-</button>
-                            <button type="button" @click.stop="changeSize('sekolah', 1)" class="w-4 h-4 rounded bg-white/15 hover:bg-emerald-500 flex items-center justify-center font-bold text-xs leading-none transition" title="Perbesar Font">+</button>
-                            <span class="text-slate-600">|</span>
-                            <span class="text-[9px] text-slate-300 flex items-center gap-0.5 font-medium">✥ Tarik Geser</span>
-                        </div>
+                         @click.stop="activeTab = 'sekolah'">
+                        SDN Kepanjenlor 2 Kota Blitar
                     </div>
 
                     <!-- 4. Predikat Juara / Kategori -->
@@ -794,22 +764,12 @@
                              fontFamily: getFontFamily(cfg.predikat.font),
                              textAlign: cfg.predikat.align || 'center'
                          }"
-                         :class="activeTab === 'predikat' ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-white/80 bg-purple-500/10 rounded-lg px-2 py-0.5 cursor-grab active:cursor-grabbing z-30 shadow-lg' : 'cursor-grab hover:ring-1 hover:ring-purple-400/60 hover:bg-black/[0.02] rounded px-1 z-20 transition'"
-                         class="whitespace-nowrap select-none"
+                         :class="activeTab === 'predikat' ? 'cursor-move z-30 ring-1 ring-purple-500 ring-dashed' : 'cursor-move z-20 hover:ring-1 hover:ring-purple-400/40 hover:ring-dashed'"
+                         class="whitespace-nowrap select-none px-0.5"
                          @mousedown="startDrag($event, 'predikat')"
                          @touchstart="startDrag($event, 'predikat')"
-                         @click.stop="activeTab = 'predikat'"
-                         @wheel.prevent="onWheelResize($event, 'predikat')">
+                         @click.stop="activeTab = 'predikat'">
                         <span x-text="getPredikatPreview()"></span>
-                        <!-- Mini Toolbar -->
-                        <div x-show="activeTab === 'predikat'" 
-                             class="no-drag absolute -top-8 left-1/2 transform -translate-x-1/2 bg-slate-900/95 backdrop-blur text-white text-[10px] px-2.5 py-1 rounded-full shadow-2xl border border-purple-500/50 flex items-center gap-1.5 z-40 whitespace-nowrap select-none pointer-events-auto">
-                            <span class="text-purple-300 font-black" x-text="cfg.predikat.size + 'px'"></span>
-                            <button type="button" @click.stop="changeSize('predikat', -1)" class="w-4 h-4 rounded bg-white/15 hover:bg-rose-500 flex items-center justify-center font-bold text-xs leading-none transition" title="Perkecil Font">-</button>
-                            <button type="button" @click.stop="changeSize('predikat', 1)" class="w-4 h-4 rounded bg-white/15 hover:bg-emerald-500 flex items-center justify-center font-bold text-xs leading-none transition" title="Perbesar Font">+</button>
-                            <span class="text-slate-600">|</span>
-                            <span class="text-[9px] text-slate-300 flex items-center gap-0.5 font-medium">✥ Tarik Geser</span>
-                        </div>
                     </div>
 
                     <!-- 5. Cabang Lomba -->
@@ -825,22 +785,12 @@
                              fontFamily: getFontFamily(cfg.lomba.font),
                              textAlign: cfg.lomba.align || 'center'
                          }"
-                         :class="activeTab === 'lomba' ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-white/80 bg-purple-500/10 rounded-lg px-2 py-0.5 cursor-grab active:cursor-grabbing z-30 shadow-lg' : 'cursor-grab hover:ring-1 hover:ring-purple-400/60 hover:bg-black/[0.02] rounded px-1 z-20 transition'"
-                         class="whitespace-nowrap select-none"
+                         :class="activeTab === 'lomba' ? 'cursor-move z-30 ring-1 ring-purple-500 ring-dashed' : 'cursor-move z-20 hover:ring-1 hover:ring-purple-400/40 hover:ring-dashed'"
+                         class="whitespace-nowrap select-none px-0.5"
                          @mousedown="startDrag($event, 'lomba')"
                          @touchstart="startDrag($event, 'lomba')"
-                         @click.stop="activeTab = 'lomba'"
-                         @wheel.prevent="onWheelResize($event, 'lomba')">
-                        <span>Cabang Musabaqah Tilawatil Qur'an (MTQ) - Kategori Putra</span>
-                        <!-- Mini Toolbar -->
-                        <div x-show="activeTab === 'lomba'" 
-                             class="no-drag absolute -top-8 left-1/2 transform -translate-x-1/2 bg-slate-900/95 backdrop-blur text-white text-[10px] px-2.5 py-1 rounded-full shadow-2xl border border-purple-500/50 flex items-center gap-1.5 z-40 whitespace-nowrap select-none pointer-events-auto">
-                            <span class="text-purple-300 font-black" x-text="cfg.lomba.size + 'px'"></span>
-                            <button type="button" @click.stop="changeSize('lomba', -1)" class="w-4 h-4 rounded bg-white/15 hover:bg-rose-500 flex items-center justify-center font-bold text-xs leading-none transition" title="Perkecil Font">-</button>
-                            <button type="button" @click.stop="changeSize('lomba', 1)" class="w-4 h-4 rounded bg-white/15 hover:bg-emerald-500 flex items-center justify-center font-bold text-xs leading-none transition" title="Perbesar Font">+</button>
-                            <span class="text-slate-600">|</span>
-                            <span class="text-[9px] text-slate-300 flex items-center gap-0.5 font-medium">✥ Tarik Geser</span>
-                        </div>
+                         @click.stop="activeTab = 'lomba'">
+                        Cabang Musabaqah Tilawatil Qur'an (MTQ) - Kategori Putra
                     </div>
 
                     <!-- 6. Tanggal Titimangsa -->
@@ -856,22 +806,12 @@
                              fontFamily: getFontFamily(cfg.tanggal.font),
                              textAlign: cfg.tanggal.align || 'center'
                          }"
-                         :class="activeTab === 'tanggal' ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-white/80 bg-purple-500/10 rounded-lg px-2 py-0.5 cursor-grab active:cursor-grabbing z-30 shadow-lg' : 'cursor-grab hover:ring-1 hover:ring-purple-400/60 hover:bg-black/[0.02] rounded px-1 z-20 transition'"
-                         class="whitespace-nowrap select-none"
+                         :class="activeTab === 'tanggal' ? 'cursor-move z-30 ring-1 ring-purple-500 ring-dashed' : 'cursor-move z-20 hover:ring-1 hover:ring-purple-400/40 hover:ring-dashed'"
+                         class="whitespace-nowrap select-none px-0.5"
                          @mousedown="startDrag($event, 'tanggal')"
                          @touchstart="startDrag($event, 'tanggal')"
-                         @click.stop="activeTab = 'tanggal'"
-                         @wheel.prevent="onWheelResize($event, 'tanggal')">
-                        <span>Blitar, 17 Oktober 2026</span>
-                        <!-- Mini Toolbar -->
-                        <div x-show="activeTab === 'tanggal'" 
-                             class="no-drag absolute -top-8 left-1/2 transform -translate-x-1/2 bg-slate-900/95 backdrop-blur text-white text-[10px] px-2.5 py-1 rounded-full shadow-2xl border border-purple-500/50 flex items-center gap-1.5 z-40 whitespace-nowrap select-none pointer-events-auto">
-                            <span class="text-purple-300 font-black" x-text="cfg.tanggal.size + 'px'"></span>
-                            <button type="button" @click.stop="changeSize('tanggal', -1)" class="w-4 h-4 rounded bg-white/15 hover:bg-rose-500 flex items-center justify-center font-bold text-xs leading-none transition" title="Perkecil Font">-</button>
-                            <button type="button" @click.stop="changeSize('tanggal', 1)" class="w-4 h-4 rounded bg-white/15 hover:bg-emerald-500 flex items-center justify-center font-bold text-xs leading-none transition" title="Perbesar Font">+</button>
-                            <span class="text-slate-600">|</span>
-                            <span class="text-[9px] text-slate-300 flex items-center gap-0.5 font-medium">✥ Tarik Geser</span>
-                        </div>
+                         @click.stop="activeTab = 'tanggal'">
+                        Blitar, 17 Oktober 2026
                     </div>
 
                     <!-- 8. Teks Tambahan 1 (Opsional) -->
@@ -887,22 +827,12 @@
                              fontFamily: getFontFamily(cfg.teks_1.font),
                              textAlign: cfg.teks_1.align || 'center'
                          }"
-                         :class="activeTab === 'teks_1' ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-white/80 bg-purple-500/10 rounded-lg px-2 py-0.5 cursor-grab active:cursor-grabbing z-30 shadow-lg' : 'cursor-grab hover:ring-1 hover:ring-purple-400/60 hover:bg-black/[0.02] rounded px-1 z-20 transition'"
-                         class="whitespace-pre-wrap max-w-[80%] select-none"
+                         :class="activeTab === 'teks_1' ? 'cursor-move z-30 ring-1 ring-purple-500 ring-dashed' : 'cursor-move z-20 hover:ring-1 hover:ring-purple-400/40 hover:ring-dashed'"
+                         class="whitespace-pre-wrap max-w-[80%] select-none px-0.5"
                          @mousedown="startDrag($event, 'teks_1')"
                          @touchstart="startDrag($event, 'teks_1')"
-                         @click.stop="activeTab = 'teks_1'"
-                         @wheel.prevent="onWheelResize($event, 'teks_1')">
+                         @click.stop="activeTab = 'teks_1'">
                         <span x-text="cfg.teks_1.text"></span>
-                        <!-- Mini Toolbar -->
-                        <div x-show="activeTab === 'teks_1'" 
-                             class="no-drag absolute -top-8 left-1/2 transform -translate-x-1/2 bg-slate-900/95 backdrop-blur text-white text-[10px] px-2.5 py-1 rounded-full shadow-2xl border border-purple-500/50 flex items-center gap-1.5 z-40 whitespace-nowrap select-none pointer-events-auto">
-                            <span class="text-purple-300 font-black" x-text="cfg.teks_1.size + 'px'"></span>
-                            <button type="button" @click.stop="changeSize('teks_1', -1)" class="w-4 h-4 rounded bg-white/15 hover:bg-rose-500 flex items-center justify-center font-bold text-xs leading-none transition" title="Perkecil Font">-</button>
-                            <button type="button" @click.stop="changeSize('teks_1', 1)" class="w-4 h-4 rounded bg-white/15 hover:bg-emerald-500 flex items-center justify-center font-bold text-xs leading-none transition" title="Perbesar Font">+</button>
-                            <span class="text-slate-600">|</span>
-                            <span class="text-[9px] text-slate-300 flex items-center gap-0.5 font-medium">✥ Tarik Geser</span>
-                        </div>
                     </div>
 
                     <!-- 9. Teks Tambahan 2 (Opsional) -->
@@ -918,22 +848,12 @@
                              fontFamily: getFontFamily(cfg.teks_2.font),
                              textAlign: cfg.teks_2.align || 'center'
                          }"
-                         :class="activeTab === 'teks_2' ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-white/80 bg-purple-500/10 rounded-lg px-2 py-0.5 cursor-grab active:cursor-grabbing z-30 shadow-lg' : 'cursor-grab hover:ring-1 hover:ring-purple-400/60 hover:bg-black/[0.02] rounded px-1 z-20 transition'"
-                         class="whitespace-pre-wrap max-w-[80%] select-none"
+                         :class="activeTab === 'teks_2' ? 'cursor-move z-30 ring-1 ring-purple-500 ring-dashed' : 'cursor-move z-20 hover:ring-1 hover:ring-purple-400/40 hover:ring-dashed'"
+                         class="whitespace-pre-wrap max-w-[80%] select-none px-0.5"
                          @mousedown="startDrag($event, 'teks_2')"
                          @touchstart="startDrag($event, 'teks_2')"
-                         @click.stop="activeTab = 'teks_2'"
-                         @wheel.prevent="onWheelResize($event, 'teks_2')">
+                         @click.stop="activeTab = 'teks_2'">
                         <span x-text="cfg.teks_2.text"></span>
-                        <!-- Mini Toolbar -->
-                        <div x-show="activeTab === 'teks_2'" 
-                             class="no-drag absolute -top-8 left-1/2 transform -translate-x-1/2 bg-slate-900/95 backdrop-blur text-white text-[10px] px-2.5 py-1 rounded-full shadow-2xl border border-purple-500/50 flex items-center gap-1.5 z-40 whitespace-nowrap select-none pointer-events-auto">
-                            <span class="text-purple-300 font-black" x-text="cfg.teks_2.size + 'px'"></span>
-                            <button type="button" @click.stop="changeSize('teks_2', -1)" class="w-4 h-4 rounded bg-white/15 hover:bg-rose-500 flex items-center justify-center font-bold text-xs leading-none transition" title="Perkecil Font">-</button>
-                            <button type="button" @click.stop="changeSize('teks_2', 1)" class="w-4 h-4 rounded bg-white/15 hover:bg-emerald-500 flex items-center justify-center font-bold text-xs leading-none transition" title="Perbesar Font">+</button>
-                            <span class="text-slate-600">|</span>
-                            <span class="text-[9px] text-slate-300 flex items-center gap-0.5 font-medium">✥ Tarik Geser</span>
-                        </div>
                     </div>
 
                     <!-- 10. Teks Tambahan 3 (Opsional) -->
@@ -949,22 +869,12 @@
                              fontFamily: getFontFamily(cfg.teks_3.font),
                              textAlign: cfg.teks_3.align || 'center'
                          }"
-                         :class="activeTab === 'teks_3' ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-white/80 bg-purple-500/10 rounded-lg px-2 py-0.5 cursor-grab active:cursor-grabbing z-30 shadow-lg' : 'cursor-grab hover:ring-1 hover:ring-purple-400/60 hover:bg-black/[0.02] rounded px-1 z-20 transition'"
-                         class="whitespace-pre-wrap max-w-[80%] select-none"
+                         :class="activeTab === 'teks_3' ? 'cursor-move z-30 ring-1 ring-purple-500 ring-dashed' : 'cursor-move z-20 hover:ring-1 hover:ring-purple-400/40 hover:ring-dashed'"
+                         class="whitespace-pre-wrap max-w-[80%] select-none px-0.5"
                          @mousedown="startDrag($event, 'teks_3')"
                          @touchstart="startDrag($event, 'teks_3')"
-                         @click.stop="activeTab = 'teks_3'"
-                         @wheel.prevent="onWheelResize($event, 'teks_3')">
+                         @click.stop="activeTab = 'teks_3'">
                         <span x-text="cfg.teks_3.text"></span>
-                        <!-- Mini Toolbar -->
-                        <div x-show="activeTab === 'teks_3'" 
-                             class="no-drag absolute -top-8 left-1/2 transform -translate-x-1/2 bg-slate-900/95 backdrop-blur text-white text-[10px] px-2.5 py-1 rounded-full shadow-2xl border border-purple-500/50 flex items-center gap-1.5 z-40 whitespace-nowrap select-none pointer-events-auto">
-                            <span class="text-purple-300 font-black" x-text="cfg.teks_3.size + 'px'"></span>
-                            <button type="button" @click.stop="changeSize('teks_3', -1)" class="w-4 h-4 rounded bg-white/15 hover:bg-rose-500 flex items-center justify-center font-bold text-xs leading-none transition" title="Perkecil Font">-</button>
-                            <button type="button" @click.stop="changeSize('teks_3', 1)" class="w-4 h-4 rounded bg-white/15 hover:bg-emerald-500 flex items-center justify-center font-bold text-xs leading-none transition" title="Perbesar Font">+</button>
-                            <span class="text-slate-600">|</span>
-                            <span class="text-[9px] text-slate-300 flex items-center gap-0.5 font-medium">✥ Tarik Geser</span>
-                        </div>
                     </div>
 
                     <!-- 7. QR Code Keabsahan -->
@@ -977,22 +887,12 @@
                              width: (cfg.qrcode.size * 0.45) + 'px',
                              height: (cfg.qrcode.size * 0.45) + 'px'
                          }"
-                         :class="activeTab === 'qrcode' ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-white/80 rounded-lg cursor-grab active:cursor-grabbing z-30 shadow-lg' : 'cursor-grab hover:ring-1 hover:ring-purple-400/60 rounded z-20 transition'"
+                         :class="activeTab === 'qrcode' ? 'cursor-move z-30 ring-2 ring-purple-500 ring-dashed' : 'cursor-move z-20 hover:ring-1 hover:ring-purple-400/40 hover:ring-dashed'"
                          class="p-1 bg-white rounded shadow-sm border border-slate-300 flex items-center justify-center select-none"
                          @mousedown="startDrag($event, 'qrcode')"
                          @touchstart="startDrag($event, 'qrcode')"
-                         @click.stop="activeTab = 'qrcode'"
-                         @wheel.prevent="onWheelResize($event, 'qrcode')">
+                         @click.stop="activeTab = 'qrcode'">
                         <i data-lucide="qr-code" class="w-full h-full text-slate-800 pointer-events-none"></i>
-                        <!-- Mini Toolbar -->
-                        <div x-show="activeTab === 'qrcode'" 
-                             class="no-drag absolute -top-8 left-1/2 transform -translate-x-1/2 bg-slate-900/95 backdrop-blur text-white text-[10px] px-2.5 py-1 rounded-full shadow-2xl border border-purple-500/50 flex items-center gap-1.5 z-40 whitespace-nowrap select-none pointer-events-auto">
-                            <span class="text-purple-300 font-black" x-text="cfg.qrcode.size + 'px'"></span>
-                            <button type="button" @click.stop="changeSize('qrcode', -4)" class="w-4 h-4 rounded bg-white/15 hover:bg-rose-500 flex items-center justify-center font-bold text-xs leading-none transition" title="Perkecil QR">-</button>
-                            <button type="button" @click.stop="changeSize('qrcode', 4)" class="w-4 h-4 rounded bg-white/15 hover:bg-emerald-500 flex items-center justify-center font-bold text-xs leading-none transition" title="Perbesar QR">+</button>
-                            <span class="text-slate-600">|</span>
-                            <span class="text-[9px] text-slate-300 flex items-center gap-0.5 font-medium">✥ Tarik Geser</span>
-                        </div>
                     </div>
 
                 </div>
