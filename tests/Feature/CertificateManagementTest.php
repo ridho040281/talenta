@@ -105,4 +105,81 @@ class CertificateManagementTest extends TestCase
         $template->refresh();
         $this->assertEquals('PESERTA TELADAN', $template->layout_config['predikat']['text']);
     }
+
+    public function test_admin_can_save_number_format_via_ajax_layout(): void
+    {
+        $this->withoutMiddleware();
+
+        $admin = User::factory()->create([
+            'role' => 'superadmin',
+        ]);
+
+        $template = CertificateTemplate::create([
+            'name' => 'Template Peserta Test',
+            'type' => 'peserta',
+            'layout_config' => CertificateTemplate::defaultLayoutConfig(),
+        ]);
+
+        $response = $this->actingAs($admin)->postJson(route('admin.certificates.template.layout', $template->id), [
+            'layout_config' => $template->layout_config,
+            'number_format' => 'B-195/Mts.13.31.01/PP.00.5/[NO]/[YEAR]',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson(['success' => true]);
+
+        $template->refresh();
+        $this->assertEquals('B-195/Mts.13.31.01/PP.00.5/[NO]/[YEAR]', $template->number_format);
+    }
+
+    public function test_admin_can_save_number_format_via_template_store(): void
+    {
+        $this->withoutMiddleware();
+
+        $admin = User::factory()->create([
+            'role' => 'superadmin',
+        ]);
+
+        $template = CertificateTemplate::create([
+            'name' => 'Template Peserta Khusus Cabang',
+            'type' => 'peserta',
+            'layout_config' => CertificateTemplate::defaultLayoutConfig(),
+        ]);
+
+        $response = $this->actingAs($admin)->post(route('admin.certificates.template.store'), [
+            'template_id' => $template->id,
+            'type' => 'peserta',
+            'name' => 'Template Peserta Khusus Cabang',
+            'number_format' => 'Nomor : B-195/Mts.13.31.01/[NO]/[YEAR]',
+        ]);
+
+        $response->assertRedirect(route('admin.certificates.designer', ['id' => $template->id]));
+
+        $template->refresh();
+        $this->assertEquals('Nomor : B-195/Mts.13.31.01/[NO]/[YEAR]', $template->number_format);
+    }
+
+    public function test_custom_number_format_is_rendered_in_print(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'superadmin',
+        ]);
+
+        $template = CertificateTemplate::create([
+            'name' => 'Template Peserta',
+            'type' => 'peserta',
+            'number_format' => 'B-195/Mts.13.31.01/PP.00.5/[NO]/[YEAR]',
+            'layout_config' => CertificateTemplate::defaultLayoutConfig(),
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('admin.certificates.print', [
+            'template_id' => $template->id,
+            'type' => 'peserta',
+            'cert_seq' => '007',
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertSee('B-195/Mts.13.31.01/PP.00.5/007/'.date('Y'));
+    }
 }

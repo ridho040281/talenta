@@ -197,7 +197,12 @@
     <!-- Toast Floating Alert untuk AJAX Save -->
     <div x-show="saveSuccess" x-transition class="p-3.5 rounded-2xl bg-emerald-500 text-slate-950 font-black text-xs shadow-2xl flex items-center gap-2.5 fixed bottom-6 right-6 z-50">
         <i data-lucide="check-circle-2" class="w-5 h-5"></i>
-        <span>Tata letak & koordinat teks berhasil disimpan ke database!</span>
+        <span>Format nomor & tata letak berhasil disimpan ke database!</span>
+    </div>
+    <div x-show="saveError" x-transition class="p-3.5 rounded-2xl bg-rose-600 text-white font-bold text-xs shadow-2xl flex items-center gap-2.5 fixed bottom-6 right-6 z-50">
+        <i data-lucide="alert-circle" class="w-5 h-5"></i>
+        <span x-text="saveError"></span>
+        <button type="button" @click="saveError = ''" class="ml-2 text-white/80 hover:text-white font-black text-sm">✕</button>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -845,6 +850,22 @@
                 <template x-for="(val, key) in cfg" :key="key">
                     <div x-show="activeTab === key" class="space-y-4 pt-1">
                         
+
+                        <!-- Khusus Nomor Sertifikat: Input Format Nomor Surat -->
+                        <div x-show="key === 'nomor'" class="p-3.5 rounded-2xl bg-white/[0.02] border border-white/[0.05] space-y-1.5">
+                            <div class="flex items-center justify-between">
+                                <label class="block text-xs font-bold text-slate-300">
+                                    Format Nomor Surat / Piagam Lembaga:
+                                </label>
+                                <span class="text-[10px] text-slate-400 font-mono">
+                                    Variabel: [NO], [MONTH], [YEAR]
+                                </span>
+                            </div>
+                            <input type="text" x-model="numberFormat" placeholder="cth: B-195/Mts.13.31.01/[NO]/[YEAR]" class="w-full px-3.5 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs text-white font-mono placeholder-slate-500 outline-none focus:border-purple-500">
+                            <p class="text-[11px] text-slate-400">
+                                Contoh penulisan: <code class="text-purple-300 font-mono">Nomor : B-195/Mts.13.31.01/PP.00.5/[NO]/[YEAR]</code>
+                            </p>
+                        </div>
 
                         <!-- Khusus Predikat / Status: Input Teks Kustom Opsional -->
                         <div x-show="key === 'predikat'" class="p-3.5 rounded-2xl bg-white/[0.02] border border-white/[0.05] space-y-1.5">
