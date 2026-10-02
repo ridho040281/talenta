@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -156,5 +157,29 @@ class CertificateTemplate extends Model
         }
 
         return $merged;
+    }
+
+    /**
+     * Format a certificate number based on template rules
+     */
+    public function formatNumber(string|int $seq, ?Carbon $date = null): string
+    {
+        $date = $date ?: Carbon::now();
+        $seqStr = is_numeric($seq) ? str_pad((string) $seq, 3, '0', STR_PAD_LEFT) : (string) $seq;
+
+        $monthRoman = match ((int) $date->format('m')) {
+            1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V', 6 => 'VI',
+            7 => 'VII', 8 => 'VIII', 9 => 'IX', 10 => 'X', 11 => 'XI', 12 => 'XII',
+        };
+
+        $rawFormat = ! empty(trim($this->number_format ?? ''))
+            ? trim($this->number_format)
+            : '[NO]/TALENTA/MTsN1-BLT/[MONTH]/[YEAR]';
+
+        return str_ireplace(
+            ['[NO]', '[MONTH]', '[YEAR]'],
+            [$seqStr, $monthRoman, $date->format('Y')],
+            $rawFormat
+        );
     }
 }

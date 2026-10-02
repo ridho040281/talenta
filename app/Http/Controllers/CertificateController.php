@@ -338,6 +338,11 @@ class CertificateController extends Controller
     {
         $template = CertificateTemplate::findOrFail($id);
         $layoutConfig = $request->input('layout_config');
+        $numberFormat = $request->input('number_format');
+
+        if ($numberFormat !== null) {
+            $template->number_format = trim($numberFormat) ?: '[NO]/TALENTA/MTsN1-BLT/[MONTH]/[YEAR]';
+        }
 
         if (is_string($layoutConfig)) {
             $layoutConfig = json_decode($layoutConfig, true);
@@ -349,7 +354,7 @@ class CertificateController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Tata letak dan koordinat teks berhasil disimpan!',
+                'message' => 'Tata letak dan nomor sertifikat berhasil disimpan!',
             ]);
         }
 
@@ -494,16 +499,7 @@ class CertificateController extends Controller
         $dateSpelled = OfficialReportController::getDateSpelledOut($nowDate);
 
         // Format certificate number
-        $monthRoman = match ((int) $nowDate->format('m')) {
-            1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V', 6 => 'VI',
-            7 => 'VII', 8 => 'VIII', 9 => 'IX', 10 => 'X', 11 => 'XI', 12 => 'XII',
-        };
-
-        $certNumber = str_replace(
-            ['[NO]', '[MONTH]', '[YEAR]'],
-            [$certNumberSeq, $monthRoman, $nowDate->format('Y')],
-            $template->number_format ?: '[NO]/TALENTA/MTsN1-BLT/[MONTH]/[YEAR]'
-        );
+        $certNumber = $template->formatNumber($certNumberSeq, $nowDate);
 
         $certCode = $this->generateCertCode($type, $registration ? $registration->id : $certNumberSeq, $competition);
         $verifyUrl = QrSignatureService::certificateUrl($certCode);
@@ -642,12 +638,7 @@ class CertificateController extends Controller
                     if (isset($ranked[$idx])) {
                         $w = $ranked[$idx];
                         $reg = $w['registration'];
-                        $certSeq = str_pad((string) $counter++, 3, '0', STR_PAD_LEFT);
-                        $certNumber = str_replace(
-                            ['[NO]', '[MONTH]', '[YEAR]'],
-                            [$certSeq, $monthRoman, $nowDate->format('Y')],
-                            $template->number_format ?: '[NO]/TALENTA/MTsN1-BLT/[MONTH]/[YEAR]'
-                        );
+                        $certNumber = $template->formatNumber($counter++, $nowDate);
 
                         $certCode = $this->generateCertCode('juara', $reg->id, $competition);
                         $verifyUrl = QrSignatureService::certificateUrl($certCode);
@@ -680,12 +671,7 @@ class CertificateController extends Controller
                 ->get();
 
             foreach ($regs as $r) {
-                $certSeq = str_pad((string) $counter++, 3, '0', STR_PAD_LEFT);
-                $certNumber = str_replace(
-                    ['[NO]', '[MONTH]', '[YEAR]'],
-                    [$certSeq, $monthRoman, $nowDate->format('Y')],
-                    $template->number_format ?: '[NO]/TALENTA/MTsN1-BLT/[MONTH]/[YEAR]'
-                );
+                $certNumber = $template->formatNumber($counter++, $nowDate);
 
                 $certCode = $this->generateCertCode('peserta', $r->id, $competition);
                 $verifyUrl = QrSignatureService::certificateUrl($certCode);
@@ -730,12 +716,7 @@ class CertificateController extends Controller
             }
 
             foreach ($uniqueOfficials as $off) {
-                $certSeq = str_pad((string) $counter++, 3, '0', STR_PAD_LEFT);
-                $certNumber = str_replace(
-                    ['[NO]', '[MONTH]', '[YEAR]'],
-                    [$certSeq, $monthRoman, $nowDate->format('Y')],
-                    $template->number_format ?: '[NO]/TALENTA/MTsN1-BLT/[MONTH]/[YEAR]'
-                );
+                $certNumber = $template->formatNumber($counter++, $nowDate);
 
                 $certCode = $this->generateCertCode('pembimbing', $off['registration_id'], $competition);
                 $verifyUrl = QrSignatureService::certificateUrl($certCode);
@@ -760,12 +741,7 @@ class CertificateController extends Controller
         } elseif ($type === 'juri') {
             $judges = $competition->judges;
             foreach ($judges as $j) {
-                $certSeq = str_pad((string) $counter++, 3, '0', STR_PAD_LEFT);
-                $certNumber = str_replace(
-                    ['[NO]', '[MONTH]', '[YEAR]'],
-                    [$certSeq, $monthRoman, $nowDate->format('Y')],
-                    $template->number_format ?: '[NO]/TALENTA/MTsN1-BLT/[MONTH]/[YEAR]'
-                );
+                $certNumber = $template->formatNumber($counter++, $nowDate);
 
                 $certCode = $this->generateCertCode('juri', $j->id, $competition);
                 $verifyUrl = QrSignatureService::certificateUrl($certCode);
@@ -853,16 +829,7 @@ class CertificateController extends Controller
 
         $nowDate = Carbon::now();
         $dateSpelled = OfficialReportController::getDateSpelledOut($nowDate);
-        $monthRoman = match ((int) $nowDate->format('m')) {
-            1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V', 6 => 'VI',
-            7 => 'VII', 8 => 'VIII', 9 => 'IX', 10 => 'X', 11 => 'XI', 12 => 'XII',
-        };
-
-        $certNumber = str_replace(
-            ['[NO]', '[MONTH]', '[YEAR]'],
-            [str_pad((string) $registration->id, 3, '0', STR_PAD_LEFT), $monthRoman, $nowDate->format('Y')],
-            $template->number_format ?: '[NO]/TALENTA/MTsN1-BLT/[MONTH]/[YEAR]'
-        );
+        $certNumber = $template->formatNumber($registration->id, $nowDate);
 
         $certCode = $this->generateCertCode($type, $registration->id, $competition);
         $verifyUrl = QrSignatureService::certificateUrl($certCode);

@@ -310,7 +310,7 @@
                 @php $aNomor = $layout['nomor']['align'] ?? 'center'; @endphp
                 <div class="cert-text-element {{ $getFontClass($layout['nomor']['font'] ?? 'sans') }}"
                      style="top: {{ $layout['nomor']['top'] }}%; left: {{ $layout['nomor']['left'] }}%; transform: {{ $calcTx($aNomor) }}; text-align: {{ $aNomor }}; font-size: {{ $layout['nomor']['size'] }}px; color: {{ $layout['nomor']['color'] }}; font-weight: {{ $isBold($layout['nomor']['font'] ?? 'sans', $layout['nomor']['bold'] ?? false) ? 'bold' : 'normal' }};">
-                    Nomor: {{ $item['cert_number'] }}
+                    {{ preg_match('/^(nomor|no)\s*:/i', trim($item['cert_number'])) ? $item['cert_number'] : 'Nomor: ' . $item['cert_number'] }}
                 </div>
                 @endif
 

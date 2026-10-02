@@ -19,6 +19,23 @@
             
             // Layout Configuration Object
             cfg: {!! json_encode($layout) !!},
+            numberFormat: @json(old('number_format', $template->number_format ?: '[NO]/TALENTA/MTsN1-BLT/[MONTH]/[YEAR]')),
+
+            getNomorPreview() {
+                let fmt = (this.numberFormat || '').trim();
+                if (!fmt) {
+                    fmt = '[NO]/TALENTA/MTsN1-BLT/[MONTH]/[YEAR]';
+                }
+                let replaced = fmt
+                    .replace(/\[NO\]/gi, '001')
+                    .replace(/\[MONTH\]/gi, 'X')
+                    .replace(/\[YEAR\]/gi, '2026');
+                
+                if (/^(nomor|no)\s*:/i.test(replaced)) {
+                    return replaced;
+                }
+                return 'Nomor: ' + replaced;
+            },
 
             // Active dragged element
             draggingElement: null,
@@ -85,7 +102,10 @@
                         'X-CSRF-TOKEN': '{{ csrf_token() }}',
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify({ layout_config: this.cfg })
+                    body: JSON.stringify({ 
+                        layout_config: this.cfg,
+                        number_format: this.numberFormat
+                    })
                 })
                 .then(res => res.json())
                 .then(data => {
@@ -216,7 +236,8 @@
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-300 mb-1.5">Format Nomor Surat:</label>
-                            <input type="text" name="number_format" value="{{ old('number_format', $template->number_format) }}" class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs text-white font-mono outline-none focus:border-purple-500">
+                            <input type="text" name="number_format" x-model="numberFormat" value="{{ old('number_format', $template->number_format) }}" placeholder="cth: B-195/Mts.13.31.01/[NO]/[YEAR]" class="w-full px-3 py-2 rounded-xl bg-[#0C111D] border border-white/[0.1] text-xs text-white font-mono outline-none focus:border-purple-500">
+                            <p class="text-[10px] text-slate-400 mt-1">Variabel otomatis: <code class="text-purple-300 font-mono">[NO]</code>, <code class="text-purple-300 font-mono">[MONTH]</code>, <code class="text-purple-300 font-mono">[YEAR]</code></p>
                         </div>
                     </div>
 
@@ -605,8 +626,8 @@
                              textAlign: cfg.nomor.align || 'center'
                          }"
                          class="cursor-pointer transition hover:outline hover:outline-2 hover:outline-purple-500 whitespace-nowrap"
-                         @click="activeTab = 'nomor'">
-                        Nomor: 001/TALENTA/MTsN1-BLT/X/2026
+                         @click="activeTab = 'nomor'"
+                         x-text="getNomorPreview()">
                     </div>
 
                     <!-- 2. Nama Penerima -->
