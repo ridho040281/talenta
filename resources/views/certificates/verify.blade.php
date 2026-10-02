@@ -49,42 +49,81 @@
                 </div>
 
                 <div>
-                    <span class="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 inline-flex items-center gap-1.5">
-                        <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                    <span class="px-3.5 py-1.5 rounded-full text-xs font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 inline-flex items-center gap-2 shadow-sm">
+                        <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
                         Dokumen Resmi & Asli Terverifikasi
                     </span>
-                    <h2 class="text-xl sm:text-2xl font-black text-white mt-3">{{ $certData['name'] }}</h2>
-                    <p class="text-sm text-slate-300 font-semibold mt-1">{{ $certData['institution'] }}</p>
+
+                    <!-- IDENTITAS UTAMA (Nama, NISN, Asal Sekolah, Cabang Lomba) -->
+                    <div class="mt-5 space-y-2.5">
+                        <h2 class="text-2xl sm:text-3xl font-black text-white tracking-wide uppercase leading-snug">
+                            {{ $certData['name'] }}
+                        </h2>
+
+                        <div class="flex flex-wrap items-center justify-center gap-2 text-sm text-slate-300">
+                            @if(!empty($certData['nisn']) && $certData['nisn'] !== '-')
+                            <span class="px-2.5 py-0.5 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-300 font-mono text-xs font-bold tracking-wider inline-flex items-center gap-1.5">
+                                <i data-lucide="id-card" class="w-3.5 h-3.5"></i>
+                                NISN: {{ $certData['nisn'] }}
+                            </span>
+                            @endif
+                            <span class="font-bold text-slate-200 inline-flex items-center gap-1.5">
+                                <i data-lucide="school" class="w-3.5 h-3.5 text-slate-400"></i>
+                                {{ $certData['institution'] }}
+                            </span>
+                        </div>
+
+                        <div class="pt-1">
+                            <span class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold tracking-wide">
+                                <i data-lucide="trophy" class="w-3.5 h-3.5 text-amber-400"></i>
+                                Cabang Lomba: {{ $certData['competition'] }}
+                            </span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Detail Verifikasi Card -->
-                <div class="bg-slate-900/80 rounded-2xl p-4 sm:p-5 border border-white/[0.08] text-left space-y-3.5 text-xs">
-                    <div class="flex items-start justify-between py-1 border-b border-white/[0.06]">
-                        <span class="text-slate-400 font-medium">Predikat Penghargaan:</span>
-                        <span class="font-bold text-amber-400 text-right">{{ $certData['predikat'] }}</span>
+                <div class="bg-slate-900/90 rounded-2xl p-4 sm:p-5 border border-white/[0.08] text-left space-y-3 text-xs shadow-inner">
+                    <div class="flex items-start justify-between py-1 border-b border-white/[0.06] gap-3">
+                        <span class="text-slate-400 font-medium shrink-0">Nama Penerima:</span>
+                        <span class="font-bold text-white text-right uppercase">{{ $certData['name'] }}</span>
                     </div>
-                    <div class="flex items-start justify-between py-1 border-b border-white/[0.06]">
-                        <span class="text-slate-400 font-medium">Cabang Lomba:</span>
+                    @if(!empty($certData['nisn']) && $certData['nisn'] !== '-')
+                    <div class="flex items-start justify-between py-1 border-b border-white/[0.06] gap-3">
+                        <span class="text-slate-400 font-medium shrink-0">NISN Siswa:</span>
+                        <span class="font-mono font-bold text-purple-300 text-right">{{ $certData['nisn'] }}</span>
+                    </div>
+                    @endif
+                    <div class="flex items-start justify-between py-1 border-b border-white/[0.06] gap-3">
+                        <span class="text-slate-400 font-medium shrink-0">Asal Lembaga / Sekolah:</span>
+                        <span class="font-semibold text-slate-200 text-right">{{ $certData['institution'] }}</span>
+                    </div>
+                    <div class="flex items-start justify-between py-1 border-b border-white/[0.06] gap-3">
+                        <span class="text-slate-400 font-medium shrink-0">Cabang Lomba:</span>
                         <span class="font-bold text-white text-right">{{ $certData['competition'] }}</span>
                     </div>
-                    <div class="flex items-start justify-between py-1 border-b border-white/[0.06]">
-                        <span class="text-slate-400 font-medium">Kode Dokumen Unik:</span>
+                    <div class="flex items-start justify-between py-1 border-b border-white/[0.06] gap-3">
+                        <span class="text-slate-400 font-medium shrink-0">Predikat Penghargaan:</span>
+                        <span class="font-bold text-amber-400 text-right">{{ $certData['predikat'] }}</span>
+                    </div>
+                    <div class="flex items-start justify-between py-1 border-b border-white/[0.06] gap-3">
+                        <span class="text-slate-400 font-medium shrink-0">Kode Dokumen Unik:</span>
                         <span class="font-mono font-bold text-[#A594FD] text-right">{{ $certData['code'] }}</span>
                     </div>
-                    <div class="flex items-start justify-between py-1 border-b border-white/[0.06]">
-                        <span class="text-slate-400 font-medium">Instansi Penerbit:</span>
+                    <div class="flex items-start justify-between py-1 border-b border-white/[0.06] gap-3">
+                        <span class="text-slate-400 font-medium shrink-0">Instansi Penerbit:</span>
                         <span class="font-bold text-white text-right">{{ $certData['institution_issuer'] }}</span>
                     </div>
-                    <div class="flex items-start justify-between py-1">
-                        <span class="text-slate-400 font-medium">Status Verifikasi Sistem:</span>
-                        <span class="font-black text-emerald-400 text-right flex items-center gap-1">
-                            <i data-lucide="check" class="w-3.5 h-3.5"></i> SAH & AKTIF
+                    <div class="flex items-start justify-between py-1 gap-3">
+                        <span class="text-slate-400 font-medium shrink-0">Status Keabsahan Sistem:</span>
+                        <span class="font-black text-emerald-400 text-right flex items-center gap-1.5">
+                            <i data-lucide="shield-check" class="w-4 h-4"></i> SAH & AKTIF TERDAFTAR
                         </span>
                     </div>
                 </div>
 
                 <p class="text-[11px] text-slate-400 leading-relaxed">
-                    Sertifikat / Piagam ini diterbitkan secara resmi melalui Sistem Informasi TALENTA MTsN 1 Blitar dan telah melalui proses penjurian serta penetapan hasil kejuaraan.
+                    Sertifikat / Piagam ini diterbitkan secara resmi melalui Sistem Informasi TALENTA MTsN 1 Blitar dan telah melalui proses verifikasi database keabsahan kejuaraan.
                 </p>
             </div>
         @else

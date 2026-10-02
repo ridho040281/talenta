@@ -866,17 +866,25 @@ class CertificateController extends Controller
         $certData = null;
 
         if (count($parts) >= 4 && $parts[0] === 'TLT') {
-            $typePrefix = $parts[1]; // JRA, PST, PMB, JRI
-            $compCode = $parts[2];
+            $typePrefix = strtoupper($parts[1]); // JRA, PST, PMB, JRI
+            $compCode = strtoupper($parts[2]);
             $id = (int) $parts[3];
 
             $competition = Competition::where('code', $compCode)->first();
-            $registration = Registration::with(['competition', 'members'])->find($id);
+            $registration = null;
+            $judge = null;
 
-            if ($registration || $competition) {
+            if ($typePrefix === 'JRI') {
+                $judge = User::find($id);
+            } else {
+                $registration = Registration::with(['competition.category', 'members'])->find($id);
+            }
+
+            if ($registration || $judge || $competition) {
                 $isValid = true;
                 $recipientName = '-';
                 $schoolName = '-';
+                $nisn = '-';
                 $predikat = match ($typePrefix) {
                     'JRA' => 'Pemenang Kejuaraan',
                     'PST' => 'Sebagai Peserta',
@@ -884,21 +892,46 @@ class CertificateController extends Controller
                     'JRI' => 'Sebagai Dewan Juri / Wasit',
                     default => 'Penerima Sertifikat',
                 };
+                $compName = $competition ? $competition->name : ($registration->competition->name ?? 'TALENTA MTsN 1 Blitar');
 
                 if ($registration) {
                     $recipientName = $registration->pure_name ?: ($registration->team_name ?: ($registration->members->first()?->full_name ?? ('Peserta #'.$registration->id)));
                     $schoolName = $registration->display_school ?: ($registration->institution_name ?: '-');
-                    if ($typePrefix === 'PMB' && $registration->official_name) {
-                        $recipientName = $registration->official_name;
+
+                    // Extract NISN
+                    $allNisn = $registration->members->pluck('nisn')->filter(fn ($v) => ! empty($v) && $v !== '-')->unique()->values();
+                    if ($allNisn->isNotEmpty()) {
+                        $nisn = $allNisn->implode(', ');
                     }
+
+                    // Append sub_category if present
+                    if ($registration->sub_category) {
+                        $compName .= ' ('.$registration->sub_category.')';
+                    }
+
+                    if ($typePrefix === 'PMB') {
+                        $recipientName = $registration->official_name ?: ($registration->pure_name ?: 'Guru Pembimbing');
+                        $nisn = '-';
+                    }
+                } elseif ($judge) {
+                    $recipientName = $judge->name;
+                    $schoolName = 'Dewan Juri / Wasit TALENTA';
+                    $nisn = '-';
+                } else {
+                    // Fallback for demo preview / sample certificates (e.g. 0001)
+                    $recipientName = 'AHMAD FAUZI NURDIN (CONTOH DOKUMEN)';
+                    $schoolName = 'SDN KEPANJENLOR 2 KOTA BLITAR';
+                    $nisn = '0012345678';
                 }
 
                 $certData = [
                     'code' => $code,
-                    'name' => $recipientName,
+                    'name' => mb_strtoupper($recipientName ?? '-'),
+                    'nisn' => $nisn,
                     'institution' => $schoolName,
-                    'competition' => $competition ? $competition->name : ($registration->competition->name ?? 'TALENTA MTsN 1 Blitar'),
+                    'competition' => $compName,
                     'predikat' => $predikat,
+                    'type_prefix' => $typePrefix,
                     'issued_at' => Carbon::now()->format('d F Y'),
                     'institution_issuer' => 'MTsN 1 Blitar - Kementerian Agama RI',
                 ];

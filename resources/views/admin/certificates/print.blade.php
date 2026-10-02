@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CETAK SERTIFIKAT & PIAGAM - TALENTA MTsN 1 BLITAR</title>
+    <title>{{ !empty($certificateItems[0]['name']) ? 'SERTIFIKAT_TALENTA_' . \Illuminate\Support\Str::slug($certificateItems[0]['name'], '_') : 'CETAK_SERTIFIKAT_TALENTA_MTSN1_BLITAR' }}</title>
     
     <!-- Self-hosted Fonts (lokal) -->
     <link rel="stylesheet" href="{{ asset('vendor/fonts/fonts.css') }}">
@@ -49,6 +49,8 @@
             overflow: hidden;
             page-break-inside: avoid;
             page-break-after: always;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .certificate-sheet:last-child {
@@ -63,6 +65,8 @@
             object-fit: fill;
             z-index: 1;
             pointer-events: none;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .cert-overlay {
@@ -71,6 +75,9 @@
             width: 100%;
             height: 100%;
             z-index: 10;
+            pointer-events: none;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .cert-text-element {
@@ -79,6 +86,9 @@
             white-space: nowrap;
             text-align: center;
             line-height: 1.2;
+            pointer-events: none;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .font-serif {
@@ -245,9 +255,9 @@
     <!-- Floating Print Control Toolbar -->
     <div class="floating-toolbar">
         <span>📄 {{ count($certificateItems) }} Lembar Sertifikat</span>
-        <button type="button" onclick="window.print()" class="btn-action btn-print">
-            <i data-lucide="printer" style="width: 15px; height: 15px;"></i>
-            <span>Cetak / Simpan PDF (Ctrl+P)</span>
+        <button type="button" onclick="window.print()" class="btn-action btn-print" title="Simpan sebagai PDF resmi atau cetak langsung">
+            <i data-lucide="download" style="width: 15px; height: 15px;"></i>
+            <span>Download PDF Resmi / Cetak</span>
         </button>
         <button type="button" onclick="window.close()" class="btn-action btn-close">
             <i data-lucide="x" style="width: 15px; height: 15px;"></i>
