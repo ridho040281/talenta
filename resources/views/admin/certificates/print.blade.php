@@ -106,6 +106,28 @@
             font-weight: bold !important;
         }
 
+        .cert-qr-box {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 4px !important;
+            box-sizing: border-box !important;
+            aspect-ratio: 1 / 1 !important;
+            line-height: 1 !important;
+            white-space: normal !important;
+        }
+
+        .cert-qr-box svg,
+        .cert-qr-box img {
+            width: 100% !important;
+            height: 100% !important;
+            max-width: 100% !important;
+            max-height: 100% !important;
+            display: block !important;
+            margin: auto !important;
+            object-fit: contain !important;
+        }
+
         /* Floating Non-Print Toolbar */
         .floating-toolbar {
             position: fixed;
@@ -339,8 +361,8 @@
 
                 <!-- QR Code Validasi Keaslian Dokumen -->
                 @if(!empty($layout['qrcode']['visible']))
-                <div class="cert-text-element"
-                     style="top: {{ $layout['qrcode']['top'] }}%; left: {{ $layout['qrcode']['left'] }}%; width: {{ $layout['qrcode']['size'] }}px; height: {{ $layout['qrcode']['size'] }}px; padding: 2px; background: #ffffff; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div class="cert-text-element cert-qr-box"
+                     style="top: {{ $layout['qrcode']['top'] }}%; left: {{ $layout['qrcode']['left'] }}%; width: {{ $layout['qrcode']['size'] }}px; height: {{ $layout['qrcode']['size'] }}px; background: #ffffff; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                     {!! $item['qr_svg'] !!}
                 </div>
                 @endif
