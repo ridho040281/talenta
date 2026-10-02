@@ -318,8 +318,8 @@
                 @if(!empty($layout['nama']['visible']))
                 @php $aNama = $layout['nama']['align'] ?? 'center'; @endphp
                 <div class="cert-text-element {{ $getFontClass($layout['nama']['font'] ?? 'serif') }}"
-                     style="top: {{ $layout['nama']['top'] }}%; left: {{ $layout['nama']['left'] }}%; transform: {{ $calcTx($aNama) }}; text-align: {{ $aNama }}; font-size: {{ $layout['nama']['size'] }}px; color: {{ $layout['nama']['color'] }}; font-weight: {{ $isBold($layout['nama']['font'] ?? 'serif', $layout['nama']['bold'] ?? true) ? 'bold' : 'normal' }}; letter-spacing: 0.5px;">
-                    {{ $item['name'] }}
+                     style="top: {{ $layout['nama']['top'] }}%; left: {{ $layout['nama']['left'] }}%; transform: {{ $calcTx($aNama) }}; text-align: {{ $aNama }}; font-size: {{ $layout['nama']['size'] }}px; color: {{ $layout['nama']['color'] }}; font-weight: {{ $isBold($layout['nama']['font'] ?? 'serif', $layout['nama']['bold'] ?? true) ? 'bold' : 'normal' }}; letter-spacing: 0.5px; text-transform: uppercase;">
+                    {{ mb_strtoupper($item['name']) }}
                 </div>
                 @endif
 

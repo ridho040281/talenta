@@ -509,7 +509,7 @@ class CertificateController extends Controller
             [
                 'cert_code' => $certCode,
                 'cert_number' => $certNumber,
-                'name' => $recipientName,
+                'name' => mb_strtoupper($recipientName ?? ''),
                 'institution' => $schoolName,
                 'predikat' => $rankTitle,
                 'competition_name' => $competition ? ($competition->name.($registration && $registration->sub_category ? ' ('.$registration->sub_category.')' : '')) : 'TALENTA MTsN 1 Blitar',
@@ -652,7 +652,7 @@ class CertificateController extends Controller
                         $certificateItems[] = [
                             'cert_code' => $certCode,
                             'cert_number' => $certNumber,
-                            'name' => $w['display_name'],
+                            'name' => mb_strtoupper($w['display_name'] ?? ''),
                             'institution' => $w['institution_name'],
                             'predikat' => $tierLabel,
                             'competition_name' => $compLabel,
@@ -687,7 +687,7 @@ class CertificateController extends Controller
                 $certificateItems[] = [
                     'cert_code' => $certCode,
                     'cert_number' => $certNumber,
-                    'name' => $participantName,
+                    'name' => mb_strtoupper($participantName ?? ''),
                     'institution' => $schoolName,
                     'predikat' => $pesertaPredikat,
                     'competition_name' => $competition->name,
@@ -729,7 +729,7 @@ class CertificateController extends Controller
                 $certificateItems[] = [
                     'cert_code' => $certCode,
                     'cert_number' => $certNumber,
-                    'name' => $off['official_name'],
+                    'name' => mb_strtoupper($off['official_name'] ?? ''),
                     'institution' => $off['institution'],
                     'predikat' => $pembimbingPredikat,
                     'competition_name' => $competition->name,
@@ -754,7 +754,7 @@ class CertificateController extends Controller
                 $certificateItems[] = [
                     'cert_code' => $certCode,
                     'cert_number' => $certNumber,
-                    'name' => $j->name,
+                    'name' => mb_strtoupper($j->name ?? ''),
                     'institution' => $j->institution ?? 'Dewan Juri / Wasit TALENTA',
                     'predikat' => $juriPredikat,
                     'competition_name' => $competition->name,
@@ -842,7 +842,7 @@ class CertificateController extends Controller
             [
                 'cert_code' => $certCode,
                 'cert_number' => $certNumber,
-                'name' => $participantName,
+                'name' => mb_strtoupper($participantName ?? ''),
                 'institution' => $schoolName,
                 'predikat' => $rankTitle,
                 'competition_name' => $competition->name,
