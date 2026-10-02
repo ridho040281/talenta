@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Category;
 use App\Models\Competition;
 use App\Models\Registration;
+use App\Models\RegistrationMember;
 use App\Models\Score;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -82,6 +83,12 @@ class ScoreImportTest extends TestCase
             'institution_name' => 'MI Al-Huda',
             'status' => 'verified',
         ]);
+        RegistrationMember::create([
+            'registration_id' => $reg1->id,
+            'full_name' => 'Peserta Satu',
+            'gender' => 'L',
+            'school_name' => 'MI Al-Huda',
+        ]);
 
         $reg2 = Registration::create([
             'user_id' => $admin->id,
@@ -90,6 +97,12 @@ class ScoreImportTest extends TestCase
             'participant_number' => '002',
             'institution_name' => 'SDN 2 Sananwetan',
             'status' => 'verified',
+        ]);
+        RegistrationMember::create([
+            'registration_id' => $reg2->id,
+            'full_name' => 'Peserta Dua',
+            'gender' => 'L',
+            'school_name' => 'SDN 2 Sananwetan',
         ]);
 
         // Create mock spreadsheet file
@@ -158,6 +171,28 @@ class ScoreImportTest extends TestCase
             'total_score' => 88.0,
             'is_locked' => true,
         ]);
+
+        // Verify Certificate Juara page immediately shows the winners
+        $certResponse = $this->actingAs($admin)->get(route('admin.certificates.index', [
+            'competition_id' => $competition->id,
+            'type' => 'juara',
+        ]));
+        $certResponse->assertStatus(200);
+        $certResponse->assertSee('Juara 1');
+        $certResponse->assertSee('MI Al-Huda');
+        $certResponse->assertSee('95.5');
+        $certResponse->assertSee('Juara 2');
+        $certResponse->assertSee('SDN 2 Sananwetan');
+        $certResponse->assertSee('88');
+
+        // Verify Certificate Bulk Print renders the winners with their respective ranks
+        $printResponse = $this->actingAs($admin)->get(route('admin.certificates.print.bulk', [
+            'competition_id' => $competition->id,
+            'type' => 'juara',
+        ]));
+        $printResponse->assertStatus(200);
+        $printResponse->assertSee('Juara 1');
+        $printResponse->assertSee('Juara 2');
 
         if (file_exists($tempPath)) {
             @unlink($tempPath);

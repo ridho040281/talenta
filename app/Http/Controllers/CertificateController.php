@@ -95,6 +95,12 @@ class CertificateController extends Controller
                         if (! $secDef['is_ganda'] && $isGanda && in_array($selectedComp->code, ['BLT', 'TMJ'])) {
                             return false;
                         }
+                        if (! empty($secDef['rob_cat'])) {
+                            $cat = $secDef['rob_cat'];
+                            if (stripos($r->match_type ?? '', $cat) === false && stripos($r->sub_category ?? '', $cat) === false && stripos($r->target_class ?? '', $cat) === false) {
+                                return false;
+                            }
+                        }
                         if ($secDef['gender'] !== 'all' && $gender !== $secDef['gender']) {
                             return false;
                         }
@@ -583,6 +589,12 @@ class CertificateController extends Controller
                     }
                     if (! $secDef['is_ganda'] && $isGanda && in_array($competition->code, ['BLT', 'TMJ'])) {
                         return false;
+                    }
+                    if (! empty($secDef['rob_cat'])) {
+                        $cat = $secDef['rob_cat'];
+                        if (stripos($r->match_type ?? '', $cat) === false && stripos($r->sub_category ?? '', $cat) === false && stripos($r->target_class ?? '', $cat) === false) {
+                            return false;
+                        }
                     }
                     if ($secDef['gender'] !== 'all' && $gender !== $secDef['gender']) {
                         return false;
