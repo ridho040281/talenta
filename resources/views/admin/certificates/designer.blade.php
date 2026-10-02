@@ -37,7 +37,7 @@
                 return 'Nomor: ' + replaced;
             },
 
-            // Interactive Drag and Drop State
+            // Interactive Drag & Drop and Corner Resize State
             isDragging: false,
             draggedKey: null,
             dragStartX: 0,
@@ -45,9 +45,15 @@
             elemStartLeft: 0,
             elemStartTop: 0,
 
-            startDrag(e, key) {
-                if (e.target.closest('.no-drag')) return;
+            isResizing: false,
+            resizeKey: null,
+            resizeHandle: null,
+            resizeStartX: 0,
+            resizeStartY: 0,
+            resizeStartSize: 16,
 
+            startDrag(e, key) {
+                if (this.isResizing) return;
                 this.activeTab = key;
                 this.isDragging = true;
                 this.draggedKey = key;
@@ -61,33 +67,81 @@
                 this.elemStartTop = parseFloat(this.cfg[key].top) || 50;
             },
 
-            onDrag(e) {
-                if (!this.isDragging || !this.draggedKey) return;
+            startResize(e, key, handle) {
+                this.activeTab = key;
+                this.isResizing = true;
+                this.resizeKey = key;
+                this.resizeHandle = handle;
 
-                const canvas = this.$refs.canvasContainer;
-                if (!canvas) return;
-
-                const rect = canvas.getBoundingClientRect();
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                 const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
-                const deltaXPercent = ((clientX - this.dragStartX) / rect.width) * 100;
-                const deltaYPercent = ((clientY - this.dragStartY) / rect.height) * 100;
-
-                let newLeft = this.elemStartLeft + deltaXPercent;
-                let newTop = this.elemStartTop + deltaYPercent;
-
-                // Clamp between 0% and 100% and round to 0.5%
-                newLeft = Math.max(0, Math.min(100, Math.round(newLeft * 2) / 2));
-                newTop = Math.max(0, Math.min(100, Math.round(newTop * 2) / 2));
-
-                this.cfg[this.draggedKey].left = newLeft;
-                this.cfg[this.draggedKey].top = newTop;
+                this.resizeStartX = clientX;
+                this.resizeStartY = clientY;
+                this.resizeStartSize = parseInt(this.cfg[key].size) || 16;
             },
 
-            stopDrag() {
+            onPointerMove(e) {
+                // 1. Resizing font size / QR size via corner handles
+                if (this.isResizing && this.resizeKey && this.cfg[this.resizeKey]) {
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+                    const deltaX = clientX - this.resizeStartX;
+                    const deltaY = clientY - this.resizeStartY;
+
+                    let dragDelta = 0;
+                    if (this.resizeHandle === 'br') {
+                        dragDelta = (deltaX + deltaY) / 2;
+                    } else if (this.resizeHandle === 'tl') {
+                        dragDelta = (-deltaX - deltaY) / 2;
+                    } else if (this.resizeHandle === 'tr') {
+                        dragDelta = (deltaX - deltaY) / 2;
+                    } else if (this.resizeHandle === 'bl') {
+                        dragDelta = (-deltaX + deltaY) / 2;
+                    }
+
+                    const isQr = (this.resizeKey === 'qrcode');
+                    const sensitivity = isQr ? 1.5 : 2.5;
+                    let newSize = Math.round(this.resizeStartSize + (dragDelta / sensitivity));
+
+                    const min = isQr ? 30 : 10;
+                    const max = isQr ? 180 : 80;
+                    newSize = Math.max(min, Math.min(max, newSize));
+
+                    this.cfg[this.resizeKey].size = newSize;
+                    return;
+                }
+
+                // 2. Dragging element position
+                if (this.isDragging && this.draggedKey && this.cfg[this.draggedKey]) {
+                    const canvas = this.$refs.canvasContainer;
+                    if (!canvas) return;
+
+                    const rect = canvas.getBoundingClientRect();
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+                    const deltaXPercent = ((clientX - this.dragStartX) / rect.width) * 100;
+                    const deltaYPercent = ((clientY - this.dragStartY) / rect.height) * 100;
+
+                    let newLeft = this.elemStartLeft + deltaXPercent;
+                    let newTop = this.elemStartTop + deltaYPercent;
+
+                    // Clamp between 0% and 100% with 0.2% precision
+                    newLeft = Math.max(0, Math.min(100, Math.round(newLeft * 5) / 5));
+                    newTop = Math.max(0, Math.min(100, Math.round(newTop * 5) / 5));
+
+                    this.cfg[this.draggedKey].left = newLeft;
+                    this.cfg[this.draggedKey].top = newTop;
+                }
+            },
+
+            onPointerUp(e) {
                 this.isDragging = false;
                 this.draggedKey = null;
+                this.isResizing = false;
+                this.resizeKey = null;
             },
 
             changeSize(key, delta) {
@@ -96,11 +150,6 @@
                 let max = key === 'qrcode' ? 180 : 80;
                 let current = parseInt(this.cfg[key].size) || 16;
                 this.cfg[key].size = Math.max(min, Math.min(max, current + delta));
-            },
-
-            onWheelResize(e, key) {
-                const delta = e.deltaY < 0 ? 1 : -1;
-                this.changeSize(key, delta);
             },
 
             resetDefaults() {
@@ -211,7 +260,12 @@
     }
 </script>
 
-<div class="space-y-6" x-data="certificateDesigner()">
+<div class="space-y-6" 
+     x-data="certificateDesigner()" 
+     @mousemove.window="onPointerMove($event)" 
+     @touchmove.window="onPointerMove($event)" 
+     @mouseup.window="onPointerUp($event)" 
+     @touchend.window="onPointerUp($event)">
 
     <!-- Alert Notifikasi -->
     @if(session('success'))
@@ -663,13 +717,8 @@
 
                 <!-- CANVAS PREVIEW DENGAN BACKGROUND DAN TEKS OVERLAY DINAMIS -->
                 <div x-ref="canvasContainer" 
-                     @mousemove="onDrag($event)" 
-                     @touchmove="onDrag($event)" 
-                     @mouseup="stopDrag()" 
-                     @mouseleave="stopDrag()" 
-                     @touchend="stopDrag()" 
                      class="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-white/[0.1] bg-white select-none" 
-                     style="aspect-ratio: 297 / 210;">
+                     style="aspect-ratio: 297 / 210; touch-action: none;">
                     
                     <!-- Background Blangko Gambar (Jika Diunggah) -->
                     @if($bgUrl)
@@ -701,11 +750,31 @@
                              textAlign: cfg.nomor.align || 'center'
                          }"
                          :class="activeTab === 'nomor' ? 'cursor-move z-30 ring-1 ring-purple-500 ring-dashed' : 'cursor-move z-20 hover:ring-1 hover:ring-purple-400/40 hover:ring-dashed'"
-                         class="whitespace-nowrap select-none px-0.5"
-                         @mousedown="startDrag($event, 'nomor')"
-                         @touchstart="startDrag($event, 'nomor')"
+                         class="whitespace-nowrap select-none px-1"
+                         @mousedown.prevent="startDrag($event, 'nomor')"
+                         @touchstart.prevent="startDrag($event, 'nomor')"
                          @click.stop="activeTab = 'nomor'">
                         <span x-text="getNomorPreview()"></span>
+
+                        <!-- 4 Titik Pojok untuk Resize (Memperbesar & Memperkecil) -->
+                        <div x-show="activeTab === 'nomor'" class="pointer-events-auto select-none">
+                            <div class="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nwse-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'nomor', 'tl')"
+                                 @touchstart.stop.prevent="startResize($event, 'nomor', 'tl')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                            <div class="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nesw-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'nomor', 'tr')"
+                                 @touchstart.stop.prevent="startResize($event, 'nomor', 'tr')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                            <div class="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nesw-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'nomor', 'bl')"
+                                 @touchstart.stop.prevent="startResize($event, 'nomor', 'bl')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                            <div class="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nwse-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'nomor', 'br')"
+                                 @touchstart.stop.prevent="startResize($event, 'nomor', 'br')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                        </div>
                     </div>
 
                     <!-- 2. Nama Penerima -->
@@ -723,11 +792,31 @@
                              letterSpacing: '0.5px'
                          }"
                          :class="activeTab === 'nama' ? 'cursor-move z-30 ring-1 ring-purple-500 ring-dashed' : 'cursor-move z-20 hover:ring-1 hover:ring-purple-400/40 hover:ring-dashed'"
-                         class="whitespace-nowrap select-none px-0.5"
-                         @mousedown="startDrag($event, 'nama')"
-                         @touchstart="startDrag($event, 'nama')"
+                         class="whitespace-nowrap select-none px-1"
+                         @mousedown.prevent="startDrag($event, 'nama')"
+                         @touchstart.prevent="startDrag($event, 'nama')"
                          @click.stop="activeTab = 'nama'">
                         AHMAD FAUZI NURDIN
+
+                        <!-- 4 Titik Pojok untuk Resize (Memperbesar & Memperkecil) -->
+                        <div x-show="activeTab === 'nama'" class="pointer-events-auto select-none">
+                            <div class="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nwse-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'nama', 'tl')"
+                                 @touchstart.stop.prevent="startResize($event, 'nama', 'tl')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                            <div class="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nesw-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'nama', 'tr')"
+                                 @touchstart.stop.prevent="startResize($event, 'nama', 'tr')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                            <div class="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nesw-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'nama', 'bl')"
+                                 @touchstart.stop.prevent="startResize($event, 'nama', 'bl')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                            <div class="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nwse-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'nama', 'br')"
+                                 @touchstart.stop.prevent="startResize($event, 'nama', 'br')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                        </div>
                     </div>
 
                     <!-- 3. Asal Sekolah / Lembaga -->
@@ -744,11 +833,31 @@
                              textAlign: cfg.sekolah.align || 'center'
                          }"
                          :class="activeTab === 'sekolah' ? 'cursor-move z-30 ring-1 ring-purple-500 ring-dashed' : 'cursor-move z-20 hover:ring-1 hover:ring-purple-400/40 hover:ring-dashed'"
-                         class="whitespace-nowrap select-none px-0.5"
-                         @mousedown="startDrag($event, 'sekolah')"
-                         @touchstart="startDrag($event, 'sekolah')"
+                         class="whitespace-nowrap select-none px-1"
+                         @mousedown.prevent="startDrag($event, 'sekolah')"
+                         @touchstart.prevent="startDrag($event, 'sekolah')"
                          @click.stop="activeTab = 'sekolah'">
                         SDN Kepanjenlor 2 Kota Blitar
+
+                        <!-- 4 Titik Pojok untuk Resize (Memperbesar & Memperkecil) -->
+                        <div x-show="activeTab === 'sekolah'" class="pointer-events-auto select-none">
+                            <div class="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nwse-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'sekolah', 'tl')"
+                                 @touchstart.stop.prevent="startResize($event, 'sekolah', 'tl')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                            <div class="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nesw-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'sekolah', 'tr')"
+                                 @touchstart.stop.prevent="startResize($event, 'sekolah', 'tr')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                            <div class="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nesw-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'sekolah', 'bl')"
+                                 @touchstart.stop.prevent="startResize($event, 'sekolah', 'bl')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                            <div class="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nwse-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'sekolah', 'br')"
+                                 @touchstart.stop.prevent="startResize($event, 'sekolah', 'br')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                        </div>
                     </div>
 
                     <!-- 4. Predikat Juara / Kategori -->
@@ -765,11 +874,31 @@
                              textAlign: cfg.predikat.align || 'center'
                          }"
                          :class="activeTab === 'predikat' ? 'cursor-move z-30 ring-1 ring-purple-500 ring-dashed' : 'cursor-move z-20 hover:ring-1 hover:ring-purple-400/40 hover:ring-dashed'"
-                         class="whitespace-nowrap select-none px-0.5"
-                         @mousedown="startDrag($event, 'predikat')"
-                         @touchstart="startDrag($event, 'predikat')"
+                         class="whitespace-nowrap select-none px-1"
+                         @mousedown.prevent="startDrag($event, 'predikat')"
+                         @touchstart.prevent="startDrag($event, 'predikat')"
                          @click.stop="activeTab = 'predikat'">
                         <span x-text="getPredikatPreview()"></span>
+
+                        <!-- 4 Titik Pojok untuk Resize (Memperbesar & Memperkecil) -->
+                        <div x-show="activeTab === 'predikat'" class="pointer-events-auto select-none">
+                            <div class="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nwse-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'predikat', 'tl')"
+                                 @touchstart.stop.prevent="startResize($event, 'predikat', 'tl')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                            <div class="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nesw-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'predikat', 'tr')"
+                                 @touchstart.stop.prevent="startResize($event, 'predikat', 'tr')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                            <div class="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nesw-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'predikat', 'bl')"
+                                 @touchstart.stop.prevent="startResize($event, 'predikat', 'bl')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                            <div class="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nwse-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'predikat', 'br')"
+                                 @touchstart.stop.prevent="startResize($event, 'predikat', 'br')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                        </div>
                     </div>
 
                     <!-- 5. Cabang Lomba -->
@@ -786,11 +915,31 @@
                              textAlign: cfg.lomba.align || 'center'
                          }"
                          :class="activeTab === 'lomba' ? 'cursor-move z-30 ring-1 ring-purple-500 ring-dashed' : 'cursor-move z-20 hover:ring-1 hover:ring-purple-400/40 hover:ring-dashed'"
-                         class="whitespace-nowrap select-none px-0.5"
-                         @mousedown="startDrag($event, 'lomba')"
-                         @touchstart="startDrag($event, 'lomba')"
+                         class="whitespace-nowrap select-none px-1"
+                         @mousedown.prevent="startDrag($event, 'lomba')"
+                         @touchstart.prevent="startDrag($event, 'lomba')"
                          @click.stop="activeTab = 'lomba'">
                         Cabang Musabaqah Tilawatil Qur'an (MTQ) - Kategori Putra
+
+                        <!-- 4 Titik Pojok untuk Resize (Memperbesar & Memperkecil) -->
+                        <div x-show="activeTab === 'lomba'" class="pointer-events-auto select-none">
+                            <div class="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nwse-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'lomba', 'tl')"
+                                 @touchstart.stop.prevent="startResize($event, 'lomba', 'tl')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                            <div class="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nesw-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'lomba', 'tr')"
+                                 @touchstart.stop.prevent="startResize($event, 'lomba', 'tr')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                            <div class="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nesw-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'lomba', 'bl')"
+                                 @touchstart.stop.prevent="startResize($event, 'lomba', 'bl')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                            <div class="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nwse-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'lomba', 'br')"
+                                 @touchstart.stop.prevent="startResize($event, 'lomba', 'br')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                        </div>
                     </div>
 
                     <!-- 6. Tanggal Titimangsa -->
@@ -807,11 +956,31 @@
                              textAlign: cfg.tanggal.align || 'center'
                          }"
                          :class="activeTab === 'tanggal' ? 'cursor-move z-30 ring-1 ring-purple-500 ring-dashed' : 'cursor-move z-20 hover:ring-1 hover:ring-purple-400/40 hover:ring-dashed'"
-                         class="whitespace-nowrap select-none px-0.5"
-                         @mousedown="startDrag($event, 'tanggal')"
-                         @touchstart="startDrag($event, 'tanggal')"
+                         class="whitespace-nowrap select-none px-1"
+                         @mousedown.prevent="startDrag($event, 'tanggal')"
+                         @touchstart.prevent="startDrag($event, 'tanggal')"
                          @click.stop="activeTab = 'tanggal'">
                         Blitar, 17 Oktober 2026
+
+                        <!-- 4 Titik Pojok untuk Resize (Memperbesar & Memperkecil) -->
+                        <div x-show="activeTab === 'tanggal'" class="pointer-events-auto select-none">
+                            <div class="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nwse-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'tanggal', 'tl')"
+                                 @touchstart.stop.prevent="startResize($event, 'tanggal', 'tl')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                            <div class="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nesw-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'tanggal', 'tr')"
+                                 @touchstart.stop.prevent="startResize($event, 'tanggal', 'tr')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                            <div class="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nesw-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'tanggal', 'bl')"
+                                 @touchstart.stop.prevent="startResize($event, 'tanggal', 'bl')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                            <div class="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nwse-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'tanggal', 'br')"
+                                 @touchstart.stop.prevent="startResize($event, 'tanggal', 'br')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                        </div>
                     </div>
 
                     <!-- 8. Teks Tambahan 1 (Opsional) -->
@@ -828,11 +997,31 @@
                              textAlign: cfg.teks_1.align || 'center'
                          }"
                          :class="activeTab === 'teks_1' ? 'cursor-move z-30 ring-1 ring-purple-500 ring-dashed' : 'cursor-move z-20 hover:ring-1 hover:ring-purple-400/40 hover:ring-dashed'"
-                         class="whitespace-pre-wrap max-w-[80%] select-none px-0.5"
-                         @mousedown="startDrag($event, 'teks_1')"
-                         @touchstart="startDrag($event, 'teks_1')"
+                         class="whitespace-pre-wrap max-w-[80%] select-none px-1"
+                         @mousedown.prevent="startDrag($event, 'teks_1')"
+                         @touchstart.prevent="startDrag($event, 'teks_1')"
                          @click.stop="activeTab = 'teks_1'">
                         <span x-text="cfg.teks_1.text"></span>
+
+                        <!-- 4 Titik Pojok untuk Resize (Memperbesar & Memperkecil) -->
+                        <div x-show="activeTab === 'teks_1'" class="pointer-events-auto select-none">
+                            <div class="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nwse-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'teks_1', 'tl')"
+                                 @touchstart.stop.prevent="startResize($event, 'teks_1', 'tl')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                            <div class="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nesw-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'teks_1', 'tr')"
+                                 @touchstart.stop.prevent="startResize($event, 'teks_1', 'tr')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                            <div class="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nesw-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'teks_1', 'bl')"
+                                 @touchstart.stop.prevent="startResize($event, 'teks_1', 'bl')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                            <div class="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nwse-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'teks_1', 'br')"
+                                 @touchstart.stop.prevent="startResize($event, 'teks_1', 'br')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                        </div>
                     </div>
 
                     <!-- 9. Teks Tambahan 2 (Opsional) -->
@@ -849,11 +1038,31 @@
                              textAlign: cfg.teks_2.align || 'center'
                          }"
                          :class="activeTab === 'teks_2' ? 'cursor-move z-30 ring-1 ring-purple-500 ring-dashed' : 'cursor-move z-20 hover:ring-1 hover:ring-purple-400/40 hover:ring-dashed'"
-                         class="whitespace-pre-wrap max-w-[80%] select-none px-0.5"
-                         @mousedown="startDrag($event, 'teks_2')"
-                         @touchstart="startDrag($event, 'teks_2')"
+                         class="whitespace-pre-wrap max-w-[80%] select-none px-1"
+                         @mousedown.prevent="startDrag($event, 'teks_2')"
+                         @touchstart.prevent="startDrag($event, 'teks_2')"
                          @click.stop="activeTab = 'teks_2'">
                         <span x-text="cfg.teks_2.text"></span>
+
+                        <!-- 4 Titik Pojok untuk Resize (Memperbesar & Memperkecil) -->
+                        <div x-show="activeTab === 'teks_2'" class="pointer-events-auto select-none">
+                            <div class="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nwse-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'teks_2', 'tl')"
+                                 @touchstart.stop.prevent="startResize($event, 'teks_2', 'tl')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                            <div class="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nesw-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'teks_2', 'tr')"
+                                 @touchstart.stop.prevent="startResize($event, 'teks_2', 'tr')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                            <div class="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nesw-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'teks_2', 'bl')"
+                                 @touchstart.stop.prevent="startResize($event, 'teks_2', 'bl')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                            <div class="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nwse-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'teks_2', 'br')"
+                                 @touchstart.stop.prevent="startResize($event, 'teks_2', 'br')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                        </div>
                     </div>
 
                     <!-- 10. Teks Tambahan 3 (Opsional) -->
@@ -870,11 +1079,31 @@
                              textAlign: cfg.teks_3.align || 'center'
                          }"
                          :class="activeTab === 'teks_3' ? 'cursor-move z-30 ring-1 ring-purple-500 ring-dashed' : 'cursor-move z-20 hover:ring-1 hover:ring-purple-400/40 hover:ring-dashed'"
-                         class="whitespace-pre-wrap max-w-[80%] select-none px-0.5"
-                         @mousedown="startDrag($event, 'teks_3')"
-                         @touchstart="startDrag($event, 'teks_3')"
+                         class="whitespace-pre-wrap max-w-[80%] select-none px-1"
+                         @mousedown.prevent="startDrag($event, 'teks_3')"
+                         @touchstart.prevent="startDrag($event, 'teks_3')"
                          @click.stop="activeTab = 'teks_3'">
                         <span x-text="cfg.teks_3.text"></span>
+
+                        <!-- 4 Titik Pojok untuk Resize (Memperbesar & Memperkecil) -->
+                        <div x-show="activeTab === 'teks_3'" class="pointer-events-auto select-none">
+                            <div class="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nwse-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'teks_3', 'tl')"
+                                 @touchstart.stop.prevent="startResize($event, 'teks_3', 'tl')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                            <div class="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nesw-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'teks_3', 'tr')"
+                                 @touchstart.stop.prevent="startResize($event, 'teks_3', 'tr')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                            <div class="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nesw-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'teks_3', 'bl')"
+                                 @touchstart.stop.prevent="startResize($event, 'teks_3', 'bl')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                            <div class="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nwse-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'teks_3', 'br')"
+                                 @touchstart.stop.prevent="startResize($event, 'teks_3', 'br')"
+                                 title="Tarik untuk ubah ukuran"></div>
+                        </div>
                     </div>
 
                     <!-- 7. QR Code Keabsahan -->
@@ -889,20 +1118,40 @@
                          }"
                          :class="activeTab === 'qrcode' ? 'cursor-move z-30 ring-2 ring-purple-500 ring-dashed' : 'cursor-move z-20 hover:ring-1 hover:ring-purple-400/40 hover:ring-dashed'"
                          class="p-1 bg-white rounded shadow-sm border border-slate-300 flex items-center justify-center select-none"
-                         @mousedown="startDrag($event, 'qrcode')"
-                         @touchstart="startDrag($event, 'qrcode')"
+                         @mousedown.prevent="startDrag($event, 'qrcode')"
+                         @touchstart.prevent="startDrag($event, 'qrcode')"
                          @click.stop="activeTab = 'qrcode'">
                         <i data-lucide="qr-code" class="w-full h-full text-slate-800 pointer-events-none"></i>
+
+                        <!-- 4 Titik Pojok untuk Resize QR -->
+                        <div x-show="activeTab === 'qrcode'" class="pointer-events-auto select-none">
+                            <div class="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nwse-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'qrcode', 'tl')"
+                                 @touchstart.stop.prevent="startResize($event, 'qrcode', 'tl')"
+                                 title="Tarik untuk ubah ukuran QR"></div>
+                            <div class="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nesw-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'qrcode', 'tr')"
+                                 @touchstart.stop.prevent="startResize($event, 'qrcode', 'tr')"
+                                 title="Tarik untuk ubah ukuran QR"></div>
+                            <div class="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nesw-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'qrcode', 'bl')"
+                                 @touchstart.stop.prevent="startResize($event, 'qrcode', 'bl')"
+                                 title="Tarik untuk ubah ukuran QR"></div>
+                            <div class="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-purple-600 rounded-full cursor-nwse-resize shadow-md hover:scale-125 z-40 transition-transform"
+                                 @mousedown.stop.prevent="startResize($event, 'qrcode', 'br')"
+                                 @touchstart.stop.prevent="startResize($event, 'qrcode', 'br')"
+                                 title="Tarik untuk ubah ukuran QR"></div>
+                        </div>
                     </div>
 
                 </div>
 
-                <div class="mt-3 flex items-center justify-between text-xs text-slate-400">
+                <div class="mt-3 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-400 gap-2">
                     <span class="flex items-center gap-1.5">
                         <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-400"></i>
-                        <span><strong>Tarik langsung (Drag & Drop)</strong> elemen teks atau QR di atas untuk menggeser posisinya. Gunakan tombol <strong>[-] [+]</strong> atau <strong>Scroll Mouse</strong> untuk mengatur ukuran!</span>
+                        <span><strong>Tarik teks</strong> untuk geser posisi. <strong>Tarik titik pojok (bulatan)</strong> untuk memperbesar/memperkecil!</span>
                     </span>
-                    <span class="text-purple-300 font-semibold" x-text="'Sedang mengedit: ' + activeTab.toUpperCase()"></span>
+                    <span class="text-purple-300 font-semibold" x-text="'Sedang aktif: ' + activeTab.toUpperCase()"></span>
                 </div>
             </div>
 
