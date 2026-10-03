@@ -230,13 +230,13 @@
         </div>
     </header>
 
-    <!-- MAIN 3-PANEL STAGE LAYOUT (RESPONSIVE 100VH BROADCAST GRID) -->
-    <main class="flex-1 min-h-0 p-3 sm:p-4 lg:p-6 max-w-[1920px] w-full mx-auto grid grid-cols-1 md:grid-cols-12 gap-4 lg:gap-6 items-stretch h-full">
+    <!-- MAIN 3-PANEL STAGE LAYOUT (RESPONSIVE 100VH BROADCAST FLEX/GRID) -->
+    <main class="flex-1 min-h-0 p-3 sm:p-4 lg:p-6 max-w-[1920px] w-full mx-auto flex flex-col lg:flex-row gap-4 lg:gap-6 items-stretch h-full overflow-hidden">
         
         <!-- ============================================================== -->
-        <!-- PANEL 1: SEDANG TAMPIL (NOW PERFORMING) — 8 COLS (66%)          -->
+        <!-- PANEL 1: SEDANG TAMPIL (NOW PERFORMING) — 68% WIDTH             -->
         <!-- ============================================================== -->
-        <div class="md:col-span-8 flex flex-col justify-between glass-card rounded-[2rem] p-5 sm:p-7 lg:p-9 relative overflow-hidden group transition-all duration-500 h-full min-h-0">
+        <div class="w-full lg:flex-[68] flex flex-col justify-between glass-card rounded-[2rem] p-5 sm:p-7 lg:p-9 relative overflow-hidden group transition-all duration-500 h-full min-h-0" style="flex: 2.2; min-width: 0;">
             
             <!-- Dynamic Stage Aura / Ambient Glow -->
             <div class="absolute -right-24 -top-24 w-96 h-96 rounded-full pointer-events-none transition-all duration-700 opacity-60"
@@ -454,9 +454,9 @@
         </div>
 
         <!-- ============================================================== -->
-        <!-- SIDEBAR: BERIKUTNYA & RIWAYAT SELESAI — 4 COLS (33%)            -->
+        <!-- SIDEBAR: BERIKUTNYA & RIWAYAT SELESAI — 32% WIDTH               -->
         <!-- ============================================================== -->
-        <div class="md:col-span-4 flex flex-col gap-3 sm:gap-4 h-full min-h-0">
+        <div class="w-full lg:flex-[32] flex flex-col gap-3 sm:gap-4 h-full min-h-0" style="flex: 1; min-width: 320px; max-width: 480px;">
             
             <!-- CARD 2: BERIKUTNYA (UP NEXT / STANDBY) -->
             <div class="glass-card-amber rounded-[1.75rem] p-4 sm:p-5 relative overflow-hidden shadow-xl shrink-0">
