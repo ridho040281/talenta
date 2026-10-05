@@ -1833,23 +1833,8 @@
                     <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
                         Tahun Kegiatan (4 Digit Angka) <span class="text-rose-400">*</span>
                     </label>
-                    <input type="text" name="year" required placeholder="Contoh: 2027" maxlength="4" pattern="\d{4}" class="w-full px-4 py-3 rounded-xl bg-[#0C111D] border border-white/[0.15] text-white font-mono font-bold text-sm focus:border-[#7A5AF8] outline-none">
-                    <p class="text-[10px] text-slate-400 mt-1">Hanya angka tahun tanpa teks lain (misal: 2027, 2028).</p>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                        Nama Kegiatan / Milad <span class="text-rose-400">*</span>
-                    </label>
-                    <input type="text" name="event_name" required placeholder="Contoh: Milad ke-58 MTsN 1 Blitar" class="w-full px-4 py-3 rounded-xl bg-[#0C111D] border border-white/[0.15] text-white font-bold text-sm focus:border-[#7A5AF8] outline-none">
-                    <p class="text-[10px] text-slate-400 mt-1">Nama agenda kegiatan beserta nomor Milad (misal: Milad ke-58 MTsN 1 Blitar).</p>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                        Tema / Slogan Kegiatan (Opsional)
-                    </label>
-                    <input type="text" name="theme_slogan" placeholder="Contoh: Berprestasi, Menginspirasi, Meraih Mimpi" class="w-full px-4 py-3 rounded-xl bg-[#0C111D] border border-white/[0.15] text-white text-xs focus:border-[#7A5AF8] outline-none">
+                    <input type="text" name="year" required placeholder="Contoh: 2029" maxlength="4" pattern="\d{4}" class="w-full px-4 py-3 rounded-xl bg-[#0C111D] border border-white/[0.15] text-white font-mono font-bold text-sm focus:border-[#7A5AF8] outline-none">
+                    <p class="text-[10px] text-slate-400 mt-1">Cukup masukkan angka tahun (misal: 2029). Nama kegiatan dan pengaturan lainnya dapat diatur langsung pada formulir pengaturan di halaman ini.</p>
                 </div>
 
                 <div class="p-3.5 rounded-2xl bg-indigo-950/40 border border-indigo-500/20 text-indigo-200 text-xs flex items-start gap-2.5">

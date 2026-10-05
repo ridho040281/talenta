@@ -448,18 +448,33 @@ class AdminSettingsController extends Controller
     {
         $validated = $request->validate([
             'year' => 'required|string|regex:/^\d{4}$/|unique:event_editions,year',
-            'event_name' => 'required|string|max:255',
+            'event_name' => 'nullable|string|max:255',
             'theme_slogan' => 'nullable|string|max:255',
             'activate_now' => 'nullable|boolean',
         ], [
-            'year.regex' => 'Format tahun harus berupa 4 digit angka (misal: 2027).',
+            'year.required' => 'Tahun kegiatan wajib diisi.',
+            'year.regex' => 'Format tahun harus berupa 4 digit angka (misal: 2029).',
             'year.unique' => 'Edisi tahun tersebut sudah terdaftar di sistem.',
-            'event_name.required' => 'Nama kegiatan / Milad wajib diisi.',
         ]);
 
+        $year = trim($validated['year']);
+        $eventName = ! empty($validated['event_name']) ? trim($validated['event_name']) : null;
+
+        if (empty($eventName)) {
+            // Attempt to derive event name from latest edition (e.g. "Milad ke-59 MTsN 1 Blitar" -> "Milad ke-60 MTsN 1 Blitar")
+            $latest = EventEdition::where('year', '<', $year)->orderBy('year', 'desc')->first();
+            if ($latest && preg_match('/^(.*Milad\s+ke-?)(\d+)(.*)$/i', $latest->event_name, $m)) {
+                $diff = (int) $year - (int) $latest->year;
+                $newMilad = (int) $m[2] + ($diff > 0 ? $diff : 1);
+                $eventName = $m[1].$newMilad.$m[3];
+            } else {
+                $eventName = AppSetting::get('event_name', 'TALENTA '.$year);
+            }
+        }
+
         $edition = EventEdition::create([
-            'year' => $validated['year'],
-            'event_name' => $validated['event_name'],
+            'year' => $year,
+            'event_name' => $eventName,
             'theme_slogan' => $validated['theme_slogan'] ?? null,
             'is_active' => false,
             'status' => 'open',
@@ -469,9 +484,9 @@ class AdminSettingsController extends Controller
 
         if ($activateNow) {
             EventEdition::activateEdition($edition->year);
-            $msg = "Tahun Kegiatan {$edition->year} ({$edition->event_name}) berhasil dibuat dan diaktifkan. Data pendaftaran tahun {$edition->year} kini siap digunakan dalam kondisi bersih/kosong.";
+            $msg = "Tahun Kegiatan {$edition->year} berhasil dibuat dan diaktifkan. Data pendaftaran tahun {$edition->year} kini siap digunakan.";
         } else {
-            $msg = "Tahun Kegiatan {$edition->year} ({$edition->event_name}) berhasil ditambahkan ke daftar edisi.";
+            $msg = "Tahun Kegiatan {$edition->year} berhasil ditambahkan ke daftar edisi.";
         }
 
         ActivityLog::record(

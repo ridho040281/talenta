@@ -103,10 +103,9 @@ class MultiYearEditionTest extends TestCase
     {
         $admin = User::factory()->create(['role' => 'superadmin']);
 
-        // Create new edition 2029 (since 2026, 2027, 2028 are default)
+        // Create new edition 2029 (only passing year, should auto-derive Milad ke-60)
         $response = $this->actingAs($admin)->post(route('admin.settings.editions.store'), [
             'year' => '2029',
-            'event_name' => 'Milad ke-60 MTsN 1 Blitar',
             'activate_now' => '1',
         ]);
 
