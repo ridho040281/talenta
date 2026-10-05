@@ -68,9 +68,9 @@
         <!-- Sisi Kanan: Pasfoto 3x4 (Lebar 65% ~42mm) -->
         <div class="col-span-7 flex items-center justify-center p-1 bg-slate-100 relative overflow-hidden">
             @if($memberPhotoUrl)
-                <img src="{{ $memberPhotoUrl }}" alt="{{ $member->full_name }}" class="w-full h-full object-cover object-center rounded-sm border border-slate-300" style="max-height: 46mm;">
+                <img src="{{ $memberPhotoUrl }}" alt="{{ $member->full_name }}" class="object-cover object-top rounded-sm border border-slate-300" style="aspect-ratio: 3/4; max-height: 46mm; max-width: 100%;">
             @else
-                <div class="w-full h-full bg-blue-600 flex flex-col items-center justify-center text-white p-1 rounded-sm text-center">
+                <div class="w-full h-full bg-blue-600 flex flex-col items-center justify-center text-white p-1 rounded-sm text-center" style="aspect-ratio: 3/4;">
                     <span class="text-[10px] font-black tracking-wider uppercase leading-tight">PASFOTO 3x4</span>
                     <span class="text-[8px] opacity-80 mt-0.5">Background Biru/Merah</span>
                 </div>
