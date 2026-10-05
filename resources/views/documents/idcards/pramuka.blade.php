@@ -59,9 +59,9 @@
         </div>
 
         <!-- Sisi Kanan: Pasfoto Peserta Murni Rasio 3x4 (Lebar 25.5mm x Tinggi 34mm = 3:4) -->
-        <div class="flex items-center justify-center bg-slate-100 relative overflow-hidden shrink-0" style="width: 25.5mm; height: 34mm;">
+        <div class="flex items-center justify-center relative overflow-hidden shrink-0" style="width: 25.5mm; height: 34mm; background-color: #dc2626;">
             @if($memberPhotoUrl)
-                <img src="{{ $memberPhotoUrl }}" alt="{{ $member->full_name }}" class="object-cover object-top" style="width: 25.5mm; height: 34mm; aspect-ratio: 3/4; object-fit: cover; object-position: center top;">
+                <img src="{{ $memberPhotoUrl }}" alt="{{ $member->full_name }}" style="width: 25.5mm; height: 34mm; aspect-ratio: 3/4; object-fit: cover; object-position: center top; display: block;">
             @else
                 <!-- Fallback Box jika belum upload foto -->
                 <div class="w-full h-full flex flex-col items-center justify-center text-white p-1 text-center" style="background-color: #dc2626;">
