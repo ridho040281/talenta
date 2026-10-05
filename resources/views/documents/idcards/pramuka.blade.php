@@ -1,32 +1,24 @@
 {{-- 
     Template Kartu Tanda Peserta Khusus Cabang Pramuka (Aryakasiga)
-    Format 100% presisi sesuai contoh fisik resmi:
-    - Box Header Judul Event (ARYAKASIGA 2025)
-    - Kolom Kiri: Maskot Pramuka + Kotak No Regu Merah
-    - Kolom Kanan: Pasfoto Peserta (3x4)
-    - Baris Data: Nama, Regu, Pangkalan
-    - Footer: URL Resmi & QR Code Validasi Keabsahan
+    Format presisi sesuai panduan fisik & revisi terbaru:
+    1. Header Judul Event: Mengikuti tahun pelaksanaan lomba (misal: ARYAKASIGA 2026)
+    2. Bagian Atas: Maskot Aryakasiga (Kiri) & Pasfoto Peserta (Kanan, sebatas sebelah logo)
+    3. Bagian Nomor Regu: Dari Nomor Undian (draw_number) dengan warna tema khas
+    4. Bagian Data: Nama Peserta, Regu, Pangkalan
+    5. Footer: URL Resmi & QR Code Validasi Keabsahan
 --}}
 @php
     $themeColor = $competition->effective_card_theme_color ?? 'red';
     $boxColorClass = match($themeColor) {
         'brown' => 'bg-[#78350f] text-white',
         'blue' => 'bg-blue-600 text-white',
-        'emerald' => 'bg-emerald-600 text-white',
+        'emerald' => 'bg-[#059669] text-white',
         'orange' => 'bg-orange-600 text-white',
         'purple' => 'bg-purple-600 text-white',
         'slate' => 'bg-slate-900 text-white',
-        default => 'bg-[#e11d48] text-white', // Red Aryakasiga
+        default => 'bg-[#dc2626] text-black', // Red Aryakasiga
     };
-    $borderColor = match($themeColor) {
-        'brown' => 'border-[#78350f]',
-        'blue' => 'border-blue-600',
-        'emerald' => 'border-emerald-600',
-        'orange' => 'border-orange-600',
-        'purple' => 'border-purple-600',
-        'slate' => 'border-slate-800',
-        default => 'border-black',
-    };
+    $boxTextColor = in_array($themeColor, ['red', 'yellow', 'amber']) ? 'text-black' : 'text-white';
 
     $memberPhotoUrl = null;
     if (!empty($member->photo)) {
@@ -34,65 +26,66 @@
     }
 
     $mascotUrl = $competition->effective_card_mascot_url;
-    $reguNumber = $registration->draw_number ?? $registration->participant_number ?? '-';
+    // Nomor Regu murni diambil dari Nomor Undian (draw_number)
+    $reguNumber = $registration->draw_number ? (string) $registration->draw_number : '-';
     $qrUrl = \App\Services\QrSignatureService::registrationFormUrl($registration);
 @endphp
 
 <div class="aryakasiga-card bg-white text-black border-2 border-black flex flex-col justify-between overflow-hidden relative" style="width: 65mm; height: 105mm; max-width: 65mm; max-height: 105mm; box-sizing: border-box; page-break-inside: avoid;">
     
-    <!-- 1. Header Judul Event (B2 ~7mm) -->
+    <!-- 1. Header Judul Event (B2 ~7mm) - Dinamis Mengikuti Tahun Pelaksanaan -->
     <div class="border-b-2 border-black py-1 px-1 text-center bg-white shrink-0" style="height: 7mm;">
         <h2 class="font-black text-[11px] uppercase tracking-wider text-black font-sans leading-none truncate">
             {{ $competition->effective_card_title }}
         </h2>
     </div>
 
-    <!-- 2. Mid Section: Maskot + No Regu (Kiri) & Pasfoto (Kanan) (~48mm) -->
-    <div class="grid grid-cols-12 border-b-2 border-black shrink-0" style="height: 48mm;">
+    <!-- 2. Mid Section: Maskot (Kiri) & Pasfoto (Kanan, Sebatas Sebelah Logo) (~32mm) -->
+    <div class="grid grid-cols-2 border-b-2 border-black shrink-0" style="height: 32mm;">
         
-        <!-- Sisi Kiri: Maskot + No Regu (5 cols ~27mm) -->
-        <div class="col-span-5 border-r-2 border-black flex flex-col justify-between bg-white">
-            <!-- Maskot -->
-            <div class="flex-1 flex items-center justify-center p-1 overflow-hidden">
-                @if($mascotUrl)
-                    <img src="{{ $mascotUrl }}" alt="Maskot" class="max-h-[23mm] max-w-full object-contain">
-                @else
-                    <div class="w-10 h-10 rounded-full border border-black flex items-center justify-center font-bold text-[9px]">
-                        PRAMUKA
-                    </div>
-                @endif
-            </div>
-
-            <!-- Label No Regu -->
-            <div class="border-t-2 border-black text-center py-0.5 bg-white">
-                <span class="block text-[8.5px] font-bold text-black uppercase tracking-tight leading-none">
-                    {{ $competition->effective_card_number_label }}
-                </span>
-            </div>
-
-            <!-- Box No Regu Merah (Presisi Sesuai Contoh Fisik) -->
-            <div class="{{ $boxColorClass }} border-t-2 border-black text-center flex items-center justify-center" style="height: 14mm;">
-                <span class="font-black text-2xl font-mono leading-none tracking-tight text-black">
-                    {{ $reguNumber }}
-                </span>
-            </div>
+        <!-- Sisi Kiri: Maskot Aryakasiga -->
+        <div class="border-r-2 border-black flex items-center justify-center p-1 bg-white overflow-hidden">
+            @if($mascotUrl)
+                <img src="{{ $mascotUrl }}" alt="Maskot" class="max-h-[28mm] max-w-full object-contain">
+            @else
+                <div class="w-12 h-12 rounded-full border border-black flex items-center justify-center font-bold text-[9px]">
+                    PRAMUKA
+                </div>
+            @endif
         </div>
 
-        <!-- Sisi Kanan: Pasfoto 3x4 (7 cols ~38mm, edge-to-edge) -->
-        <div class="col-span-7 flex items-center justify-center bg-slate-100 relative overflow-hidden">
+        <!-- Sisi Kanan: Pasfoto 3x4 (Sebatas Sebelah Logo) -->
+        <div class="flex items-center justify-center bg-slate-100 relative overflow-hidden">
             @if($memberPhotoUrl)
                 <img src="{{ $memberPhotoUrl }}" alt="{{ $member->full_name }}" class="w-full h-full object-cover object-top">
             @else
                 <!-- Fallback Box jika belum upload foto -->
-                <div class="w-full h-full bg-[#dc2626] flex flex-col items-center justify-center text-white p-2 text-center">
-                    <span class="text-[11px] font-black tracking-wider uppercase leading-tight">PASFOTO 3x4</span>
-                    <span class="text-[8px] opacity-90 mt-1">Background Merah</span>
+                <div class="w-full h-full bg-[#dc2626] flex flex-col items-center justify-center text-white p-1 text-center">
+                    <span class="text-[10px] font-black tracking-wider uppercase leading-tight">PASFOTO 3x4</span>
+                    <span class="text-[7.5px] opacity-90 mt-0.5">Background Merah</span>
                 </div>
             @endif
         </div>
     </div>
 
-    <!-- 3. Lower Section: Tabel Rincian Data Peserta (~44mm) -->
+    <!-- 3. Section No Regu: Murni dari Nomor Undian (~18mm) -->
+    <div class="border-b-2 border-black flex flex-col shrink-0" style="height: 18mm;">
+        <!-- Label No Regu -->
+        <div class="border-b border-black text-center py-0.5 bg-white">
+            <span class="block text-[8.5px] font-bold text-black uppercase tracking-wider leading-none">
+                {{ $competition->effective_card_number_label }}
+            </span>
+        </div>
+
+        <!-- Box No Regu / Nomor Undian -->
+        <div class="{{ $boxColorClass }} flex-1 flex items-center justify-center">
+            <span class="font-black text-2xl font-mono leading-none tracking-tight {{ $boxTextColor }}">
+                {{ $reguNumber }}
+            </span>
+        </div>
+    </div>
+
+    <!-- 4. Lower Section: Tabel Rincian Data Peserta (~42mm) -->
     <div class="flex flex-col text-center font-sans flex-1 justify-around">
         
         <!-- Baris Nama -->
@@ -125,7 +118,7 @@
 
     </div>
 
-    <!-- 4. Footer: URL & QR Code Validasi Sah (~6mm) -->
+    <!-- 5. Footer: URL & QR Code Validasi Sah (~6mm) -->
     <div class="py-0.5 px-1.5 flex items-center justify-between bg-white text-[8px] shrink-0" style="height: 6mm;">
         <span class="font-mono text-slate-700 truncate max-w-[44mm] leading-none">
             {{ $competition->effective_card_footer_text }}

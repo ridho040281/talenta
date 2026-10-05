@@ -114,6 +114,7 @@ class Competition extends Model
         'effective_card_theme_color',
         'effective_card_footer_text',
         'effective_card_mascot_url',
+        'execution_year',
     ];
 
     protected function casts(): array
@@ -164,18 +165,49 @@ class Competition extends Model
         return 'universal';
     }
 
+    public function getExecutionYearAttribute(): string
+    {
+        if ($this->schedule_date) {
+            return $this->schedule_date->format('Y');
+        }
+
+        if ($this->registration_end_at) {
+            return $this->registration_end_at->format('Y');
+        }
+
+        if ($this->registration_start_at) {
+            return $this->registration_start_at->format('Y');
+        }
+
+        $eventYear = AppSetting::get('event_year');
+        if (! empty($eventYear)) {
+            return (string) $eventYear;
+        }
+
+        $appName = AppSetting::get('app_name', config('app.name', ''));
+        if (preg_match('/\b(20\d{2})\b/', (string) $appName, $matches)) {
+            return $matches[1];
+        }
+
+        return (string) date('Y');
+    }
+
     public function getEffectiveCardTitleAttribute(): string
     {
+        $year = $this->execution_year;
+
         if (! empty($this->card_title)) {
-            return $this->card_title;
+            // Jika ada tahun statis lama seperti 2024 atau 2025, ganti otomatis ke tahun pelaksanaan
+            return str_replace(['2024', '2025'], $year, $this->card_title);
         }
 
         $template = $this->effective_card_template;
         if ($template === 'pramuka') {
-            return 'ARYAKASIGA 2025';
+            return 'ARYAKASIGA '.$year;
         }
 
-        $appName = AppSetting::get('app_name', 'TALENTA 2026');
+        $appName = AppSetting::get('app_name', 'TALENTA '.$year);
+        $appName = preg_replace('/\b20\d{2}\b/', $year, (string) $appName);
 
         if ($template === 'robotik') {
             return $appName.' - ROBOTIK';
