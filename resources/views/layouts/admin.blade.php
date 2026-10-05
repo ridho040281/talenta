@@ -1070,7 +1070,14 @@
                 <!-- Active Year Selector / Badge Pill -->
                 @php
                     $navActiveYear = $appSettings['event_year'] ?? '2026';
-                    $navEditions = \App\Models\EventEdition::getAvailableEditions();
+                    try {
+                        $navEditions = \App\Models\EventEdition::getAvailableEditions();
+                        if ($navEditions->isEmpty()) {
+                            $navEditions = collect([(object) ['year' => $navActiveYear, 'event_name' => $appSettings['event_name'] ?? 'TALENTA '.$navActiveYear, 'is_active' => true]]);
+                        }
+                    } catch (\Throwable $e) {
+                        $navEditions = collect([(object) ['year' => $navActiveYear, 'event_name' => $appSettings['event_name'] ?? 'TALENTA '.$navActiveYear, 'is_active' => true]]);
+                    }
                 @endphp
                 <div class="relative" x-data="{ openYearDrop: false }" @click.outside="openYearDrop = false">
                     <button type="button" @click="openYearDrop = !openYearDrop" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] hover:border-white/[0.15] text-[11px] font-bold text-slate-200 transition cursor-pointer" title="Tahun kegiatan yang sedang aktif (Klik untuk beralih tahun)">

@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -141,18 +142,31 @@ class AdminSettingsController extends Controller
             'total_logs' => ActivityLog::count(),
         ];
 
-        $availableEditions = EventEdition::getAvailableEditions();
-        if ($availableEditions->isEmpty()) {
-            EventEdition::firstOrCreate([
-                'year' => '2026',
-            ], [
-                'event_name' => AppSetting::get('event_name', 'Milad ke-57 MTsN 1 Blitar'),
-                'is_active' => true,
-                'status' => 'open',
-            ]);
+        try {
             $availableEditions = EventEdition::getAvailableEditions();
+            if ($availableEditions->isEmpty() && Schema::hasTable('event_editions')) {
+                EventEdition::firstOrCreate([
+                    'year' => '2026',
+                ], [
+                    'event_name' => AppSetting::get('event_name', 'Milad ke-57 MTsN 1 Blitar'),
+                    'is_active' => true,
+                    'status' => 'open',
+                ]);
+                $availableEditions = EventEdition::getAvailableEditions();
+            }
+            $activeEdition = EventEdition::getActiveEdition();
+        } catch (\Throwable $e) {
+            $availableEditions = collect([
+                (object) ['year' => '2026', 'event_name' => AppSetting::get('event_name', 'Milad ke-57 MTsN 1 Blitar'), 'is_active' => true],
+            ]);
+            $activeEdition = $availableEditions->first();
         }
-        $activeEdition = EventEdition::getActiveEdition();
+
+        if ($availableEditions->isEmpty()) {
+            $availableEditions = collect([
+                (object) ['year' => '2026', 'event_name' => AppSetting::get('event_name', 'Milad ke-57 MTsN 1 Blitar'), 'is_active' => true],
+            ]);
+        }
 
         return view('admin.settings.general', compact('settings', 'systemInfo', 'activityLogs', 'logStats', 'availableEditions', 'activeEdition'));
     }

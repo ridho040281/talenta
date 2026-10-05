@@ -117,5 +117,11 @@ class MultiYearEditionTest extends TestCase
         // Switch back to 2026
         $responseSwitch = $this->actingAs($admin)->post(route('admin.editions.switch', '2026'));
         $this->assertEquals('2026', AppSetting::getActiveYear());
+
+        // Access General Settings page
+        $responseGet = $this->actingAs($admin)->get(route('admin.settings.general'));
+        $responseGet->assertOk();
+        $responseGet->assertSee('Identitas Instansi & Headings Surat Resmi', false);
+        $responseGet->assertSee('Tahun Kegiatan');
     }
 }
