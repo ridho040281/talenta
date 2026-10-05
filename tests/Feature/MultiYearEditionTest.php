@@ -103,16 +103,16 @@ class MultiYearEditionTest extends TestCase
     {
         $admin = User::factory()->create(['role' => 'superadmin']);
 
-        // Create new edition 2028
+        // Create new edition 2029 (since 2026, 2027, 2028 are default)
         $response = $this->actingAs($admin)->post(route('admin.settings.editions.store'), [
-            'year' => '2028',
-            'event_name' => 'Milad ke-59 MTsN 1 Blitar',
+            'year' => '2029',
+            'event_name' => 'Milad ke-60 MTsN 1 Blitar',
             'activate_now' => '1',
         ]);
 
         $response->assertRedirect(route('admin.settings.general', ['tab' => 'identitas']));
-        $this->assertEquals('2028', AppSetting::getActiveYear());
-        $this->assertEquals('Milad ke-59 MTsN 1 Blitar', AppSetting::getActiveEventName());
+        $this->assertEquals('2029', AppSetting::getActiveYear());
+        $this->assertEquals('Milad ke-60 MTsN 1 Blitar', AppSetting::getActiveEventName());
 
         // Switch back to 2026
         $responseSwitch = $this->actingAs($admin)->post(route('admin.editions.switch', '2026'));

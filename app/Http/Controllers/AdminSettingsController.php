@@ -143,21 +143,16 @@ class AdminSettingsController extends Controller
         ];
 
         try {
-            $availableEditions = EventEdition::getAvailableEditions();
-            if ($availableEditions->isEmpty() && Schema::hasTable('event_editions')) {
-                EventEdition::firstOrCreate([
-                    'year' => '2026',
-                ], [
-                    'event_name' => AppSetting::get('event_name', 'Milad ke-57 MTsN 1 Blitar'),
-                    'is_active' => true,
-                    'status' => 'open',
-                ]);
-                $availableEditions = EventEdition::getAvailableEditions();
+            if (Schema::hasTable('event_editions')) {
+                EventEdition::ensureDefaultEditions();
             }
+            $availableEditions = EventEdition::getAvailableEditions();
             $activeEdition = EventEdition::getActiveEdition();
         } catch (\Throwable $e) {
             $availableEditions = collect([
                 (object) ['year' => '2026', 'event_name' => AppSetting::get('event_name', 'Milad ke-57 MTsN 1 Blitar'), 'is_active' => true],
+                (object) ['year' => '2027', 'event_name' => 'Milad ke-58 MTsN 1 Blitar', 'is_active' => false],
+                (object) ['year' => '2028', 'event_name' => 'Milad ke-59 MTsN 1 Blitar', 'is_active' => false],
             ]);
             $activeEdition = $availableEditions->first();
         }
@@ -165,6 +160,8 @@ class AdminSettingsController extends Controller
         if ($availableEditions->isEmpty()) {
             $availableEditions = collect([
                 (object) ['year' => '2026', 'event_name' => AppSetting::get('event_name', 'Milad ke-57 MTsN 1 Blitar'), 'is_active' => true],
+                (object) ['year' => '2027', 'event_name' => 'Milad ke-58 MTsN 1 Blitar', 'is_active' => false],
+                (object) ['year' => '2028', 'event_name' => 'Milad ke-59 MTsN 1 Blitar', 'is_active' => false],
             ]);
         }
 

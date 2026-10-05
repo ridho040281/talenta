@@ -385,6 +385,15 @@
                         editionsMap: {{ json_encode($availableEditions->pluck('event_name', 'year')) }},
                         selectedYear: '{{ old('event_year', $settings['event_year'] ?? '2026') }}',
                         onYearChange(yr) {
+                            if (yr === '__add_new__') {
+                                showAddYearModal = true;
+                                this.$nextTick(() => {
+                                    if (window.lucide) lucide.createIcons();
+                                    let selectEl = document.getElementById('event_year_select');
+                                    if (selectEl) selectEl.value = this.selectedYear;
+                                });
+                                return;
+                            }
                             this.selectedYear = yr;
                             let nameInput = document.getElementById('event_name_input');
                             if (nameInput && this.editionsMap[yr]) {
@@ -401,13 +410,16 @@
                                 <span>+ Tambah Tahun Baru</span>
                             </button>
                         </div>
-                        <p class="text-[10px] text-slate-500">Pilih edisi tahun aktif (misal: 2026, 2027)</p>
+                        <p class="text-[10px] text-slate-500">Pilih edisi tahun kegiatan aktif (2026, 2027, 2028, dst)</p>
                         <select name="event_year" id="event_year_select" x-model="selectedYear" @change="onYearChange($event.target.value)" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-mono font-bold focus:border-[#7A5AF8] outline-none">
                             @foreach($availableEditions as $edition)
                                 <option value="{{ $edition->year }}" {{ (string)($settings['event_year'] ?? '2026') === (string)$edition->year ? 'selected' : '' }}>
                                     {{ $edition->year }} {{ (string)($settings['event_year'] ?? '2026') === (string)$edition->year ? '★ (Aktif Saat Ini)' : '' }}
                                 </option>
                             @endforeach
+                            <option value="__add_new__" class="bg-[#1e1b4b] text-[#A594FD] font-bold">
+                                ➕ + Tambah Tahun Baru...
+                            </option>
                         </select>
                     </div>
                 </div>
