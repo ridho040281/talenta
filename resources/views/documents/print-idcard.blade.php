@@ -25,11 +25,15 @@
     <!-- Alpine.js -->
     <script defer src="{{ asset('vendor/alpine/alpine.min.js') }}"></script>
 
-    <style>
+    <!-- Dynamic Paged Media CSS -->
+    <style id="dynamic-page-style">
         @page {
-            size: A4 portrait;
-            margin: 8mm;
+            size: A4 landscape;
+            margin: 4mm;
         }
+    </style>
+
+    <style>
         @media print {
             body { 
                 background: white !important; 
@@ -39,6 +43,8 @@
                 margin: 0 !important;
             }
             .no-print { display: none !important; }
+
+            /* Lembar A4 Portrait (Grid 4 & Grid 6) */
             .a4-print-page {
                 box-shadow: none !important;
                 margin: 0 auto !important;
@@ -47,25 +53,54 @@
                 width: 194mm !important;
                 min-height: 280mm !important;
             }
-            .a4-print-page:last-child {
+
+            /* Lembar A4 Landscape (Grid 8 - Super Hemat) */
+            .a4-landscape-page {
+                box-shadow: none !important;
+                margin: 0 auto !important;
+                page-break-after: always !important;
+                break-after: page !important;
+                width: 288mm !important;
+                min-height: 200mm !important;
+                max-height: 202mm !important;
+                overflow: hidden !important;
+            }
+
+            .a4-print-page:last-child,
+            .a4-landscape-page:last-child {
                 page-break-after: auto !important;
                 break-after: auto !important;
             }
         }
 
-        /* Dashed Cut Marks for A4 sheet */
+        /* Garis Tanda Potong */
         .card-cut-mark {
             border: 1px dashed #cbd5e1;
-            padding: 4mm;
             border-radius: 4px;
             background: #ffffff;
             display: flex;
             align-items: center;
             justify-content: center;
+            box-sizing: border-box;
         }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen py-6 px-4 flex flex-col items-center" x-data="{ printLayout: 'grid' }">
+<body class="bg-slate-100 min-h-screen py-6 px-4 flex flex-col items-center" 
+      x-data="{ 
+          printLayout: 'grid8',
+          setLayout(layout) {
+              this.printLayout = layout;
+              const styleTag = document.getElementById('dynamic-page-style');
+              if (layout === 'grid8') {
+                  styleTag.innerHTML = '@page { size: A4 landscape; margin: 4mm; }';
+              } else {
+                  styleTag.innerHTML = '@page { size: A4 portrait; margin: 6mm; }';
+              }
+              this.$nextTick(() => {
+                  if (window.lucide) lucide.createIcons();
+              });
+          }
+      }">
 
     @php
         $competition = $registration->competition;
@@ -84,10 +119,14 @@
         $viewPath = view()->exists('documents.idcards.' . $templateName) 
             ? 'documents.idcards.' . $templateName 
             : 'documents.idcards.universal';
+
+        $chunks8 = $members->chunk(8);
+        $chunks6 = $members->chunk(6);
+        $chunks4 = $members->chunk(4);
     @endphp
 
     <!-- Top Action Bar (Hidden on Print) -->
-    <div class="no-print mb-6 max-w-4xl w-full flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl shadow-md border border-slate-200">
+    <div class="no-print mb-6 max-w-5xl w-full flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl shadow-md border border-slate-200">
         <div class="flex items-center gap-3">
             <a href="javascript:history.back()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition flex items-center gap-1.5 cursor-pointer">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i>
@@ -98,19 +137,34 @@
                     Cetak Kartu Peserta — {{ $competition->name }}
                 </h1>
                 <p class="text-[11px] text-slate-500">
-                    Total {{ $members->count() }} Anggota Regu/Peserta • Format: <strong class="text-emerald-700 font-bold uppercase">{{ $templateName }}</strong> • Ukuran: <span class="bg-emerald-50 text-emerald-800 font-bold px-1.5 py-0.5 rounded border border-emerald-200">B2 (10,5 x 6,5 cm)</span>
+                    Total {{ $members->count() }} Anggota • Format: <strong class="text-emerald-700 font-bold uppercase">{{ $templateName }}</strong> • Ukuran: <span class="bg-emerald-50 text-emerald-800 font-bold px-1.5 py-0.5 rounded border border-emerald-200">B2 (10,5 x 6,5 cm)</span>
                 </p>
             </div>
         </div>
 
-        <div class="flex items-center gap-2.5 w-full sm:w-auto justify-end">
-            <!-- Layout Switcher -->
-            <div class="bg-slate-100 p-1 rounded-xl flex items-center gap-1 border border-slate-200 text-xs font-bold">
-                <button type="button" @click="printLayout = 'grid'" :class="printLayout === 'grid' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'" class="px-3 py-1.5 rounded-lg transition cursor-pointer">
-                    Grid A4 (4 Kartu B2)
+        <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
+            <!-- Layout Switcher (4 Pilihan) -->
+            <div class="bg-slate-100 p-1 rounded-xl flex flex-wrap items-center gap-1 border border-slate-200 text-xs font-bold">
+                <!-- Tombol Grid 8 (A4 Landscape) -->
+                <button type="button" @click="setLayout('grid8')" :class="printLayout === 'grid8' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'" class="px-2.5 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1">
+                    <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+                    <span>Grid 8 (A4 Landscape)</span>
+                    <span class="text-[9px] bg-amber-400 text-amber-950 font-black px-1 rounded">Super Hemat</span>
                 </button>
-                <button type="button" @click="printLayout = 'single'" :class="printLayout === 'single' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'" class="px-3 py-1.5 rounded-lg transition cursor-pointer">
-                    Satuan Lanyard
+
+                <!-- Tombol Grid 6 (A4 Portrait) -->
+                <button type="button" @click="setLayout('grid6')" :class="printLayout === 'grid6' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'" class="px-2.5 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1">
+                    <span>Grid 6 (A4)</span>
+                </button>
+
+                <!-- Tombol Grid 4 (Standar) -->
+                <button type="button" @click="setLayout('grid4')" :class="printLayout === 'grid4' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'" class="px-2.5 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1">
+                    <span>Grid 4 (Standar)</span>
+                </button>
+
+                <!-- Tombol Satuan Lanyard -->
+                <button type="button" @click="setLayout('single')" :class="printLayout === 'single' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'" class="px-2.5 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1">
+                    <span>Satuan</span>
                 </button>
             </div>
 
@@ -122,25 +176,107 @@
         </div>
     </div>
 
-    <!-- ==================== MODE 1: GRID A4 (4 Kartu per Lembar A4) ==================== -->
-    <div x-show="printLayout === 'grid'" class="w-full flex flex-col items-center gap-8">
-        @php
-            $chunks = $members->chunk(4);
-        @endphp
+    <!-- ==================== MODE 1: GRID 8 (A4 LANDSCAPE - 8 KARTU SUSUN 4x2) ==================== -->
+    <div x-show="printLayout === 'grid8'" class="w-full flex flex-col items-center gap-8">
+        @foreach($chunks8 as $pageIndex => $chunkMembers)
+            <div class="a4-landscape-page bg-white p-3 shadow-xl border border-slate-300 rounded-2xl flex flex-col justify-between" style="width: 288mm; min-height: 200mm; max-height: 202mm; box-sizing: border-box;">
+                
+                <!-- Notice on top of sheet (Hidden in print) -->
+                <div class="no-print pb-1 mb-1 border-b border-slate-200 flex items-center justify-between text-[11px] text-slate-500">
+                    <span>Lembar {{ $pageIndex + 1 }} dari {{ $chunks8->count() }} (A4 Landscape • 8 Kartu per Lembar)</span>
+                    <span class="text-emerald-700 font-bold">✂️ Susunan 4 Kolom x 2 Baris • Ukuran Pas Plastik B2 (10,5 x 6,5 cm)</span>
+                </div>
 
-        @foreach($chunks as $pageIndex => $chunkMembers)
+                <!-- 4x2 Grid of Cards (Scaled to fit A4 Landscape printable margins) -->
+                <div class="flex-1 flex items-center justify-center overflow-hidden">
+                    <div class="grid grid-cols-4 gap-2" style="transform: scale(0.93); transform-origin: top center;">
+                        @foreach($chunkMembers as $memberItem)
+                            <div class="card-cut-mark flex items-center justify-center p-0.5">
+                                @include($viewPath, [
+                                    'registration' => $registration,
+                                    'competition' => $competition,
+                                    'member' => $memberItem
+                                ])
+                            </div>
+                        @endforeach
+
+                        {{-- Empty slots placeholder to maintain 4x2 grid alignment --}}
+                        @for($i = $chunkMembers->count(); $i < 8; $i++)
+                            <div class="card-cut-mark border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-300 text-xs text-center p-2" style="width: 65mm; height: 105mm; box-sizing: border-box;">
+                                <i data-lucide="scissors" class="w-5 h-5 mb-1 opacity-40"></i>
+                                <span class="text-[9px] uppercase font-bold tracking-wider">Slot Kosong</span>
+                            </div>
+                        @endfor
+                    </div>
+                </div>
+
+                <!-- Footer Sheet Info -->
+                <div class="pt-1 mt-1 border-t border-slate-200 text-center text-[9px] text-slate-400 font-mono flex items-center justify-between">
+                    <span>TALENTA MTsN 1 Blitar — Lembar Cetak ID Card (A4 Landscape 8 Kartu)</span>
+                    <span>Halaman {{ $pageIndex + 1 }} / {{ $chunks8->count() }}</span>
+                </div>
+            </div>
+        @endforeach
+    </div>
+
+    <!-- ==================== MODE 2: GRID 6 (A4 PORTRAIT - 6 KARTU SUSUN 3x2) ==================== -->
+    <div x-show="printLayout === 'grid6'" x-cloak class="w-full flex flex-col items-center gap-8">
+        @foreach($chunks6 as $pageIndex => $chunkMembers)
+            <div class="a4-print-page bg-white p-3 shadow-xl border border-slate-300 rounded-2xl flex flex-col justify-between" style="width: 194mm; min-height: 280mm; box-sizing: border-box;">
+                
+                <!-- Notice on top of sheet (Hidden in print) -->
+                <div class="no-print pb-2 mb-2 border-b border-slate-200 flex items-center justify-between text-[11px] text-slate-500">
+                    <span>Lembar {{ $pageIndex + 1 }} dari {{ $chunks6->count() }} (A4 Portrait • 6 Kartu per Lembar)</span>
+                    <span class="text-emerald-700 font-bold">✂️ Susunan 3 Kolom x 2 Baris • Standar B2 (10,5 x 6,5 cm)</span>
+                </div>
+
+                <!-- 3x2 Grid of Cards -->
+                <div class="flex-1 flex items-center justify-center overflow-hidden">
+                    <div class="grid grid-cols-3 gap-2" style="transform: scale(0.97); transform-origin: top center;">
+                        @foreach($chunkMembers as $memberItem)
+                            <div class="card-cut-mark flex items-center justify-center p-0.5">
+                                @include($viewPath, [
+                                    'registration' => $registration,
+                                    'competition' => $competition,
+                                    'member' => $memberItem
+                                ])
+                            </div>
+                        @endforeach
+
+                        {{-- Empty slots placeholder to maintain 3x2 grid alignment --}}
+                        @for($i = $chunkMembers->count(); $i < 6; $i++)
+                            <div class="card-cut-mark border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-300 text-xs text-center p-2" style="width: 65mm; height: 105mm; box-sizing: border-box;">
+                                <i data-lucide="scissors" class="w-5 h-5 mb-1 opacity-40"></i>
+                                <span class="text-[9px] uppercase font-bold tracking-wider">Slot Kosong</span>
+                            </div>
+                        @endfor
+                    </div>
+                </div>
+
+                <!-- Footer Sheet Info -->
+                <div class="pt-2 mt-2 border-t border-slate-200 text-center text-[9px] text-slate-400 font-mono flex items-center justify-between">
+                    <span>TALENTA MTsN 1 Blitar — Lembar Cetak ID Card (A4 Portrait 6 Kartu)</span>
+                    <span>Halaman {{ $pageIndex + 1 }} / {{ $chunks6->count() }}</span>
+                </div>
+            </div>
+        @endforeach
+    </div>
+
+    <!-- ==================== MODE 3: GRID 4 (A4 PORTRAIT - 4 KARTU STANDAR 2x2) ==================== -->
+    <div x-show="printLayout === 'grid4'" x-cloak class="w-full flex flex-col items-center gap-8">
+        @foreach($chunks4 as $pageIndex => $chunkMembers)
             <div class="a4-print-page bg-white p-4 shadow-xl border border-slate-300 rounded-2xl flex flex-col justify-between" style="width: 194mm; min-height: 280mm; box-sizing: border-box;">
                 
                 <!-- Notice on top of sheet (Hidden in print) -->
                 <div class="no-print pb-2 mb-2 border-b border-slate-200 flex items-center justify-between text-[11px] text-slate-500">
-                    <span>Lembar {{ $pageIndex + 1 }} dari {{ $chunks->count() }} (A4 Portrait)</span>
+                    <span>Lembar {{ $pageIndex + 1 }} dari {{ $chunks4->count() }} (A4 Portrait • 4 Kartu per Lembar)</span>
                     <span class="text-emerald-700 font-bold">✂️ Standar Plastik B2 (10,5 x 6,5 cm) — Potong mengikuti garis batas luar kartu</span>
                 </div>
 
                 <!-- 2x2 Grid of Cards -->
                 <div class="grid grid-cols-2 gap-4 flex-1">
                     @foreach($chunkMembers as $memberItem)
-                        <div class="card-cut-mark flex items-center justify-center">
+                        <div class="card-cut-mark flex items-center justify-center p-1">
                             @include($viewPath, [
                                 'registration' => $registration,
                                 'competition' => $competition,
@@ -161,13 +297,13 @@
                 <!-- Footer Sheet Info -->
                 <div class="pt-2 mt-2 border-t border-slate-200 text-center text-[9px] text-slate-400 font-mono flex items-center justify-between">
                     <span>TALENTA MTsN 1 Blitar — Lembar Cetak ID Card Peserta</span>
-                    <span>Halaman {{ $pageIndex + 1 }} / {{ $chunks->count() }}</span>
+                    <span>Halaman {{ $pageIndex + 1 }} / {{ $chunks4->count() }}</span>
                 </div>
             </div>
         @endforeach
     </div>
 
-    <!-- ==================== MODE 2: SATUAN LANYARD (Single Badges) ==================== -->
+    <!-- ==================== MODE 4: SATUAN LANYARD (Single Badges) ==================== -->
     <div x-show="printLayout === 'single'" x-cloak class="w-full flex flex-col items-center gap-6">
         @foreach($members as $mIdx => $memberItem)
             <div class="id-card-single-wrapper bg-white p-3 rounded-2xl shadow-xl border border-slate-300 flex flex-col items-center">
