@@ -25,7 +25,7 @@
         border-radius: 16px !important;
     }
 </style>
-<div x-data="{ activeTab: '{{ request('tab', 'jadwal') }}' }" class="space-y-6">
+<div x-data="{ activeTab: '{{ request('tab', 'jadwal') }}', showAddYearModal: false }" class="space-y-6">
     
     <!-- Top Header Bar (AIStarterKit Dark Style) -->
     <div class="ai-card rounded-3xl p-6 sm:p-8 border border-white/[0.08] shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -368,7 +368,7 @@
                             Nama Kegiatan / Event Acara <span class="text-rose-400">*</span>
                         </label>
                         <p class="text-[10px] text-slate-500">Nama agenda kegiatan lomba (misal: <strong>Milad ke-57 MTsN 1 Blitar</strong>)</p>
-                        <input type="text" name="event_name" required value="{{ old('event_name', $settings['event_name'] ?? 'Milad ke-57 MTsN 1 Blitar') }}" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-bold focus:border-[#7A5AF8] outline-none">
+                        <input type="text" name="event_name" id="event_name_input" required value="{{ old('event_name', $settings['event_name'] ?? 'Milad ke-57 MTsN 1 Blitar') }}" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-bold focus:border-[#7A5AF8] outline-none">
                     </div>
                 </div>
 
@@ -381,11 +381,34 @@
                         <input type="text" name="institution_name" required value="{{ old('institution_name', $settings['institution_name']) }}" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-semibold focus:border-[#7A5AF8] outline-none">
                     </div>
 
-                    <div class="space-y-1 bg-[#0C111D]/80 p-4 rounded-2xl border border-white/[0.08]">
-                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">
-                            Tahun Kegiatan <span class="text-rose-400">*</span>
-                        </label>
-                        <input type="text" name="event_year" required value="{{ old('event_year', $settings['event_year'] ?? '2026') }}" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-mono font-bold focus:border-[#7A5AF8] outline-none">
+                    <div class="space-y-1 bg-[#0C111D]/80 p-4 rounded-2xl border border-white/[0.08]" x-data="{
+                        editionsMap: {{ json_encode($availableEditions->pluck('event_name', 'year')) }},
+                        selectedYear: '{{ old('event_year', $settings['event_year'] ?? '2026') }}',
+                        onYearChange(yr) {
+                            this.selectedYear = yr;
+                            let nameInput = document.getElementById('event_name_input');
+                            if (nameInput && this.editionsMap[yr]) {
+                                nameInput.value = this.editionsMap[yr];
+                            }
+                        }
+                    }">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                                Tahun Kegiatan <span class="text-rose-400">*</span>
+                            </label>
+                            <button type="button" @click="showAddYearModal = true" class="text-[10px] font-bold text-[#84D0FF] hover:text-white flex items-center gap-1 transition cursor-pointer">
+                                <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                                <span>+ Tambah Tahun Baru</span>
+                            </button>
+                        </div>
+                        <p class="text-[10px] text-slate-500">Pilih edisi tahun aktif (misal: 2026, 2027)</p>
+                        <select name="event_year" id="event_year_select" x-model="selectedYear" @change="onYearChange($event.target.value)" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs font-mono font-bold focus:border-[#7A5AF8] outline-none">
+                            @foreach($availableEditions as $edition)
+                                <option value="{{ $edition->year }}" {{ (string)($settings['event_year'] ?? '2026') === (string)$edition->year ? 'selected' : '' }}>
+                                    {{ $edition->year }} {{ (string)($settings['event_year'] ?? '2026') === (string)$edition->year ? '★ (Aktif Saat Ini)' : '' }}
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
 
@@ -1756,6 +1779,72 @@
         setTimeout(initSponsorSortable, 150);
     }
     </script>
+
+    <!-- MODAL TAMBAH TAHUN BARU -->
+    <div x-show="showAddYearModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="showAddYearModal" @click="showAddYearModal = false" class="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div x-show="showAddYearModal" class="inline-block align-bottom bg-[#0C111D] border border-white/[0.12] rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full p-6 sm:p-8">
+                <div class="flex items-center justify-between border-b border-white/[0.08] pb-4 mb-5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-[#7A5AF8]/15 text-[#9B82F9] border border-[#7A5AF8]/30 flex items-center justify-center font-bold">
+                            <i data-lucide="calendar-plus" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-white font-display">Tambah Tahun Kegiatan Baru</h3>
+                            <p class="text-xs text-slate-400">Buat edisi tahun baru untuk TALENTA</p>
+                        </div>
+                    </div>
+                    <button type="button" @click="showAddYearModal = false" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-white/[0.06] transition">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <form action="{{ route('admin.settings.editions.store') }}" method="POST" class="space-y-4">
+                    @csrf
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
+                            Tahun Kegiatan (4 Digit Angka) <span class="text-rose-400">*</span>
+                        </label>
+                        <input type="text" name="year" required placeholder="Contoh: 2027" maxlength="4" pattern="\d{4}" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-sm font-mono font-bold focus:border-[#7A5AF8] outline-none">
+                        <p class="text-[10px] text-slate-400 mt-1">Hanya angka tahun tanpa teks lain (misal: 2027, 2028).</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
+                            Nama Kegiatan / Milad <span class="text-rose-400">*</span>
+                        </label>
+                        <input type="text" name="event_name" required placeholder="Contoh: Milad ke-58 MTsN 1 Blitar" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-sm font-bold focus:border-[#7A5AF8] outline-none">
+                        <p class="text-[10px] text-slate-400 mt-1">Nama agenda kegiatan beserta nomor Milad (misal: Milad ke-58 MTsN 1 Blitar).</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
+                            Tema / Slogan Kegiatan (Opsional)
+                        </label>
+                        <input type="text" name="theme_slogan" placeholder="Contoh: Berprestasi, Menginspirasi, Meraih Mimpi" class="block w-full px-3.5 py-2.5 rounded-xl bg-[#161F30] border border-white/[0.1] text-white text-xs focus:border-[#7A5AF8] outline-none">
+                    </div>
+
+                    <div class="p-3.5 rounded-2xl bg-indigo-950/40 border border-indigo-500/20 text-indigo-200 text-xs flex items-start gap-2.5">
+                        <i data-lucide="info" class="w-4 h-4 text-indigo-400 shrink-0 mt-0.5"></i>
+                        <p class="text-[11px] leading-relaxed">
+                            Ketika tahun baru diaktifkan, data peserta, tagihan/invoice, dan undian akan tampil <strong>bersih (kosong)</strong> khusus untuk tahun tersebut. Seluruh data tahun sebelumnya (misal: 2026) tetap tersimpan aman di database dan dapat dibuka kembali kapan saja.
+                        </p>
+                    </div>
+
+                    <div class="pt-2 flex items-center justify-end gap-3">
+                        <button type="button" @click="showAddYearModal = false" class="px-4 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-slate-300 text-xs font-bold transition">
+                            Batal
+                        </button>
+                        <button type="submit" class="gradient-btn px-5 py-2.5 rounded-xl text-white text-xs font-bold shadow-lg shadow-[#7A5AF8]/30 hover:scale-[1.02] active:scale-[0.98] transition">
+                            Buat & Aktifkan Tahun Ini
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
 </div>
 @endsection

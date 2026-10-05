@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Scopes\EventYearScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +13,7 @@ class Invoice extends Model
     use HasFactory;
 
     protected $fillable = [
+        'event_year',
         'user_id',
         'invoice_number',
         'type',
@@ -25,6 +27,27 @@ class Invoice extends Model
         'verified_by',
         'notes',
     ];
+
+    protected static function booted(): void
+    {
+        static::addGlobalScope(new EventYearScope);
+
+        static::creating(function (Invoice $invoice) {
+            if (empty($invoice->event_year)) {
+                $invoice->event_year = AppSetting::getActiveYear();
+            }
+        });
+    }
+
+    public function scopeForYear($query, string $year)
+    {
+        return $query->withoutGlobalScope(EventYearScope::class)->where('invoices.event_year', $year);
+    }
+
+    public function scopeAllYears($query)
+    {
+        return $query->withoutGlobalScope(EventYearScope::class);
+    }
 
     protected function casts(): array
     {

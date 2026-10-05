@@ -885,7 +885,7 @@ class CertificateController extends Controller
             if ($typePrefix === 'JRI') {
                 $judge = User::find($id);
             } else {
-                $registration = Registration::with(['competition.category', 'members'])->find($id);
+                $registration = Registration::allYears()->with(['competition.category', 'members'])->find($id);
             }
 
             if ($registration || $judge || $competition) {

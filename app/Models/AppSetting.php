@@ -50,6 +50,16 @@ class AppSetting extends Model
         );
     }
 
+    public static function getActiveYear(): string
+    {
+        return (string) static::get('event_year', '2026');
+    }
+
+    public static function getActiveEventName(): string
+    {
+        return (string) static::get('event_name', 'Milad ke-57 MTsN 1 Blitar');
+    }
+
     public static function isRegistrationOpen(): bool
     {
         $status = static::get('global_registration_status', 'open');

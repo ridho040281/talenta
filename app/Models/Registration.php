@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Helpers\NameStandardizer;
+use App\Scopes\EventYearScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,6 +14,7 @@ class Registration extends Model
     use HasFactory;
 
     protected $fillable = [
+        'event_year',
         'competition_id',
         'user_id',
         'invoice_id',
@@ -68,6 +70,14 @@ class Registration extends Model
 
     protected static function booted(): void
     {
+        static::addGlobalScope(new EventYearScope);
+
+        static::creating(function (Registration $registration) {
+            if (empty($registration->event_year)) {
+                $registration->event_year = AppSetting::getActiveYear();
+            }
+        });
+
         static::saved(function (Registration $registration) {
             if ($registration->invoice_id && ($registration->wasChanged(['competition_id', 'target_class', 'sub_category', 'match_type']) || $registration->wasRecentlyCreated)) {
                 $registration->invoice?->recalculateTotals();
@@ -79,6 +89,16 @@ class Registration extends Model
                 $registration->invoice?->recalculateTotals();
             }
         });
+    }
+
+    public function scopeForYear($query, string $year)
+    {
+        return $query->withoutGlobalScope(EventYearScope::class)->where('registrations.event_year', $year);
+    }
+
+    public function scopeAllYears($query)
+    {
+        return $query->withoutGlobalScope(EventYearScope::class);
     }
 
     public function invoice(): BelongsTo

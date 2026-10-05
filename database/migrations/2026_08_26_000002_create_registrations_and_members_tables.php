@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('registrations', function (Blueprint $table) {
             $table->id();
+            $table->string('event_year', 10)->default('2026')->index();
             $table->foreignId('competition_id')->constrained('competitions')->cascadeOnDelete();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->string('registration_code')->unique();

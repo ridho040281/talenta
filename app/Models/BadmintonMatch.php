@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Helpers\NameStandardizer;
+use App\Scopes\EventYearScope;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,6 +14,7 @@ class BadmintonMatch extends Model
     use HasFactory;
 
     protected $fillable = [
+        'event_year',
         'competition_id',
         'court_number',
         'scheduled_time',
@@ -49,6 +51,27 @@ class BadmintonMatch extends Model
         'interval_until',
         'scores_history',
     ];
+
+    protected static function booted(): void
+    {
+        static::addGlobalScope(new EventYearScope);
+
+        static::creating(function (BadmintonMatch $match) {
+            if (empty($match->event_year)) {
+                $match->event_year = AppSetting::getActiveYear();
+            }
+        });
+    }
+
+    public function scopeForYear($query, string $year)
+    {
+        return $query->withoutGlobalScope(EventYearScope::class)->where('badminton_matches.event_year', $year);
+    }
+
+    public function scopeAllYears($query)
+    {
+        return $query->withoutGlobalScope(EventYearScope::class);
+    }
 
     protected $appends = [
         'category_label',

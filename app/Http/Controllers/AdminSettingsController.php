@@ -7,6 +7,7 @@ use App\Models\AppSetting;
 use App\Models\BroadcastLog;
 use App\Models\Competition;
 use App\Models\CustomContact;
+use App\Models\EventEdition;
 use App\Models\Registration;
 use App\Models\User;
 use App\Models\WhatsappTemplate;
@@ -140,7 +141,20 @@ class AdminSettingsController extends Controller
             'total_logs' => ActivityLog::count(),
         ];
 
-        return view('admin.settings.general', compact('settings', 'systemInfo', 'activityLogs', 'logStats'));
+        $availableEditions = EventEdition::getAvailableEditions();
+        if ($availableEditions->isEmpty()) {
+            EventEdition::firstOrCreate([
+                'year' => '2026',
+            ], [
+                'event_name' => AppSetting::get('event_name', 'Milad ke-57 MTsN 1 Blitar'),
+                'is_active' => true,
+                'status' => 'open',
+            ]);
+            $availableEditions = EventEdition::getAvailableEditions();
+        }
+        $activeEdition = EventEdition::getActiveEdition();
+
+        return view('admin.settings.general', compact('settings', 'systemInfo', 'activityLogs', 'logStats', 'availableEditions', 'activeEdition'));
     }
 
     /**
@@ -371,7 +385,7 @@ class AdminSettingsController extends Controller
         AppSetting::set('pamphlet_images', json_encode(array_values($currentPamphletImages)));
 
         $textFields = [
-            'app_name', 'institution_name', 'headmaster_name', 'headmaster_nip',
+            'app_name', 'event_name', 'institution_name', 'headmaster_name', 'headmaster_nip',
             'committee_chairman_name', 'committee_chairman_nip', 'address',
             'contact_phone', 'contact_email', 'school_website', 'event_year',
             'allow_individual_reg', 'allow_collective_reg',
@@ -393,6 +407,20 @@ class AdminSettingsController extends Controller
             }
         }
 
+        // Synchronize EventEdition if event_year is set
+        if (! empty($data['event_year'])) {
+            $year = trim($data['event_year']);
+            $eventName = ! empty($data['event_name']) ? trim($data['event_name']) : ('TALENTA '.$year);
+            $edition = EventEdition::firstOrCreate(
+                ['year' => $year],
+                ['event_name' => $eventName, 'status' => 'open']
+            );
+            if (! empty($data['event_name'])) {
+                $edition->update(['event_name' => $eventName]);
+            }
+            EventEdition::activateEdition($year);
+        }
+
         // Handle Boolean Toggle Settings
         $showPamphletEmbed = $request->boolean('show_pamphlet_embed') ? '1' : '0';
         AppSetting::set('show_pamphlet_embed', $showPamphletEmbed);
@@ -400,6 +428,103 @@ class AdminSettingsController extends Controller
         $activeTab = $request->input('active_tab', 'landing');
 
         return redirect()->route('admin.settings.general', ['tab' => $activeTab])->with('success', 'Pengaturan aplikasi dan konten landing page berhasil disimpan.');
+    }
+
+    /**
+     * Store new Event Edition (Tahun Baru)
+     */
+    public function storeEdition(Request $request)
+    {
+        $validated = $request->validate([
+            'year' => 'required|string|regex:/^\d{4}$/|unique:event_editions,year',
+            'event_name' => 'required|string|max:255',
+            'theme_slogan' => 'nullable|string|max:255',
+            'activate_now' => 'nullable|boolean',
+        ], [
+            'year.regex' => 'Format tahun harus berupa 4 digit angka (misal: 2027).',
+            'year.unique' => 'Edisi tahun tersebut sudah terdaftar di sistem.',
+            'event_name.required' => 'Nama kegiatan / Milad wajib diisi.',
+        ]);
+
+        $edition = EventEdition::create([
+            'year' => $validated['year'],
+            'event_name' => $validated['event_name'],
+            'theme_slogan' => $validated['theme_slogan'] ?? null,
+            'is_active' => false,
+            'status' => 'open',
+        ]);
+
+        $activateNow = $request->has('activate_now') ? $request->boolean('activate_now') : true;
+
+        if ($activateNow) {
+            EventEdition::activateEdition($edition->year);
+            $msg = "Tahun Kegiatan {$edition->year} ({$edition->event_name}) berhasil dibuat dan diaktifkan. Data pendaftaran tahun {$edition->year} kini siap digunakan dalam kondisi bersih/kosong.";
+        } else {
+            $msg = "Tahun Kegiatan {$edition->year} ({$edition->event_name}) berhasil ditambahkan ke daftar edisi.";
+        }
+
+        ActivityLog::record(
+            'EDITION_CREATED',
+            "Membuat edisi kegiatan baru tahun {$edition->year} ({$edition->event_name})",
+            Auth::user(),
+            'info'
+        );
+
+        return redirect()->route('admin.settings.general', ['tab' => 'identitas'])->with('success', $msg);
+    }
+
+    /**
+     * Switch active Event Edition
+     */
+    public function switchEdition(Request $request, string $year)
+    {
+        $edition = EventEdition::where('year', $year)->first();
+        if (! $edition) {
+            return back()->with('error', "Edisi tahun {$year} tidak ditemukan.");
+        }
+
+        EventEdition::activateEdition($year);
+
+        ActivityLog::record(
+            'EDITION_SWITCHED',
+            "Beralih ke tahun kegiatan {$year} ({$edition->event_name})",
+            Auth::user(),
+            'info'
+        );
+
+        return back()->with('success', "Berhasil beralih ke Tahun Kegiatan {$year} ({$edition->event_name}). Data yang ditampilkan kini khusus edisi {$year}.");
+    }
+
+    /**
+     * Delete an inactive Event Edition (only if it has no registrations)
+     */
+    public function deleteEdition(Request $request, string $year)
+    {
+        $currentYear = AppSetting::getActiveYear();
+        if ($year === $currentYear) {
+            return back()->with('error', "Tahun kegiatan {$year} sedang aktif dan tidak dapat dihapus.");
+        }
+
+        $edition = EventEdition::where('year', $year)->first();
+        if (! $edition) {
+            return back()->with('error', "Edisi tahun {$year} tidak ditemukan.");
+        }
+
+        $hasRegistrations = Registration::withoutGlobalScopes()->where('event_year', $year)->exists();
+        if ($hasRegistrations) {
+            return back()->with('error', "Tahun kegiatan {$year} memiliki data pendaftaran peserta dan tidak dapat dihapus demi integritas arsip data.");
+        }
+
+        $edition->delete();
+
+        ActivityLog::record(
+            'EDITION_DELETED',
+            "Menghapus edisi kegiatan kosong tahun {$year}",
+            Auth::user(),
+            'warning'
+        );
+
+        return back()->with('success', "Edisi tahun {$year} berhasil dihapus.");
     }
 
     /**

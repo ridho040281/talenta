@@ -337,9 +337,13 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->name('admin.')-
         Route::post('/sponsor-logo/delete', [AdminSettingsController::class, 'deleteSingleSponsorLogo'])->name('sponsor.delete');
         Route::post('/sponsor-logo/reorder', [AdminSettingsController::class, 'reorderSponsorLogos'])->name('sponsor.reorder');
         Route::post('/pamphlet-image/upload', [AdminSettingsController::class, 'uploadPamphletImages'])->name('pamphlet.upload');
-        Route::post('/pamphlet-image/delete', [AdminSettingsController::class, 'deleteSinglePamphletImage'])->name('pamphlet.delete');
         Route::post('/clean-broken-media', [AdminSettingsController::class, 'cleanBrokenMedia'])->name('clean_broken_media');
         Route::post('/activity_logs/clear', [AdminSettingsController::class, 'clearActivityLogs'])->name('activity_logs.clear');
+
+        // Multi-Year Edition Management
+        Route::post('/editions', [AdminSettingsController::class, 'storeEdition'])->name('editions.store');
+        Route::post('/editions/{year}/switch', [AdminSettingsController::class, 'switchEdition'])->name('editions.switch');
+        Route::post('/editions/{year}/delete', [AdminSettingsController::class, 'deleteEdition'])->name('editions.delete');
         Route::get('/whatsapp-blast', [AdminSettingsController::class, 'whatsappBlast'])->name('whatsapp.blast');
         Route::get('/whatsapp-blast/check-status', [AdminSettingsController::class, 'checkWablasStatus'])->name('whatsapp.blast.check-status');
         Route::get('/whatsapp-blast/template', [AdminSettingsController::class, 'downloadWhatsappTemplate'])->name('whatsapp.blast.template');
@@ -369,6 +373,8 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->name('admin.')-
         Route::get('/changelog', [AdminSettingsController::class, 'changelog'])->name('changelog');
         Route::get('/app-info', [AdminSettingsController::class, 'appInfo'])->name('app.info');
     });
+
+    Route::post('/editions/{year}/switch', [AdminSettingsController::class, 'switchEdition'])->name('editions.switch');
 });
 
 // Direct Dynamic Media Serving Fallback (Protects against symlink or server permissions issues)

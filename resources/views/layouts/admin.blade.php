@@ -1067,10 +1067,46 @@
 
             <!-- Top Right Action Area -->
             <div class="flex items-center gap-3 shrink-0">
-                <!-- AI Badge Pill -->
-                <div class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.05] border border-white/[0.08] text-[11px] font-bold text-slate-300">
-                    <span class="w-2 h-2 rounded-full bg-[#7A5AF8] animate-pulse"></span>
-                    <span>Portal 2026</span>
+                <!-- Active Year Selector / Badge Pill -->
+                @php
+                    $navActiveYear = $appSettings['event_year'] ?? '2026';
+                    $navEditions = \App\Models\EventEdition::getAvailableEditions();
+                @endphp
+                <div class="relative" x-data="{ openYearDrop: false }" @click.outside="openYearDrop = false">
+                    <button type="button" @click="openYearDrop = !openYearDrop" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] hover:border-white/[0.15] text-[11px] font-bold text-slate-200 transition cursor-pointer" title="Tahun kegiatan yang sedang aktif (Klik untuk beralih tahun)">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span>Edisi {{ $navActiveYear }}</span>
+                        <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400 transition-transform duration-200" :class="openYearDrop ? 'rotate-180' : ''"></i>
+                    </button>
+                    <div x-show="openYearDrop" x-cloak class="absolute right-0 mt-2 w-52 py-2 bg-[#0C111D] border border-white/[0.12] rounded-2xl shadow-2xl z-50 divide-y divide-white/[0.06]">
+                        <div class="px-3.5 py-1 text-[10px] uppercase font-bold tracking-wider text-slate-400">
+                            Pilih Tahun Kegiatan
+                        </div>
+                        <div class="py-1 max-h-56 overflow-y-auto">
+                            @foreach($navEditions as $ed)
+                                <form action="{{ route('admin.editions.switch', $ed->year) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-white/[0.06] transition {{ $navActiveYear == $ed->year ? 'text-[#84D0FF] font-bold bg-[#84D0FF]/10' : 'text-slate-300 font-medium' }}">
+                                        <div class="truncate pr-2">
+                                            <div class="font-mono font-bold">{{ $ed->year }}</div>
+                                            <div class="text-[10px] text-slate-400 truncate">{{ $ed->event_name }}</div>
+                                        </div>
+                                        @if($navActiveYear == $ed->year)
+                                            <span class="shrink-0 text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">Aktif</span>
+                                        @endif
+                                    </button>
+                                </form>
+                            @endforeach
+                        </div>
+                        @if(auth()->user()->role === 'superadmin')
+                            <div class="pt-1.5 px-2">
+                                <a href="{{ route('admin.settings.general', ['tab' => 'identitas']) }}" class="flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-bold text-[#7A5AF8] hover:text-[#9B82F9] hover:bg-[#7A5AF8]/10 rounded-xl transition">
+                                    <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                                    <span>Tambah / Kelola Tahun</span>
+                                </a>
+                            </div>
+                        @endif
+                    </div>
                 </div>
 
                 <div class="flex items-center gap-2">

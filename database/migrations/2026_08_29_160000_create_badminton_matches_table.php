@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('badminton_matches', function (Blueprint $table) {
             $table->id();
+            $table->string('event_year', 10)->default('2026')->index();
             $table->foreignId('competition_id')->nullable()->constrained('competitions')->nullOnDelete();
             $table->string('court_number')->default('Lapangan 1');
             $table->string('match_code')->nullable();
