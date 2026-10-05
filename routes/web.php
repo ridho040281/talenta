@@ -145,6 +145,7 @@ Route::middleware(['auth'])->prefix('dokumen')->name('document.')->group(functio
     Route::get('/bukti-akun/{registration_id}', [DocumentController::class, 'printAccountProof'])->name('print.account');
     Route::get('/bukti-pendaftaran/{registration_id}', [DocumentController::class, 'printRegistrationForm'])->name('print.registration');
     Route::get('/kwitansi/{registration_id}', [DocumentController::class, 'printReceipt'])->name('print.receipt');
+    Route::get('/kartu-peserta/{registration_id}', [DocumentController::class, 'printIdCard'])->name('print.idcard');
     Route::get('/cetak-semua-bukti', [DocumentController::class, 'printCollectiveRegistrations'])->name('print.collective');
 });
 
@@ -158,6 +159,7 @@ Route::middleware(['auth', 'role:pic_lomba,superadmin,panitia,admin'])->prefix('
     Route::get('/lomba/{competition_id}/peserta', [PicController::class, 'participants'])->name('participants');
     Route::get('/peserta/cetak-pdf', [PicController::class, 'printParticipantsPdf'])->name('participants.print.pdf');
     Route::get('/peserta/export-excel', [PicController::class, 'exportParticipantsExcel'])->name('participants.export.excel');
+    Route::get('/peserta/cetak-kartu-all', [DocumentController::class, 'printAllCompetitionIdCards'])->name('participants.print.cards');
     Route::post('/peserta/store-manual', [PicController::class, 'storeParticipant'])->name('store.participant');
     Route::post('/peserta/{registration_id}/verifikasi', [PicController::class, 'verifyParticipant'])->name('verify.participant');
     Route::post('/peserta/{registration_id}/update', [PicController::class, 'updateParticipantData'])->name('update.participant');

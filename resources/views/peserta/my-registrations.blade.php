@@ -383,6 +383,10 @@
                                                 <i data-lucide="printer" class="w-3.5 h-3.5"></i>
                                                 <span>Cetak</span>
                                             </a>
+                                            <a href="{{ route('peserta.print.idcard', $reg->id) }}" target="_blank" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 font-bold text-xs border border-cyan-500/30 transition shadow-sm" title="Cetak Kartu Peserta (ID Card Lanyard)">
+                                                <i data-lucide="contact" class="w-3.5 h-3.5"></i>
+                                                <span>Kartu</span>
+                                            </a>
                                         @endif
                                     </div>
                                 </td>

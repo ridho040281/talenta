@@ -43,6 +43,10 @@
                     <i data-lucide="printer" class="w-4 h-4"></i>
                     <span>Cetak Formulir</span>
                 </a>
+                <a href="{{ route('peserta.print.idcard', $registration->id) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/30 font-bold text-xs transition">
+                    <i data-lucide="contact" class="w-4 h-4"></i>
+                    <span>Cetak Kartu Peserta</span>
+                </a>
                 <a href="{{ route('document.print.receipt', $registration->id) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 font-bold text-xs transition">
                     <i data-lucide="receipt" class="w-4 h-4"></i>
                     <span>Kwitansi</span>

@@ -893,6 +893,171 @@
                 </div>
             </div>
 
+            <!-- PENGATURAN KARTU TANDA PESERTA (ID CARD) CARD -->
+            <div class="card-admin rounded-2xl p-5 sm:p-7 space-y-5">
+                <div class="flex items-center justify-between pb-4 border-b border-white/[0.07]">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3);">
+                            <i data-lucide="contact" class="w-4 h-4 text-emerald-400"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-black text-white flex items-center gap-2">
+                                <span>Pengaturan Kartu Tanda Peserta (ID Card)</span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                    Modul Cetak Lanyard
+                                </span>
+                            </h4>
+                            <p class="text-xs text-slate-500">Kustomisasi tata letak, istilah nomor, nama regu/kategori, pangkalan, warna tema, serta maskot khusus per cabang lomba</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- Row 1: Template & Tema Warna -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5 flex items-center gap-1.5">
+                                <i data-lucide="layout" class="w-3.5 h-3.5 text-emerald-400"></i>
+                                <span>Format Desain Kartu</span>
+                            </label>
+                            <select name="card_template" class="input-admin block w-full px-3.5 py-2.5 rounded-xl text-xs font-bold">
+                                <option value="auto" {{ ($competition->card_template == 'auto' || empty($competition->card_template)) ? 'selected' : '' }}>
+                                    ⚡ Otomatis Deteksi Cabang (Pramuka → Aryakasiga, Robotik → Tim Robot, Olahraga → Bagan, dll)
+                                </option>
+                                <option value="pramuka" {{ $competition->card_template == 'pramuka' ? 'selected' : '' }}>
+                                    ⛺ Format Pramuka (Aryakasiga - No Regu, Pangkalan, Pasfoto 3x4)
+                                </option>
+                                <option value="robotik" {{ $competition->card_template == 'robotik' ? 'selected' : '' }}>
+                                    🤖 Format Robotik (Kategori Sumo/Soccer, No Tim Robot, Asal Sekolah)
+                                </option>
+                                <option value="olahraga" {{ $competition->card_template == 'olahraga' ? 'selected' : '' }}>
+                                    🏸 Format Olahraga (Bulu Tangkis & Tenis Meja - Pool / No Undian Bagan)
+                                </option>
+                                <option value="universal" {{ $competition->card_template == 'universal' ? 'selected' : '' }}>
+                                    🪪 Format Standar Universal (TALENTA 2026 Elegan)
+                                </option>
+                            </select>
+                            <span class="text-[10px] text-slate-400 block mt-1">Template saat ini yang aktif: <strong class="text-emerald-400 uppercase font-mono">{{ $competition->effective_card_template }}</strong></span>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5 flex items-center gap-1.5">
+                                <i data-lucide="palette" class="w-3.5 h-3.5 text-amber-400"></i>
+                                <span>Warna Aksen Kartu</span>
+                            </label>
+                            <select name="card_theme_color" class="input-admin block w-full px-3.5 py-2.5 rounded-xl text-xs font-bold">
+                                <option value="red" {{ ($competition->card_theme_color == 'red' || (empty($competition->card_theme_color) && $competition->effective_card_theme_color == 'red')) ? 'selected' : '' }}>
+                                    🔴 Merah Aryakasiga (Pramuka / Bold Red)
+                                </option>
+                                <option value="brown" {{ $competition->card_theme_color == 'brown' ? 'selected' : '' }}>
+                                    🟤 Coklat Pramuka (Warm Scout Brown)
+                                </option>
+                                <option value="blue" {{ ($competition->card_theme_color == 'blue' || (empty($competition->card_theme_color) && $competition->effective_card_theme_color == 'blue')) ? 'selected' : '' }}>
+                                    🔵 Biru Cyber (Robotik / Electric Tech Blue)
+                                </option>
+                                <option value="emerald" {{ ($competition->card_theme_color == 'emerald' || (empty($competition->card_theme_color) && $competition->effective_card_theme_color == 'emerald')) ? 'selected' : '' }}>
+                                    🟢 Hijau Emerald (MTsN 1 Blitar / Segar)
+                                </option>
+                                <option value="orange" {{ $competition->card_theme_color == 'orange' ? 'selected' : '' }}>
+                                    🟠 Oranye Sporty (Bulu Tangkis / Tenis Meja)
+                                </option>
+                                <option value="purple" {{ $competition->card_theme_color == 'purple' ? 'selected' : '' }}>
+                                    🟣 Ungu Elegan (Seni / Pop Singer / Tahfidz)
+                                </option>
+                                <option value="slate" {{ $competition->card_theme_color == 'slate' ? 'selected' : '' }}>
+                                    ⚫ Slate Navy (Dark Elegan Modern)
+                                </option>
+                            </select>
+                            <span class="text-[10px] text-slate-400 block mt-1">Mempengaruhi warna kotak nomor dada dan aksen ribbon kartu.</span>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Judul Khusus Header & Footer URL -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5 flex items-center gap-1.5">
+                                <i data-lucide="type" class="w-3.5 h-3.5 text-[#84D0FF]"></i>
+                                <span>Judul Header Kartu (Opsional)</span>
+                            </label>
+                            <input name="card_title" type="text" value="{{ old('card_title', $competition->card_title) }}" placeholder="Default: {{ $competition->effective_card_title }}" class="input-admin block w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold">
+                            <span class="text-[10px] text-slate-400 block mt-1">Kosongkan jika ingin otomatis menggunakan nama event lomba.</span>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5 flex items-center gap-1.5">
+                                <i data-lucide="globe" class="w-3.5 h-3.5 text-cyan-400"></i>
+                                <span>Teks / Link Footer Website</span>
+                            </label>
+                            <input name="card_footer_text" type="text" value="{{ old('card_footer_text', $competition->card_footer_text) }}" placeholder="https://mtsn1blitar.sch.id" class="input-admin block w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold">
+                            <span class="text-[10px] text-slate-400 block mt-1">Teks tautan resmi yang tertera di bagian paling bawah kartu.</span>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: Istilah / Label Kolom Kartu (Custom Label Dinamis) -->
+                    <div class="p-4 rounded-xl space-y-3" style="background: rgba(12,17,29,0.75); border: 1px solid rgba(255,255,255,0.08);">
+                        <div class="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+                            <span class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                                <i data-lucide="tag" class="w-3.5 h-3.5 text-amber-400"></i>
+                                <span>Label & Istilah Teks Pada Kartu (Disesuaikan Karakteristik Cabang)</span>
+                            </span>
+                            <span class="text-[10px] text-slate-400 font-mono">Bisa diubah bebas</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-400 mb-1">Label Nomor</label>
+                                <input name="card_number_label" type="text" value="{{ old('card_number_label', $competition->card_number_label) }}" placeholder="Default: {{ $competition->effective_card_number_label }}" class="input-admin block w-full px-3 py-2 rounded-lg text-xs font-semibold">
+                                <span class="text-[10px] text-slate-500 block mt-0.5">Misal: <em>No Regu, No Undian, No Tim</em></span>
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-400 mb-1">Label Regu / Cabang</label>
+                                <input name="card_team_label" type="text" value="{{ old('card_team_label', $competition->card_team_label) }}" placeholder="Default: {{ $competition->effective_card_team_label }}" class="input-admin block w-full px-3 py-2 rounded-lg text-xs font-semibold">
+                                <span class="text-[10px] text-slate-500 block mt-0.5">Misal: <em>Regu, Kategori Robot, Kategori Tanding</em></span>
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-400 mb-1">Label Pangkalan / Asal Sekolah</label>
+                                <input name="card_school_label" type="text" value="{{ old('card_school_label', $competition->card_school_label) }}" placeholder="Default: {{ $competition->effective_card_school_label }}" class="input-admin block w-full px-3 py-2 rounded-lg text-xs font-semibold">
+                                <span class="text-[10px] text-slate-500 block mt-0.5">Misal: <em>Pangkalan, Asal Sekolah, Madrasah</em></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 4: Upload Maskot Khusus Cabang -->
+                    <div class="p-4 rounded-xl space-y-3" style="background: rgba(12,17,29,0.75); border: 1px solid rgba(255,255,255,0.08);">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                            <i data-lucide="image" class="w-3.5 h-3.5 text-pink-400"></i>
+                            <span>Maskot / Logo Khusus Cabang Lomba</span>
+                        </label>
+
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                            <!-- Mascot Preview -->
+                            <div class="w-20 h-20 rounded-2xl bg-white/[0.05] border border-white/[0.1] flex items-center justify-center p-2 shrink-0 overflow-hidden relative">
+                                @if($competition->effective_card_mascot_url)
+                                    <img src="{{ $competition->effective_card_mascot_url }}" alt="Maskot" class="max-h-full max-w-full object-contain">
+                                @else
+                                    <i data-lucide="image" class="w-8 h-8 text-slate-600"></i>
+                                @endif
+                            </div>
+
+                            <div class="flex-1 space-y-2">
+                                <input type="file" name="card_mascot_file" accept="image/png,image/jpeg,image/webp,image/svg+xml" class="input-admin block w-full px-3 py-2 rounded-xl text-xs text-slate-300 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-emerald-500/20 file:text-emerald-300 hover:file:bg-emerald-500/30 cursor-pointer">
+                                <div class="flex flex-wrap items-center gap-3 text-[11px] text-slate-400">
+                                    <span>Format: PNG transparan disarankan (Maks 5 MB).</span>
+                                    @if($competition->card_mascot)
+                                        <label class="inline-flex items-center gap-1.5 text-rose-400 font-bold cursor-pointer">
+                                            <input type="checkbox" name="remove_card_mascot" value="1" class="rounded text-rose-500">
+                                            <span>Hapus maskot khusus (Gunakan logo umum)</span>
+                                        </label>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- FOOTER CARD -->
             <div class="card-admin rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <button type="button" onclick="if(confirm('Yakin hapus cabang lomba {{ addslashes($competition->name) }}?')) { document.getElementById('deleteForm').submit(); }" class="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 hover:bg-rose-500/20 cursor-pointer" style="background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); color: #f87171;">

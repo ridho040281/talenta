@@ -47,6 +47,15 @@ class Competition extends Model
         'stage_bell_sound',
         'stage_state',
         'order',
+        'card_template',
+        'card_title',
+        'card_theme_color',
+        'card_number_label',
+        'card_team_label',
+        'card_school_label',
+        'card_mascot',
+        'card_footer_text',
+        'card_settings',
     ];
 
     protected static function booted()
@@ -97,6 +106,14 @@ class Competition extends Model
         'guidelines_embed_url',
         'guidelines_download_url',
         'tier_statuses',
+        'effective_card_template',
+        'effective_card_title',
+        'effective_card_number_label',
+        'effective_card_team_label',
+        'effective_card_school_label',
+        'effective_card_theme_color',
+        'effective_card_footer_text',
+        'effective_card_mascot_url',
     ];
 
     protected function casts(): array
@@ -118,7 +135,165 @@ class Competition extends Model
             'registration_fee' => 'decimal:2',
             'order' => 'integer',
             'bracket_settings' => 'array',
+            'card_settings' => 'array',
         ];
+    }
+
+    public function getEffectiveCardTemplateAttribute(): string
+    {
+        if (! empty($this->card_template) && $this->card_template !== 'auto') {
+            return $this->card_template;
+        }
+
+        $code = strtoupper((string) $this->code);
+        $name = strtolower((string) $this->name);
+        $slug = strtolower((string) $this->slug);
+
+        if ($code === 'PRM' || str_contains($name, 'pramuka') || str_contains($slug, 'pramuka')) {
+            return 'pramuka';
+        }
+
+        if ($code === 'ROB' || str_contains($name, 'robot') || str_contains($slug, 'robot')) {
+            return 'robotik';
+        }
+
+        if (in_array($code, ['BLT', 'TMJ']) || str_contains($name, 'bulu tangkis') || str_contains($name, 'tenis meja')) {
+            return 'olahraga';
+        }
+
+        return 'universal';
+    }
+
+    public function getEffectiveCardTitleAttribute(): string
+    {
+        if (! empty($this->card_title)) {
+            return $this->card_title;
+        }
+
+        $template = $this->effective_card_template;
+        if ($template === 'pramuka') {
+            return 'ARYAKASIGA 2025';
+        }
+
+        $appName = AppSetting::get('app_name', 'TALENTA 2026');
+
+        if ($template === 'robotik') {
+            return $appName.' - ROBOTIK';
+        }
+
+        if ($template === 'olahraga') {
+            return $appName.' - '.strtoupper($this->name);
+        }
+
+        return $appName.' - '.strtoupper($this->name);
+    }
+
+    public function getEffectiveCardNumberLabelAttribute(): string
+    {
+        if (! empty($this->card_number_label)) {
+            return $this->card_number_label;
+        }
+
+        $template = $this->effective_card_template;
+        if ($template === 'pramuka') {
+            return 'No Regu';
+        }
+
+        if ($template === 'robotik') {
+            return 'No Tim';
+        }
+
+        if ($template === 'olahraga') {
+            return 'No Undian';
+        }
+
+        return ($this->type === 'beregu' || $this->type === 'tim' || $this->type === 'kolektif') ? 'No Regu/Tim' : 'No Peserta';
+    }
+
+    public function getEffectiveCardTeamLabelAttribute(): string
+    {
+        if (! empty($this->card_team_label)) {
+            return $this->card_team_label;
+        }
+
+        $template = $this->effective_card_template;
+        if ($template === 'pramuka') {
+            return 'Regu';
+        }
+
+        if ($template === 'robotik') {
+            return 'Kategori';
+        }
+
+        if ($template === 'olahraga') {
+            return 'Kategori Tanding';
+        }
+
+        return ($this->type === 'beregu' || $this->type === 'tim' || $this->type === 'kolektif') ? 'Nama Tim / Regu' : 'Cabang Lomba';
+    }
+
+    public function getEffectiveCardSchoolLabelAttribute(): string
+    {
+        if (! empty($this->card_school_label)) {
+            return $this->card_school_label;
+        }
+
+        if ($this->effective_card_template === 'pramuka') {
+            return 'Pangkalan';
+        }
+
+        return 'Asal Sekolah';
+    }
+
+    public function getEffectiveCardThemeColorAttribute(): string
+    {
+        if (! empty($this->card_theme_color)) {
+            return $this->card_theme_color;
+        }
+
+        $template = $this->effective_card_template;
+        if ($template === 'pramuka') {
+            return 'red';
+        }
+
+        if ($template === 'robotik') {
+            return 'blue';
+        }
+
+        if ($template === 'olahraga') {
+            return 'emerald';
+        }
+
+        return 'emerald';
+    }
+
+    public function getEffectiveCardFooterTextAttribute(): string
+    {
+        if (! empty($this->card_footer_text)) {
+            return $this->card_footer_text;
+        }
+
+        return AppSetting::get('app_website', 'https://mtsn1blitar.sch.id');
+    }
+
+    public function getEffectiveCardMascotUrlAttribute(): ?string
+    {
+        if (! empty($this->card_mascot)) {
+            return asset('storage/'.$this->card_mascot);
+        }
+
+        if ($this->effective_card_template === 'pramuka') {
+            if (file_exists(public_path('images/mascot-pramuka.png'))) {
+                return asset('images/mascot-pramuka.png');
+            }
+        }
+
+        $logo = AppSetting::get('event_logo', AppSetting::get('app_logo'));
+        if (! empty($logo)) {
+            return asset('storage/'.$logo);
+        }
+
+        return null;
     }
 
     public function getTierFeesAttribute(): array

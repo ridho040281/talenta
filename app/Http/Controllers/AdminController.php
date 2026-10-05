@@ -238,6 +238,14 @@ class AdminController extends Controller
             'stage_warning_minutes' => ['nullable', 'integer', 'min:1'],
             'stage_overtime_minutes' => ['nullable', 'integer', 'min:0'],
             'stage_bell_sound' => ['nullable', 'string'],
+            'card_template' => ['nullable', 'string'],
+            'card_title' => ['nullable', 'string', 'max:255'],
+            'card_theme_color' => ['nullable', 'string', 'max:50'],
+            'card_number_label' => ['nullable', 'string', 'max:50'],
+            'card_team_label' => ['nullable', 'string', 'max:50'],
+            'card_school_label' => ['nullable', 'string', 'max:50'],
+            'card_footer_text' => ['nullable', 'string', 'max:255'],
+            'card_mascot_file' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp,svg', 'max:5120'],
         ]);
 
         $guidelinesPath = $competition->guidelines_file;
@@ -246,6 +254,14 @@ class AdminController extends Controller
             AdminSettingsController::ensurePublicStorageSync($guidelinesPath);
         } elseif ($request->has('guidelines_file')) {
             $guidelinesPath = $request->input('guidelines_file');
+        }
+
+        $cardMascotPath = $competition->card_mascot;
+        if ($request->hasFile('card_mascot_file')) {
+            $cardMascotPath = $request->file('card_mascot_file')->store('settings/mascots', 'public');
+            AdminSettingsController::ensurePublicStorageSync($cardMascotPath);
+        } elseif ($request->boolean('remove_card_mascot')) {
+            $cardMascotPath = null;
         }
 
         $primaryPicId = $request->filled('pic_id') ? $request->input('pic_id') : ($validated['pic_id'] ?? null);
@@ -311,6 +327,14 @@ class AdminController extends Controller
             'stage_warning_minutes' => (int) $request->input('stage_warning_minutes', $competition->stage_warning_minutes ?: 2),
             'stage_overtime_minutes' => (int) $request->input('stage_overtime_minutes', $competition->stage_overtime_minutes ?: 1),
             'stage_bell_sound' => $request->input('stage_bell_sound', $competition->stage_bell_sound ?: 'bell'),
+            'card_template' => $request->input('card_template') ?: 'auto',
+            'card_title' => $request->input('card_title') ?: null,
+            'card_theme_color' => $request->input('card_theme_color') ?: 'emerald',
+            'card_number_label' => $request->input('card_number_label') ?: null,
+            'card_team_label' => $request->input('card_team_label') ?: null,
+            'card_school_label' => $request->input('card_school_label') ?: null,
+            'card_mascot' => $cardMascotPath,
+            'card_footer_text' => $request->input('card_footer_text') ?: null,
         ]);
 
         // Update Criteria if submitted

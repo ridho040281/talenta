@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Competition;
 use App\Models\Registration;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -112,5 +113,72 @@ class DocumentController extends Controller
         }
 
         return view('documents.print-collective-registrations', compact('registrations'));
+    }
+
+    /**
+     * 5. Cetak Kartu Tanda Peserta (ID Card) - Satuan atau Per Regu
+     */
+    public function printIdCard($registration_id)
+    {
+        $registration = Registration::with(['user', 'competition.category', 'members', 'verifier'])->findOrFail($registration_id);
+        $redirect = $this->checkAccess($registration, true);
+        if ($redirect) {
+            return $redirect;
+        }
+
+        return view('documents.print-idcard', compact('registration'));
+    }
+
+    /**
+     * 6. Cetak Massal Semua Kartu Peserta Cabang Lomba (A4 Grid 4 Kartu)
+     */
+    public function printAllCompetitionIdCards(Request $request)
+    {
+        $user = Auth::user();
+        if (! $user) {
+            abort(401);
+        }
+
+        $competitionId = $request->query('competition_id');
+        if (! $competitionId) {
+            return back()->with('error', 'Cabang lomba tidak ditemukan.');
+        }
+
+        $competition = Competition::with('category')->findOrFail($competitionId);
+
+        // Security check for PIC
+        if ($user->role === 'pic_lomba') {
+            $managedCompIds = PicController::getManagedCompetitionIds($user);
+            if (! in_array($competition->id, $managedCompIds)) {
+                abort(403, 'Anda tidak memiliki akses sebagai PIC untuk cabang lomba ini.');
+            }
+        }
+
+        $query = Registration::with(['user', 'competition.category', 'members', 'verifier'])
+            ->where('competition_id', $competition->id)
+            ->where('status', 'verified');
+
+        if ($request->filled('gender') && $request->query('gender') !== 'all') {
+            $query->where('primary_gender', $request->query('gender'));
+        }
+
+        if ($request->filled('category_class') && $request->query('category_class') !== 'all') {
+            $catClass = strtolower($request->query('category_class'));
+            if ($competition->code === 'ROB') {
+                $query->where(function ($q) use ($catClass) {
+                    $q->where('sub_category', 'like', "%{$catClass}%")
+                        ->orWhere('target_class', 'like', "%{$catClass}%");
+                });
+            } else {
+                $query->where('target_class', 'like', "%{$catClass}%");
+            }
+        }
+
+        $registrations = $query->orderBy('draw_number', 'asc')
+            ->orderBy('participant_number', 'asc')
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        return view('documents.print-all-idcards', compact('competition', 'registrations'));
     }
 }

@@ -2164,8 +2164,8 @@
                     </div>
                 </div>
 
-                <!-- 2 Action Options -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <!-- 3 Action Options -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                     
                     <!-- Option 1: PDF Print Out -->
                     <a :href="'{{ url('pic/peserta/cetak-pdf') }}?competition_id=' + selectedPrintCompetition + '&status=' + selectedPrintStatus + '&gender=' + selectedPrintGender + '&category_class=' + selectedPrintCategory" target="_blank" class="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 hover:border-emerald-500/60 transition group flex flex-col justify-between cursor-pointer space-y-3">
@@ -2173,9 +2173,9 @@
                             <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold">
                                 <i data-lucide="file-text" class="w-4 h-4"></i>
                             </div>
-                            <h4 class="font-black text-white text-sm group-hover:text-emerald-400 transition">Cetak PDF / Print Out</h4>
+                            <h4 class="font-black text-white text-sm group-hover:text-emerald-400 transition">Cetak PDF / Absensi</h4>
                             <p class="text-[11px] text-slate-400 leading-relaxed">
-                                Dilengkapi <strong>KOP Surat Resmi MTsN 1 Blitar</strong>. Otomatis pisah halaman per PA/PI dan Kategori Kelas.
+                                Dilengkapi <strong>KOP Resmi</strong>. Otomatis pisah halaman per PA/PI & Kategori.
                             </p>
                         </div>
                         <span class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400 pt-2 border-t border-emerald-500/20">
@@ -2192,12 +2192,29 @@
                             </div>
                             <h4 class="font-black text-white text-sm group-hover:text-[#84D0FF] transition">Export Excel (.xls)</h4>
                             <p class="text-[11px] text-slate-400 leading-relaxed">
-                                Data rapi dalam <strong>1 Single Sheet</strong> yang diurutkan berurutan berdasarkan Kategori Kelas dan PA/PI.
+                                Data rapi dalam <strong>1 Single Sheet</strong> berurutan berdasarkan Kategori & Gender.
                             </p>
                         </div>
                         <span class="inline-flex items-center gap-1.5 text-xs font-bold text-[#84D0FF] pt-2 border-t border-[#4E6EFF]/20">
                             <span>Download File Excel</span>
                             <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </a>
+
+                    <!-- Option 3: Cetak ID Card Massal -->
+                    <a :href="'{{ url('pic/peserta/cetak-kartu-all') }}?competition_id=' + selectedPrintCompetition + '&status=' + selectedPrintStatus + '&gender=' + selectedPrintGender + '&category_class=' + selectedPrintCategory" target="_blank" class="p-4 rounded-2xl border border-cyan-500/30 bg-cyan-500/10 hover:bg-cyan-500/20 hover:border-cyan-500/60 transition group flex flex-col justify-between cursor-pointer space-y-3">
+                        <div class="space-y-1.5">
+                            <div class="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center font-bold">
+                                <i data-lucide="contact" class="w-4 h-4"></i>
+                            </div>
+                            <h4 class="font-black text-white text-sm group-hover:text-cyan-400 transition">ID Card (A4 Grid)</h4>
+                            <p class="text-[11px] text-slate-400 leading-relaxed">
+                                Cetak massal kartu peserta (<strong>4 kartu per lembar</strong>) siap gunting lengkap maskot.
+                            </p>
+                        </div>
+                        <span class="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-400 pt-2 border-t border-cyan-500/20">
+                            <span>Buka Cetak ID Card</span>
+                            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
                         </span>
                     </a>
 
@@ -2272,6 +2289,20 @@
                             </div>
                         </div>
                         <i data-lucide="printer" class="w-4 h-4 text-amber-400 shrink-0"></i>
+                    </a>
+
+                    <!-- 4. Kartu Tanda Peserta (ID Card) -->
+                    <a :href="'{{ url('dokumen/kartu-peserta') }}/' + (selectedSingleReg ? selectedSingleReg.id : '')" target="_blank" class="p-4 rounded-2xl border border-white/[0.08] bg-[#0C111D] hover:bg-white/[0.04] hover:border-cyan-500/50 transition group flex items-center justify-between cursor-pointer">
+                        <div class="flex items-center gap-3.5">
+                            <div class="w-10 h-10 rounded-xl bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 flex items-center justify-center font-bold shrink-0 shadow-xs">
+                                <i data-lucide="contact" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-black text-white text-xs sm:text-sm group-hover:text-cyan-400 transition">🪪 Kartu Tanda Peserta (ID Card)</h4>
+                                <p class="text-[11px] text-slate-400 mt-0.5">Format ID Card lanyard lengkap pasfoto 3x4, nomor regu, dan maskot cabang.</p>
+                            </div>
+                        </div>
+                        <i data-lucide="printer" class="w-4 h-4 text-cyan-400 shrink-0"></i>
                     </a>
 
                 </div>
