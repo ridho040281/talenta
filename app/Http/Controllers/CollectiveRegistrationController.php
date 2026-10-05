@@ -422,7 +422,7 @@ class CollectiveRegistrationController extends Controller
             if ($isRobotik) {
                 $teamMaxMembers = 3;
             } elseif ($isPramuka) {
-                $teamMaxMembers = 6;
+                $teamMaxMembers = 8;
             } elseif ($isGandaBlt) {
                 $teamMaxMembers = 2;
             } elseif ($compObj && $compObj->max_members > 0) {
@@ -659,8 +659,8 @@ class CollectiveRegistrationController extends Controller
                 $minMembers = ($tComp && $tComp->min_members >= 2) ? $tComp->min_members : 2;
                 $maxMembers = ($tComp && $tComp->max_members >= 2) ? $tComp->max_members : 3;
             } elseif ($tCompCode === 'PRM' || str_contains(strtolower($tComp?->name ?? ''), 'pramuka')) {
-                $minMembers = ($tComp && $tComp->min_members >= 2) ? $tComp->min_members : 4;
-                $maxMembers = ($tComp && $tComp->max_members >= 2) ? $tComp->max_members : 6;
+                $minMembers = ($tComp && $tComp->min_members >= 2) ? $tComp->min_members : 8;
+                $maxMembers = ($tComp && $tComp->max_members >= 2) ? $tComp->max_members : 8;
             } elseif ($tCompCode === 'BLT') {
                 $minMembers = 2;
                 $maxMembers = 2;

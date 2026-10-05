@@ -52,6 +52,8 @@
                 break-after: page !important;
                 width: 194mm !important;
                 min-height: 280mm !important;
+                border: none !important;
+                padding: 2mm !important;
             }
 
             /* Lembar A4 Landscape (Grid 8 - Super Hemat) */
@@ -61,9 +63,10 @@
                 page-break-after: always !important;
                 break-after: page !important;
                 width: 288mm !important;
-                min-height: 200mm !important;
-                max-height: 202mm !important;
-                overflow: hidden !important;
+                min-height: 198mm !important;
+                border: none !important;
+                padding: 1.5mm !important;
+                overflow: visible !important;
             }
 
             .a4-print-page:last-child,
@@ -104,15 +107,82 @@
 
     @php
         $competition = $registration->competition;
-        $members = $registration->members;
-        if ($members->isEmpty()) {
-            // Fallback: create mock member from registration
+        
+        // 1. Kumpulkan seluruh anggota yang harus dicetak
+        $allItems = collect();
+
+        // Anggota langsung dari pendaftaran ini
+        if ($registration->members && $registration->members->isNotEmpty()) {
+            foreach ($registration->members as $m) {
+                $allItems->push([
+                    'registration' => $registration,
+                    'competition' => $competition,
+                    'member' => $m,
+                ]);
+            }
+        } else {
             $mockMember = new \App\Models\RegistrationMember([
                 'full_name' => $registration->user->name ?? $registration->team_name ?? 'Peserta Lomba',
                 'school_name' => $registration->institution_name,
                 'photo' => null,
             ]);
-            $members = collect([$mockMember]);
+            $allItems->push([
+                'registration' => $registration,
+                'competition' => $competition,
+                'member' => $mockMember,
+            ]);
+        }
+
+        // 2. Jika merupakan cabang tim/kolektif (Pramuka, Robotik, dll) atau memiliki nama regu/tim,
+        // cari juga pendaftaran anggota lain dalam satu regu/tim yang sama (sibling registrations)
+        $isTeamOrCollective = ! empty($registration->team_name) || $competition->isCollective();
+        if ($isTeamOrCollective) {
+            $siblingQuery = \App\Models\Registration::with(['members', 'user', 'competition.category'])
+                ->where('competition_id', $registration->competition_id)
+                ->where('id', '!=', $registration->id);
+
+            if (! empty($registration->team_name)) {
+                $siblingQuery->where(function ($q) use ($registration) {
+                    $q->where('team_name', $registration->team_name);
+                    if (! empty($registration->invoice_id)) {
+                        $q->orWhere('invoice_id', $registration->invoice_id);
+                    }
+                });
+            } elseif (! empty($registration->invoice_id)) {
+                $siblingQuery->where('invoice_id', $registration->invoice_id);
+            }
+
+            $siblings = $siblingQuery->orderBy('draw_number', 'asc')->orderBy('id', 'asc')->get();
+
+            foreach ($siblings as $siblingReg) {
+                // Wariskan nomor undian dari registrasi utama jika sibling belum punya
+                if (empty($siblingReg->draw_number) && ! empty($registration->draw_number)) {
+                    $siblingReg->draw_number = $registration->draw_number;
+                }
+
+                if ($siblingReg->members && $siblingReg->members->isNotEmpty()) {
+                    foreach ($siblingReg->members as $sm) {
+                        if (! $allItems->contains(fn ($it) => ! empty($it['member']->id) && $it['member']->id === $sm->id)) {
+                            $allItems->push([
+                                'registration' => $siblingReg,
+                                'competition' => $competition,
+                                'member' => $sm,
+                            ]);
+                        }
+                    }
+                } else {
+                    $mockSiblingMember = new \App\Models\RegistrationMember([
+                        'full_name' => $siblingReg->user->name ?? $siblingReg->team_name ?? 'Peserta Lomba',
+                        'school_name' => $siblingReg->institution_name,
+                        'photo' => null,
+                    ]);
+                    $allItems->push([
+                        'registration' => $siblingReg,
+                        'competition' => $competition,
+                        'member' => $mockSiblingMember,
+                    ]);
+                }
+            }
         }
 
         $templateName = $competition->effective_card_template;
@@ -120,9 +190,9 @@
             ? 'documents.idcards.' . $templateName 
             : 'documents.idcards.universal';
 
-        $chunks8 = $members->chunk(8);
-        $chunks6 = $members->chunk(6);
-        $chunks4 = $members->chunk(4);
+        $chunks8 = $allItems->chunk(8);
+        $chunks6 = $allItems->chunk(6);
+        $chunks4 = $allItems->chunk(4);
     @endphp
 
     <!-- Top Action Bar (Hidden on Print) -->
@@ -137,7 +207,7 @@
                     Cetak Kartu Peserta — {{ $competition->name }}
                 </h1>
                 <p class="text-[11px] text-slate-500">
-                    Total {{ $members->count() }} Anggota • Format: <strong class="text-emerald-700 font-bold uppercase">{{ $templateName }}</strong> • Ukuran: <span class="bg-emerald-50 text-emerald-800 font-bold px-1.5 py-0.5 rounded border border-emerald-200">B2 (10,5 x 6,5 cm)</span>
+                    Total {{ $allItems->count() }} Anggota {{ $registration->team_name ? '• ' . $registration->team_name : '' }} • Format: <strong class="text-emerald-700 font-bold uppercase">{{ $templateName }}</strong> • Ukuran: <span class="bg-emerald-50 text-emerald-800 font-bold px-1.5 py-0.5 rounded border border-emerald-200">B2 (10,5 x 6,5 cm)</span>
                 </p>
             </div>
         </div>
@@ -178,8 +248,8 @@
 
     <!-- ==================== MODE 1: GRID 8 (A4 LANDSCAPE - 8 KARTU SUSUN 4x2) ==================== -->
     <div x-show="printLayout === 'grid8'" class="w-full flex flex-col items-center gap-8">
-        @foreach($chunks8 as $pageIndex => $chunkMembers)
-            <div class="a4-landscape-page bg-white p-3 shadow-xl border border-slate-300 rounded-2xl flex flex-col justify-between" style="width: 288mm; min-height: 200mm; max-height: 202mm; box-sizing: border-box;">
+        @foreach($chunks8 as $pageIndex => $chunkItems)
+            <div class="a4-landscape-page bg-white p-2.5 shadow-xl border border-slate-300 rounded-2xl flex flex-col justify-between" style="width: 288mm; min-height: 198mm; box-sizing: border-box;">
                 
                 <!-- Notice on top of sheet (Hidden in print) -->
                 <div class="no-print pb-1 mb-1 border-b border-slate-200 flex items-center justify-between text-[11px] text-slate-500">
@@ -187,21 +257,21 @@
                     <span class="text-emerald-700 font-bold">✂️ Susunan 4 Kolom x 2 Baris • Ukuran Pas Plastik B2 (10,5 x 6,5 cm)</span>
                 </div>
 
-                <!-- 4x2 Grid of Cards (Scaled to fit A4 Landscape printable margins) -->
-                <div class="flex-1 flex items-center justify-center overflow-hidden">
-                    <div class="grid grid-cols-4 gap-2" style="transform: scale(0.93); transform-origin: top center;">
-                        @foreach($chunkMembers as $memberItem)
+                <!-- 4x2 Grid of Cards (Scaled to fit A4 Landscape printable margins without clipping top header) -->
+                <div class="flex-1 flex flex-col items-center justify-start pt-1" style="overflow: visible;">
+                    <div class="grid grid-cols-4 gap-2" style="transform: scale(0.90); transform-origin: top center; margin-bottom: -21mm;">
+                        @foreach($chunkItems as $item)
                             <div class="card-cut-mark flex items-center justify-center p-0.5">
                                 @include($viewPath, [
-                                    'registration' => $registration,
-                                    'competition' => $competition,
-                                    'member' => $memberItem
+                                    'registration' => $item['registration'],
+                                    'competition' => $item['competition'],
+                                    'member' => $item['member']
                                 ])
                             </div>
                         @endforeach
 
                         {{-- Empty slots placeholder to maintain 4x2 grid alignment --}}
-                        @for($i = $chunkMembers->count(); $i < 8; $i++)
+                        @for($i = $chunkItems->count(); $i < 8; $i++)
                             <div class="card-cut-mark border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-300 text-xs text-center p-2" style="width: 65mm; height: 105mm; box-sizing: border-box;">
                                 <i data-lucide="scissors" class="w-5 h-5 mb-1 opacity-40"></i>
                                 <span class="text-[9px] uppercase font-bold tracking-wider">Slot Kosong</span>
@@ -221,7 +291,7 @@
 
     <!-- ==================== MODE 2: GRID 6 (A4 PORTRAIT - 6 KARTU SUSUN 3x2) ==================== -->
     <div x-show="printLayout === 'grid6'" x-cloak class="w-full flex flex-col items-center gap-8">
-        @foreach($chunks6 as $pageIndex => $chunkMembers)
+        @foreach($chunks6 as $pageIndex => $chunkItems)
             <div class="a4-print-page bg-white p-3 shadow-xl border border-slate-300 rounded-2xl flex flex-col justify-between" style="width: 194mm; min-height: 280mm; box-sizing: border-box;">
                 
                 <!-- Notice on top of sheet (Hidden in print) -->
@@ -231,20 +301,20 @@
                 </div>
 
                 <!-- 3x2 Grid of Cards -->
-                <div class="flex-1 flex items-center justify-center overflow-hidden">
-                    <div class="grid grid-cols-3 gap-2" style="transform: scale(0.97); transform-origin: top center;">
-                        @foreach($chunkMembers as $memberItem)
+                <div class="flex-1 flex flex-col items-center justify-start pt-1" style="overflow: visible;">
+                    <div class="grid grid-cols-3 gap-2" style="transform: scale(0.94); transform-origin: top center; margin-bottom: -12mm;">
+                        @foreach($chunkItems as $item)
                             <div class="card-cut-mark flex items-center justify-center p-0.5">
                                 @include($viewPath, [
-                                    'registration' => $registration,
-                                    'competition' => $competition,
-                                    'member' => $memberItem
+                                    'registration' => $item['registration'],
+                                    'competition' => $item['competition'],
+                                    'member' => $item['member']
                                 ])
                             </div>
                         @endforeach
 
                         {{-- Empty slots placeholder to maintain 3x2 grid alignment --}}
-                        @for($i = $chunkMembers->count(); $i < 6; $i++)
+                        @for($i = $chunkItems->count(); $i < 6; $i++)
                             <div class="card-cut-mark border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-300 text-xs text-center p-2" style="width: 65mm; height: 105mm; box-sizing: border-box;">
                                 <i data-lucide="scissors" class="w-5 h-5 mb-1 opacity-40"></i>
                                 <span class="text-[9px] uppercase font-bold tracking-wider">Slot Kosong</span>
@@ -264,7 +334,7 @@
 
     <!-- ==================== MODE 3: GRID 4 (A4 PORTRAIT - 4 KARTU STANDAR 2x2) ==================== -->
     <div x-show="printLayout === 'grid4'" x-cloak class="w-full flex flex-col items-center gap-8">
-        @foreach($chunks4 as $pageIndex => $chunkMembers)
+        @foreach($chunks4 as $pageIndex => $chunkItems)
             <div class="a4-print-page bg-white p-4 shadow-xl border border-slate-300 rounded-2xl flex flex-col justify-between" style="width: 194mm; min-height: 280mm; box-sizing: border-box;">
                 
                 <!-- Notice on top of sheet (Hidden in print) -->
@@ -275,18 +345,18 @@
 
                 <!-- 2x2 Grid of Cards -->
                 <div class="grid grid-cols-2 gap-4 flex-1">
-                    @foreach($chunkMembers as $memberItem)
+                    @foreach($chunkItems as $item)
                         <div class="card-cut-mark flex items-center justify-center p-1">
                             @include($viewPath, [
-                                'registration' => $registration,
-                                'competition' => $competition,
-                                'member' => $memberItem
+                                'registration' => $item['registration'],
+                                'competition' => $item['competition'],
+                                'member' => $item['member']
                             ])
                         </div>
                     @endforeach
 
                     {{-- Empty slots placeholder to maintain grid alignment --}}
-                    @for($i = $chunkMembers->count(); $i < 4; $i++)
+                    @for($i = $chunkItems->count(); $i < 4; $i++)
                         <div class="card-cut-mark border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-300 text-xs text-center p-4">
                             <i data-lucide="scissors" class="w-6 h-6 mb-1 opacity-40"></i>
                             <span class="text-[10px] uppercase font-bold tracking-wider">Slot Kosong</span>
@@ -305,15 +375,15 @@
 
     <!-- ==================== MODE 4: SATUAN LANYARD (Single Badges) ==================== -->
     <div x-show="printLayout === 'single'" x-cloak class="w-full flex flex-col items-center gap-6">
-        @foreach($members as $mIdx => $memberItem)
+        @foreach($allItems as $mIdx => $item)
             <div class="id-card-single-wrapper bg-white p-3 rounded-2xl shadow-xl border border-slate-300 flex flex-col items-center">
                 <div class="no-print pb-2 mb-2 w-full text-center text-xs text-slate-500 border-b border-slate-200 font-bold">
-                    Kartu Anggota #{{ $mIdx + 1 }} — {{ $memberItem->full_name }}
+                    Kartu Anggota #{{ $mIdx + 1 }} — {{ $item['member']->full_name }}
                 </div>
                 @include($viewPath, [
-                    'registration' => $registration,
-                    'competition' => $competition,
-                    'member' => $memberItem
+                    'registration' => $item['registration'],
+                    'competition' => $item['competition'],
+                    'member' => $item['member']
                 ])
             </div>
         @endforeach

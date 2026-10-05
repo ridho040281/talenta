@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CETAK MASSAL KARTU PESERTA — {{ $competition->name }}</title>
+    <title>CETAK MASSAL KARTU PESERTA - {{ $competition->name }} ({{ count($registrations) }} Pendaftar)</title>
     
     <!-- Favicon -->
     @if(!empty($appSettings['favicon']))
         <link rel="icon" type="image/png" href="{{ asset('storage/' . $appSettings['favicon']) }}">
         <link rel="shortcut icon" href="{{ asset('storage/' . $appSettings['favicon']) }}">
-        <link rel="apple-touch-icon" href="{{ asset('storage/' . $appSettings['favicon']) }}">
     @else
         <link rel="icon" href="{{ asset('favicon.ico') }}">
     @endif
@@ -53,6 +52,8 @@
                 break-after: page !important;
                 width: 194mm !important;
                 min-height: 280mm !important;
+                border: none !important;
+                padding: 2mm !important;
             }
 
             /* Lembar A4 Landscape (Grid 8 - Super Hemat) */
@@ -62,9 +63,10 @@
                 page-break-after: always !important;
                 break-after: page !important;
                 width: 288mm !important;
-                min-height: 200mm !important;
-                max-height: 202mm !important;
-                overflow: hidden !important;
+                min-height: 198mm !important;
+                border: none !important;
+                padding: 1.5mm !important;
+                overflow: visible !important;
             }
 
             .a4-print-page:last-child,
@@ -86,7 +88,7 @@
         }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen py-6 px-4 flex flex-col items-center"
+<body class="bg-slate-100 min-h-screen py-6 px-4 flex flex-col items-center" 
       x-data="{ 
           printLayout: 'grid8',
           setLayout(layout) {
@@ -186,7 +188,7 @@
     <!-- ==================== MODE 1: GRID 8 (A4 LANDSCAPE - 8 KARTU SUSUN 4x2) ==================== -->
     <div x-show="printLayout === 'grid8'" class="w-full flex flex-col items-center gap-8">
         @forelse($chunks8 as $pageIndex => $chunkItems)
-            <div class="a4-landscape-page bg-white p-3 shadow-xl border border-slate-300 rounded-2xl flex flex-col justify-between" style="width: 288mm; min-height: 200mm; max-height: 202mm; box-sizing: border-box;">
+            <div class="a4-landscape-page bg-white p-2.5 shadow-xl border border-slate-300 rounded-2xl flex flex-col justify-between" style="width: 288mm; min-height: 198mm; box-sizing: border-box;">
                 
                 <!-- Notice on top of sheet (Hidden in print) -->
                 <div class="no-print pb-1 mb-1 border-b border-slate-200 flex items-center justify-between text-[11px] text-slate-500">
@@ -194,9 +196,9 @@
                     <span class="text-emerald-700 font-bold">✂️ Susunan 4 Kolom x 2 Baris • Ukuran Pas Plastik B2 (10,5 x 6,5 cm)</span>
                 </div>
 
-                <!-- 4x2 Grid of Cards -->
-                <div class="flex-1 flex items-center justify-center overflow-hidden">
-                    <div class="grid grid-cols-4 gap-2" style="transform: scale(0.93); transform-origin: top center;">
+                <!-- 4x2 Grid of Cards (Scaled to fit A4 Landscape printable margins without clipping top header) -->
+                <div class="flex-1 flex flex-col items-center justify-start pt-1" style="overflow: visible;">
+                    <div class="grid grid-cols-4 gap-2" style="transform: scale(0.90); transform-origin: top center; margin-bottom: -21mm;">
                         @foreach($chunkItems as $item)
                             <div class="card-cut-mark flex items-center justify-center p-0.5">
                                 @include($viewPath, [
@@ -244,8 +246,8 @@
                 </div>
 
                 <!-- 3x2 Grid of Cards -->
-                <div class="flex-1 flex items-center justify-center overflow-hidden">
-                    <div class="grid grid-cols-3 gap-2" style="transform: scale(0.97); transform-origin: top center;">
+                <div class="flex-1 flex flex-col items-center justify-start pt-1" style="overflow: visible;">
+                    <div class="grid grid-cols-3 gap-2" style="transform: scale(0.94); transform-origin: top center; margin-bottom: -12mm;">
                         @foreach($chunkItems as $item)
                             <div class="card-cut-mark flex items-center justify-center p-0.5">
                                 @include($viewPath, [
