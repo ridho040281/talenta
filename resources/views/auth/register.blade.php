@@ -28,37 +28,16 @@
             <form action="{{ route('register.post') }}" method="POST" class="space-y-5">
                 @csrf
 
-                <!-- NISN Input (Primary Identifier & Default Password) -->
-                <div>
-                    <div class="flex items-center justify-between mb-1.5">
-                        <label for="nisn" class="block text-xs font-bold uppercase tracking-wider text-slate-300">
-                            NISN (Nomor Induk Siswa Nasional) <span class="text-rose-400">*</span>
-                        </label>
-                        <span class="text-[10px] font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-lg border border-amber-400/20">
-                            Otomatis Jadi User & Sandi
-                        </span>
-                    </div>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                            <i data-lucide="badge-check" class="w-5 h-5 text-emerald-400"></i>
-                        </div>
-                        <input id="nisn" name="nisn" type="text" required value="{{ old('nisn') }}" placeholder="Contoh: 0112345678" maxlength="20" class="block w-full pl-11 pr-4 py-3 rounded-2xl bg-slate-900/90 border border-slate-700/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-white font-mono text-sm outline-none transition @error('nisn') border-rose-500 @enderror">
-                    </div>
-                    @error('nisn')
-                        <p class="mt-1 text-xs text-rose-400">{{ $message }}</p>
-                    @enderror
-                </div>
-
                 <!-- Name Input -->
                 <div>
                     <label for="name" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                        Nama Lengkap Pendaftar / Peserta <span class="text-rose-400">*</span>
+                        Nama Lengkap Pendaftar / Pembina <span class="text-rose-400">*</span>
                     </label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
                             <i data-lucide="user" class="w-5 h-5"></i>
                         </div>
-                        <input id="name" name="name" type="text" required value="{{ old('name') }}" placeholder="Contoh: Muhammad Azka / Ust. Ridwan" class="block w-full pl-11 pr-4 py-3 rounded-2xl bg-slate-900/90 border border-slate-700/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-white text-sm outline-none transition @error('name') border-rose-500 @enderror">
+                        <input id="name" name="name" type="text" required value="{{ old('name') }}" placeholder="Contoh: Budi Santoso, S.Pd / Ust. Ridwan" class="block w-full pl-11 pr-4 py-3 rounded-2xl bg-slate-900/90 border border-slate-700/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-white text-sm outline-none transition @error('name') border-rose-500 @enderror">
                     </div>
                     @error('name')
                         <p class="mt-1 text-xs text-rose-400">{{ $message }}</p>
@@ -81,17 +60,23 @@
                     @enderror
                 </div>
 
-                <!-- Phone WhatsApp -->
+                <!-- Phone WhatsApp (Primary Identifier & Default Password) -->
                 <div>
-                    <label for="phone" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                        Nomor WhatsApp Aktif <span class="text-rose-400">*</span>
-                    </label>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label for="phone" class="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                            Nomor WhatsApp Aktif <span class="text-rose-400">*</span>
+                        </label>
+                        <span class="text-[10px] font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-lg border border-amber-400/20">
+                            Otomatis Jadi User & Sandi
+                        </span>
+                    </div>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                            <i data-lucide="phone" class="w-5 h-5"></i>
+                            <i data-lucide="phone" class="w-5 h-5 text-emerald-400"></i>
                         </div>
-                        <input id="phone" name="phone" type="text" required value="{{ old('phone') }}" placeholder="08xxxxxxxxxx" class="block w-full pl-11 pr-4 py-3 rounded-2xl bg-slate-900/90 border border-slate-700/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-white text-sm outline-none transition @error('phone') border-rose-500 @enderror">
+                        <input id="phone" name="phone" type="text" required value="{{ old('phone') }}" placeholder="Contoh: 081234567890" maxlength="20" class="block w-full pl-11 pr-4 py-3 rounded-2xl bg-slate-900/90 border border-slate-700/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-white font-mono text-sm outline-none transition @error('phone') border-rose-500 @enderror">
                     </div>
+                    <p class="text-[11px] text-slate-400 mt-1">Digunakan untuk login akun dan menerima notifikasi WhatsApp resmi dari sistem TALENTA.</p>
                     @error('phone')
                         <p class="mt-1 text-xs text-rose-400">{{ $message }}</p>
                     @enderror
@@ -117,8 +102,8 @@
                 <div class="p-4 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 flex items-start gap-3 text-emerald-200 text-xs">
                     <i data-lucide="key" class="w-5 h-5 text-emerald-400 shrink-0 mt-0.5"></i>
                     <div>
-                        <span class="font-bold text-white block">Informasi Login Otomatis:</span>
-                        <span>Username login dan kata sandi awal Anda adalah <strong>NISN</strong> yang dimasukkan. Anda akan mendapatkan bukti pembuatan akun setelah menekan tombol daftar di bawah.</span>
+                        <span class="font-bold text-white block">Informasi Login Akun Induk:</span>
+                        <span>Username login dan kata sandi awal Anda adalah <strong>Nomor WhatsApp</strong> yang dimasukkan. Akun ini dapat digunakan untuk mendaftarkan <strong>banyak siswa</strong> pada berbagai cabang lomba.</span>
                     </div>
                 </div>
 

@@ -456,7 +456,7 @@
                             Bukti Pembuatan Akun
                         </h4>
                         <p class="text-xs text-slate-400 mt-1 leading-relaxed">
-                            Lembar bukti sah registrasi akun sistem login peserta (NISN/ID: <strong class="text-slate-200">{{ $user->nisn ?: $user->email }}</strong>, Instansi: <strong class="text-slate-200">{{ $user->institution_name ?: '-' }}</strong>).
+                            Lembar bukti sah registrasi akun sistem login peserta (WhatsApp/ID: <strong class="text-slate-200">{{ $user->phone ?: ($user->nisn ?: $user->email) }}</strong>, Instansi: <strong class="text-slate-200">{{ $user->institution_name ?: '-' }}</strong>).
                         </p>
                     </div>
                 </div>

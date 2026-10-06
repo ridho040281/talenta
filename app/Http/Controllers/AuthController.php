@@ -76,7 +76,7 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
             'captcha' => ['required', 'string'],
         ], [
-            'login.required' => 'Silakan masukkan NISN atau Alamat Email Anda.',
+            'login.required' => 'Silakan masukkan Nomor WhatsApp, NISN, atau Alamat Email Anda.',
             'password.required' => 'Silakan masukkan kata sandi Anda.',
             'captcha.required' => 'Silakan isi jawaban perhitungan verifikasi (Captcha).',
         ]);
@@ -94,11 +94,30 @@ class AuthController extends Controller
         }
 
         $loginInput = trim($request->input('login'));
+        $digitsOnly = preg_replace('/[^0-9]/', '', $loginInput);
 
-        // Check user by NISN or Email
-        $user = User::where('nisn', $loginInput)
-            ->orWhere('email', $loginInput)
-            ->first();
+        // Normalize phone variations (08xxx <-> 628xxx <-> +628xxx)
+        $phoneVariations = [];
+        if (! empty($digitsOnly)) {
+            $phoneVariations[] = $digitsOnly;
+            if (str_starts_with($digitsOnly, '08')) {
+                $phoneVariations[] = '62'.substr($digitsOnly, 1);
+                $phoneVariations[] = '+62'.substr($digitsOnly, 1);
+            } elseif (str_starts_with($digitsOnly, '628')) {
+                $phoneVariations[] = '0'.substr($digitsOnly, 2);
+                $phoneVariations[] = '+'.$digitsOnly;
+            }
+        }
+
+        // Check user by Phone (WhatsApp), NISN (old accounts), or Email
+        $user = User::where(function ($q) use ($loginInput, $phoneVariations) {
+            $q->where('email', $loginInput)
+                ->orWhere('nisn', $loginInput);
+
+            if (! empty($phoneVariations)) {
+                $q->orWhereIn('phone', $phoneVariations);
+            }
+        })->first();
 
         if ($user && Hash::check($request->password, $user->password)) {
             if ($user->status !== 'active') {
@@ -129,7 +148,7 @@ class AuthController extends Controller
         }
 
         return back()->withErrors([
-            'login' => 'NISN / Email atau kata sandi yang Anda masukkan tidak sesuai.',
+            'login' => 'Nomor WhatsApp / NISN / Email atau kata sandi yang Anda masukkan tidak sesuai.',
         ])->onlyInput('login');
     }
 
@@ -145,45 +164,45 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $validated = $request->validate([
-            'nisn' => ['required', 'string', 'digits:10', 'regex:/^[0-9]{10}$/', 'unique:users,nisn'],
             'name' => ['required', 'string', 'max:255'],
             'institution_name' => ['required', 'string', 'max:255'],
-            'phone' => ['required', 'string', 'max:20'],
+            'phone' => ['required', 'string', 'min:9', 'max:20'],
             'email' => ['nullable', 'string', 'email', 'max:255', 'unique:users,email'],
         ], [
-            'nisn.required' => 'NISN wajib diisi sebagai identitas akun.',
-            'nisn.digits' => 'NISN harus tepat 10 digit angka resmi Kemdikbud/Kemenag.',
-            'nisn.regex' => 'NISN hanya boleh berisi angka 10 digit.',
-            'nisn.unique' => 'NISN ini sudah terdaftar di sistem. Satu NISN hanya untuk 1 akun. Silakan langsung login dengan NISN Anda.',
-            'name.required' => 'Nama lengkap peserta / pendaftar wajib diisi.',
-            'institution_name.required' => 'Nama asal sekolah / madrasah wajib diisi.',
-            'phone.required' => 'Nomor WhatsApp aktif wajib diisi untuk koordinasi.',
-            'email.unique' => 'Email ini sudah terdaftar di sistem.',
+            'name.required' => 'Nama lengkap pendaftar / pembina wajib diisi.',
+            'institution_name.required' => 'Nama asal sekolah / madrasah / instansi wajib diisi.',
+            'phone.required' => 'Nomor WhatsApp aktif wajib diisi sebagai identitas akun.',
+            'phone.min' => 'Nomor WhatsApp minimal 9 digit angka.',
+            'email.unique' => 'Alamat Email ini sudah terdaftar di sistem.',
         ]);
 
-        $nisnClean = trim($validated['nisn']);
-
-        // Check for dummy / fake patterns
-        $invalidPatterns = [
-            '0000000000', '1111111111', '2222222222', '3333333333', '4444444444',
-            '5555555555', '6666666666', '7777777777', '8888888888', '9999999999',
-            '1234567890', '0123456789', '9876543210', '0987654321',
-        ];
-        if (in_array($nisnClean, $invalidPatterns)) {
-            return back()->withErrors(['nisn' => 'Format NISN tidak valid / terdeteksi angka acak. Harap masukkan 10 digit NISN resmi Anda.'])->withInput();
+        $cleanPhone = preg_replace('/[^0-9]/', '', $validated['phone']);
+        if (str_starts_with($cleanPhone, '62')) {
+            $cleanPhone = '0'.substr($cleanPhone, 2);
         }
 
-        $email = ! empty($validated['email']) ? trim($validated['email']) : ($nisnClean.'@pendaftar.talenta');
+        // Check if phone already registered
+        $existingPhone = User::where('phone', $cleanPhone)
+            ->orWhere('phone', '62'.substr($cleanPhone, 1))
+            ->orWhere('phone', '+62'.substr($cleanPhone, 1))
+            ->first();
+
+        if ($existingPhone) {
+            return back()->withErrors([
+                'phone' => 'Nomor WhatsApp ini sudah terdaftar. Silakan langsung masuk (login) menggunakan nomor WhatsApp Anda.',
+            ])->withInput();
+        }
+
+        $email = ! empty($validated['email']) ? trim($validated['email']) : ($cleanPhone.'@pendaftar.talenta');
 
         $user = User::create([
-            'nisn' => $nisnClean,
             'name' => $validated['name'],
-            'email' => $email,
-            'password' => Hash::make($nisnClean), // Default password is NISN
-            'role' => 'peserta',
-            'phone' => $validated['phone'],
-            'account_type' => 'pendaftar',
             'institution_name' => $validated['institution_name'],
+            'phone' => $cleanPhone,
+            'email' => $email,
+            'password' => Hash::make($cleanPhone), // Default password is Phone Number
+            'role' => 'peserta',
+            'account_type' => 'pendaftar',
             'status' => 'active',
         ]);
 
@@ -192,7 +211,7 @@ class AuthController extends Controller
             WablasNotificationService::sendAutoNotification('account_created', [
                 'phone' => $user->phone,
                 'nama_peserta' => $user->name,
-                'nisn' => $user->nisn,
+                'nisn' => $user->phone,
                 'nama_sekolah' => $user->institution_name,
                 'link_login' => route('login'),
             ]);
@@ -205,11 +224,10 @@ class AuthController extends Controller
         // Store Account Slip in Session for display & print
         session()->flash('account_slip', [
             'name' => $user->name,
-            'nisn' => $user->nisn,
             'institution_name' => $user->institution_name,
             'phone' => $user->phone,
             'email' => $user->email,
-            'default_password' => $nisnClean,
+            'default_password' => $cleanPhone,
             'created_at' => $user->created_at->format('d F Y, H:i').' WIB',
         ]);
 
@@ -225,11 +243,10 @@ class AuthController extends Controller
 
         $slip = session('account_slip') ?? [
             'name' => $user->name,
-            'nisn' => $user->nisn ?? '-',
             'institution_name' => $user->institution_name ?? '-',
             'phone' => $user->phone ?? '-',
             'email' => $user->email,
-            'default_password' => $user->nisn ?? 'Sandi Anda',
+            'default_password' => $user->phone ?? ($user->nisn ?? 'Sandi Anda'),
             'created_at' => $user->created_at->format('d F Y, H:i').' WIB',
         ];
 

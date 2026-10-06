@@ -13,7 +13,7 @@
                 <span class="px-2.5 py-0.5 text-[11px] font-bold rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                     {{ $user->institution_name ?: 'Pendaftar Resmi' }}
                 </span>
-                <span class="text-xs text-slate-400 font-mono">NISN/ID: {{ $user->nisn ?: $user->email }}</span>
+                <span class="text-xs text-slate-400 font-mono">WhatsApp/ID: {{ $user->phone ?: ($user->nisn ?: $user->email) }}</span>
             </div>
             <h2 class="text-xl sm:text-2xl font-black text-white mt-1 font-display">Assalamu'alaikum, {{ $user->name }}</h2>
             <p class="text-xs text-slate-300 mt-0.5">Pilih cabang lomba di bawah untuk mendaftarkan peserta delegasi sekolah, unduh bukti pendaftaran, dan kelola berkas.</p>
@@ -176,8 +176,10 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             @foreach($openCompetitions as $c)
                 @php
-                    $registeredReg = $registrations->firstWhere('competition_id', $c->id);
-                    $isRegistered = !is_null($registeredReg);
+                    $userRegistrations = $registrations->where('competition_id', $c->id);
+                    $isRegistered = $userRegistrations->isNotEmpty();
+                    $regCount = $userRegistrations->count();
+                    $registeredReg = $userRegistrations->first();
                     $categoryName = $c->category->name ?? 'Lomba';
                     $catSlug = strtolower($c->category->slug ?? '');
 
@@ -257,9 +259,9 @@
 
                     $compStatus = $c->registration_status_info;
                     $canRegister = ($compStatus['is_open'] || $isTester);
-                    $targetUrl = $isRegistered 
-                        ? route('peserta.registration.detail', $registeredReg->id) 
-                        : ($canRegister ? route('peserta.register.competition', $c->slug) : route('competition.detail', $c->slug));
+                    $targetUrl = $canRegister 
+                        ? route('peserta.register.competition', $c->slug) 
+                        : ($isRegistered ? route('peserta.registration.detail', $registeredReg->id) : route('competition.detail', $c->slug));
                 @endphp
                 
                 <a href="{{ $targetUrl }}" 
@@ -392,16 +394,16 @@
 
                         <!-- Card Action CTA Button (Category-Dynamic Neon Glowing CTA) -->
                         <div class="pt-3 border-t border-slate-800/80">
-                            @if($isRegistered)
-                                <div class="w-full py-2.5 px-3 rounded-2xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-black text-xs flex items-center justify-between shadow-xs">
-                                    <span class="flex items-center gap-1.5">
-                                        <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400 shrink-0"></i>
-                                        <span>Sudah Terdaftar</span>
-                                    </span>
-                                    <span class="text-[10px] text-emerald-300 font-bold underline">Lihat Berkas ➔</span>
-                                </div>
-                            @elseif(!$canRegister)
-                                @if($compStatus['status_code'] === 'not_started')
+                            @if(!$canRegister)
+                                @if($isRegistered)
+                                    <div class="w-full py-2.5 px-3 rounded-2xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-black text-xs flex items-center justify-between shadow-xs">
+                                        <span class="flex items-center gap-1.5">
+                                            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+                                            <span>{{ $regCount }} Peserta Terdaftar</span>
+                                        </span>
+                                        <span class="text-[10px] text-emerald-300 font-bold underline">Lihat Berkas ➔</span>
+                                    </div>
+                                @elseif($compStatus['status_code'] === 'not_started')
                                     <div class="w-full py-2.5 px-3 rounded-2xl bg-amber-500/10 text-amber-300 border border-amber-500/30 font-bold text-xs flex items-center justify-center gap-2 tracking-wide">
                                         <i data-lucide="clock" class="w-4 h-4 text-amber-400"></i>
                                         <span>Belum Dibuka</span>
@@ -428,10 +430,26 @@
                                     </div>
                                 @endif
                             @else
-                                <div class="w-full py-3 px-4 rounded-2xl {{ $theme['btnGrad'] }} font-black text-xs flex items-center justify-center gap-2 tracking-wide uppercase group-hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 cursor-pointer">
-                                    <span>Daftar Cabang Ini</span>
-                                    <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
-                                </div>
+                                @if($isRegistered)
+                                    <div class="space-y-2">
+                                        <div class="w-full py-1.5 px-2.5 rounded-xl bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[11px] font-bold flex items-center justify-between">
+                                            <span class="flex items-center gap-1.5">
+                                                <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-400 shrink-0"></i>
+                                                <span>{{ $regCount }} Pendaftaran Terkirim</span>
+                                            </span>
+                                            <span class="text-[10px] text-emerald-400 font-bold">Terdaftar</span>
+                                        </div>
+                                        <div class="w-full py-2.5 px-4 rounded-2xl {{ $theme['btnGrad'] }} font-black text-xs flex items-center justify-center gap-2 tracking-wide uppercase group-hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 cursor-pointer">
+                                            <i data-lucide="user-plus" class="w-4 h-4"></i>
+                                            <span>+ Tambah Peserta Baru</span>
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="w-full py-3 px-4 rounded-2xl {{ $theme['btnGrad'] }} font-black text-xs flex items-center justify-center gap-2 tracking-wide uppercase group-hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 cursor-pointer">
+                                        <span>Daftar Cabang Ini</span>
+                                        <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+                                    </div>
+                                @endif
                             @endif
                         </div>
 

@@ -28,16 +28,16 @@
             <form action="{{ route('login.post') }}" method="POST" class="space-y-5" id="loginForm" data-no-loading>
                 @csrf
 
-                <!-- NISN or Email -->
+                <!-- Phone, NISN or Email -->
                 <div>
                     <label for="login" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">
-                        NISN atau Alamat Email
+                        Nomor WhatsApp, NISN, atau Email
                     </label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
                             <i data-lucide="user" class="w-5 h-5"></i>
                         </div>
-                        <input id="login" name="login" type="text" autocomplete="username" required value="{{ old('login') }}" placeholder="Masukkan nomor NISN atau Email" class="block w-full pl-11 pr-4 py-3 rounded-2xl bg-slate-900/90 border border-slate-700/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-white text-sm outline-none transition @error('login') border-rose-500 @enderror">
+                        <input id="login" name="login" type="text" autocomplete="username" required value="{{ old('login') }}" placeholder="Masukkan Nomor WhatsApp, NISN, atau Email" class="block w-full pl-11 pr-4 py-3 rounded-2xl bg-slate-900/90 border border-slate-700/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-white text-sm outline-none transition @error('login') border-rose-500 @enderror">
                     </div>
                     @error('login')
                         <p class="mt-1.5 text-xs text-rose-400 font-medium">{{ $message }}</p>
@@ -56,7 +56,7 @@
                                :type="showPassword ? 'text' : 'password'" 
                                type="password" 
                                required 
-                               placeholder="Masukkan password (default: NISN)" 
+                               placeholder="Masukkan kata sandi akun Anda" 
                                class="block w-full pl-11 pr-11 py-3 rounded-2xl bg-slate-900/90 border border-slate-700/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-white text-sm outline-none transition">
                         <button type="button" 
                                 @click="showPassword = !showPassword" 

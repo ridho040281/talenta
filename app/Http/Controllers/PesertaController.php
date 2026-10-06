@@ -66,36 +66,13 @@ class PesertaController extends Controller
             return redirect()->route('peserta.dashboard')->with('error', $statusInfo['message']);
         }
 
-        // Check if user already registered for this competition
-        $existingRegistrations = Registration::where('user_id', $user->id)
-            ->where('competition_id', $competition->id)
-            ->get();
-
-        $existing = $existingRegistrations->first();
-
-        if ($competition->code === 'BLT') {
-            $hasTunggal = $existingRegistrations->contains(fn ($r) => stripos($r->match_type ?? '', 'ganda') === false && stripos($r->target_class ?? '', 'ganda') === false && stripos($r->sub_category ?? '', 'ganda') === false);
-            $hasGanda = $existingRegistrations->contains(fn ($r) => stripos($r->match_type ?? '', 'ganda') !== false || stripos($r->target_class ?? '', 'ganda') !== false || stripos($r->sub_category ?? '', 'ganda') !== false);
-
-            // If user already registered both Tunggal and Ganda in BLT, redirect
-            if ($hasTunggal && $hasGanda && $existing) {
-                return redirect()->route('peserta.registration.detail', $existing->id)
-                    ->with('info', 'Anda sudah terdaftar pada sektor Tunggal dan Ganda cabang lomba Bulu Tangkis. Anda bebas mendaftar pada cabang lomba yang berbeda di Dashboard.');
-            }
-        } else {
-            if ($existing) {
-                return redirect()->route('peserta.registration.detail', $existing->id)
-                    ->with('info', 'Anda sudah terdaftar pada cabang lomba '.$competition->name.' (Kode Reg: '.$existing->registration_code.'). Anda bebas mendaftar pada cabang lomba yang berbeda di Dashboard.');
-            }
-        }
-
         $bankInfo = [
             'bank_name' => AppSetting::get('bank_name', 'Bank Syariah Indonesia (BSI)'),
             'bank_account_number' => AppSetting::get('bank_account_number', '7199242042'),
             'bank_account_holder' => AppSetting::get('bank_account_holder', 'WIJIATIN'),
         ];
 
-        return view('peserta.register-competition', compact('competition', 'user', 'existing', 'bankInfo'));
+        return view('peserta.register-competition', compact('competition', 'user', 'bankInfo'));
     }
 
     public function storeRegistration(Request $request, $slug)
@@ -143,38 +120,6 @@ class PesertaController extends Controller
                 };
 
                 return back()->withInput()->with('error', $msg);
-            }
-        }
-
-        // Prevent duplicate registration in the same competition / sector for this user account
-        $existingUserRegs = Registration::where('user_id', $user->id)
-            ->where('competition_id', $competition->id)
-            ->get();
-
-        if ($competition->code === 'BLT') {
-            $isSubmittingGanda = stripos($request->input('match_type', ''), 'Ganda') !== false;
-            $alreadyHasThisSector = $existingUserRegs->contains(function ($r) use ($isSubmittingGanda) {
-                $isRegGanda = stripos($r->match_type ?? '', 'ganda') !== false || stripos($r->target_class ?? '', 'ganda') !== false || stripos($r->sub_category ?? '', 'ganda') !== false;
-
-                return $isSubmittingGanda ? $isRegGanda : ! $isRegGanda;
-            });
-
-            if ($alreadyHasThisSector) {
-                $existingReg = $existingUserRegs->first(function ($r) use ($isSubmittingGanda) {
-                    $isRegGanda = stripos($r->match_type ?? '', 'ganda') !== false || stripos($r->target_class ?? '', 'ganda') !== false || stripos($r->sub_category ?? '', 'ganda') !== false;
-
-                    return $isSubmittingGanda ? $isRegGanda : ! $isRegGanda;
-                });
-
-                return redirect()->route('peserta.registration.detail', $existingReg->id)
-                    ->with('error', 'Anda sudah terdaftar pada sektor '.($isSubmittingGanda ? 'Ganda' : 'Tunggal').' cabang lomba '.$competition->name.'. Silakan pilih cabang lomba lain jika ingin mengikuti lomba tambahan.');
-            }
-        } else {
-            if ($existingUserRegs->isNotEmpty()) {
-                $existingUserReg = $existingUserRegs->first();
-
-                return redirect()->route('peserta.registration.detail', $existingUserReg->id)
-                    ->with('error', 'Anda sudah terdaftar pada cabang lomba '.$competition->name.'. Silakan pilih cabang lomba lain jika ingin mengikuti lebih dari satu lomba.');
             }
         }
 

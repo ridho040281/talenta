@@ -33,7 +33,7 @@ class WhatsappTemplate extends Model
                 'code' => 'account_created',
                 'name' => '1. Notifikasi Pembuatan Akun Baru',
                 'description' => 'Terkirim otomatis saat peserta/pendaftar baru selesai membuat akun di portal TALENTA 2026.',
-                'message' => "Assalamu'alaikum Wr. Wb.\nYth. {nama_peserta} ({nama_sekolah}),\n\nSelamat! Akun pendaftaran TALENTA 2026 MTsN 1 Blitar Anda telah berhasil dibuat.\n\nDetail Akun Login:\n• NISN / ID Login: {nisn}\n• Password Default: {nisn}\n• No. WhatsApp: {no_wa}\n\nSilakan masuk ke portal TALENTA 2026 untuk memilih cabang lomba yang ingin diikuti:\n{link_login}\n\nSimpan pesan ini sebagai bukti akun resmi.\nPanitia TALENTA 2026 MTsN 1 Blitar",
+                'message' => "Assalamu'alaikum Wr. Wb.\nYth. {nama_peserta} ({nama_sekolah}),\n\nSelamat! Akun pendaftaran TALENTA 2026 MTsN 1 Blitar Anda telah berhasil dibuat.\n\nDetail Akun Login:\n• No. WhatsApp (ID Login): {no_wa}\n• Password Default: {no_wa}\n\nSilakan masuk ke portal TALENTA 2026 untuk memilih cabang lomba dan mendaftarkan siswa delegasi:\n{link_login}\n\nSimpan pesan ini sebagai bukti akun resmi.\nPanitia TALENTA 2026 MTsN 1 Blitar",
                 'is_active' => true,
                 'is_system' => true,
             ],

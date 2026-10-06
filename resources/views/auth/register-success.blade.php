@@ -145,16 +145,16 @@
                             <div class="p-3.5 rounded-xl bg-white border border-emerald-300 shadow-xs">
                                 <span class="text-[10px] font-black uppercase text-emerald-800 block">Username / ID Login</span>
                                 <span class="font-sans font-black text-slate-950 text-sm sm:text-base block mt-0.5 select-all tracking-wide">
-                                    {{ $slip['nisn'] ?? ($user->nisn ?: $user->email) }}
+                                    {{ $slip['phone'] ?? ($slip['nisn'] ?? ($user->phone ?: ($user->nisn ?: $user->email))) }}
                                 </span>
-                                <span class="text-[9px] text-slate-400 block mt-0.5">(Dapat menggunakan NISN atau Alamat Email)</span>
+                                <span class="text-[9px] text-slate-400 block mt-0.5">(Nomor WhatsApp, NISN, atau Alamat Email)</span>
                             </div>
                             <div class="p-3.5 rounded-xl bg-white border border-amber-300 shadow-xs">
                                 <span class="text-[10px] font-black uppercase text-amber-800 block">Password / Kata Sandi</span>
                                 <span class="font-sans font-black text-amber-950 text-sm sm:text-base block mt-0.5 select-all tracking-wider">
-                                    {{ $slip['default_password'] ?? ($user->nisn ?: 'Password Anda') }}
+                                    {{ $slip['default_password'] ?? ($user->phone ?: ($user->nisn ?: 'Password Anda')) }}
                                 </span>
-                                <span class="text-[9px] text-slate-400 block mt-0.5">(Default otomatis sesuai NISN saat registrasi)</span>
+                                <span class="text-[9px] text-slate-400 block mt-0.5">(Default otomatis sesuai Nomor WhatsApp saat pendaftaran)</span>
                             </div>
                         </div>
 
@@ -296,16 +296,16 @@
                         <div class="p-3 rounded-xl bg-white border border-emerald-300 shadow-xs">
                             <span class="text-[10px] font-black uppercase text-emerald-800 block">Username / ID Login</span>
                             <span class="font-sans font-black text-slate-950 text-sm sm:text-base block mt-0.5 tracking-wide">
-                                {{ $slip['nisn'] ?? ($user->nisn ?: $user->email) }}
+                                {{ $slip['phone'] ?? ($slip['nisn'] ?? ($user->phone ?: ($user->nisn ?: $user->email))) }}
                             </span>
-                            <span class="text-[9px] text-slate-400 block">(Dapat menggunakan NISN atau Alamat Email)</span>
+                            <span class="text-[9px] text-slate-400 block">(Nomor WhatsApp, NISN, atau Alamat Email)</span>
                         </div>
                         <div class="p-3 rounded-xl bg-white border border-amber-300 shadow-xs">
                             <span class="text-[10px] font-black uppercase text-amber-800 block">Password / Kata Sandi</span>
                             <span class="font-sans font-black text-amber-950 text-sm sm:text-base block mt-0.5 tracking-wider">
-                                {{ $slip['default_password'] ?? ($user->nisn ?: 'Password Anda') }}
+                                {{ $slip['default_password'] ?? ($user->phone ?: ($user->nisn ?: 'Password Anda')) }}
                             </span>
-                            <span class="text-[9px] text-slate-400 block">(Default otomatis sesuai NISN saat registrasi)</span>
+                            <span class="text-[9px] text-slate-400 block">(Default otomatis sesuai Nomor WhatsApp saat pendaftaran)</span>
                         </div>
                     </div>
 
