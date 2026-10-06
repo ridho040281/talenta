@@ -707,23 +707,21 @@
                             </div>
                         </div>
 
-                        @if($isPramuka)
-                            <div class="sm:col-span-2 pt-3 border-t border-slate-800/80">
-                                <div class="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1.5">
-                                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                                         <label class="block text-xs font-bold text-emerald-300 flex items-center gap-1.5">
-                                             <i data-lucide="image" class="w-3.5 h-3.5 text-emerald-400"></i>
-                                             <span>Upload Pas Foto Peserta <span class="text-rose-400">*</span></span>
-                                         </label>
-                                         <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 w-fit">Auto Kompres ±200 KB</span>
-                                     </div>
-                                     <input :name="'members[' + index + '][photo]'" type="file" accept="image/jpeg,image/png,image/jpg,image/webp" required class="block w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-slate-800 file:text-emerald-400 hover:file:bg-slate-700 cursor-pointer">
-                                     <p class="text-[10px] text-slate-400">
-                                         Bebas ukuran berkas foto (JPG, JPEG, PNG, WEBP). Sistem otomatis mengoptimasi & mengompres foto menjadi <strong class="text-emerald-400">&plusmn; 200 KB</strong> dengan penamaan: <code class="text-emerald-400 font-mono">NISN_Nama.jpg</code>.
-                                     </p>
+                        <div class="sm:col-span-2 pt-3 border-t border-slate-800/80">
+                            <div class="p-3.5 sm:p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2">
+                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                                     <label class="block text-xs font-bold text-emerald-300 flex items-center gap-1.5">
+                                         <i data-lucide="image" class="w-3.5 h-3.5 text-emerald-400"></i>
+                                         <span>Upload Pas Foto Peserta (Rasio 3x4) <span class="text-rose-400">*</span></span>
+                                     </label>
+                                     <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 w-fit">Auto Kompres ±200 KB</span>
                                  </div>
-                            </div>
-                        @endif
+                                 <input :name="'members[' + index + '][photo]'" type="file" accept="image/jpeg,image/png,image/jpg,image/webp" required class="block w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-slate-800 file:text-emerald-400 hover:file:bg-slate-700 cursor-pointer">
+                                 <p class="text-[10px] text-slate-400">
+                                     Pas foto 3x4 resmi (JPG, JPEG, PNG, WEBP). Sistem otomatis mengoptimasi & mengompres ukuran foto menjadi <strong class="text-emerald-400">&plusmn; 200 KB</strong> untuk kebutuhan ID Card.
+                                 </p>
+                             </div>
+                        </div>
                     </div>
 
                 </div>

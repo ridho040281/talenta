@@ -122,6 +122,7 @@ Route::middleware(['auth', 'role:peserta,superadmin'])->prefix('peserta')->name(
     Route::post('/daftar/{slug}', [PesertaController::class, 'storeRegistration'])->name('register.competition.store');
     Route::get('/pendaftaran/{id}', [PesertaController::class, 'showRegistrationDetail'])->name('registration.detail');
     Route::post('/pendaftaran/{id}/revisi', [PesertaController::class, 'updateRevision'])->name('registration.revision');
+    Route::post('/pendaftaran/{id}/upload-foto/{member_id}', [PesertaController::class, 'uploadMemberPhoto'])->name('registration.upload_photo');
     Route::get('/pendaftaran/{id}/cetak-kartu', [PesertaController::class, 'printIdCard'])->name('print.idcard');
     Route::get('/pendaftaran/{id}/kartu', [PesertaController::class, 'printIdCard'])->name('card');
     Route::get('/pendaftaran/{id}/sertifikat', [CertificateController::class, 'pesertaDownload'])->name('certificate.download');
@@ -163,6 +164,7 @@ Route::middleware(['auth', 'role:pic_lomba,superadmin,panitia,admin'])->prefix('
     Route::post('/peserta/store-manual', [PicController::class, 'storeParticipant'])->name('store.participant');
     Route::post('/peserta/{registration_id}/verifikasi', [PicController::class, 'verifyParticipant'])->name('verify.participant');
     Route::post('/peserta/{registration_id}/update', [PicController::class, 'updateParticipantData'])->name('update.participant');
+    Route::post('/peserta/{registration_id}/upload-photo/{member_id}', [PicController::class, 'uploadMemberPhoto'])->name('participants.upload_photo');
     Route::post('/peserta/{registration_id}/batalkan-verifikasi', [PicController::class, 'unverifyParticipant'])->name('unverify.participant');
     Route::post('/peserta/{registration_id}/hapus', [PicController::class, 'deleteParticipant'])->name('delete.participant');
     Route::get('/peserta/{id}/download-photos', [PicController::class, 'downloadPhotos'])->name('participants.download_photos');
@@ -269,6 +271,7 @@ Route::middleware(['auth', 'role:superadmin,panitia,pic_lomba,admin'])->prefix('
     Route::get('/peserta', [PicController::class, 'dashboard'])->name('participants.index');
     Route::get('/peserta/{id}/download-photos', [PicController::class, 'downloadPhotos'])->name('participants.download_photos');
     Route::get('/peserta-multi-lomba', [AdminController::class, 'multiParticipants'])->name('participants.multi');
+    Route::post('/peserta/{registration_id}/upload-photo/{member_id}', [PicController::class, 'uploadMemberPhoto'])->name('participants.upload_photo');
     Route::get('/juri-wasit', [AdminController::class, 'juriWasitUndian'])->name('juri.wasit');
     Route::get('/undi-peserta', [PicController::class, 'drawIndex'])->name('undian');
 });

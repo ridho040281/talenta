@@ -193,15 +193,40 @@
                         $ttl = trim(($member->birth_place ? $member->birth_place : '').($member->birth_place && $bDateStr ? ', ' : '').($bDateStr ?: ''));
                     @endphp
                     <div class="p-3.5 sm:p-4 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition space-y-3">
-                        <div class="flex items-start justify-between gap-3">
-                            <div class="flex items-center gap-3">
+                        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                            <div class="flex items-start gap-3">
                                 @if($member->photo)
-                                    <a href="{{ asset('storage/' . $member->photo) }}" target="_blank" class="relative group shrink-0" title="Klik untuk memperbesar foto">
-                                        <img src="{{ asset('storage/' . $member->photo) }}" alt="{{ $member->full_name }}" class="w-12 h-14 object-cover rounded-xl border border-emerald-500/40 shadow-md group-hover:opacity-80 transition">
-                                        <div class="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
-                                            <i data-lucide="zoom-in" class="w-3.5 h-3.5 text-white"></i>
+                                    <div class="flex flex-col items-center gap-1 shrink-0">
+                                        <a href="{{ asset('storage/' . $member->photo) }}" target="_blank" class="relative group" title="Klik untuk memperbesar foto">
+                                            <img src="{{ asset('storage/' . $member->photo) }}" alt="{{ $member->full_name }}" class="w-12 h-14 object-cover rounded-xl border border-emerald-500/40 shadow-md group-hover:opacity-80 transition">
+                                            <div class="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
+                                                <i data-lucide="zoom-in" class="w-3.5 h-3.5 text-white"></i>
+                                            </div>
+                                        </a>
+                                        <form action="{{ route('peserta.registration.upload_photo', [$registration->id, $member->id]) }}" method="POST" enctype="multipart/form-data">
+                                            @csrf
+                                            <label class="cursor-pointer text-[9px] text-slate-400 hover:text-emerald-400 font-bold transition flex items-center gap-0.5" title="Klik untuk ganti foto">
+                                                <i data-lucide="camera" class="w-2.5 h-2.5"></i>
+                                                <span>Ganti</span>
+                                                <input type="file" name="photo" accept="image/jpeg,image/png,image/jpg,image/webp" class="hidden" onchange="this.form.submit()">
+                                            </label>
+                                        </form>
+                                    </div>
+                                @else
+                                    <div class="flex flex-col items-center gap-1 shrink-0">
+                                        <div class="w-12 h-14 rounded-xl bg-slate-800/90 border border-dashed border-amber-500/50 flex flex-col items-center justify-center text-amber-400">
+                                            <i data-lucide="image" class="w-4 h-4"></i>
+                                            <span class="text-[8px] font-bold mt-0.5">3x4</span>
                                         </div>
-                                    </a>
+                                        <form action="{{ route('peserta.registration.upload_photo', [$registration->id, $member->id]) }}" method="POST" enctype="multipart/form-data">
+                                            @csrf
+                                            <label class="cursor-pointer inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[9px] font-bold transition shadow-sm" title="Upload pas foto peserta">
+                                                <i data-lucide="upload" class="w-2.5 h-2.5"></i>
+                                                <span>Upload</span>
+                                                <input type="file" name="photo" accept="image/jpeg,image/png,image/jpg,image/webp" class="hidden" onchange="this.form.submit()">
+                                            </label>
+                                        </form>
+                                    </div>
                                 @endif
                                 <div>
                                     <div class="flex items-center gap-2">
@@ -210,7 +235,7 @@
                                     <h4 class="text-sm font-black text-white mt-0.5">{{ $member->full_name }}</h4>
                                 </div>
                             </div>
-                            <span class="px-2 py-0.5 text-[10px] font-bold rounded shrink-0 {{ $member->gender === 'L' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-pink-500/20 text-pink-300 border border-pink-500/30' }}">
+                            <span class="px-2 py-0.5 text-[10px] font-bold rounded self-start shrink-0 {{ $member->gender === 'L' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-pink-500/20 text-pink-300 border border-pink-500/30' }}">
                                 {{ $member->gender === 'L' ? '👦 Laki-laki (PA)' : '👧 Perempuan (PI)' }}
                             </span>
                         </div>

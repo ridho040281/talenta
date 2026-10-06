@@ -1809,7 +1809,7 @@ class PicController extends Controller
                     }
 
                     $mSchool = ! empty($mData['school_name']) ? trim($mData['school_name']) : (count($validated['members']) === 1 ? $finalInstitutionName : null);
-                    $member->update([
+                    $updatePayload = [
                         'full_name' => $mData['full_name'],
                         'school_name' => $mSchool,
                         'nisn' => $mData['nisn'] ?? null,
@@ -1817,7 +1817,18 @@ class PicController extends Controller
                         'birth_place' => $mData['birth_place'] ?? null,
                         'birth_date' => $mData['birth_date'] ?? null,
                         'phone' => $mData['phone'] ?? null,
-                    ]);
+                    ];
+
+                    if ($request->hasFile("members.{$idx}.photo")) {
+                        $pfile = $request->file("members.{$idx}.photo");
+                        $rawNisn = ! empty($mData['nisn']) ? preg_replace('/[^0-9]/', '', $mData['nisn']) : 'NONISN';
+                        $cleanName = preg_replace('/[\\\\\/:\*\?"<>|]/', '', trim($mData['full_name']));
+                        $pName = "{$rawNisn}_{$cleanName}_".time().'.jpg';
+                        $folder = ($registration->competition && $registration->competition->isPramuka()) ? 'photos/pramuka/members' : 'photos/members';
+                        $updatePayload['photo'] = ImageOptimizerService::optimizeAndStore($pfile, $folder, $pName, 1080, 200);
+                    }
+
+                    $member->update($updatePayload);
                 }
             }
         }
@@ -1827,6 +1838,40 @@ class PicController extends Controller
         }
 
         return back()->with('success', 'Data pendaftaran '.$registration->display_name.' ('.$registration->registration_code.') berhasil diperbarui oleh Admin.');
+    }
+
+    /**
+     * Upload or update photo for a participant member by PIC / Admin.
+     */
+    public function uploadMemberPhoto(Request $request, $registration_id, $member_id)
+    {
+        $registration = Registration::with('competition')->findOrFail($registration_id);
+        $user = Auth::user();
+        $this->authorizeCompetitionManagement($user, $registration->competition_id);
+
+        $member = RegistrationMember::where('id', $member_id)
+            ->where('registration_id', $registration->id)
+            ->firstOrFail();
+
+        $request->validate([
+            'photo' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp,bmp', 'max:25600'],
+        ], [
+            'photo.required' => 'Berkas pas foto peserta wajib dipilih.',
+            'photo.image' => 'Berkas harus berupa gambar.',
+            'photo.max' => 'Ukuran berkas foto maksimal 25 MB.',
+        ]);
+
+        $file = $request->file('photo');
+        $rawNisn = ! empty($member->nisn) ? preg_replace('/[^0-9]/', '', $member->nisn) : 'NONISN';
+        $cleanName = preg_replace('/[\\\\\/:\*\?"<>|]/', '', trim($member->full_name));
+        $pName = "{$rawNisn}_{$cleanName}_".time().'.jpg';
+
+        $folder = ($registration->competition && $registration->competition->isPramuka()) ? 'photos/pramuka/members' : 'photos/members';
+        $photoPath = ImageOptimizerService::optimizeAndStore($file, $folder, $pName, 1080, 200);
+
+        $member->update(['photo' => $photoPath]);
+
+        return back()->with('success', "Pas foto untuk {$member->full_name} berhasil diunggah oleh Panitia!");
     }
 
     public function unverifyParticipant($registration_id)

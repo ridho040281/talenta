@@ -288,7 +288,7 @@ class PesertaController extends Controller
             'members.*.birth_date' => ['nullable', 'date'],
             'members.*.phone' => ['nullable', 'string', 'max:20'],
             'members.*.role_in_team' => ['nullable', 'string', 'max:100'],
-            'members.*.photo' => [$isPramuka ? 'required' : 'nullable', 'file', 'image', 'mimes:jpg,jpeg,png,webp,bmp', 'max:25600'],
+            'members.*.photo' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp,bmp', 'max:25600'],
             'chosen_song' => [$isPopSinger ? 'required' : 'nullable', 'string', 'max:255'],
             'document_file' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,zip', 'max:5120'],
             'payment_proof' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
@@ -300,7 +300,7 @@ class PesertaController extends Controller
             'official_photo.required' => 'Foto pembina / pendamping wajib diunggah untuk cabang lomba Pramuka.',
             'official_photo.max' => 'Ukuran berkas foto pembina / pendamping maksimal 25 MB.',
             'official_photo.mimes' => 'Format foto pembina / pendamping harus berupa gambar (JPG, JPEG, PNG, atau WEBP).',
-            'members.*.photo.required' => 'Foto peserta wajib diunggah untuk cabang lomba Pramuka.',
+            'members.*.photo.required' => 'Pas foto peserta (rasio 3x4) wajib diunggah.',
             'members.*.photo.max' => 'Ukuran berkas foto peserta maksimal 25 MB.',
             'members.*.photo.mimes' => 'Format foto peserta harus berupa gambar (JPG, JPEG, PNG, atau WEBP).',
             'chosen_song.required' => 'Judul lagu pilihan wajib dipilih untuk cabang lomba Pop Singer.',
@@ -481,9 +481,10 @@ class PesertaController extends Controller
                 // Contoh: 3123412231_Joko Kelana.jpg
                 $memberFileName = "{$rawNisn}_{$cleanMemberName}.jpg";
 
+                $memberPhotoFolder = $isPramuka ? 'photos/pramuka/members' : 'photos/members';
                 $memberPhotoPath = ImageOptimizerService::optimizeAndStore(
                     $memberFile,
-                    'photos/pramuka/members',
+                    $memberPhotoFolder,
                     $memberFileName,
                     1080,
                     200
@@ -588,5 +589,41 @@ class PesertaController extends Controller
         }
 
         return view('peserta.print-idcard', compact('registration'));
+    }
+
+    /**
+     * Upload or update photo for a specific registration member.
+     */
+    public function uploadMemberPhoto(Request $request, $id, $member_id)
+    {
+        $user = Auth::user();
+        $registration = Registration::with('competition')->where('id', $id)
+            ->when($user->role === 'peserta', fn ($q) => $q->where('user_id', $user->id))
+            ->firstOrFail();
+
+        $member = RegistrationMember::where('id', $member_id)
+            ->where('registration_id', $registration->id)
+            ->firstOrFail();
+
+        $request->validate([
+            'photo' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp,bmp', 'max:25600'],
+        ], [
+            'photo.required' => 'Berkas pas foto peserta wajib dipilih.',
+            'photo.image' => 'Berkas harus berupa gambar (JPG, JPEG, PNG, WEBP).',
+            'photo.max' => 'Ukuran berkas foto maksimal 25 MB.',
+        ]);
+
+        $file = $request->file('photo');
+        $rawNisn = ! empty($member->nisn) ? preg_replace('/[^0-9]/', '', $member->nisn) : 'NONISN';
+        $rawMemberName = trim($member->full_name);
+        $cleanMemberName = preg_replace('/[\\\\\/:\*\?"<>|]/', '', $rawMemberName);
+        $fileName = "{$rawNisn}_{$cleanMemberName}_".time().'.jpg';
+
+        $folder = ($registration->competition && $registration->competition->isPramuka()) ? 'photos/pramuka/members' : 'photos/members';
+        $photoPath = ImageOptimizerService::optimizeAndStore($file, $folder, $fileName, 1080, 200);
+
+        $member->update(['photo' => $photoPath]);
+
+        return back()->with('success', "Pas foto untuk {$member->full_name} berhasil diunggah!");
     }
 }

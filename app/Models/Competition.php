@@ -1335,6 +1335,17 @@ class Competition extends Model
             || str_contains($name, 'robot');
     }
 
+    public function isPramuka(): bool
+    {
+        $code = strtoupper($this->code ?? '');
+        $slug = strtolower($this->slug ?? '');
+        $name = strtolower($this->name ?? '');
+
+        return $code === 'PRM'
+            || str_contains($slug, 'pramuka')
+            || str_contains($name, 'pramuka');
+    }
+
     public static function getRobotikCategories(): array
     {
         return [
