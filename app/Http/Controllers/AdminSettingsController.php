@@ -362,6 +362,7 @@ class AdminSettingsController extends Controller
         }
 
         AppSetting::set('sponsor_logos', json_encode(array_values($currentSponsorLogos)));
+        AppSetting::set('tv_signage_version', 'v_'.time());
 
         // Handle Pamphlet Images Uploads & Deletions
         $currentPamphletImages = json_decode(AppSetting::get('pamphlet_images', '[]'), true) ?: [];
@@ -587,6 +588,7 @@ class AdminSettingsController extends Controller
         }
 
         AppSetting::set('sponsor_logos', json_encode(array_values($currentSponsorLogos)));
+        AppSetting::set('tv_signage_version', 'v_'.time());
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -635,6 +637,7 @@ class AdminSettingsController extends Controller
         }
 
         AppSetting::set('pamphlet_images', json_encode(array_values($currentPamphletImages)));
+        AppSetting::set('tv_signage_version', 'v_'.time());
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -676,6 +679,7 @@ class AdminSettingsController extends Controller
             return $item !== $logoToDelete && $itemClean !== $cleanPath;
         }));
         AppSetting::set('sponsor_logos', json_encode($filtered));
+        AppSetting::set('tv_signage_version', 'v_'.time());
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -722,6 +726,7 @@ class AdminSettingsController extends Controller
         }
 
         AppSetting::set('sponsor_logos', json_encode(array_values($newOrder)));
+        AppSetting::set('tv_signage_version', 'v_'.time());
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
