@@ -184,7 +184,7 @@
                         {{-- SLIDE VARIANT B: VIDEO MP4 / WEBM --}}
                         @elseif($slide['type'] === 'video' && !empty($slide['media_url']))
                             <div class="relative w-full h-full bg-black flex items-center justify-center">
-                                <video id="video-slide-{{ $index }}" src="{{ $slide['media_url'] }}" class="w-full h-full object-contain" autoplay muted playsinline @ended="nextSlide()"></video>
+                                <video id="video-slide-{{ $index }}" src="{{ $slide['media_url'] }}" class="w-full h-full object-contain" autoplay muted playsinline></video>
                             </div>
 
                         {{-- SLIDE VARIANT C: SPONSOR SINGLE SPOTLIGHT (1 SLIDE 1 LOGO BESAR FULL LAYAR) --}}
@@ -382,6 +382,7 @@
                 currentIndex: 0,
                 isPaused: false,
                 isMuted: true,
+                isTransitioning: false,
                 showHeaderFooter: true,
                 progressPercent: 0,
                 currentDuration: 10,
@@ -408,14 +409,43 @@
                 startSlideTimer() {
                     if (this.totalSlides === 0) return;
 
+                    if (this.progressInterval) {
+                        clearInterval(this.progressInterval);
+                        this.progressInterval = null;
+                    }
+
                     const cur = this.slides[this.currentIndex];
-                    this.currentDuration = (cur && cur.duration) ? parseInt(cur.duration) : 10;
+                    this.currentDuration = (cur && cur.duration) ? Math.max(2, parseInt(cur.duration)) : 10;
                     this.progressPercent = 0;
 
-                    if (this.progressInterval) clearInterval(this.progressInterval);
+                    // If video slide, let the video drive duration & progress cleanly
+                    if (cur && cur.type === 'video') {
+                        this.$nextTick(() => {
+                            const videoEl = document.getElementById('video-slide-' + this.currentIndex);
+                            if (videoEl) {
+                                videoEl.currentTime = 0;
+                                videoEl.muted = this.isMuted;
+                                videoEl.play().catch(e => console.log('Auto-play error:', e));
 
-                    const stepMs = 100;
-                    const totalSteps = (this.currentDuration * 1000) / stepMs;
+                                videoEl.ontimeupdate = () => {
+                                    if (videoEl.duration && !isNaN(videoEl.duration)) {
+                                        this.progressPercent = (videoEl.currentTime / videoEl.duration) * 100;
+                                    }
+                                };
+
+                                videoEl.onended = () => {
+                                    videoEl.ontimeupdate = null;
+                                    videoEl.onended = null;
+                                    this.nextSlide();
+                                };
+                            }
+                        });
+                        return;
+                    }
+
+                    // For image / sponsor slides, run smooth step-by-step progress timer
+                    const stepMs = 50;
+                    const totalSteps = Math.max(1, Math.round((this.currentDuration * 1000) / stepMs));
                     let currentStep = 0;
 
                     this.progressInterval = setInterval(() => {
@@ -424,6 +454,10 @@
                             this.progressPercent = Math.min(100, (currentStep / totalSteps) * 100);
 
                             if (currentStep >= totalSteps) {
+                                if (this.progressInterval) {
+                                    clearInterval(this.progressInterval);
+                                    this.progressInterval = null;
+                                }
                                 this.nextSlide();
                             }
                         }
@@ -431,25 +465,37 @@
                 },
 
                 nextSlide() {
-                    if (this.totalSlides === 0) return;
+                    if (this.totalSlides === 0 || this.isTransitioning) return;
+                    this.isTransitioning = true;
+
+                    if (this.progressInterval) {
+                        clearInterval(this.progressInterval);
+                        this.progressInterval = null;
+                    }
+
                     this.currentIndex = (this.currentIndex + 1) % this.totalSlides;
                     this.startSlideTimer();
-                    this.$nextTick(() => { this.playCurrentVideo(); });
+
+                    setTimeout(() => {
+                        this.isTransitioning = false;
+                    }, 350);
                 },
 
                 prevSlide() {
-                    if (this.totalSlides === 0) return;
+                    if (this.totalSlides === 0 || this.isTransitioning) return;
+                    this.isTransitioning = true;
+
+                    if (this.progressInterval) {
+                        clearInterval(this.progressInterval);
+                        this.progressInterval = null;
+                    }
+
                     this.currentIndex = (this.currentIndex - 1 + this.totalSlides) % this.totalSlides;
                     this.startSlideTimer();
-                    this.$nextTick(() => { this.playCurrentVideo(); });
-                },
 
-                playCurrentVideo() {
-                    const videoEl = document.getElementById('video-slide-' + this.currentIndex);
-                    if (videoEl) {
-                        videoEl.currentTime = 0;
-                        videoEl.play().catch(e => console.log('Auto-play prevented:', e));
-                    }
+                    setTimeout(() => {
+                        this.isTransitioning = false;
+                    }, 350);
                 },
 
                 toggleFullscreen() {

@@ -247,18 +247,7 @@ class HomeController extends Controller
 
         $prepared = [];
 
-        // 1. Slide 1: Event Hero Showcase
-        $prepared[] = [
-            'id' => 'default_slide_event',
-            'title' => AppSetting::get('event_name', 'Milad ke-57 MTsN 1 Blitar'),
-            'type' => 'default_event',
-            'media_url' => null,
-            'duration' => $defaultDuration,
-            'notes' => 'Pentas Seni & Kejuaraan Pelajar Tingkat Jawa Timur',
-            'is_custom' => false,
-        ];
-
-        // 2. Add any valid custom banner / poster / video uploaded by admin (1 per 1)
+        // 1. TAMPIL PERTAMA: Custom Banner / Poster / Video yang diunggah di Menu TV
         foreach ($activeCustomSlides as $s) {
             $mediaUrl = null;
             if (! empty($s['media_path'])) {
@@ -285,7 +274,7 @@ class HomeController extends Controller
             }
         }
 
-        // 3. Sponsor Logos - 1 Slide 1 Logo Full Screen Spotlight
+        // 2. TAMPIL KEDUA (SETELAH UPLOAD TV): 24 Logo Sponsor dari Landing Page (1 per 1 Full Screen Spotlight)
         if (! empty($sponsorLogos)) {
             $totalLogos = count($sponsorLogos);
             foreach ($sponsorLogos as $lIdx => $logoPath) {
@@ -307,7 +296,7 @@ class HomeController extends Controller
             }
         }
 
-        // 4. Include Pamphlet Images (if uploaded)
+        // 3. TAMPIL KETIGA: Pamflet & Poster Jadwal (jika ada)
         foreach ($pamphletImages as $idx => $pImg) {
             $cleanP = ltrim(str_replace(['public/', 'storage/'], '', $pImg), '/');
             $prepared[] = [
@@ -319,6 +308,23 @@ class HomeController extends Controller
                 'notes' => 'Informasi Pelaksanaan & Petunjuk Teknis Lomba',
                 'is_custom' => false,
             ];
+        }
+
+        // 4. Slide Hero Info Acara (Jika belum ada custom upload, jadikan pembuka; jika ada, jadikan penutup putaran)
+        $eventHeroSlide = [
+            'id' => 'default_slide_event',
+            'title' => AppSetting::get('event_name', 'Milad ke-57 MTsN 1 Blitar'),
+            'type' => 'default_event',
+            'media_url' => null,
+            'duration' => $defaultDuration,
+            'notes' => 'Pentas Seni & Kejuaraan Pelajar Tingkat Jawa Timur',
+            'is_custom' => false,
+        ];
+
+        if (empty($activeCustomSlides)) {
+            array_unshift($prepared, $eventHeroSlide);
+        } else {
+            $prepared[] = $eventHeroSlide;
         }
 
         return $prepared;
