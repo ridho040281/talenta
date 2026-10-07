@@ -46,6 +46,13 @@ Route::get('/tv-panggung/{slug}', [StageController::class, 'stageViewer'])->name
 Route::get('/panggung/{slug}', [StageController::class, 'stageViewer'])->name('stage.viewer.panggung');
 Route::get('/stage/{slug}/state', [StageController::class, 'apiState'])->name('stage.api.state');
 
+// Layar TV & Iklan / Digital Signage Display
+Route::get('/iklan', [HomeController::class, 'tvSignage'])->name('public.tv.signage');
+Route::get('/ads', [HomeController::class, 'tvSignage'])->name('public.tv.ads');
+Route::get('/tv-iklan', [HomeController::class, 'tvSignage'])->name('public.tv.iklan');
+Route::get('/tv-signage', [HomeController::class, 'tvSignage'])->name('public.tv.signage.alias');
+Route::get('/api/tv-signage/state', [HomeController::class, 'apiTvSignageState'])->name('api.tv.signage.state');
+
 Route::get('/cek-status', [HomeController::class, 'checkStatus'])->name('check.status');
 Route::get('/live-scoreboard/{slug?}', [HomeController::class, 'liveScoreboard'])->name('live.scoreboard');
 Route::get('/skor/{slug?}', [HomeController::class, 'liveScoreboard'])->name('live.scoreboard.short');
@@ -376,6 +383,15 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->name('admin.')-
 
         Route::get('/changelog', [AdminSettingsController::class, 'changelog'])->name('changelog');
         Route::get('/app-info', [AdminSettingsController::class, 'appInfo'])->name('app.info');
+
+        // Layar TV & Digital Signage Management
+        Route::get('/tv-signage', [AdminSettingsController::class, 'tvSignageIndex'])->name('tv.signage.index');
+        Route::post('/tv-signage/slide/store', [AdminSettingsController::class, 'storeTvSlide'])->name('tv.signage.slide.store');
+        Route::post('/tv-signage/slide/{id}/update', [AdminSettingsController::class, 'updateTvSlide'])->name('tv.signage.slide.update');
+        Route::post('/tv-signage/slide/{id}/delete', [AdminSettingsController::class, 'deleteTvSlide'])->name('tv.signage.slide.delete');
+        Route::post('/tv-signage/slide/{id}/toggle', [AdminSettingsController::class, 'toggleTvSlide'])->name('tv.signage.slide.toggle');
+        Route::post('/tv-signage/reorder', [AdminSettingsController::class, 'reorderTvSlides'])->name('tv.signage.reorder');
+        Route::post('/tv-signage/settings', [AdminSettingsController::class, 'updateTvSignageSettings'])->name('tv.signage.settings.update');
     });
 
     Route::post('/editions/{year}/switch', [AdminSettingsController::class, 'switchEdition'])->name('editions.switch');
@@ -385,7 +401,7 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->name('admin.')-
 Route::get('/storage/{folder}/{filename}', function ($folder, $filename) {
     $allowedFolders = [
         'documents', 'payments', 'payment_proofs', 'sponsors', 'pamphlets', 'popups',
-        'settings', 'guidelines', 'certificates', 'avatars', 'qrcodes', 'invoices', 'adjustments',
+        'settings', 'guidelines', 'certificates', 'avatars', 'qrcodes', 'invoices', 'adjustments', 'signage',
     ];
     if (! in_array($folder, $allowedFolders)) {
         abort(404);

@@ -629,6 +629,15 @@
                             <span>Informasi</span>
                         </div>
                     </a>
+                    <a href="{{ route('admin.settings.tv.signage.index') }}" 
+                       class="relative group flex items-center rounded-2xl transition {{ request()->routeIs('admin.settings.tv.signage*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}"
+                       :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">
+                        <i data-lucide="tv" class="w-4 h-4 shrink-0 {{ request()->routeIs('admin.settings.tv.signage*') ? 'text-white' : 'text-pink-400' }}"></i>
+                        <span x-show="sidebarOpen" x-transition.opacity.duration.200ms class="truncate">Layar TV & Iklan</span>
+                        <div x-show="!sidebarOpen" class="hidden md:group-hover:flex absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#161F30] border border-white/[0.15] text-white text-xs font-bold shadow-2xl z-50 whitespace-nowrap pointer-events-none items-center gap-1.5">
+                            <span>Layar TV & Iklan</span>
+                        </div>
+                    </a>
                     <a href="{{ route('admin.settings.changelog') }}" 
                        class="relative group flex items-center rounded-2xl transition {{ request()->routeIs('admin.settings.changelog*') ? 'bg-gradient-to-r from-[#7A5AF8] to-[#4E6EFF] text-white font-bold shadow-lg shadow-[#7A5AF8]/25' : 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-200' }}"
                        :class="sidebarOpen ? 'gap-3 px-3 py-2.5 justify-start' : 'px-0 py-2.5 justify-center'">

@@ -2075,6 +2075,295 @@ class AdminSettingsController extends Controller
     }
 
     /**
+     * Layar TV & Digital Signage Management Index
+     */
+    public function tvSignageIndex()
+    {
+        $slides = json_decode(AppSetting::get('tv_signage_slides', '[]'), true) ?: [];
+
+        // Ensure every slide media path is synced to public storage
+        foreach ($slides as $s) {
+            if (! empty($s['media_path'])) {
+                self::ensurePublicStorageSync($s['media_path']);
+            }
+        }
+
+        $sponsorLogos = json_decode(AppSetting::get('sponsor_logos', '[]'), true) ?: [];
+        foreach ($sponsorLogos as $logo) {
+            self::ensurePublicStorageSync($logo);
+        }
+
+        $settings = [
+            'tv_signage_enabled' => AppSetting::get('tv_signage_enabled', '1'),
+            'tv_signage_header_title' => AppSetting::get('tv_signage_header_title', AppSetting::get('event_name', 'TALENTA 2026 - MTsN 1 Blitar')),
+            'tv_signage_header_subtitle' => AppSetting::get('tv_signage_header_subtitle', 'Pentas Seni & Kejuaraan Pelajar Tingkat Jawa Timur'),
+            'tv_signage_running_text' => AppSetting::get('tv_signage_running_text', 'Selamat Datang di TALENTA 2026 MTsN 1 Blitar • Junjung Tinggi Sportivitas & Kreativitas • Terima Kasih Kepada Seluruh Sponsor dan Pihak Pendukung Acara • Sukseskan Prestasi Gemilang Bersama Kami!'),
+            'tv_signage_show_sponsor_marquee' => AppSetting::get('tv_signage_show_sponsor_marquee', '1'),
+            'tv_signage_show_clock' => AppSetting::get('tv_signage_show_clock', '1'),
+            'tv_signage_transition' => AppSetting::get('tv_signage_transition', 'fade'),
+            'tv_signage_default_duration' => AppSetting::get('tv_signage_default_duration', '10'),
+            'app_logo' => AppSetting::get('app_logo', null),
+            'event_logo' => AppSetting::get('event_logo', null),
+        ];
+
+        return view('admin.settings.tv-signage', compact('slides', 'settings', 'sponsorLogos'));
+    }
+
+    /**
+     * Store New TV Signage Slide
+     */
+    public function storeTvSlide(Request $request)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'type' => 'required|in:image,video',
+            'duration' => 'nullable|integer|min:3|max:300',
+            'media_file' => 'nullable|file|mimes:jpeg,png,jpg,webp,svg,gif,mp4,webm,mov|max:102400',
+            'video_url' => 'nullable|url|max:500',
+            'notes' => 'nullable|string|max:500',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $mediaPath = null;
+        if ($request->hasFile('media_file')) {
+            $file = $request->file('media_file');
+            $extension = $file->getClientOriginalExtension();
+            $filename = 'slide_'.time().'_'.Str::random(8).'.'.$extension;
+            $path = $file->storeAs('signage', $filename, 'public');
+            $mediaPath = $path;
+            self::ensurePublicStorageSync($mediaPath);
+        }
+
+        $slides = json_decode(AppSetting::get('tv_signage_slides', '[]'), true) ?: [];
+
+        $newSlide = [
+            'id' => 'slide_'.time().'_'.Str::random(6),
+            'title' => $request->input('title'),
+            'type' => $request->input('type', 'image'),
+            'media_path' => $mediaPath,
+            'video_url' => $request->input('video_url'),
+            'duration' => (int) ($request->input('duration') ?: 10),
+            'order' => count($slides) + 1,
+            'is_active' => $request->boolean('is_active', true),
+            'notes' => $request->input('notes'),
+            'created_at' => now()->toDateTimeString(),
+        ];
+
+        $slides[] = $newSlide;
+        AppSetting::set('tv_signage_slides', json_encode(array_values($slides)));
+        AppSetting::set('tv_signage_version', 'v_'.time());
+
+        ActivityLog::record(
+            'TV_SIGNAGE_ADD',
+            "Menambahkan slide TV Signage baru: '{$newSlide['title']}'",
+            Auth::user(),
+            'info'
+        );
+
+        return redirect()->route('admin.settings.tv.signage.index')->with('success', 'Slide iklan TV baru berhasil ditambahkan!');
+    }
+
+    /**
+     * Update Existing TV Slide
+     */
+    public function updateTvSlide(Request $request, $id)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'type' => 'required|in:image,video',
+            'duration' => 'nullable|integer|min:3|max:300',
+            'media_file' => 'nullable|file|mimes:jpeg,png,jpg,webp,svg,gif,mp4,webm,mov|max:102400',
+            'video_url' => 'nullable|url|max:500',
+            'notes' => 'nullable|string|max:500',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $slides = json_decode(AppSetting::get('tv_signage_slides', '[]'), true) ?: [];
+        $found = false;
+
+        foreach ($slides as &$slide) {
+            if (($slide['id'] ?? '') === $id) {
+                $slide['title'] = $request->input('title');
+                $slide['type'] = $request->input('type', 'image');
+                $slide['duration'] = (int) ($request->input('duration') ?: 10);
+                $slide['video_url'] = $request->input('video_url');
+                $slide['notes'] = $request->input('notes');
+                $slide['is_active'] = $request->boolean('is_active', true);
+
+                if ($request->hasFile('media_file')) {
+                    // Delete old media if exists
+                    if (! empty($slide['media_path'])) {
+                        $clean = ltrim(str_replace(['public/', 'storage/'], '', $slide['media_path']), '/');
+                        @Storage::disk('public')->delete($clean);
+                        @unlink(public_path('storage/'.$clean));
+                    }
+                    $file = $request->file('media_file');
+                    $filename = 'slide_'.time().'_'.Str::random(8).'.'.$file->getClientOriginalExtension();
+                    $slide['media_path'] = $file->storeAs('signage', $filename, 'public');
+                    self::ensurePublicStorageSync($slide['media_path']);
+                }
+
+                $found = true;
+                break;
+            }
+        }
+        unset($slide);
+
+        if ($found) {
+            AppSetting::set('tv_signage_slides', json_encode(array_values($slides)));
+            AppSetting::set('tv_signage_version', 'v_'.time());
+
+            return redirect()->route('admin.settings.tv.signage.index')->with('success', 'Slide iklan TV berhasil diperbarui!');
+        }
+
+        return redirect()->route('admin.settings.tv.signage.index')->with('error', 'Slide tidak ditemukan.');
+    }
+
+    /**
+     * Delete a TV Slide
+     */
+    public function deleteTvSlide($id)
+    {
+        $slides = json_decode(AppSetting::get('tv_signage_slides', '[]'), true) ?: [];
+        $filtered = [];
+        $deletedTitle = 'Slide';
+
+        foreach ($slides as $slide) {
+            if (($slide['id'] ?? '') === $id) {
+                $deletedTitle = $slide['title'] ?? 'Slide';
+                if (! empty($slide['media_path'])) {
+                    $clean = ltrim(str_replace(['public/', 'storage/'], '', $slide['media_path']), '/');
+                    @Storage::disk('public')->delete($clean);
+                    @unlink(public_path('storage/'.$clean));
+                }
+            } else {
+                $filtered[] = $slide;
+            }
+        }
+
+        // Re-index order
+        foreach ($filtered as $idx => &$item) {
+            $item['order'] = $idx + 1;
+        }
+        unset($item);
+
+        AppSetting::set('tv_signage_slides', json_encode(array_values($filtered)));
+        AppSetting::set('tv_signage_version', 'v_'.time());
+
+        ActivityLog::record(
+            'TV_SIGNAGE_DELETE',
+            "Menghapus slide TV Signage: '{$deletedTitle}'",
+            Auth::user(),
+            'warning'
+        );
+
+        return redirect()->route('admin.settings.tv.signage.index')->with('success', "Slide '{$deletedTitle}' berhasil dihapus.");
+    }
+
+    /**
+     * Toggle Slide Active Status
+     */
+    public function toggleTvSlide($id)
+    {
+        $slides = json_decode(AppSetting::get('tv_signage_slides', '[]'), true) ?: [];
+        $newStatus = true;
+
+        foreach ($slides as &$slide) {
+            if (($slide['id'] ?? '') === $id) {
+                $slide['is_active'] = ! ($slide['is_active'] ?? true);
+                $newStatus = $slide['is_active'];
+                break;
+            }
+        }
+        unset($slide);
+
+        AppSetting::set('tv_signage_slides', json_encode(array_values($slides)));
+        AppSetting::set('tv_signage_version', 'v_'.time());
+
+        return response()->json([
+            'success' => true,
+            'is_active' => $newStatus,
+            'message' => $newStatus ? 'Slide berhasil diaktifkan!' : 'Slide dinonaktifkan!',
+        ]);
+    }
+
+    /**
+     * Reorder TV Slides via Drag and Drop
+     */
+    public function reorderTvSlides(Request $request)
+    {
+        $orderedIds = $request->input('ordered_ids', []);
+        if (! is_array($orderedIds) || empty($orderedIds)) {
+            return response()->json(['success' => false, 'message' => 'Data urutan tidak valid.'], 400);
+        }
+
+        $slides = json_decode(AppSetting::get('tv_signage_slides', '[]'), true) ?: [];
+        $indexed = [];
+        foreach ($slides as $s) {
+            $indexed[$s['id']] = $s;
+        }
+
+        $reordered = [];
+        $order = 1;
+        foreach ($orderedIds as $id) {
+            if (isset($indexed[$id])) {
+                $item = $indexed[$id];
+                $item['order'] = $order++;
+                $reordered[] = $item;
+                unset($indexed[$id]);
+            }
+        }
+
+        // Append any remaining slides that weren't in orderedIds
+        foreach ($indexed as $item) {
+            $item['order'] = $order++;
+            $reordered[] = $item;
+        }
+
+        AppSetting::set('tv_signage_slides', json_encode(array_values($reordered)));
+        AppSetting::set('tv_signage_version', 'v_'.time());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Urutan slide TV berhasil disimpan secara otomatis!',
+        ]);
+    }
+
+    /**
+     * Update General TV Signage Settings (Running Text, Header, Toggles)
+     */
+    public function updateTvSignageSettings(Request $request)
+    {
+        $request->validate([
+            'tv_signage_enabled' => 'nullable|string|in:0,1',
+            'tv_signage_header_title' => 'nullable|string|max:255',
+            'tv_signage_header_subtitle' => 'nullable|string|max:255',
+            'tv_signage_running_text' => 'nullable|string|max:2000',
+            'tv_signage_show_sponsor_marquee' => 'nullable|string|in:0,1',
+            'tv_signage_show_clock' => 'nullable|string|in:0,1',
+            'tv_signage_transition' => 'nullable|string|in:fade,slide,zoom',
+            'tv_signage_default_duration' => 'nullable|integer|min:3|max:120',
+        ]);
+
+        foreach (['tv_signage_enabled', 'tv_signage_header_title', 'tv_signage_header_subtitle', 'tv_signage_running_text', 'tv_signage_show_sponsor_marquee', 'tv_signage_show_clock', 'tv_signage_transition', 'tv_signage_default_duration'] as $key) {
+            if ($request->has($key)) {
+                AppSetting::set($key, (string) $request->input($key));
+            }
+        }
+
+        AppSetting::set('tv_signage_version', 'v_'.time());
+
+        ActivityLog::record(
+            'TV_SIGNAGE_SETTINGS',
+            'Memperbarui konfigurasi teks berjalan dan header Layar TV',
+            Auth::user(),
+            'info'
+        );
+
+        return redirect()->route('admin.settings.tv.signage.index')->with('success', 'Pengaturan Layar TV & Iklan berhasil disimpan!');
+    }
+
+    /**
      * Ensure a stored file in storage/app/public is mirrored into public/storage and has readable permissions.
      */
     public static function ensurePublicStorageSync(?string $relativePath): void

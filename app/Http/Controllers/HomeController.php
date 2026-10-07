@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AppSetting;
 use App\Models\Category;
 use App\Models\Competition;
 use App\Models\Registration;
@@ -194,5 +195,74 @@ class HomeController extends Controller
         });
 
         return view('public.spin-viewer', compact('competition', 'participants'));
+    }
+
+    /**
+     * Layar Iklan & TV Signage Display Page (Full Screen TV / Proyektor)
+     */
+    public function tvSignage()
+    {
+        $allSlides = json_decode(AppSetting::get('tv_signage_slides', '[]'), true) ?: [];
+        $activeSlides = array_values(array_filter($allSlides, fn ($s) => ($s['is_active'] ?? true)));
+
+        // Ensure physical media files exist and are synced
+        foreach ($activeSlides as $s) {
+            if (! empty($s['media_path'])) {
+                AdminSettingsController::ensurePublicStorageSync($s['media_path']);
+            }
+        }
+
+        $sponsorLogos = json_decode(AppSetting::get('sponsor_logos', '[]'), true) ?: [];
+        foreach ($sponsorLogos as $logo) {
+            AdminSettingsController::ensurePublicStorageSync($logo);
+        }
+
+        $pamphletImages = json_decode(AppSetting::get('pamphlet_images', '[]'), true) ?: [];
+        foreach ($pamphletImages as $img) {
+            AdminSettingsController::ensurePublicStorageSync($img);
+        }
+
+        $settings = [
+            'tv_signage_enabled' => AppSetting::get('tv_signage_enabled', '1'),
+            'tv_signage_header_title' => AppSetting::get('tv_signage_header_title', AppSetting::get('event_name', 'TALENTA 2026 - MTsN 1 Blitar')),
+            'tv_signage_header_subtitle' => AppSetting::get('tv_signage_header_subtitle', 'Pentas Seni & Kejuaraan Pelajar Tingkat Jawa Timur'),
+            'tv_signage_running_text' => AppSetting::get('tv_signage_running_text', 'Selamat Datang di TALENTA 2026 MTsN 1 Blitar • Junjung Tinggi Sportivitas & Kreativitas • Terima Kasih Kepada Seluruh Sponsor dan Pihak Pendukung Acara • Sukseskan Prestasi Gemilang Bersama Kami!'),
+            'tv_signage_show_sponsor_marquee' => AppSetting::get('tv_signage_show_sponsor_marquee', '1'),
+            'tv_signage_show_clock' => AppSetting::get('tv_signage_show_clock', '1'),
+            'tv_signage_transition' => AppSetting::get('tv_signage_transition', 'fade'),
+            'tv_signage_default_duration' => (int) AppSetting::get('tv_signage_default_duration', '10'),
+            'tv_signage_version' => AppSetting::get('tv_signage_version', 'v1'),
+            'app_logo' => AppSetting::get('app_logo', null),
+            'event_logo' => AppSetting::get('event_logo', null),
+            'institution_name' => AppSetting::get('institution_name', 'MTs Negeri 1 Blitar'),
+            'event_year' => AppSetting::get('event_year', '2026'),
+        ];
+
+        return view('public.tv-signage', compact('activeSlides', 'settings', 'sponsorLogos', 'pamphletImages'));
+    }
+
+    /**
+     * API State for TV Signage (Allows dynamic polling / seamless live updates on Smart TV)
+     */
+    public function apiTvSignageState()
+    {
+        $allSlides = json_decode(AppSetting::get('tv_signage_slides', '[]'), true) ?: [];
+        $activeSlides = array_values(array_filter($allSlides, fn ($s) => ($s['is_active'] ?? true)));
+
+        $sponsorLogos = json_decode(AppSetting::get('sponsor_logos', '[]'), true) ?: [];
+
+        return response()->json([
+            'version' => AppSetting::get('tv_signage_version', 'v1'),
+            'slides_count' => count($activeSlides),
+            'slides' => $activeSlides,
+            'sponsor_logos' => $sponsorLogos,
+            'running_text' => AppSetting::get('tv_signage_running_text', ''),
+            'header_title' => AppSetting::get('tv_signage_header_title', ''),
+            'header_subtitle' => AppSetting::get('tv_signage_header_subtitle', ''),
+            'show_sponsor_marquee' => AppSetting::get('tv_signage_show_sponsor_marquee', '1'),
+            'show_clock' => AppSetting::get('tv_signage_show_clock', '1'),
+            'transition' => AppSetting::get('tv_signage_transition', 'fade'),
+            'server_time' => now()->toIso8601String(),
+        ])->header('Cache-Control', 'no-cache, no-store');
     }
 }
