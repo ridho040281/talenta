@@ -283,10 +283,10 @@
                 @endforeach
             </div>
 
-            <!-- Bottom Slide Progress Bar (Active Countdown) -->
+            <!-- Bottom Overall Playlist Progress Bar (1 Full Cycle Progress, No Per-Slide Reset) -->
             <div class="absolute bottom-0 left-0 right-0 h-1.5 bg-white/[0.08] z-30 overflow-hidden">
                 <div class="h-full bg-gradient-to-r from-[#7A5AF8] via-[#4E6EFF] to-[#FF58D5] transition-all ease-linear"
-                     :style="'width: ' + progressPercent + '%; transition-duration: 100ms;'"></div>
+                     :style="'width: ' + overallProgressPercent + '%; transition-duration: 50ms;'"></div>
             </div>
 
         </div>
@@ -392,6 +392,13 @@
                 clockTime: '00:00:00',
                 clockDate: '',
                 currentVersion: '{{ $settings['tv_signage_version'] ?? 'v1' }}',
+
+                get overallProgressPercent() {
+                    if (this.totalSlides <= 0) return 0;
+                    const fraction = (this.progressPercent || 0) / 100;
+                    const val = ((this.currentIndex + fraction) / this.totalSlides) * 100;
+                    return Math.min(100, Math.max(0, val)).toFixed(2);
+                },
 
                 initPlayer() {
                     this.updateClock();
