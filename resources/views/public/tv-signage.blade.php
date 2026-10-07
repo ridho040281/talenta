@@ -160,11 +160,42 @@
             
             <!-- Direct Blade Rendering (Each Slide 100% Isolated & Opaque) -->
             <div class="relative w-full h-full">
+                @php
+                    $transitionMode = $settings['tv_signage_transition'] ?? 'fade';
+                @endphp
+
                 @foreach($activeSlides as $index => $slide)
-                    <div x-show="currentIndex === {{ $index }}"
-                         x-cloak
-                         style="display: {{ $index === 0 ? 'flex' : 'none' }};"
-                         class="absolute inset-0 w-full h-full bg-[#070B14] flex items-center justify-center overflow-hidden transition-opacity duration-700 ease-in-out">
+                    @if($transitionMode === 'slide')
+                        <div x-show="currentIndex === {{ $index }}"
+                             x-cloak
+                             x-transition:enter="transition-all duration-700 ease-out"
+                             x-transition:enter-start="opacity-0 translate-x-full"
+                             x-transition:enter-end="opacity-100 translate-x-0"
+                             x-transition:leave="transition-all duration-500 ease-in"
+                             x-transition:leave-start="opacity-100 translate-x-0"
+                             x-transition:leave-end="opacity-0 -translate-x-full"
+                             class="absolute inset-0 w-full h-full bg-[#070B14] flex items-center justify-center overflow-hidden">
+                    @elseif($transitionMode === 'zoom')
+                        <div x-show="currentIndex === {{ $index }}"
+                             x-cloak
+                             x-transition:enter="transition-all duration-700 ease-out"
+                             x-transition:enter-start="opacity-0 scale-90"
+                             x-transition:enter-end="opacity-100 scale-100"
+                             x-transition:leave="transition-all duration-500 ease-in"
+                             x-transition:leave-start="opacity-100 scale-100"
+                             x-transition:leave-end="opacity-0 scale-110"
+                             class="absolute inset-0 w-full h-full bg-[#070B14] flex items-center justify-center overflow-hidden">
+                    @else
+                        <div x-show="currentIndex === {{ $index }}"
+                             x-cloak
+                             x-transition:enter="transition-opacity duration-700 ease-out"
+                             x-transition:enter-start="opacity-0"
+                             x-transition:enter-end="opacity-100"
+                             x-transition:leave="transition-opacity duration-500 ease-in"
+                             x-transition:leave-start="opacity-100"
+                             x-transition:leave-end="opacity-0"
+                             class="absolute inset-0 w-full h-full bg-[#070B14] flex items-center justify-center overflow-hidden">
+                    @endif
                         
                         {{-- SLIDE VARIANT A: CUSTOM IMAGE / POSTER / BANNER --}}
                         @if($slide['type'] === 'image' && !empty($slide['media_url']))

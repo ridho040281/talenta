@@ -2352,11 +2352,16 @@ class AdminSettingsController extends Controller
             'tv_signage_sponsor_duration' => 'nullable|integer|min:2|max:120',
         ]);
 
-        foreach (['tv_signage_enabled', 'tv_signage_header_title', 'tv_signage_header_subtitle', 'tv_signage_running_text', 'tv_signage_show_sponsor_marquee', 'tv_signage_show_clock', 'tv_signage_transition', 'tv_signage_default_duration', 'tv_signage_sponsor_duration'] as $key) {
+        $keys = ['tv_signage_header_title', 'tv_signage_header_subtitle', 'tv_signage_running_text', 'tv_signage_transition', 'tv_signage_default_duration', 'tv_signage_sponsor_duration'];
+        foreach ($keys as $key) {
             if ($request->has($key)) {
                 AppSetting::set($key, (string) $request->input($key));
             }
         }
+
+        // Explicit Checkbox Handling (Defaults to 0 if unchecked in form)
+        AppSetting::set('tv_signage_show_sponsor_marquee', $request->boolean('tv_signage_show_sponsor_marquee') ? '1' : '0');
+        AppSetting::set('tv_signage_show_clock', $request->boolean('tv_signage_show_clock') ? '1' : '0');
 
         AppSetting::set('tv_signage_version', 'v_'.time());
 
