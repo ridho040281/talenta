@@ -609,6 +609,26 @@
                     </div>
                 </div>
 
+                <!-- Judul & Keterangan Slide Sponsor TV -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                    <div class="space-y-1.5">
+                        <label class="block text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                            <i data-lucide="award" class="w-3.5 h-3.5 text-amber-400"></i>
+                            <span>Judul Slide Sponsor TV</span>
+                        </label>
+                        <input type="text" name="tv_signage_sponsor_title" value="{{ $settings['tv_signage_sponsor_title'] ?? 'Mitra & Sponsor Resmi' }}" placeholder="Mitra & Sponsor Resmi" class="w-full px-4 py-2.5 text-xs rounded-xl bg-[#0C111D] border border-amber-500/30 text-amber-200 focus:border-amber-400 font-bold">
+                        <p class="text-[10px] text-slate-400">Judul teks yang tampil di atas logo sponsor pada layar TV.</p>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="block text-xs font-bold text-slate-300">
+                            Teks Keterangan Bawah Sponsor
+                        </label>
+                        <input type="text" name="tv_signage_sponsor_subtitle" value="{{ $settings['tv_signage_sponsor_subtitle'] ?? 'Terima kasih atas partisipasi dan dukungan sponsorship TALENTA 2026' }}" placeholder="Terima kasih atas partisipasi dan dukungan sponsorship" class="w-full px-4 py-2.5 text-xs rounded-xl bg-[#0C111D] border border-white/[0.12] text-white focus:border-[#7A5AF8]">
+                        <p class="text-[10px] text-slate-400">Teks ucapan terima kasih di bagian bawah slide sponsor TV.</p>
+                    </div>
+                </div>
+
                 <!-- Running Text (Teks Berjalan) -->
                 <div class="space-y-1.5">
                     <div class="flex items-center justify-between">

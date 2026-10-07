@@ -277,6 +277,9 @@ class HomeController extends Controller
         // 2. TAMPIL KEDUA (SETELAH UPLOAD TV): 24 Logo Sponsor dari Landing Page (1 per 1 Full Screen Spotlight)
         if (! empty($sponsorLogos)) {
             $totalLogos = count($sponsorLogos);
+            $sponsorTitle = AppSetting::get('tv_signage_sponsor_title', AppSetting::get('sponsor_title', 'Mitra & Sponsor Resmi'));
+            $sponsorSubtitle = AppSetting::get('tv_signage_sponsor_subtitle', 'Terima kasih atas partisipasi dan dukungan sponsorship TALENTA 2026');
+
             foreach ($sponsorLogos as $lIdx => $logoPath) {
                 $cleanL = ltrim(str_replace(['public/', 'storage/'], '', $logoPath), '/');
                 $logoUrl = Str::startsWith($logoPath, ['http://', 'https://'])
@@ -285,12 +288,12 @@ class HomeController extends Controller
 
                 $prepared[] = [
                     'id' => 'sponsor_single_'.($lIdx + 1),
-                    'title' => 'Mitra & Sponsor Resmi',
+                    'title' => $sponsorTitle,
                     'type' => 'sponsor_single',
                     'logo_url' => $logoUrl,
                     'media_url' => null,
                     'duration' => $sponsorDuration,
-                    'notes' => 'Terima kasih atas partisipasi dan dukungan sponsorship TALENTA 2026',
+                    'notes' => $sponsorSubtitle,
                     'is_custom' => false,
                 ];
             }
