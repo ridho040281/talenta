@@ -26,7 +26,7 @@
         [x-cloak] { display: none !important; }
 
         body {
-            background-color: #060913;
+            background-color: #050811;
             overflow: hidden;
             user-select: none;
             -webkit-user-select: none;
@@ -63,26 +63,17 @@
         .ambient-glow {
             position: absolute;
             border-radius: 50%;
-            filter: blur(120px);
+            filter: blur(140px);
             pointer-events: none;
             z-index: 0;
         }
 
-        /* Smooth Slide Transitions */
-        .slide-fade-enter {
-            opacity: 0;
-            transform: scale(0.98);
-        }
-        .slide-fade-enter-active {
-            transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1), transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .slide-fade-leave-active {
-            transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            position: absolute;
-            inset: 0;
-        }
-        .slide-fade-leave-to {
-            opacity: 0;
+        /* Glass Surface */
+        .glass-tv {
+            background: rgba(13, 20, 36, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
         }
     </style>
 </head>
@@ -92,14 +83,14 @@
       @keydown.window="handleKeyboard($event)">
 
     <!-- Background Ambient Mesh Lighting -->
-    <div class="ambient-glow w-[500px] h-[500px] -top-32 -left-32 bg-[#7A5AF8]/20"></div>
-    <div class="ambient-glow w-[600px] h-[600px] -bottom-40 -right-40 bg-[#FF58D5]/15"></div>
-    <div class="ambient-glow w-[400px] h-[400px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-cyan-500/10"></div>
+    <div class="ambient-glow w-[500px] h-[500px] -top-32 -left-32 bg-[#7A5AF8]/25"></div>
+    <div class="ambient-glow w-[600px] h-[600px] -bottom-40 -right-40 bg-[#FF58D5]/20"></div>
+    <div class="ambient-glow w-[450px] h-[450px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-cyan-500/15"></div>
 
     <!-- ========================================================================= -->
     <!-- 1. TOP HEADER BAR (Header Display TV)                                      -->
     <!-- ========================================================================= -->
-    <header x-show="showHeaderFooter" x-transition.opacity.duration.300ms class="relative z-20 h-16 sm:h-20 px-6 sm:px-10 bg-[#090E1A]/85 backdrop-blur-xl border-b border-white/[0.08] flex items-center justify-between shadow-2xl shrink-0">
+    <header x-show="showHeaderFooter" x-transition.opacity.duration.300ms class="relative z-20 h-16 sm:h-20 px-6 sm:px-10 bg-[#090E1A]/90 backdrop-blur-xl border-b border-white/[0.08] flex items-center justify-between shadow-2xl shrink-0">
         
         <!-- Left: Logo & Event Title -->
         <div class="flex items-center gap-3.5 sm:gap-5 min-w-0">
@@ -164,49 +155,32 @@
         <!-- SLIDE CONTAINER -->
         <div class="relative w-full h-full rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.8)] border border-white/[0.12] bg-[#070B14] flex items-center justify-center">
             
-            <!-- Dynamic Active Slide Display -->
-            <template x-if="slides.length > 0">
-                <div class="relative w-full h-full flex items-center justify-center">
+            <!-- Dynamic Slide Loop -->
+            <template x-for="(slide, index) in slides" :key="slide.id || index">
+                <div x-show="currentIndex === index"
+                     x-transition:enter="transition-all duration-700 ease-out"
+                     x-transition:enter-start="opacity-0 scale-95"
+                     x-transition:enter-end="opacity-100 scale-100"
+                     x-transition:leave="transition-all duration-500 ease-in absolute inset-0"
+                     x-transition:leave-start="opacity-100 scale-100"
+                     x-transition:leave-to="opacity-0 scale-105"
+                     class="absolute inset-0 w-full h-full flex items-center justify-center overflow-hidden">
                     
-                    <template x-for="(slide, index) in slides" :key="slide.id || index">
-                        <div x-show="currentIndex === index"
-                             x-transition:enter="transition-all duration-700 ease-out"
-                             x-transition:enter-start="opacity-0 scale-95"
-                             x-transition:enter-end="opacity-100 scale-100"
-                             x-transition:leave="transition-all duration-500 ease-in absolute inset-0"
-                             x-transition:leave-start="opacity-100 scale-100"
-                             x-transition:leave-to="opacity-0 scale-105"
-                             class="absolute inset-0 w-full h-full flex items-center justify-center overflow-hidden">
+                    <!-- ========================================================= -->
+                    <!-- SLIDE VARIANT A: IMAGE / BANNER POSTER                    -->
+                    <!-- ========================================================= -->
+                    <template x-if="slide.type === 'image' && slide.media_url">
+                        <div class="relative w-full h-full flex items-center justify-center bg-black/90">
+                            <!-- Blurred Ambient Background -->
+                            <div class="absolute inset-0 bg-cover bg-center blur-3xl opacity-50 scale-110" 
+                                 :style="'background-image: url(' + slide.media_url + ')'"></div>
                             
-                            <!-- Slide Type: IMAGE -->
-                            <template x-if="slide.type === 'image' && slide.media_url">
-                                <div class="relative w-full h-full flex items-center justify-center bg-black/90">
-                                    <!-- Blurred Ambient Background (Fills screen nicely for non-16:9 images) -->
-                                    <div class="absolute inset-0 bg-cover bg-center blur-2xl opacity-40 scale-110" 
-                                         :style="'background-image: url(' + slide.media_url + ')'"></div>
-                                    
-                                    <!-- Main Sharp High-Res Image -->
-                                    <img :src="slide.media_url" 
-                                         :alt="slide.title" 
-                                         class="relative z-10 max-h-full max-w-full w-auto h-auto object-contain drop-shadow-2xl">
-                                </div>
-                            </template>
+                            <!-- Main Sharp High-Res Image -->
+                            <img :src="slide.media_url" 
+                                 :alt="slide.title" 
+                                 class="relative z-10 max-h-full max-w-full w-auto h-auto object-contain drop-shadow-2xl">
 
-                            <!-- Slide Type: VIDEO -->
-                            <template x-if="slide.type === 'video' && slide.media_url">
-                                <div class="relative w-full h-full bg-black flex items-center justify-center">
-                                    <video :id="'video-slide-' + index"
-                                           :src="slide.media_url" 
-                                           class="w-full h-full object-contain"
-                                           autoplay
-                                           :muted="isMuted"
-                                           playsinline
-                                           @ended="nextSlide()"></video>
-                                </div>
-                            </template>
-
-                            <!-- Slide Floating Caption / Badge Overlay (Bottom Left of Slide) -->
-                            @if(!empty($slide['notes']) || true)
+                            <!-- Slide Caption Overlay (Bottom Left) -->
                             <div x-show="slide.title" class="absolute bottom-6 left-6 z-20 max-w-xl p-3.5 sm:p-4 rounded-2xl bg-[#090E1A]/85 backdrop-blur-xl border border-white/[0.15] shadow-2xl pointer-events-none">
                                 <span class="text-[10px] font-mono font-black uppercase tracking-widest text-[#FF58D5] block">
                                     TALENTA TV SPONSOR & EVENT
@@ -214,57 +188,83 @@
                                 <h3 class="text-sm sm:text-base font-black text-white leading-snug" x-text="slide.title"></h3>
                                 <p x-show="slide.notes" class="text-xs text-slate-300 line-clamp-1 mt-0.5" x-text="slide.notes"></p>
                             </div>
-                            @endif
+                        </div>
+                    </template>
+
+                    <!-- ========================================================= -->
+                    <!-- SLIDE VARIANT B: VIDEO MP4 / WEBM                         -->
+                    <!-- ========================================================= -->
+                    <template x-if="slide.type === 'video' && slide.media_url">
+                        <div class="relative w-full h-full bg-black flex items-center justify-center">
+                            <video :id="'video-slide-' + index"
+                                   :src="slide.media_url" 
+                                   class="w-full h-full object-contain"
+                                   autoplay
+                                   :muted="isMuted"
+                                   playsinline
+                                   @ended="nextSlide()"></video>
+                        </div>
+                    </template>
+
+                    <!-- ========================================================= -->
+                    <!-- SLIDE VARIANT C: DEFAULT EVENT HERO SHOWCASE              -->
+                    <!-- ========================================================= -->
+                    <template x-if="slide.type === 'default_event'">
+                        <div class="relative w-full h-full flex flex-col items-center justify-center text-center p-8 sm:p-12 space-y-6 bg-gradient-to-br from-[#0D1527] via-[#090E1A] to-[#140B22]">
+                            
+                            <!-- Ambient Glow Circle -->
+                            <div class="w-96 h-96 rounded-full bg-gradient-to-tr from-[#7A5AF8]/35 via-[#4E6EFF]/30 to-[#FF58D5]/35 blur-3xl absolute pointer-events-none"></div>
+
+                            <div class="relative z-10 max-w-3xl mx-auto space-y-5">
+                                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.08] border border-white/[0.15] text-[#84D0FF] text-xs sm:text-sm font-bold shadow-lg">
+                                    <i data-lucide="sparkles" class="w-4 h-4 text-amber-400"></i>
+                                    <span>PENTAS SENI & KEJUARAAN PELAJAR JAWA TIMUR</span>
+                                </div>
+
+                                <h2 class="text-3xl sm:text-5xl lg:text-6xl font-black text-white font-display tracking-tight leading-tight drop-shadow-lg">
+                                    {{ $settings['tv_signage_header_title'] ?? 'Milad ke-58 MTsN 1 Blitar' }}
+                                </h2>
+
+                                <p class="text-sm sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
+                                    Ajang kompetisi bergengsi tingkat SD/MI & SMP/MTs sederajat. Junjung tinggi sportivitas, ukir prestasi gemilang!
+                                </p>
+                            </div>
 
                         </div>
                     </template>
 
-                </div>
-            </template>
+                    <!-- ========================================================= -->
+                    <!-- SLIDE VARIANT D: DEFAULT WALL OF SPONSORS (24 LOGOS)      -->
+                    <!-- ========================================================= -->
+                    <template x-if="slide.type === 'default_sponsors'">
+                        <div class="relative w-full h-full flex flex-col items-center justify-center p-6 sm:p-10 bg-gradient-to-br from-[#0A0F1D] via-[#080C17] to-[#120D24] overflow-hidden">
+                            
+                            <!-- Title Header -->
+                            <div class="text-center space-y-1 mb-6 relative z-10">
+                                <span class="px-3 py-1 rounded-full text-[10px] font-mono font-black uppercase tracking-widest bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                    ★ OFFICIAL PARTNERS & SPONSORS ★
+                                </span>
+                                <h3 class="text-xl sm:text-3xl font-black text-white font-display">
+                                    Didukung Oleh Mitra & Sponsor Resmi
+                                </h3>
+                            </div>
 
-            <!-- FALLBACK DEFAULT SLIDESHOW (When no custom slides uploaded yet) -->
-            <template x-if="slides.length === 0">
-                <div class="relative w-full h-full flex flex-col items-center justify-center text-center p-8 sm:p-12 space-y-8 bg-gradient-to-br from-[#0D1527] via-[#090E1A] to-[#120B20]">
-                    
-                    <!-- Ambient Glow Elements -->
-                    <div class="w-96 h-96 rounded-full bg-gradient-to-tr from-[#7A5AF8]/30 via-[#4E6EFF]/30 to-[#FF58D5]/30 blur-3xl absolute pointer-events-none"></div>
-
-                    <!-- Center Event Hero Card -->
-                    <div class="relative z-10 max-w-3xl mx-auto space-y-6">
-                        
-                        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.08] border border-white/[0.15] text-[#84D0FF] text-xs sm:text-sm font-bold shadow-lg">
-                            <i data-lucide="sparkles" class="w-4 h-4 text-amber-400"></i>
-                            <span>{{ $settings['tv_signage_header_subtitle'] ?? 'PLATFORM MANAJEMEN & LIVE EVENT PERLOMBAAN' }}</span>
-                        </div>
-
-                        <h2 class="text-3xl sm:text-5xl lg:text-6xl font-black text-white font-display tracking-tight leading-tight">
-                            {{ $settings['tv_signage_header_title'] ?? 'TALENTA 2026' }}
-                        </h2>
-
-                        <p class="text-sm sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
-                            Terbuka untuk SD/MI & SMP/MTs sederajat dalam berbagai cabang perlombaan bergengsi.
-                        </p>
-
-                        <!-- Highlight Grid Sponsors Showcase (24 Logo) -->
-                        @if(count($sponsorLogos) > 0)
-                        <div class="pt-6 space-y-3">
-                            <span class="text-xs font-black uppercase tracking-widest text-slate-400 block font-mono">
-                                ★ DIDUKUNG OLEH SPONSOR RESMI ★
-                            </span>
-                            <div class="flex flex-wrap items-center justify-center gap-3 sm:gap-5 max-w-4xl mx-auto">
-                                @foreach(array_slice($sponsorLogos, 0, 12) as $logo)
+                            <!-- 24 Logos Grid Display -->
+                            <div class="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4 max-w-6xl mx-auto w-full relative z-10">
+                                @foreach($sponsorLogos as $logo)
                                     @php
                                         $cleanLogo = ltrim(str_replace(['public/', 'storage/'], '', $logo), '/');
                                     @endphp
-                                    <div class="p-2 sm:p-3 rounded-xl bg-white/[0.05] border border-white/[0.1] shadow-md flex items-center justify-center">
-                                        <img src="{{ asset('storage/' . $cleanLogo) }}" class="h-8 sm:h-12 w-auto max-w-[120px] object-contain drop-shadow">
+                                    <div class="p-2.5 sm:p-3.5 rounded-2xl bg-[#0C1220]/80 border border-white/[0.1] hover:border-[#7A5AF8]/60 flex items-center justify-center shadow-lg transition-all duration-300 hover:scale-105">
+                                        <img src="{{ asset('storage/' . $cleanLogo) }}" 
+                                             alt="Sponsor" 
+                                             class="h-9 sm:h-12 w-auto max-w-full object-contain drop-shadow">
                                     </div>
                                 @endforeach
                             </div>
-                        </div>
-                        @endif
 
-                    </div>
+                        </div>
+                    </template>
 
                 </div>
             </template>
@@ -276,7 +276,7 @@
             </div>
 
             <!-- Slide Index Counter Badge (Bottom Right) -->
-            <div class="absolute bottom-4 right-4 z-30 px-3 py-1.5 rounded-xl bg-[#090E1A]/90 backdrop-blur-md border border-white/[0.12] text-xs font-mono font-bold text-white shadow-xl flex items-center gap-2">
+            <div class="absolute bottom-4 right-4 z-30 px-3.5 py-1.5 rounded-xl bg-[#090E1A]/90 backdrop-blur-md border border-white/[0.12] text-xs font-mono font-bold text-white shadow-xl flex items-center gap-2">
                 <span x-text="isPaused ? '⏸ PAUSED' : '▶ PLAYING'" :class="isPaused ? 'text-amber-400' : 'text-emerald-400'"></span>
                 <span class="text-slate-500">•</span>
                 <span>
@@ -387,16 +387,6 @@
                 currentVersion: '{{ $settings['tv_signage_version'] ?? 'v1' }}',
 
                 initPlayer() {
-                    // Pre-process media URLs for slides
-                    this.slides = this.slides.map(s => {
-                        let url = s.video_url || null;
-                        if (s.media_path) {
-                            let clean = s.media_path.replace(/^(public\/|storage\/)/, '');
-                            url = '{{ asset('storage') }}/' + clean;
-                        }
-                        return { ...s, media_url: url };
-                    });
-
                     this.updateClock();
                     this.clockInterval = setInterval(() => { this.updateClock(); }, 1000);
 
@@ -410,7 +400,7 @@
                 },
 
                 startSlideTimer() {
-                    if (this.slides.length === 0) return;
+                    if (!this.slides || this.slides.length === 0) return;
 
                     const cur = this.slides[this.currentIndex];
                     this.currentDuration = (cur && cur.duration) ? parseInt(cur.duration) : 10;
@@ -435,14 +425,14 @@
                 },
 
                 nextSlide() {
-                    if (this.slides.length === 0) return;
+                    if (!this.slides || this.slides.length === 0) return;
                     this.currentIndex = (this.currentIndex + 1) % this.slides.length;
                     this.startSlideTimer();
                     this.$nextTick(() => { this.playCurrentVideo(); });
                 },
 
                 prevSlide() {
-                    if (this.slides.length === 0) return;
+                    if (!this.slides || this.slides.length === 0) return;
                     this.currentIndex = (this.currentIndex - 1 + this.slides.length) % this.slides.length;
                     this.startSlideTimer();
                     this.$nextTick(() => { this.playCurrentVideo(); });
@@ -510,16 +500,7 @@
                             if (data.version && data.version !== this.currentVersion) {
                                 console.log('New TV Signage version detected, syncing...');
                                 this.currentVersion = data.version;
-                                
-                                // Map slides with absolute storage URLs
-                                this.slides = (data.slides || []).map(s => {
-                                    let url = s.video_url || null;
-                                    if (s.media_path) {
-                                        let clean = s.media_path.replace(/^(public\/|storage\/)/, '');
-                                        url = '{{ asset('storage') }}/' + clean;
-                                    }
-                                    return { ...s, media_url: url };
-                                });
+                                this.slides = data.slides || [];
 
                                 if (this.currentIndex >= this.slides.length) {
                                     this.currentIndex = 0;

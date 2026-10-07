@@ -202,16 +202,6 @@ class HomeController extends Controller
      */
     public function tvSignage()
     {
-        $allSlides = json_decode(AppSetting::get('tv_signage_slides', '[]'), true) ?: [];
-        $activeSlides = array_values(array_filter($allSlides, fn ($s) => ($s['is_active'] ?? true)));
-
-        // Ensure physical media files exist and are synced
-        foreach ($activeSlides as $s) {
-            if (! empty($s['media_path'])) {
-                AdminSettingsController::ensurePublicStorageSync($s['media_path']);
-            }
-        }
-
         $sponsorLogos = json_decode(AppSetting::get('sponsor_logos', '[]'), true) ?: [];
         foreach ($sponsorLogos as $logo) {
             AdminSettingsController::ensurePublicStorageSync($logo);
@@ -221,6 +211,8 @@ class HomeController extends Controller
         foreach ($pamphletImages as $img) {
             AdminSettingsController::ensurePublicStorageSync($img);
         }
+
+        $activeSlides = $this->buildPreparedTvSlides($sponsorLogos, $pamphletImages);
 
         $settings = [
             'tv_signage_enabled' => AppSetting::get('tv_signage_enabled', '1'),
@@ -242,14 +234,91 @@ class HomeController extends Controller
     }
 
     /**
+     * Build prepared slides with complete absolute URLs and fallbacks
+     */
+    protected function buildPreparedTvSlides(array $sponsorLogos = [], array $pamphletImages = []): array
+    {
+        $allSlides = json_decode(AppSetting::get('tv_signage_slides', '[]'), true) ?: [];
+        $activeCustomSlides = array_values(array_filter($allSlides, fn ($s) => ($s['is_active'] ?? true)));
+
+        $prepared = [];
+
+        foreach ($activeCustomSlides as $s) {
+            $mediaUrl = null;
+            if (! empty($s['media_path'])) {
+                AdminSettingsController::ensurePublicStorageSync($s['media_path']);
+                $clean = ltrim(str_replace(['public/', 'storage/'], '', $s['media_path']), '/');
+                $mediaUrl = \Illuminate\Support\Str::startsWith($s['media_path'], ['http://', 'https://'])
+                    ? $s['media_path']
+                    : asset('storage/'.$clean);
+            } elseif (! empty($s['video_url'])) {
+                $mediaUrl = $s['video_url'];
+            }
+
+            // Only add slide if it has mediaUrl or valid type
+            $prepared[] = [
+                'id' => $s['id'] ?? ('slide_'.count($prepared)),
+                'title' => $s['title'] ?? 'Slide Iklan',
+                'type' => $s['type'] ?? 'image',
+                'media_url' => $mediaUrl,
+                'duration' => (int) ($s['duration'] ?? 10),
+                'notes' => $s['notes'] ?? '',
+                'is_custom' => true,
+            ];
+        }
+
+        // If no custom slides were added by admin, generate magnificent default slides
+        if (empty($prepared)) {
+            // Slide 1: Event Hero Showcase
+            $prepared[] = [
+                'id' => 'default_slide_event',
+                'title' => AppSetting::get('event_name', 'Milad ke-58 MTsN 1 Blitar'),
+                'type' => 'default_event',
+                'media_url' => null,
+                'duration' => 12,
+                'notes' => 'Pentas Seni & Kejuaraan Pelajar Tingkat Jawa Timur',
+                'is_custom' => false,
+            ];
+
+            // Slide 2: Wall of Sponsors Showcase (24 Logos)
+            if (! empty($sponsorLogos)) {
+                $prepared[] = [
+                    'id' => 'default_slide_sponsors',
+                    'title' => 'Sponsor & Mitra Resmi',
+                    'type' => 'default_sponsors',
+                    'media_url' => null,
+                    'duration' => 15,
+                    'notes' => 'Terima kasih atas dukungan seluruh mitra sponsor',
+                    'is_custom' => false,
+                ];
+            }
+
+            // Slide 3+: Pamphlet images (if available)
+            foreach ($pamphletImages as $idx => $pImg) {
+                $cleanP = ltrim(str_replace(['public/', 'storage/'], '', $pImg), '/');
+                $prepared[] = [
+                    'id' => 'default_slide_pamphlet_'.$idx,
+                    'title' => 'Pamflet & Jadwal Lomba',
+                    'type' => 'image',
+                    'media_url' => asset('storage/'.$cleanP),
+                    'duration' => 12,
+                    'notes' => 'Informasi Pelaksanaan & Petunjuk Teknis Lomba',
+                    'is_custom' => false,
+                ];
+            }
+        }
+
+        return $prepared;
+    }
+
+    /**
      * API State for TV Signage (Allows dynamic polling / seamless live updates on Smart TV)
      */
     public function apiTvSignageState()
     {
-        $allSlides = json_decode(AppSetting::get('tv_signage_slides', '[]'), true) ?: [];
-        $activeSlides = array_values(array_filter($allSlides, fn ($s) => ($s['is_active'] ?? true)));
-
         $sponsorLogos = json_decode(AppSetting::get('sponsor_logos', '[]'), true) ?: [];
+        $pamphletImages = json_decode(AppSetting::get('pamphlet_images', '[]'), true) ?: [];
+        $activeSlides = $this->buildPreparedTvSlides($sponsorLogos, $pamphletImages);
 
         return response()->json([
             'version' => AppSetting::get('tv_signage_version', 'v1'),
