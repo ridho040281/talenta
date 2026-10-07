@@ -67,14 +67,6 @@
             pointer-events: none;
             z-index: 0;
         }
-
-        /* Glass Surface */
-        .glass-tv {
-            background: rgba(13, 20, 36, 0.85);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-        }
     </style>
 </head>
 <body class="h-full w-full flex flex-col justify-between text-slate-100 font-sans relative"
@@ -155,119 +147,89 @@
         <!-- SLIDE CONTAINER -->
         <div class="relative w-full h-full rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.8)] border border-white/[0.12] bg-[#070B14] flex items-center justify-center">
             
-            <!-- Dynamic Slide Loop -->
-            <template x-for="(slide, index) in slides" :key="slide.id || index">
-                <div x-show="currentIndex === index"
-                     x-transition:enter="transition-all duration-700 ease-out"
-                     x-transition:enter-start="opacity-0 scale-95"
-                     x-transition:enter-end="opacity-100 scale-100"
-                     x-transition:leave="transition-all duration-500 ease-in absolute inset-0"
-                     x-transition:leave-start="opacity-100 scale-100"
-                     x-transition:leave-to="opacity-0 scale-105"
-                     class="absolute inset-0 w-full h-full flex items-center justify-center overflow-hidden">
-                    
-                    <!-- ========================================================= -->
-                    <!-- SLIDE VARIANT A: IMAGE / BANNER POSTER                    -->
-                    <!-- ========================================================= -->
-                    <template x-if="slide.type === 'image' && slide.media_url">
-                        <div class="relative w-full h-full flex items-center justify-center bg-black/90">
-                            <!-- Blurred Ambient Background -->
-                            <div class="absolute inset-0 bg-cover bg-center blur-3xl opacity-50 scale-110" 
-                                 :style="'background-image: url(' + slide.media_url + ')'"></div>
-                            
-                            <!-- Main Sharp High-Res Image -->
-                            <img :src="slide.media_url" 
-                                 :alt="slide.title" 
-                                 class="relative z-10 max-h-full max-w-full w-auto h-auto object-contain drop-shadow-2xl">
-
-                            <!-- Slide Caption Overlay (Bottom Left) -->
-                            <div x-show="slide.title" class="absolute bottom-6 left-6 z-20 max-w-xl p-3.5 sm:p-4 rounded-2xl bg-[#090E1A]/85 backdrop-blur-xl border border-white/[0.15] shadow-2xl pointer-events-none">
-                                <span class="text-[10px] font-mono font-black uppercase tracking-widest text-[#FF58D5] block">
-                                    TALENTA TV SPONSOR & EVENT
-                                </span>
-                                <h3 class="text-sm sm:text-base font-black text-white leading-snug" x-text="slide.title"></h3>
-                                <p x-show="slide.notes" class="text-xs text-slate-300 line-clamp-1 mt-0.5" x-text="slide.notes"></p>
+            <!-- Direct Blade Rendering (Instant High-Performance SSR) -->
+            <div class="relative w-full h-full">
+                @foreach($activeSlides as $index => $slide)
+                    <div x-show="currentIndex === {{ $index }}"
+                         x-transition:enter="transition-all duration-700 ease-out"
+                         x-transition:enter-start="opacity-0 scale-95"
+                         x-transition:enter-end="opacity-100 scale-100"
+                         x-transition:leave="transition-all duration-500 ease-in absolute inset-0"
+                         x-transition:leave-start="opacity-100 scale-100"
+                         x-transition:leave-to="opacity-0 scale-105"
+                         class="absolute inset-0 w-full h-full flex items-center justify-center overflow-hidden">
+                        
+                        {{-- SLIDE VARIANT A: CUSTOM IMAGE / POSTER / BANNER --}}
+                        @if($slide['type'] === 'image' && !empty($slide['media_url']))
+                            <div class="relative w-full h-full flex items-center justify-center bg-black/90">
+                                <div class="absolute inset-0 bg-cover bg-center blur-3xl opacity-50 scale-110" style="background-image: url('{{ $slide['media_url'] }}')"></div>
+                                <img src="{{ $slide['media_url'] }}" alt="{{ $slide['title'] }}" class="relative z-10 max-h-full max-w-full w-auto h-auto object-contain drop-shadow-2xl">
+                                
+                                <div class="absolute bottom-6 left-6 z-20 max-w-xl p-4 rounded-2xl bg-[#090E1A]/85 backdrop-blur-xl border border-white/[0.15] shadow-2xl">
+                                    <span class="text-[10px] font-mono font-black uppercase tracking-widest text-[#FF58D5] block">TALENTA TV SPONSOR & EVENT</span>
+                                    <h3 class="text-base font-black text-white leading-snug">{{ $slide['title'] }}</h3>
+                                    @if(!empty($slide['notes']))
+                                        <p class="text-xs text-slate-300 mt-0.5">{{ $slide['notes'] }}</p>
+                                    @endif
+                                </div>
                             </div>
-                        </div>
-                    </template>
 
-                    <!-- ========================================================= -->
-                    <!-- SLIDE VARIANT B: VIDEO MP4 / WEBM                         -->
-                    <!-- ========================================================= -->
-                    <template x-if="slide.type === 'video' && slide.media_url">
-                        <div class="relative w-full h-full bg-black flex items-center justify-center">
-                            <video :id="'video-slide-' + index"
-                                   :src="slide.media_url" 
-                                   class="w-full h-full object-contain"
-                                   autoplay
-                                   :muted="isMuted"
-                                   playsinline
-                                   @ended="nextSlide()"></video>
-                        </div>
-                    </template>
+                        {{-- SLIDE VARIANT B: VIDEO MP4 / WEBM --}}
+                        @elseif($slide['type'] === 'video' && !empty($slide['media_url']))
+                            <div class="relative w-full h-full bg-black flex items-center justify-center">
+                                <video id="video-slide-{{ $index }}" src="{{ $slide['media_url'] }}" class="w-full h-full object-contain" autoplay muted playsinline @ended="nextSlide()"></video>
+                            </div>
 
-                    <!-- ========================================================= -->
-                    <!-- SLIDE VARIANT C: DEFAULT EVENT HERO SHOWCASE              -->
-                    <!-- ========================================================= -->
-                    <template x-if="slide.type === 'default_event'">
-                        <div class="relative w-full h-full flex flex-col items-center justify-center text-center p-8 sm:p-12 space-y-6 bg-gradient-to-br from-[#0D1527] via-[#090E1A] to-[#140B22]">
-                            
-                            <!-- Ambient Glow Circle -->
-                            <div class="w-96 h-96 rounded-full bg-gradient-to-tr from-[#7A5AF8]/35 via-[#4E6EFF]/30 to-[#FF58D5]/35 blur-3xl absolute pointer-events-none"></div>
-
-                            <div class="relative z-10 max-w-3xl mx-auto space-y-5">
-                                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.08] border border-white/[0.15] text-[#84D0FF] text-xs sm:text-sm font-bold shadow-lg">
-                                    <i data-lucide="sparkles" class="w-4 h-4 text-amber-400"></i>
-                                    <span>PENTAS SENI & KEJUARAAN PELAJAR JAWA TIMUR</span>
+                        {{-- SLIDE VARIANT C: GRAND WALL OF SPONSORS (24 LOGOS) --}}
+                        @elseif($slide['type'] === 'default_sponsors')
+                            <div class="relative w-full h-full flex flex-col items-center justify-center p-6 sm:p-10 bg-gradient-to-br from-[#0A0F1D] via-[#080C17] to-[#120D24] overflow-hidden">
+                                <div class="text-center space-y-1 mb-6 relative z-10">
+                                    <span class="px-3 py-1 rounded-full text-[10px] font-mono font-black uppercase tracking-widest bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                        ★ OFFICIAL PARTNERS & SPONSORS ★
+                                    </span>
+                                    <h3 class="text-2xl sm:text-4xl font-black text-white font-display">
+                                        Didukung Oleh Mitra & Sponsor Resmi
+                                    </h3>
+                                    <p class="text-xs sm:text-sm text-slate-400">
+                                        Terima kasih kepada seluruh mitra pendukung {{ $settings['tv_signage_header_title'] ?? 'TALENTA 2026' }}
+                                    </p>
                                 </div>
 
-                                <h2 class="text-3xl sm:text-5xl lg:text-6xl font-black text-white font-display tracking-tight leading-tight drop-shadow-lg">
-                                    {{ $settings['tv_signage_header_title'] ?? 'Milad ke-58 MTsN 1 Blitar' }}
-                                </h2>
-
-                                <p class="text-sm sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
-                                    Ajang kompetisi bergengsi tingkat SD/MI & SMP/MTs sederajat. Junjung tinggi sportivitas, ukir prestasi gemilang!
-                                </p>
+                                <div class="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4 max-w-6xl mx-auto w-full relative z-10 px-4">
+                                    @foreach($sponsorLogos as $logo)
+                                        @php
+                                            $cleanLogo = ltrim(str_replace(['public/', 'storage/'], '', $logo), '/');
+                                            $logoUrl = \Illuminate\Support\Str::startsWith($logo, ['http://', 'https://']) ? $logo : asset('storage/' . $cleanLogo);
+                                        @endphp
+                                        <div class="p-3 sm:p-4 rounded-2xl bg-[#0C1220]/90 border border-white/[0.12] hover:border-[#7A5AF8]/60 flex items-center justify-center shadow-xl transition-all duration-300 hover:scale-105">
+                                            <img src="{{ $logoUrl }}" alt="Sponsor Logo" class="h-10 sm:h-14 w-auto max-w-full object-contain drop-shadow">
+                                        </div>
+                                    @endforeach
+                                </div>
                             </div>
 
-                        </div>
-                    </template>
-
-                    <!-- ========================================================= -->
-                    <!-- SLIDE VARIANT D: DEFAULT WALL OF SPONSORS (24 LOGOS)      -->
-                    <!-- ========================================================= -->
-                    <template x-if="slide.type === 'default_sponsors'">
-                        <div class="relative w-full h-full flex flex-col items-center justify-center p-6 sm:p-10 bg-gradient-to-br from-[#0A0F1D] via-[#080C17] to-[#120D24] overflow-hidden">
-                            
-                            <!-- Title Header -->
-                            <div class="text-center space-y-1 mb-6 relative z-10">
-                                <span class="px-3 py-1 rounded-full text-[10px] font-mono font-black uppercase tracking-widest bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                                    ★ OFFICIAL PARTNERS & SPONSORS ★
-                                </span>
-                                <h3 class="text-xl sm:text-3xl font-black text-white font-display">
-                                    Didukung Oleh Mitra & Sponsor Resmi
-                                </h3>
-                            </div>
-
-                            <!-- 24 Logos Grid Display -->
-                            <div class="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4 max-w-6xl mx-auto w-full relative z-10">
-                                @foreach($sponsorLogos as $logo)
-                                    @php
-                                        $cleanLogo = ltrim(str_replace(['public/', 'storage/'], '', $logo), '/');
-                                    @endphp
-                                    <div class="p-2.5 sm:p-3.5 rounded-2xl bg-[#0C1220]/80 border border-white/[0.1] hover:border-[#7A5AF8]/60 flex items-center justify-center shadow-lg transition-all duration-300 hover:scale-105">
-                                        <img src="{{ asset('storage/' . $cleanLogo) }}" 
-                                             alt="Sponsor" 
-                                             class="h-9 sm:h-12 w-auto max-w-full object-contain drop-shadow">
+                        {{-- SLIDE VARIANT D: EVENT HERO SHOWCASE --}}
+                        @elseif($slide['type'] === 'default_event')
+                            <div class="relative w-full h-full flex flex-col items-center justify-center text-center p-8 sm:p-12 space-y-6 bg-gradient-to-br from-[#0D1527] via-[#090E1A] to-[#140B22]">
+                                <div class="w-96 h-96 rounded-full bg-gradient-to-tr from-[#7A5AF8]/35 via-[#4E6EFF]/30 to-[#FF58D5]/35 blur-3xl absolute pointer-events-none"></div>
+                                <div class="relative z-10 max-w-3xl mx-auto space-y-5">
+                                    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.08] border border-white/[0.15] text-[#84D0FF] text-xs sm:text-sm font-bold shadow-lg">
+                                        <i data-lucide="sparkles" class="w-4 h-4 text-amber-400"></i>
+                                        <span>{{ $settings['tv_signage_header_subtitle'] ?? 'PENTAS SENI & KEJUARAAN PELAJAR JAWA TIMUR' }}</span>
                                     </div>
-                                @endforeach
+                                    <h2 class="text-4xl sm:text-6xl font-black text-white font-display tracking-tight leading-tight drop-shadow-lg">
+                                        {{ $settings['tv_signage_header_title'] ?? 'Milad ke-58 MTsN 1 Blitar' }}
+                                    </h2>
+                                    <p class="text-base sm:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed">
+                                        Ajang kompetisi bergengsi tingkat SD/MI & SMP/MTs sederajat. Junjung tinggi sportivitas, ukir prestasi gemilang!
+                                    </p>
+                                </div>
                             </div>
+                        @endif
 
-                        </div>
-                    </template>
-
-                </div>
-            </template>
+                    </div>
+                @endforeach
+            </div>
 
             <!-- Bottom Slide Progress Bar (Active Countdown) -->
             <div class="absolute bottom-0 left-0 right-0 h-1.5 bg-white/[0.08] z-30 overflow-hidden">
@@ -282,7 +244,7 @@
                 <span>
                     <span class="text-white" x-text="String(currentIndex + 1).padStart(2, '0')">01</span>
                     <span class="text-slate-500">/</span>
-                    <span class="text-slate-400" x-text="String(Math.max(1, slides.length)).padStart(2, '0')">01</span>
+                    <span class="text-slate-400" x-text="String(Math.max(1, totalSlides)).padStart(2, '0')">01</span>
                 </span>
             </div>
 
@@ -315,9 +277,10 @@
                     @foreach($sponsorLogos as $logo)
                         @php
                             $cleanLogo = ltrim(str_replace(['public/', 'storage/'], '', $logo), '/');
+                            $logoUrl = \Illuminate\Support\Str::startsWith($logo, ['http://', 'https://']) ? $logo : asset('storage/' . $cleanLogo);
                         @endphp
                         <div class="h-9 sm:h-11 px-3 py-1 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center shrink-0">
-                            <img src="{{ asset('storage/' . $cleanLogo) }}" alt="Sponsor" class="h-full w-auto max-w-[120px] object-contain drop-shadow-sm">
+                            <img src="{{ $logoUrl }}" alt="Sponsor" class="h-full w-auto max-w-[120px] object-contain drop-shadow-sm">
                         </div>
                     @endforeach
 
@@ -325,9 +288,10 @@
                     @foreach($sponsorLogos as $logo)
                         @php
                             $cleanLogo = ltrim(str_replace(['public/', 'storage/'], '', $logo), '/');
+                            $logoUrl = \Illuminate\Support\Str::startsWith($logo, ['http://', 'https://']) ? $logo : asset('storage/' . $cleanLogo);
                         @endphp
                         <div class="h-9 sm:h-11 px-3 py-1 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center shrink-0">
-                            <img src="{{ asset('storage/' . $cleanLogo) }}" alt="Sponsor" class="h-full w-auto max-w-[120px] object-contain drop-shadow-sm">
+                            <img src="{{ $logoUrl }}" alt="Sponsor" class="h-full w-auto max-w-[120px] object-contain drop-shadow-sm">
                         </div>
                     @endforeach
 
@@ -373,6 +337,7 @@
         function tvSignagePlayer() {
             return {
                 slides: @json($activeSlides),
+                totalSlides: {{ count($activeSlides) }},
                 currentIndex: 0,
                 isPaused: false,
                 isMuted: true,
@@ -400,7 +365,7 @@
                 },
 
                 startSlideTimer() {
-                    if (!this.slides || this.slides.length === 0) return;
+                    if (this.totalSlides === 0) return;
 
                     const cur = this.slides[this.currentIndex];
                     this.currentDuration = (cur && cur.duration) ? parseInt(cur.duration) : 10;
@@ -425,15 +390,15 @@
                 },
 
                 nextSlide() {
-                    if (!this.slides || this.slides.length === 0) return;
-                    this.currentIndex = (this.currentIndex + 1) % this.slides.length;
+                    if (this.totalSlides === 0) return;
+                    this.currentIndex = (this.currentIndex + 1) % this.totalSlides;
                     this.startSlideTimer();
                     this.$nextTick(() => { this.playCurrentVideo(); });
                 },
 
                 prevSlide() {
-                    if (!this.slides || this.slides.length === 0) return;
-                    this.currentIndex = (this.currentIndex - 1 + this.slides.length) % this.slides.length;
+                    if (this.totalSlides === 0) return;
+                    this.currentIndex = (this.currentIndex - 1 + this.totalSlides) % this.totalSlides;
                     this.startSlideTimer();
                     this.$nextTick(() => { this.playCurrentVideo(); });
                 },
@@ -498,14 +463,8 @@
                         .then(res => res.json())
                         .then(data => {
                             if (data.version && data.version !== this.currentVersion) {
-                                console.log('New TV Signage version detected, syncing...');
-                                this.currentVersion = data.version;
-                                this.slides = data.slides || [];
-
-                                if (this.currentIndex >= this.slides.length) {
-                                    this.currentIndex = 0;
-                                }
-                                this.startSlideTimer();
+                                console.log('New TV Signage version detected, reloading...');
+                                window.location.reload();
                             }
                         })
                         .catch(err => console.error('Signage sync polling error:', err));
