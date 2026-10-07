@@ -82,7 +82,7 @@
     <!-- ========================================================================= -->
     <!-- 1. TOP HEADER BAR (Header Display TV)                                      -->
     <!-- ========================================================================= -->
-    <header x-show="showHeaderFooter" x-transition.opacity.duration.300ms class="relative z-20 h-16 sm:h-20 px-6 sm:px-10 bg-[#090E1A]/90 backdrop-blur-xl border-b border-white/[0.08] flex items-center justify-between shadow-2xl shrink-0">
+    <header x-show="showHeaderFooter" x-transition.opacity.duration.300ms class="relative z-20 h-16 sm:h-20 px-6 sm:px-10 bg-[#090E1A]/95 backdrop-blur-xl border-b border-white/[0.08] flex items-center justify-between shadow-2xl shrink-0">
         
         <!-- Left: Logo & Event Title -->
         <div class="flex items-center gap-3.5 sm:gap-5 min-w-0">
@@ -147,25 +147,21 @@
         <!-- SLIDE CONTAINER -->
         <div class="relative w-full h-full rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.8)] border border-white/[0.12] bg-[#070B14] flex items-center justify-center">
             
-            <!-- Direct Blade Rendering (Instant High-Performance SSR) -->
+            <!-- Direct Blade Rendering (Each Slide 100% Isolated & Opaque) -->
             <div class="relative w-full h-full">
                 @foreach($activeSlides as $index => $slide)
                     <div x-show="currentIndex === {{ $index }}"
-                         x-transition:enter="transition-all duration-700 ease-out"
-                         x-transition:enter-start="opacity-0 scale-95"
-                         x-transition:enter-end="opacity-100 scale-100"
-                         x-transition:leave="transition-all duration-500 ease-in absolute inset-0"
-                         x-transition:leave-start="opacity-100 scale-100"
-                         x-transition:leave-to="opacity-0 scale-105"
-                         class="absolute inset-0 w-full h-full flex items-center justify-center overflow-hidden">
+                         x-cloak
+                         style="display: {{ $index === 0 ? 'flex' : 'none' }};"
+                         class="absolute inset-0 w-full h-full bg-[#070B14] flex items-center justify-center overflow-hidden transition-opacity duration-700 ease-in-out">
                         
                         {{-- SLIDE VARIANT A: CUSTOM IMAGE / POSTER / BANNER --}}
                         @if($slide['type'] === 'image' && !empty($slide['media_url']))
-                            <div class="relative w-full h-full flex items-center justify-center bg-black/90">
+                            <div class="relative w-full h-full flex items-center justify-center bg-black">
                                 <div class="absolute inset-0 bg-cover bg-center blur-3xl opacity-50 scale-110" style="background-image: url('{{ $slide['media_url'] }}')"></div>
                                 <img src="{{ $slide['media_url'] }}" alt="{{ $slide['title'] }}" class="relative z-10 max-h-full max-w-full w-auto h-auto object-contain drop-shadow-2xl">
                                 
-                                <div class="absolute bottom-6 left-6 z-20 max-w-xl p-4 rounded-2xl bg-[#090E1A]/85 backdrop-blur-xl border border-white/[0.15] shadow-2xl">
+                                <div class="absolute bottom-6 left-6 z-20 max-w-xl p-4 rounded-2xl bg-[#090E1A]/90 backdrop-blur-xl border border-white/[0.15] shadow-2xl">
                                     <span class="text-[10px] font-mono font-black uppercase tracking-widest text-[#FF58D5] block">TALENTA TV SPONSOR & EVENT</span>
                                     <h3 class="text-base font-black text-white leading-snug">{{ $slide['title'] }}</h3>
                                     @if(!empty($slide['notes']))
@@ -180,50 +176,58 @@
                                 <video id="video-slide-{{ $index }}" src="{{ $slide['media_url'] }}" class="w-full h-full object-contain" autoplay muted playsinline @ended="nextSlide()"></video>
                             </div>
 
-                        {{-- SLIDE VARIANT C: GRAND WALL OF SPONSORS (24 LOGOS) --}}
-                        @elseif($slide['type'] === 'default_sponsors')
-                            <div class="relative w-full h-full flex flex-col items-center justify-center p-6 sm:p-10 bg-gradient-to-br from-[#0A0F1D] via-[#080C17] to-[#120D24] overflow-hidden">
-                                <div class="text-center space-y-1 mb-6 relative z-10">
-                                    <span class="px-3 py-1 rounded-full text-[10px] font-mono font-black uppercase tracking-widest bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                                        ★ OFFICIAL PARTNERS & SPONSORS ★
+                        {{-- SLIDE VARIANT C: SPONSOR GROUP (6 LOGO BESAR PER SLIDE SECARA BERGANTIAN) --}}
+                        @elseif($slide['type'] === 'sponsor_group' && !empty($slide['logos']))
+                            <div class="relative w-full h-full flex flex-col items-center justify-center p-6 sm:p-12 bg-gradient-to-br from-[#0A0F1D] via-[#070B14] to-[#140D24] overflow-hidden">
+                                
+                                <!-- Ambient Glow -->
+                                <div class="w-96 h-96 rounded-full bg-gradient-to-tr from-[#7A5AF8]/30 via-[#4E6EFF]/20 to-[#FF58D5]/25 blur-3xl absolute pointer-events-none"></div>
+
+                                <!-- Header Slide Sponsor -->
+                                <div class="text-center space-y-1.5 mb-8 relative z-10">
+                                    <span class="px-3.5 py-1 rounded-full text-[11px] font-mono font-black uppercase tracking-widest bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-md">
+                                        ★ OFFICIAL SPONSOR & PARTNER ★
                                     </span>
                                     <h3 class="text-2xl sm:text-4xl font-black text-white font-display">
-                                        Didukung Oleh Mitra & Sponsor Resmi
+                                        Didukung Oleh Mitra Resmi
                                     </h3>
                                     <p class="text-xs sm:text-sm text-slate-400">
-                                        Terima kasih kepada seluruh mitra pendukung {{ $settings['tv_signage_header_title'] ?? 'TALENTA 2026' }}
+                                        {{ $slide['notes'] ?? 'Terima kasih atas partisipasi dan dukungan sponsorship' }}
                                     </p>
                                 </div>
 
-                                <div class="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4 max-w-6xl mx-auto w-full relative z-10 px-4">
-                                    @foreach($sponsorLogos as $logo)
-                                        @php
-                                            $cleanLogo = ltrim(str_replace(['public/', 'storage/'], '', $logo), '/');
-                                            $logoUrl = \Illuminate\Support\Str::startsWith($logo, ['http://', 'https://']) ? $logo : asset('storage/' . $cleanLogo);
-                                        @endphp
-                                        <div class="p-3 sm:p-4 rounded-2xl bg-[#0C1220]/90 border border-white/[0.12] hover:border-[#7A5AF8]/60 flex items-center justify-center shadow-xl transition-all duration-300 hover:scale-105">
-                                            <img src="{{ $logoUrl }}" alt="Sponsor Logo" class="h-10 sm:h-14 w-auto max-w-full object-contain drop-shadow">
+                                <!-- 6 Logos Grid (3 Columns x 2 Rows) - Extra Large Cards -->
+                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-5 sm:gap-8 max-w-5xl mx-auto w-full relative z-10 px-4">
+                                    @foreach($slide['logos'] as $logoUrl)
+                                        <div class="p-6 sm:p-8 rounded-3xl bg-[#0E1528]/90 border border-white/[0.12] hover:border-[#7A5AF8]/60 flex items-center justify-center shadow-2xl transition-all duration-300 hover:scale-105 h-32 sm:h-44">
+                                            <img src="{{ $logoUrl }}" alt="Sponsor Logo" class="h-full w-auto max-w-full object-contain drop-shadow-lg">
                                         </div>
                                     @endforeach
                                 </div>
+
                             </div>
 
                         {{-- SLIDE VARIANT D: EVENT HERO SHOWCASE --}}
                         @elseif($slide['type'] === 'default_event')
-                            <div class="relative w-full h-full flex flex-col items-center justify-center text-center p-8 sm:p-12 space-y-6 bg-gradient-to-br from-[#0D1527] via-[#090E1A] to-[#140B22]">
-                                <div class="w-96 h-96 rounded-full bg-gradient-to-tr from-[#7A5AF8]/35 via-[#4E6EFF]/30 to-[#FF58D5]/35 blur-3xl absolute pointer-events-none"></div>
-                                <div class="relative z-10 max-w-3xl mx-auto space-y-5">
-                                    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.08] border border-white/[0.15] text-[#84D0FF] text-xs sm:text-sm font-bold shadow-lg">
+                            <div class="relative w-full h-full flex flex-col items-center justify-center text-center p-8 sm:p-14 space-y-6 bg-gradient-to-br from-[#0D1527] via-[#070B14] to-[#160B26]">
+                                
+                                <div class="w-96 h-96 rounded-full bg-gradient-to-tr from-[#7A5AF8]/40 via-[#4E6EFF]/30 to-[#FF58D5]/40 blur-3xl absolute pointer-events-none"></div>
+                                
+                                <div class="relative z-10 max-w-4xl mx-auto space-y-6">
+                                    <div class="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/[0.08] border border-white/[0.15] text-[#84D0FF] text-xs sm:text-sm font-bold shadow-lg">
                                         <i data-lucide="sparkles" class="w-4 h-4 text-amber-400"></i>
                                         <span>{{ $settings['tv_signage_header_subtitle'] ?? 'PENTAS SENI & KEJUARAAN PELAJAR JAWA TIMUR' }}</span>
                                     </div>
-                                    <h2 class="text-4xl sm:text-6xl font-black text-white font-display tracking-tight leading-tight drop-shadow-lg">
-                                        {{ $settings['tv_signage_header_title'] ?? 'Milad ke-58 MTsN 1 Blitar' }}
+                                    
+                                    <h2 class="text-4xl sm:text-6xl lg:text-7xl font-black text-white font-display tracking-tight leading-tight drop-shadow-2xl">
+                                        {{ $settings['tv_signage_header_title'] ?? 'Milad ke-57 MTsN 1 Blitar' }}
                                     </h2>
-                                    <p class="text-base sm:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed">
+                                    
+                                    <p class="text-base sm:text-2xl text-slate-300 max-w-3xl mx-auto leading-relaxed">
                                         Ajang kompetisi bergengsi tingkat SD/MI & SMP/MTs sederajat. Junjung tinggi sportivitas, ukir prestasi gemilang!
                                     </p>
                                 </div>
+
                             </div>
                         @endif
 
@@ -255,7 +259,7 @@
     <!-- ========================================================================= -->
     <!-- 3. BOTTOM SIGNAGE FOOTER (24 Sponsor Marquee + Running Text Ticker)        -->
     <!-- ========================================================================= -->
-    <footer x-show="showHeaderFooter" x-transition.opacity.duration.300ms class="relative z-20 flex flex-col bg-[#080C17]/95 backdrop-blur-2xl border-t border-white/[0.08] shadow-2xl shrink-0">
+    <footer x-show="showHeaderFooter" x-transition.opacity.duration.300ms class="relative z-20 flex flex-col bg-[#080C17]/98 backdrop-blur-2xl border-t border-white/[0.08] shadow-2xl shrink-0">
         
         <!-- ROW 1: SPONSOR 24 LOGO MARQUEE (Horizontal Auto-Slide) -->
         @if(($settings['tv_signage_show_sponsor_marquee'] ?? '1') == '1' && count($sponsorLogos) > 0)

@@ -243,7 +243,18 @@ class HomeController extends Controller
 
         $prepared = [];
 
-        // 1. Add any valid custom slides uploaded by admin
+        // 1. Slide 1: Event Hero Showcase
+        $prepared[] = [
+            'id' => 'default_slide_event',
+            'title' => AppSetting::get('event_name', 'Milad ke-57 MTsN 1 Blitar'),
+            'type' => 'default_event',
+            'media_url' => null,
+            'duration' => 12,
+            'notes' => 'Pentas Seni & Kejuaraan Pelajar Tingkat Jawa Timur',
+            'is_custom' => false,
+        ];
+
+        // 2. Add any valid custom banner / poster / video uploaded by admin (1 per 1)
         foreach ($activeCustomSlides as $s) {
             $mediaUrl = null;
             if (! empty($s['media_path'])) {
@@ -270,29 +281,32 @@ class HomeController extends Controller
             }
         }
 
-        // 2. ALWAYS include the Wall of Sponsors Slide (24 Logos from Landing Page) in rotation!
+        // 3. Divide 24 Sponsor Logos into neat groups of 6 logos per slide (1 per 1 Slide Group)
         if (! empty($sponsorLogos)) {
-            $prepared[] = [
-                'id' => 'default_slide_sponsors',
-                'title' => 'Sponsor & Mitra Resmi',
-                'type' => 'default_sponsors',
-                'media_url' => null,
-                'duration' => 15,
-                'notes' => 'Didukung oleh ' . count($sponsorLogos) . ' Mitra & Sponsor Resmi',
-                'is_custom' => false,
-            ];
-        }
+            $chunks = array_chunk($sponsorLogos, 6);
+            $totalGroups = count($chunks);
 
-        // 3. Include Event Hero Showcase
-        $prepared[] = [
-            'id' => 'default_slide_event',
-            'title' => AppSetting::get('event_name', 'Milad ke-58 MTsN 1 Blitar'),
-            'type' => 'default_event',
-            'media_url' => null,
-            'duration' => 12,
-            'notes' => 'Pentas Seni & Kejuaraan Pelajar Tingkat Jawa Timur',
-            'is_custom' => false,
-        ];
+            foreach ($chunks as $cIdx => $chunkLogos) {
+                $resolvedLogos = [];
+                foreach ($chunkLogos as $l) {
+                    $cleanL = ltrim(str_replace(['public/', 'storage/'], '', $l), '/');
+                    $resolvedLogos[] = \Illuminate\Support\Str::startsWith($l, ['http://', 'https://'])
+                        ? $l
+                        : asset('storage/'.$cleanL);
+                }
+
+                $prepared[] = [
+                    'id' => 'sponsors_group_'.($cIdx + 1),
+                    'title' => 'Mitra & Sponsor Resmi (Bagian '.($cIdx + 1).' dari '.$totalGroups.')',
+                    'type' => 'sponsor_group',
+                    'logos' => $resolvedLogos,
+                    'media_url' => null,
+                    'duration' => 10,
+                    'notes' => 'Terima kasih atas partisipasi dan dukungan sponsorship',
+                    'is_custom' => false,
+                ];
+            }
+        }
 
         // 4. Include Pamphlet Images (if uploaded)
         foreach ($pamphletImages as $idx => $pImg) {
