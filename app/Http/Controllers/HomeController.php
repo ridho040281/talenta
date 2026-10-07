@@ -243,6 +243,7 @@ class HomeController extends Controller
 
         $prepared = [];
 
+        // 1. Add any valid custom slides uploaded by admin
         foreach ($activeCustomSlides as $s) {
             $mediaUrl = null;
             if (! empty($s['media_path'])) {
@@ -255,57 +256,56 @@ class HomeController extends Controller
                 $mediaUrl = $s['video_url'];
             }
 
-            // Only add slide if it has mediaUrl or valid type
+            // Only add if there is a valid media URL
+            if (! empty($mediaUrl)) {
+                $prepared[] = [
+                    'id' => $s['id'] ?? ('slide_'.count($prepared)),
+                    'title' => $s['title'] ?? 'Slide Iklan',
+                    'type' => $s['type'] ?? 'image',
+                    'media_url' => $mediaUrl,
+                    'duration' => (int) ($s['duration'] ?? 10),
+                    'notes' => $s['notes'] ?? '',
+                    'is_custom' => true,
+                ];
+            }
+        }
+
+        // 2. ALWAYS include the Wall of Sponsors Slide (24 Logos from Landing Page) in rotation!
+        if (! empty($sponsorLogos)) {
             $prepared[] = [
-                'id' => $s['id'] ?? ('slide_'.count($prepared)),
-                'title' => $s['title'] ?? 'Slide Iklan',
-                'type' => $s['type'] ?? 'image',
-                'media_url' => $mediaUrl,
-                'duration' => (int) ($s['duration'] ?? 10),
-                'notes' => $s['notes'] ?? '',
-                'is_custom' => true,
+                'id' => 'default_slide_sponsors',
+                'title' => 'Sponsor & Mitra Resmi',
+                'type' => 'default_sponsors',
+                'media_url' => null,
+                'duration' => 15,
+                'notes' => 'Didukung oleh ' . count($sponsorLogos) . ' Mitra & Sponsor Resmi',
+                'is_custom' => false,
             ];
         }
 
-        // If no custom slides were added by admin, generate magnificent default slides
-        if (empty($prepared)) {
-            // Slide 1: Event Hero Showcase
+        // 3. Include Event Hero Showcase
+        $prepared[] = [
+            'id' => 'default_slide_event',
+            'title' => AppSetting::get('event_name', 'Milad ke-58 MTsN 1 Blitar'),
+            'type' => 'default_event',
+            'media_url' => null,
+            'duration' => 12,
+            'notes' => 'Pentas Seni & Kejuaraan Pelajar Tingkat Jawa Timur',
+            'is_custom' => false,
+        ];
+
+        // 4. Include Pamphlet Images (if uploaded)
+        foreach ($pamphletImages as $idx => $pImg) {
+            $cleanP = ltrim(str_replace(['public/', 'storage/'], '', $pImg), '/');
             $prepared[] = [
-                'id' => 'default_slide_event',
-                'title' => AppSetting::get('event_name', 'Milad ke-58 MTsN 1 Blitar'),
-                'type' => 'default_event',
-                'media_url' => null,
+                'id' => 'default_slide_pamphlet_'.$idx,
+                'title' => 'Pamflet & Jadwal Kegiatan',
+                'type' => 'image',
+                'media_url' => asset('storage/'.$cleanP),
                 'duration' => 12,
-                'notes' => 'Pentas Seni & Kejuaraan Pelajar Tingkat Jawa Timur',
+                'notes' => 'Informasi Pelaksanaan & Petunjuk Teknis Lomba',
                 'is_custom' => false,
             ];
-
-            // Slide 2: Wall of Sponsors Showcase (24 Logos)
-            if (! empty($sponsorLogos)) {
-                $prepared[] = [
-                    'id' => 'default_slide_sponsors',
-                    'title' => 'Sponsor & Mitra Resmi',
-                    'type' => 'default_sponsors',
-                    'media_url' => null,
-                    'duration' => 15,
-                    'notes' => 'Terima kasih atas dukungan seluruh mitra sponsor',
-                    'is_custom' => false,
-                ];
-            }
-
-            // Slide 3+: Pamphlet images (if available)
-            foreach ($pamphletImages as $idx => $pImg) {
-                $cleanP = ltrim(str_replace(['public/', 'storage/'], '', $pImg), '/');
-                $prepared[] = [
-                    'id' => 'default_slide_pamphlet_'.$idx,
-                    'title' => 'Pamflet & Jadwal Lomba',
-                    'type' => 'image',
-                    'media_url' => asset('storage/'.$cleanP),
-                    'duration' => 12,
-                    'notes' => 'Informasi Pelaksanaan & Petunjuk Teknis Lomba',
-                    'is_custom' => false,
-                ];
-            }
         }
 
         return $prepared;
