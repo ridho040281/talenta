@@ -176,7 +176,44 @@
                                 <video id="video-slide-{{ $index }}" src="{{ $slide['media_url'] }}" class="w-full h-full object-contain" autoplay muted playsinline @ended="nextSlide()"></video>
                             </div>
 
-                        {{-- SLIDE VARIANT C: SPONSOR GROUP (6 LOGO BESAR PER SLIDE SECARA BERGANTIAN) --}}
+                        {{-- SLIDE VARIANT C: SPONSOR SINGLE SPOTLIGHT (1 SLIDE 1 LOGO BESAR FULL LAYAR) --}}
+                        @elseif($slide['type'] === 'sponsor_single' && !empty($slide['logo_url']))
+                            <div class="relative w-full h-full flex flex-col items-center justify-between p-6 sm:p-10 lg:p-12 bg-gradient-to-br from-[#0B1022] via-[#070B14] to-[#150D26] overflow-hidden">
+                                
+                                <!-- Background Ambient Spotlight Glows -->
+                                <div class="w-[500px] h-[500px] rounded-full bg-gradient-to-tr from-[#7A5AF8]/25 via-[#4E6EFF]/20 to-[#FF58D5]/25 blur-[120px] absolute pointer-events-none"></div>
+                                <div class="w-[320px] h-[320px] rounded-full bg-cyan-500/15 blur-[100px] absolute pointer-events-none"></div>
+
+                                <!-- Header Slide Sponsor -->
+                                <div class="text-center space-y-2 relative z-10 shrink-0">
+                                    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs sm:text-sm font-mono font-black uppercase tracking-widest bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 border border-amber-500/40 shadow-xl backdrop-blur-md">
+                                        <i data-lucide="award" class="w-4 h-4 text-amber-400"></i>
+                                        <span>★ OFFICIAL SPONSOR & PARTNER ★</span>
+                                    </div>
+                                    <h3 class="text-2xl sm:text-3xl lg:text-4xl font-black text-white font-display tracking-tight drop-shadow-md">
+                                        {{ $slide['title'] }}
+                                    </h3>
+                                </div>
+
+                                <!-- Single Logo Hero Card (Full Screen Spotlight) -->
+                                <div class="relative z-10 w-full max-w-4xl px-4 flex-1 flex items-center justify-center my-2 sm:my-4">
+                                    <div class="w-full h-full max-h-[380px] sm:max-h-[460px] p-8 sm:p-14 rounded-3xl bg-gradient-to-b from-[#111933]/90 to-[#0A0F20]/90 border border-white/[0.16] shadow-[0_25px_60px_rgba(0,0,0,0.8)] flex items-center justify-center backdrop-blur-2xl relative">
+                                        <img src="{{ $slide['logo_url'] }}" 
+                                             alt="Sponsor Logo" 
+                                             class="max-h-full max-w-full w-auto h-auto object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.9)] transition-transform duration-700 ease-out hover:scale-105">
+                                    </div>
+                                </div>
+
+                                <!-- Footer Caption -->
+                                <div class="text-center relative z-10 shrink-0">
+                                    <p class="text-xs sm:text-sm lg:text-base text-slate-300 font-medium max-w-2xl mx-auto drop-shadow-sm">
+                                        {{ $slide['notes'] ?? 'Terima kasih atas partisipasi dan dukungan sponsorship TALENTA 2026' }}
+                                    </p>
+                                </div>
+
+                            </div>
+
+                        {{-- SLIDE VARIANT C2: SPONSOR GROUP (MULTI LOGO) --}}
                         @elseif($slide['type'] === 'sponsor_group' && !empty($slide['logos']))
                             <div class="relative w-full h-full flex flex-col items-center justify-center p-6 sm:p-12 bg-gradient-to-br from-[#0A0F1D] via-[#070B14] to-[#140D24] overflow-hidden">
                                 

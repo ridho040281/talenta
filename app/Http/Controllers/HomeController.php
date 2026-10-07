@@ -9,6 +9,7 @@ use App\Models\Registration;
 use App\Models\Timeline;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class HomeController extends Controller
 {
@@ -260,7 +261,7 @@ class HomeController extends Controller
             if (! empty($s['media_path'])) {
                 AdminSettingsController::ensurePublicStorageSync($s['media_path']);
                 $clean = ltrim(str_replace(['public/', 'storage/'], '', $s['media_path']), '/');
-                $mediaUrl = \Illuminate\Support\Str::startsWith($s['media_path'], ['http://', 'https://'])
+                $mediaUrl = Str::startsWith($s['media_path'], ['http://', 'https://'])
                     ? $s['media_path']
                     : asset('storage/'.$clean);
             } elseif (! empty($s['video_url'])) {
@@ -281,28 +282,23 @@ class HomeController extends Controller
             }
         }
 
-        // 3. Divide 24 Sponsor Logos into neat groups of 6 logos per slide (1 per 1 Slide Group)
+        // 3. Sponsor Logos - 1 Slide 1 Logo Full Screen Spotlight
         if (! empty($sponsorLogos)) {
-            $chunks = array_chunk($sponsorLogos, 6);
-            $totalGroups = count($chunks);
-
-            foreach ($chunks as $cIdx => $chunkLogos) {
-                $resolvedLogos = [];
-                foreach ($chunkLogos as $l) {
-                    $cleanL = ltrim(str_replace(['public/', 'storage/'], '', $l), '/');
-                    $resolvedLogos[] = \Illuminate\Support\Str::startsWith($l, ['http://', 'https://'])
-                        ? $l
-                        : asset('storage/'.$cleanL);
-                }
+            $totalLogos = count($sponsorLogos);
+            foreach ($sponsorLogos as $lIdx => $logoPath) {
+                $cleanL = ltrim(str_replace(['public/', 'storage/'], '', $logoPath), '/');
+                $logoUrl = Str::startsWith($logoPath, ['http://', 'https://'])
+                    ? $logoPath
+                    : asset('storage/'.$cleanL);
 
                 $prepared[] = [
-                    'id' => 'sponsors_group_'.($cIdx + 1),
-                    'title' => 'Mitra & Sponsor Resmi (Bagian '.($cIdx + 1).' dari '.$totalGroups.')',
-                    'type' => 'sponsor_group',
-                    'logos' => $resolvedLogos,
+                    'id' => 'sponsor_single_'.($lIdx + 1),
+                    'title' => 'Mitra & Sponsor Resmi ('.($lIdx + 1).' dari '.$totalLogos.')',
+                    'type' => 'sponsor_single',
+                    'logo_url' => $logoUrl,
                     'media_url' => null,
-                    'duration' => 10,
-                    'notes' => 'Terima kasih atas partisipasi dan dukungan sponsorship',
+                    'duration' => 6,
+                    'notes' => 'Terima kasih atas partisipasi dan dukungan sponsorship TALENTA 2026',
                     'is_custom' => false,
                 ];
             }
