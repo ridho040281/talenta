@@ -116,9 +116,20 @@
             </div>
         </div>
 
-        <!-- Right: Digital Clock & Date Live + Fullscreen Toggle -->
-        <div class="flex items-center gap-4 sm:gap-6 shrink-0">
+        <!-- Right: Status / Slide Counter + Digital Clock & Date Live + Fullscreen Toggle -->
+        <div class="flex items-center gap-3 sm:gap-5 shrink-0">
             
+            <!-- Slide Status & Index Counter Badge (Moved to Top Right) -->
+            <div class="px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl bg-white/[0.06] border border-white/[0.12] text-xs font-mono font-bold text-white shadow-lg flex items-center gap-2">
+                <span x-text="isPaused ? '⏸ PAUSED' : '▶ LIVE'" :class="isPaused ? 'text-amber-400' : 'text-emerald-400'" class="tracking-wide"></span>
+                <span class="text-slate-500">•</span>
+                <span class="flex items-center gap-1">
+                    <span class="text-white text-xs sm:text-sm font-black" x-text="String(currentIndex + 1).padStart(2, '0')">01</span>
+                    <span class="text-slate-500">/</span>
+                    <span class="text-slate-400 text-xs sm:text-sm" x-text="String(Math.max(1, totalSlides)).padStart(2, '0')">01</span>
+                </span>
+            </div>
+
             @if(($settings['tv_signage_show_clock'] ?? '1') == '1')
             <div class="text-right flex flex-col items-end">
                 <div class="text-lg sm:text-2xl lg:text-3xl font-black font-mono tracking-tight text-white flex items-center gap-1 leading-none">
@@ -178,35 +189,35 @@
 
                         {{-- SLIDE VARIANT C: SPONSOR SINGLE SPOTLIGHT (1 SLIDE 1 LOGO BESAR FULL LAYAR) --}}
                         @elseif($slide['type'] === 'sponsor_single' && !empty($slide['logo_url']))
-                            <div class="relative w-full h-full flex flex-col items-center justify-between p-6 sm:p-10 lg:p-12 bg-gradient-to-br from-[#0B1022] via-[#070B14] to-[#150D26] overflow-hidden">
+                            <div class="relative w-full h-full flex flex-col items-center justify-between p-3 sm:p-5 lg:p-6 bg-gradient-to-br from-[#090D1A] via-[#060912] to-[#11091C] overflow-hidden">
                                 
                                 <!-- Background Ambient Spotlight Glows -->
-                                <div class="w-[500px] h-[500px] rounded-full bg-gradient-to-tr from-[#7A5AF8]/25 via-[#4E6EFF]/20 to-[#FF58D5]/25 blur-[120px] absolute pointer-events-none"></div>
-                                <div class="w-[320px] h-[320px] rounded-full bg-cyan-500/15 blur-[100px] absolute pointer-events-none"></div>
+                                <div class="w-[600px] h-[600px] rounded-full bg-gradient-to-tr from-[#7A5AF8]/25 via-[#4E6EFF]/20 to-[#FF58D5]/25 blur-[140px] absolute pointer-events-none"></div>
+                                <div class="w-[400px] h-[400px] rounded-full bg-cyan-500/15 blur-[120px] absolute pointer-events-none"></div>
 
-                                <!-- Header Slide Sponsor -->
-                                <div class="text-center space-y-2 relative z-10 shrink-0">
-                                    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs sm:text-sm font-mono font-black uppercase tracking-widest bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 border border-amber-500/40 shadow-xl backdrop-blur-md">
-                                        <i data-lucide="award" class="w-4 h-4 text-amber-400"></i>
+                                <!-- Header Slide Sponsor (Compact & Ultra Clean) -->
+                                <div class="text-center space-y-1 relative z-10 shrink-0">
+                                    <div class="inline-flex items-center gap-2 px-4 py-1 rounded-full text-[11px] sm:text-xs font-mono font-black uppercase tracking-widest bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 border border-amber-500/40 shadow-xl backdrop-blur-md">
+                                        <i data-lucide="award" class="w-3.5 h-3.5 text-amber-400"></i>
                                         <span>★ OFFICIAL SPONSOR & PARTNER ★</span>
                                     </div>
-                                    <h3 class="text-2xl sm:text-3xl lg:text-4xl font-black text-white font-display tracking-tight drop-shadow-md">
+                                    <h3 class="text-xl sm:text-2xl lg:text-3xl font-black text-white font-display tracking-tight drop-shadow-md">
                                         {{ $slide['title'] }}
                                     </h3>
                                 </div>
 
-                                <!-- Single Logo Hero Card (Full Screen Spotlight) -->
-                                <div class="relative z-10 w-full max-w-4xl px-4 flex-1 flex items-center justify-center my-2 sm:my-4">
-                                    <div class="w-full h-full max-h-[380px] sm:max-h-[460px] p-8 sm:p-14 rounded-3xl bg-gradient-to-b from-[#111933]/90 to-[#0A0F20]/90 border border-white/[0.16] shadow-[0_25px_60px_rgba(0,0,0,0.8)] flex items-center justify-center backdrop-blur-2xl relative">
+                                <!-- Single Logo Hero Card (MAXIMUM FULL SCREEN SPOTLIGHT) -->
+                                <div class="relative z-10 w-full max-w-6xl px-2 sm:px-4 flex-1 flex items-center justify-center my-1 sm:my-2 overflow-hidden">
+                                    <div class="w-full h-full max-h-[560px] sm:max-h-[640px] lg:max-h-[720px] p-6 sm:p-10 rounded-3xl bg-gradient-to-b from-[#111933]/90 to-[#0A0F20]/90 border border-white/[0.16] shadow-[0_25px_60px_rgba(0,0,0,0.85)] flex items-center justify-center backdrop-blur-2xl relative">
                                         <img src="{{ $slide['logo_url'] }}" 
                                              alt="Sponsor Logo" 
-                                             class="max-h-full max-w-full w-auto h-auto object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.9)] transition-transform duration-700 ease-out hover:scale-105">
+                                             class="max-h-full max-w-full w-auto h-auto object-contain drop-shadow-[0_25px_50px_rgba(0,0,0,0.95)] transition-transform duration-700 ease-out hover:scale-105">
                                     </div>
                                 </div>
 
                                 <!-- Footer Caption -->
-                                <div class="text-center relative z-10 shrink-0">
-                                    <p class="text-xs sm:text-sm lg:text-base text-slate-300 font-medium max-w-2xl mx-auto drop-shadow-sm">
+                                <div class="text-center relative z-10 shrink-0 pb-1">
+                                    <p class="text-[11px] sm:text-xs lg:text-sm text-slate-300 font-medium max-w-2xl mx-auto drop-shadow-sm">
                                         {{ $slide['notes'] ?? 'Terima kasih atas partisipasi dan dukungan sponsorship TALENTA 2026' }}
                                     </p>
                                 </div>
@@ -276,17 +287,6 @@
             <div class="absolute bottom-0 left-0 right-0 h-1.5 bg-white/[0.08] z-30 overflow-hidden">
                 <div class="h-full bg-gradient-to-r from-[#7A5AF8] via-[#4E6EFF] to-[#FF58D5] transition-all ease-linear"
                      :style="'width: ' + progressPercent + '%; transition-duration: 100ms;'"></div>
-            </div>
-
-            <!-- Slide Index Counter Badge (Bottom Right) -->
-            <div class="absolute bottom-4 right-4 z-30 px-3.5 py-1.5 rounded-xl bg-[#090E1A]/90 backdrop-blur-md border border-white/[0.12] text-xs font-mono font-bold text-white shadow-xl flex items-center gap-2">
-                <span x-text="isPaused ? '⏸ PAUSED' : '▶ PLAYING'" :class="isPaused ? 'text-amber-400' : 'text-emerald-400'"></span>
-                <span class="text-slate-500">•</span>
-                <span>
-                    <span class="text-white" x-text="String(currentIndex + 1).padStart(2, '0')">01</span>
-                    <span class="text-slate-500">/</span>
-                    <span class="text-slate-400" x-text="String(Math.max(1, totalSlides)).padStart(2, '0')">01</span>
-                </span>
             </div>
 
         </div>

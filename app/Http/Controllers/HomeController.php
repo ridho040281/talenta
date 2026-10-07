@@ -296,7 +296,7 @@ class HomeController extends Controller
 
                 $prepared[] = [
                     'id' => 'sponsor_single_'.($lIdx + 1),
-                    'title' => 'Mitra & Sponsor Resmi ('.($lIdx + 1).' dari '.$totalLogos.')',
+                    'title' => 'Mitra & Sponsor Resmi',
                     'type' => 'sponsor_single',
                     'logo_url' => $logoUrl,
                     'media_url' => null,
