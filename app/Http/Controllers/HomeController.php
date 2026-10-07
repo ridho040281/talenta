@@ -224,6 +224,7 @@ class HomeController extends Controller
             'tv_signage_show_clock' => AppSetting::get('tv_signage_show_clock', '1'),
             'tv_signage_transition' => AppSetting::get('tv_signage_transition', 'fade'),
             'tv_signage_default_duration' => (int) AppSetting::get('tv_signage_default_duration', '10'),
+            'tv_signage_sponsor_duration' => (int) AppSetting::get('tv_signage_sponsor_duration', AppSetting::get('tv_signage_default_duration', '5')),
             'tv_signage_version' => AppSetting::get('tv_signage_version', 'v1'),
             'app_logo' => AppSetting::get('app_logo', null),
             'event_logo' => AppSetting::get('event_logo', null),
@@ -241,6 +242,8 @@ class HomeController extends Controller
     {
         $allSlides = json_decode(AppSetting::get('tv_signage_slides', '[]'), true) ?: [];
         $activeCustomSlides = array_values(array_filter($allSlides, fn ($s) => ($s['is_active'] ?? true)));
+        $defaultDuration = (int) AppSetting::get('tv_signage_default_duration', '10');
+        $sponsorDuration = (int) AppSetting::get('tv_signage_sponsor_duration', $defaultDuration);
 
         $prepared = [];
 
@@ -250,7 +253,7 @@ class HomeController extends Controller
             'title' => AppSetting::get('event_name', 'Milad ke-57 MTsN 1 Blitar'),
             'type' => 'default_event',
             'media_url' => null,
-            'duration' => 12,
+            'duration' => $defaultDuration,
             'notes' => 'Pentas Seni & Kejuaraan Pelajar Tingkat Jawa Timur',
             'is_custom' => false,
         ];
@@ -275,7 +278,7 @@ class HomeController extends Controller
                     'title' => $s['title'] ?? 'Slide Iklan',
                     'type' => $s['type'] ?? 'image',
                     'media_url' => $mediaUrl,
-                    'duration' => (int) ($s['duration'] ?? 10),
+                    'duration' => (int) ($s['duration'] ?? $defaultDuration),
                     'notes' => $s['notes'] ?? '',
                     'is_custom' => true,
                 ];
@@ -297,7 +300,7 @@ class HomeController extends Controller
                     'type' => 'sponsor_single',
                     'logo_url' => $logoUrl,
                     'media_url' => null,
-                    'duration' => 6,
+                    'duration' => $sponsorDuration,
                     'notes' => 'Terima kasih atas partisipasi dan dukungan sponsorship TALENTA 2026',
                     'is_custom' => false,
                 ];
@@ -312,7 +315,7 @@ class HomeController extends Controller
                 'title' => 'Pamflet & Jadwal Kegiatan',
                 'type' => 'image',
                 'media_url' => asset('storage/'.$cleanP),
-                'duration' => 12,
+                'duration' => $defaultDuration,
                 'notes' => 'Informasi Pelaksanaan & Petunjuk Teknis Lomba',
                 'is_custom' => false,
             ];

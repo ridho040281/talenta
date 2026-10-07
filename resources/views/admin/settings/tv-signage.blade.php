@@ -206,8 +206,11 @@
     <!-- Quick Stats Cards (4 Metrics) -->
     @php
         $activeSlidesCount = count(array_filter($slides, fn($s) => ($s['is_active'] ?? true)));
-        $totalCycleDuration = array_reduce(array_filter($slides, fn($s) => ($s['is_active'] ?? true)), fn($carry, $item) => $carry + ($item['duration'] ?? 10), 0);
+        $sponsorDurationSetting = (int) ($settings['tv_signage_sponsor_duration'] ?? ($settings['tv_signage_default_duration'] ?? 5));
+        $defaultDurationSetting = (int) ($settings['tv_signage_default_duration'] ?? 10);
+        $customSlidesDuration = array_reduce(array_filter($slides, fn($s) => ($s['is_active'] ?? true)), fn($carry, $item) => $carry + ($item['duration'] ?? $defaultDurationSetting), 0);
         $totalSponsorsCount = count($sponsorLogos);
+        $totalCycleDuration = $defaultDurationSetting + $customSlidesDuration + ($totalSponsorsCount * $sponsorDurationSetting);
     @endphp
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
@@ -219,7 +222,7 @@
             <div class="min-w-0">
                 <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Slide Playlist</span>
                 <div class="text-xl font-black text-white font-mono mt-0.5">
-                    {{ $activeSlidesCount }} <span class="text-xs font-normal text-slate-400">/ {{ count($slides) }} Slide</span>
+                    {{ $activeSlidesCount }} <span class="text-xs font-normal text-slate-400">Khusus + {{ $totalSponsorsCount }} Sponsor</span>
                 </div>
             </div>
         </div>
@@ -232,7 +235,7 @@
             <div class="min-w-0">
                 <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Durasi 1 Putaran</span>
                 <div class="text-xl font-black text-white font-mono mt-0.5">
-                    {{ $totalCycleDuration ?: 10 }} <span class="text-xs font-normal text-slate-400">Detik</span>
+                    {{ $totalCycleDuration }} <span class="text-xs font-normal text-slate-400">Detik</span>
                 </div>
             </div>
         </div>
@@ -648,24 +651,45 @@
                     </label>
                 </div>
 
-                <!-- Efek Transisi Slide -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                <!-- Efek Transisi & Durasi Slide -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                    <!-- Efek Transisi -->
                     <div class="space-y-1.5">
                         <label class="block text-xs font-bold text-slate-300">
-                            Efek Animasi Transisi Slide
+                            Efek Animasi Transisi
                         </label>
                         <select name="tv_signage_transition" class="w-full px-4 py-2.5 text-xs rounded-xl bg-[#0C111D] border border-white/[0.12] text-white focus:border-[#7A5AF8]">
                             <option value="fade" {{ ($settings['tv_signage_transition'] ?? 'fade') == 'fade' ? 'selected' : '' }}>✨ Halus (Crossfade Effect)</option>
                             <option value="slide" {{ ($settings['tv_signage_transition'] ?? '') == 'slide' ? 'selected' : '' }}>➡️ Geser Horizontal (Slide Left)</option>
                             <option value="zoom" {{ ($settings['tv_signage_transition'] ?? '') == 'zoom' ? 'selected' : '' }}>🔍 Zoom Perlahan (Cinematic Ken Burns)</option>
                         </select>
+                        <p class="text-[10px] text-slate-500">Animasi perpindahan antar slide di TV.</p>
                     </div>
 
+                    <!-- Durasi Per Logo Sponsor Landing -->
                     <div class="space-y-1.5">
-                        <label class="block text-xs font-bold text-slate-300">
-                            Durasi Standar Slide Baru (Detik)
+                        <label class="block text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                            <i data-lucide="award" class="w-3.5 h-3.5 text-amber-400"></i>
+                            <span>Durasi Tiap Logo Sponsor (Detik)</span>
                         </label>
-                        <input type="number" name="tv_signage_default_duration" value="{{ $settings['tv_signage_default_duration'] ?? 10 }}" min="3" max="60" class="w-full px-4 py-2.5 text-xs rounded-xl bg-[#0C111D] border border-white/[0.12] text-white focus:border-[#7A5AF8] font-mono">
+                        <div class="relative">
+                            <input type="number" name="tv_signage_sponsor_duration" value="{{ $settings['tv_signage_sponsor_duration'] ?? ($settings['tv_signage_default_duration'] ?? 5) }}" min="2" max="60" required class="w-full pl-4 pr-12 py-2.5 text-xs rounded-xl bg-[#0C111D] border border-amber-500/30 text-amber-200 focus:border-amber-400 font-mono">
+                            <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">detik</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400">Lama tayang per-1 logo sponsor dari landing page.</p>
+                    </div>
+
+                    <!-- Durasi Standar Slide / Pamflet Acara -->
+                    <div class="space-y-1.5">
+                        <label class="block text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                            <i data-lucide="clock" class="w-3.5 h-3.5 text-cyan-400"></i>
+                            <span>Durasi Slide Acara (Detik)</span>
+                        </label>
+                        <div class="relative">
+                            <input type="number" name="tv_signage_default_duration" value="{{ $settings['tv_signage_default_duration'] ?? 10 }}" min="3" max="120" required class="w-full pl-4 pr-12 py-2.5 text-xs rounded-xl bg-[#0C111D] border border-white/[0.12] text-white focus:border-[#7A5AF8] font-mono">
+                            <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">detik</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400">Durasi default poster acara / pamflet.</p>
                     </div>
                 </div>
 

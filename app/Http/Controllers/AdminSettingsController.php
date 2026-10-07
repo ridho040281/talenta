@@ -2102,6 +2102,7 @@ class AdminSettingsController extends Controller
             'tv_signage_show_clock' => AppSetting::get('tv_signage_show_clock', '1'),
             'tv_signage_transition' => AppSetting::get('tv_signage_transition', 'fade'),
             'tv_signage_default_duration' => AppSetting::get('tv_signage_default_duration', '10'),
+            'tv_signage_sponsor_duration' => AppSetting::get('tv_signage_sponsor_duration', AppSetting::get('tv_signage_default_duration', '5')),
             'app_logo' => AppSetting::get('app_logo', null),
             'event_logo' => AppSetting::get('event_logo', null),
         ];
@@ -2343,9 +2344,10 @@ class AdminSettingsController extends Controller
             'tv_signage_show_clock' => 'nullable|string|in:0,1',
             'tv_signage_transition' => 'nullable|string|in:fade,slide,zoom',
             'tv_signage_default_duration' => 'nullable|integer|min:3|max:120',
+            'tv_signage_sponsor_duration' => 'nullable|integer|min:2|max:120',
         ]);
 
-        foreach (['tv_signage_enabled', 'tv_signage_header_title', 'tv_signage_header_subtitle', 'tv_signage_running_text', 'tv_signage_show_sponsor_marquee', 'tv_signage_show_clock', 'tv_signage_transition', 'tv_signage_default_duration'] as $key) {
+        foreach (['tv_signage_enabled', 'tv_signage_header_title', 'tv_signage_header_subtitle', 'tv_signage_running_text', 'tv_signage_show_sponsor_marquee', 'tv_signage_show_clock', 'tv_signage_transition', 'tv_signage_default_duration', 'tv_signage_sponsor_duration'] as $key) {
             if ($request->has($key)) {
                 AppSetting::set($key, (string) $request->input($key));
             }
