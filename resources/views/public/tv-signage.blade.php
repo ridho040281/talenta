@@ -469,14 +469,26 @@
                     this.currentDuration = (cur && cur.duration) ? Math.max(2, parseInt(cur.duration)) : 10;
                     this.progressPercent = 0;
 
-                    // If video slide, let the video drive duration & progress cleanly
+                    // If video slide, let the video drive duration & progress cleanly with fallback timer
                     if (cur && cur.type === 'video') {
                         this.$nextTick(() => {
                             const videoEl = document.getElementById('video-slide-' + this.currentIndex);
                             if (videoEl) {
                                 videoEl.currentTime = 0;
                                 videoEl.muted = this.isMuted;
-                                videoEl.play().catch(e => console.log('Auto-play error:', e));
+
+                                const maxWaitSec = (cur.duration && parseInt(cur.duration) > 0) ? parseInt(cur.duration) : 20;
+                                let timeoutHandle = setTimeout(() => {
+                                    this.nextSlide();
+                                }, maxWaitSec * 1000 + 1500);
+
+                                const cleanupAndNext = () => {
+                                    clearTimeout(timeoutHandle);
+                                    videoEl.onended = null;
+                                    videoEl.onerror = null;
+                                    videoEl.ontimeupdate = null;
+                                    this.nextSlide();
+                                };
 
                                 videoEl.ontimeupdate = () => {
                                     if (videoEl.duration && !isNaN(videoEl.duration)) {
@@ -484,11 +496,14 @@
                                     }
                                 };
 
-                                videoEl.onended = () => {
-                                    videoEl.ontimeupdate = null;
-                                    videoEl.onended = null;
-                                    this.nextSlide();
-                                };
+                                videoEl.onended = cleanupAndNext;
+                                videoEl.onerror = cleanupAndNext;
+
+                                videoEl.play().catch(e => {
+                                    console.log('Video autoplay error / policy:', e);
+                                });
+                            } else {
+                                setTimeout(() => { this.nextSlide(); }, 5000);
                             }
                         });
                         return;
@@ -515,9 +530,16 @@
                     }, stepMs);
                 },
 
+                pauseAllVideos() {
+                    document.querySelectorAll('video').forEach(v => {
+                        try { v.pause(); } catch(e) {}
+                    });
+                },
+
                 nextSlide() {
                     if (this.totalSlides === 0 || this.isTransitioning) return;
                     this.isTransitioning = true;
+                    this.pauseAllVideos();
 
                     if (this.progressInterval) {
                         clearInterval(this.progressInterval);
@@ -535,6 +557,7 @@
                 prevSlide() {
                     if (this.totalSlides === 0 || this.isTransitioning) return;
                     this.isTransitioning = true;
+                    this.pauseAllVideos();
 
                     if (this.progressInterval) {
                         clearInterval(this.progressInterval);
