@@ -199,22 +199,26 @@
                         
                         {{-- SLIDE VARIANT A: CUSTOM IMAGE / POSTER / BANNER --}}
                         @if($slide['type'] === 'image' && !empty($slide['media_url']))
-                            <div class="relative w-full h-full flex items-center justify-center bg-black">
-                                <div class="absolute inset-0 bg-cover bg-center blur-3xl opacity-50 scale-110" style="background-image: url('{{ $slide['media_url'] }}')"></div>
-                                <img src="{{ $slide['media_url'] }}" alt="{{ $slide['title'] }}" class="relative z-10 max-h-full max-w-full w-auto h-auto object-contain drop-shadow-2xl">
+                            <div class="relative w-full h-full flex items-center justify-center bg-black overflow-hidden">
+                                <div class="absolute inset-0 bg-cover bg-center blur-3xl opacity-40 scale-110" style="background-image: url('{{ $slide['media_url'] }}')"></div>
+                                <img src="{{ $slide['media_url'] }}" alt="{{ $slide['title'] }}" 
+                                     class="relative z-10 w-full h-full object-contain drop-shadow-2xl"
+                                     style="width: 100%; height: 100%; max-height: 100%; max-width: 100%; object-fit: contain;">
                                 
+                                @if(!empty($slide['title']) || !empty($slide['notes']))
                                 <div class="absolute bottom-6 left-6 z-20 max-w-xl p-4 rounded-2xl bg-[#090E1A]/90 backdrop-blur-xl border border-white/[0.15] shadow-2xl">
                                     <span class="text-[10px] font-mono font-black uppercase tracking-widest text-[#FF58D5] block">TALENTA TV SPONSOR & EVENT</span>
-                                    <h3 class="text-base font-black text-white leading-snug">{{ $slide['title'] }}</h3>
+                                    <h3 class="text-base sm:text-lg font-black text-white leading-snug">{{ $slide['title'] }}</h3>
                                     @if(!empty($slide['notes']))
                                         <p class="text-xs text-slate-300 mt-0.5">{{ $slide['notes'] }}</p>
                                     @endif
                                 </div>
+                                @endif
                             </div>
 
                         {{-- SLIDE VARIANT B: VIDEO MP4 / WEBM --}}
                         @elseif($slide['type'] === 'video' && !empty($slide['media_url']))
-                            <div class="relative w-full h-full bg-black flex items-center justify-center">
+                            <div class="relative w-full h-full bg-black flex items-center justify-center overflow-hidden">
                                 <video id="video-slide-{{ $index }}" src="{{ $slide['media_url'] }}" class="w-full h-full object-contain" autoplay muted playsinline></video>
                             </div>
 
@@ -238,17 +242,21 @@
                                 </div>
 
                                 <!-- Single Logo Hero Card (MAXIMUM FULL SCREEN SPOTLIGHT) -->
-                                <div class="relative z-10 w-full max-w-6xl px-2 sm:px-4 flex-1 flex items-center justify-center my-1 sm:my-2 overflow-hidden">
-                                    <div class="w-full h-full max-h-[560px] sm:max-h-[640px] lg:max-h-[720px] p-6 sm:p-10 rounded-3xl bg-gradient-to-b from-[#111933]/90 to-[#0A0F20]/90 border border-white/[0.16] shadow-[0_25px_60px_rgba(0,0,0,0.85)] flex items-center justify-center backdrop-blur-2xl relative">
+                                <div class="relative z-10 w-full max-w-5xl lg:max-w-6xl px-2 sm:px-4 flex-1 flex items-center justify-center my-2 sm:my-3 overflow-hidden">
+                                    <div class="w-full h-full max-h-[70vh] p-4 sm:p-8 lg:p-10 rounded-3xl bg-gradient-to-b from-[#131d3d]/90 to-[#0a0f20]/90 border border-white/[0.16] shadow-[0_25px_60px_rgba(0,0,0,0.85)] flex items-center justify-center backdrop-blur-2xl relative overflow-hidden">
+                                        <!-- Subtle Glow inside Card for Contrast -->
+                                        <div class="absolute w-72 sm:w-96 h-72 sm:h-96 rounded-full bg-white/[0.04] blur-2xl pointer-events-none"></div>
+                                        
                                         <img src="{{ $slide['logo_url'] }}" 
-                                             alt="Sponsor Logo" 
-                                             class="max-h-full max-w-full w-auto h-auto object-contain drop-shadow-[0_25px_50px_rgba(0,0,0,0.95)] transition-transform duration-700 ease-out hover:scale-105">
+                                             alt="{{ $slide['title'] ?? 'Sponsor Logo' }}" 
+                                             class="relative z-10 w-full h-full object-contain filter drop-shadow-[0_20px_40px_rgba(0,0,0,0.95)] transition-transform duration-700 ease-out"
+                                             style="width: 100%; height: 100%; max-height: 100%; max-width: 100%; object-fit: contain;">
                                     </div>
                                 </div>
 
                                 <!-- Footer Caption -->
                                 <div class="text-center relative z-10 shrink-0 pb-1">
-                                    <p class="text-[11px] sm:text-xs lg:text-sm text-slate-300 font-medium max-w-2xl mx-auto drop-shadow-sm">
+                                    <p class="text-xs sm:text-sm lg:text-base text-slate-300 font-medium max-w-2xl mx-auto drop-shadow-sm">
                                         {{ $slide['notes'] ?? 'Terima kasih atas partisipasi dan dukungan sponsorship TALENTA 2026' }}
                                     </p>
                                 </div>
@@ -278,8 +286,8 @@
                                 <!-- 6 Logos Grid (3 Columns x 2 Rows) - Extra Large Cards -->
                                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-5 sm:gap-8 max-w-5xl mx-auto w-full relative z-10 px-4">
                                     @foreach($slide['logos'] as $logoUrl)
-                                        <div class="p-6 sm:p-8 rounded-3xl bg-[#0E1528]/90 border border-white/[0.12] hover:border-[#7A5AF8]/60 flex items-center justify-center shadow-2xl transition-all duration-300 hover:scale-105 h-32 sm:h-44">
-                                            <img src="{{ $logoUrl }}" alt="Sponsor Logo" class="h-full w-auto max-w-full object-contain drop-shadow-lg">
+                                        <div class="p-4 sm:p-6 rounded-3xl bg-[#0E1528]/90 border border-white/[0.12] hover:border-[#7A5AF8]/60 flex items-center justify-center shadow-2xl transition-all duration-300 hover:scale-105 h-32 sm:h-44">
+                                            <img src="{{ $logoUrl }}" alt="Sponsor Logo" class="w-full h-full object-contain drop-shadow-lg" style="width: 100%; height: 100%; max-height: 100%; max-width: 100%; object-fit: contain;">
                                         </div>
                                     @endforeach
                                 </div>
