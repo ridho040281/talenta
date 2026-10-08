@@ -422,19 +422,13 @@
                 currentIndex: 0,
                 isPaused: false,
                 isMuted: true,
-                isTransitioning: false,
                 showHeaderFooter: true,
                 progressPercent: 0,
                 currentDuration: 10,
                 progressInterval: null,
-                pollInterval: null,
                 clockInterval: null,
                 clockTime: '00:00:00',
                 clockDate: '',
-                currentVersion: '{{ $settings['tv_signage_version'] ?? 'v1' }}',
-                initialVersionSet: false,
-                isReloading: false,
-                lastReloadTime: Date.now(),
 
                 get overallProgressPercent() {
                     if (this.totalSlides <= 0) return 0;
@@ -449,10 +443,6 @@
 
                     // Start Slideshow Loop
                     this.startSlideTimer();
-
-                    // Start Background API Sync (Check for live updates from admin every 4s)
-                    setTimeout(() => { this.checkLiveState(); }, 1500);
-                    this.pollInterval = setInterval(() => { this.checkLiveState(); }, 4000);
 
                     this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
                 },
@@ -537,8 +527,7 @@
                 },
 
                 nextSlide() {
-                    if (this.totalSlides === 0 || this.isTransitioning) return;
-                    this.isTransitioning = true;
+                    if (this.totalSlides === 0) return;
                     this.pauseAllVideos();
 
                     if (this.progressInterval) {
@@ -548,15 +537,10 @@
 
                     this.currentIndex = (this.currentIndex + 1) % this.totalSlides;
                     this.startSlideTimer();
-
-                    setTimeout(() => {
-                        this.isTransitioning = false;
-                    }, 350);
                 },
 
                 prevSlide() {
-                    if (this.totalSlides === 0 || this.isTransitioning) return;
-                    this.isTransitioning = true;
+                    if (this.totalSlides === 0) return;
                     this.pauseAllVideos();
 
                     if (this.progressInterval) {
@@ -566,10 +550,6 @@
 
                     this.currentIndex = (this.currentIndex - 1 + this.totalSlides) % this.totalSlides;
                     this.startSlideTimer();
-
-                    setTimeout(() => {
-                        this.isTransitioning = false;
-                    }, 350);
                 },
 
                 toggleFullscreen() {
@@ -617,51 +597,6 @@
                     const year = now.getFullYear();
 
                     this.clockDate = `${dayName}, ${dayNum} ${monthName} ${year}`;
-                },
-
-                checkLiveState() {
-                    if (this.isReloading) return;
-
-                    const url = '{{ route('api.tv.signage.state') }}?_t=' + Date.now();
-                    fetch(url, {
-                        cache: 'no-store',
-                        headers: {
-                            'Cache-Control': 'no-cache, no-store, must-revalidate',
-                            'Pragma': 'no-cache',
-                            'Accept': 'application/json'
-                        }
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (!data || !data.version) return;
-
-                        // On first poll after page load, establish server version as baseline without reloading
-                        if (!this.initialVersionSet) {
-                            this.initialVersionSet = true;
-                            this.currentVersion = data.version;
-                            return;
-                        }
-
-                        // When admin makes changes later, reload once with anti-loop lock
-                        const now = Date.now();
-                        if (data.version !== this.currentVersion && (now - this.lastReloadTime > 12000)) {
-                            console.log('Perubahan logo/pengaturan TV terdeteksi (' + this.currentVersion + ' -> ' + data.version + '). Auto-reloading TV display...');
-                            this.isReloading = true;
-                            this.lastReloadTime = now;
-                            this.currentVersion = data.version;
-
-                            if (this.pollInterval) {
-                                clearInterval(this.pollInterval);
-                                this.pollInterval = null;
-                            }
-
-                            setTimeout(() => {
-                                const cleanUrl = window.location.origin + window.location.pathname + '?v=' + encodeURIComponent(data.version) + '&_t=' + Date.now();
-                                window.location.replace(cleanUrl);
-                            }, 500);
-                        }
-                    })
-                    .catch(err => console.error('Signage sync polling error:', err));
                 }
             };
         }
