@@ -214,6 +214,7 @@ class HomeController extends Controller
         }
 
         $activeSlides = $this->buildPreparedTvSlides($sponsorLogos, $pamphletImages);
+        $currentVersion = $this->getTvSignageVersionHash();
 
         $settings = [
             'tv_signage_enabled' => AppSetting::get('tv_signage_enabled', '1'),
@@ -225,7 +226,7 @@ class HomeController extends Controller
             'tv_signage_transition' => AppSetting::get('tv_signage_transition', 'fade'),
             'tv_signage_default_duration' => (int) AppSetting::get('tv_signage_default_duration', '10'),
             'tv_signage_sponsor_duration' => (int) AppSetting::get('tv_signage_sponsor_duration', AppSetting::get('tv_signage_default_duration', '5')),
-            'tv_signage_version' => AppSetting::get('tv_signage_version', 'v1'),
+            'tv_signage_version' => $currentVersion,
             'app_logo' => AppSetting::get('app_logo', null),
             'event_logo' => AppSetting::get('event_logo', null),
             'institution_name' => AppSetting::get('institution_name', 'MTs Negeri 1 Blitar'),
@@ -334,16 +335,44 @@ class HomeController extends Controller
     }
 
     /**
+     * Compute a dynamic snapshot hash representing the complete TV signage configuration state
+     */
+    public function getTvSignageVersionHash(): string
+    {
+        $snapshot = [
+            'raw_version' => AppSetting::get('tv_signage_version', 'v1'),
+            'slides' => AppSetting::get('tv_signage_slides', '[]'),
+            'sponsors' => AppSetting::get('sponsor_logos', '[]'),
+            'pamphlets' => AppSetting::get('pamphlet_images', '[]'),
+            'sponsor_title' => AppSetting::get('tv_signage_sponsor_title', AppSetting::get('sponsor_title', '')),
+            'sponsor_subtitle' => AppSetting::get('tv_signage_sponsor_subtitle', ''),
+            'sponsor_duration' => AppSetting::get('tv_signage_sponsor_duration', ''),
+            'default_duration' => AppSetting::get('tv_signage_default_duration', ''),
+            'running_text' => AppSetting::get('tv_signage_running_text', ''),
+            'header_title' => AppSetting::get('tv_signage_header_title', AppSetting::get('event_name', '')),
+            'header_subtitle' => AppSetting::get('tv_signage_header_subtitle', ''),
+            'show_marquee' => AppSetting::get('tv_signage_show_sponsor_marquee', '1'),
+            'show_clock' => AppSetting::get('tv_signage_show_clock', '1'),
+            'transition' => AppSetting::get('tv_signage_transition', 'fade'),
+            'app_logo' => AppSetting::get('app_logo', ''),
+            'event_logo' => AppSetting::get('event_logo', ''),
+        ];
+
+        return 'v_'.substr(md5(json_encode($snapshot)), 0, 14);
+    }
+
+    /**
      * API State for TV Signage (Allows dynamic polling / seamless live updates on Smart TV)
      */
     public function apiTvSignageState()
     {
+        $version = $this->getTvSignageVersionHash();
         $sponsorLogos = json_decode(AppSetting::get('sponsor_logos', '[]'), true) ?: [];
         $pamphletImages = json_decode(AppSetting::get('pamphlet_images', '[]'), true) ?: [];
         $activeSlides = $this->buildPreparedTvSlides($sponsorLogos, $pamphletImages);
 
         return response()->json([
-            'version' => AppSetting::get('tv_signage_version', 'v1'),
+            'version' => $version,
             'slides_count' => count($activeSlides),
             'slides' => $activeSlides,
             'sponsor_logos' => $sponsorLogos,
@@ -354,6 +383,9 @@ class HomeController extends Controller
             'show_clock' => AppSetting::get('tv_signage_show_clock', '1'),
             'transition' => AppSetting::get('tv_signage_transition', 'fade'),
             'server_time' => now()->toIso8601String(),
-        ])->header('Cache-Control', 'no-cache, no-store');
+        ])
+        ->header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
+        ->header('Pragma', 'no-cache')
+        ->header('Expires', '0');
     }
 }

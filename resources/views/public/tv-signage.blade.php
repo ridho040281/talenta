@@ -447,8 +447,9 @@
                     // Start Slideshow Loop
                     this.startSlideTimer();
 
-                    // Start Background API Sync (Check for live updates from admin every 20s)
-                    this.pollInterval = setInterval(() => { this.checkLiveState(); }, 20000);
+                    // Start Background API Sync (Check for live updates from admin every 4s)
+                    setTimeout(() => { this.checkLiveState(); }, 1500);
+                    this.pollInterval = setInterval(() => { this.checkLiveState(); }, 4000);
 
                     this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
                 },
@@ -593,15 +594,24 @@
                 },
 
                 checkLiveState() {
-                    fetch('{{ route('api.tv.signage.state') }}')
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.version && data.version !== this.currentVersion) {
-                                console.log('New TV Signage version detected, reloading...');
-                                window.location.reload();
-                            }
-                        })
-                        .catch(err => console.error('Signage sync polling error:', err));
+                    const url = '{{ route('api.tv.signage.state') }}?_t=' + Date.now();
+                    fetch(url, {
+                        cache: 'no-store',
+                        headers: {
+                            'Cache-Control': 'no-cache, no-store, must-revalidate',
+                            'Pragma': 'no-cache',
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data.version && data.version !== this.currentVersion) {
+                            console.log('Perubahan logo/pengaturan TV terdeteksi (' + this.currentVersion + ' -> ' + data.version + '). Auto-reloading TV display...');
+                            const cleanUrl = window.location.origin + window.location.pathname + '?v=' + encodeURIComponent(data.version) + '&_t=' + Date.now();
+                            window.location.replace(cleanUrl);
+                        }
+                    })
+                    .catch(err => console.error('Signage sync polling error:', err));
                 }
             };
         }
