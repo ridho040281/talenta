@@ -153,7 +153,7 @@
     <!-- ========================================================================= -->
     <!-- 2. MAIN STAGE SLIDESHOW (Area Utama Layar Iklan & Poster)                  -->
     <!-- ========================================================================= -->
-    <main class="flex-1 relative overflow-hidden flex items-center justify-center p-3 sm:p-6 z-10">
+    <main class="flex-1 relative overflow-hidden flex items-center justify-center p-1 sm:p-3 lg:p-4 z-10">
         
         <!-- SLIDE CONTAINER -->
         <div class="relative w-full h-full rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.8)] border border-white/[0.12] bg-[#070B14] flex items-center justify-center">
@@ -203,7 +203,7 @@
                                 <div class="absolute inset-0 bg-cover bg-center blur-3xl opacity-40 scale-110" style="background-image: url('{{ $slide['media_url'] }}')"></div>
                                 <img src="{{ $slide['media_url'] }}" alt="{{ $slide['title'] }}" 
                                      class="relative z-10 w-full h-full object-contain drop-shadow-2xl"
-                                     style="width: 100%; height: 100%; max-height: 100%; max-width: 100%; object-fit: contain;">
+                                     style="width: 100%; height: 100%; max-height: 100%; max-width: 100%; object-fit: contain; min-height: 0; min-width: 0; display: block;">
                                 
                                 @if(!empty($slide['title']) || !empty($slide['notes']))
                                 <div class="absolute bottom-6 left-6 z-20 max-w-xl p-4 rounded-2xl bg-[#090E1A]/90 backdrop-blur-xl border border-white/[0.15] shadow-2xl">
@@ -224,41 +224,42 @@
 
                         {{-- SLIDE VARIANT C: SPONSOR SINGLE SPOTLIGHT (1 SLIDE 1 LOGO BESAR FULL LAYAR) --}}
                         @elseif($slide['type'] === 'sponsor_single' && !empty($slide['logo_url']))
-                            <div class="relative w-full h-full flex flex-col items-center justify-between p-3 sm:p-5 lg:p-6 bg-gradient-to-br from-[#090D1A] via-[#060912] to-[#11091C] overflow-hidden">
+                            <div class="relative w-full h-full flex flex-col items-center justify-between p-2 sm:p-4 lg:p-5 bg-gradient-to-br from-[#090D1A] via-[#050811] to-[#120A1E] overflow-hidden">
                                 
                                 <!-- Background Ambient Spotlight Glows -->
-                                <div class="w-[600px] h-[600px] rounded-full bg-gradient-to-tr from-[#7A5AF8]/25 via-[#4E6EFF]/20 to-[#FF58D5]/25 blur-[140px] absolute pointer-events-none"></div>
-                                <div class="w-[400px] h-[400px] rounded-full bg-cyan-500/15 blur-[120px] absolute pointer-events-none"></div>
+                                <div class="w-[800px] h-[800px] rounded-full bg-gradient-to-tr from-[#7A5AF8]/30 via-[#4E6EFF]/25 to-[#FF58D5]/30 blur-[160px] absolute pointer-events-none"></div>
+                                <div class="w-[500px] h-[500px] rounded-full bg-cyan-500/20 blur-[130px] absolute pointer-events-none"></div>
 
-                                <!-- Header Slide Sponsor (Compact & Ultra Clean) -->
-                                <div class="text-center space-y-1 relative z-10 shrink-0">
-                                    <div class="inline-flex items-center gap-2 px-4 py-1 rounded-full text-[11px] sm:text-xs font-mono font-black uppercase tracking-widest bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 border border-amber-500/40 shadow-xl backdrop-blur-md">
+                                <!-- Header Slide Sponsor (Compact Top Bar) -->
+                                <div class="text-center space-y-0.5 relative z-20 shrink-0 pt-1">
+                                    <div class="inline-flex items-center gap-2 px-4 py-1 rounded-full text-[11px] sm:text-xs font-mono font-black uppercase tracking-widest bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 text-amber-300 border border-amber-500/40 shadow-lg backdrop-blur-md">
                                         <i data-lucide="award" class="w-3.5 h-3.5 text-amber-400"></i>
                                         <span>★ OFFICIAL SPONSOR & PARTNER ★</span>
                                     </div>
-                                    <h3 class="text-xl sm:text-2xl lg:text-3xl font-black text-white font-display tracking-tight drop-shadow-md">
+                                    <h3 class="text-xl sm:text-3xl lg:text-4xl font-black text-white font-display tracking-tight drop-shadow-md mt-0.5">
                                         {{ $slide['title'] }}
                                     </h3>
                                 </div>
 
-                                <!-- Single Logo Hero Card (MAXIMUM FULL SCREEN SPOTLIGHT) -->
-                                <div class="relative z-10 w-full max-w-5xl lg:max-w-6xl px-2 sm:px-4 flex-1 flex items-center justify-center my-2 sm:my-3 overflow-hidden">
-                                    <div class="w-full h-full max-h-[70vh] p-4 sm:p-8 lg:p-10 rounded-3xl bg-gradient-to-b from-[#131d3d]/90 to-[#0a0f20]/90 border border-white/[0.16] shadow-[0_25px_60px_rgba(0,0,0,0.85)] flex items-center justify-center backdrop-blur-2xl relative overflow-hidden">
-                                        <!-- Subtle Glow inside Card for Contrast -->
-                                        <div class="absolute w-72 sm:w-96 h-72 sm:h-96 rounded-full bg-white/[0.04] blur-2xl pointer-events-none"></div>
+                                <!-- Ultra-Large Logo Spotlight Container (Takes 100% of available viewport) -->
+                                <div class="relative z-10 w-full flex-1 flex items-center justify-center p-2 sm:p-3 my-1 overflow-hidden min-h-0 min-w-0" style="min-height: 0; min-width: 0;">
+                                    <div class="w-full h-full flex items-center justify-center rounded-3xl bg-gradient-to-b from-white/[0.07] via-white/[0.03] to-[#0A0F20]/90 border border-white/[0.18] shadow-[0_30px_80px_rgba(0,0,0,0.95)] backdrop-blur-2xl p-3 sm:p-6 lg:p-8 relative overflow-hidden min-h-0 min-w-0" style="min-height: 0; min-width: 0;">
+                                        <!-- Ambient Inner Glow Behind Logo for Contrast -->
+                                        <div class="absolute w-96 sm:w-[600px] h-96 sm:h-[600px] rounded-full bg-white/[0.08] blur-3xl pointer-events-none"></div>
                                         
+                                        <!-- HUGE LOGO IMAGE -->
                                         <img src="{{ $slide['logo_url'] }}" 
                                              alt="{{ $slide['title'] ?? 'Sponsor Logo' }}" 
-                                             class="relative z-10 w-full h-full object-contain filter drop-shadow-[0_20px_40px_rgba(0,0,0,0.95)] transition-transform duration-700 ease-out"
-                                             style="width: 100%; height: 100%; max-height: 100%; max-width: 100%; object-fit: contain;">
+                                             class="relative z-10 w-full h-full object-contain filter drop-shadow-[0_25px_50px_rgba(0,0,0,0.95)]"
+                                             style="width: 100%; height: 100%; max-height: 100%; max-width: 100%; object-fit: contain; min-height: 0; min-width: 0; display: block;">
                                     </div>
                                 </div>
 
-                                <!-- Footer Caption -->
-                                <div class="text-center relative z-10 shrink-0 pb-1">
-                                    <p class="text-xs sm:text-sm lg:text-base text-slate-300 font-medium max-w-2xl mx-auto drop-shadow-sm">
+                                <!-- Footer Caption (Compact Bottom Bar) -->
+                                <div class="text-center relative z-20 shrink-0 pb-1">
+                                    <span class="inline-block px-5 py-1 rounded-full bg-black/50 backdrop-blur-md border border-white/10 text-xs sm:text-sm lg:text-base text-slate-200 font-semibold drop-shadow-sm">
                                         {{ $slide['notes'] ?? 'Terima kasih atas partisipasi dan dukungan sponsorship TALENTA 2026' }}
-                                    </p>
+                                    </span>
                                 </div>
 
                             </div>
