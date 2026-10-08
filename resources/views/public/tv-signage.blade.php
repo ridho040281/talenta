@@ -432,6 +432,9 @@
                 clockTime: '00:00:00',
                 clockDate: '',
                 currentVersion: '{{ $settings['tv_signage_version'] ?? 'v1' }}',
+                initialVersionSet: false,
+                isReloading: false,
+                lastReloadTime: Date.now(),
 
                 get overallProgressPercent() {
                     if (this.totalSlides <= 0) return 0;
@@ -594,6 +597,8 @@
                 },
 
                 checkLiveState() {
+                    if (this.isReloading) return;
+
                     const url = '{{ route('api.tv.signage.state') }}?_t=' + Date.now();
                     fetch(url, {
                         cache: 'no-store',
@@ -605,10 +610,32 @@
                     })
                     .then(res => res.json())
                     .then(data => {
-                        if (data && data.version && data.version !== this.currentVersion) {
+                        if (!data || !data.version) return;
+
+                        // On first poll after page load, establish server version as baseline without reloading
+                        if (!this.initialVersionSet) {
+                            this.initialVersionSet = true;
+                            this.currentVersion = data.version;
+                            return;
+                        }
+
+                        // When admin makes changes later, reload once with anti-loop lock
+                        const now = Date.now();
+                        if (data.version !== this.currentVersion && (now - this.lastReloadTime > 12000)) {
                             console.log('Perubahan logo/pengaturan TV terdeteksi (' + this.currentVersion + ' -> ' + data.version + '). Auto-reloading TV display...');
-                            const cleanUrl = window.location.origin + window.location.pathname + '?v=' + encodeURIComponent(data.version) + '&_t=' + Date.now();
-                            window.location.replace(cleanUrl);
+                            this.isReloading = true;
+                            this.lastReloadTime = now;
+                            this.currentVersion = data.version;
+
+                            if (this.pollInterval) {
+                                clearInterval(this.pollInterval);
+                                this.pollInterval = null;
+                            }
+
+                            setTimeout(() => {
+                                const cleanUrl = window.location.origin + window.location.pathname + '?v=' + encodeURIComponent(data.version) + '&_t=' + Date.now();
+                                window.location.replace(cleanUrl);
+                            }, 500);
                         }
                     })
                     .catch(err => console.error('Signage sync polling error:', err));

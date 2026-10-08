@@ -233,7 +233,11 @@ class HomeController extends Controller
             'event_year' => AppSetting::get('event_year', '2026'),
         ];
 
-        return view('public.tv-signage', compact('activeSlides', 'settings', 'sponsorLogos', 'pamphletImages'));
+        return response()
+            ->view('public.tv-signage', compact('activeSlides', 'settings', 'sponsorLogos', 'pamphletImages'))
+            ->header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0');
     }
 
     /**
