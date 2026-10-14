@@ -856,6 +856,170 @@ class CertificateController extends Controller
     }
 
     /**
+     * Download All Certificates for Collective / User's Contingent
+     */
+    public function pesertaDownloadAll()
+    {
+        $user = Auth::user();
+        $registrations = Registration::with(['competition.category', 'members'])
+            ->where('user_id', $user->id)
+            ->where('status', 'verified')
+            ->where('is_attended', true)
+            ->get();
+
+        $nowDate = Carbon::now();
+        $dateSpelled = OfficialReportController::getDateSpelledOut($nowDate);
+
+        // Filter registrations where certificate has been released by committee
+        $eligibleRegs = $registrations->filter(function ($r) {
+            return AppSetting::where('key', 'certificate_release_'.$r->competition_id)->value('value') === '1';
+        });
+
+        if ($eligibleRegs->isEmpty()) {
+            return redirect()->route('peserta.registrations')
+                ->with('error', 'Belum ada sertifikat siswa yang siap diunduh. Pastikan sertifikat telah dirilis panitia dan peserta telah discan kehadirannya di lokasi lomba.');
+        }
+
+        $firstReg = $eligibleRegs->first();
+        $template = CertificateTemplate::where('type', 'peserta')
+            ->where('competition_id', $firstReg->competition_id)
+            ->where('is_active', true)
+            ->first();
+
+        if (! $template) {
+            $template = CertificateTemplate::where('type', 'peserta')
+                ->whereNull('competition_id')
+                ->where('is_active', true)
+                ->first();
+        }
+
+        if (! $template) {
+            $template = new CertificateTemplate([
+                'name' => 'Default Peserta',
+                'type' => 'peserta',
+                'layout_config' => CertificateTemplate::defaultLayoutConfig(),
+                'number_format' => '[NO]/TALENTA/MTsN1-BLT/[MONTH]/[YEAR]',
+            ]);
+        }
+
+        $certificateItems = [];
+        foreach ($eligibleRegs as $r) {
+            $certNumber = $template->formatNumber($r->id, $nowDate);
+            $certCode = $this->generateCertCode('peserta', $r->id, $r->competition);
+            $verifyUrl = QrSignatureService::certificateUrl($certCode);
+            $qrSvg = QrSignatureService::generateSvg($verifyUrl, 85);
+
+            $participantName = $r->pure_name ?: ($r->team_name ?: ($r->members->first()?->full_name ?? ('Peserta #'.$r->id)));
+            $schoolName = $r->display_school ?: ($r->institution_name ?: '-');
+            $pesertaPredikat = ! empty($template->layout_config['predikat']['text'])
+                ? $template->layout_config['predikat']['text']
+                : 'PESERTA';
+
+            $certificateItems[] = [
+                'cert_code' => $certCode,
+                'cert_number' => $certNumber,
+                'name' => mb_strtoupper($participantName ?? ''),
+                'institution' => $schoolName,
+                'predikat' => $pesertaPredikat,
+                'competition_name' => $r->competition->name,
+                'date_formatted' => 'Blitar, '.$dateSpelled['date_formatted'],
+                'qr_svg' => $qrSvg,
+                'verify_url' => $verifyUrl,
+            ];
+        }
+
+        return view('admin.certificates.print', compact('template', 'certificateItems'));
+    }
+
+    /**
+     * Download Certificate for Official / Guru Pembimbing
+     */
+    public function pesertaDownloadPembimbing()
+    {
+        $user = Auth::user();
+        $registration = Registration::with(['competition.category', 'members'])
+            ->where('user_id', $user->id)
+            ->where('status', 'verified')
+            ->whereNotNull('official_name')
+            ->where('official_name', '!=', '')
+            ->first();
+
+        if (! $registration) {
+            $registration = Registration::with(['competition.category', 'members'])
+                ->where('user_id', $user->id)
+                ->where('status', 'verified')
+                ->first();
+        }
+
+        if (! $registration) {
+            return redirect()->route('peserta.registrations')
+                ->with('error', 'Tidak ditemukan data pendaftaran terverifikasi untuk mengunduh sertifikat pembimbing.');
+        }
+
+        // Check if certificate is released for this competition
+        $releaseSetting = AppSetting::where('key', 'certificate_release_'.$registration->competition_id)->first();
+        if (! $releaseSetting || $releaseSetting->value !== '1') {
+            return redirect()->route('peserta.registrations')
+                ->with('error', 'Sertifikat pembimbing untuk cabang lomba ini belum dirilis oleh panitia pelaksana.');
+        }
+
+        $competition = $registration->competition;
+        $type = 'pembimbing';
+
+        $template = CertificateTemplate::where('type', $type)
+            ->where('competition_id', $competition->id)
+            ->where('is_active', true)
+            ->first();
+
+        if (! $template) {
+            $template = CertificateTemplate::where('type', $type)
+                ->whereNull('competition_id')
+                ->where('is_active', true)
+                ->first();
+        }
+
+        if (! $template) {
+            $template = new CertificateTemplate([
+                'name' => 'Default Pembimbing',
+                'type' => $type,
+                'layout_config' => CertificateTemplate::defaultLayoutConfig(),
+                'number_format' => '[NO]/TALENTA/MTsN1-BLT/[MONTH]/[YEAR]',
+            ]);
+        }
+
+        $pembimbingPredikat = ! empty($template->layout_config['predikat']['text'])
+            ? $template->layout_config['predikat']['text']
+            : 'GURU PEMBIMBING';
+
+        $nowDate = Carbon::now();
+        $dateSpelled = OfficialReportController::getDateSpelledOut($nowDate);
+        $certNumber = $template->formatNumber($registration->id, $nowDate);
+
+        $certCode = $this->generateCertCode('pembimbing', $registration->id, $competition);
+        $verifyUrl = QrSignatureService::certificateUrl($certCode);
+        $qrSvg = QrSignatureService::generateSvg($verifyUrl, 85);
+
+        $officialName = $registration->official_name ?: $user->name;
+        $schoolName = $registration->display_school ?: ($registration->institution_name ?: ($user->institution_name ?: '-'));
+
+        $certificateItems = [
+            [
+                'cert_code' => $certCode,
+                'cert_number' => $certNumber,
+                'name' => mb_strtoupper($officialName ?? ''),
+                'institution' => $schoolName,
+                'predikat' => $pembimbingPredikat,
+                'competition_name' => $competition->name,
+                'date_formatted' => 'Blitar, '.$dateSpelled['date_formatted'],
+                'qr_svg' => $qrSvg,
+                'verify_url' => $verifyUrl,
+            ],
+        ];
+
+        return view('admin.certificates.print', compact('template', 'certificateItems'));
+    }
+
+    /**
      * Public Verification Page when QR Code is scanned
      */
     public function verifyPublic($code)

@@ -587,7 +587,7 @@
                 </div>
 
                 @php
-                    $availableCertReg = $registrations->first(function($r) {
+                    $availableCertRegs = $registrations->filter(function($r) {
                         $released = \App\Models\AppSetting::where('key', 'certificate_release_' . $r->competition_id)->value('value') === '1';
                         return $r->status === 'verified' && $released && $r->is_attended;
                     });
@@ -595,29 +595,47 @@
                         $released = \App\Models\AppSetting::where('key', 'certificate_release_' . $r->competition_id)->value('value') === '1';
                         return $r->status === 'verified' && $released && !$r->is_attended;
                     });
+                    $hasPembimbingCert = $registrations->first(function($r) {
+                        $released = \App\Models\AppSetting::where('key', 'certificate_release_' . $r->competition_id)->value('value') === '1';
+                        return $r->status === 'verified' && $released && !empty($r->official_name);
+                    });
                 @endphp
 
-                @if($availableCertReg)
-                    <a href="{{ route('peserta.certificate.download', $availableCertReg->id) }}" target="_blank" class="w-full py-2.5 px-4 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-purple-600/20 hover:scale-[1.02] transition cursor-pointer">
-                        <i data-lucide="download" class="w-4 h-4"></i>
-                        <span>Download Sertifikat (PDF)</span>
-                    </a>
-                @elseif($hasReleasedLocked)
-                    <button type="button" @click="openInfo('Sertifikat untuk cabang lomba Anda sudah dirilis panitia, namun statusnya masih terkunci karena belum melakukan presensi scan kehadiran di lokasi lomba oleh panitia/PIC.', 'Sertifikat Masih Terkunci', 'amber')" class="w-full py-2.5 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700/80 text-amber-300 hover:text-amber-200 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer border border-amber-500/30 shadow-sm">
-                        <i data-lucide="lock" class="w-4 h-4 text-amber-400"></i>
-                        <span>Sertifikat Terkunci</span>
-                    </button>
-                @elseif($registrations->where('status', 'verified')->isNotEmpty())
-                    <button type="button" @click="openInfo('Sertifikat resmi diterbitkan setelah rangkaian cabang lomba selesai dan diaktifkan (dirilis) oleh panitia pelaksana. Pastikan Anda juga telah melakukan scan presensi kehadiran di lokasi lomba.', 'Informasi Rilis Sertifikat', 'purple')" class="w-full py-2.5 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700/80 text-purple-300 hover:text-purple-200 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer border border-purple-500/30 shadow-sm">
-                        <i data-lucide="info" class="w-4 h-4 text-purple-400"></i>
-                        <span>Status Sertifikat Lomba</span>
-                    </button>
-                @else
-                    <button type="button" disabled class="w-full py-2.5 px-4 rounded-2xl bg-slate-800 text-slate-500 font-bold text-xs flex items-center justify-center gap-2 cursor-not-allowed">
-                        <i data-lucide="lock" class="w-4 h-4"></i>
-                        <span>Belum Ada Pendaftaran</span>
-                    </button>
-                @endif
+                <div class="space-y-2">
+                    @if($availableCertRegs->count() > 1)
+                        <a href="{{ route('peserta.certificate.download.all') }}" target="_blank" class="w-full py-2.5 px-4 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-purple-600/20 hover:scale-[1.02] transition cursor-pointer" title="Download semua sertifikat siswa kolektif sekaligus dalam 1 dokumen PDF">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                            <span>Cetak Semua Sertifikat ({{ $availableCertRegs->count() }} Siswa)</span>
+                        </a>
+                    @elseif($availableCertRegs->count() === 1)
+                        <a href="{{ route('peserta.certificate.download', $availableCertRegs->first()->id) }}" target="_blank" class="w-full py-2.5 px-4 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-purple-600/20 hover:scale-[1.02] transition cursor-pointer">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                            <span>Download Sertifikat (PDF)</span>
+                        </a>
+                    @elseif($hasReleasedLocked)
+                        <button type="button" @click="openInfo('Sertifikat untuk cabang lomba Anda sudah dirilis panitia, namun statusnya masih terkunci karena belum melakukan presensi scan kehadiran di lokasi lomba oleh panitia/PIC.', 'Sertifikat Masih Terkunci', 'amber')" class="w-full py-2.5 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700/80 text-amber-300 hover:text-amber-200 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer border border-amber-500/30 shadow-sm">
+                            <i data-lucide="lock" class="w-4 h-4 text-amber-400"></i>
+                            <span>Sertifikat Terkunci</span>
+                        </button>
+                    @elseif($registrations->where('status', 'verified')->isNotEmpty())
+                        <button type="button" @click="openInfo('Sertifikat resmi diterbitkan setelah rangkaian cabang lomba selesai dan diaktifkan (dirilis) oleh panitia pelaksana. Pastikan Anda juga telah melakukan scan presensi kehadiran di lokasi lomba.', 'Informasi Rilis Sertifikat', 'purple')" class="w-full py-2.5 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700/80 text-purple-300 hover:text-purple-200 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer border border-purple-500/30 shadow-sm">
+                            <i data-lucide="info" class="w-4 h-4 text-purple-400"></i>
+                            <span>Status Sertifikat Lomba</span>
+                        </button>
+                    @else
+                        <button type="button" disabled class="w-full py-2.5 px-4 rounded-2xl bg-slate-800 text-slate-500 font-bold text-xs flex items-center justify-center gap-2 cursor-not-allowed">
+                            <i data-lucide="lock" class="w-4 h-4"></i>
+                            <span>Belum Ada Pendaftaran</span>
+                        </button>
+                    @endif
+
+                    @if($hasPembimbingCert)
+                        <a href="{{ route('peserta.certificate.download.pembimbing') }}" target="_blank" class="w-full py-2 px-3 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 font-bold text-[11px] flex items-center justify-center gap-1.5 transition">
+                            <i data-lucide="award" class="w-3.5 h-3.5 text-purple-400"></i>
+                            <span>Sertifikat Guru Pembimbing</span>
+                        </a>
+                    @endif
+                </div>
             </div>
 
         </div>

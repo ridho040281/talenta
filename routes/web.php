@@ -131,8 +131,9 @@ Route::middleware(['auth', 'role:peserta,superadmin'])->prefix('peserta')->name(
     Route::post('/pendaftaran/{id}/revisi', [PesertaController::class, 'updateRevision'])->name('registration.revision');
     Route::post('/pendaftaran/{id}/upload-foto/{member_id}', [PesertaController::class, 'uploadMemberPhoto'])->name('registration.upload_photo');
     Route::get('/pendaftaran/{id}/cetak-kartu', [PesertaController::class, 'printIdCard'])->name('print.idcard');
-    Route::get('/pendaftaran/{id}/kartu', [PesertaController::class, 'printIdCard'])->name('card');
     Route::get('/pendaftaran/{id}/sertifikat', [CertificateController::class, 'pesertaDownload'])->name('certificate.download');
+    Route::get('/cetak-semua-sertifikat', [CertificateController::class, 'pesertaDownloadAll'])->name('certificate.download.all');
+    Route::get('/sertifikat-pembimbing', [CertificateController::class, 'pesertaDownloadPembimbing'])->name('certificate.download.pembimbing');
 
     // Collective Registration (Excel) & Invoices
     Route::get('/collective', [CollectiveRegistrationController::class, 'wizard'])->name('collective.wizard');
