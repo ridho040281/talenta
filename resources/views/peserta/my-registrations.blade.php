@@ -387,6 +387,27 @@
                                                 <i data-lucide="contact" class="w-3.5 h-3.5"></i>
                                                 <span>Kartu</span>
                                             </a>
+                                            @php
+                                                $isCertReleased = \App\Models\AppSetting::where('key', 'certificate_release_' . $reg->competition_id)->value('value') === '1';
+                                            @endphp
+                                            @if($isCertReleased)
+                                                @if($reg->is_attended)
+                                                    <a href="{{ route('peserta.certificate.download', $reg->id) }}" target="_blank" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 font-bold text-xs border border-purple-500/30 transition shadow-sm" title="Download / Cetak Sertifikat Resmi">
+                                                        <i data-lucide="award" class="w-3.5 h-3.5"></i>
+                                                        <span>Sertifikat</span>
+                                                    </a>
+                                                @else
+                                                    <button type="button" @click="openInfo('Sertifikat untuk cabang lomba ini sudah dirilis panitia, namun sertifikat Anda masih terkunci karena belum melakukan presensi scan kehadiran di lokasi lomba oleh panitia/PIC.', 'Sertifikat Masih Terkunci', 'amber')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-800/80 text-amber-300 hover:text-amber-200 font-bold text-xs border border-amber-500/30 transition shadow-sm" title="Sertifikat Terkunci: Belum presensi di lokasi lomba">
+                                                        <i data-lucide="lock" class="w-3.5 h-3.5 text-amber-400"></i>
+                                                        <span>Sertifikat</span>
+                                                    </button>
+                                                @endif
+                                            @else
+                                                <button type="button" @click="openInfo('Sertifikat untuk cabang lomba ini belum dirilis oleh panitia pelaksana. Akses download akan dibuka setelah seluruh rangkaian lomba selesai.', 'Sertifikat Belum Rilis', 'purple')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-800/60 text-slate-400 hover:text-slate-300 font-bold text-xs border border-slate-700/50 transition shadow-sm" title="Sertifikat belum dirilis oleh panitia">
+                                                    <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-500"></i>
+                                                    <span>Sertifikat</span>
+                                                </button>
+                                            @endif
                                         @endif
                                     </div>
                                 </td>
@@ -438,7 +459,7 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             
             <!-- 1. BUKTI PEMBUATAN AKUN (1 Halaman A4 Standalone) -->
             <div class="p-5 rounded-3xl bg-slate-900/80 border border-slate-800 hover:border-blue-500/60 hover:shadow-[0_0_30px_rgba(59,130,246,0.18)] transition-all duration-300 flex flex-col justify-between space-y-4 group">
@@ -468,7 +489,7 @@
             </div>
 
             <!-- 2. BUKTI PENDAFTARAN LOMBA (Semua / Kolektif) -->
-            <div class="p-5 rounded-3xl bg-slate-900/80 border border-slate-800 hover:border-emerald-500/60 hover:shadow-[0_0_30px_rgba(16,185,129,0.18)] transition-all duration-300 flex flex-col justify-between space-y-4 group">
+            <div class="p-5 rounded-3xl bg-slate-900/80 border border-slate-800 hover:border-emerald-500/60 hover:shadow-[0_0_30px_rgba(168,185,129,0.18)] transition-all duration-300 flex flex-col justify-between space-y-4 group">
                 <div class="space-y-3">
                     <div class="flex items-center justify-between">
                         <div class="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold border border-emerald-500/30">
@@ -540,6 +561,61 @@
                     <button type="button" @click="openInfo('Kwitansi / Invoice resmi dapat dicetak setelah pendaftaran Anda diverifikasi dan berstatus lunas oleh panitia.', 'Kwitansi & Invoice Resmi', 'amber')" class="w-full py-2.5 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700/80 text-slate-400 hover:text-slate-200 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer border border-slate-700/60 shadow-sm">
                         <i data-lucide="info" class="w-4 h-4 text-amber-400"></i>
                         <span>Status Invoice / Kwitansi</span>
+                    </button>
+                @endif
+            </div>
+
+            <!-- 4. SERTIFIKAT & PIAGAM PENGHARGAAN -->
+            <div class="p-5 rounded-3xl bg-slate-900/80 border border-slate-800 hover:border-purple-500/60 hover:shadow-[0_0_30px_rgba(168,85,247,0.18)] transition-all duration-300 flex flex-col justify-between space-y-4 group">
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="w-10 h-10 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold border border-purple-500/30">
+                            <i data-lucide="award" class="w-5 h-5"></i>
+                        </div>
+                        <span class="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 font-mono">
+                            Digital Sah
+                        </span>
+                    </div>
+                    <div>
+                        <h4 class="font-black text-white text-base group-hover:text-purple-300 transition font-display">
+                            Sertifikat & Piagam
+                        </h4>
+                        <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                            Sertifikat resmi peserta ber-QR Code verifikasi keabsahan. Dapat dicetak setelah dirilis panitia dan hadir di lokasi lomba.
+                        </p>
+                    </div>
+                </div>
+
+                @php
+                    $availableCertReg = $registrations->first(function($r) {
+                        $released = \App\Models\AppSetting::where('key', 'certificate_release_' . $r->competition_id)->value('value') === '1';
+                        return $r->status === 'verified' && $released && $r->is_attended;
+                    });
+                    $hasReleasedLocked = $registrations->first(function($r) {
+                        $released = \App\Models\AppSetting::where('key', 'certificate_release_' . $r->competition_id)->value('value') === '1';
+                        return $r->status === 'verified' && $released && !$r->is_attended;
+                    });
+                @endphp
+
+                @if($availableCertReg)
+                    <a href="{{ route('peserta.certificate.download', $availableCertReg->id) }}" target="_blank" class="w-full py-2.5 px-4 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-purple-600/20 hover:scale-[1.02] transition cursor-pointer">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        <span>Download Sertifikat (PDF)</span>
+                    </a>
+                @elseif($hasReleasedLocked)
+                    <button type="button" @click="openInfo('Sertifikat untuk cabang lomba Anda sudah dirilis panitia, namun statusnya masih terkunci karena belum melakukan presensi scan kehadiran di lokasi lomba oleh panitia/PIC.', 'Sertifikat Masih Terkunci', 'amber')" class="w-full py-2.5 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700/80 text-amber-300 hover:text-amber-200 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer border border-amber-500/30 shadow-sm">
+                        <i data-lucide="lock" class="w-4 h-4 text-amber-400"></i>
+                        <span>Sertifikat Terkunci</span>
+                    </button>
+                @elseif($registrations->where('status', 'verified')->isNotEmpty())
+                    <button type="button" @click="openInfo('Sertifikat resmi diterbitkan setelah rangkaian cabang lomba selesai dan diaktifkan (dirilis) oleh panitia pelaksana. Pastikan Anda juga telah melakukan scan presensi kehadiran di lokasi lomba.', 'Informasi Rilis Sertifikat', 'purple')" class="w-full py-2.5 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700/80 text-purple-300 hover:text-purple-200 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer border border-purple-500/30 shadow-sm">
+                        <i data-lucide="info" class="w-4 h-4 text-purple-400"></i>
+                        <span>Status Sertifikat Lomba</span>
+                    </button>
+                @else
+                    <button type="button" disabled class="w-full py-2.5 px-4 rounded-2xl bg-slate-800 text-slate-500 font-bold text-xs flex items-center justify-center gap-2 cursor-not-allowed">
+                        <i data-lucide="lock" class="w-4 h-4"></i>
+                        <span>Belum Ada Pendaftaran</span>
                     </button>
                 @endif
             </div>

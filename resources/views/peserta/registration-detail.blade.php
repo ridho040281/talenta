@@ -61,11 +61,16 @@
                             <span>Cetak Sertifikat</span>
                         </a>
                     @else
-                        <span class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800/80 text-slate-400 border border-slate-700/60 font-bold text-xs cursor-not-allowed" title="Sertifikat terkunci: Anda belum melakukan scan kehadiran di lokasi lomba oleh panitia/PIC">
+                        <span class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800/80 text-amber-300 border border-amber-500/30 font-bold text-xs cursor-not-allowed" title="Sertifikat terkunci: Anda belum melakukan scan kehadiran di lokasi lomba oleh panitia/PIC">
                             <i data-lucide="lock" class="w-3.5 h-3.5 text-amber-400"></i>
                             <span>Sertifikat Terkunci</span>
                         </span>
                     @endif
+                @else
+                    <span class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800/80 text-slate-400 border border-slate-700/60 font-bold text-xs cursor-not-allowed" title="Sertifikat untuk cabang lomba ini belum dirilis oleh panitia pelaksana. Akses akan dibuka setelah rangkaian lomba selesai.">
+                        <i data-lucide="clock" class="w-3.5 h-3.5 text-purple-400"></i>
+                        <span>Sertifikat Belum Rilis</span>
+                    </span>
                 @endif
             @endif
             <a href="{{ route('peserta.registrations') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs transition">
